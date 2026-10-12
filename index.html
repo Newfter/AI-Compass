@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI Compass — your guide to understanding Artificial Intelligence.">
+    <title>AI Compass | Explore Artificial Intelligence</title>
+    
+    <link rel="stylesheet" href="./style.css">
+    <script src="./script.js" defer></script>
+
+</head>
+
+<body>
+<header class="navbar">
+    <a href="#home" class="logo">AI Compass</a>
+    
+    <nav class="nav-links">
+        <a href="#home" data-i18n="navHome">Home</a>
+        <a href="#lessons" data-i18n="navLessons">Lessons</a>
+        <a href="#about" data-i18n="navAbout">About</a>
+    </nav>
+
+    <button id="language-toggle" type="button" aria-label="Switch language">
+        RU
+    </button>
+</header>
+
+<main>
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <p class="hero-label">YOUR AI JOURNEY STARTS HERE</p>
+
+            <h1 data-i18n="heroTitle">
+                Navigate the World of <span>AI</span>
+            </h1>
+
+            <p data-i18n="heroSubtitle">
+                Your guide to understanding Artificial Intelligence.
+            </p>
+
+            <a href="#lessons" class="hero-button" data-i18n="heroButton">
+                Explore Lessons
+            </a>
+        </div>
+    </section>
+
+    <section class="lessons section" id="lessons">
+        <div class="section-heading">
+            <p class="section-label">LEARN SOMETHING NEW</p>
+            <h2 data-i18n="lessonsTitle">Explore the Basics</h2>
+        </div>
+
+        <div class="lesson-grid">
+            <article class="lesson-card">
+                <div class="lesson-number">01</div>
+                <h3 data-i18n="lesson1Title">What is AI?</h3>
+                <p data-i18n="lesson1Text">
+                    Discover what Artificial Intelligence is and how it works.
+                </p>
+            </article>
+
+            <article class="lesson-card">
+                <div class="lesson-number">02</div>
+                <h3 data-i18n="lesson2Title">Machine Learning</h3>
+                <p data-i18n="lesson2Text">
+                    Learn how machines learn from data and improve.
+                </p>
+            </article>
+
+            <article class="lesson-card">
+                <div class="lesson-number">03</div>
+                <h3 data-i18n="lesson3Title">AI in Everyday Life</h3>
+                <p data-i18n="lesson3Text">
+                    See how AI is already part of your daily life.
+                </p>
+            </article>
+
+            <article class="lesson-card">
+                <div class="lesson-number">04</div>
+                <h3 data-i18n="lesson4Title">AI Ethics</h3>
+                <p data-i18n="lesson4Text">
+                    Explore the challenges and responsibilities of AI.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <section class="about section" id="about">
+        <div class="about-content">
+            <p class="section-label">OUR MISSION</p>
+            <h2 data-i18n="aboutTitle">About AI Compass</h2>
+            <p data-i18n="aboutText">
+                AI Compass is your starting point for exploring the world of Artificial Intelligence.
+            </p>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <p>
+        © 2026 AI Compass.
+        <span data-i18n="footerText">Made for curious minds.</span>
+    </p>
+</footer>
+</body>
+</html>
