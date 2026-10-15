@@ -435,4 +435,513 @@ button {
         transition-duration: 0.01ms !important;
     }
 }
-```
+
+/* ===== FUTURISTIC AI COMPASS UPDATE ===== */
+
+body {
+    position: relative;
+    isolation: isolate;
+    background:
+        radial-gradient(ellipse at 15% 15%, rgba(94, 48, 180, 0.13), transparent 38%),
+        radial-gradient(ellipse at 85% 45%, rgba(28, 132, 190, 0.09), transparent 38%),
+        #070914;
+}
+
+/* Subtle futuristic grid */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(135, 116, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(135, 116, 255, 0.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+/* Floating spheres background */
+.ambient-orbs {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.orb {
+    position: absolute;
+    display: block;
+    border: 1px solid rgba(153, 122, 255, 0.35);
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at 30% 30%,
+        rgba(120, 100, 255, 0.22),
+        rgba(62, 180, 255, 0.035) 65%,
+        transparent 75%
+    );
+    box-shadow:
+        inset 0 0 22px rgba(115, 100, 255, 0.08),
+        0 0 28px rgba(105, 75, 255, 0.08);
+    animation: orb-float 16s ease-in-out infinite alternate;
+    will-change: transform;
+}
+
+.orb-1 {
+    width: 145px;
+    height: 145px;
+    top: 12%;
+    left: 7%;
+    --move-x: 55px;
+    --move-y: 75px;
+}
+
+.orb-2 {
+    width: 65px;
+    height: 65px;
+    top: 23%;
+    right: 15%;
+    --move-x: -45px;
+    --move-y: 90px;
+    animation-duration: 12s;
+}
+
+.orb-3 {
+    width: 210px;
+    height: 210px;
+    top: 58%;
+    left: 24%;
+    --move-x: 70px;
+    --move-y: -65px;
+    animation-duration: 21s;
+}
+
+.orb-4 {
+    width: 95px;
+    height: 95px;
+    top: 72%;
+    right: 8%;
+    --move-x: -65px;
+    --move-y: -85px;
+    animation-duration: 14s;
+}
+
+.orb-5 {
+    width: 42px;
+    height: 42px;
+    top: 45%;
+    left: 48%;
+    --move-x: 35px;
+    --move-y: -70px;
+    animation-duration: 10s;
+}
+
+.orb-6 {
+    width: 115px;
+    height: 115px;
+    top: 8%;
+    left: 67%;
+    --move-x: -50px;
+    --move-y: 55px;
+    animation-duration: 19s;
+}
+
+.orb-7 {
+    width: 55px;
+    height: 55px;
+    top: 82%;
+    left: 12%;
+    --move-x: 60px;
+    --move-y: -45px;
+    animation-duration: 13s;
+}
+
+.orb-8 {
+    width: 170px;
+    height: 170px;
+    top: 38%;
+    right: 28%;
+    --move-x: -35px;
+    --move-y: 65px;
+    animation-duration: 23s;
+}
+
+@keyframes orb-float {
+    from {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    to {
+        transform: translate3d(var(--move-x), var(--move-y), 0) rotate(35deg);
+    }
+}
+
+/* Navigation glow */
+.navbar {
+    position: relative;
+    border-bottom-color: rgba(139, 125, 255, 0.18);
+}
+
+.logo {
+    letter-spacing: -1.2px;
+    text-shadow: 0 0 24px rgba(155, 109, 255, 0.22);
+}
+
+.navbar nav a {
+    transition: color 0.25s ease, text-shadow 0.25s ease;
+}
+
+.navbar nav a:hover {
+    color: #75eaff;
+    text-shadow: 0 0 16px rgba(80, 227, 255, 0.55);
+}
+
+/* Language button */
+#language-toggle {
+    padding: 9px 15px;
+    border: 1px solid rgba(155, 109, 255, 0.42);
+    border-radius: 12px;
+    background: rgba(93, 66, 160, 0.12);
+    color: #cdbaff;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+#language-toggle:hover {
+    border-color: #50e3ff;
+    color: #50e3ff;
+    box-shadow: 0 0 22px rgba(80, 227, 255, 0.16);
+}
+
+/* Hero section */
+.hero {
+    min-height: 620px;
+    padding-top: 130px;
+    padding-bottom: 125px;
+}
+
+.hero-content {
+    width: min(900px, 100%);
+    margin: 0 auto;
+    animation: hero-appear 1s ease both;
+}
+
+.hero-label {
+    display: inline-block;
+    margin-bottom: 25px;
+    padding: 8px 15px;
+    border: 1px solid rgba(80, 227, 255, 0.3);
+    border-radius: 999px;
+    background: rgba(80, 227, 255, 0.055);
+    color: #83ecff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    box-shadow: 0 0 30px rgba(80, 227, 255, 0.06);
+}
+
+.hero h1 {
+    font-size: clamp(44px, 7vw, 82px);
+    line-height: 1.08;
+    letter-spacing: -3px;
+    text-wrap: balance;
+    text-shadow: 0 0 45px rgba(155, 109, 255, 0.13);
+}
+
+.hero h1 span {
+    color: #a88aff;
+    background: linear-gradient(110deg, #a88aff 10%, #65eaff 90%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-content > p:not(.hero-label) {
+    max-width: 620px;
+    margin: 25px auto 0;
+    color: #aab5d0;
+    font-size: 17px;
+    line-height: 1.85;
+}
+
+.hero-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 35px;
+    padding: 15px 27px;
+    border: 1px solid rgba(190, 170, 255, 0.35);
+    border-radius: 13px;
+    background: linear-gradient(115deg, #8758ee, #536cf0);
+    color: white;
+    font-weight: 700;
+    box-shadow:
+        0 8px 35px rgba(120, 80, 235, 0.23),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hero-button:hover {
+    transform: translateY(-4px);
+    box-shadow:
+        0 12px 42px rgba(120, 80, 235, 0.38),
+        0 0 25px rgba(80, 227, 255, 0.12);
+}
+
+/* Section headings */
+.section-heading h2,
+.about h2 {
+    letter-spacing: -1.4px;
+}
+
+.section-label {
+    text-shadow: 0 0 18px rgba(80, 227, 255, 0.25);
+}
+
+/* Lesson cards */
+.lessons {
+    position: relative;
+    width: min(1180px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: 55px 0 110px;
+}
+
+.lesson-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(143, 130, 255, 0.17);
+    border-radius: 20px;
+    background: linear-gradient(
+        145deg,
+        rgba(22, 27, 52, 0.82),
+        rgba(10, 15, 29, 0.88)
+    );
+    backdrop-filter: blur(8px);
+    transition:
+        transform 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease;
+}
+
+.lesson-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 70%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #70eaff, transparent);
+    transition: left 0.6s ease;
+}
+
+.lesson-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(120, 180, 255, 0.48);
+    background: linear-gradient(
+        145deg,
+        rgba(32, 37, 70, 0.94),
+        rgba(13, 22, 41, 0.96)
+    );
+    box-shadow:
+        0 18px 45px rgba(0, 0, 0, 0.2),
+        0 0 28px rgba(112, 100, 255, 0.1);
+}
+
+.lesson-card:hover::before {
+    left: 140%;
+}
+
+.lesson-number {
+    color: #72eaff;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 14px rgba(80, 227, 255, 0.25);
+}
+
+.lesson-card h3 {
+    letter-spacing: -0.3px;
+}
+
+/* About section */
+.about {
+    position: relative;
+    width: min(820px, calc(100% - 48px));
+    margin: 0 auto 100px;
+    padding: 60px 35px;
+    border: 1px solid rgba(155, 109, 255, 0.23);
+    border-radius: 26px;
+    background:
+        radial-gradient(ellipse at top, rgba(92, 69, 170, 0.19), transparent 75%),
+        rgba(16, 22, 38, 0.8);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 60px rgba(95, 70, 180, 0.06);
+    text-align: center;
+}
+
+.about h2 {
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+.about-content > p:last-child {
+    max-width: 600px;
+    margin: 20px auto 0;
+    color: #aab5d0;
+    font-size: 15px;
+    line-height: 1.9;
+}
+
+/* Footer */
+.footer {
+    border-top-color: rgba(139, 125, 255, 0.16);
+    color: #8e9bb8;
+}
+
+/* Entrance animation */
+@keyframes hero-appear {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .hero {
+        min-height: 500px;
+        padding: 90px 20px;
+    }
+
+    .hero h1 {
+        letter-spacing: -1.8px;
+    }
+
+    .hero-content > p:not(.hero-label) {
+        font-size: 15px;
+    }
+
+    .lessons {
+        width: calc(100% - 32px);
+        padding-top: 35px;
+    }
+
+    .about {
+        width: calc(100% - 32px);
+        padding: 40px 22px;
+    }
+
+    .orb-3,
+    .orb-8 {
+        opacity: 0.45;
+    }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .orb,
+    .hero-content {
+        animation: none !important;
+    }
+
+    .lesson-card,
+    .hero-button {
+        transition: none !important;
+    }
+}
+
+
+/* ===== READABILITY & TEXT CONTRAST FIX ===== */
+
+/* Default text color */
+body {
+    color: #e8edff;
+}
+
+/* Main headings */
+h1,
+h2,
+h3,
+h4,
+.section-heading h2,
+.about h2 {
+    color: #f4f6ff;
+}
+
+/* Keep the gradient on the main hero title */
+.hero h1 span {
+    background: linear-gradient(110deg, #b69aff 10%, #70edff 90%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Paragraphs and descriptions */
+p,
+.hero-content > p:not(.hero-label),
+.about-content > p:last-child {
+    color: #c1cbe2;
+}
+
+/* Navigation */
+.navbar nav a {
+    color: #dce4ff;
+}
+
+.navbar nav a:hover {
+    color: #75eaff;
+}
+
+/* Lesson cards */
+.lesson-card h3 {
+    color: #f0f3ff;
+}
+
+.lesson-card p {
+    color: #bdc8e2;
+}
+
+.lesson-number,
+.section-label {
+    color: #78eaff;
+}
+
+/* Labels and lesson status */
+.hero-label {
+    color: #8ceeff;
+}
+
+.lesson-card .status,
+.lesson-card .lesson-status {
+    color: #b7c5e6;
+}
+
+/* Footer */
+.footer,
+footer {
+    color: #aab6d0;
+}
+
+.footer p,
+footer p {
+    color: #aab6d0;
+}
+
+/* General links */
+a {
+    color: #9bcaff;
+}
+
+a:hover {
+    color: #79edff;
+}
+
+/* Make text selection easier to see */
+::selection {
+    color: #ffffff;
+    background: #6844c8;
+}
