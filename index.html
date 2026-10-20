@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AI Compass — your guide to understanding Artificial Intelligence.">
     <title>AI Compass | Explore Artificial Intelligence</title>
-    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+
     <link rel="stylesheet" href="./style.css">
     <script src="./script.js" defer></script>
 
@@ -24,8 +25,8 @@
     <span class="orb orb-8"></span>
 </div>
 <header class="navbar">
-    <a href="#home" class="logo">AI Compass</a>
-    
+    <a href="#home" class="logo">AI <span>Compass</span></a>
+
     <nav class="nav-links">
         <a href="#home" data-i18n="navHome">Home</a>
         <a href="#lessons" data-i18n="navLessons">Lessons</a>
@@ -40,7 +41,7 @@
 <main>
     <section class="hero" id="home">
         <div class="hero-content">
-            <p class="hero-label">YOUR AI JOURNEY STARTS HERE</p>
+            <p class="hero-label" data-i18n="heroLabel">YOUR AI JOURNEY STARTS HERE</p>
 
             <h1 data-i18n="heroTitle">
                 Navigate the World of <span>AI</span>
@@ -58,48 +59,76 @@
 
     <section class="lessons section" id="lessons">
         <div class="section-heading">
-            <p class="section-label">LEARN SOMETHING NEW</p>
+            <p class="section-label" data-i18n="lessonsLabel">LEARN SOMETHING NEW</p>
             <h2 data-i18n="lessonsTitle">Explore the Basics</h2>
         </div>
 
         <div class="lesson-grid">
             <article class="lesson-card">
+                <div class="lesson-icon" aria-hidden="true">🤖</div>
                 <div class="lesson-number">01</div>
                 <h3 data-i18n="lesson1Title">What is AI?</h3>
                 <p data-i18n="lesson1Text">
                     Discover what Artificial Intelligence is and how it works.
                 </p>
+                <div class="lesson-more" id="lesson1-more" hidden>
+                    <p data-i18n="lesson1More">
+                        Artificial Intelligence is when computers do tasks that usually need human thinking, like understanding speech, recognising pictures or answering questions. AI does not really "think" like a person: it finds patterns in huge amounts of examples and uses them to make its best guess.
+                    </p>
+                </div>
+                <button class="lesson-toggle" type="button" aria-expanded="false" aria-controls="lesson1-more">Read lesson</button>
             </article>
 
             <article class="lesson-card">
+                <div class="lesson-icon" aria-hidden="true">📊</div>
                 <div class="lesson-number">02</div>
                 <h3 data-i18n="lesson2Title">Machine Learning</h3>
                 <p data-i18n="lesson2Text">
                     Learn how machines learn from data and improve.
                 </p>
+                <div class="lesson-more" id="lesson2-more" hidden>
+                    <p data-i18n="lesson2More">
+                        Machine learning is how most AI is built. Instead of writing every rule by hand, we show the computer thousands of examples, such as photos labelled "cat" or "dog". It slowly adjusts itself until its answers are mostly right, and the more good examples it sees, the better it gets.
+                    </p>
+                </div>
+                <button class="lesson-toggle" type="button" aria-expanded="false" aria-controls="lesson2-more">Read lesson</button>
             </article>
 
             <article class="lesson-card">
+                <div class="lesson-icon" aria-hidden="true">📱</div>
                 <div class="lesson-number">03</div>
                 <h3 data-i18n="lesson3Title">AI in Everyday Life</h3>
                 <p data-i18n="lesson3Text">
                     See how AI is already part of your daily life.
                 </p>
+                <div class="lesson-more" id="lesson3-more" hidden>
+                    <p data-i18n="lesson3More">
+                        You probably use AI every day: face unlock on your phone, video and music recommendations, map apps that predict traffic, spam filters in your email, and translators. Chatbots that answer questions and help with ideas are AI too.
+                    </p>
+                </div>
+                <button class="lesson-toggle" type="button" aria-expanded="false" aria-controls="lesson3-more">Read lesson</button>
             </article>
 
             <article class="lesson-card">
+                <div class="lesson-icon" aria-hidden="true">⚖️</div>
                 <div class="lesson-number">04</div>
                 <h3 data-i18n="lesson4Title">AI Ethics</h3>
                 <p data-i18n="lesson4Text">
                     Explore the challenges and responsibilities of AI.
                 </p>
+                <div class="lesson-more" id="lesson4-more" hidden>
+                    <p data-i18n="lesson4More">
+                        AI can make mistakes and can copy unfair ideas hidden in the data it learned from. That is why it matters to check important facts, protect your personal information, and be honest about when you used AI in your work. People, not machines, stay responsible for decisions.
+                    </p>
+                </div>
+                <button class="lesson-toggle" type="button" aria-expanded="false" aria-controls="lesson4-more">Read lesson</button>
             </article>
         </div>
     </section>
 
     <section class="about section" id="about">
         <div class="about-content">
-            <p class="section-label">OUR MISSION</p>
+            <p class="section-label" data-i18n="aboutLabel">OUR MISSION</p>
             <h2 data-i18n="aboutTitle">About AI Compass</h2>
             <p data-i18n="aboutText">
                 AI Compass is your starting point for exploring the world of Artificial Intelligence.
@@ -113,6 +142,7 @@
         © 2026 AI Compass.
         <span data-i18n="footerText">Made for curious minds.</span>
     </p>
+    <a href="#home" class="back-to-top" data-i18n="backToTop">Back to top ↑</a>
 </footer>
 </body>
 </html>
