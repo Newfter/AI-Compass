@@ -1,1 +1,518 @@
-/* effects styles */
+/* =========================================================
+   AI COMPASS — VISUAL EFFECTS
+   Styles for js/effects.js and js/neural-bg.js:
+   scroll bar, reveal animations, decoding text, typewriter,
+   tilt glare, spotlight, magnetic buttons, ripples, mini-map,
+   calm mode, reduced motion and printing.
+   ========================================================= */
+
+/* ===== 1. NEURAL BACKGROUND CANVAS ===== */
+
+/* The "large" viewport height stays the same when a phone's address bar
+   slides in and out, so the canvas doesn't have to be resized while scrolling */
+.neural-bg {
+    bottom: auto;
+    height: 100vh;
+    height: 100lvh;
+}
+
+/* ===== 2. SCROLL PROGRESS BAR ===== */
+
+.scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 150;
+    height: 3px;
+    pointer-events: none;
+}
+
+.scroll-progress span {
+    position: relative;
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: 0 3px 3px 0;
+    background: var(--gradient);
+    box-shadow: 0 0 10px rgba(var(--accent-2-rgb), 0.55), 0 0 2px rgba(var(--accent-rgb), 0.8);
+}
+
+/* A bright "comet head" at the end of the bar */
+.scroll-progress span::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -4px;
+    width: 28px;
+    height: 9px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(var(--accent-2-rgb), 0.95), rgba(var(--accent-2-rgb), 0));
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.scroll-progress.is-active span::after {
+    opacity: 1;
+}
+
+/* ===== 3. REVEAL ON SCROLL ===== */
+
+/* Hidden only when JavaScript is running, motion is allowed and the
+   element is about to scroll into view ("armed"). Content far away from
+   the screen always stays visible. */
+html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
+    opacity: 0;
+}
+
+/* The animation only runs once and then gets out of the way,
+   so the element's own hover effects keep working */
+[data-reveal].fx-reveal-run {
+    animation: fx-reveal-up 0.95s var(--ease) var(--fx-delay, 0ms) backwards;
+}
+
+[data-reveal="left"].fx-reveal-run {
+    animation-name: fx-reveal-left;
+}
+
+[data-reveal="right"].fx-reveal-run {
+    animation-name: fx-reveal-right;
+}
+
+[data-reveal="zoom"].fx-reveal-run {
+    animation-name: fx-reveal-zoom;
+}
+
+[data-reveal="fade"].fx-reveal-run {
+    animation-name: fx-reveal-fade;
+}
+
+/* Lists: the list fades in quickly and its items rise one by one */
+[data-reveal].fx-reveal-run.fx-reveal-list {
+    animation: fx-reveal-fade 0.3s ease var(--fx-delay, 0ms) backwards;
+}
+
+[data-reveal].fx-reveal-list > * {
+    animation: fx-reveal-up 0.85s var(--ease) calc(var(--fx-delay, 0ms) + var(--fx-item-delay, 0ms)) backwards;
+}
+
+@keyframes fx-reveal-up {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 34px, 0) scale(0.985);
+    }
+}
+
+@keyframes fx-reveal-left {
+    from {
+        opacity: 0;
+        transform: translate3d(-44px, 0, 0);
+    }
+}
+
+@keyframes fx-reveal-right {
+    from {
+        opacity: 0;
+        transform: translate3d(44px, 0, 0);
+    }
+}
+
+@keyframes fx-reveal-zoom {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+}
+
+@keyframes fx-reveal-fade {
+    from {
+        opacity: 0;
+    }
+}
+
+/* ===== 4. DECODING TEXT ===== */
+
+/* Letters that haven't "decoded" yet look dimmer */
+.fx-scramble-noise {
+    opacity: 0.55;
+}
+
+/* ...except in gradient text, where see-through letters would vanish */
+.fx-scramble-clip .fx-scramble-noise {
+    opacity: 1;
+}
+
+/* Short texts keep a fixed width while decoding */
+.fx-scramble-lock {
+    white-space: nowrap;
+}
+
+/* ===== 5. TYPEWRITER WORDS ===== */
+
+.fx-rotator {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.fx-rotator-text {
+    text-shadow: 0 0 22px rgba(var(--accent-2-rgb), 0.35);
+}
+
+.fx-rotator-caret {
+    display: inline-block;
+    width: 2px;
+    height: 1.1em;
+    margin-left: 3px;
+    vertical-align: -0.15em;
+    border-radius: 1px;
+    background: var(--accent-2);
+    box-shadow: 0 0 8px rgba(var(--accent-2-rgb), 0.8);
+    animation: fx-caret-blink 1s steps(1) infinite;
+}
+
+/* The caret stays solid while letters are typed */
+.fx-rotator.is-typing .fx-rotator-caret {
+    animation: none;
+}
+
+.fx-rotator.is-static .fx-rotator-caret {
+    display: none;
+}
+
+/* Our caret lives inside the word now, so hide the old one next to it */
+.fx-rotator + .rotator-caret {
+    display: none;
+}
+
+/* Invisible helper used to measure the longest word */
+.fx-rotator-probe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    visibility: hidden;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+@keyframes fx-caret-blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* ===== 6. TILT GLARE + GLOWING CARD BORDER ===== */
+
+[data-tilt].fx-tilting {
+    will-change: transform;
+}
+
+.fx-glare {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.fx-lit > .fx-glare {
+    opacity: 1;
+}
+
+/* A soft light spot that follows the cursor (tilt cards only) */
+.fx-glare-full {
+    background: radial-gradient(circle at var(--fx-x, 50%) var(--fx-y, 50%), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%);
+}
+
+[data-theme="light"] .fx-glare-full {
+    background: radial-gradient(circle at var(--fx-x, 50%) var(--fx-y, 50%), rgba(var(--accent-rgb), 0.07), rgba(var(--accent-rgb), 0) 55%);
+}
+
+/* The border lights up near the cursor (a ring cut out with a mask) */
+.fx-glare::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: radial-gradient(240px circle at var(--fx-x, 50%) var(--fx-y, 50%), rgba(var(--accent-2-rgb), 0.9), rgba(var(--accent-rgb), 0.45) 40%, rgba(var(--accent-rgb), 0) 72%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* ===== 7. CURSOR SPOTLIGHT ===== */
+
+.fx-spotlight {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 560px;
+    height: 560px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.13) 0%, rgba(var(--accent-2-rgb), 0.05) 38%, rgba(var(--accent-2-rgb), 0) 68%);
+    opacity: 0;
+    transform: translate3d(-1000px, -1000px, 0);
+    transition: opacity 0.6s ease;
+    will-change: transform;
+}
+
+[data-theme="light"] .fx-spotlight {
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.08) 0%, rgba(var(--accent-2-rgb), 0.04) 38%, rgba(var(--accent-2-rgb), 0) 68%);
+}
+
+html.fx-fine .fx-spotlight.is-visible {
+    opacity: 1;
+}
+
+html:not(.fx-fine) .fx-spotlight {
+    display: none;
+}
+
+/* ===== 8. MAGNETIC MAIN BUTTONS ===== */
+
+html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]) {
+    transform: translate3d(var(--fx-mx, 0px), var(--fx-my, 0px), 0);
+}
+
+html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):hover {
+    transform: translate3d(var(--fx-mx, 0px), calc(var(--fx-my, 0px) - 3px), 0);
+}
+
+/* ===== 9. BUTTON RIPPLE ===== */
+
+.fx-ripple {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.fx-ripple > span {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--accent-2-rgb), 0.32) 0%, rgba(var(--accent-2-rgb), 0) 70%);
+    transform: scale(0);
+    animation: fx-ripple 0.65s var(--ease) forwards;
+}
+
+.btn-primary > .fx-ripple > span {
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+@keyframes fx-ripple {
+    to {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+
+/* ===== 10. SECTION MINI-MAP (big screens only) ===== */
+
+.fx-rail {
+    display: none;
+}
+
+@media (min-width: 1280px) and (min-height: 560px) {
+    .fx-rail {
+        position: fixed;
+        top: 50%;
+        right: 18px;
+        z-index: 90;
+        display: block;
+        transform: translateY(-50%);
+    }
+}
+
+.fx-rail-list {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* The thin line behind the dots, filled as you scroll */
+.fx-rail-track {
+    position: absolute;
+    top: 16px;
+    bottom: 16px;
+    right: 15px;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--border);
+}
+
+.fx-rail-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(to bottom, var(--accent), var(--accent-2));
+    box-shadow: 0 0 8px rgba(var(--accent-2-rgb), 0.6);
+    transform: scaleY(0);
+    transform-origin: top;
+}
+
+.fx-rail-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.fx-rail-dot {
+    width: 8px;
+    height: 8px;
+    border: 1.5px solid var(--text-dim);
+    border-radius: 50%;
+    background: var(--bg);
+    transition: transform 0.3s var(--ease), background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fx-rail-link.is-passed .fx-rail-dot {
+    border-color: var(--accent);
+    background: var(--accent);
+}
+
+.fx-rail-link[aria-current] .fx-rail-dot {
+    border-color: var(--accent-2);
+    background: var(--accent-2);
+    box-shadow: 0 0 0 4px rgba(var(--accent-2-rgb), 0.16), 0 0 14px rgba(var(--accent-2-rgb), 0.8);
+    transform: scale(1.35);
+}
+
+.fx-rail-link:hover .fx-rail-dot {
+    border-color: var(--accent-2);
+    transform: scale(1.35);
+}
+
+/* The name pops out to the left on hover or keyboard focus */
+.fx-rail-label {
+    position: absolute;
+    top: 50%;
+    right: 40px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface-solid);
+    box-shadow: var(--shadow);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(8px, -50%);
+    transition: opacity 0.2s ease, transform 0.25s var(--ease);
+}
+
+.fx-rail-number {
+    color: var(--accent-2);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+.fx-rail-link:hover .fx-rail-label,
+.fx-rail-link:focus-visible .fx-rail-label {
+    opacity: 1;
+    transform: translate(0, -50%);
+}
+
+/* How much of the page you have scrolled, under the dots */
+.fx-rail-percent {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 32px;
+    margin-top: 8px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.fx-rail-link:focus-visible {
+    outline-offset: 0;
+    border-radius: 50%;
+}
+
+/* ===== 11. CALM MODE (our own switch to pause animations) ===== */
+
+html.fx-calm {
+    scroll-behavior: auto;
+}
+
+html.fx-calm *,
+html.fx-calm *::before,
+html.fx-calm *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+}
+
+html.fx-calm .fx-spotlight,
+html.fx-calm .fx-glare,
+html.fx-calm .fx-ripple {
+    display: none;
+}
+
+/* ===== 12. REDUCED MOTION ===== */
+
+@media (prefers-reduced-motion: reduce) {
+    .fx-spotlight,
+    .fx-glare,
+    .fx-ripple {
+        display: none;
+    }
+
+    .fx-rail-dot,
+    .fx-rail-label {
+        transition: none;
+    }
+}
+
+/* ===== 13. PRINTING ===== */
+
+@media print {
+    .scroll-progress,
+    .fx-spotlight,
+    .fx-rail,
+    .fx-glare,
+    .fx-ripple,
+    .neural-bg {
+        display: none !important;
+    }
+
+    [data-reveal] {
+        opacity: 1 !important;
+        animation: none !important;
+    }
+}
