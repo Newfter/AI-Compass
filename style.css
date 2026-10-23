@@ -1,4 +1,3 @@
-```css
 /* ===== BASIC SETTINGS ===== */
 
 :root {
@@ -944,4 +943,136 @@ a:hover {
 ::selection {
     color: #ffffff;
     background: #6844c8;
+}
+
+
+/* ===== UPDATE: STICKY MENU, LESSON CARDS & MOBILE ===== */
+
+/* Logo: white "AI" with a glowing gradient "Compass" */
+.logo {
+    color: #f4f6ff;
+}
+
+.logo span {
+    background: linear-gradient(110deg, #b69aff 10%, #70edff 90%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Menu stays at the top of the screen while you scroll */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Once the page is scrolled, the menu gets a dark background
+   (the big shadow stretches it across the full screen width) */
+.navbar.scrolled {
+    background: rgba(7, 9, 20, 0.92);
+    box-shadow: 0 0 0 100vmax rgba(7, 9, 20, 0.92);
+    clip-path: inset(0 -100vmax);
+}
+
+/* Lesson cards: icon, "Read lesson" button and the full lesson text */
+.lesson-grid {
+    align-items: start;
+}
+
+.lesson-card {
+    min-height: 300px;
+}
+
+.lesson-icon {
+    font-size: 22px;
+}
+
+.lesson-more {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(143, 130, 255, 0.2);
+    animation: hero-appear 0.4s ease both;
+}
+
+.lesson-more p {
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+.lesson-toggle {
+    margin-top: auto;
+    padding: 8px 14px;
+    border: 1px solid rgba(80, 227, 255, 0.35);
+    border-radius: 10px;
+    background: rgba(80, 227, 255, 0.06);
+    color: #8ceeff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+/* Small gap above the button so it never touches the text */
+.lesson-card > p + .lesson-more + .lesson-toggle,
+.lesson-card.is-open .lesson-toggle {
+    margin-top: 22px;
+}
+
+.lesson-toggle:hover {
+    border-color: #50e3ff;
+    background: rgba(80, 227, 255, 0.14);
+}
+
+.lesson-card.is-open {
+    border-color: rgba(120, 180, 255, 0.48);
+}
+
+/* "Back to top" link in the footer */
+.back-to-top {
+    color: #9bcaff;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* Clear outline for people who move around the site with the keyboard */
+a:focus-visible,
+button:focus-visible {
+    outline: 2px solid #70edff;
+    outline-offset: 3px;
+}
+
+/* Phones: logo and language button on top, menu links underneath */
+@media (max-width: 600px) {
+    .navbar {
+        flex-wrap: wrap;
+        padding: 12px 0;
+        row-gap: 8px;
+    }
+
+    .navbar nav {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        gap: 26px;
+    }
+
+    .navbar nav a {
+        font-size: 14px;
+    }
+
+    .lesson-card {
+        min-height: 0;
+    }
+
+    .lesson-toggle {
+        margin-top: 22px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lesson-more {
+        animation: none !important;
+    }
 }
