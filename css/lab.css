@@ -13,17 +13,48 @@
 
 /* ===== 1. THE CARD, TABS AND SHARED PARTS ===== */
 
+/* Colours for small text. In the light theme the bright cyan, the green and the
+   dim grey are too pale for tiny letters, so they are mixed with the text colour
+   (still the same hue, just darker) to stay easy to read (WCAG AA contrast). */
+.lab {
+    --lab-cyan-text: var(--accent-2);
+    --lab-green-text: var(--success);
+    --lab-warning-text: var(--warning);
+    --lab-dim-text: var(--text-dim);
+}
+
+[data-theme="light"] .lab {
+    --lab-cyan-text: color-mix(in srgb, var(--accent-2) 70%, var(--text));
+    --lab-green-text: color-mix(in srgb, var(--success) 70%, var(--text));
+    --lab-warning-text: color-mix(in srgb, var(--warning) 70%, var(--text));
+    --lab-dim-text: var(--text-muted);
+}
+
 [data-feature="lab"] [hidden] {
     display: none !important;
 }
 
+/* The lab card is big and its canvases change every frame, so instead of
+   blurring the animated page behind it (slow), it uses an almost solid glass colour. */
 .lab {
     padding: 26px;
     overflow: hidden;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     background:
         radial-gradient(ellipse at 0% 0%, rgba(var(--accent-rgb), 0.16), transparent 50%),
         radial-gradient(ellipse at 100% 100%, rgba(var(--accent-2-rgb), 0.08), transparent 50%),
-        var(--surface);
+        var(--surface-solid);
+    background:
+        radial-gradient(ellipse at 0% 0%, rgba(var(--accent-rgb), 0.16), transparent 50%),
+        radial-gradient(ellipse at 100% 100%, rgba(var(--accent-2-rgb), 0.08), transparent 50%),
+        color-mix(in srgb, var(--surface-solid) 93%, transparent);
+}
+
+/* Glass buttons inside the lab don't need their own blur either */
+.lab .btn-ghost {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
 }
 
 /* A thin light that slowly sweeps along the top edge */
@@ -161,21 +192,21 @@
 
 .lab-tab-sub {
     margin-top: 3px;
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-size: 10px;
     letter-spacing: 1.6px;
     transition: color 0.25s ease;
 }
 
 .lab-tab[aria-selected="true"] .lab-tab-sub {
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
 }
 
 .lab-live {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.6px;
@@ -214,7 +245,7 @@
 }
 
 .lab-mini-label {
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 2px;
@@ -244,7 +275,7 @@
 
 .lab-box-note {
     margin-top: 10px;
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-size: 12.5px;
     line-height: 1.5;
 }
@@ -372,7 +403,7 @@
 
 .lab-tool:hover:not(:disabled) {
     border-color: var(--accent-2);
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
 }
 
 .lab-tool:disabled {
@@ -401,6 +432,35 @@
     outline: 2px solid var(--accent-2);
     outline-offset: 3px;
     border-radius: 20px;
+}
+
+/* style.css gives every focused control 6px corners. Inside the lab the
+   controls keep their own rounded shape, so the focus ring follows it. */
+.lab-tab:focus-visible,
+.lab-cand:focus-visible {
+    border-radius: 13px;
+}
+
+.lab-class:focus-visible {
+    border-radius: 11px;
+}
+
+.lab-tool:focus-visible,
+.lab-lm-clear:focus-visible,
+.lab-teach-input:focus-visible {
+    border-radius: 12px;
+}
+
+.lab .btn:focus-visible {
+    border-radius: 14px;
+}
+
+.lab .btn-small:focus-visible {
+    border-radius: 11px;
+}
+
+.lab .chip:focus-visible {
+    border-radius: 999px;
 }
 
 .lab-board-canvas {
@@ -448,9 +508,8 @@
     padding: 18px 18px 16px;
     border: 1px solid var(--border-strong);
     border-radius: 16px;
-    background: var(--surface);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    background: var(--surface-solid);
+    background: color-mix(in srgb, var(--surface-solid) 88%, transparent);
     color: var(--text-muted);
     font-size: 13.5px;
     line-height: 1.45;
@@ -485,9 +544,8 @@
     padding: 5px 10px;
     border: 1px solid var(--border);
     border-radius: 9px;
-    background: var(--surface);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
+    background: var(--surface-solid);
+    background: color-mix(in srgb, var(--surface-solid) 86%, transparent);
     color: var(--accent);
     font-size: 11.5px;
     font-weight: 600;
@@ -498,7 +556,7 @@
 }
 
 .lab-readout.is-b {
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
 }
 
 /* Example datasets */
@@ -512,6 +570,12 @@
 
 .lab-presets .lab-mini-label {
     margin-right: 4px;
+}
+
+/* Selected / hovered chips use the readable cyan (the same as style.css in the dark theme) */
+.lab button.chip:hover,
+.lab .chip.active {
+    color: var(--lab-cyan-text);
 }
 
 .lab-preset {
@@ -577,7 +641,7 @@
 
 .lab-hint {
     margin-top: 10px;
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-size: 13px;
     line-height: 1.55;
 }
@@ -613,7 +677,7 @@
     display: inline-flex;
 }
 
-.lab-train[aria-pressed="true"] {
+.lab-train.is-training {
     box-shadow: 0 10px 35px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(var(--accent-2-rgb), 0.5), 0 0 30px rgba(var(--accent-2-rgb), 0.3);
 }
 
@@ -640,7 +704,7 @@
 
 .lab-status[data-status="training"] {
     border-color: rgba(var(--accent-2-rgb), 0.4);
-    color: var(--success);
+    color: var(--lab-green-text);
 }
 
 .lab-status[data-status="training"] .lab-status-dot {
@@ -655,7 +719,7 @@
 
 .lab-status[data-status="done"] {
     border-color: rgba(var(--accent-2-rgb), 0.5);
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
 }
 
 .lab-status[data-status="done"] .lab-status-dot {
@@ -673,6 +737,18 @@
     gap: 8px;
 }
 
+/* The stats box measures its own width: when 4 numbers in a row would not
+   fit (for example on a 1024px laptop), they go 2 x 2 instead */
+.lab-statbox {
+    container-type: inline-size;
+}
+
+@container (max-width: 470px) {
+    .lab-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 .lab-stat {
     position: relative;
     min-width: 0;
@@ -683,7 +759,7 @@
 }
 
 .lab-stat dt {
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 1.4px;
@@ -707,7 +783,7 @@
 .lab-stat-sub {
     display: block;
     margin-top: 2px;
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-size: 10.5px;
     white-space: nowrap;
 }
@@ -763,7 +839,7 @@
     display: grid;
     place-items: center;
     padding: 0 10px;
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-size: 12.5px;
     text-align: center;
 }
@@ -783,6 +859,23 @@
     grid-column: 1 / -1;
 }
 
+/* In a narrow settings box the three speed buttons get the full width,
+   so long words like "Медленно" don't touch each other */
+.lab-settings {
+    container-type: inline-size;
+}
+
+@container (max-width: 450px) {
+    .lab-field-speed,
+    .lab-field-layer {
+        grid-column: 1 / -1;
+    }
+
+    .lab-field-layer .lab-field-label {
+        display: none;
+    }
+}
+
 .lab-field label,
 .lab-field-label,
 .lab-temp label {
@@ -797,7 +890,7 @@
 .lab-field small {
     display: block;
     margin-top: 6px;
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-size: 12px;
     line-height: 1.4;
 }
@@ -853,7 +946,7 @@
     padding: 2px 8px;
     border-radius: 8px;
     background: rgba(var(--accent-2-rgb), 0.12);
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
@@ -865,7 +958,8 @@
     appearance: none;
     display: block;
     width: 100%;
-    height: 32px;
+    height: 44px;           /* a big, finger-friendly area to grab */
+    margin: -4px 0;
     background: transparent;
     cursor: pointer;
 }
@@ -922,8 +1016,8 @@
 .lab-seg {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 3px;
-    padding: 3px;
+    gap: 2px;
+    padding: 2px;
     border: 1px solid var(--border-strong);
     border-radius: 12px;
     background: var(--surface-solid);
@@ -931,7 +1025,7 @@
 
 .lab-seg button {
     min-width: 0;
-    min-height: 38px;
+    min-height: 44px;
     padding: 0 4px;
     border-radius: 9px;
     color: var(--text-muted);
@@ -946,7 +1040,7 @@
 
 .lab-seg button[aria-pressed="true"] {
     background: rgba(var(--accent-2-rgb), 0.14);
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
     box-shadow: inset 0 0 0 1px rgba(var(--accent-2-rgb), 0.45);
 }
 
@@ -1135,7 +1229,7 @@
 }
 
 .lab-step-num {
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -1198,7 +1292,7 @@
 }
 
 .lab-hood em {
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
     font-family: var(--font-mono);
     font-style: normal;
     font-size: 12.5px;
@@ -1252,12 +1346,13 @@
 }
 
 .lab-lm-input::placeholder {
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-weight: 500;
 }
 
 .lab-lm-input:focus-visible {
     outline: none;
+    border-radius: 18px;
     border-color: var(--accent-2);
     box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.35), 0 0 30px rgba(var(--accent-2-rgb), 0.15);
 }
@@ -1301,7 +1396,7 @@
 }
 
 .lab-starter {
-    min-height: 40px;
+    min-height: 44px;
     padding: 8px 14px;
     font-size: 13.5px;
     text-align: left;
@@ -1343,6 +1438,7 @@
     color: var(--text-muted);
     font-size: 13.5px;
     line-height: 1.5;
+    overflow-wrap: anywhere;    /* a very long typed word wraps instead of sticking out */
 }
 
 .lab-cands {
@@ -1423,7 +1519,7 @@
 
 .lab-cand-item:first-child .lab-cand-rank {
     border-color: rgba(var(--accent-2-rgb), 0.5);
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
 }
 
 .lab-cand-word {
@@ -1439,7 +1535,7 @@
 }
 
 .lab-cand-pct {
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
     font-size: 14px;
     font-weight: 600;
 }
@@ -1452,7 +1548,7 @@
 
 .lab-cands-legend {
     margin-top: 10px;
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-size: 12.5px;
     line-height: 1.5;
 }
@@ -1526,7 +1622,7 @@
 
 .lab-tok small {
     margin-top: 2px;
-    color: var(--text-muted);
+    color: var(--text);
     font-size: 10px;
     font-weight: 600;
 }
@@ -1539,7 +1635,7 @@
 }
 
 .lab-tok.is-new small {
-    color: var(--warning);
+    color: var(--lab-warning-text);
 }
 
 .lab-tok.is-typing {
@@ -1547,11 +1643,14 @@
     border-color: var(--border-strong);
     background: transparent;
     box-shadow: none;
-    opacity: 0.7;
+}
+
+.lab-tok.is-typing > span {
+    color: var(--text-muted);
 }
 
 .lab-tokens-empty {
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
     font-size: 13.5px;
 }
 
@@ -1608,7 +1707,7 @@
 }
 
 .lab-teach-input::placeholder {
-    color: var(--text-dim);
+    color: var(--lab-dim-text);
 }
 
 .lab-teach-btn {
@@ -1621,6 +1720,7 @@
     color: var(--text-muted);
     font-size: 12.5px;
     line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .lab-teach-status.is-error {
@@ -1630,7 +1730,7 @@
 .lab-link-btn {
     min-height: 44px;
     margin-top: 2px;
-    color: var(--accent-2);
+    color: var(--lab-cyan-text);
     font-size: 13px;
     font-weight: 700;
     text-decoration: underline;
@@ -1794,7 +1894,10 @@
         width: 100%;
     }
 
-    .lab-lm-input {
+    /* 16px text stops phones from zooming in when you tap a field */
+    .lab-lm-input,
+    .lab-teach-input,
+    .lab-select select {
         font-size: 16px;
     }
 

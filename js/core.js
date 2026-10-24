@@ -65,7 +65,9 @@ function applyTranslations(root) {
     root.querySelectorAll("[data-i18n]").forEach(function (element) {
         const key = element.getAttribute("data-i18n");
         if (translations.en[key] !== undefined || translations.ru[key] !== undefined) {
-            element.innerHTML = t(key);
+            // Only touch the page when the text really changes (much faster at start-up)
+            const text = t(key);
+            if (element.innerHTML !== text) element.innerHTML = text;
         }
     });
 
@@ -73,7 +75,9 @@ function applyTranslations(root) {
         element.getAttribute("data-i18n-attr").split(",").forEach(function (pair) {
             const parts = pair.split(":");
             if (parts.length === 2) {
-                element.setAttribute(parts[0].trim(), t(parts[1].trim()));
+                const name = parts[0].trim();
+                const text = t(parts[1].trim());
+                if (element.getAttribute(name) !== text) element.setAttribute(name, text);
             }
         });
     });
@@ -98,10 +102,21 @@ function setLanguage(lang) {
     document.documentElement.lang = lang;
     applyTranslations(document);
 
+    // The browser tab title and the page description follow the language too
+    document.title = t("core.pageTitle");
+    const description = document.querySelector('meta[name="description"]');
+    if (description) description.setAttribute("content", t("core.pageDescription"));
+
     const button = document.getElementById("language-toggle");
     if (button) button.textContent = lang === "en" ? "RU" : "EN";
 
     emit("aic:language", { lang: lang });
+}
+
+// The colour of the browser's address bar on phones
+function updateThemeMeta() {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", state.theme === "light" ? "#f4f6fd" : "#060812");
 }
 
 function setTheme(theme) {
@@ -109,9 +124,7 @@ function setTheme(theme) {
     state.theme = theme;
     storage.set("theme", theme);
     document.documentElement.setAttribute("data-theme", theme);
-
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", theme === "light" ? "#f4f6fd" : "#060812");
+    updateThemeMeta();
 
     emit("aic:theme", { theme: theme });
 }
@@ -146,8 +159,13 @@ function toast(message, icon) {
 }
 
 // ---------- Helpers ----------
+// The browser's computed styles are read through one live object, so
+// features that read many variables in a row don't ask for a new one each time.
+let computedRoot = null;
+
 function cssVar(name) {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    if (!computedRoot) computedRoot = getComputedStyle(document.documentElement);
+    return computedRoot.getPropertyValue(name).trim();
 }
 
 function escapeHTML(text) {
@@ -159,11 +177,19 @@ function escapeHTML(text) {
         .replace(/'/g, "&#39;");
 }
 
-// Smoothly scroll to a section by its id, e.g. scrollToSection("quiz")
+// Smoothly scroll to a section by its id, e.g. scrollToSection("quiz").
+// The keyboard focus moves to the section's heading, so the next Tab
+// continues from there (and doesn't jump back to where you were).
 function scrollToSection(id) {
     const target = document.getElementById(id);
     if (!target) return;
     target.scrollIntoView({ behavior: reducedMotionQuery.matches ? "auto" : "smooth", block: "start" });
+
+    const heading = target.querySelector("h1, h2");
+    if (heading) {
+        if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
+        heading.focus({ preventScroll: true });
+    }
 }
 
 // ---------- Core translations ----------
@@ -174,6 +200,11 @@ addTranslations({
         "core.themeLabel": "Switch light / dark theme",
         "core.langLabel": "Switch language",
         "core.menuLabel": "Open menu",
+        "core.menuClose": "Close menu",
+        "core.navMain": "Main menu",
+        "core.navFooter": "Footer links",
+        "core.pageTitle": "AI Compass | Explore Artificial Intelligence",
+        "core.pageDescription": "AI Compass — a free bilingual platform for learning about Artificial Intelligence: lessons, live AI experiments, a quiz, a glossary and more.",
         "core.toastLight": "Light mode on",
         "core.toastDark": "Dark mode on",
         "core.toastLang": "Language: English",
@@ -204,7 +235,7 @@ addTranslations({
 
         "lab.label": "HANDS-ON EXPERIMENTS",
         "lab.title": "The AI Lab",
-        "lab.subtitle": "Real machine learning, running right here in your browser. Teach it, test it, and watch it think.",
+        "lab.subtitle": "Real machine learning, running right here in your browser. Teach a model, test it, and watch it think.",
 
         "quiz.label": "TEST YOURSELF",
         "quiz.title": "The AI Challenge",
@@ -236,7 +267,7 @@ addTranslations({
         "cmd.groupActions": "Actions",
         "cmd.home": "Home",
         "cmd.toggleTheme": "Switch light / dark theme",
-        "cmd.toggleLang": "Switch language to Russian"
+        "cmd.toggleLang": "Language — switch to Russian"
     },
     ru: {
         "core.skip": "Перейти к содержанию",
@@ -244,12 +275,17 @@ addTranslations({
         "core.themeLabel": "Сменить светлую / тёмную тему",
         "core.langLabel": "Сменить язык",
         "core.menuLabel": "Открыть меню",
+        "core.menuClose": "Закрыть меню",
+        "core.navMain": "Главное меню",
+        "core.navFooter": "Ссылки в подвале сайта",
+        "core.pageTitle": "AI Compass | Исследуй искусственный интеллект",
+        "core.pageDescription": "AI Compass — бесплатная платформа на двух языках для знакомства с искусственным интеллектом: уроки, живые ИИ-эксперименты, тест, словарь и многое другое.",
         "core.toastLight": "Включена светлая тема",
         "core.toastDark": "Включена тёмная тема",
         "core.toastLang": "Язык: русский",
 
         "nav.lessons": "Уроки",
-        "nav.lab": "AI-лаборатория",
+        "nav.lab": "ИИ-лаборатория",
         "nav.quiz": "Тест",
         "nav.glossary": "Словарь",
         "nav.timeline": "История",
@@ -261,9 +297,9 @@ addTranslations({
         "hero.subtitle": "Бесплатный интерактивный путеводитель по искусственному интеллекту для",
         "hero.rotator": "школьников|учителей|родителей|всех",
         "hero.ctaLessons": "Начать обучение",
-        "hero.ctaLab": "Открыть AI-лабораторию",
+        "hero.ctaLab": "Открыть ИИ-лабораторию",
         "hero.statLessons": "интерактивных уроков",
-        "hero.statDemos": "живых AI-эксперимента",
+        "hero.statDemos": "живых ИИ-эксперимента",
         "hero.statQuiz": "вопросов в тесте",
         "hero.statLanguages": "языка",
         "hero.scrollHint": "Прокрутить к урокам",
@@ -273,11 +309,11 @@ addTranslations({
         "lessons.subtitle": "Шесть коротких уроков. Открой урок, прочитай, проверь себя и следи за своим прогрессом.",
 
         "lab.label": "ЭКСПЕРИМЕНТЫ СВОИМИ РУКАМИ",
-        "lab.title": "AI-лаборатория",
-        "lab.subtitle": "Настоящее машинное обучение прямо в твоём браузере. Обучи его, проверь и посмотри, как оно «думает».",
+        "lab.title": "ИИ-лаборатория",
+        "lab.subtitle": "Настоящее машинное обучение прямо в твоём браузере. Обучи модель, проверь её и посмотри, как она «думает».",
 
         "quiz.label": "ПРОВЕРЬ СЕБЯ",
-        "quiz.title": "AI-испытание",
+        "quiz.title": "ИИ-испытание",
         "quiz.subtitle": "Двенадцать вопросов. Насколько хорошо ты знаешь ИИ?",
 
         "glossary.label": "ГОВОРИ НА ЯЗЫКЕ ИИ",
@@ -296,7 +332,7 @@ addTranslations({
         "about.value2Title": "На двух языках",
         "about.value2Text": "Всё доступно на английском и русском.",
         "about.value3Title": "Учись на практике",
-        "about.value3Text": "Эксперименты, тесты и помощник помогают лучше запомнить.",
+        "about.value3Text": "Эксперименты, тесты и чат-бот помогают лучше запомнить материал.",
 
         "footer.tagline": "Создано для любознательных умов.",
         "footer.cas": "Школьный проект CAS.",
@@ -306,7 +342,7 @@ addTranslations({
         "cmd.groupActions": "Действия",
         "cmd.home": "Главная",
         "cmd.toggleTheme": "Сменить светлую / тёмную тему",
-        "cmd.toggleLang": "Сменить язык на английский"
+        "cmd.toggleLang": "Язык — переключить на английский"
     }
 });
 
@@ -362,7 +398,7 @@ registerCommand({
     group: "cmd.groupActions",
     icon: "🌓",
     title: function () { return t("cmd.toggleTheme"); },
-    keywords: "theme dark light тема",
+    keywords: "theme dark light mode night тема тёмная светлая тёмный светлый ночной режим",
     run: function () { window.AICompass.toggleTheme(); }
 });
 
@@ -371,7 +407,7 @@ registerCommand({
     group: "cmd.groupActions",
     icon: "🌐",
     title: function () { return t("cmd.toggleLang"); },
-    keywords: "language english russian язык",
+    keywords: "language english russian switch change translate язык русский английский сменить перевод",
     run: function () { window.AICompass.toggleLanguage(); }
 });
 
@@ -379,6 +415,7 @@ registerCommand({
 document.addEventListener("DOMContentLoaded", function () {
     document.documentElement.classList.add("js");
     setLanguage(state.lang);
+    updateThemeMeta();
 
     // Language and theme buttons
     const languageButton = document.getElementById("language-toggle");
@@ -402,31 +439,95 @@ document.addEventListener("DOMContentLoaded", function () {
     const navLinks = document.getElementById("nav-links");
     const navbar = document.getElementById("navbar");
 
-    function closeMenu() {
-        if (!menuButton) return;
-        menuButton.setAttribute("aria-expanded", "false");
-        navbar.classList.remove("menu-open");
+    function isMenuOpen() {
+        return Boolean(menuButton) && menuButton.getAttribute("aria-expanded") === "true";
     }
 
-    if (menuButton && navLinks) {
-        menuButton.addEventListener("click", function () {
-            const isOpen = menuButton.getAttribute("aria-expanded") === "true";
-            menuButton.setAttribute("aria-expanded", String(!isOpen));
-            navbar.classList.toggle("menu-open", !isOpen);
+    // The button says "Open menu" or "Close menu"
+    function updateMenuLabel() {
+        if (!menuButton) return;
+        const key = isMenuOpen() ? "core.menuClose" : "core.menuLabel";
+        menuButton.setAttribute("data-i18n-attr", "aria-label:" + key);
+        menuButton.setAttribute("aria-label", t(key));
+    }
+
+    function openMenu() {
+        menuButton.setAttribute("aria-expanded", "true");
+        navbar.classList.add("menu-open");
+        updateMenuLabel();
+    }
+
+    function closeMenu() {
+        if (!isMenuOpen()) return;
+        // If the focus was on a link that is about to hide, give it back to the button
+        const focusWasInside = navLinks.contains(document.activeElement);
+        menuButton.setAttribute("aria-expanded", "false");
+        navbar.classList.remove("menu-open");
+        updateMenuLabel();
+        if (focusWasInside) menuButton.focus({ preventScroll: true });
+    }
+
+    if (menuButton && navLinks && navbar) {
+        menuButton.addEventListener("click", function (event) {
+            if (isMenuOpen()) {
+                closeMenu();
+                return;
+            }
+            openMenu();
+            // Opened with the keyboard (Enter / Space): go straight to the first link
+            if (event.detail === 0) {
+                const firstLink = navLinks.querySelector("a");
+                if (firstLink) firstLink.focus();
+            }
         });
 
         navLinks.querySelectorAll("a").forEach(function (link) {
-            link.addEventListener("click", closeMenu);
+            link.addEventListener("click", function () {
+                // The page is about to scroll to this link, so the focus stays on it
+                menuButton.setAttribute("aria-expanded", "false");
+                navbar.classList.remove("menu-open");
+                updateMenuLabel();
+            });
         });
 
         document.addEventListener("keydown", function (event) {
             if (event.key === "Escape") closeMenu();
         });
+
+        // A tap or click anywhere outside the menu closes it
+        document.addEventListener("pointerdown", function (event) {
+            if (!isMenuOpen()) return;
+            if (navLinks.contains(event.target) || menuButton.contains(event.target)) return;
+            closeMenu();
+        }, true);
+
+        // So does moving the keyboard focus somewhere else (e.g. Tab past the last link)
+        function onFocusOut(event) {
+            const next = event.relatedTarget;
+            if (!isMenuOpen() || !next) return;
+            if (navLinks.contains(next) || menuButton.contains(next)) return;
+            closeMenu();
+        }
+        navLinks.addEventListener("focusout", onFocusOut);
+        menuButton.addEventListener("focusout", onFocusOut);
+
+        // On a wide screen the links are always visible, so the menu state is reset
+        // (without moving the focus: the links stay where they are)
+        const wideQuery = window.matchMedia("(min-width: 961px)");
+        const onWide = function () {
+            if (!wideQuery.matches || !isMenuOpen()) return;
+            menuButton.setAttribute("aria-expanded", "false");
+            navbar.classList.remove("menu-open");
+            updateMenuLabel();
+        };
+        if (wideQuery.addEventListener) wideQuery.addEventListener("change", onWide);
+        else if (wideQuery.addListener) wideQuery.addListener(onWide);
     }
 
     // Menu gets a solid background once the page is scrolled,
     // and the link of the section on screen is highlighted
-    const sections = Array.prototype.slice.call(document.querySelectorAll("main section[id]"));
+    // Only the page's own sections (not the sections that features put inside them)
+    const sections = Array.prototype.slice.call(document.querySelectorAll("main > section[id]"));
     const links = navLinks ? Array.prototype.slice.call(navLinks.querySelectorAll("a")) : [];
 
     function onScroll() {
@@ -445,7 +546,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
+    // The first check waits for the next frame, when the page is laid out anyway
+    requestAnimationFrame(onScroll);
 });
 
 })();

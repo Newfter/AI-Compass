@@ -19,7 +19,7 @@
 
     --text: #eef1ff;
     --text-muted: #aab5d0;
-    --text-dim: #7d89a8;
+    --text-dim: #8793b2;
 
     --accent: #9b6dff;
     --accent-2: #50e3ff;
@@ -53,13 +53,13 @@
 
     --text: #12162b;
     --text-muted: #4a5470;
-    --text-dim: #6b7591;
+    --text-dim: #5d6785;
 
     --accent: #6b3fe0;
-    --accent-2: #0a8fb3;
+    --accent-2: #07728f;
     --accent-3: #c42f98;
     --accent-rgb: 107, 63, 224;
-    --accent-2-rgb: 10, 143, 179;
+    --accent-2-rgb: 7, 114, 143;
     --accent-3-rgb: 196, 47, 152;
     --success: #0f9a62;
     --danger: #d4304f;
@@ -115,7 +115,17 @@ body {
     font-size: 16px;
     line-height: 1.65;
     overflow-x: hidden;
+    /* Room for the fixed menu bar at the top */
+    padding-top: var(--nav-height);
     transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Safety net: nothing inside the page may make it wider than the screen
+   (on phones that would zoom the whole page out). "clip" cuts off the
+   overflow without creating a scroll box, so sticky bars still work. */
+main,
+footer {
+    overflow-x: clip;
 }
 
 img,
@@ -195,7 +205,7 @@ textarea:focus-visible,
     z-index: 1000;
     padding: 10px 16px;
     border-radius: var(--radius-sm);
-    background: var(--accent);
+    background: #6844c8;
     color: #ffffff;
     font-weight: 700;
     transition: top 0.2s ease;
@@ -335,19 +345,40 @@ button.chip:hover,
 /* ===== 5. NAVIGATION ===== */
 
 .navbar {
-    position: sticky;
+    /* Fixed (not sticky): the browser never scrolls the page to "show"
+       a menu button when it gets focus. body has padding-top for it. */
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 100;
     border-bottom: 1px solid transparent;
-    transition: background 0.3s ease, border-color 0.3s ease;
+    transition: border-color 0.3s ease;
+}
+
+/* The glass background lives on its own layer, so the mobile menu
+   panel inside the bar can blur the page with its own glass */
+.navbar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--nav-bg);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .navbar.scrolled,
 .navbar.menu-open {
-    background: var(--nav-bg);
     border-bottom-color: var(--border);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    backdrop-filter: blur(16px) saturate(140%);
+}
+
+.navbar.scrolled::before,
+.navbar.menu-open::before {
+    opacity: 1;
 }
 
 .navbar-inner {
@@ -478,7 +509,7 @@ button.chip:hover,
     gap: 4px;
 }
 
-.burger span {
+.burger > span:not(.fx-ripple) {
     display: block;
     width: 18px;
     height: 2px;
@@ -487,15 +518,15 @@ button.chip:hover,
     transition: transform 0.3s var(--ease), opacity 0.2s ease;
 }
 
-.burger[aria-expanded="true"] span:nth-child(1) {
+.burger[aria-expanded="true"] > span:nth-child(1) {
     transform: translateY(6px) rotate(45deg);
 }
 
-.burger[aria-expanded="true"] span:nth-child(2) {
+.burger[aria-expanded="true"] > span:nth-child(2) {
     opacity: 0;
 }
 
-.burger[aria-expanded="true"] span:nth-child(3) {
+.burger[aria-expanded="true"] > span:nth-child(3) {
     transform: translateY(-6px) rotate(-45deg);
 }
 
@@ -834,14 +865,14 @@ button.chip:hover,
 
 .toast-stack {
     position: fixed;
-    left: 50%;
+    left: 16px;
+    right: 16px;
     bottom: 24px;
     z-index: 700;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    transform: translateX(-50%);
     pointer-events: none;
 }
 
@@ -849,7 +880,7 @@ button.chip:hover,
     display: flex;
     align-items: center;
     gap: 10px;
-    max-width: calc(100vw - 32px);
+    max-width: 520px;
     padding: 11px 18px;
     border: 1px solid var(--border-strong);
     border-radius: 14px;
@@ -875,6 +906,21 @@ button.chip:hover,
 }
 
 /* ===== 11. RESPONSIVE ===== */
+
+/* The round assistant button sits in the bottom-right corner:
+   keep "Back to top" out from under it */
+@media (min-width: 641px) {
+    .footer-bottom {
+        padding-right: 96px;
+    }
+}
+
+/* On smaller screens toasts sit above the assistant button and its hint bubble */
+@media (max-width: 1200px) {
+    .toast-stack {
+        bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+    }
+}
 
 @media (max-width: 1080px) {
     .palette-kbd {
@@ -911,10 +957,18 @@ button.chip:hover,
         transition: opacity 0.25s ease, transform 0.25s var(--ease), visibility 0.25s;
     }
 
+    /* Browsers without the glass blur get a solid panel, so text stays readable */
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .nav-links {
+            background: var(--bg-2);
+        }
+    }
+
     .navbar.menu-open .nav-links {
         opacity: 1;
         visibility: visible;
         transform: none;
+        transition: opacity 0.25s ease, transform 0.25s var(--ease), visibility 0s;
     }
 
     .nav-links a {
@@ -974,7 +1028,12 @@ button.chip:hover,
     }
 
     .hero {
-        padding: 56px 0 100px;
+        padding: 56px 0 64px;
+    }
+
+    /* On phones the hint would sit below the first screen, where nobody sees it */
+    .scroll-hint {
+        display: none;
     }
 
     .hero-label {

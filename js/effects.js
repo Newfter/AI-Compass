@@ -87,7 +87,7 @@ function updateModeClasses() {
 
 // Lists of everything the effects are working on
 const revealPending = new Set();
-const revealDelays = new WeakMap();
+const revealTimes = new WeakMap();                                    // when each card starts to appear
 const itemDelays = new WeakMap();
 const counters = new Map();
 const scrambleTargets = new Set();
@@ -95,12 +95,14 @@ const scramblePending = new Set();
 const scrambleRuns = new Map();
 const rotators = new Map();
 
-// Three "zones" watch the page:
+// Four "zones" watch the page:
 // - screenObserver: remembers what has already been on screen.
 //   Something you have seen is never hidden again (no blinking).
 // - armObserver: a bit bigger than the screen. Things entering it get ready
 //   (hidden, or set to 0) just before you can see them.
 // - viewObserver: the screen minus a bottom strip. Things entering it animate in.
+// - counterObserver: the whole screen. A number starts counting as soon as
+//   any part of it can be seen, so you never look at a "0" that waits.
 // Content far away from the screen is never hidden, so the page always works.
 // (They are created in this order, so they also run in this order.)
 const NEAR_ZONE = 0.1;                                                 // 10% of the screen height
@@ -108,6 +110,7 @@ const seenOnScreen = new WeakSet();
 const screenObserver = hasObserver ? new IntersectionObserver(onScreenSeen, { threshold: 0 }) : null;
 const armObserver = hasObserver ? new IntersectionObserver(onNear, { rootMargin: "10% 0px 10% 0px", threshold: 0 }) : null;
 const viewObserver = hasObserver ? new IntersectionObserver(onEnterView, { rootMargin: "0px 0px -8% 0px", threshold: 0 }) : null;
+const counterObserver = hasObserver ? new IntersectionObserver(onCounterView, { threshold: 0 }) : null;
 const scrambleObserver = hasObserver ? new IntersectionObserver(onScrambleView, { threshold: 0.2 }) : null;
 const rotatorObserver = hasObserver ? new IntersectionObserver(onRotatorView) : null;
 
@@ -136,9 +139,12 @@ function updateProgress() {
     updateRail(progress, max - window.scrollY < 4);
 
     // At the very bottom, show anything that is on screen but too small to trigger
-    if (max - window.scrollY < 6 && revealPending.size) {
+    if (max - window.scrollY < 6) {
         revealPending.forEach((element) => {
             if (isOnScreen(element)) reveal(element, nextStagger());
+        });
+        counters.forEach((counter, element) => {
+            if (counter.waiting) startIfVisible(element, counter, false);
         });
     }
 }
@@ -178,14 +184,54 @@ function registerReveal(element) {
     return true;
 }
 
-// Visible but not hidden (e.g. the page moved under it): leave it as it is
+// Is the element inside a fixed layer (a chat panel, a toast, a modal)?
+// Such a layer never scrolls, so its content can't "scroll into view".
+function inFixedLayer(element) {
+    let node = element;
+    while (node.offsetParent) node = node.offsetParent;               // climb to the outermost positioned box
+    return node !== document.body && getComputedStyle(node).position === "fixed";
+}
+
+// Backup timers for hidden elements that sit on screen but don't animate in
+const fallbackTimers = new Map();
+
+function clearFallback(element) {
+    if (!fallbackTimers.has(element)) return;
+    clearTimeout(fallbackTimers.get(element));
+    fallbackTimers.delete(element);
+}
+
+// Something can be seen (even one pixel of it)
 function onScreenSeen(entries) {
     entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
         const element = entry.target;
+        if (!revealPending.has(element)) {
+            screenObserver.unobserve(element);
+            return;
+        }
+        if (!entry.isIntersecting) {
+            clearFallback(element);
+            return;
+        }
         seenOnScreen.add(element);
-        screenObserver.unobserve(element);
-        if (revealPending.has(element) && !element.classList.contains("fx-armed")) showNow(element);
+
+        // Visible but not hidden (e.g. the page moved under it): leave it as it is
+        if (!element.classList.contains("fx-armed")) {
+            showNow(element);
+            return;
+        }
+
+        // Hidden, but already peeking onto the screen:
+        // - in a fixed panel it will never scroll further in, so it appears now
+        // - anywhere else it appears by itself if you stop scrolling for a moment
+        if (inFixedLayer(element)) {
+            reveal(element, nextStagger());
+        } else if (!fallbackTimers.has(element)) {
+            fallbackTimers.set(element, setTimeout(() => {
+                fallbackTimers.delete(element);
+                if (revealPending.has(element) && isOnScreen(element)) reveal(element, 0);
+            }, 1400));
+        }
     });
 }
 
@@ -199,10 +245,26 @@ function isNear(element) {
 // New elements that are already close to the screen are hidden at once
 // (before the browser paints them), so they don't flash before animating in.
 // All sizes are read first and classes added after, which is faster.
+// While the page starts, every feature adds its content one after another:
+// measuring after each one would make the browser lay out the whole page
+// many times, so they wait in a list and are all measured once, just before
+// the first frame is painted.
+let armQueue = [];
+
 function armIfNear(elements) {
+    if (armQueue) {
+        elements.forEach((element) => armQueue.push(element));
+        return;
+    }
     const near = elements.filter(isNear);
     near.forEach((element) => element.classList.add("fx-armed"));
 }
+
+requestAnimationFrame(() => {
+    const waiting = armQueue;
+    armQueue = null;
+    armIfNear(waiting.filter((element) => element.isConnected && revealPending.has(element) && !element.classList.contains("revealed")));
+});
 
 // Something came close to the screen (or went far away again)
 function onNear(entries) {
@@ -235,11 +297,9 @@ function onNear(entries) {
                 counter.shown = counter.target;
                 writeCounter(element, counter, counter.shown);
             } else if (!counter.armed) {
-                const hiddenByCard = element.closest("[data-reveal].fx-armed");
-                if (isOnScreen(element) && !hiddenByCard) {
+                if (isOnScreen(element) && !hiddenByCard(element)) {
                     // Already visible with its real number: don't jump back to 0
-                    counter.waiting = false;
-                    if (viewObserver) viewObserver.unobserve(element);
+                    stopWaiting(element, counter);
                     stillNeeded = revealPending.has(element);
                 } else {
                     counter.armed = true;
@@ -277,13 +337,15 @@ function reveal(element, delay) {
 
     revealPending.delete(element);
     element.classList.remove("fx-armed");
+    clearFallback(element);
     if (screenObserver) screenObserver.unobserve(element);
+    if (viewObserver) viewObserver.unobserve(element);
     const counter = counters.get(element);
     if (armObserver && !(counter && counter.waiting)) armObserver.unobserve(element);
 
     const items = isStaggerList(element) ? Array.prototype.slice.call(element.children) : null;
     element.style.setProperty("--fx-delay", delay + "ms");
-    revealDelays.set(element, delay);
+    revealTimes.set(element, performance.now() + delay);
 
     if (items) {
         const step = Math.min(85, 720 / items.length);
@@ -297,8 +359,9 @@ function reveal(element, delay) {
 
     element.classList.add("revealed", "fx-reveal-run");
 
-    // Labels inside decode as they appear
+    // Labels inside decode and numbers inside count as they appear
     scrambleWithin(element, delay + 140);
+    startCountersWithin(element, true);
 
     // Clean up when the animation is over, so the element's own styles take over again
     const total = delay + 1000 + (items ? 720 : 0);
@@ -315,15 +378,15 @@ function showNow(element) {
     revealPending.delete(element);
     element.classList.remove("fx-armed");
     element.classList.add("revealed");
+    clearFallback(element);
     scrambleWithin(element, 0);
+    startCountersWithin(element, false);
 
     if (screenObserver) screenObserver.unobserve(element);
+    if (viewObserver) viewObserver.unobserve(element);
     const counter = counters.get(element);
     const counting = Boolean(counter && counter.waiting);
-    if (!counting) {
-        if (viewObserver) viewObserver.unobserve(element);
-        if (armObserver) armObserver.unobserve(element);
-    }
+    if (!counting && armObserver) armObserver.unobserve(element);
     return counting;
 }
 
@@ -331,6 +394,7 @@ function revealAll() {
     revealPending.forEach((element) => {
         element.classList.add("revealed");
         element.classList.remove("fx-armed");
+        clearFallback(element);
         if (viewObserver) viewObserver.unobserve(element);
         if (armObserver) armObserver.unobserve(element);
         if (screenObserver) screenObserver.unobserve(element);
@@ -339,19 +403,14 @@ function revealAll() {
     document.querySelectorAll("[data-reveal]:not(.revealed)").forEach((element) => element.classList.add("revealed"));
 }
 
-// One observer handles both reveals and counters
+// Elements scrolled into view animate in, top to bottom
 function onEnterView(entries) {
     const visible = entries.filter((entry) => entry.isIntersecting).map((entry) => entry.target);
     visible.sort(pageOrder);
 
     visible.forEach((element) => {
         if (revealPending.has(element)) reveal(element, nextStagger());
-    });
-
-    visible.forEach((element) => {
-        const counter = counters.get(element);
-        if (counter && counter.waiting) startCounter(element, counter, counterDelay(element));
-        if (!revealPending.has(element) && !(counter && counter.waiting)) viewObserver.unobserve(element);
+        else viewObserver.unobserve(element);
     });
 }
 
@@ -440,10 +499,10 @@ function registerCounter(element) {
     counters.set(element, counter);
     writeCounter(element, counter, value);
 
-    if (motionOK() && viewObserver) {
+    if (motionOK() && counterObserver) {
         counter.waiting = true;                 // counts up when it scrolls into view
         armObserver.observe(element);
-        viewObserver.observe(element);
+        counterObserver.observe(element);
         // Close to the screen already? Start from 0 (the page isn't painted yet)
         if (isNear(element)) {
             counter.armed = true;
@@ -453,23 +512,82 @@ function registerCounter(element) {
     }
 }
 
+// Is the number inside a card that is still hidden, waiting to animate in?
+function hiddenByCard(element) {
+    return Boolean(element.closest("[data-reveal].fx-armed:not(.revealed)"));
+}
+
+// The real number is already on screen: keep it and stop waiting
+function stopWaiting(element, counter) {
+    counter.waiting = false;
+    counter.armed = false;
+    if (counter.shown !== counter.target) {
+        counter.shown = counter.target;
+        writeCounter(element, counter, counter.target);
+    }
+    if (counterObserver) counterObserver.unobserve(element);
+    if (armObserver && !revealPending.has(element)) armObserver.unobserve(element);
+}
+
+// A waiting number that can be seen starts counting.
+// "fresh" means its card has just appeared, so the visitor hasn't seen the number yet.
+function startIfVisible(element, counter, fresh, knownVisible) {
+    if (!counter.waiting || hiddenByCard(element)) return;
+    if (!knownVisible && !isOnScreen(element)) return;
+    if (counter.armed || fresh) startCounter(element, counter, counterDelay(element));
+    else stopWaiting(element, counter);
+}
+
+function startCountersWithin(container, fresh) {
+    counters.forEach((counter, element) => {
+        if (counter.waiting && container.contains(element)) startIfVisible(element, counter, fresh, false);
+    });
+}
+
+// Any part of a number came onto the screen
+function onCounterView(entries) {
+    entries.forEach((entry) => {
+        const element = entry.target;
+        const counter = counters.get(element);
+        if (!counter || !counter.waiting) {
+            counterObserver.unobserve(element);
+            return;
+        }
+        if (entry.isIntersecting) startIfVisible(element, counter, false, true);
+    });
+}
+
+// Fonts and translations can move numbers onto the screen after loading:
+// make sure no visible number is left waiting at 0
+function checkCounters() {
+    counters.forEach((counter, element) => {
+        if (counter.waiting && counter.armed) startIfVisible(element, counter, false, false);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => requestAnimationFrame(checkCounters));
+window.addEventListener("load", checkCounters);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(checkCounters);
+
 // Start counting when the card around the number has appeared
+// (only the time that is still left: the card may have appeared long ago)
 function counterDelay(element) {
-    let delay = 150;
+    let wait = 0;
     const host = element.closest("[data-reveal]");
     if (host && host.classList.contains("fx-reveal-run")) {
-        delay += revealDelays.get(host) || 0;
         let item = element;
         while (item.parentElement && item.parentElement !== host) item = item.parentElement;
-        delay += itemDelays.get(item) || 0;
+        const appearsAt = (revealTimes.get(host) || 0) + (itemDelays.get(item) || 0);
+        wait = Math.max(0, appearsAt - performance.now());
     }
-    return delay;
+    return 150 + wait;
 }
 
 function startCounter(element, counter, delay) {
     if (counter.waiting) {
         counter.waiting = false;
-        if (armObserver) armObserver.unobserve(element);
+        if (counterObserver) counterObserver.unobserve(element);
+        if (armObserver && !revealPending.has(element)) armObserver.unobserve(element);
         if (!counter.armed) counter.shown = 0;          // first count always starts at 0
         counter.armed = false;
     }
@@ -488,7 +606,8 @@ function startCounter(element, counter, delay) {
         counter.timer = 0;
         const start = performance.now();
         const tick = (now) => {
-            const progress = Math.min(1, (now - start) / duration);
+            // (the frame time can be a hair earlier than "start", so keep it at 0 or more)
+            const progress = clamp((now - start) / duration, 0, 1);
             const eased = 1 - Math.pow(2, -10 * progress);              // fast start, soft landing
             counter.shown = progress >= 1 ? to : from + (to - from) * eased;
             writeCounter(element, counter, counter.decimals ? counter.shown : Math.round(counter.shown));
@@ -502,6 +621,7 @@ function finishAllCounters() {
     counters.forEach((counter, element) => {
         stopCounter(counter);
         if (armObserver) armObserver.unobserve(element);
+        if (counterObserver) counterObserver.unobserve(element);
         counter.waiting = false;
         counter.armed = false;
         counter.shown = counter.target;
@@ -643,7 +763,7 @@ function beginScramble(run) {
             return;
         }
 
-        const progress = Math.min(1, (now - start) / duration);
+        const progress = clamp((now - start) / duration, 0, 1);
         const done = Math.floor(clamp((progress - 0.15) / 0.85, 0, 1) * letters.length);
 
         if (now - lastShuffle > 55) {
@@ -665,12 +785,19 @@ function beginScramble(run) {
     run.raf = requestAnimationFrame(tick);
 }
 
-// Hovering a [data-scramble] text decodes it again
+// Hovering a [data-scramble] text decodes it again.
+// We remember which text the mouse is on, so it only replays when the mouse
+// really comes in from outside. (While decoding, the letters are swapped
+// under the resting mouse; the browser reports that as a new "pointerover",
+// which must not start the effect again.)
+let hoveredScramble = null;
+
 document.addEventListener("pointerover", (event) => {
-    if (!fineOK() || !(event.target instanceof Element)) return;
-    const element = event.target.closest("[data-scramble]");
-    if (!element || scrambleRuns.has(element)) return;
-    if (event.relatedTarget instanceof Node && element.contains(event.relatedTarget)) return;
+    if (event.pointerType === "touch") return;
+    const element = event.target instanceof Element ? event.target.closest("[data-scramble]") : null;
+    if (element === hoveredScramble) return;
+    hoveredScramble = element;
+    if (!element || !fineOK() || scrambleRuns.has(element)) return;
     scramble(element, 0);
 });
 
@@ -679,6 +806,9 @@ document.addEventListener("pointerover", (event) => {
    The translation "students|teachers|parents|everyone" is
    typed and deleted word by word, in the current language.
    ========================================================= */
+// The text around the word can wrap differently when the page is resized
+const rotatorResize = "ResizeObserver" in window ? new ResizeObserver(() => rotators.forEach(updateRotatorLine)) : null;
+
 function registerRotator(element) {
     if (rotators.has(element)) return;
     const key = element.getAttribute("data-rotator");
@@ -701,6 +831,28 @@ function registerRotator(element) {
     rotators.set(element, rotator);
     setRotatorWords(rotator);
     if (rotatorObserver) rotatorObserver.observe(element);
+    if (rotatorResize && element.parentElement) rotatorResize.observe(element.parentElement);
+}
+
+// When the word starts a new line of its own, it is centred on that line.
+// (When it shares a line, it stays left-aligned right after the text before it.)
+function updateRotatorLine(rotator) {
+    const element = rotator.element;
+    let before = element.previousSibling;
+    while (before && before.nodeType === 3 && !before.textContent.trim()) before = before.previousSibling;
+
+    let alone = true;
+    if (before && (before.nodeType === 1 || before.nodeType === 3)) {
+        const range = document.createRange();
+        range.selectNodeContents(before);
+        const rects = range.getClientRects();
+        const last = rects[rects.length - 1];
+        if (last) {
+            const box = element.getBoundingClientRect();
+            alone = box.top + box.height / 2 > last.bottom;           // our middle is below their last line
+        }
+    }
+    element.classList.toggle("fx-rotator-alone", alone);
 }
 
 function setRotatorWords(rotator) {
@@ -735,6 +887,7 @@ function measureRotator(rotator) {
 
     const fontSize = parseFloat(getComputedStyle(rotator.element).fontSize) || 16;
     if (widest > 0) rotator.element.style.minWidth = (widest / fontSize + 0.35).toFixed(3) + "em";
+    updateRotatorLine(rotator);
 }
 
 function renderRotator(rotator) {
@@ -1056,6 +1209,7 @@ function updateMagnet() {
 
 function resetPointerEffects() {
     pointer.inside = false;
+    hoveredScramble = null;
     spotlight.classList.remove("is-visible");
     if (litHost) unlight(litHost);
     if (magnetButton) releaseMagnet(magnetButton);
@@ -1143,6 +1297,9 @@ let railPercent = null;
 let lastRailScale = "";
 const railLinks = [];
 let railSections = [];
+// Same rule as in css/effects.css: wide screens with a mouse
+const railQuery = window.matchMedia("(min-width: 1360px) and (min-height: 560px) and (hover: hover) and (pointer: fine)");
+onMediaChange(railQuery, queueProgress);
 
 function buildRail() {
     railSections = Array.prototype.slice.call(document.querySelectorAll("main section[id]")).filter((section) => RAIL_KEYS[section.id]);
@@ -1191,7 +1348,7 @@ function buildRail() {
 }
 
 function updateRail(progress, atBottom) {
-    if (!railNav || !railSections.length) return;
+    if (!railNav || !railSections.length || !railQuery.matches) return;   // hidden: nothing to update
 
     // Which section is under the "reading line" (40% down the screen)?
     const line = window.innerHeight * 0.4;
@@ -1290,6 +1447,7 @@ function prune() {
     revealPending.forEach((element) => {
         if (!element.isConnected) {
             revealPending.delete(element);
+            clearFallback(element);
             if (viewObserver) viewObserver.unobserve(element);
             if (armObserver) armObserver.unobserve(element);
             if (screenObserver) screenObserver.unobserve(element);
@@ -1299,7 +1457,7 @@ function prune() {
         if (!element.isConnected) {
             stopCounter(counter);
             counters.delete(element);
-            if (viewObserver) viewObserver.unobserve(element);
+            if (counterObserver) counterObserver.unobserve(element);
             if (armObserver) armObserver.unobserve(element);
         }
     });

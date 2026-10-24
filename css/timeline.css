@@ -1,1 +1,773 @@
-/* timeline styles */
+/* =========================================================
+   AI COMPASS — TIMELINE ("A Short History of AI")
+   1. The bar with the era filters (sticks to the top)
+   2. The glowing line that fills as you scroll
+   3. Era headings
+   4. Milestones: dot, big year, card
+   5. Inside a card
+   6. "Lit up" milestones (the line has reached them)
+   7. Slide-in animations
+      (+ light theme: darker small labels)
+   8. Phones and tablets (one column)
+   9. Reduced motion / calm mode
+   All colours come from the variables in style.css,
+   so both the dark and the light theme look right.
+   ========================================================= */
+
+[data-feature="timeline"] [hidden] {
+    display: none !important;
+}
+
+.tl {
+    position: relative;
+}
+
+/* ===== 1. THE FILTER BAR ===== */
+
+.tl-bar {
+    position: sticky;
+    top: calc(var(--nav-height) + 12px);
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 18px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto 48px;
+    padding: 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    background: var(--nav-bg);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+    box-shadow: var(--shadow);
+}
+
+.tl-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tl-chip {
+    justify-content: center;
+    min-width: 44px;
+    min-height: 40px;
+    padding: 7px 8px 7px 14px;
+    font-size: 13.5px;
+}
+
+/* When the chips need two rows (e.g. Russian on a narrow laptop), the bar
+   would cover too much of the screen, so it scrolls away with the page.
+   timeline.js adds the class "is-stacked" in that case. */
+.tl.is-stacked .tl-bar {
+    position: relative;
+    top: auto;
+}
+
+.tl-chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tl-chip[aria-pressed="true"] .tl-chip-dot {
+    background: var(--accent-2);
+    box-shadow: 0 0 8px var(--accent-2);
+}
+
+.tl-chip-count {
+    min-width: 24px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--surface-hover);
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: center;
+}
+
+.tl-chip[aria-pressed="true"] .tl-chip-count {
+    background: rgba(var(--accent-2-rgb), 0.18);
+    color: var(--accent-2);
+}
+
+/* "1997 · 06/15" on the right of the bar */
+.tl-hud {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px 0 6px;
+    white-space: nowrap;
+}
+
+.tl-hud-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 10px var(--accent-2);
+    animation: tl-blink 2s ease-in-out infinite;
+}
+
+@keyframes tl-blink {
+    50% { opacity: 0.35; }
+}
+
+.tl-hud-year {
+    min-width: 4ch;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    background: var(--gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: var(--accent);
+}
+
+.tl-hud-count {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 1px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ===== 2. THE LINE ===== */
+
+.tl-wrap {
+    position: relative;
+    max-width: 1120px;
+    margin: 0 auto;
+}
+
+/* Keyboard focus must never hide under the sticky bar: when the browser
+   scrolls to a button, it leaves this much room above it.
+   timeline.js sets --tl-bar-room (0px when the bar doesn't stick). */
+.tl-wrap button {
+    scroll-margin-top: var(--tl-bar-room, 0px);
+}
+
+.tl-line {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    z-index: 0;
+    width: 2px;
+    height: 0;
+    margin-left: -1px;
+    border-radius: 2px;
+    background: var(--border-strong);
+    pointer-events: none;
+}
+
+.tl-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(to bottom, var(--accent), var(--accent-2));
+    box-shadow: 0 0 10px rgba(var(--accent-2-rgb), 0.65), 0 0 2px rgba(var(--accent-2-rgb), 0.9);
+    transform: scaleY(0);
+    transform-origin: top;
+    will-change: transform;
+}
+
+/* The bright "comet" at the end of the filled part */
+.tl-head {
+    position: absolute;
+    top: -7px;
+    left: -6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 0 4px rgba(var(--accent-2-rgb), 0.2), 0 0 18px 4px rgba(var(--accent-2-rgb), 0.65);
+    will-change: transform;
+    transition: opacity 0.3s ease;
+}
+
+.tl-head::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.6);
+    border-radius: 50%;
+    animation: tl-ping 1.8s ease-out infinite;
+}
+
+/* At the very end the comet rests on the last dot */
+.tl-head.is-end {
+    opacity: 0;
+}
+
+@keyframes tl-ping {
+    from { transform: scale(0.5); opacity: 1; }
+    to { transform: scale(1.7); opacity: 0; }
+}
+
+/* ===== 3. ERA HEADINGS ===== */
+
+.tl-era {
+    position: relative;
+}
+
+.tl-era + .tl-era {
+    margin-top: 64px;
+}
+
+.tl-era-head {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    max-width: 460px;
+    margin: 0 auto 40px;
+    padding: 18px 26px 20px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(var(--accent-rgb), 0.18), transparent 70%),
+        var(--surface-solid);
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* The era heading glows once you've reached its first milestone */
+.tl-era:has(.tl-item.is-reached) .tl-era-head {
+    border-color: rgba(var(--accent-2-rgb), 0.55);
+    box-shadow: var(--shadow), 0 0 34px rgba(var(--accent-2-rgb), 0.16);
+}
+
+.tl-era-num {
+    color: var(--accent-2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+}
+
+.tl-era-title {
+    font-family: var(--font-display);
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.tl-era-range {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+.tl-era-desc {
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 14.5px;
+    line-height: 1.55;
+}
+
+/* ===== 4. MILESTONES ===== */
+
+.tl-list {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+/* Three columns: card | dot | big year (or the other way round) */
+.tl-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
+    align-items: start;
+}
+
+.tl-node {
+    position: relative;
+    z-index: 2;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: center;
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    margin-top: 16px;
+    border: 2px solid var(--border-strong);
+    border-radius: 50%;
+    background: var(--surface-solid);
+    font-size: 22px;
+    line-height: 1;
+    transition: border-color 0.5s ease, box-shadow 0.5s ease, background 0.5s ease, transform 0.5s var(--ease);
+}
+
+.tl-node-icon {
+    filter: grayscale(0.85);
+    opacity: 0.55;
+    transition: filter 0.6s ease, opacity 0.6s ease, transform 0.6s var(--ease);
+}
+
+/* A ring that ripples out once when the dot lights up */
+.tl-node::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border: 2px solid var(--accent-2);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.tl-ghost {
+    grid-row: 1;
+    align-self: start;
+    margin-top: 12px;
+    padding: 0 6px;
+    font-family: var(--font-display);
+    font-size: clamp(40px, 5.2vw, 70px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--border-strong);
+    /* The colour fill waits on the right half and slides in when reached */
+    background-image: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 50%, transparent 50%);
+    background-size: 200% 100%;
+    background-position: 100% 0;
+    background-clip: text;
+    -webkit-background-clip: text;
+    transition: background-position 1s var(--ease), -webkit-text-stroke-color 0.6s ease;
+    user-select: none;
+}
+
+.tl-item.is-left .tl-card {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.tl-item.is-left .tl-ghost {
+    grid-column: 3;
+    text-align: left;
+}
+
+.tl-item.is-right .tl-card {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.tl-item.is-right .tl-ghost {
+    grid-column: 1;
+    text-align: right;
+}
+
+/* ===== 5. INSIDE A CARD ===== */
+
+.tl-card {
+    min-width: 0;
+    padding: 22px 24px 24px;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background:
+        linear-gradient(160deg, rgba(var(--accent-rgb), 0.08), transparent 50%),
+        var(--surface);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    transition: border-color 0.5s ease, box-shadow 0.5s ease, transform 0.35s var(--ease);
+}
+
+[data-theme="light"] .tl-card {
+    box-shadow: 0 12px 30px rgba(30, 30, 80, 0.08);
+}
+
+.tl-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--border-strong);
+}
+
+/* A short line from the card to its dot */
+.tl-card::before {
+    content: "";
+    position: absolute;
+    top: 42px;
+    width: 18px;
+    height: 2px;
+    background: var(--border-strong);
+    transition: background 0.5s ease, box-shadow 0.5s ease;
+}
+
+.tl-item.is-left .tl-card::before {
+    right: -19px;
+}
+
+.tl-item.is-right .tl-card::before {
+    left: -19px;
+}
+
+.tl-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-bottom: 12px;
+}
+
+.tl-year {
+    padding: 3px 10px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.35);
+    border-radius: 999px;
+    background: rgba(var(--accent-2-rgb), 0.08);
+    color: var(--accent-2);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.tl-era-tag {
+    color: var(--text-dim);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.tl-title {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+
+.tl-text {
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+.tl-why {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-left: 2px solid var(--accent);
+    border-radius: 0 12px 12px 0;
+    background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.13), rgba(var(--accent-rgb), 0.02));
+}
+
+.tl-why-label {
+    color: var(--accent);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.tl-why-text {
+    margin-top: 4px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.tl-terms {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.tl-terms-label {
+    color: var(--text-dim);
+    font-size: 10.5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.tl-term {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: left;
+}
+
+.tl-term-arrow {
+    font-size: 12px;
+    transition: transform 0.25s var(--ease);
+}
+
+.tl-term:hover .tl-term-arrow {
+    transform: translate(2px, -2px);
+}
+
+/* ===== 6. LIT-UP MILESTONES ===== */
+
+.tl-item.is-reached .tl-node {
+    border-color: var(--accent-2);
+    background: radial-gradient(circle, rgba(var(--accent-2-rgb), 0.22), var(--surface-solid) 72%);
+    box-shadow: 0 0 0 5px rgba(var(--accent-2-rgb), 0.12), 0 0 28px rgba(var(--accent-2-rgb), 0.5);
+}
+
+.tl-item.is-reached .tl-node-icon {
+    filter: none;
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+.tl-item.is-reached .tl-node::after {
+    animation: tl-ring 0.9s ease-out;
+}
+
+@keyframes tl-ring {
+    from { transform: scale(1); opacity: 0.9; }
+    to { transform: scale(1.9); opacity: 0; }
+}
+
+.tl-item.is-reached .tl-ghost {
+    background-position: 0 0;
+    -webkit-text-stroke-color: transparent;
+}
+
+.tl-item.is-reached .tl-card {
+    border-color: rgba(var(--accent-2-rgb), 0.32);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), 0 0 32px rgba(var(--accent-2-rgb), 0.08);
+}
+
+[data-theme="light"] .tl-item.is-reached .tl-card {
+    box-shadow: 0 12px 30px rgba(30, 30, 80, 0.08), 0 0 28px rgba(var(--accent-2-rgb), 0.1);
+}
+
+.tl-item.is-reached .tl-card::before {
+    background: var(--accent-2);
+    box-shadow: 0 0 8px rgba(var(--accent-2-rgb), 0.8);
+}
+
+/* "Today" keeps pulsing: the story isn't over */
+.tl-item.is-today.is-reached .tl-node::after {
+    animation: tl-ring 2s ease-out infinite;
+}
+
+/* ===== 7. SLIDE-IN ANIMATIONS ===== */
+/* js/effects.js fades the whole milestone in ([data-reveal="fade"]);
+   while that runs, the card slides in from its own side. */
+
+.tl.is-wide .tl-item.is-left.fx-reveal-run .tl-card {
+    animation: tl-from-left 0.9s var(--ease) var(--fx-delay, 0ms) backwards;
+}
+
+.tl.is-wide .tl-item.is-right.fx-reveal-run .tl-card {
+    animation: tl-from-right 0.9s var(--ease) var(--fx-delay, 0ms) backwards;
+}
+
+.tl:not(.is-wide) .tl-item.fx-reveal-run .tl-card {
+    animation: tl-from-below 0.9s var(--ease) var(--fx-delay, 0ms) backwards;
+}
+
+.tl-item.fx-reveal-run .tl-node {
+    animation: tl-pop 0.7s var(--ease) calc(var(--fx-delay, 0ms) + 120ms) backwards;
+}
+
+@keyframes tl-from-left {
+    from { opacity: 0; transform: translate3d(-48px, 0, 0); }
+}
+
+@keyframes tl-from-right {
+    from { opacity: 0; transform: translate3d(48px, 0, 0); }
+}
+
+@keyframes tl-from-below {
+    from { opacity: 0; transform: translate3d(0, 30px, 0); }
+}
+
+@keyframes tl-pop {
+    from { opacity: 0; transform: scale(0.4); }
+}
+
+/* ===== LIGHT THEME: DARKER SMALL LABELS ===== */
+/* Bright cyan is too pale for tiny text on white; a bit of the text colour
+   keeps the hue but makes it easy to read (contrast of at least 4.5 : 1). */
+
+[data-theme="light"] .tl-year,
+[data-theme="light"] .tl-era-num,
+[data-theme="light"] .tl-chip[aria-pressed="true"] .tl-chip-count {
+    color: color-mix(in srgb, var(--accent-2) 70%, var(--text));
+}
+
+/* ===== 8. PHONES AND TABLETS: ONE COLUMN ===== */
+
+/* Not enough room for the read-out next to the chips */
+@media (max-width: 1100px) {
+    .tl-hud {
+        display: none;
+    }
+}
+
+@media (max-width: 899px) {
+    /* The chips may need two rows here, so the bar scrolls away with the page */
+    .tl-bar {
+        position: relative;
+        top: auto;
+    }
+
+    .tl-line {
+        left: 27px;
+    }
+
+    .tl-item {
+        grid-template-columns: 54px minmax(0, 1fr);
+        column-gap: 16px;
+    }
+
+    .tl-node {
+        grid-column: 1;
+        width: 50px;
+        height: 50px;
+        margin-top: 16px;
+        font-size: 20px;
+    }
+
+    .tl-ghost {
+        display: none;
+    }
+
+    .tl-item.is-left .tl-card,
+    .tl-item.is-right .tl-card {
+        grid-column: 2;
+    }
+
+    .tl-item.is-left .tl-card::before,
+    .tl-item.is-right .tl-card::before {
+        left: -19px;
+        right: auto;
+        top: 40px;
+    }
+
+    .tl-era-head {
+        align-items: flex-start;
+        max-width: none;
+        margin: 0 0 32px;
+        text-align: left;
+    }
+
+    .tl-list {
+        gap: 28px;
+    }
+}
+
+@media (max-width: 640px) {
+    .tl-bar {
+        margin-bottom: 36px;
+        padding: 10px;
+        border-radius: 18px;
+    }
+
+    .tl-filters {
+        width: 100%;
+    }
+
+    /* Compact chips, so they fit in two or three rows */
+    .tl-chip {
+        min-height: 44px;
+        padding: 6px 13px;
+        font-size: 13px;
+    }
+
+    .tl-chip-count,
+    .tl-chip-dot {
+        display: none;
+    }
+
+    .tl-line {
+        left: 21px;
+    }
+
+    .tl-item {
+        grid-template-columns: 42px minmax(0, 1fr);
+        column-gap: 12px;
+    }
+
+    .tl-node {
+        width: 42px;
+        height: 42px;
+        margin-top: 18px;
+        font-size: 17px;
+        border-width: 1.5px;
+    }
+
+    .tl-item.is-left .tl-card::before,
+    .tl-item.is-right .tl-card::before {
+        left: -13px;
+        width: 12px;
+        top: 38px;
+    }
+
+    .tl-card {
+        padding: 18px 16px 18px;
+    }
+
+    .tl-title {
+        font-size: 17px;
+    }
+
+    .tl-text {
+        font-size: 14.5px;
+    }
+
+    .tl-term {
+        min-height: 44px;
+    }
+
+    .tl-era-head {
+        padding: 16px 18px 18px;
+    }
+
+    .tl-era-title {
+        font-size: 20px;
+    }
+
+    .tl-era + .tl-era {
+        margin-top: 44px;
+    }
+}
+
+@media (pointer: coarse) {
+    .tl-chip,
+    .tl-term {
+        min-height: 44px;
+    }
+}
+
+/* ===== 9. REDUCED MOTION / CALM MODE ===== */
+
+@media (prefers-reduced-motion: reduce) {
+    .tl-head::after,
+    .tl-hud-dot {
+        animation: none;
+    }
+
+    .tl-card:hover {
+        transform: none;
+    }
+
+    .tl-ghost,
+    .tl-node,
+    .tl-node-icon {
+        transition: none;
+    }
+}
+
+html.fx-calm .tl-head::after,
+html.fx-calm .tl-hud-dot,
+html.fx-calm .tl-item.is-reached .tl-node::after {
+    animation: none;
+}
+
+html.fx-calm .tl-card:hover {
+    transform: none;
+}

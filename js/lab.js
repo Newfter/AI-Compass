@@ -102,13 +102,16 @@ AIC.addTranslations({
         "lab.params": "{n} {params}",
         "lab.pluralParams": "parameter|parameters",
         "lab.diagramHow": "Each square is a <strong>neuron</strong>. The tiny picture inside shows how it reacts to every spot of the board: purple means negative, cyan means positive. The lines are the <strong>weights</strong> that connect them. Watch them change while it learns!",
+        "lab.diagramPointMouse": "Point at the board, and a dot marks that spot inside every neuron.",
+        "lab.diagramPointTouch": "Tap the board, and a dot marks that spot inside every neuron.",
         "lab.legendPos": "positive weight",
         "lab.legendNeg": "negative weight",
         "lab.nnInput": "INPUT",
         "lab.nnHidden": "LAYER {n}",
         "lab.nnOutput": "OUTPUT",
         "lab.nnOutputHint": "P(B)",
-        "lab.diagramLabel": "Network diagram: 2 inputs → {hidden} hidden neurons → 1 output; {params} in total. Cyan lines are positive weights, purple lines are negative, thicker lines are stronger.",
+        "lab.pluralHidden": "hidden neuron|hidden neurons",
+        "lab.diagramLabel": "Network diagram: 2 inputs → {hidden} → 1 output; {params} in total. Cyan lines are positive weights, purple lines are negative, thicker lines are stronger.",
 
         // Messages
         "lab.toastEmpty": "Add some dots first, or pick an example",
@@ -116,6 +119,7 @@ AIC.addTranslations({
         "lab.pluralEpochs": "epoch|epochs",
         "lab.toastOneClass": "Add dots of both classes, so there is something to tell apart",
         "lab.toastMax": "That's plenty of dots! (maximum {n})",
+        "lab.toastStuck": "The network seems stuck. Try more neurons, the second layer or another learning rate.",
         "lab.srStatus": "Epoch {epoch}. Loss {loss}. Accuracy {acc}%.",
         "lab.srAdded": "Added a dot: {cls}. {n} {points} in total.",
         "lab.pluralPoints": "dot|dots",
@@ -138,7 +142,7 @@ AIC.addTranslations({
         "lab.tipsTitle": "TRY THIS",
         "lab.tip1": "Load <strong>XOR</strong>, set 2 neurons and train. Then try 8. What changes?",
         "lab.tip2": "The <strong>spiral</strong> is tricky. Turn on the second layer and watch the boundary curl.",
-        "lab.tip3": "Set the learning rate to <strong>1</strong>: the steps get so big that learning goes wild.",
+        "lab.tip3": "Load the <strong>Circle</strong> and set the learning rate to <strong>10</strong>: the steps are so big that the network overshoots. The loss jumps up instead of going down, and it may never learn. With <strong>0.001</strong> it just crawls.",
         "lab.tip4": "Put a purple dot deep inside the cyan area. Does the network bend just to fit it? That's called <strong>overfitting</strong>.",
         "lab.underHood": "Under the hood: 2 inputs (x and y) → hidden neurons with <em>tanh</em> → 1 output with a <em>sigmoid</em> (a probability from 0 to 1). It learns with binary cross-entropy loss and the Adam or SGD optimizer: the same ideas big AI uses, just tiny.",
 
@@ -208,7 +212,7 @@ AIC.addTranslations({
         "lab.lmExplain3Title": "It picks a word",
         "lab.lmExplain3Text": "Every possible word gets a probability. Low creativity always takes the top word; high creativity rolls a weighted dice, so unlikely words get a chance too.",
         "lab.lmRealTitle": "Just like ChatGPT… only much, much smaller",
-        "lab.lmRealText": "Real chatbots work on the same idea: predict the next word (more precisely, the next <strong>token</strong>, a word or a piece of a word) again and again. But they use huge neural networks trained on billions of sentences, and they look at thousands of previous words, not just two. Ours is tiny, so it often says silly things, and it only knows the sentences it was given.",
+        "lab.lmRealText": "Real chatbots work on the same idea: predict the next word (more precisely, the next <strong>token</strong>, a word or a piece of a word) again and again. But they use huge neural networks trained on billions of sentences, and they can look at thousands — sometimes hundreds of thousands — of previous words, not just two. Ours is tiny, so it often says silly things, and it only knows the sentences it was given.",
 
         // Command palette
         "lab.cmdGroup": "AI Lab",
@@ -216,7 +220,7 @@ AIC.addTranslations({
         "lab.cmdLM": "Next-word predictor: a mini language model"
     },
     ru: {
-        "lab.tablistLabel": "Эксперименты AI-лаборатории",
+        "lab.tablistLabel": "Эксперименты ИИ-лаборатории",
         "lab.tabNN": "Обучи машину",
         "lab.tabNNSub": "НЕЙРОСЕТЬ",
         "lab.tabLM": "Предсказатель слов",
@@ -286,19 +290,23 @@ AIC.addTranslations({
         "lab.params": "{n} {params}",
         "lab.pluralParams": "параметр|параметра|параметров",
         "lab.diagramHow": "Каждый квадратик — это <strong>нейрон</strong>. Картинка внутри показывает, как он реагирует на каждое место поля: фиолетовый — отрицательно, голубой — положительно. Линии — это <strong>веса</strong>, которые их соединяют. Посмотри, как они меняются во время обучения!",
+        "lab.diagramPointMouse": "Наведи курсор на поле — точка покажет это место внутри каждого нейрона.",
+        "lab.diagramPointTouch": "Коснись поля — точка покажет это место внутри каждого нейрона.",
         "lab.legendPos": "положительный вес",
         "lab.legendNeg": "отрицательный вес",
         "lab.nnInput": "ВХОД",
         "lab.nnHidden": "СЛОЙ {n}",
         "lab.nnOutput": "ВЫХОД",
         "lab.nnOutputHint": "P(B)",
-        "lab.diagramLabel": "Схема сети: 2 входа → {hidden} скрытых нейронов → 1 выход; всего {params}. Голубые линии — положительные веса, фиолетовые — отрицательные, чем толще линия, тем сильнее вес.",
+        "lab.pluralHidden": "скрытый нейрон|скрытых нейрона|скрытых нейронов",
+        "lab.diagramLabel": "Схема сети: 2 входа → {hidden} → 1 выход; всего {params}. Голубые линии — положительные веса, фиолетовые — отрицательные, чем толще линия, тем сильнее вес.",
 
         "lab.toastEmpty": "Сначала добавь точки или выбери пример",
         "lab.toastLearned": "Получилось! 100% точности за {n} {epochs}",
         "lab.pluralEpochs": "эпоху|эпохи|эпох",
         "lab.toastOneClass": "Добавь точки обоих классов, чтобы сети было что различать",
         "lab.toastMax": "Точек уже очень много! (максимум {n})",
+        "lab.toastStuck": "Сеть, похоже, застряла. Попробуй больше нейронов, второй слой или другую скорость обучения.",
         "lab.srStatus": "Эпоха {epoch}. Ошибка {loss}. Точность {acc}%.",
         "lab.srAdded": "Добавлена точка: {cls}. Всего {n} {points}.",
         "lab.pluralPoints": "точка|точки|точек",
@@ -320,7 +328,7 @@ AIC.addTranslations({
         "lab.tipsTitle": "ПОПРОБУЙ",
         "lab.tip1": "Загрузи <strong>XOR</strong>, поставь 2 нейрона и обучи сеть. Потом попробуй 8. Что изменилось?",
         "lab.tip2": "<strong>Спираль</strong> — сложная задача. Включи второй слой и посмотри, как закручивается граница.",
-        "lab.tip3": "Поставь скорость обучения <strong>1</strong>: шаги станут такими большими, что обучение пойдёт вразнос.",
+        "lab.tip3": "Загрузи <strong>Круг</strong> и поставь скорость обучения <strong>10</strong>: шаги станут такими большими, что сеть будет «перепрыгивать» цель. Ошибка будет скакать вверх, а не падать, и сеть может так и не научиться. А с <strong>0,001</strong> обучение еле ползёт.",
         "lab.tip4": "Поставь фиолетовую точку глубоко в голубой зоне. Станет ли сеть изгибаться ради одной точки? Это называется <strong>переобучение</strong>.",
         "lab.underHood": "Под капотом: 2 входа (x и y) → скрытые нейроны с функцией <em>tanh</em> → 1 выход с <em>сигмоидой</em> (вероятность от 0 до 1). Сеть учится с функцией потерь «бинарная кросс-энтропия» и оптимизатором Adam или SGD — это те же идеи, что и в больших ИИ, только в миниатюре.",
 
@@ -389,11 +397,11 @@ AIC.addTranslations({
         "lab.lmExplain3Title": "Выбирает слово",
         "lab.lmExplain3Text": "Каждое возможное слово получает вероятность. При низкой креативности модель всегда берёт самое вероятное слово, а при высокой бросает «взвешенный кубик» — и шанс получают даже редкие слова.",
         "lab.lmRealTitle": "Как ChatGPT… только намного меньше",
-        "lab.lmRealText": "Настоящие чат-боты работают по той же идее: снова и снова предсказывают следующее слово (точнее, следующий <strong>токен</strong> — слово или кусочек слова). Но они используют огромные нейросети, обученные на миллиардах предложений, и смотрят на тысячи предыдущих слов, а не на два. Наша модель крошечная, поэтому часто говорит глупости и знает только те предложения, которые ей дали.",
+        "lab.lmRealText": "Настоящие чат-боты работают по той же идее: снова и снова предсказывают следующее слово (точнее, следующий <strong>токен</strong> — слово или кусочек слова). Но они используют огромные нейросети, обученные на миллиардах предложений, и учитывают тысячи, а иногда и сотни тысяч предыдущих слов, а не два. Наша модель крошечная, поэтому часто говорит глупости и знает только те предложения, которые ей дали.",
 
-        "lab.cmdGroup": "AI-лаборатория",
+        "lab.cmdGroup": "ИИ-лаборатория",
         "lab.cmdNN": "Обучи машину: тренируй нейросеть",
-        "lab.cmdLM": "Предсказатель слов: мини языковая модель"
+        "lab.cmdLM": "Предсказатель слов: маленькая языковая модель"
     }
 });
 
@@ -429,6 +437,19 @@ function fmt(value, digits) {
         });
     }
     return numberFormats[id].format(value);
+}
+
+// Very big counts get short, so they fit their box: "1.2M" or "1,2 млн"
+function fmtCount(n) {
+    if (n < 1e6) return fmt(n, 0);
+    const id = AIC.lang + "compact";
+    if (!numberFormats[id]) {
+        numberFormats[id] = new Intl.NumberFormat(AIC.lang === "ru" ? "ru-RU" : "en-US", {
+            notation: "compact",
+            maximumFractionDigits: 1
+        });
+    }
+    return numberFormats[id].format(n);
 }
 
 function percent(p) {
@@ -473,15 +494,17 @@ function rgba(color, alpha) {
 // All canvas colours come from the CSS variables, so both themes work
 let colors = {};
 function readColors() {
+    const light = document.documentElement.getAttribute("data-theme") === "light";
     colors = {
         a: toRGB(AIC.cssVar("--accent-rgb"), [155, 109, 255]),
         b: toRGB(AIC.cssVar("--accent-2-rgb"), [80, 227, 255]),
         pink: toRGB(AIC.cssVar("--accent-3-rgb"), [255, 106, 213]),
         base: toRGB(AIC.cssVar("--surface-solid"), [16, 22, 42]),
         text: toRGB(AIC.cssVar("--text"), [238, 241, 255]),
-        dim: toRGB(AIC.cssVar("--text-dim"), [125, 137, 168]),
+        // small labels on the diagram: the dim grey is too pale on white, so the light theme uses a darker one
+        dim: toRGB(AIC.cssVar(light ? "--text-muted" : "--text-dim"), [125, 137, 168]),
         danger: toRGB(AIC.cssVar("--danger"), [255, 92, 122]),
-        light: document.documentElement.getAttribute("data-theme") === "light"
+        light: light
     };
     colors.mono = AIC.cssVar("--font-mono") || "monospace";
 }
@@ -537,6 +560,9 @@ const icons = {
    ========================================================= */
 const TABS = ["classifier", "predictor"];
 
+// Learning rates you can choose (10 is too big on purpose: try it and watch the loss jump)
+const LR_OPTIONS = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10];
+
 mount.innerHTML =
     '<div class="lab card" data-reveal>' +
         '<span class="lab-corners" aria-hidden="true"></span>' +
@@ -565,8 +591,8 @@ function tabButton(name, icon, titleKey, subKey) {
 }
 
 function classifierHTML() {
-    const lrOptions = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1].map((value) =>
-        '<option value="' + value + '">' + value + '</option>').join("");
+    // The visible text ("0.03" or "0,03") is written by updateLrLabels()
+    const lrOptions = LR_OPTIONS.map((value) => '<option value="' + value + '"></option>').join("");
 
     const steps = [1, 2, 3, 4].map((n) =>
         '<li class="lab-step-card">' +
@@ -624,7 +650,7 @@ function classifierHTML() {
         // ----- Right: buttons, stats, settings and the network diagram -----
         '<div class="lab-nn-side">' +
             '<div class="lab-run">' +
-                '<button type="button" class="btn btn-primary lab-train" data-action="train" aria-pressed="false">' +
+                '<button type="button" class="btn btn-primary lab-train" data-action="train">' +
                     '<span class="lab-train-icon"></span><span class="lab-train-text"></span>' +
                 '</button>' +
                 '<button type="button" class="btn btn-ghost" data-action="step" data-i18n-attr="title:lab.stepLabel">' + icons.step + '<span data-i18n="lab.step"></span></button>' +
@@ -677,7 +703,7 @@ function classifierHTML() {
                         '<input type="range" id="lab-neurons" class="lab-range" min="2" max="16" step="1" value="8" aria-describedby="lab-neurons-hint">' +
                         '<small id="lab-neurons-hint" data-i18n="lab.neuronsHint"></small>' +
                     '</div>' +
-                    '<div class="lab-field">' +
+                    '<div class="lab-field lab-field-speed">' +
                         '<span class="lab-field-label" id="lab-speed-label" data-i18n="lab.speed"></span>' +
                         '<div class="lab-seg" role="group" aria-labelledby="lab-speed-label">' +
                             '<button type="button" data-speed="slow" aria-pressed="false" data-i18n="lab.speedSlow"></button>' +
@@ -685,7 +711,7 @@ function classifierHTML() {
                             '<button type="button" data-speed="fast" aria-pressed="false" data-i18n="lab.speedFast"></button>' +
                         '</div>' +
                     '</div>' +
-                    '<div class="lab-field">' +
+                    '<div class="lab-field lab-field-layer">' +
                         '<span class="lab-field-label" aria-hidden="true">&nbsp;</span>' +
                         '<button type="button" class="lab-switch" role="switch" aria-checked="false" aria-describedby="lab-layer-hint">' +
                             '<span class="lab-switch-track" aria-hidden="true"><span class="lab-switch-knob"></span></span>' +
@@ -707,7 +733,9 @@ function classifierHTML() {
             '<div class="lab-diagram-body">' +
                 '<div class="lab-diagram-wrap"><canvas class="lab-diagram-canvas" role="img"></canvas></div>' +
                 '<div class="lab-diagram-info">' +
-                    '<p data-i18n="lab.diagramHow"></p>' +
+                    '<p><span data-i18n="lab.diagramHow"></span> ' +
+                        '<span class="lab-hint-mouse" data-i18n="lab.diagramPointMouse"></span>' +
+                        '<span class="lab-hint-touch" data-i18n="lab.diagramPointTouch"></span></p>' +
                     '<p class="lab-diagram-legend">' +
                         '<span><span class="lab-wline lab-wline-pos" aria-hidden="true"></span><span data-i18n="lab.legendPos"></span></span>' +
                         '<span><span class="lab-wline lab-wline-neg" aria-hidden="true"></span><span data-i18n="lab.legendNeg"></span></span>' +
@@ -835,11 +863,13 @@ const $$ = (selector) => Array.prototype.slice.call(mount.querySelectorAll(selec
    The output is the probability that a spot belongs to class B.
    ========================================================= */
 const MAX_POINTS = 400;
-const SPEEDS = { slow: 0.34, normal: 2, fast: 8 };   // training steps per frame
+const SPEEDS = { slow: 20, normal: 120, fast: 480 };   // training epochs per second
+const FRAME_BUDGET = 10;                                // at most 10 ms of learning per frame, so the page stays smooth
+const STUCK_EPOCHS = 2500;                              // after this many epochs without success we give a hint
 const savedSettings = AIC.storage.get("lab.nn", {}) || {};
 
 const settings = {
-    lr: [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1].indexOf(savedSettings.lr) >= 0 ? savedSettings.lr : 0.03,
+    lr: LR_OPTIONS.indexOf(savedSettings.lr) >= 0 ? savedSettings.lr : 0.03,
     optimizer: savedSettings.optimizer === "sgd" ? "sgd" : "adam",
     speed: SPEEDS[savedSettings.speed] ? savedSettings.speed : "normal",
     hidden: clamp(Math.round(Number(savedSettings.hidden) || 8), 2, 16),
@@ -1066,6 +1096,7 @@ const nn = {
     net: createNetwork(),
     training: false,
     learned: false,          // reached 100% (training pauses by itself)
+    keepGoing: false,        // you pressed Train after that, so it won't pause by itself again
     epoch: 0,
     loss: null,
     acc: null,
@@ -1077,6 +1108,8 @@ const nn = {
     stroke: null,            // mouse "painting" in progress
     tap: null,               // touch tap in progress
     stepBudget: 0,
+    lastTick: 0,
+    stuckHinted: false,
     lastStats: 0,
     lastAnnounce: 0,
     lastDiagram: 0,
@@ -1180,6 +1213,7 @@ function refreshNetwork() {
     const mini = atlas.image.data;
     const rowWidth = columns * MINI;
     const last = net.layers.length - 1;
+    const miniStrength = colors.light ? 1 : 0.85;
     for (let gy = 0; gy < MINI; gy++) {
         const y = 1 - ((gy + 0.5) / MINI) * 2;
         for (let gx = 0; gx < MINI; gx++) {
@@ -1187,7 +1221,7 @@ function refreshNetwork() {
             forward(net, x, y);
             let column = 0;
             const put = (value) => {
-                paint(mini, (gy * rowWidth + column * MINI + gx) * 4, value, 0.85);
+                paint(mini, (gy * rowWidth + column * MINI + gx) * 4, value, miniStrength);
                 column++;
             };
             put(x);
@@ -1383,6 +1417,13 @@ function drawBoard() {
 
     // 5. Where the next dot would go (mouse or keyboard)
     const spot = nn.cursor || nn.hover;
+
+    // When that spot moves, the network diagram shows it too
+    const spotKey = spot ? spot.x.toFixed(3) + "," + spot.y.toFixed(3) : "";
+    if (spotKey !== board.lastSpot) {
+        board.lastSpot = spotKey;
+        nn.dirty.diagram = true;
+    }
     if (spot && board.sprites) {
         const x = toPx(spot.x, size);
         const y = toPy(spot.y, size);
@@ -1557,6 +1598,12 @@ function drawDiagram() {
         }
     });
 
+    // The spot you point at on the board (mouse or keyboard cursor).
+    // Running the network on it fills every layer's "a" with that spot's activations.
+    const spot = nn.cursor || nn.hover;
+    const spotP = spot ? forward(net, spot.x, spot.y) : null;
+    const ringGap = Math.max(1, Math.min(3, (slot - node) / 2 - 0.6));
+
     // Neurons, each showing its own mini-map of what it reacts to
     let atlasColumn = 0;
     sizes.forEach((n, c) => {
@@ -1575,6 +1622,26 @@ function drawDiagram() {
             ctx.strokeStyle = rgba(colors.text, isOutput ? 0.55 : 0.25);
             ctx.lineWidth = isOutput ? 1.5 : 1;
             ctx.stroke();
+
+            if (spot) {
+                // A glowing ring: how strongly this neuron reacts to the spot (colour = sign)
+                let value;
+                if (c === 0) value = k === 0 ? spot.x : spot.y;
+                else value = isOutput ? net.layers[c - 1].a[k] * 2 - 1 : net.layers[c - 1].a[k];
+                roundRectPath(ctx, x - ringGap, y - ringGap, s + ringGap * 2, s + ringGap * 2, Math.min(8, s * 0.3));
+                ctx.strokeStyle = rgba(value < 0 ? colors.a : colors.b, Math.min(1, Math.abs(value)) * 0.95);
+                ctx.lineWidth = 1.6;
+                ctx.stroke();
+
+                // A small dot marks the same spot inside the neuron's mini-map
+                ctx.beginPath();
+                ctx.arc(x + ((spot.x + 1) / 2) * s, y + (1 - (spot.y + 1) / 2) * s, clamp(s * 0.1, 1.8, 3.2), 0, Math.PI * 2);
+                ctx.fillStyle = rgba(colors.text, 1);
+                ctx.fill();
+                ctx.lineWidth = 1.2;
+                ctx.strokeStyle = rgba(colors.base, 0.9);
+                ctx.stroke();
+            }
             atlasColumn++;
         }
     });
@@ -1597,12 +1664,21 @@ function drawDiagram() {
     ctx.fillText("x", xs[0] - node / 2 - 6, ys[0][0]);
     ctx.fillText("y", xs[0] - node / 2 - 6, ys[0][1]);
     ctx.textAlign = "left";
-    ctx.fillText(t("lab.nnOutputHint"), xs[columns - 1] + outputSize / 2 + 5, ys[columns - 1][0]);
+    const outX = xs[columns - 1] + outputSize / 2 + 5;
+    const outY = ys[columns - 1][0];
+    ctx.fillText(t("lab.nnOutputHint"), outX, spot ? outY - 7 : outY);
+    if (spot) {
+        // The network's answer for the spot you point at
+        ctx.fillStyle = rgba(spotP >= 0.5 ? colors.b : colors.a, 1);
+        ctx.fillText(Math.round(spotP * 100) + "%", outX, outY + 8);
+    }
 }
 
 function updateDiagramLabel() {
     const params = countParams(nn.net);
-    const hidden = settings.twoLayers ? settings.hidden + " + " + settings.hidden : String(settings.hidden);
+    // "8 hidden neurons", or "8 hidden neurons → 8 hidden neurons" with two layers
+    const layerText = settings.hidden + " " + plural(settings.hidden, "lab.pluralHidden");
+    const hidden = settings.twoLayers ? layerText + " → " + layerText : layerText;
     const paramsText = t("lab.params", { n: params, params: plural(params, "lab.pluralParams") });
     $('[data-out="params"]').textContent = paramsText;
     diagram.canvas.setAttribute("aria-label", t("lab.diagramLabel", { hidden: hidden, params: paramsText }));
@@ -1642,11 +1718,17 @@ function tick(now) {
     frame = 0;
     const dirty = nn.dirty;
 
+    // How much time has passed since the last frame (at most 0.1 s)
+    const elapsed = nn.lastTick ? Math.min(100, now - nn.lastTick) : 16.7;
+    nn.lastTick = now;
+
     if (wantsTraining()) {
-        nn.stepBudget += SPEEDS[settings.speed];
+        // The speed is in epochs per second, so it is the same on 60 Hz and 120 Hz screens
+        nn.stepBudget += (SPEEDS[settings.speed] * elapsed) / 1000;
         let steps = Math.floor(nn.stepBudget);
         nn.stepBudget -= steps;
-        while (steps-- > 0) trainStep();
+        const started = performance.now();
+        while (steps-- > 0 && performance.now() - started < FRAME_BUDGET) trainStep();
         dirty.net = true;
     }
 
@@ -1684,13 +1766,16 @@ function tick(now) {
         announceStats();
     }
 
+    if (wantsTraining()) checkStuck();
+
     if (wantsTraining() || dirty.diagram || dirty.stats) schedule();
+    else nn.lastTick = 0;    // the loop sleeps; the next frame starts fresh
 }
 
 function updateStats() {
     const points = nn.points;
     const countB = points.reduce((sum, point) => sum + point.label, 0);
-    statEls.epoch.textContent = fmt(nn.epoch, 0);
+    statEls.epoch.textContent = fmtCount(nn.epoch);
     statEls.loss.textContent = nn.loss === null ? "—" : fmt(nn.loss, 3);
     statEls.acc.textContent = nn.acc === null ? "—" : Math.round(nn.acc * 100) + "%";
     statEls.accBar.style.transform = "scaleX(" + (nn.acc || 0) + ")";
@@ -1728,13 +1813,15 @@ function announceStats() {
 function updateTrainButton() {
     trainButton.querySelector(".lab-train-icon").innerHTML = nn.training ? icons.pause : icons.play;
     trainButton.querySelector(".lab-train-text").textContent = t(nn.training ? "lab.pause" : "lab.train");
-    trainButton.setAttribute("aria-pressed", String(nn.training));
+    trainButton.classList.toggle("is-training", nn.training);
     updateStatus();
 }
 
-// When every dot is right and the loss is tiny, training pauses by itself
+// When every dot is right and the loss is tiny, training pauses by itself.
+// This happens only once: if you press Train again, it keeps going until you pause.
 function checkLearned() {
-    if (!nn.training || nn.learned || nn.acc !== 1 || nn.loss === null || nn.loss > 0.025) return;
+    if (!nn.training || nn.learned || nn.keepGoing) return;
+    if (nn.acc !== 1 || nn.loss === null || nn.loss > 0.025) return;
     const hasBoth = nn.points.some((p) => p.label === 0) && nn.points.some((p) => p.label === 1);
     if (!hasBoth) return;
     nn.training = false;
@@ -1742,6 +1829,13 @@ function checkLearned() {
     updateTrainButton();
     AIC.toast(t("lab.toastLearned", { n: fmt(nn.epoch, 0), epochs: plural(nn.epoch, "lab.pluralEpochs") }), "🎯");
     announceStats();
+}
+
+// A friendly hint when the network trains for a long time without success
+function checkStuck() {
+    if (nn.stuckHinted || nn.epoch < STUCK_EPOCHS || nn.acc === null || nn.acc >= 0.95) return;
+    nn.stuckHinted = true;
+    AIC.toast(t("lab.toastStuck"), "🧩");
 }
 
 function setTraining(on) {
@@ -1752,6 +1846,8 @@ function setTraining(on) {
     if (on && !(nn.points.some((p) => p.label === 0) && nn.points.some((p) => p.label === 1))) {
         AIC.toast(t("lab.toastOneClass"), "⚖️");
     }
+    // Training again after "Learned it!" means: keep going, don't stop by yourself
+    if (on && nn.learned) nn.keepGoing = true;
     nn.training = on;
     if (on) nn.learned = false;
     updateTrainButton();
@@ -1763,6 +1859,8 @@ function resetNetwork() {
     nn.net = createNetwork();
     nn.epoch = 0;
     nn.learned = false;
+    nn.keepGoing = false;
+    nn.stuckHinted = false;
     nn.stepBudget = 0;
     clearLossHistory();
     nn.dirty.net = true;
@@ -1779,15 +1877,34 @@ function pushUndo() {
 
 function pointsChanged() {
     nn.learned = false;
+    nn.keepGoing = false;
     nn.dirty.net = true;
     $(".lab-board-empty").hidden = nn.points.length > 0;
-    $('[data-action="undo"]').disabled = nn.undo.length === 0;
-    $('[data-action="clear"]').disabled = nn.points.length === 0;
+    updateEditButtons();
     if (!nn.points.length && nn.training) {
         nn.training = false;
         updateTrainButton();
     }
     schedule();
+}
+
+// Undo and Clear are switched off when there is nothing to undo or clear.
+// If the button you just pressed switches itself off, keyboard focus moves
+// to the other button (or to the board), so it is not lost.
+function updateEditButtons() {
+    const undoButton = $('[data-action="undo"]');
+    const clearButton = $('[data-action="clear"]');
+    const undoOff = nn.undo.length === 0;
+    const clearOff = nn.points.length === 0;
+    const focused = document.activeElement;
+    if ((focused === undoButton && undoOff) || (focused === clearButton && clearOff)) {
+        const other = focused === undoButton ? clearButton : undoButton;
+        const otherOff = other === undoButton ? undoOff : clearOff;
+        other.disabled = otherOff;
+        (otherOff ? board.el : other).focus();
+    }
+    undoButton.disabled = undoOff;
+    clearButton.disabled = clearOff;
 }
 
 function addPoint(x, y, label) {
@@ -1866,6 +1983,9 @@ board.el.addEventListener("pointerdown", (event) => {
     }
 
     event.preventDefault();
+    // preventDefault() also stops the normal focus, so we focus the board ourselves:
+    // then Ctrl+Z, A / B and Backspace work right after clicking
+    board.el.focus({ preventScroll: true });
     nn.cursor = null;
     pushUndo();
     clearPresetMark();
@@ -1899,6 +2019,22 @@ board.el.addEventListener("pointermove", (event) => {
     schedule();
 });
 
+// Phones have no mouse pointer to "point" with, so after a tap we show the
+// network's guess for that spot (readout + diagram markers) for 3 seconds
+function showTouchSpot(spot, label) {
+    clearTimeout(nn.touchTimer);
+    nn.hover = { x: spot.x, y: spot.y, label: label, touch: true };
+    nn.dirty.board = true;
+    schedule();
+    nn.touchTimer = setTimeout(() => {
+        if (nn.hover && nn.hover.touch) {
+            nn.hover = null;
+            nn.dirty.board = true;
+            schedule();
+        }
+    }, 3000);
+}
+
 function endPointer(event) {
     if (nn.tap && nn.tap.id === event.pointerId && event.type === "pointerup") {
         const tap = nn.tap;
@@ -1907,6 +2043,7 @@ function endPointer(event) {
         clearPresetMark();
         if (addPoint(tap.spot.x, tap.spot.y, tap.label)) announceAdded(tap.label);
         pointsChanged();
+        showTouchSpot(tap.spot, tap.label);
     }
     if (event.type === "pointercancel") nn.tap = null;
     if (nn.stroke && nn.stroke.id === event.pointerId) {
@@ -2192,7 +2329,7 @@ const CORPUS = {
         "ИИ умеет узнавать лица на фотографиях.",
         "ИИ может помочь нам узнавать новое.",
         "В школе мы изучаем математику и физику.",
-        "В школе мы обедаем с друзьями.",
+        "В школе мы обедаем в столовой.",
         "В школе мы работаем на компьютерах.",
         "В школе мы обсуждаем, как работает ИИ.",
         "Мой учитель очень понятно объясняет новые темы.",
@@ -2201,9 +2338,9 @@ const CORPUS = {
         "Я люблю биологию, потому что это очень интересно.",
         "Я люблю читать книги о космосе.",
         "Я люблю гулять в лесу.",
-        "Я люблю есть пиццу с друзьями.",
+        "Я люблю есть пиццу с сыром.",
         "Я люблю есть яблоки и бананы.",
-        "Я люблю узнавать новое вместе с друзьями.",
+        "Я люблю узнавать что-то новое.",
         "Ученики делают проект о роботах.",
         "Наш класс изучает искусственный интеллект.",
         "В пятницу у нас контрольная.",
@@ -2214,7 +2351,7 @@ const CORPUS = {
         "Мы с друзьями хотим узнать больше об ИИ.",
         "Мой лучший друг отлично рисует.",
         "Мой лучший друг живёт рядом с парком.",
-        "Мы гуляем в парке с друзьями.",
+        "Мы с друзьями гуляем в парке.",
         "Мы любим играть в игры вместе.",
         "Друзья помогают друг другу с домашним заданием.",
         "Я каждый день пишу сообщения друзьям.",
@@ -2352,7 +2489,7 @@ function buildModel(sentences) {
 // a small part is left for all other words, using the shorter context.
 function backoff(context, lower) {
     if (!context) return lower;
-    const discount = 0.5;
+    const discount = 0.3;
     const result = new Map();
     let seenLowerMass = 0;
     context.counts.forEach((count, word) => {
@@ -2690,23 +2827,34 @@ function insertWord(word) {
 }
 
 // ----- Auto-write: the model writes up to 12 words by itself -----
-function stopAuto(announceDone) {
+// finishWord: true = a word that is half typed gets finished (the Stop button),
+// false = it is taken back (for example when you click a candidate instead).
+function stopAuto(announceDone, finishWord) {
     const job = lm.writer;
     if (!job) return;
     job.cancelled = true;
     clearTimeout(job.timer);
     lm.writer = null;
     lmEls.items.forEach((item) => item.querySelector(".lab-cand").classList.remove("is-picked"));
+
+    // Stopped in the middle of typing a word? Only fix the text if you didn't edit it yourself.
+    const input = lmEls.input;
+    if (job.typing && input.value === job.base + job.typed) {
+        input.value = finishWord ? job.base + job.word : job.base;
+        input.scrollTop = input.scrollHeight;
+        renderPredictor();
+    }
     updateAutoButton();
     if (announceDone) announce(lmEls.live, t("lab.lmSrDone"));
 }
 
 function startAuto() {
     if (lm.writer) {
-        stopAuto(true);
+        stopAuto(true, true);
         return;
     }
-    const job = { cancelled: false, count: 0, timer: 0 };
+    // base = the text before the current word, word = the word being typed, typed = the letters so far
+    const job = { cancelled: false, count: 0, timer: 0, typing: false, base: "", word: "", typed: "" };
     lm.writer = job;
     updateAutoButton();
 
@@ -2745,6 +2893,7 @@ function startAuto() {
             }
             const atStart = readText(input.value).previous.length === 0;
             typeOut(displayWord(choice, atStart) + " ", () => {
+                job.typing = false;
                 renderPredictor();
                 job.timer = setTimeout(nextWord, calm ? 120 : 160);
             });
@@ -2759,10 +2908,15 @@ function startAuto() {
             done();
             return;
         }
+        job.typing = true;
+        job.base = input.value;
+        job.word = text;
+        job.typed = "";
         let i = 0;
         (function typeLetter() {
             if (job.cancelled) return;
             input.value += text.charAt(i);
+            job.typed += text.charAt(i);
             input.scrollTop = input.scrollHeight;
             i++;
             if (i < text.length) job.timer = setTimeout(typeLetter, 30 + Math.random() * 25);
@@ -2985,7 +3139,17 @@ AIC.onThemeChange(() => {
 });
 
 // ----- Language: update the text that JavaScript writes, keep everything else -----
+// Learning-rate numbers in the style of the language ("0.03" or "0,03")
+function updateLrLabels() {
+    Array.prototype.forEach.call(lrSelect.options, (option) => {
+        const value = Number(option.value);
+        const digits = value < 1 ? option.value.split(".")[1].length : 0;
+        option.textContent = fmt(value, digits);
+    });
+}
+
 function refreshTexts() {
+    updateLrLabels();
     updateTrainButton();
     updateAutoButton();
     updateDiagramLabel();
@@ -3000,12 +3164,15 @@ function refreshTexts() {
 AIC.onLanguageChange((lang) => {
     if (lang !== lm.lang) {
         stopAuto(false);
-        // A sentence started with a starter button switches to the same starter in the new language
-        const keepStarter = lm.starter && lmEls.input.value.startsWith(lm.starter.text);
+        // If the text is exactly a starter, it switches to the same starter in the new language.
+        // Anything you wrote or picked yourself stays as it is.
+        const keepStarter = lm.starter && lmEls.input.value.trim() === lm.starter.text.trim();
         loadModel();
         if (keepStarter) {
             lmEls.input.value = t("lab.lmStarter" + lm.starter.n) + " ";
             lm.starter.text = lmEls.input.value;
+        } else {
+            lm.starter = null;
         }
         AIC.applyTranslations(mount);
     }
@@ -3040,8 +3207,9 @@ AIC.registerCommand({
 // ----- First draw -----
 readColors();
 loadModel();
-nn.points = makePreset("spiral");
-$$(".lab-preset").forEach((chip) => chip.classList.toggle("active", chip.getAttribute("data-preset") === "spiral"));
+// The circle is a good first example: you can watch the line bend into a ring in a few seconds
+nn.points = makePreset("circle");
+$$(".lab-preset").forEach((chip) => chip.classList.toggle("active", chip.getAttribute("data-preset") === "circle"));
 AIC.applyTranslations(mount);
 pointsChanged();
 updateDiagramLabel();

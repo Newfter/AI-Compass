@@ -35,7 +35,7 @@
         },
         {
             number: 2, icon: "📊", level: "beginner", minutes: 5, rgb: "--accent-2-rgb",
-            sections: 4, notes: { 2: "tip" }, lab: "fit", correct: 1,
+            sections: 4, notes: { 2: "tip" }, lab: "fit", correct: 2,
             tryIt: "classifier", tryIcon: "🧪",
             keywords: "machine learning training data model машинное обучение данные модель"
         },
@@ -47,19 +47,19 @@
         },
         {
             number: 4, icon: "💬", level: "intermediate", minutes: 6, rgb: "--accent-rgb",
-            sections: 4, notes: { 3: "example" }, lab: "words", correct: 1,
+            sections: 4, notes: { 3: "example" }, lab: "words", correct: 2,
             tryIt: "predictor", tryIcon: "🔮",
             keywords: "generative ai chatbots llm chatgpt генеративный ии чат-боты чатбот языковая модель"
         },
         {
             number: 5, icon: "📱", level: "beginner", minutes: 4, rgb: "--accent-2-rgb",
-            sections: 4, notes: { 1: "fact" }, lab: "day", correct: 0,
+            sections: 4, notes: { 1: "fact" }, lab: "day", correct: 1,
             tryIt: "glossary", tryIcon: "📖",
             keywords: "everyday life phone recommendations повседневная жизнь телефон рекомендации"
         },
         {
             number: 6, icon: "⚖️", level: "intermediate", minutes: 5, rgb: "--accent-3-rgb",
-            sections: 4, notes: { 2: "tip" }, lab: "dilemmas", correct: 1,
+            sections: 4, notes: { 2: "tip" }, lab: "dilemmas", correct: 0,
             tryIt: "quiz", tryIcon: "🏆",
             keywords: "ethics safety bias deepfakes privacy этика безопасность предвзятость дипфейки приватность"
         }
@@ -105,8 +105,9 @@
             "lessons.reader.finishTitle": "All lessons",
             "lessons.reader.finishLabel": "Finish and go back to all lessons",
             "lessons.reader.complete": "Mark as complete",
-            "lessons.reader.completed": "Completed ✓",
-            "lessons.reader.undoHint": "Click to mark as not completed",
+            "lessons.reader.completed": "Completed",
+            "lessons.reader.undo": "Undo",
+            "lessons.reader.undoLabel": "Completed · Undo: mark this lesson as not completed",
             "lessons.reader.toc": "In this lesson",
             "lessons.reader.listen": "Listen",
             "lessons.reader.stop": "Stop",
@@ -195,8 +196,9 @@
             "lessons.reader.finishTitle": "Все уроки",
             "lessons.reader.finishLabel": "Закончить и вернуться ко всем урокам",
             "lessons.reader.complete": "Отметить пройденным",
-            "lessons.reader.completed": "Пройден ✓",
-            "lessons.reader.undoHint": "Нажми, чтобы снять отметку",
+            "lessons.reader.completed": "Пройден",
+            "lessons.reader.undo": "Отменить",
+            "lessons.reader.undoLabel": "Пройден · Отменить: снять отметку о прохождении",
             "lessons.reader.toc": "В этом уроке",
             "lessons.reader.listen": "Слушать",
             "lessons.reader.stop": "Стоп",
@@ -320,8 +322,8 @@
             "lessons.l2.tipBtn": "Open the classifier",
             "lessons.l2.q": "Why do we test a model on examples it has never seen before?",
             "lessons.l2.a1": "To make the training go faster",
-            "lessons.l2.a2": "To check it learned the pattern, not just memorised the answers",
-            "lessons.l2.a3": "Because the training examples are deleted after training",
+            "lessons.l2.a2": "Because the training examples are deleted after training",
+            "lessons.l2.a3": "To check it learned the pattern, not just memorised the answers",
             "lessons.l2.explain": "A model that only memorised its training data fails on anything new. Testing on unseen data shows whether it really learned the general pattern."
         },
         ru: {
@@ -339,12 +341,12 @@
             "lessons.l2.key1": "Модели машинного обучения находят закономерности в примерах (данных), а не следуют правилам, написанным вручную.",
             "lessons.l2.key2": "Обучение: угадать, измерить ошибку, подправить, повторить. Проверка: тест на новых, незнакомых данных.",
             "lessons.l2.key3": "Если данных мало или они однобокие, модель усвоит неправильный урок.",
-            "lessons.l2.tip": "Побудь учителем! В AI-лаборатории можно дать классификатору свои примеры и посмотреть, как он учится.",
+            "lessons.l2.tip": "Побудь учителем! В ИИ-лаборатории можно дать классификатору свои примеры и посмотреть, как он учится.",
             "lessons.l2.tipBtn": "Открыть классификатор",
             "lessons.l2.q": "Зачем проверять модель на примерах, которых она никогда не видела?",
             "lessons.l2.a1": "Чтобы обучение шло быстрее",
-            "lessons.l2.a2": "Чтобы убедиться, что она поняла закономерность, а не просто запомнила ответы",
-            "lessons.l2.a3": "Потому что после обучения примеры удаляются",
+            "lessons.l2.a2": "Потому что после обучения примеры удаляются",
+            "lessons.l2.a3": "Чтобы убедиться, что она поняла закономерность, а не просто запомнила ответы",
             "lessons.l2.explain": "Модель, которая просто запомнила обучающие данные, ошибается на всём новом. Проверка на незнакомых данных показывает, усвоила ли она общую закономерность."
         }
     });
@@ -357,9 +359,9 @@
             "lessons.l3.s1.h": "Inspired by the brain",
             "lessons.l3.s1.p": "Your brain has about <strong>86 billion neurons</strong> — cells that pass signals to each other. <strong>Artificial neural networks</strong> borrow this idea, very loosely: they're made of simple maths units, called artificial neurons, connected in layers. A neural network is far simpler than a real brain. The similarity is mostly in the name!",
             "lessons.l3.s2.h": "What one neuron does",
-            "lessons.l3.s2.p": "An artificial neuron takes some numbers as <strong>inputs</strong>, multiplies each one by a <strong>weight</strong> (how important that input is), adds everything up together with a <strong>bias</strong>, and then passes the result through an <strong>activation function</strong> that decides how strongly the neuron “fires”. That's it — just multiplying and adding! The power comes from connecting thousands, millions or even billions of them.",
+            "lessons.l3.s2.p": "An artificial neuron takes some numbers as <strong>inputs</strong>, multiplies each one by a <strong>weight</strong> (how important that input is), adds everything up together with a <strong>bias</strong>, and then passes the result through an <strong>activation function</strong> that decides how strongly the neuron “fires”. That's it — mostly just multiplying and adding! The power comes from connecting thousands, millions or even billions of them.",
             "lessons.l3.s3.h": "Layers upon layers",
-            "lessons.l3.s3.p": "Neurons are arranged in layers. The <strong>input layer</strong> receives the data, for example the pixels of a photo. The <strong>hidden layers</strong> in the middle transform it step by step. The <strong>output layer</strong> gives the answer, such as “cat: 92%, dog: 8%”. In image recognition, early layers tend to detect simple things like edges, middle layers combine them into shapes, and later layers recognise whole objects. Networks with many layers are called <strong>deep learning</strong>.",
+            "lessons.l3.s3.p": "Neurons are arranged in layers. The <strong>input layer</strong> receives the data, for example the pixels of a photo. The <strong>hidden layers</strong> in the middle transform it step by step. The <strong>output layer</strong> gives the answer, such as “cat: 92%, dog: 8%”. In image recognition, early layers tend to detect simple things like edges, middle layers combine them into shapes, and later layers recognise whole objects. Networks with many layers are called <strong>deep neural networks</strong>, and training them is called <strong>deep learning</strong>.",
             "lessons.l3.s3.note": "Face unlock, voice assistants, translation apps and chatbots all run on deep neural networks.",
             "lessons.l3.s4.h": "How a network learns",
             "lessons.l3.s4.p": "At first, all the weights are random, so the answers are nonsense. During training, the network compares its answer with the correct one, and an algorithm called <strong>backpropagation</strong> works out how to nudge every weight to reduce the error. After millions of tiny nudges, the weights hold everything the network has learned. The biggest modern networks have billions of weights, also called <strong>parameters</strong>.",
@@ -380,16 +382,16 @@
             "lessons.l3.s1.h": "Вдохновлено мозгом",
             "lessons.l3.s1.p": "В твоём мозге около <strong>86 миллиардов нейронов</strong> — клеток, которые передают друг другу сигналы. <strong>Искусственные нейронные сети</strong> заимствуют эту идею, но очень приблизительно: они состоят из простых математических блоков — искусственных нейронов, соединённых в слои. Нейросеть гораздо проще настоящего мозга. Сходство в основном в названии!",
             "lessons.l3.s2.h": "Что делает один нейрон",
-            "lessons.l3.s2.p": "Искусственный нейрон получает несколько чисел — <strong>входы</strong>, умножает каждое на <strong>вес</strong> (насколько этот вход важен), складывает всё вместе со <strong>смещением</strong>, а затем пропускает результат через <strong>функцию активации</strong>, которая решает, насколько сильно нейрон «сработает». И всё — только умножение и сложение! Вся сила в том, что таких нейронов соединяют тысячи, миллионы и даже миллиарды.",
+            "lessons.l3.s2.p": "Искусственный нейрон получает несколько чисел — <strong>входы</strong>, умножает каждое на <strong>вес</strong> (насколько этот вход важен), складывает всё вместе со <strong>смещением</strong>, а затем пропускает результат через <strong>функцию активации</strong>, которая решает, насколько сильно нейрон «сработает». И всё — в основном это просто умножение и сложение! Вся сила в том, что таких нейронов соединяют тысячи, миллионы и даже миллиарды.",
             "lessons.l3.s3.h": "Слой за слоем",
-            "lessons.l3.s3.p": "Нейроны расположены слоями. <strong>Входной слой</strong> получает данные, например пиксели фотографии. <strong>Скрытые слои</strong> посередине шаг за шагом их преобразуют. <strong>Выходной слой</strong> выдаёт ответ, например «кошка: 92%, собака: 8%». При распознавании изображений первые слои обычно находят простые вещи вроде границ и линий, средние собирают из них формы, а последние узнают целые объекты. Сети с большим количеством слоёв называют <strong>глубоким обучением</strong>.",
+            "lessons.l3.s3.p": "Нейроны расположены слоями. <strong>Входной слой</strong> получает данные, например пиксели фотографии. <strong>Скрытые слои</strong> посередине шаг за шагом их преобразуют. <strong>Выходной слой</strong> выдаёт ответ, например «кошка: 92%, собака: 8%». При распознавании изображений первые слои обычно находят простые вещи вроде границ и линий, средние собирают из них формы, а последние узнают целые объекты. Сети с большим количеством слоёв называют <strong>глубокими нейронными сетями</strong>, а их обучение — <strong>глубоким обучением</strong>.",
             "lessons.l3.s3.note": "Разблокировка по лицу, голосовые помощники, переводчики и чат-боты — всё это работает на глубоких нейронных сетях.",
             "lessons.l3.s4.h": "Как сеть учится",
             "lessons.l3.s4.p": "Сначала все веса случайные, поэтому ответы получаются бессмысленными. Во время обучения сеть сравнивает свой ответ с правильным, а алгоритм <strong>обратного распространения ошибки</strong> вычисляет, как подправить каждый вес, чтобы ошибка уменьшилась. После миллионов крошечных поправок в весах оказывается всё, чему научилась сеть. У самых больших современных сетей миллиарды весов — их ещё называют <strong>параметрами</strong>.",
             "lessons.l3.key1": "Нейронная сеть состоит из множества простых искусственных нейронов, расположенных слоями.",
             "lessons.l3.key2": "Каждый нейрон умножает входы на веса, складывает их и применяет функцию активации.",
             "lessons.l3.key3": "Учиться — значит понемногу подстраивать веса, чтобы ошибаться всё реже.",
-            "lessons.l3.tip": "Классификатор в AI-лаборатории учится на твоих примерах — так можно своими руками увидеть, что такое «обучение».",
+            "lessons.l3.tip": "Классификатор в ИИ-лаборатории учится на твоих примерах — так можно своими руками увидеть, что такое «обучение».",
             "lessons.l3.tipBtn": "Открыть классификатор",
             "lessons.l3.q": "Что делает «вес» в искусственном нейроне?",
             "lessons.l3.a1": "Показывает, насколько важен каждый вход",
@@ -420,8 +422,8 @@
             "lessons.l4.tipBtn": "Open the predictor",
             "lessons.l4.q": "Why can a chatbot confidently say something false?",
             "lessons.l4.a1": "It gets tired after answering lots of questions",
-            "lessons.l4.a2": "It generates likely-sounding text and doesn't automatically check facts",
-            "lessons.l4.a3": "Someone secretly types wrong answers into it",
+            "lessons.l4.a2": "Someone secretly types wrong answers into it",
+            "lessons.l4.a3": "It generates likely-sounding text and doesn't automatically check facts",
             "lessons.l4.explain": "An LLM predicts which words are likely to come next. Likely-sounding isn't the same as true, so it can “hallucinate” facts. Always check important information."
         },
         ru: {
@@ -439,12 +441,12 @@
             "lessons.l4.key1": "Генеративный ИИ создаёт новые тексты, изображения, звук, код и видео.",
             "lessons.l4.key2": "Чат-боты работают на LLM, которые снова и снова предсказывают следующий токен.",
             "lessons.l4.key3": "Они могут «галлюцинировать», поэтому важные факты всегда проверяй.",
-            "lessons.l4.tip": "Предсказание — сердце генеративного ИИ. Попробуй предсказатель в AI-лаборатории и посмотри, как модель делает свои догадки.",
+            "lessons.l4.tip": "Предсказание — сердце генеративного ИИ. Попробуй предсказатель в ИИ-лаборатории и посмотри, как модель делает свои догадки.",
             "lessons.l4.tipBtn": "Открыть предсказатель",
             "lessons.l4.q": "Почему чат-бот может уверенно сказать неправду?",
             "lessons.l4.a1": "Он устаёт, ответив на много вопросов",
-            "lessons.l4.a2": "Он создаёт правдоподобный текст и не проверяет факты автоматически",
-            "lessons.l4.a3": "Кто-то тайно вписывает в него неверные ответы",
+            "lessons.l4.a2": "Кто-то тайно вписывает в него неверные ответы",
+            "lessons.l4.a3": "Он создаёт правдоподобный текст и не проверяет факты автоматически",
             "lessons.l4.explain": "LLM предсказывает, какие слова вероятнее всего будут дальше. Правдоподобно — не значит правдиво, поэтому модель может «галлюцинировать». Важную информацию всегда проверяй."
         }
     });
@@ -455,7 +457,7 @@
             "lessons.l5.title": "AI in Everyday Life",
             "lessons.l5.desc": "The hidden AI you use every day — probably without noticing.",
             "lessons.l5.s1.h": "AI in your pocket",
-            "lessons.l5.s1.p": "Your smartphone is packed with AI: <strong>face unlock</strong>, the keyboard that <strong>predicts your next word</strong>, <strong>voice assistants</strong> like Siri or Google Assistant, and a camera that blurs the background or brightens night photos automatically. Many of these run right on your phone, without even needing the Internet.",
+            "lessons.l5.s1.p": "Your smartphone is packed with AI: <strong>face unlock</strong>, the keyboard that <strong>predicts your next word</strong>, <strong>voice assistants</strong> like Siri, Gemini or Alexa, and a camera that blurs the background or brightens night photos automatically. Many of these run right on your phone, without even needing the Internet.",
             "lessons.l5.s1.note": "Many phones have a special chip just for AI, often called a neural processing unit (NPU). It runs AI tasks quickly without draining the battery.",
             "lessons.l5.s2.h": "What you watch and hear",
             "lessons.l5.s2.p": "YouTube, TikTok, Netflix and Spotify all use <strong>recommendation systems</strong>. They learn from what you watch, like, skip and replay, and compare you with millions of other users to guess what you'll enjoy next. That's why your feed feels made just for you — because, in a way, it is.",
@@ -469,8 +471,8 @@
             "lessons.l5.tip": "Algorithm, training data, neural network… Look up the key words behind everyday AI in the glossary.",
             "lessons.l5.tipBtn": "Open the glossary",
             "lessons.l5.q": "Why does your video feed seem to know what you like?",
-            "lessons.l5.a1": "A recommendation system learns from what you watch, like and skip",
-            "lessons.l5.a2": "A person at the company picks every video for you by hand",
+            "lessons.l5.a1": "A person at the company picks every video for you by hand",
+            "lessons.l5.a2": "A recommendation system learns from what you watch, like and skip",
             "lessons.l5.a3": "It's completely random — you just get lucky",
             "lessons.l5.explain": "Recommendation systems find patterns in your behaviour and in the behaviour of similar users, then predict what will keep you watching."
         },
@@ -478,7 +480,7 @@
             "lessons.l5.title": "ИИ в повседневной жизни",
             "lessons.l5.desc": "Скрытый ИИ, которым ты пользуешься каждый день, — скорее всего, даже не замечая.",
             "lessons.l5.s1.h": "ИИ в твоём кармане",
-            "lessons.l5.s1.p": "Твой смартфон полон ИИ: <strong>разблокировка по лицу</strong>, клавиатура, которая <strong>подсказывает следующее слово</strong>, <strong>голосовые помощники</strong> вроде Siri, Алисы или Google Ассистента и камера, которая сама размывает фон и осветляет ночные снимки. Многое из этого работает прямо на телефоне, даже без интернета.",
+            "lessons.l5.s1.p": "Твой смартфон полон ИИ: <strong>разблокировка по лицу</strong>, клавиатура, которая <strong>подсказывает следующее слово</strong>, <strong>голосовые помощники</strong> вроде Siri, Алисы или Gemini и камера, которая сама размывает фон и осветляет ночные снимки. Многое из этого работает прямо на телефоне, даже без интернета.",
             "lessons.l5.s1.note": "Во многих телефонах есть специальный чип для ИИ — его часто называют нейропроцессором (NPU). Он быстро выполняет задачи ИИ и бережёт заряд батареи.",
             "lessons.l5.s2.h": "Что ты смотришь и слушаешь",
             "lessons.l5.s2.p": "YouTube, TikTok, Netflix и Spotify используют <strong>рекомендательные системы</strong>. Они учатся на том, что ты смотришь, лайкаешь, пропускаешь и пересматриваешь, и сравнивают тебя с миллионами других пользователей, чтобы угадать, что тебе понравится дальше. Поэтому лента кажется созданной специально для тебя — и в каком-то смысле так и есть.",
@@ -492,8 +494,8 @@
             "lessons.l5.tip": "Алгоритм, обучающие данные, нейросеть… Найди ключевые слова повседневного ИИ в словаре.",
             "lessons.l5.tipBtn": "Открыть словарь",
             "lessons.l5.q": "Почему лента видео будто знает, что тебе нравится?",
-            "lessons.l5.a1": "Рекомендательная система учится на том, что ты смотришь, лайкаешь и пропускаешь",
-            "lessons.l5.a2": "Сотрудник компании вручную подбирает для тебя каждое видео",
+            "lessons.l5.a1": "Сотрудник компании вручную подбирает для тебя каждое видео",
+            "lessons.l5.a2": "Рекомендательная система учится на том, что ты смотришь, лайкаешь и пропускаешь",
             "lessons.l5.a3": "Всё совершенно случайно — тебе просто везёт",
             "lessons.l5.explain": "Рекомендательные системы находят закономерности в твоём поведении и в поведении похожих пользователей, а затем предсказывают, что удержит тебя у экрана."
         }
@@ -519,8 +521,8 @@
             "lessons.l6.tip": "Time to test yourself! Take the AI Challenge and see how much you already know.",
             "lessons.l6.tipBtn": "Take the quiz",
             "lessons.l6.q": "Why can an AI system be unfair (biased)?",
-            "lessons.l6.a1": "Computers have their own opinions about people",
-            "lessons.l6.a2": "It learned from data that contained human unfairness or was one-sided",
+            "lessons.l6.a1": "It learned from data that contained human unfairness or was one-sided",
+            "lessons.l6.a2": "Computers have their own opinions about people",
             "lessons.l6.a3": "AI is always programmed to be unfair on purpose",
             "lessons.l6.explain": "AI copies patterns from its training data — including unfair ones. Diverse data, testing and human checks help reduce bias."
         },
@@ -531,7 +533,7 @@
             "lessons.l6.s1.p": "ИИ учится на данных, созданных людьми, поэтому может перенять и человеческую несправедливость. Это называется <strong>предвзятостью</strong>. В 2018 году журналисты рассказали, что Amazon отказалась от экспериментальной системы подбора сотрудников, потому что та была предвзята к женщинам: она училась на резюме за десять лет, и почти все они были от мужчин. Исследователи также выяснили, что некоторые системы распознавания лиц гораздо чаще ошибаются с темнокожими женщинами, чем со светлокожими мужчинами. Чтобы бороться с предвзятостью, нужны разнообразные данные, тщательная проверка и люди, которые контролируют результаты.",
             "lessons.l6.s2.h": "Дипфейки и дезинформация",
             "lessons.l6.s2.p": "Генеративный ИИ умеет создавать реалистичные поддельные фото, видео и голоса — <strong>дипфейки</strong>. Они бывают забавными в фильмах и мемах, но их используют и для распространения лжи и мошенничества — например, подделывают голос родственника по телефону, чтобы попросить денег. Прежде чем делиться чем-то шокирующим, остановись и проверь: <strong>кто это опубликовал? Пишут ли об этом надёжные СМИ?</strong> Подделки становятся всё лучше, поэтому проверка источника важнее, чем поиск «глюков» на картинке.",
-            "lessons.l6.s2.note": "Мошенникам бывает достаточно нескольких секунд записи, чтобы скопировать голос. Договоритесь с семьёй о секретном кодовом слове на экстренный случай.",
+            "lessons.l6.s2.note": "Мошенникам бывает достаточно нескольких секунд записи, чтобы скопировать голос. Договорись с семьёй о секретном кодовом слове на экстренный случай.",
             "lessons.l6.s3.h": "Береги свою приватность",
             "lessons.l6.s3.p": "Системы ИИ учатся на огромных объёмах данных, включая то, что люди публикуют в интернете. Всё, что ты пишешь ИИ-сервису, может сохраняться и даже использоваться для обучения будущих моделей. Никогда не сообщай чат-боту пароли, домашний адрес, личные фото или секреты и проверяй настройки приватности в приложениях.",
             "lessons.l6.s4.h": "Решают люди",
@@ -539,11 +541,11 @@
             "lessons.l6.key1": "ИИ может перенять несправедливость (предвзятость) из данных, на которых учится.",
             "lessons.l6.key2": "Дипфейки становятся всё реалистичнее: проверяй источник, прежде чем делиться.",
             "lessons.l6.key3": "Береги свою приватность, а ответственность за важные решения оставляй людям.",
-            "lessons.l6.tip": "Пора проверить себя! Пройди AI-испытание и посмотри, сколько ты уже знаешь.",
+            "lessons.l6.tip": "Пора проверить себя! Пройди ИИ-испытание и посмотри, сколько ты уже знаешь.",
             "lessons.l6.tipBtn": "Пройти тест",
             "lessons.l6.q": "Почему система ИИ может быть несправедливой (предвзятой)?",
-            "lessons.l6.a1": "У компьютеров есть своё мнение о людях",
-            "lessons.l6.a2": "Она училась на данных, в которых была человеческая несправедливость или однобокость",
+            "lessons.l6.a1": "Она училась на данных, в которых была человеческая несправедливость или однобокость",
+            "lessons.l6.a2": "У компьютеров есть своё мнение о людях",
             "lessons.l6.a3": "ИИ всегда специально программируют быть несправедливым",
             "lessons.l6.explain": "ИИ копирует закономерности из обучающих данных — в том числе несправедливые. Разнообразные данные, проверки и контроль людей помогают уменьшить предвзятость."
         }
@@ -639,7 +641,7 @@
             "lessons.w4.history": "Picks so far",
             "lessons.w4.empty": "Press the button to let the model pick a word.",
             "lessons.w4.picked": "The model picked “{word}” (chance: {p}).",
-            "lessons.w4.note": "The numbers are made up for this demo, but real chatbots work the same way — with tens of thousands of possible tokens.",
+            "lessons.w4.note": "The numbers are made up for this demo, but real chatbots work the same way — with tens or even hundreds of thousands of possible tokens.",
 
             // Mini-lab 5: spot the hidden AI
             "lessons.w5.title": "Spot the hidden AI",
@@ -782,7 +784,7 @@
             "lessons.w4.history": "Выбор модели",
             "lessons.w4.empty": "Нажми кнопку, чтобы модель выбрала слово.",
             "lessons.w4.picked": "Модель выбрала «{word}» (вероятность: {p}).",
-            "lessons.w4.note": "Числа придуманы для демонстрации, но настоящие чат-боты работают так же — только вариантов (токенов) у них десятки тысяч.",
+            "lessons.w4.note": "Числа придуманы для демонстрации, но настоящие чат-боты работают так же — только вариантов (токенов) у них десятки и даже сотни тысяч.",
 
             // Мини-лаборатория 5: найди скрытый ИИ
             "lessons.w5.title": "Найди скрытый ИИ",
@@ -1180,10 +1182,12 @@
             A.toast(t("lessons.toast.undone"), "↩️");
             return;
         }
-        A.toast(t("lessons.toast.done", { title: lessonTitle(n) }), "✅");
+        // The very last lesson gets one big message instead of two small ones
         if (completed.size === TOTAL && before < TOTAL) {
             launchConfetti();
-            setTimeout(function () { A.toast(t("lessons.toast.all"), "🏆"); }, 700);
+            A.toast(t("lessons.toast.all"), "🏆");
+        } else {
+            A.toast(t("lessons.toast.done", { title: lessonTitle(n) }), "✅");
         }
     }
 
@@ -1327,12 +1331,11 @@
         ctx.fillText(text, x, y);
     }
 
-    // Writes text on up to two centred lines
-    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-        const words = text.split(" ");
+    // Splits text into lines that are each at most maxWidth wide
+    function splitLines(ctx, text, maxWidth) {
         const lines = [];
         let line = "";
-        words.forEach(function (word) {
+        text.split(" ").forEach(function (word) {
             const test = line ? line + " " + word : word;
             if (ctx.measureText(test).width > maxWidth && line) {
                 lines.push(line);
@@ -1342,8 +1345,22 @@
             }
         });
         lines.push(line);
-        lines.slice(0, 2).forEach(function (text, index) {
-            ctx.fillText(text, x, y + index * lineHeight);
+        return lines;
+    }
+
+    // Writes text on two centred lines. If it needs more lines, the font gets
+    // a little smaller until it fits (no words are ever cut off).
+    function wrapText(ctx, text, x, y, maxWidth, weight, size, family) {
+        let fontSize = size;
+        let lines;
+        do {
+            ctx.font = weight + " " + fontSize + "px " + family;
+            lines = splitLines(ctx, text, maxWidth);
+            fontSize -= 1;
+        } while (lines.length > 2 && fontSize >= 14);
+        const lineHeight = Math.round((fontSize + 1) * 1.28);
+        lines.forEach(function (line, index) {
+            ctx.fillText(line, x, y + index * lineHeight);
         });
     }
 
@@ -1476,8 +1493,7 @@
             ctx.fillText("✓", x + 40, y - 39);
             ctx.textBaseline = "alphabetic";
             ctx.fillStyle = color.muted;
-            ctx.font = "600 19px " + fonts.body;
-            wrapText(ctx, lessonTitle(lesson.number), x, y + 92, 176, 24);
+            wrapText(ctx, lessonTitle(lesson.number), x, y + 92, 176, "600", 19, fonts.body);
         });
 
         // Date and seal
@@ -1488,27 +1504,29 @@
         ctx.font = "500 26px " + fonts.mono;
         ctx.fillText(t("lessons.cert.date", { date: date }), 132, H - 128);
 
+        // The round "6/6" seal sits low enough to leave space under the lesson names
+        const sealX = W - 220;
+        const sealY = H - 168;
         ctx.textAlign = "center";
         ctx.beginPath();
-        ctx.arc(W - 220, H - 190, 86, 0, Math.PI * 2);
+        ctx.arc(sealX, sealY, 78, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(" + color.rgb2 + ", 0.10)";
         ctx.fill();
         ctx.strokeStyle = gradient;
         ctx.lineWidth = 4;
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(W - 220, H - 190, 72, 0, Math.PI * 2);
+        ctx.arc(sealX, sealY, 65, 0, Math.PI * 2);
         ctx.setLineDash([4, 8]);
         ctx.strokeStyle = color.accent2;
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.fillStyle = gradient;
-        ctx.font = "700 44px " + fonts.display;
-        ctx.fillText("6/6", W - 220, H - 182);
+        ctx.font = "700 40px " + fonts.display;
+        ctx.fillText("6/6", sealX, sealY + 7);
         ctx.fillStyle = color.muted;
-        ctx.font = "600 18px " + fonts.mono;
-        ctx.fillText(t("lessons.cert.lessons").toUpperCase(), W - 220, H - 150);
+        fitText(ctx, t("lessons.cert.lessons").toUpperCase(), sealX, sealY + 36, 100, "600", 16, fonts.mono);
         ctx.restore();
 
         canvas.setAttribute("aria-label", t("lessons.cert.preview", { name: name }));
@@ -1875,7 +1893,8 @@
     }
 
     // ---------- 20. Mini-lab 3: play with a neuron ----------
-    const NEURON_START = { x1: 0.9, x2: 0.2, w1: 1.5, w2: 2.5, b: -2 };
+    // Starts on "Go to the park!" (z = 0.35), so the "Try this" hint can flip it
+    const NEURON_START = { x1: 0.9, x2: 0.2, w1: 1.5, w2: 2.5, b: -1.5 };
     const NEURON_SLIDERS = [
         { key: "x1", min: 0, max: 1, step: 0.05, digits: 2, label: "lessons.w3.x1" },
         { key: "x2", min: 0, max: 1, step: 0.05, digits: 2, label: "lessons.w3.x2" },
@@ -1894,7 +1913,7 @@
                 <div class="lsn-slider">
                     <label for="${id}">${t(slider.label)}</label>
                     <output for="${id}" class="mono" data-value="${slider.key}"></output>
-                    <input class="lsn-range" type="range" id="${id}" data-key="${slider.key}"
+                    <input class="lsn-range" type="range" id="${id}" data-key="${slider.key}" data-fid="w3-${slider.key}"
                            min="${slider.min}" max="${slider.max}" step="${slider.step}" value="${state[slider.key]}">
                 </div>`;
         }
@@ -2048,7 +2067,7 @@
                 <div class="lsn-slider lsn-temp">
                     <label for="lsn-temp">${t("lessons.w4.temp")}</label>
                     <output for="lsn-temp" class="mono" data-temp-value></output>
-                    <input class="lsn-range" type="range" id="lsn-temp" min="0.2" max="2" step="0.1" value="${state.temp}">
+                    <input class="lsn-range" type="range" id="lsn-temp" data-fid="w4-temp" min="0.2" max="2" step="0.1" value="${state.temp}">
                     <div class="lsn-temp-scale" aria-hidden="true"><span>❄ ${t("lessons.w4.low")}</span><span>${t("lessons.w4.high")} 🔥</span></div>
                 </div>
                 <p class="lsn-temp-note" data-temp-note></p>
@@ -2320,7 +2339,8 @@
         scrollRatio: 0,
         cleanupLab: null,
         inerted: [],
-        previousHash: ""
+        previousHash: "",
+        renderedLang: ""
     };
 
     const SIZES = ["s", "m", "l"];
@@ -2409,7 +2429,7 @@
                     <span class="chip"><span aria-hidden="true">⏱</span>${t("lessons.card.minutes", { n: lesson.minutes })}</span>
                     <span class="chip lsn-chip-done" data-ref="doneChip" hidden>✓ ${t("lessons.card.done")}</span>
                 </div>
-                <h2 class="lsn-article-title" id="lsn-reader-title" tabindex="-1" data-speak>${lessonTitle(n)}</h2>
+                <h2 class="lsn-article-title" id="lsn-reader-title" tabindex="-1" data-fid="title" data-speak>${lessonTitle(n)}</h2>
                 <p class="lsn-article-lead" data-speak>${t(lessonKey(n, "desc"))}</p>
             </header>`;
 
@@ -2418,7 +2438,7 @@
             const noteIcon = { fact: "✨", example: "🔎", tip: "💡" }[note];
             html += `
                 <section class="lsn-part" id="lsn-part-s${i}" data-part="s${i}">
-                    <h3 class="lsn-part-title" tabindex="-1"><span class="lsn-part-num mono" aria-hidden="true">${pad(i)}</span><span data-speak>${t(lessonKey(n, "s" + i + ".h"))}</span></h3>
+                    <h3 class="lsn-part-title" tabindex="-1" data-fid="part-s${i}"><span class="lsn-part-num mono" aria-hidden="true">${pad(i)}</span><span data-speak>${t(lessonKey(n, "s" + i + ".h"))}</span></h3>
                     <p class="lsn-part-text" data-speak>${t(lessonKey(n, "s" + i + ".p"))}</p>
                     ${note ? `
                     <aside class="lsn-note lsn-note-${note}">
@@ -2432,14 +2452,14 @@
             <section class="lsn-part lsn-lab" id="lsn-part-lab" data-part="lab" aria-labelledby="lsn-lab-title">
                 <div class="lsn-lab-head">
                     <p class="lsn-lab-label mono"><span class="lsn-lab-led" aria-hidden="true"></span>${t("lessons.reader.miniLab")}</p>
-                    <h3 class="lsn-lab-title" id="lsn-lab-title" tabindex="-1">${t("lessons.w" + n + ".title")}</h3>
+                    <h3 class="lsn-lab-title" id="lsn-lab-title" tabindex="-1" data-fid="part-lab">${t("lessons.w" + n + ".title")}</h3>
                     <p class="lsn-lab-intro">${t("lessons.w" + n + ".intro")}</p>
                 </div>
                 <div class="lsn-lab-body" data-ref="lab"></div>
             </section>
 
             <section class="lsn-part lsn-keys" id="lsn-part-keys" data-part="keys">
-                <h3 class="lsn-part-title" tabindex="-1"><span class="lsn-part-num mono" aria-hidden="true">✦</span><span data-speak>${t("lessons.reader.keyIdeas")}</span></h3>
+                <h3 class="lsn-part-title" tabindex="-1" data-fid="part-keys"><span class="lsn-part-num mono" aria-hidden="true">✦</span><span data-speak>${t("lessons.reader.keyIdeas")}</span></h3>
                 <ul class="lsn-keys-list">
                     ${[1, 2, 3].map(function (k) {
                         return `<li><span class="lsn-key-num mono" aria-hidden="true">${pad(k)}</span><span data-speak>${t(lessonKey(n, "key" + k))}</span></li>`;
@@ -2457,7 +2477,7 @@
             </aside>
 
             <section class="lsn-part lsn-check" id="lsn-part-check" data-part="check" aria-labelledby="lsn-check-title">
-                <h3 class="lsn-part-title" id="lsn-check-title" tabindex="-1"><span class="lsn-part-num mono" aria-hidden="true">?</span><span>${t("lessons.reader.check")}</span></h3>
+                <h3 class="lsn-part-title" id="lsn-check-title" tabindex="-1" data-fid="part-check"><span class="lsn-part-num mono" aria-hidden="true">?</span><span>${t("lessons.reader.check")}</span></h3>
                 <p class="lsn-check-question" id="lsn-check-question">${t(lessonKey(n, "q"))}</p>
                 <div class="lsn-options" role="group" aria-labelledby="lsn-check-question" data-ref="options"></div>
                 <div class="lsn-feedback" aria-live="polite" data-ref="feedback"></div>
@@ -2555,6 +2575,7 @@
 
     function renderLessonContent() {
         const n = reader.lesson;
+        reader.renderedLang = A.lang;
         stopLab(false);
         panel.style.setProperty("--lsn-rgb", "var(" + LESSONS[n - 1].rgb + ")");
         parts.article.innerHTML = articleHTML(n);
@@ -2599,10 +2620,17 @@
         setNavButton(parts.prev, n - 1, "prev");
         setNavButton(parts.next, n + 1, "next");
 
+        // When the lesson is done, the button says so and shows a visible "Undo",
+        // so nobody un-completes a lesson by accident without knowing it
         parts.complete.classList.toggle("is-done", isDone);
-        parts.completeText.textContent = t(isDone ? "lessons.reader.completed" : "lessons.reader.complete");
-        if (isDone) parts.complete.title = t("lessons.reader.undoHint");
-        else parts.complete.removeAttribute("title");
+        if (isDone) {
+            parts.completeText.innerHTML = '<span aria-hidden="true">✓</span> ' + esc(t("lessons.reader.completed")) +
+                '<span class="lsn-complete-undo"><span aria-hidden="true">↩</span> ' + esc(t("lessons.reader.undo")) + "</span>";
+            parts.complete.setAttribute("aria-label", t("lessons.reader.undoLabel"));
+        } else {
+            parts.completeText.textContent = t("lessons.reader.complete");
+            parts.complete.removeAttribute("aria-label");
+        }
         const chip = ref(parts.article, "doneChip");
         if (chip) chip.hidden = !isDone;
     }
@@ -2685,18 +2713,24 @@
         onReaderScroll();
     }
 
+    // Moves the keyboard focus to the heading of a page section (without scrolling)
+    function focusSectionHeading(sectionId) {
+        const section = document.getElementById(sectionId);
+        const heading = section && section.querySelector("h1, h2");
+        if (!heading) return;
+        if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
+        heading.focus({ preventScroll: true });
+    }
+
     // "Try it on this site": close the reader and jump to the right place
     function runTryIt() {
         const target = LESSONS[reader.lesson - 1].tryIt;
         closeReader({ restoreFocus: false });
         requestAnimationFrame(function () {
             const sectionId = target === "classifier" || target === "predictor" ? "lab" : target;
-            const heading = document.querySelector("#" + sectionId + " h2");
-            if (heading) {
-                if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
-                heading.focus({ preventScroll: true });
-            }
+            focusSectionHeading(sectionId);
             if (sectionId === "lab" && typeof A.openLab === "function") A.openLab(target);
+            else if (sectionId === "quiz" && typeof A.startQuiz === "function") A.startQuiz();
             else A.scrollToSection(sectionId);
         });
     }
@@ -2762,6 +2796,14 @@
         window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
     }
 
+    // Can the keyboard focus go back to this element when the reader closes?
+    function canTakeFocus(element) {
+        return Boolean(element && element.isConnected && typeof element.focus === "function" &&
+            element !== document.body && element !== document.documentElement &&
+            !readerEl.contains(element) && !element.closest("[inert], [hidden]") &&
+            element.getClientRects().length > 0);
+    }
+
     function openLesson(number, opener) {
         const n = Number(number);
         if (!Number.isInteger(n) || n < 1 || n > TOTAL) return;
@@ -2771,12 +2813,15 @@
         }
         clearTimeout(reader.closeTimer);
         reader.open = true;
-        reader.opener = opener || null;
-        if (!opener) scrollCardIntoView(n);
+        reader.opener = canTakeFocus(opener) ? opener : null;
+        // Without a button to come back to, closing returns to the lesson's card
+        if (!reader.opener) scrollCardIntoView(n);
         const hash = window.location.hash;
         reader.previousHash = /^#lesson-\d$/.test(hash) ? "" : hash;
 
+        wrapPaletteCommands();
         lockPage();
+        document.body.classList.add("lsn-reading");
         readerEl.hidden = false;
         readerEl.classList.remove("is-closing");
         void readerEl.offsetWidth;   // lets the opening animation start from the beginning
@@ -2785,16 +2830,19 @@
         showLesson(n);
     }
 
+    // options.restoreFocus = false: another part of the page takes the focus
+    // options.keepHash = true: leave the address bar alone (the Back button changed it)
     function closeReader(options) {
         if (!reader.open) return;
-        const restoreFocus = !options || options.restoreFocus !== false;
+        const settings = options || {};
         reader.open = false;
         stopSpeaking();
         stopLab(true);
         readerEl.classList.remove("is-open");
+        document.body.classList.remove("lsn-reading");
         updatePaused();
         unlockPage();
-        setHash(reader.previousHash);
+        if (!settings.keepHash) setHash(reader.previousHash);
 
         const finish = function () {
             readerEl.hidden = true;
@@ -2807,12 +2855,18 @@
             reader.closeTimer = setTimeout(finish, 260);
         }
 
-        if (restoreFocus) {
-            let target = reader.opener;
-            if (!target || !target.isConnected || target.getClientRects().length === 0) {
-                target = mount.querySelector('#lesson-card-' + reader.lesson + ' [data-open]');
+        if (settings.restoreFocus !== false) {
+            // Back to the button that opened the reader. If there is none, go to the
+            // card of the lesson you were reading (scrolled into view, so the focus ring is visible).
+            if (canTakeFocus(reader.opener)) {
+                reader.opener.focus({ preventScroll: true });
+            } else {
+                const card = mount.querySelector("#lesson-card-" + reader.lesson + " [data-open]");
+                if (card) {
+                    scrollCardIntoView(reader.lesson);
+                    card.focus({ preventScroll: true });
+                }
             }
-            if (target) target.focus({ preventScroll: true });
         }
     }
 
@@ -2959,7 +3013,9 @@
             icon: lesson.icon,
             title: function () { return t("lessons.cmdOpen", { title: lessonTitle(lesson.number) }); },
             keywords: "lesson урок " + lesson.number + " " + lesson.keywords,
-            run: function () { openLesson(lesson.number); }
+            // The palette gives the focus back before running a command, so the
+            // focused element is where the reader returns to when it closes
+            run: function () { openLesson(lesson.number, document.activeElement); }
         });
     });
 
@@ -2969,12 +3025,71 @@
         icon: "▶️",
         title: function () { return t("lessons.cmdContinue"); },
         keywords: "continue next lesson learning продолжить следующий урок обучение",
-        run: function () { openLesson(nextLesson() || 1); }
+        run: function () { openLesson(nextLesson() || 1, document.activeElement); }
     });
 
+    // Other features open a lesson with AICompass.openLesson(3).
+    // Closing the reader brings the focus back to the button they used.
     A.openLesson = function (number) {
-        openLesson(number);
+        openLesson(number, document.activeElement);
     };
+
+    A.closeLesson = function () {
+        closeReader({ restoreFocus: false });
+    };
+
+    // While the reader is open, anything that takes you to another part of the page
+    // would happen hidden behind it. So these close the reader first:
+    // 1) AICompass.scrollToSection(), used by the lab, quiz, glossary and assistant
+    let handingOver = false;   // true while another feature takes over from the reader
+    const coreScrollToSection = A.scrollToSection;
+    A.scrollToSection = function (id) {
+        if (reader.open || handingOver) {
+            closeReader({ restoreFocus: false });   // does nothing if it is already closed
+            focusSectionHeading(id);
+        }
+        return coreScrollToSection.apply(A, arguments);
+    };
+
+    // 2) Ctrl+K commands that go somewhere, like "Go to Glossary" or "Ask Compass Bot",
+    //    and the glossary / assistant functions the palette calls directly.
+    //    Quick actions (theme, language...) and the lesson commands keep the reader open.
+    //    This runs every time the reader opens, so things added later are included.
+    const KEEP_READER_GROUPS = ["cmd.groupActions", "lessons.cmdGroup"];
+
+    // Wraps owner[name] so it closes the reader before it runs
+    function closeReaderFirst(owner, name, sectionId) {
+        const original = owner && owner[name];
+        if (typeof original !== "function" || original.lsnClosesReader) return;
+        const wrapped = function () {
+            if (!reader.open) return original.apply(this, arguments);
+            closeReader({ restoreFocus: false });
+            // The focus goes to the section's heading, or back to the button that opened
+            // the reader. The feature can still move it (for example into its own text box).
+            if (sectionId) focusSectionHeading(sectionId);
+            else if (canTakeFocus(reader.opener)) reader.opener.focus({ preventScroll: true });
+            handingOver = true;
+            try {
+                return original.apply(this, arguments);
+            } finally {
+                handingOver = false;
+            }
+        };
+        wrapped.lsnClosesReader = true;
+        owner[name] = wrapped;
+    }
+
+    function wrapPaletteCommands() {
+        (A.commands || []).forEach(function (command) {
+            if (!command || KEEP_READER_GROUPS.indexOf(command.group) !== -1) return;
+            const section = /^go-([a-z]+)$/.exec(String(command.id || ""));
+            closeReaderFirst(command, "run", section ? section[1] : "");
+        });
+        closeReaderFirst(A.glossary, "show", "glossary");
+        if (A.assistant) {
+            ["open", "ask", "toggle"].forEach(function (name) { closeReaderFirst(A.assistant, name); });
+        }
+    }
 
     A.lessons = LESSONS.map(function (lesson) {
         return {
@@ -2990,23 +3105,24 @@
         updateHUD();
         updateCards();
         if (!cert.root.hidden) drawCertificate();
-        if (!reader.open) return;
+        // Core also sends this event once when the page starts: nothing to redo then
+        if (!reader.open || reader.renderedLang === A.lang) return;
 
-        // Re-draw the open lesson in the new language, keeping its place and answers
+        // Re-draw the open lesson in the new language, keeping its place, answers and focus
         const ratio = reader.scrollRatio;
         const active = document.activeElement;
-        const fid = active && readerEl.contains(active) ? active.getAttribute("data-fid") : null;
+        const focusWasInside = Boolean(active) && readerEl.contains(active);
+        const fid = focusWasInside ? active.getAttribute("data-fid") : null;
         stopSpeaking();
         renderLessonContent();
         updateReaderChrome();
         const box = parts.scroll;
         box.scrollTop = ratio * (box.scrollHeight - box.clientHeight);
         onReaderScroll();
-        if (!active || !active.isConnected || !readerEl.contains(active)) {
+        if (focusWasInside && !active.isConnected) {
             const again = fid ? readerEl.querySelector('[data-fid="' + fid + '"]') : null;
-            const fallback = parts.article.querySelector("#lsn-reader-title");
-            if (again) again.focus({ preventScroll: true });
-            else if (fallback && readerEl.contains(active)) fallback.focus({ preventScroll: true });
+            const target = again || parts.article.querySelector("#lsn-reader-title");
+            if (target) target.focus({ preventScroll: true });
         }
     });
 
@@ -3029,9 +3145,11 @@
         return match ? Number(match[1]) : 0;
     }
 
+    // The Back / Forward buttons change the hash: open the lesson, or close the reader
     window.addEventListener("hashchange", function () {
         const n = lessonFromHash();
-        if (n) openLesson(n);
+        if (n) openLesson(n, document.activeElement);
+        else if (reader.open) closeReader({ keepHash: true });
     });
 
     function openFromHash() {

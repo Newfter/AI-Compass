@@ -19,6 +19,33 @@
     display: none !important;
 }
 
+/* Text versions of the bright accent colours. In the light theme the cyan,
+   green and amber are too pale for small text on white, so they are mixed
+   with a bit of the text colour. Borders, dots and glows keep the bright ones. */
+:root {
+    --lsn-ink-2: var(--accent-2);
+    --lsn-ink-ok: var(--success);
+    --lsn-ink-warn: var(--warning);
+}
+
+:root[data-theme="light"] {
+    --lsn-ink-2: color-mix(in srgb, var(--accent-2) 72%, var(--text));
+    --lsn-ink-ok: color-mix(in srgb, var(--success) 72%, var(--text));
+    --lsn-ink-warn: color-mix(in srgb, var(--warning) 80%, var(--text));
+}
+
+/* While a lesson is open, pop-up messages appear above the reader's bottom bar,
+   so they never cover the "Mark as complete" button */
+.lsn-reading .toast-stack {
+    bottom: calc(max(24px, (100vh - 960px) / 2) + 92px);
+}
+
+@media (max-width: 640px) {
+    .lsn-reading .toast-stack {
+        bottom: 82px;
+    }
+}
+
 .lsn-arrow {
     display: inline-block;
     transition: transform 0.3s var(--ease);
@@ -174,7 +201,7 @@
 
 .lsn-hud-label {
     margin-bottom: 6px;
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 11.5px;
     font-weight: 600;
     letter-spacing: 2.2px;
@@ -282,7 +309,7 @@
 .lsn-node:hover {
     transform: scale(1.08);
     border-color: var(--accent-2);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
 }
 
 .lsn-node-num,
@@ -314,7 +341,7 @@
 
 .lsn-step.is-next .lsn-node {
     border-color: var(--accent-2);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
 }
 
 /* A pulsing ring around the next lesson */
@@ -335,7 +362,7 @@
 .lsn-step-label {
     max-width: 150px;
     padding: 0 4px;
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 12.5px;
     font-weight: 600;
     line-height: 1.35;
@@ -346,7 +373,7 @@
 }
 
 .lsn-step.is-next .lsn-step-label {
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
 }
 
 /* ===== 2. CERTIFICATE ===== */
@@ -541,7 +568,7 @@
     border: 1px solid rgba(var(--accent-2-rgb), 0.45);
     border-radius: 999px;
     background: rgba(var(--accent-2-rgb), 0.1);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.2px;
@@ -567,7 +594,7 @@
     border-color: var(--success);
     background: var(--surface-2);
     background: color-mix(in srgb, var(--success) 13%, transparent);
-    color: var(--success);
+    color: var(--lsn-ink-ok);
 }
 
 .lsn-card-icon {
@@ -780,7 +807,7 @@
 .lsn-reader-keys {
     padding-left: 12px;
     border-left: 1px solid var(--border);
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 11.5px;
     white-space: nowrap;
 }
@@ -810,7 +837,7 @@
 
 .lsn-tool:hover {
     border-color: var(--accent-2);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     box-shadow: 0 0 18px rgba(var(--accent-2-rgb), 0.2);
 }
 
@@ -852,7 +879,7 @@
 .lsn-tool-listen.is-on {
     border-color: var(--accent-2);
     background: rgba(var(--accent-2-rgb), 0.12);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
 }
 
 .lsn-tool-listen.is-on .lsn-wave i {
@@ -900,7 +927,7 @@
 
 .lsn-toc-title {
     margin-bottom: 12px;
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 2px;
@@ -923,7 +950,7 @@
     min-height: 40px;
     padding: 9px 10px 9px 16px;
     border-radius: 0 10px 10px 0;
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 13.5px;
     font-weight: 600;
     line-height: 1.35;
@@ -962,7 +989,7 @@
 .lsn-toc-num {
     flex-shrink: 0;
     min-width: 20px;
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 11px;
 }
 
@@ -1001,7 +1028,7 @@
 }
 
 .lsn-nav-small {
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 10.5px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -1035,7 +1062,7 @@
 
 .lsn-nav.is-finish .lsn-nav-small,
 .lsn-nav.is-finish .lsn-nav-arrow {
-    color: var(--success);
+    color: var(--lsn-ink-ok);
 }
 
 .lsn-nav[aria-disabled="true"] {
@@ -1055,8 +1082,32 @@
     border-color: var(--success);
     background: var(--surface-2);
     background: color-mix(in srgb, var(--success) 14%, var(--surface-solid));
-    color: var(--success);
+    color: var(--lsn-ink-ok);
     box-shadow: 0 0 24px color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+/* The small "Undo" part of the "Completed" button */
+.lsn-complete-undo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 10px;
+    padding: 2px 9px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.lsn-complete.is-done:hover .lsn-complete-undo,
+.lsn-complete.is-done:focus-visible .lsn-complete-undo {
+    background: var(--surface-hover);
+    color: var(--text);
 }
 
 /* ===== 5. LESSON TEXT ===== */
@@ -1116,7 +1167,7 @@
 
 .lsn-chip-done {
     border-color: var(--success);
-    color: var(--success);
+    color: var(--lsn-ink-ok);
 }
 
 .lsn-article-title {
@@ -1158,7 +1209,7 @@
 
 .lsn-part-num {
     flex-shrink: 0;
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 13px;
     font-weight: 600;
     text-shadow: 0 0 12px rgba(var(--accent-2-rgb), 0.5);
@@ -1214,7 +1265,7 @@
 
 .lsn-note-label {
     margin-bottom: 4px;
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 11.5px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -1294,7 +1345,7 @@
 }
 
 .lsn-try-label {
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 11.5px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -1376,7 +1427,7 @@
     height: 32px;
     border: 1px solid var(--border-strong);
     border-radius: 10px;
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 13px;
     font-weight: 600;
 }
@@ -1447,11 +1498,11 @@
 
 .lsn-feedback-box.is-correct .lsn-feedback-title,
 .lsn-feedback-done {
-    color: var(--success);
+    color: var(--lsn-ink-ok);
 }
 
 .lsn-feedback-box.is-wrong .lsn-feedback-title {
-    color: var(--warning);
+    color: var(--lsn-ink-warn);
 }
 
 .lsn-feedback-done {
@@ -1483,7 +1534,7 @@
     border: 1px solid rgba(var(--accent-2-rgb), 0.4);
     border-radius: 999px;
     background: rgba(var(--accent-2-rgb), 0.08);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.6px;
@@ -1518,7 +1569,7 @@
 }
 
 .lsn-lab-sub {
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -1563,7 +1614,7 @@
 
 .lsn-lab-status.is-done,
 .lsn-lab-win {
-    color: var(--success);
+    color: var(--lsn-ink-ok);
     font-weight: 700;
 }
 
@@ -1583,7 +1634,7 @@
 
 .lsn-lab-small {
     margin-top: 12px;
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 13px;
 }
 
@@ -1606,7 +1657,7 @@
 
 .lsn-pill:not([aria-disabled="true"]):hover {
     border-color: var(--accent-2);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
 }
 
 .lsn-pill[aria-disabled="true"] {
@@ -1618,7 +1669,7 @@
     opacity: 1;
     border-color: var(--accent-2);
     background: rgba(var(--accent-2-rgb), 0.14);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
 }
 
 /* -- Lab 1: AI or not AI? -- */
@@ -1666,11 +1717,11 @@
 }
 
 .lsn-sort-item.is-right .lsn-sort-feedback strong {
-    color: var(--success);
+    color: var(--lsn-ink-ok);
 }
 
 .lsn-sort-item.is-wrong .lsn-sort-feedback strong {
-    color: var(--warning);
+    color: var(--lsn-ink-warn);
 }
 
 /* -- Lab 2: watch a model learn -- */
@@ -1791,7 +1842,7 @@
 }
 
 .lsn-stat-step {
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -1816,7 +1867,7 @@
 
 .lsn-loss figcaption {
     margin-bottom: 6px;
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.4px;
@@ -1970,7 +2021,7 @@
 
 .lsn-fieldset legend {
     padding: 0 6px;
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.3px;
@@ -1997,7 +2048,7 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--surface-2);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 13px;
     text-align: center;
 }
@@ -2102,14 +2153,14 @@
 }
 
 .lsn-verdict {
-    color: var(--warning);
+    color: var(--lsn-ink-warn);
     font-family: var(--font-display);
     font-size: 17px;
     font-weight: 600;
 }
 
 .lsn-verdict.is-yes {
-    color: var(--success);
+    color: var(--lsn-ink-ok);
 }
 
 /* -- Lab 4: be the language model -- */
@@ -2141,7 +2192,7 @@
     border-bottom-color: transparent;
     border-radius: 8px;
     background: rgba(var(--accent-2-rgb), 0.14);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
 }
 
 .lsn-blank.is-pop {
@@ -2226,7 +2277,7 @@
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 12px;
 }
 
@@ -2258,12 +2309,12 @@
 
 .lsn-history-chip.is-new {
     border-color: var(--accent-2);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     animation: lsn-pop 0.4s var(--ease);
 }
 
 .lsn-history-empty {
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 14px;
 }
 
@@ -2309,7 +2360,7 @@
 
 .lsn-moment.is-found .lsn-moment-time {
     border-color: var(--accent-2);
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
 }
 
 .lsn-moment-card {
@@ -2337,7 +2388,7 @@
 }
 
 .lsn-moment-button:hover .lsn-moment-hint {
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
 }
 
 .lsn-moment-icon {
@@ -2353,7 +2404,7 @@
 
 .lsn-moment-hint {
     flex-shrink: 0;
-    color: var(--text-dim);
+    color: var(--text-muted);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.5px;
@@ -2371,7 +2422,7 @@
 }
 
 .lsn-moment-ai strong {
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
 }
 
 .lsn-progress-mini {
@@ -2404,7 +2455,7 @@
 }
 
 .lsn-dilemma-tag {
-    color: var(--accent-2);
+    color: var(--lsn-ink-2);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -2473,11 +2524,11 @@
 }
 
 .lsn-dilemma-feedback.is-good strong {
-    color: var(--success);
+    color: var(--lsn-ink-ok);
 }
 
 .lsn-dilemma-feedback.is-bad strong {
-    color: var(--warning);
+    color: var(--lsn-ink-warn);
 }
 
 /* ===== 7. CONFETTI ===== */

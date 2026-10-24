@@ -14,6 +14,8 @@
             var savedTheme = JSON.parse(localStorage.getItem("aic:theme"));
             if (savedTheme === "light" || savedTheme === "dark") {
                 document.documentElement.setAttribute("data-theme", savedTheme);
+                // The phone's address bar matches the theme too
+                document.querySelector('meta[name="theme-color"]').setAttribute("content", savedTheme === "light" ? "#f4f6fd" : "#060812");
             }
         } catch (error) {}
     </script>
@@ -66,7 +68,7 @@
             <span class="logo-text">AI <span>Compass</span></span>
         </a>
 
-        <nav class="nav-links" id="nav-links" aria-label="Main">
+        <nav class="nav-links" id="nav-links" aria-label="Main menu" data-i18n-attr="aria-label:core.navMain">
             <a href="#lessons" data-i18n="nav.lessons">Lessons</a>
             <a href="#lab" data-i18n="nav.lab">AI Lab</a>
             <a href="#quiz" data-i18n="nav.quiz">Quiz</a>
@@ -166,7 +168,7 @@
             <div class="section-head" data-reveal>
                 <p class="section-label" data-i18n="lab.label">HANDS-ON EXPERIMENTS</p>
                 <h2 data-i18n="lab.title">The AI Lab</h2>
-                <p class="section-sub" data-i18n="lab.subtitle">Real machine learning, running right here in your browser. Teach it, test it, and watch it think.</p>
+                <p class="section-sub" data-i18n="lab.subtitle">Real machine learning, running right here in your browser. Teach a model, test it, and watch it think.</p>
             </div>
             <div data-feature="lab"></div>
         </div>
@@ -248,7 +250,7 @@
             <p data-i18n="footer.tagline">Made for curious minds.</p>
         </div>
 
-        <nav class="footer-links" aria-label="Footer">
+        <nav class="footer-links" aria-label="Footer links" data-i18n-attr="aria-label:core.navFooter">
             <a href="#lessons" data-i18n="nav.lessons">Lessons</a>
             <a href="#lab" data-i18n="nav.lab">AI Lab</a>
             <a href="#quiz" data-i18n="nav.quiz">Quiz</a>

@@ -148,6 +148,12 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     white-space: nowrap;
 }
 
+/* The changing letters let the mouse "see through" them to the text itself,
+   so swapping them under a resting mouse doesn't count as a new hover */
+.fx-scrambling * {
+    pointer-events: none;
+}
+
 /* ===== 5. TYPEWRITER WORDS ===== */
 
 .fx-rotator {
@@ -172,6 +178,11 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     background: var(--accent-2);
     box-shadow: 0 0 8px rgba(var(--accent-2-rgb), 0.8);
     animation: fx-caret-blink 1s steps(1) infinite;
+}
+
+/* On a line of its own, the word sits in the middle of that line */
+.fx-rotator.fx-rotator-alone {
+    text-align: center;
 }
 
 /* The caret stays solid while letters are typed */
@@ -323,13 +334,15 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
     }
 }
 
-/* ===== 10. SECTION MINI-MAP (big screens only) ===== */
+/* ===== 10. SECTION MINI-MAP (big screens with a mouse only) ===== */
 
+/* Its dots are small, so touch screens (tablets too) don't get it */
 .fx-rail {
     display: none;
 }
 
-@media (min-width: 1280px) and (min-height: 560px) {
+/* From 1360px there is a clear gap between the content and the rail */
+@media (min-width: 1360px) and (min-height: 560px) and (hover: hover) and (pointer: fine) {
     .fx-rail {
         position: fixed;
         top: 50%;

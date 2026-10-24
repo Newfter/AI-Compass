@@ -1,1 +1,996 @@
-/* glossary styles */
+/* =========================================================
+   AI COMPASS — GLOSSARY
+   1. Category colours
+   2. The control panel ("console")
+   3. Search box and random button
+   4. Category chips and alphabet strip
+   5. Status line (counter, reset)
+   6. Grid of term cards
+   7. Opening a card (example + related terms)
+   8. Glowing "spotlight" when a term is shown
+   9. Empty state and "show all"
+      (+ light theme: darker small labels)
+  10. Responsive
+  11. Reduced motion / calm mode
+   All colours come from the variables in style.css,
+   so both the dark and the light theme look right.
+   ========================================================= */
+
+[data-feature="glossary"] [hidden] {
+    display: none !important;
+}
+
+/* ===== 1. CATEGORY COLOURS ===== */
+
+.gl {
+    --gl-c: var(--accent);
+}
+
+[data-cat="basics"] {
+    --gl-c: var(--accent-2);
+}
+
+[data-cat="learning"] {
+    --gl-c: var(--accent);
+}
+
+[data-cat="generative"] {
+    --gl-c: var(--accent-3);
+}
+
+[data-cat="ethics"] {
+    --gl-c: var(--warning);
+}
+
+[data-cat="all"] {
+    --gl-c: var(--text-muted);
+}
+
+/* ===== 2. THE CONTROL PANEL ===== */
+
+.gl-console {
+    z-index: 2;
+    padding: 26px 28px 22px;
+    margin-bottom: 26px;
+    border-color: var(--border-strong);
+    background:
+        radial-gradient(ellipse at 100% 0%, rgba(var(--accent-2-rgb), 0.1), transparent 55%),
+        radial-gradient(ellipse at 0% 100%, rgba(var(--accent-rgb), 0.14), transparent 55%),
+        var(--surface);
+}
+
+/* A thin light that slowly scans along the top edge */
+.gl-console::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 0;
+    width: 30%;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
+    animation: gl-scan 6s ease-in-out infinite;
+}
+
+@keyframes gl-scan {
+    0% { transform: translateX(-20%); opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: 1; }
+    /* 233% of its own width (30%) ends exactly at the right edge, so it never sticks out */
+    100% { transform: translateX(233%); opacity: 0; }
+}
+
+/* Small corner brackets, like on a screen */
+.gl-corner {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+    border-color: var(--accent-2);
+    border-style: solid;
+    border-width: 0;
+    opacity: 0.7;
+}
+
+.gl-corner-tl {
+    top: 12px;
+    left: 12px;
+    border-top-width: 1.5px;
+    border-left-width: 1.5px;
+}
+
+.gl-corner-br {
+    right: 12px;
+    bottom: 12px;
+    border-right-width: 1.5px;
+    border-bottom-width: 1.5px;
+}
+
+.gl-console-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 20px;
+    margin-bottom: 16px;
+}
+
+.gl-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--accent-2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.gl-kicker-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 10px var(--accent-2);
+}
+
+/* "Explored 7/33" with a small bar */
+.gl-explored {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.gl-explored-label {
+    font-size: 11px;
+}
+
+.gl-explored-bar,
+.gl-count-bar {
+    position: relative;
+    display: block;
+    width: 90px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: var(--border);
+}
+
+.gl-explored-bar span,
+.gl-count-bar span {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--gradient);
+    box-shadow: 0 0 8px rgba(var(--accent-2-rgb), 0.6);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.6s var(--ease);
+}
+
+.gl-explored-num {
+    min-width: 40px;
+    color: var(--text);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.gl-explored.is-complete .gl-explored-num {
+    color: var(--success);
+}
+
+/* ===== 3. SEARCH BOX AND RANDOM BUTTON ===== */
+
+.gl-search-row {
+    display: flex;
+    gap: 12px;
+}
+
+.gl-search {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background: var(--surface-2);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.gl-search:hover {
+    border-color: rgba(var(--accent-2-rgb), 0.55);
+}
+
+/* When you type, the box glows with the site gradient */
+.gl-search:focus-within {
+    border-color: transparent;
+    background:
+        linear-gradient(var(--surface-solid), var(--surface-solid)) padding-box,
+        var(--gradient) border-box;
+    box-shadow: 0 0 0 4px rgba(var(--accent-2-rgb), 0.12), 0 0 30px rgba(var(--accent-rgb), 0.22);
+}
+
+.gl-search-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 48px;
+    color: var(--text-dim);
+    transition: color 0.25s ease;
+}
+
+.gl-search:focus-within .gl-search-icon {
+    color: var(--accent-2);
+}
+
+.gl-input {
+    flex: 1;
+    min-width: 0;
+    height: 54px;
+    padding: 0 8px 0 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.gl-input::placeholder {
+    color: var(--text-dim);
+    opacity: 1;
+}
+
+/* The focus glow is on the whole box, not on the field itself */
+.gl-input:focus-visible {
+    outline: none;
+}
+
+/* Hide the browser's own "x" button: we have our own */
+.gl-input::-webkit-search-cancel-button,
+.gl-input::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.gl-clear {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    margin-right: 6px;
+    border-radius: 12px;
+    color: var(--text-muted);
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.gl-clear:hover {
+    color: var(--text);
+    background: rgba(var(--accent-rgb), 0.14);
+}
+
+.gl-random,
+.gl-filter-toggle {
+    flex: none;
+    min-height: 56px;
+    padding: 12px 20px;
+    border-radius: 16px;
+}
+
+/* Only phones fold the filters away (see section 10) */
+.gl-filter-toggle {
+    position: relative;
+    display: none;
+}
+
+.gl-filter-badge {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.6);
+    border-radius: 999px;
+    background: var(--gradient-button);
+    color: #ffffff;
+    font-size: 11px;
+}
+
+.gl-filter-toggle[aria-expanded="true"] {
+    border-color: var(--accent-2);
+    color: var(--accent-2);
+}
+
+.gl-dice {
+    display: inline-block;
+    font-size: 19px;
+    line-height: 1;
+}
+
+.gl-random:hover .gl-dice {
+    transform: rotate(-14deg) scale(1.1);
+}
+
+.gl-dice {
+    transition: transform 0.3s var(--ease);
+}
+
+/* ===== 4. CATEGORY CHIPS AND ALPHABET STRIP ===== */
+
+.gl-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.gl-chip {
+    min-height: 40px;
+    padding: 7px 8px 7px 14px;
+}
+
+.gl-chip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gl-c);
+    box-shadow: 0 0 8px var(--gl-c);
+}
+
+.gl-chip[data-cat="all"] .gl-chip-dot {
+    background: var(--gradient);
+    box-shadow: none;
+}
+
+.gl-chip-count {
+    min-width: 26px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--surface-hover);
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.gl-chip[aria-pressed="true"] .gl-chip-count {
+    background: rgba(var(--accent-2-rgb), 0.18);
+    color: var(--accent-2);
+}
+
+.gl-chip.is-zero:not([aria-pressed="true"]) {
+    opacity: 0.55;
+}
+
+.gl-alpha {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+}
+
+.gl-letter {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 38px;
+    height: 40px;
+    padding: 0 8px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 600;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gl-letter:hover:not(:disabled) {
+    color: var(--text);
+    background: rgba(var(--accent-rgb), 0.12);
+}
+
+.gl-letter[aria-pressed="true"] {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.12);
+    color: var(--accent-2);
+    box-shadow: 0 0 16px rgba(var(--accent-2-rgb), 0.2);
+}
+
+.gl-letter:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.gl-letter-all {
+    padding: 0 12px;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+/* ===== 5. STATUS LINE ===== */
+
+.gl-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    min-height: 40px;
+    margin-top: 12px;
+}
+
+.gl-count {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.gl-count-bar {
+    width: 70px;
+}
+
+.gl-reset {
+    margin-left: auto;
+    min-height: 40px;
+}
+
+/* ===== 6. GRID OF TERM CARDS ===== */
+
+.gl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 18px;
+}
+
+.gl-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 22px 22px 14px;
+    overflow: hidden;
+    /* Many cards: a solid-looking glass instead of an expensive blur */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(var(--accent-rgb), 0.06);
+    background:
+        linear-gradient(160deg, color-mix(in srgb, var(--gl-c) 10%, transparent), transparent 45%),
+        var(--surface);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.35s var(--ease);
+}
+
+[data-theme="light"] .gl-card {
+    box-shadow: 0 10px 28px rgba(30, 30, 80, 0.07);
+}
+
+/* A coloured line at the top of every card */
+.gl-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 22px;
+    right: 22px;
+    height: 2px;
+    border-radius: 0 0 2px 2px;
+    background: linear-gradient(90deg, transparent, var(--gl-c), transparent);
+    opacity: 0.55;
+    transition: opacity 0.3s ease;
+}
+
+.gl-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--border-strong);
+    border-color: color-mix(in srgb, var(--gl-c) 45%, transparent);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22), 0 0 30px rgba(var(--accent-rgb), 0.1);
+}
+
+.gl-card:hover::before,
+.gl-card.is-open::before {
+    opacity: 1;
+}
+
+/* Shares a row with an open card: keep its own height (see markLooseRows) */
+.gl-card.is-loose {
+    align-self: start;
+}
+
+.gl-card.is-open {
+    border-color: var(--border-strong);
+    border-color: color-mix(in srgb, var(--gl-c) 40%, transparent);
+}
+
+.gl-card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.gl-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--border-strong);
+    border-color: color-mix(in srgb, var(--gl-c) 40%, transparent);
+    border-radius: 12px;
+    background: rgba(var(--accent-rgb), 0.1);
+    background: color-mix(in srgb, var(--gl-c) 13%, transparent);
+    font-size: 20px;
+    line-height: 1;
+}
+
+.gl-cat-tag {
+    min-width: 0;
+    color: var(--gl-c);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+/* A small tick on terms you have already opened */
+.gl-seen {
+    display: none;
+    place-items: center;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin-left: auto;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.4);
+    border-radius: 50%;
+    color: var(--success);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.gl-card.is-explored .gl-seen {
+    display: grid;
+}
+
+.gl-name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+}
+
+.gl-alt {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 6px;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.gl-alt-code {
+    flex: none;
+    padding: 1px 5px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 9.5px;
+    letter-spacing: 1px;
+}
+
+.gl-def {
+    margin: 12px 0 12px;
+    color: var(--text-muted);
+    font-size: 14.5px;
+    line-height: 1.6;
+}
+
+/* Search matches */
+.gl-card mark,
+.gl-empty mark {
+    padding: 0 2px;
+    border-radius: 4px;
+    background: rgba(var(--accent-2-rgb), 0.22);
+    color: var(--text);
+    box-shadow: 0 0 0 1px rgba(var(--accent-2-rgb), 0.35);
+}
+
+/* ===== 7. OPENING A CARD ===== */
+
+.gl-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: calc(100% + 16px);
+    min-height: 44px;
+    margin: auto -8px 0;
+    padding: 8px;
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 10px 10px;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    font-weight: 700;
+    text-align: left;
+    transition: color 0.2s ease;
+}
+
+.gl-toggle:hover,
+.gl-toggle[aria-expanded="true"] {
+    color: var(--accent-2);
+}
+
+.gl-chevron {
+    flex: none;
+    transition: transform 0.35s var(--ease);
+}
+
+.gl-toggle[aria-expanded="true"] .gl-chevron {
+    transform: rotate(180deg);
+}
+
+/* Closed content takes no space and can't be reached with Tab */
+.gl-more {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition: grid-template-rows 0.42s var(--ease), visibility 0s linear 0.42s;
+}
+
+.gl-card.is-open .gl-more {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition: grid-template-rows 0.42s var(--ease), visibility 0s linear 0s;
+}
+
+.gl-more-inner {
+    min-height: 0;
+    overflow: hidden;
+    /* 6px of room on each side, so the focus ring of the first and last
+       related chip is not cut off by "overflow: hidden" */
+    margin: 0 -6px;
+    padding: 0 6px;
+}
+
+.gl-example {
+    margin-top: 6px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gl-c);
+    border-radius: 12px;
+    background: var(--surface-2);
+}
+
+.gl-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dim);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.gl-ex-text {
+    margin-top: 6px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.gl-related {
+    margin-top: 14px;
+    padding-bottom: 8px;
+}
+
+.gl-rel-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.gl-rel {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    text-align: left;
+}
+
+/* ===== 8. SPOTLIGHT (a term was just shown) ===== */
+
+.gl-card.is-spotlight {
+    border-color: var(--accent-2);
+    animation: gl-spotlight 2.4s var(--ease) both;
+}
+
+@keyframes gl-spotlight {
+    0% { box-shadow: 0 0 0 0 rgba(var(--accent-2-rgb), 0.7), 0 0 0 rgba(var(--accent-rgb), 0); }
+    25% { box-shadow: 0 0 0 6px rgba(var(--accent-2-rgb), 0.25), 0 0 46px rgba(var(--accent-rgb), 0.45); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--accent-2-rgb), 0), 0 14px 34px rgba(0, 0, 0, 0.18); }
+}
+
+/* A band of light sweeps across the card once */
+.gl-card.is-spotlight::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 30%, rgba(var(--accent-2-rgb), 0.16) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: gl-sweep 1.2s var(--ease) 0.15s both;
+}
+
+@keyframes gl-sweep {
+    to { transform: translateX(100%); }
+}
+
+/* ===== 9. EMPTY STATE AND "SHOW ALL" ===== */
+
+.gl-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 44px 24px;
+    text-align: center;
+    border-style: dashed;
+    border-color: var(--border-strong);
+}
+
+.gl-empty-orb {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(var(--accent-2-rgb), 0.25), rgba(var(--accent-rgb), 0.12) 60%, transparent);
+    box-shadow: var(--glow);
+    font-size: 32px;
+    animation: gl-float 4s ease-in-out infinite;
+}
+
+@keyframes gl-float {
+    50% { transform: translateY(-6px); }
+}
+
+.gl-empty-title {
+    max-width: 100%;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.gl-empty-hint {
+    max-width: 440px;
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+.gl-suggest {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.gl-suggest-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.gl-suggestion {
+    min-height: 40px;
+    font-size: 13.5px;
+}
+
+.gl-empty-reset {
+    margin-top: 10px;
+}
+
+.gl-foot {
+    display: flex;
+    justify-content: center;
+    margin-top: 28px;
+}
+
+.gl-more-btn[aria-expanded="true"] .gl-chevron {
+    transform: rotate(180deg);
+}
+
+@keyframes gl-drop {
+    from { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ===== LIGHT THEME: DARKER SMALL LABELS ===== */
+/* On a white background the bright cyan and orange are too pale for tiny text.
+   Mixing in some of the text colour keeps the hue but makes it easy to read
+   (contrast of at least 4.5 : 1). */
+
+[data-theme="light"] .gl-cat-tag {
+    color: color-mix(in srgb, var(--gl-c) 70%, var(--text));
+}
+
+[data-theme="light"] .gl-kicker,
+[data-theme="light"] .gl-chip[aria-pressed="true"] .gl-chip-count,
+[data-theme="light"] .gl-letter[aria-pressed="true"],
+[data-theme="light"] .gl-toggle:hover,
+[data-theme="light"] .gl-toggle[aria-expanded="true"],
+[data-theme="light"] .gl-filter-toggle[aria-expanded="true"] {
+    color: color-mix(in srgb, var(--accent-2) 70%, var(--text));
+}
+
+/* ===== 10. RESPONSIVE ===== */
+
+@media (max-width: 760px) {
+    .gl-console {
+        padding: 22px 18px 16px;
+    }
+
+    .gl-search-row {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .gl-search {
+        flex: 1 1 200px;
+    }
+
+    .gl-random {
+        flex: 1 1 100%;
+        min-height: 48px;
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 640px) {
+    .gl-console {
+        margin-bottom: 20px;
+        border-radius: 20px;
+    }
+
+    .gl-corner {
+        display: none;
+    }
+
+    .gl-console-head {
+        margin-bottom: 14px;
+    }
+
+    /* Filters fold away behind the "Filters" button next to the search box */
+    .gl-filter-toggle {
+        display: inline-flex;
+        width: 54px;
+        min-height: 54px;
+        padding: 0;
+        border-radius: 16px;
+    }
+
+    .gl:not(.filters-open) .gl-filters {
+        display: none;
+    }
+
+    .gl.filters-open .gl-filters {
+        animation: gl-drop 0.35s var(--ease);
+    }
+
+    .gl-input {
+        height: 52px;
+    }
+
+    .gl-input::placeholder {
+        font-size: 15px;
+    }
+
+    .gl-search-icon {
+        width: 42px;
+    }
+
+    /* Bigger touch targets on phones */
+    .gl-chip,
+    .gl-letter,
+    .gl-reset,
+    .gl-empty-reset,
+    .gl-suggestion {
+        min-height: 44px;
+    }
+
+    .gl-letter {
+        min-width: 44px;
+        height: 44px;
+    }
+
+    .gl-rel {
+        min-height: 44px;
+    }
+
+    .gl-grid {
+        gap: 14px;
+    }
+
+    .gl-card {
+        padding: 20px 18px 12px;
+    }
+
+    .gl-reset {
+        margin-left: 0;
+    }
+
+    .gl-foot .btn {
+        width: 100%;
+    }
+}
+
+@media (pointer: coarse) {
+    .gl-chip,
+    .gl-letter,
+    .gl-rel,
+    .gl-reset,
+    .gl-empty-reset,
+    .gl-suggestion {
+        min-height: 44px;
+    }
+
+    .gl-letter {
+        min-width: 44px;
+        height: 44px;
+    }
+}
+
+/* ===== 11. REDUCED MOTION / CALM MODE ===== */
+
+@media (prefers-reduced-motion: reduce) {
+    .gl-console::before,
+    .gl-card.is-spotlight::after {
+        display: none;
+    }
+
+    .gl-empty-orb,
+    .gl-card.is-spotlight {
+        animation: none;
+    }
+
+    .gl-card.is-spotlight {
+        box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.35);
+    }
+
+    .gl-card:hover {
+        transform: none;
+    }
+}
+
+html.fx-calm .gl-console::before,
+html.fx-calm .gl-card.is-spotlight::after {
+    display: none;
+}
+
+html.fx-calm .gl-card.is-spotlight {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.35);
+}
+
+html.fx-calm .gl-card:hover {
+    transform: none;
+}
