@@ -132,13 +132,6 @@
     }
 }
 
-/* Decorations pause while the quiz is off screen */
-[data-feature="quiz"].is-paused *,
-[data-feature="quiz"].is-paused *::before,
-[data-feature="quiz"].is-paused *::after {
-    animation-play-state: paused !important;
-}
-
 /* ===== 2. SCREEN CHANGES ===== */
 
 .qz-stage {
