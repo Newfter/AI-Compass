@@ -27,128 +27,25 @@
     /* =========================================================
        2. SMALL HELPERS
        ========================================================= */
-    function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
-    // Picks the right word form for a number.
-    // English: "dot|dots". Russian: "точка|точки|точек" (1 / 2-4 / 5+).
-    function plural(n, key) {
-        const forms = t(key).split("|");
-        if (A.lang === "ru") {
-            const mod10 = n % 10;
-            const mod100 = n % 100;
-            if (mod10 === 1 && mod100 !== 11) return forms[0];
-            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return forms[1];
-            return forms[2] || forms[1];
-        }
-        return n === 1 ? forms[0] : forms[1];
-    }
-
-    // Numbers in the style of the current language ("0.25" or "0,25")
-    const numberFormats = {};
-    function fmt(value, digits) {
-        const id = A.lang + digits;
-        if (!numberFormats[id]) {
-            numberFormats[id] = new Intl.NumberFormat(A.lang === "ru" ? "ru-RU" : "en-US", {
-                minimumFractionDigits: digits,
-                maximumFractionDigits: digits
-            });
-        }
-        return numberFormats[id].format(value);
-    }
-
-    // Very big counts get short, so they fit their box: "1.2M" or "1,2 млн"
-    function fmtCount(n) {
-        if (n < 1e6) return fmt(n, 0);
-        const id = A.lang + "compact";
-        if (!numberFormats[id]) {
-            numberFormats[id] = new Intl.NumberFormat(A.lang === "ru" ? "ru-RU" : "en-US", {
-                notation: "compact",
-                maximumFractionDigits: 1
-            });
-        }
-        return numberFormats[id].format(n);
-    }
-
-    function percent(p) {
-        if (p > 0 && p < 0.01) return "<1%";
-        return Math.round(p * 100) + "%";
-    }
-
     function quote(word) {
         return t("lab.q", { w: word });
-    }
-
-    // Big decorative animations are skipped in reduced-motion and calm mode
-    function calmMode() {
-        return A.reducedMotion || Boolean(A.effects && A.effects.calm) ||
-            document.documentElement.classList.contains("fx-calm");
-    }
-
-    function announce(region, text) {
-        if (!region) return;
-        // A tiny change makes screen readers repeat the same sentence too
-        region.textContent = region.textContent === text ? text + " " : text;
-    }
-
-    // "#9b6dff", "155, 109, 255" or "rgb(1, 2, 3)" -> [r, g, b]
-    function toRGB(value, fallback) {
-        value = (value || "").trim();
-        let match = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-        if (match) {
-            let hex = match[1];
-            if (hex.length === 3) hex = hex.split("").map((c) => c + c).join("");
-            return [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)];
-        }
-        match = value.match(/(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)/);
-        if (match) return [Number(match[1]), Number(match[2]), Number(match[3])];
-        return fallback;
-    }
-
-    function rgba(color, alpha) {
-        return "rgba(" + Math.round(color[0]) + "," + Math.round(color[1]) + "," + Math.round(color[2]) + "," + alpha + ")";
     }
 
     // All canvas colours come from the CSS variables, so both themes work
     let colors = {};
     function readColors() {
-        const light = document.documentElement.getAttribute("data-theme") === "light";
+        const light = A.theme === "light";
         colors = {
-            a: toRGB(A.cssVar("--accent-rgb"), [155, 109, 255]),
-            b: toRGB(A.cssVar("--accent-2-rgb"), [80, 227, 255]),
-            pink: toRGB(A.cssVar("--accent-3-rgb"), [255, 106, 213]),
-            base: toRGB(A.cssVar("--surface-solid"), [16, 22, 42]),
-            text: toRGB(A.cssVar("--text"), [238, 241, 255]),
+            a: A.colors.rgb("--accent-rgb"),
+            b: A.colors.rgb("--accent-2-rgb"),
+            base: A.colors.rgb("--surface-solid"),
+            text: A.colors.rgb("--text"),
             // small labels on the diagram: the dim grey is too pale on white, so the light theme uses a darker one
-            dim: toRGB(A.cssVar(light ? "--text-muted" : "--text-dim"), [125, 137, 168]),
-            danger: toRGB(A.cssVar("--danger"), [255, 92, 122]),
+            dim: A.colors.rgb(light ? "--text-muted" : "--text-dim"),
+            danger: A.colors.rgb("--danger"),
+            mono: A.cssVar("--font-mono") || "monospace",
             light: light
         };
-        colors.mono = A.cssVar("--font-mono") || "monospace";
-    }
-
-    // Gives a canvas a sharp backing size (device pixel ratio capped at 2)
-    function fitCanvas(canvas, width, height) {
-        const dpr = Math.min(2, window.devicePixelRatio || 1);
-        const w = Math.max(1, Math.round(width * dpr));
-        const h = Math.max(1, Math.round(height * dpr));
-        if (canvas.width !== w || canvas.height !== h) {
-            canvas.width = w;
-            canvas.height = h;
-        }
-        return dpr;
-    }
-
-    function roundRectPath(ctx, x, y, w, h, r) {
-        r = Math.min(r, w / 2, h / 2);
-        ctx.beginPath();
-        ctx.moveTo(x + r, y);
-        ctx.arcTo(x + w, y, x + w, y + h, r);
-        ctx.arcTo(x + w, y + h, x, y + h, r);
-        ctx.arcTo(x, y + h, x, y, r);
-        ctx.arcTo(x, y, x + w, y, r);
-        ctx.closePath();
     }
 
     // A random number with a bell-curve shape (for natural-looking clusters)
@@ -491,7 +388,7 @@
         lr: LR_OPTIONS.indexOf(savedSettings.lr) >= 0 ? savedSettings.lr : 0.03,
         optimizer: savedSettings.optimizer === "sgd" ? "sgd" : "adam",
         speed: SPEEDS[savedSettings.speed] ? savedSettings.speed : "normal",
-        hidden: clamp(Math.round(Number(savedSettings.hidden) || 8), 2, 16),
+        hidden: A.util.clamp(Math.round(Number(savedSettings.hidden) || 8), 2, 16),
         twoLayers: savedSettings.twoLayers === true
     };
 
@@ -574,7 +471,7 @@
         for (let k = 0; k < points.length; k++) {
             const point = points[k];
             const out = forward(net, point.x, point.y);
-            const safe = clamp(out, 1e-7, 1 - 1e-7);
+            const safe = A.util.clamp(out, 1e-7, 1 - 1e-7);
             loss -= point.label === 1 ? Math.log(safe) : Math.log(1 - safe);
 
             // With sigmoid + cross-entropy the output error is simply (guess - answer)
@@ -666,7 +563,7 @@
     // ----- Example datasets (coordinates go from -1 to 1) -----
     function makePreset(name) {
         const points = [];
-        const edge = (value) => clamp(value, -0.96, 0.96);
+        const edge = (value) => A.util.clamp(value, -0.96, 0.96);
 
         if (name === "clusters") {
             for (let i = 0; i < 60; i++) {
@@ -773,21 +670,21 @@
     const atlas = { canvas: document.createElement("canvas"), columns: 0 };
     atlas.ctx = atlas.canvas.getContext("2d");
 
+    // The three canvases on the page. "ratio" is the pixel ratio their backing
+    // store was made for, and ctx comes from A.canvas.fit (it draws in CSS pixels).
     const board = {
         el: $(".lab-board"),
         canvas: $(".lab-board-canvas"),
         readout: $(".lab-readout"),
+        ctx: null,
         size: 0,
-        dpr: 1,
+        ratio: 0,
         sprites: null
     };
-    board.ctx = board.canvas.getContext("2d");
 
-    const chart = { wrap: $(".lab-chart-wrap"), canvas: $(".lab-chart-canvas"), w: 0, h: 0, dpr: 1 };
-    chart.ctx = chart.canvas.getContext("2d");
+    const chart = { wrap: $(".lab-chart-wrap"), canvas: $(".lab-chart-canvas"), ctx: null, w: 0, h: 0, ratio: 0 };
 
-    const diagram = { wrap: $(".lab-diagram-wrap"), canvas: $(".lab-diagram-canvas"), w: 0, h: 0, dpr: 1 };
-    diagram.ctx = diagram.canvas.getContext("2d");
+    const diagram = { wrap: $(".lab-diagram-wrap"), canvas: $(".lab-diagram-canvas"), ctx: null, w: 0, h: 0, ratio: 0 };
 
     // Colour for a value from -1 (class A, purple) to +1 (class B, cyan)
     function paint(data, index, value, strength) {
@@ -862,7 +759,7 @@
             const point = points[k];
             const p = forward(net, point.x, point.y);
             nn.preds[k] = p;
-            const safe = clamp(p, 1e-7, 1 - 1e-7);
+            const safe = A.util.clamp(p, 1e-7, 1 - 1e-7);
             loss -= point.label === 1 ? Math.log(safe) : Math.log(1 - safe);
             if ((p >= 0.5 ? 1 : 0) === point.label) correct++;
         }
@@ -924,30 +821,31 @@
 
     // Pre-drawn glowing dots: much faster than drawing a glow for every dot every frame
     function dotRadius() {
-        return clamp(board.size * 0.0115, 3.6, 7);
+        return A.util.clamp(board.size * 0.0115, 3.6, 7);
     }
 
     function makeSprites() {
         const r = dotRadius();
-        const dpr = board.dpr;
+        const ratio = board.ratio;
         const make = (color) => {
             const glow = colors.light ? r * 0.7 : r * 1.5;
             const half = r + glow + 2;
+            // A sharp sprite on retina screens too (rounded up, so the whole glow fits)
             const canvas = document.createElement("canvas");
-            canvas.width = canvas.height = Math.ceil(half * 2 * dpr);
+            canvas.width = canvas.height = Math.ceil(half * 2 * ratio);
             const g = canvas.getContext("2d");
-            g.scale(dpr, dpr);
+            g.scale(ratio, ratio);
             const gradient = g.createRadialGradient(half, half, r * 0.6, half, half, half);
-            gradient.addColorStop(0, rgba(color, colors.light ? 0.35 : 0.55));
-            gradient.addColorStop(1, rgba(color, 0));
+            gradient.addColorStop(0, A.colors.rgba(color, colors.light ? 0.35 : 0.55));
+            gradient.addColorStop(1, A.colors.rgba(color, 0));
             g.fillStyle = gradient;
             g.fillRect(0, 0, half * 2, half * 2);
             g.beginPath();
             g.arc(half, half, r, 0, Math.PI * 2);
-            g.fillStyle = rgba(color, 1);
+            g.fillStyle = A.colors.rgba(color, 1);
             g.fill();
             g.lineWidth = Math.max(1.2, r * 0.32);
-            g.strokeStyle = rgba(colors.base, 0.95);
+            g.strokeStyle = A.colors.rgba(colors.base, 0.95);
             g.stroke();
             // a tiny highlight makes the dots look like glass beads
             g.beginPath();
@@ -963,7 +861,6 @@
         const size = board.size;
         if (!size) return;
         const ctx = board.ctx;
-        ctx.setTransform(board.dpr, 0, 0, board.dpr, 0, 0);
         ctx.clearRect(0, 0, size, size);
 
         // 1. The heatmap: what the network thinks about every spot
@@ -975,7 +872,7 @@
         ctx.lineWidth = 1;
         for (let k = -0.75; k <= 0.76; k += 0.25) {
             const isAxis = Math.abs(k) < 0.01;
-            ctx.strokeStyle = rgba(colors.text, isAxis ? (colors.light ? 0.16 : 0.12) : (colors.light ? 0.07 : 0.05));
+            ctx.strokeStyle = A.colors.rgba(colors.text, isAxis ? (colors.light ? 0.16 : 0.12) : (colors.light ? 0.07 : 0.05));
             const px = Math.round(toPx(k, size)) + 0.5;
             const py = Math.round(toPy(k, size)) + 0.5;
             ctx.beginPath();
@@ -997,10 +894,10 @@
             }
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
-            ctx.strokeStyle = rgba(colors.text, colors.light ? 0.12 : 0.16);
+            ctx.strokeStyle = A.colors.rgba(colors.text, colors.light ? 0.12 : 0.16);
             ctx.lineWidth = 7;
             ctx.stroke();
-            ctx.strokeStyle = rgba(colors.text, colors.light ? 0.75 : 0.9);
+            ctx.strokeStyle = A.colors.rgba(colors.text, colors.light ? 0.75 : 0.9);
             ctx.lineWidth = 1.7;
             ctx.stroke();
         }
@@ -1009,7 +906,7 @@
         const r = dotRadius();
         const points = nn.points;
         ctx.lineWidth = 1.6;
-        ctx.strokeStyle = rgba(colors.danger, 0.95);
+        ctx.strokeStyle = A.colors.rgba(colors.danger, 0.95);
         ctx.setLineDash([2.5, 2.2]);
         ctx.beginPath();
         for (let k = 0; k < points.length; k++) {
@@ -1051,7 +948,7 @@
             ctx.drawImage(sprite.canvas, x - sprite.half, y - sprite.half, sprite.half * 2, sprite.half * 2);
             ctx.globalAlpha = 1;
 
-            ctx.strokeStyle = rgba(colors.text, 0.7);
+            ctx.strokeStyle = A.colors.rgba(colors.text, 0.7);
             ctx.lineWidth = 1.2;
             ctx.beginPath();
             ctx.arc(x, y, r + 8, 0, Math.PI * 2);
@@ -1060,7 +957,7 @@
             if (nn.cursor) {
                 // keyboard: dashed guides across the board
                 ctx.setLineDash([3, 5]);
-                ctx.strokeStyle = rgba(colors.text, 0.35);
+                ctx.strokeStyle = A.colors.rgba(colors.text, 0.35);
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, y - r - 10);
@@ -1088,10 +985,10 @@
         const isB = p >= 0.5;
         board.readout.hidden = false;
         board.readout.textContent = t("lab.readout", {
-            x: fmt(spot.x, 2),
-            y: fmt(spot.y, 2),
+            x: A.format.number(spot.x, 2),
+            y: A.format.number(spot.y, 2),
             cls: isB ? "B" : "A",
-            pct: Math.round((isB ? p : 1 - p) * 100)
+            pct: A.format.number((isB ? p : 1 - p) * 100, 0)
         });
         board.readout.classList.toggle("is-b", isB);
     }
@@ -1103,11 +1000,10 @@
         const w = chart.w;
         const h = chart.h;
         const values = nn.lossHistory.values;
-        ctx.setTransform(chart.dpr, 0, 0, chart.dpr, 0, 0);
         ctx.clearRect(0, 0, w, h);
 
         // faint guide lines
-        ctx.strokeStyle = rgba(colors.text, colors.light ? 0.08 : 0.06);
+        ctx.strokeStyle = A.colors.rgba(colors.text, colors.light ? 0.08 : 0.06);
         ctx.lineWidth = 1;
         ctx.beginPath();
         for (let k = 1; k < 4; k++) {
@@ -1137,8 +1033,8 @@
         ctx.lineTo(xAt(0), h);
         ctx.closePath();
         const fill = ctx.createLinearGradient(0, 0, 0, h);
-        fill.addColorStop(0, rgba(colors.a, colors.light ? 0.22 : 0.32));
-        fill.addColorStop(1, rgba(colors.a, 0));
+        fill.addColorStop(0, A.colors.rgba(colors.a, colors.light ? 0.22 : 0.32));
+        fill.addColorStop(1, A.colors.rgba(colors.a, 0));
         ctx.fillStyle = fill;
         ctx.fill();
 
@@ -1147,8 +1043,8 @@
         ctx.moveTo(xAt(0), yAt(values[0]));
         for (let i = 1; i < values.length; i++) ctx.lineTo(xAt(i), yAt(values[i]));
         const stroke = ctx.createLinearGradient(0, 0, w, 0);
-        stroke.addColorStop(0, rgba(colors.a, 1));
-        stroke.addColorStop(1, rgba(colors.b, 1));
+        stroke.addColorStop(0, A.colors.rgba(colors.a, 1));
+        stroke.addColorStop(1, A.colors.rgba(colors.b, 1));
         ctx.strokeStyle = stroke;
         ctx.lineWidth = 2;
         ctx.lineJoin = "round";
@@ -1157,11 +1053,11 @@
         // a glowing dot at the newest value
         const lastX = xAt(values.length - 1);
         const lastY = yAt(values[values.length - 1]);
-        ctx.fillStyle = rgba(colors.b, 0.25);
+        ctx.fillStyle = A.colors.rgba(colors.b, 0.25);
         ctx.beginPath();
         ctx.arc(lastX, lastY, 6, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = rgba(colors.b, 1);
+        ctx.fillStyle = A.colors.rgba(colors.b, 1);
         ctx.beginPath();
         ctx.arc(lastX, lastY, 2.8, 0, Math.PI * 2);
         ctx.fill();
@@ -1176,7 +1072,6 @@
         const net = nn.net;
         const sizes = net.sizes;
         const columns = sizes.length;
-        ctx.setTransform(diagram.dpr, 0, 0, diagram.dpr, 0, 0);
         ctx.clearRect(0, 0, w, h);
 
         // Where every neuron goes
@@ -1185,7 +1080,7 @@
         const maxNodes = Math.max.apply(null, sizes);
         const available = h - top - bottom;
         const slot = Math.min(available / maxNodes, 46);
-        const node = clamp(slot * 0.74, 10, 30);
+        const node = A.util.clamp(slot * 0.74, 10, 30);
         const left = 26;
         const right = 40;
         const xs = sizes.map((n, c) => left + node / 2 + (c * (w - left - right - node)) / (columns - 1));
@@ -1207,7 +1102,7 @@
                 for (let i = 0; i < layer.nIn; i++) {
                     const weight = layer.W[j * layer.nIn + i];
                     const strength = Math.min(1, Math.abs(weight) / 2.5);
-                    ctx.strokeStyle = rgba(weight >= 0 ? colors.b : colors.a, 0.12 + strength * 0.75);
+                    ctx.strokeStyle = A.colors.rgba(weight >= 0 ? colors.b : colors.a, 0.12 + strength * 0.75);
                     ctx.lineWidth = 0.4 + strength * 4.2;
                     ctx.beginPath();
                     ctx.moveTo(x1, ys[l][i]);
@@ -1232,13 +1127,13 @@
                 const x = xs[c] - s / 2;
                 const y = ys[c][k] - s / 2;
                 ctx.save();
-                roundRectPath(ctx, x, y, s, s, Math.min(6, s * 0.25));
+                A.canvas.roundRect(ctx, x, y, s, s, Math.min(6, s * 0.25));
                 ctx.clip();
                 ctx.imageSmoothingEnabled = true;
                 ctx.drawImage(atlas.canvas, atlasColumn * MINI, 0, MINI, MINI, x, y, s, s);
                 ctx.restore();
-                roundRectPath(ctx, x, y, s, s, Math.min(6, s * 0.25));
-                ctx.strokeStyle = rgba(colors.text, isOutput ? 0.55 : 0.25);
+                A.canvas.roundRect(ctx, x, y, s, s, Math.min(6, s * 0.25));
+                ctx.strokeStyle = A.colors.rgba(colors.text, isOutput ? 0.55 : 0.25);
                 ctx.lineWidth = isOutput ? 1.5 : 1;
                 ctx.stroke();
 
@@ -1247,18 +1142,18 @@
                     let value;
                     if (c === 0) value = k === 0 ? spot.x : spot.y;
                     else value = isOutput ? net.layers[c - 1].a[k] * 2 - 1 : net.layers[c - 1].a[k];
-                    roundRectPath(ctx, x - ringGap, y - ringGap, s + ringGap * 2, s + ringGap * 2, Math.min(8, s * 0.3));
-                    ctx.strokeStyle = rgba(value < 0 ? colors.a : colors.b, Math.min(1, Math.abs(value)) * 0.95);
+                    A.canvas.roundRect(ctx, x - ringGap, y - ringGap, s + ringGap * 2, s + ringGap * 2, Math.min(8, s * 0.3));
+                    ctx.strokeStyle = A.colors.rgba(value < 0 ? colors.a : colors.b, Math.min(1, Math.abs(value)) * 0.95);
                     ctx.lineWidth = 1.6;
                     ctx.stroke();
 
                     // A small dot marks the same spot inside the neuron's mini-map
                     ctx.beginPath();
-                    ctx.arc(x + ((spot.x + 1) / 2) * s, y + (1 - (spot.y + 1) / 2) * s, clamp(s * 0.1, 1.8, 3.2), 0, Math.PI * 2);
-                    ctx.fillStyle = rgba(colors.text, 1);
+                    ctx.arc(x + ((spot.x + 1) / 2) * s, y + (1 - (spot.y + 1) / 2) * s, A.util.clamp(s * 0.1, 1.8, 3.2), 0, Math.PI * 2);
+                    ctx.fillStyle = A.colors.rgba(colors.text, 1);
                     ctx.fill();
                     ctx.lineWidth = 1.2;
-                    ctx.strokeStyle = rgba(colors.base, 0.9);
+                    ctx.strokeStyle = A.colors.rgba(colors.base, 0.9);
                     ctx.stroke();
                 }
                 atlasColumn++;
@@ -1269,17 +1164,17 @@
         ctx.font = "600 10px " + colors.mono;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillStyle = rgba(colors.dim, 1);
+        ctx.fillStyle = A.colors.rgba(colors.dim, 1);
         sizes.forEach((n, c) => {
             let label;
             if (c === 0) label = t("lab.nnInput");
             else if (c === columns - 1) label = t("lab.nnOutput");
             else label = t("lab.nnHidden", { n: c });
-            ctx.fillText(label, clamp(xs[c], 22, w - 22), 12);
+            ctx.fillText(label, A.util.clamp(xs[c], 22, w - 22), 12);
         });
         ctx.font = "600 11px " + colors.mono;
         ctx.textAlign = "right";
-        ctx.fillStyle = rgba(colors.text, 0.75);
+        ctx.fillStyle = A.colors.rgba(colors.text, 0.75);
         ctx.fillText("x", xs[0] - node / 2 - 6, ys[0][0]);
         ctx.fillText("y", xs[0] - node / 2 - 6, ys[0][1]);
         ctx.textAlign = "left";
@@ -1288,7 +1183,7 @@
         ctx.fillText(t("lab.nnOutputHint"), outX, spot ? outY - 7 : outY);
         if (spot) {
             // The network's answer for the spot you point at
-            ctx.fillStyle = rgba(spotP >= 0.5 ? colors.b : colors.a, 1);
+            ctx.fillStyle = A.colors.rgba(spotP >= 0.5 ? colors.b : colors.a, 1);
             ctx.fillText(Math.round(spotP * 100) + "%", outX, outY + 8);
         }
     }
@@ -1296,9 +1191,9 @@
     function updateDiagramLabel() {
         const params = countParams(nn.net);
         // "8 hidden neurons", or "8 hidden neurons → 8 hidden neurons" with two layers
-        const layerText = settings.hidden + " " + plural(settings.hidden, "lab.pluralHidden");
+        const layerText = settings.hidden + " " + A.plural("lab.pluralHidden", settings.hidden);
         const hidden = settings.twoLayers ? layerText + " → " + layerText : layerText;
-        const paramsText = t("lab.params", { n: params, params: plural(params, "lab.pluralParams") });
+        const paramsText = t("lab.params", { n: params, params: A.plural("lab.pluralParams", params) });
         $('[data-out="params"]').textContent = paramsText;
         diagram.canvas.setAttribute("aria-label", t("lab.diagramLabel", { hidden: hidden, params: paramsText }));
     }
@@ -1320,12 +1215,11 @@
     };
 
     let activeTab = "classifier";
-    let labOnScreen = false;
-    let pageVisible = !document.hidden;
+    let labVisible = false;      // on screen in a visible browser tab (see onLabVisible)
     let frame = 0;
 
     function wantsTraining() {
-        return nn.training && labOnScreen && pageVisible && activeTab === "classifier";
+        return nn.training && labVisible && activeTab === "classifier";
     }
 
     function schedule() {
@@ -1394,17 +1288,18 @@
     function updateStats() {
         const points = nn.points;
         const countB = points.reduce((sum, point) => sum + point.label, 0);
-        statEls.epoch.textContent = fmtCount(nn.epoch);
-        statEls.loss.textContent = nn.loss === null ? "—" : fmt(nn.loss, 3);
-        statEls.acc.textContent = nn.acc === null ? "—" : Math.round(nn.acc * 100) + "%";
+        // Very big counts get short, so they fit their box: "1.2M" or "1,2 млн"
+        statEls.epoch.textContent = A.format.number(nn.epoch, nn.epoch < 1e6 ? 0 : { compact: true });
+        statEls.loss.textContent = nn.loss === null ? "—" : A.format.number(nn.loss, 3);
+        statEls.acc.textContent = nn.acc === null ? "—" : A.format.percent(nn.acc, { small: false });
         statEls.accBar.style.transform = "scaleX(" + (nn.acc || 0) + ")";
         statEls.accBar.parentElement.classList.toggle("is-full", nn.acc === 1);
-        statEls.points.textContent = fmt(points.length, 0);
+        statEls.points.textContent = A.format.number(points.length);
         statEls.split.textContent = t("lab.pointsSplit", { a: points.length - countB, b: countB });
 
         const values = nn.lossHistory.values;
         if (values.length > 1) {
-            chart.canvas.setAttribute("aria-label", t("lab.chartLabel", { loss: fmt(values[values.length - 1], 3) }));
+            chart.canvas.setAttribute("aria-label", t("lab.chartLabel", { loss: A.format.number(values[values.length - 1], 3) }));
         }
         updateStatus();
     }
@@ -1422,11 +1317,11 @@
 
     function announceStats() {
         if (nn.loss === null) return;
-        announce(nnLive, t("lab.srStatus", {
-            epoch: fmt(nn.epoch, 0),
-            loss: fmt(nn.loss, 3),
-            acc: Math.round(nn.acc * 100)
-        }));
+        A.announce(t("lab.srStatus", {
+            epoch: A.format.number(nn.epoch),
+            loss: A.format.number(nn.loss, 3),
+            acc: A.format.number(nn.acc * 100, 0)
+        }), { region: nnLive });
     }
 
     function updateTrainButton() {
@@ -1446,7 +1341,7 @@
         nn.training = false;
         nn.learned = true;
         updateTrainButton();
-        A.toast(t("lab.toastLearned", { n: fmt(nn.epoch, 0), epochs: plural(nn.epoch, "lab.pluralEpochs") }), "🎯");
+        A.toast(t("lab.toastLearned", { n: A.format.number(nn.epoch), epochs: A.plural("lab.pluralEpochs", nn.epoch) }), "🎯");
         announceStats();
     }
 
@@ -1470,7 +1365,7 @@
         nn.training = on;
         if (on) nn.learned = false;
         updateTrainButton();
-        announce(nnLive, t(on ? "lab.srTraining" : "lab.srPaused"));
+        A.announce(t(on ? "lab.srTraining" : "lab.srPaused"), { region: nnLive });
         schedule();
     }
 
@@ -1532,7 +1427,7 @@
             nn.maxWarned = true;
             return false;
         }
-        nn.points.push({ x: clamp(x, -1, 1), y: clamp(y, -1, 1), label: label });
+        nn.points.push({ x: A.util.clamp(x, -1, 1), y: A.util.clamp(y, -1, 1), label: label });
         return true;
     }
 
@@ -1542,7 +1437,7 @@
 
     function announceAdded(label) {
         const n = nn.points.length;
-        announce(nnLive, t("lab.srAdded", { cls: className(label), n: n, points: plural(n, "lab.pluralPoints") }));
+        A.announce(t("lab.srAdded", { cls: className(label), n: n, points: A.plural("lab.pluralPoints", n) }), { region: nnLive });
     }
 
     function selectClass(label) {
@@ -1564,11 +1459,11 @@
         resetNetwork();
         $$(".lab-preset").forEach((chip) => chip.classList.toggle("active", chip.getAttribute("data-preset") === name));
         const n = nn.points.length;
-        announce(nnLive, t("lab.srPreset", {
+        A.announce(t("lab.srPreset", {
             name: t("lab.preset" + name.charAt(0).toUpperCase() + name.slice(1)),
             n: n,
-            points: plural(n, "lab.pluralPoints")
-        }));
+            points: A.plural("lab.pluralPoints", n)
+        }), { region: nnLive });
         setTraining(true);
     }
 
@@ -1580,8 +1475,8 @@
     function eventToBoard(event) {
         const rect = board.el.getBoundingClientRect();
         return {
-            x: clamp(((event.clientX - rect.left) / rect.width) * 2 - 1, -1, 1),
-            y: clamp(1 - ((event.clientY - rect.top) / rect.height) * 2, -1, 1)
+            x: A.util.clamp(((event.clientX - rect.left) / rect.width) * 2 - 1, -1, 1),
+            y: A.util.clamp(1 - ((event.clientY - rect.top) / rect.height) * 2, -1, 1)
         };
     }
 
@@ -1710,8 +1605,8 @@
             event.preventDefault();
             if (!nn.cursor) nn.cursor = { x: 0, y: 0, label: nn.selected };
             const amount = event.shiftKey ? 0.2 : 0.05;
-            nn.cursor.x = clamp(nn.cursor.x + moves[event.key][0] * amount, -1, 1);
-            nn.cursor.y = clamp(nn.cursor.y + moves[event.key][1] * amount, -1, 1);
+            nn.cursor.x = A.util.clamp(nn.cursor.x + moves[event.key][0] * amount, -1, 1);
+            nn.cursor.y = A.util.clamp(nn.cursor.y + moves[event.key][1] * amount, -1, 1);
             nn.dirty.board = true;
             schedule();
         } else if (event.key === "Enter" || event.key === " ") {
@@ -1736,7 +1631,7 @@
         clearPresetMark();
         pointsChanged();
         const n = nn.points.length;
-        announce(nnLive, t("lab.srUndo", { n: n, points: plural(n, "lab.pluralPoints") }));
+        A.announce(t("lab.srUndo", { n: n, points: A.plural("lab.pluralPoints", n) }), { region: nnLive });
     }
 
     // ----- Buttons and settings -----
@@ -1756,7 +1651,7 @@
         nn.points = [];
         clearPresetMark();
         pointsChanged();
-        announce(nnLive, t("lab.srCleared"));
+        A.announce(t("lab.srCleared"), { region: nnLive });
     });
 
     trainButton.addEventListener("click", () => setTraining(!nn.training));
@@ -2163,15 +2058,6 @@
         return weights.map((weight) => weight / sum);
     }
 
-    function sampleIndex(chances) {
-        let roll = Math.random();
-        for (let i = 0; i < chances.length; i++) {
-            roll -= chances[i];
-            if (roll <= 0) return i;
-        }
-        return 0;
-    }
-
     // ----- State of the predictor -----
     const lm = {
         lang: A.lang,
@@ -2205,7 +2091,7 @@
     };
 
     const savedTemp = Number(A.storage.get("lab.temperature", 0.7));
-    lm.temperature = isFinite(savedTemp) ? clamp(Math.round(savedTemp * 10) / 10, 0, 2) : 0.7;
+    lm.temperature = isFinite(savedTemp) ? A.util.clamp(Math.round(savedTemp * 10) / 10, 0, 2) : 0.7;
     lmEls.temp.value = String(lm.temperature);
 
     function loadModel() {
@@ -2268,13 +2154,13 @@
         if (prediction.p1 === START) return t("lab.lmCtxStart");
         if (prediction.level === 3) {
             const n = prediction.count;
-            if (prediction.p2 === START) return t("lab.lmCtxFirst", { word: quote(p1), n: n, times: plural(n, "lab.pluralTimes") });
-            return t("lab.lmCtxTri", { words: quote(p2 + " " + p1), n: n, times: plural(n, "lab.pluralTimes") });
+            if (prediction.p2 === START) return t("lab.lmCtxFirst", { word: quote(p1), n: n, times: A.plural("lab.pluralTimes", n) });
+            return t("lab.lmCtxTri", { words: quote(p2 + " " + p1), n: n, times: A.plural("lab.pluralTimes", n) });
         }
         if (prediction.level === 2) {
             const n = prediction.oneCount;
-            if (prediction.p2 === START) return t("lab.lmCtxOne", { word: quote(p1), n: n, times: plural(n, "lab.pluralTimes") });
-            return t("lab.lmCtxBi", { pair: quote(p2 + " " + p1), word: quote(p1), n: n, times: plural(n, "lab.pluralTimes") });
+            if (prediction.p2 === START) return t("lab.lmCtxOne", { word: quote(p1), n: n, times: A.plural("lab.pluralTimes", n) });
+            return t("lab.lmCtxBi", { pair: quote(p2 + " " + p1), word: quote(p1), n: n, times: A.plural("lab.pluralTimes", n) });
         }
         return t("lab.lmCtxUni", { word: quote(prediction.p1) });
     }
@@ -2302,12 +2188,12 @@
             const shown = isEnd ? "⏎ " + t("lab.lmEnd") : displayWord(data.word, atStart);
             button.classList.toggle("is-end", isEnd);
             button.querySelector(".lab-cand-word").textContent = shown;
-            button.querySelector(".lab-cand-pct").textContent = percent(data.p);
+            button.querySelector(".lab-cand-pct").textContent = A.format.percent(data.p);
             button.querySelector(".lab-cand-fill").style.transform = "scaleX(" + Math.max(0.015, data.p).toFixed(4) + ")";
             button.querySelector(".lab-cand-pick").style.transform = "scaleX(" + (data.chance || 0).toFixed(4) + ")";
             button.setAttribute("aria-label", isEnd ?
-                t("lab.lmPickEndLabel", { pct: percent(data.p) }) :
-                t("lab.lmPickLabel", { word: quote(shown), pct: percent(data.p) }));
+                t("lab.lmPickEndLabel", { pct: A.format.percent(data.p) }) :
+                t("lab.lmPickLabel", { word: quote(shown), pct: A.format.percent(data.p) }));
         });
 
         renderTokens();
@@ -2319,7 +2205,7 @@
             const top = lm.shown[0];
             if (!top || lm.writer) return;
             const word = top.word === END ? t("lab.lmEnd") : quote(displayWord(top.word, atStart));
-            announce(lmEls.live, t("lab.lmSrTop", { word: word, pct: percent(top.p) }));
+            A.announce(t("lab.lmSrTop", { word: word, pct: A.format.percent(top.p) }), { region: lmEls.live });
         }, 900);
     }
 
@@ -2376,9 +2262,9 @@
                 value.textContent = t("lab.lmTokenNew");
             } else {
                 // log scale: 100% -> 1, 10% -> 0.67, 1% -> 0.33, 0.1% -> 0
-                const glow = clamp((Math.log10(token.p) + 3) / 3, 0, 1);
+                const glow = A.util.clamp((Math.log10(token.p) + 3) / 3, 0, 1);
                 chip.style.setProperty("--p", glow.toFixed(3));
-                value.textContent = percent(token.p);
+                value.textContent = A.format.percent(token.p);
             }
             chip.appendChild(word);
             chip.appendChild(value);
@@ -2390,8 +2276,8 @@
         const stats = lm.model.stats;
         const labels = { sentences: "lab.pluralSentences", words: "lab.pluralWords", pairs: "lab.pluralPairs", triples: "lab.pluralTriples" };
         Object.keys(labels).forEach((name) => {
-            $('[data-lmstat="' + name + '"]').textContent = fmt(stats[name], 0);
-            $('[data-lmstat-label="' + name + '"]').textContent = plural(stats[name], labels[name]);
+            $('[data-lmstat="' + name + '"]').textContent = A.format.number(stats[name]);
+            $('[data-lmstat-label="' + name + '"]').textContent = A.plural(labels[name], stats[name]);
         });
         lmEls.teachStatus.textContent = lm.taught.length ?
             t("lab.lmTeachCount", { n: lm.taught.length }) : t("lab.lmTeachNone");
@@ -2408,7 +2294,7 @@
     }
 
     function updateTempOutput() {
-        const text = fmt(lm.temperature, 1) + " · " + tempWord(lm.temperature);
+        const text = A.format.number(lm.temperature, 1) + " · " + tempWord(lm.temperature);
         lmEls.tempOut.textContent = text;
         lmEls.temp.setAttribute("aria-valuetext", text);
         updateRangeFill(lmEls.temp);
@@ -2464,7 +2350,7 @@
             renderPredictor();
         }
         updateAutoButton();
-        if (announceDone) announce(lmEls.live, t("lab.lmSrDone"));
+        if (announceDone) A.announce(t("lab.lmSrDone"), { region: lmEls.live });
     }
 
     function startAuto() {
@@ -2481,10 +2367,15 @@
         if (input.value.trim() && !/[\s.,!?…;:]$/.test(input.value)) input.value += " ";
         renderPredictor();
 
-        const calm = calmMode();
+        const calm = !A.motion.ok();
 
         function nextWord() {
             if (job.cancelled) return;
+            // A hidden browser tab stops it (onLabVisible only hears about that while the lab is on screen)
+            if (document.hidden) {
+                stopAuto(false);
+                return;
+            }
             if (job.count >= AUTO_WORDS || input.value.length > 360) {
                 stopAuto(true);
                 return;
@@ -2495,7 +2386,7 @@
                 stopAuto(true);
                 return;
             }
-            const choice = result.list[sampleIndex(chances)].word;
+            const choice = result.list[A.util.sampleWeighted(chances)].word;
             job.count++;
 
             // Light up the chosen candidate for a moment, so you can see the "decision"
@@ -2617,7 +2508,7 @@
     lmEls.auto.addEventListener("click", startAuto);
 
     lmEls.temp.addEventListener("input", () => {
-        lm.temperature = clamp(Number(lmEls.temp.value) || 0, 0, 2);
+        lm.temperature = A.util.clamp(Number(lmEls.temp.value) || 0, 0, 2);
         A.storage.set("lab.temperature", lm.temperature);
         // only the "chance to be picked" lines change
         if (lm.lastResult) {
@@ -2652,7 +2543,7 @@
         panels.forEach((panel) => {
             const on = panel.getAttribute("data-panel") === name;
             panel.hidden = !on;
-            if (on && !calmMode()) {
+            if (on && A.motion.ok()) {
                 panel.classList.remove("lab-panel-in");
                 void panel.offsetWidth;    // restart the fade-in animation
                 panel.classList.add("lab-panel-in");
@@ -2679,37 +2570,37 @@
     });
 
     // ----- Canvas sizes follow their boxes -----
+    // A canvas gets a new backing store (A.canvas.fit) when its box changes size,
+    // or when the screen's pixel ratio changes.
     function measureAll() {
+        const ratio = A.canvas.pixelRatio();
+
         const boardSize = board.el.clientWidth;
-        if (boardSize && boardSize !== board.size) {
+        if (boardSize && (boardSize !== board.size || ratio !== board.ratio)) {
             board.size = boardSize;
-            board.dpr = fitCanvas(board.canvas, boardSize, boardSize);
+            board.ratio = ratio;
+            board.ctx = A.canvas.fit(board.canvas, boardSize, boardSize);
             makeSprites();
             nn.dirty.board = true;
-        } else if (boardSize) {
-            const dpr = fitCanvas(board.canvas, boardSize, boardSize);
-            if (dpr !== board.dpr) {
-                board.dpr = dpr;
-                makeSprites();
-                nn.dirty.board = true;
-            }
         }
 
         const chartW = chart.wrap.clientWidth;
         const chartH = chart.wrap.clientHeight;
-        if (chartW && (chartW !== chart.w || chartH !== chart.h)) {
+        if (chartW && (chartW !== chart.w || chartH !== chart.h || ratio !== chart.ratio)) {
             chart.w = chartW;
             chart.h = chartH;
-            chart.dpr = fitCanvas(chart.canvas, chartW, chartH);
+            chart.ratio = ratio;
+            chart.ctx = A.canvas.fit(chart.canvas, chartW, chartH);
             nn.dirty.chart = true;
         }
 
         const diagramW = diagram.wrap.clientWidth;
         const diagramH = diagram.wrap.clientHeight;
-        if (diagramW && (diagramW !== diagram.w || diagramH !== diagram.h)) {
+        if (diagramW && (diagramW !== diagram.w || diagramH !== diagram.h || ratio !== diagram.ratio)) {
             diagram.w = diagramW;
             diagram.h = diagramH;
-            diagram.dpr = fitCanvas(diagram.canvas, diagramW, diagramH);
+            diagram.ratio = ratio;
+            diagram.ctx = A.canvas.fit(diagram.canvas, diagramW, diagramH);
             nn.dirty.diagram = true;
         }
         schedule();
@@ -2719,34 +2610,24 @@
         const resizer = new ResizeObserver(measureAll);
         [board.el, chart.wrap, diagram.wrap].forEach((element) => resizer.observe(element));
     } else {
-        window.addEventListener("resize", measureAll);
+        A.onResize(measureAll);
     }
 
     // ----- Pause when the lab is off screen or the browser tab is hidden -----
+    // A.whenVisible also pauses the lab's CSS animations while nobody can see them.
     function onLabVisible(visible) {
-        labOnScreen = visible;
-        labCard.classList.toggle("is-offscreen", !visible);
+        labVisible = visible;
+        // A hidden browser tab stops auto-write (nobody would see it type)
+        if (document.hidden) stopAuto(false);
         // The first time you scroll to the lab, the network starts learning by itself
         if (visible && !nn.autoStarted) {
             nn.autoStarted = true;
-            if (!calmMode() && activeTab === "classifier" && nn.points.length && nn.epoch === 0) setTraining(true);
+            if (A.motion.ok() && activeTab === "classifier" && nn.points.length && nn.epoch === 0) setTraining(true);
         }
         schedule();
     }
 
-    if ("IntersectionObserver" in window) {
-        new IntersectionObserver((entries) => {
-            entries.forEach((entry) => onLabVisible(entry.isIntersecting));
-        }, { threshold: 0.05 }).observe(labCard);
-    } else {
-        onLabVisible(true);
-    }
-
-    document.addEventListener("visibilitychange", () => {
-        pageVisible = !document.hidden;
-        if (document.hidden) stopAuto(false);
-        schedule();
-    });
+    A.whenVisible(labCard, onLabVisible, { threshold: 0.05, pauseAnimations: true });
 
     // ----- Theme: read the new colours and redraw everything -----
     A.onThemeChange(() => {
@@ -2763,7 +2644,7 @@
         Array.prototype.forEach.call(lrSelect.options, (option) => {
             const value = Number(option.value);
             const digits = value < 1 ? option.value.split(".")[1].length : 0;
-            option.textContent = fmt(value, digits);
+            option.textContent = A.format.number(value, digits);
         });
     }
 

@@ -94,12 +94,6 @@
     opacity: 0.5;
 }
 
-/* Decorative loops stop while the lab is off screen */
-.lab.is-offscreen *,
-.lab.is-offscreen::before {
-    animation-play-state: paused !important;
-}
-
 .lab-top {
     position: relative;
     display: flex;
