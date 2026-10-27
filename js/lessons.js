@@ -19,7 +19,6 @@
 
     const t = A.t;
     const esc = A.escapeHTML;
-    const TOTAL = 6;
     const READER_ID = "lesson-reader";     // the reader's name among the pop-up windows (A.overlays)
 
     // ---------- 1. The six lessons ----------
@@ -65,6 +64,8 @@
             keywords: "ethics safety bias deepfakes privacy этика безопасность предвзятость дипфейки приватность"
         }
     ];
+
+    const TOTAL = LESSONS.length;
 
     // Every text (English and Russian) is in js/content/lessons.js
 
@@ -379,7 +380,7 @@
         // The very last lesson gets one big message instead of two small ones
         if (completed.size === TOTAL && before < TOTAL) {
             if (A.effects) A.effects.confetti();   // two bursts from the bottom corners
-            A.toast(t("lessons.toast.all"), "🏆");
+            A.toast(A.plural("lessons.toast.all", TOTAL), "🏆");
         } else {
             A.toast(t("lessons.toast.done", { title: lessonTitle(n) }), "✅");
         }
@@ -412,6 +413,7 @@
     }
 
     // ---------- 16. The certificate ----------
+    const CERT_ICON_STEP = 190;   // distance between the lesson icons on the certificate (canvas pixels)
     let certFrame = 0;
 
     function toggleCertificate(force) {
@@ -579,12 +581,15 @@
         ctx.fillStyle = line;
         ctx.fillRect(W / 2 - 380, 492, 760, 3);
 
+        // "for completing all six lessons": the number as a word when the texts have one
+        const countWord = "lessons.cert.count." + TOTAL;
         ctx.fillStyle = color.muted;
-        fitText(ctx, t("lessons.cert.for"), W / 2, 566, 1240, "500", 34, fonts.body);
+        fitText(ctx, A.plural("lessons.cert.for", TOTAL, A.has(countWord) ? { n: t(countWord) } : null),
+            W / 2, 566, 1240, "500", 34, fonts.body);
 
-        // The six lessons with check marks
+        // Every lesson with a check mark, in one row around the middle
         LESSONS.forEach(function (lesson, index) {
-            const x = W / 2 + (index - 2.5) * 190;
+            const x = W / 2 + (index - (TOTAL - 1) / 2) * CERT_ICON_STEP;
             const y = 700;
             ctx.beginPath();
             ctx.arc(x, y, 54, 0, Math.PI * 2);
@@ -616,7 +621,7 @@
         ctx.font = "500 26px " + fonts.mono;
         ctx.fillText(t("lessons.cert.date", { date: date }), 132, H - 128);
 
-        // The round "6/6" seal sits low enough to leave space under the lesson names
+        // The round "6/6" seal (lessons done / all lessons) sits low enough to leave space under the lesson names
         const sealX = W - 220;
         const sealY = H - 168;
         ctx.textAlign = "center";
@@ -636,9 +641,9 @@
         ctx.setLineDash([]);
         ctx.fillStyle = gradient;
         ctx.font = "700 40px " + fonts.display;
-        ctx.fillText("6/6", sealX, sealY + 7);
+        ctx.fillText(completed.size + "/" + TOTAL, sealX, sealY + 7);
         ctx.fillStyle = color.muted;
-        fitText(ctx, t("lessons.cert.lessons").toUpperCase(), sealX, sealY + 36, 100, "600", 16, fonts.mono);
+        fitText(ctx, A.plural("lessons.cert.lessons", TOTAL).toUpperCase(), sealX, sealY + 36, 100, "600", 16, fonts.mono);
         ctx.restore();
 
         canvas.setAttribute("aria-label", t("lessons.cert.preview", { name: name }));
