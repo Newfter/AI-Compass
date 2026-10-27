@@ -31,6 +31,15 @@
     --danger: #ff5c7a;
     --warning: #ffc861;
 
+    /* Text in an accent colour. On the dark background the colours themselves
+       are easy to read; the light theme below uses darker versions. */
+    --text-accent: var(--accent);
+    --text-accent-2: var(--accent-2);
+    --text-accent-3: var(--accent-3);
+    --text-success: var(--success);
+    --text-warning: var(--warning);
+    --text-danger: var(--danger);
+
     --gradient: linear-gradient(110deg, #b69aff 10%, #70edff 90%);
     --gradient-button: linear-gradient(115deg, #8758ee, #536cf0);
     --glow: 0 0 40px rgba(155, 109, 255, 0.25);
@@ -65,6 +74,14 @@
     --danger: #d4304f;
     --warning: #a86a12;
 
+    /* Mixed 70% with the text colour: at least 5:1 contrast on every light surface */
+    --text-accent: var(--accent);
+    --text-accent-2: color-mix(in srgb, var(--accent-2) 70%, var(--text));
+    --text-accent-3: color-mix(in srgb, var(--accent-3) 70%, var(--text));
+    --text-success: color-mix(in srgb, var(--success) 70%, var(--text));
+    --text-warning: color-mix(in srgb, var(--warning) 70%, var(--text));
+    --text-danger: color-mix(in srgb, var(--danger) 70%, var(--text));
+
     --gradient: linear-gradient(110deg, #6b3fe0 10%, #0a8fb3 90%);
     --gradient-button: linear-gradient(115deg, #7446ea, #3d5ee8);
     --glow: 0 0 40px rgba(107, 63, 224, 0.15);
@@ -85,6 +102,25 @@
     --container: 1180px;
     --nav-height: 76px;
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* Text and icons on top of an accent colour or the button gradient */
+    --on-accent: #ffffff;
+    --accent-strong: #6844c8;
+
+    /* Layers, from the back to the front (z-index) */
+    --z-bg-grid: -3;      /* the grid pattern */
+    --z-bg: -2;           /* the neural network background */
+    --z-sticky: 20;       /* bars that stick to the top inside a section */
+    --z-rail: 90;         /* the section map on the right */
+    --z-nav: 100;         /* the menu bar */
+    --z-progress: 150;    /* the scroll progress bar */
+    --z-launcher: 300;    /* the assistant's round button */
+    --z-sheet: 301;       /* the assistant's window */
+    --z-reader: 500;      /* the lesson reader */
+    --z-confetti: 560;    /* confetti, above the reader */
+    --z-palette: 600;     /* the command palette */
+    --z-toast: 700;       /* small pop-up messages */
+    --z-skip: 1000;       /* the "Skip to content" link */
 }
 
 /* ===== 2. BASICS ===== */
@@ -117,7 +153,8 @@ body {
     overflow-x: hidden;
     /* Room for the fixed menu bar at the top */
     padding-top: var(--nav-height);
-    transition: background-color 0.4s ease, color 0.4s ease;
+    /* No colour transition here: "color" is inherited, so fading it would
+       restyle the whole page in every frame after a theme switch */
 }
 
 /* Safety net: nothing inside the page may make it wider than the screen
@@ -169,8 +206,13 @@ h4 {
 }
 
 ::selection {
-    color: #ffffff;
-    background: #6844c8;
+    color: var(--on-accent);
+    background: var(--accent-strong);
+}
+
+/* Anything with the hidden attribute stays hidden, whatever its display style */
+[hidden] {
+    display: none !important;
 }
 
 a:focus-visible,
@@ -181,6 +223,12 @@ textarea:focus-visible,
 [tabindex]:focus-visible {
     outline: 2px solid var(--accent-2);
     outline-offset: 3px;
+}
+
+/* The ring follows the element's own rounded corners. Elements without any
+   (like plain text links) get soft ones while focused. :where() has no weight,
+   so the border-radius of any component always wins. */
+:where(a, button, input, select, textarea, [tabindex]):where(:focus-visible) {
     border-radius: 6px;
 }
 
@@ -202,11 +250,11 @@ textarea:focus-visible,
     position: fixed;
     top: -60px;
     left: 16px;
-    z-index: 1000;
+    z-index: var(--z-skip);
     padding: 10px 16px;
     border-radius: var(--radius-sm);
-    background: #6844c8;
-    color: #ffffff;
+    background: var(--accent-strong);
+    color: var(--on-accent);
     font-weight: 700;
     transition: top 0.2s ease;
 }
@@ -228,7 +276,7 @@ textarea:focus-visible,
 .neural-bg {
     position: fixed;
     inset: 0;
-    z-index: -2;
+    z-index: var(--z-bg);
     width: 100%;
     height: 100%;
     pointer-events: none;
@@ -237,7 +285,7 @@ textarea:focus-visible,
 .bg-grid {
     position: fixed;
     inset: 0;
-    z-index: -3;
+    z-index: var(--z-bg-grid);
     pointer-events: none;
     background-image:
         linear-gradient(var(--grid-line) 1px, transparent 1px),
@@ -267,7 +315,7 @@ textarea:focus-visible,
 
 .btn-primary {
     background: var(--gradient-button);
-    color: #ffffff;
+    color: var(--on-accent);
     border-color: rgba(190, 170, 255, 0.35);
     box-shadow: 0 10px 35px rgba(var(--accent-rgb), 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -351,7 +399,7 @@ button.chip:hover,
     top: 0;
     left: 0;
     right: 0;
-    z-index: 100;
+    z-index: var(--z-nav);
     border-bottom: 1px solid transparent;
     transition: border-color 0.3s ease;
 }
@@ -582,12 +630,7 @@ button.chip:hover,
     inset: -4px;
     border: 1px solid var(--success);
     border-radius: 50%;
-    animation: pulse-ring 2s ease-out infinite;
-}
-
-@keyframes pulse-ring {
-    from { transform: scale(0.6); opacity: 1; }
-    to { transform: scale(1.8); opacity: 0; }
+    animation: aic-pulse-ring 2s ease-out infinite;
 }
 
 .hero-title {
@@ -625,11 +668,7 @@ button.chip:hover,
     margin-left: 3px;
     vertical-align: -0.15em;
     background: var(--accent-2);
-    animation: caret-blink 1s steps(1) infinite;
-}
-
-@keyframes caret-blink {
-    50% { opacity: 0; }
+    animation: aic-blink 1s steps(1) infinite;
 }
 
 .hero-buttons {
@@ -868,7 +907,7 @@ button.chip:hover,
     left: 16px;
     right: 16px;
     bottom: 24px;
-    z-index: 700;
+    z-index: var(--z-toast);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1094,7 +1133,58 @@ button.chip:hover,
     }
 }
 
-/* ===== 12. REDUCED MOTION ===== */
+/* ===== 12. SHARED ANIMATIONS ===== */
+
+@keyframes aic-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes aic-blink {
+    50% { opacity: 0; }
+}
+
+@keyframes aic-pulse-ring {
+    from { transform: scale(0.6); opacity: 1; }
+    to { transform: scale(1.8); opacity: 0; }
+}
+
+/* A light that slides across a bar: aic-slide moves one width, aic-sweep 2.5 widths */
+@keyframes aic-slide {
+    to { transform: translateX(100%); }
+}
+
+@keyframes aic-sweep {
+    to { transform: translateX(250%); }
+}
+
+/* A small panel dropping open */
+@keyframes aic-drop {
+    from { opacity: 0; transform: translateY(-6px); }
+}
+
+/* Animations of something off screen (or in a hidden tab) wait: AICompass.whenVisible */
+[data-paused],
+[data-paused] *,
+[data-paused] *::before,
+[data-paused] *::after {
+    animation-play-state: paused !important;
+}
+
+/* ===== 13. REDUCED MOTION AND CALM MODE =====
+   core.js puts "fx-motion-off" on <html> when the device asks for less motion
+   or calm mode is on. The @media block does the same before scripts run. */
+
+html.fx-motion-off {
+    scroll-behavior: auto;
+}
+
+html.fx-motion-off *,
+html.fx-motion-off *::before,
+html.fx-motion-off *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+}
 
 @media (prefers-reduced-motion: reduce) {
     html {

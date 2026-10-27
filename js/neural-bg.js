@@ -20,21 +20,7 @@ if (!AIC || !canvas || !canvas.getContext) return;
 const ctx = canvas.getContext("2d");
 if (!ctx) return;
 
-// ---------- Translations (command palette + small pop-ups) ----------
-AIC.addTranslations({
-    en: {
-        "neural.cmdStorm": "Neural storm: make the neurons fire",
-        "neural.stormToast": "Neural storm! Watch the background light up",
-        "neural.stormOff": "Animations are paused, so the network is resting",
-        "neural.secret": "Secret code accepted. Neural overdrive!"
-    },
-    ru: {
-        "neural.cmdStorm": "Нейронный шторм: заставь нейроны сработать",
-        "neural.stormToast": "Нейронный шторм! Посмотри, как засветился фон",
-        "neural.stormOff": "Анимации на паузе, поэтому сеть отдыхает",
-        "neural.secret": "Секретный код принят. Нейроускорение!"
-    }
-});
+// Every text (English and Russian) is in js/content/neural-bg.js
 
 // ---------- Settings you can play with ----------
 const MIN_NODES = 40;            // on phones
@@ -107,8 +93,7 @@ function readColour(name, fallback) {
 }
 
 function calmMode() {
-    if (AIC.effects) return AIC.effects.calm;
-    return AIC.storage.get("effects.calm", false) === true;
+    return AIC.motion.calm;
 }
 
 function motionAllowed() {

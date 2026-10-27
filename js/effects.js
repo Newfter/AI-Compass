@@ -23,26 +23,9 @@ if (!AIC) return;
 
 const root = document.documentElement;
 const finePointerQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
-const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const hasObserver = "IntersectionObserver" in window;
 
-// ---------- Translations ----------
-AIC.addTranslations({
-    en: {
-        "effects.calmOn": "Calm mode: pause animations",
-        "effects.calmOff": "Turn animations back on",
-        "effects.toastCalmOn": "Calm mode on: animations are paused",
-        "effects.toastCalmOff": "Animations are back on",
-        "effects.railLabel": "Page sections"
-    },
-    ru: {
-        "effects.calmOn": "Спокойный режим: остановить анимации",
-        "effects.calmOff": "Снова включить анимации",
-        "effects.toastCalmOn": "Спокойный режим включён: анимации на паузе",
-        "effects.toastCalmOff": "Анимации снова включены",
-        "effects.railLabel": "Разделы страницы"
-    }
-});
+// Every text (English and Russian) is in js/content/effects.js
 
 // ---------- Small helpers ----------
 function clamp(value, min, max) {
@@ -66,12 +49,10 @@ function onMediaChange(query, callback) {
 }
 
 // ---------- Motion settings ----------
-// "Calm mode" is our own switch (saved in the browser);
-// "reduced motion" comes from the device settings.
-let calm = AIC.storage.get("effects.calm", false) === true;
-
+// AIC.motion (core) knows both: "calm mode" (our own switch, saved in the browser)
+// and "reduced motion" (the device settings).
 function motionOK() {
-    return !calm && !reducedMotionQuery.matches;
+    return AIC.motion.ok();
 }
 
 // Tilt, magnet and spotlight only make sense with a real mouse
@@ -80,7 +61,6 @@ function fineOK() {
 }
 
 function updateModeClasses() {
-    root.classList.toggle("fx-calm", calm);
     root.classList.toggle("fx-fine", fineOK());
     root.classList.toggle("reveal-ready", motionOK() && hasObserver);
 }
@@ -1399,28 +1379,27 @@ function onMotionChange() {
     }
     if (!fineOK()) resetPointerEffects();
     rotators.forEach(updateRotator);
-    document.dispatchEvent(new CustomEvent("aic:effects", { detail: { calm: calm } }));
+    document.dispatchEvent(new CustomEvent("aic:effects", { detail: { calm: AIC.motion.calm } }));
 }
 
 function setCalm(value) {
-    calm = Boolean(value);
-    AIC.storage.set("effects.calm", calm);
-    onMotionChange();
+    AIC.motion.setCalm(value);
 }
 
 AIC.registerCommand({
     id: "effects-calm",
     group: "cmd.groupActions",
     icon: "🧘",
-    title: function () { return AIC.t(calm ? "effects.calmOff" : "effects.calmOn"); },
+    title: function () { return AIC.t(AIC.motion.calm ? "effects.calmOff" : "effects.calmOn"); },
     keywords: "calm motion animation animations effects pause reduce accessibility спокойный режим анимации анимация эффекты движение пауза",
+    keepOverlays: true,
     run: function () {
-        setCalm(!calm);
+        const calm = AIC.motion.toggleCalm();
         AIC.toast(AIC.t(calm ? "effects.toastCalmOn" : "effects.toastCalmOff"), calm ? "🧘" : "✨");
     }
 });
 
-onMediaChange(reducedMotionQuery, onMotionChange);
+AIC.motion.onChange(onMotionChange);
 onMediaChange(finePointerQuery, onMotionChange);
 
 /* =========================================================
@@ -1533,15 +1512,128 @@ AIC.onLanguageChange(() => {
 document.addEventListener("visibilitychange", () => rotators.forEach(updateRotator));
 
 /* =========================================================
+   12. CONFETTI (for big moments: every lesson done, a new best quiz score)
+   AICompass.effects.confetti()                    two bursts from the bottom corners
+   AICompass.effects.confetti({ origin: element }) one burst from the middle of an element
+   Options: count (pieces), duration (ms). Nothing happens when animations are off.
+   ========================================================= */
+const CONFETTI_COLORS = ["--accent", "--accent-2", "--accent-3", "--success", "--warning"];
+let party = null;
+
+function stopConfetti() {
+    if (!party) return;
+    cancelAnimationFrame(party.frame);
+    party.canvas.remove();
+    party = null;
+}
+
+function confetti(options) {
+    const settings = options || {};
+    if (!motionOK() || document.hidden) return;
+    stopConfetti();
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "fx-confetti";
+    canvas.setAttribute("aria-hidden", "true");
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const context = AIC.canvas.fit(canvas, width, height);
+    if (!context) return;
+    document.body.appendChild(canvas);
+
+    const colors = CONFETTI_COLORS.map((name) => AIC.cssVar(name)).filter(Boolean);
+    const origin = settings.origin && settings.origin.getBoundingClientRect ? settings.origin.getBoundingClientRect() : null;
+    const count = settings.count || (origin ? (width < 600 ? 90 : 150) : 180);
+    const pieces = [];
+    for (let i = 0; i < count; i++) {
+        let x, y, angle, speed;
+        if (origin) {
+            // One round burst, thrown a little upwards
+            x = origin.left + origin.width / 2;
+            y = origin.top + origin.height / 2;
+            angle = Math.random() * Math.PI * 2;
+            speed = 220 + Math.random() * 560;
+        } else {
+            // Two cannons in the bottom corners, aiming up and inwards
+            const fromLeft = i % 2 === 0;
+            x = fromLeft ? -10 : width + 10;
+            y = height * 0.85;
+            angle = ((fromLeft ? -62 : -118) + (Math.random() - 0.5) * 46) * Math.PI / 180;
+            speed = 660 + Math.random() * 600;
+        }
+        pieces.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - (origin ? 260 : 0),
+            size: 5 + Math.random() * 8,
+            shape: i % 3,                     // 0 square, 1 circle, 2 paper strip
+            turn: Math.random() * Math.PI * 2,
+            spin: (Math.random() - 0.5) * 14,
+            color: colors[i % colors.length] || "#9b6dff"
+        });
+    }
+
+    const duration = settings.duration || 3000;
+    const start = performance.now();
+    party = { canvas: canvas, frame: 0 };
+    let last = start;
+
+    function frame(now) {
+        const dt = Math.min(0.05, (now - last) / 1000);   // the same speed at 60 Hz and 120 Hz
+        last = now;
+        const age = now - start;
+        context.clearRect(0, 0, width, height);
+        context.globalAlpha = AIC.util.clamp((duration - age) / 700, 0, 1);
+
+        let alive = 0;
+        pieces.forEach((piece) => {
+            // Gravity pulls down, the air slows everything down
+            piece.vy += 1000 * dt;
+            piece.vx *= 1 - 1.4 * dt;
+            piece.vy *= 1 - 1.1 * dt;
+            piece.x += piece.vx * dt;
+            piece.y += piece.vy * dt;
+            piece.turn += piece.spin * dt;
+            if (piece.y > height + 30) return;
+            alive++;
+
+            context.save();
+            context.translate(piece.x, piece.y);
+            context.rotate(piece.turn);
+            context.fillStyle = piece.color;
+            if (piece.shape === 1) {
+                context.beginPath();
+                context.arc(0, 0, piece.size * 0.38, 0, Math.PI * 2);
+                context.fill();
+            } else if (piece.shape === 2) {
+                // Squashing the width looks like a strip of paper flipping over
+                const flip = Math.abs(Math.cos(piece.turn * 1.7));
+                context.fillRect(-piece.size / 2 * flip, -piece.size * 0.3, piece.size * flip, piece.size * 0.6);
+            } else {
+                context.fillRect(-piece.size / 2, -piece.size / 4, piece.size, piece.size / 2);
+            }
+            context.restore();
+        });
+
+        if (alive > 0 && age < duration && !document.hidden) party.frame = requestAnimationFrame(frame);
+        else stopConfetti();
+    }
+    party.frame = requestAnimationFrame(frame);
+}
+
+/* =========================================================
    Tools for other features, e.g.
    if (AICompass.effects) AICompass.effects.scramble(element);
    ========================================================= */
 AIC.effects = {
-    get calm() { return calm; },
+    get calm() { return AIC.motion.calm; },
     setCalm: setCalm,
     refresh: function (container) { scan(container || document.body); },
     reveal: function (element) { if (element) reveal(element, 0); },
-    scramble: function (element) { if (element) scramble(element, 0); }
+    scramble: function (element) { if (element) scramble(element, 0); },
+    confetti: confetti,
+    stopConfetti: stopConfetti
 };
 
 /* ---------- Start ---------- */
