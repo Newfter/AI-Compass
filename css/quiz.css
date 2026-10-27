@@ -1,17 +1,19 @@
 /* =========================================================
    AI COMPASS — THE AI CHALLENGE (QUIZ)
-   1. The card (glass panel, corner brackets, scanning light)
-   2. Screen changes (fade + smooth height)
-   3. Shared parts (labels, tiles, arrows)
-   4. Start screen (orb, rules, timed-mode switch)
-   5. Question screen: top bar (counter, score, streak, timer)
-   6. Question screen: progress, question, answer buttons
-   7. Question screen: feedback after an answer
-   8. Results screen (ring, rank, tiles, buttons)
-   9. Results screen: review list
-  10. Helpers
-  11. Responsive
-  12. Reduced motion / calm mode
+   The styles of the quiz card that js/quiz.js builds.
+   Sections of this file:
+    1. The card (glass panel, corner brackets, scanning light)
+    2. Screen changes (fade + smooth height)
+    3. Shared parts (labels, tiles, arrows)
+    4. Start screen (orb, rules, timed-mode switch)
+    5. Question screen: top bar (counter, score, streak, timer)
+    6. Question screen: progress, question, answer buttons
+    7. Question screen: feedback after an answer
+    8. Results screen (ring, rank, tiles, buttons)
+    9. Results screen: review list
+   10. Helpers
+   11. Responsive
+   12. Reduced motion / calm mode
    All colours come from the variables in style.css,
    so both the dark and the light theme look right.
    ========================================================= */

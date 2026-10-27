@@ -1,13 +1,36 @@
 /* =========================================================
    AI COMPASS — THE AI CHALLENGE (QUIZ)
-   Questions about AI inside one glass card with three screens:
-   1. START    rules, best score, "timed mode" switch
-   2. QUESTION progress, score, streak, timer ring, answers, feedback
-   3. RESULTS  score ring, rank, new best + confetti, answer review
-   Keyboard: number keys answer, Enter goes to the next question.
-   Other files can call window.AICompass.startQuiz().
+   A game of questions about AI, in one glass card with three screens:
+   START     the rules, the best score and the "timed mode" switch
+   QUESTION  progress, score, streak, timer ring, the answers, and an
+             explanation after each answer
+   RESULTS   score ring, rank, a new best score (with confetti) and a
+             review of every answer
+   Keyboard: the number keys answer, Enter goes to the next question.
    The language can change at any moment: the quiz keeps its place
    and simply re-writes its texts in the other language.
+   Sections of this file:
+    1. Settings
+    2. The questions and ranks
+    3. Small helpers
+    4. Best scores (saved in the browser)
+    5. The state of the quiz
+    6. The card and its screens
+    7. START screen
+    8. QUESTION screen
+    9. The countdown (timed mode)
+   10. Answering
+   11. Starting and finishing a game
+   12. RESULTS screen
+   13. Confetti (only for a new best score)
+   14. "Copy my result"
+   15. Keyboard: number keys and Enter
+   16. Pop-up windows, calm mode and the language
+   17. Building the quiz (only when it is needed)
+   18. Ctrl+K commands and the public API
+   Other features use AICompass.quiz (see the last section).
+   Every text (English and Russian) is in js/content/quiz.js,
+   and so are the questions and the ranks.
    ========================================================= */
 
 (function () {
@@ -19,20 +42,46 @@
     if (!A || !mount || !data) return;
 
     const t = A.t;
+    // A translated piece of text inside HTML. Its data-i18n attribute lets core.js
+    // re-translate it by itself when the language changes.
+    const text = A.i18nHTML;
 
     // ---------- 1. Settings ----------
-    const TIME_LIMIT = 20;          // seconds per question in timed mode
+    // Points
     const BASE_POINTS = 100;        // for every correct answer
-    const SPEED_BONUS_MAX = 50;     // timed mode: a fast answer earns up to +50
+    const STREAK_MIN = 2;           // right answers in a row that make a streak: it shows, and earns a bonus
     const STREAK_STEP = 10;         // 2 in a row: +10, 3 in a row: +20, ...
     const STREAK_BONUS_MAX = 50;    // ...but never more than +50
-    const PRAISE_COUNT = 4;         // how many different "Correct!" messages we have
+    const STREAK_HOT = 4;           // from 4 in a row the flame burns brighter
+
+    // Timed mode
+    const TIME_LIMIT = 20;          // seconds per question
+    const SPEED_BONUS_MAX = 50;     // a fast answer earns up to +50
+    const WARNING_SECONDS = 10;     // the timer turns yellow with 10 seconds left...
+    const DANGER_SECONDS = 5;       // ...and red with 5 (screen readers hear it then, once)
+    const MAX_FRAME_MS = 100;       // a long pause between two frames counts as 100 ms at most
+
+    // The questions
     const CHOICE_OPTIONS = 4;       // answers of a multiple-choice question ("o1" … "o4" in the texts)
+    const PRAISE_COUNT = 4;         // how many different "Correct!" messages there are
     const SECONDS_PER_QUESTION = 25;   // about how long one question takes (to read, answer and learn)
-    const SCROLL_GAP = 8;           // px kept free below the menu bar and above the assistant's button
-    const ON_SCREEN_MARGIN = "-25% 0px";   // "on screen" = the quiz reaches into the middle half of the window
-    const CONFETTI_DELAY = 950;     // ms after the results appear (the ring is almost full then)
+
+    // Timings, in milliseconds
+    const LEAVE_MS = 220;           // the old screen fades out (as long as "qz-leave" in quiz.css)...
+    const RESIZE_MS = 650;          // ...then the card changes its height while the new screen slides in
+    const SCORE_COUNT_MS = 700;     // the score counts up to its new value
+    const PERCENT_COUNT_MS = 1400;  // the result in % counts up while the ring fills
+    const QUIT_CONFIRM_MS = 4000;   // after a first press, "Quit" waits this long for the second one
+    const COPIED_MS = 2200;         // the copy button says "Copied" for this long
+    const CONFETTI_DELAY = 950;     // after the results appear (the ring is almost full then)
     const CONFETTI_MS = 3000;       // how long the confetti of a new best score falls
+    const START_DELAY = 80;         // quiz.start() waits for the command palette to close first
+
+    // Sizes and places
+    const SCROLL_GAP = 8;           // px kept free below the menu bar and above the assistant's button
+    const LAUNCHER_ROOM = 96;       // px for the assistant's button, if the CSS has no --launcher-room
+    const REVEAL_LINE = 0.8;        // a new screen scrolls the card's top into view if it is above the window or below 80% of it
+    const ON_SCREEN_MARGIN = "-25% 0px";   // "on screen" = the quiz reaches into the middle half of the window
     const TIMER_RADIUS = 27;        // the countdown ring (an SVG circle in a 64 × 64 picture)
     const RESULT_RADIUS = 66;       // the score ring of the results (in a 160 × 160 picture)
     const TIMER_LENGTH = 2 * Math.PI * TIMER_RADIUS;     // the length of a ring is its circumference
@@ -44,13 +93,9 @@
     const RANKS = data.ranks;           // by the number of correct answers
     const PLAY_MINUTES = Math.max(1, Math.round(QUESTIONS.length * SECONDS_PER_QUESTION / 60));
 
-    // ---------- 4. Small helpers ----------
+    // ---------- 3. Small helpers ----------
     // (Plurals, number formats, shuffling, motion and screen-reader messages
     // come from the shared toolkit in core.js.)
-
-    // A translated piece of text. The data-i18n attribute lets core.js
-    // re-translate it by itself when the language changes.
-    const text = A.i18nHTML;
 
     // "Twelve questions": the texts can spell out the exact number the quiz has
     // ("quiz.questionCount.12"); any other number uses the plural forms ("13 questions")
@@ -76,68 +121,7 @@
         return Boolean(element && element.closest && (element.isContentEditable || element.closest("input, textarea, select")));
     }
 
-    // Each mode has its own best score, because the timed mode can give more points
-    // (speed bonus). The points are saved as a number, the details of that game next to it:
-    //   no timer: "quiz.best" + "quiz.bestRun"     timed: "quiz.bestTimed" + "quiz.bestTimedRun"
-    function bestKeys(timed) {
-        return timed
-            ? { points: "quiz.bestTimed", details: "quiz.bestTimedRun" }
-            : { points: "quiz.best", details: "quiz.bestRun" };
-    }
-
-    function readBest(timed) {
-        const keys = bestKeys(timed);
-        const points = A.storage.get(keys.points, null);
-        if (typeof points !== "number" || !isFinite(points)) return null;
-        const details = A.storage.get(keys.details, null) || {};
-        return {
-            points: points,
-            correct: typeof details.correct === "number" ? details.correct : null,
-            total: typeof details.total === "number" ? details.total : QUESTIONS.length
-        };
-    }
-
-    function saveBest(timed, details) {
-        const keys = bestKeys(timed);
-        A.storage.set(keys.points, details.points);
-        A.storage.set(keys.details, details);
-    }
-
-    // ---------- 5. The state of the quiz ----------
-    const state = {
-        screen: "start",              // "start", "question" or "results"
-        timed: A.storage.get("quiz.timed", false) === true,   // the switch on the start screen
-        gameTimed: false,             // was the current game started in timed mode?
-        order: [],                    // question numbers in the order of this game
-        optionOrders: [],             // for each question: the order of its options
-        index: 0,                     // which question we are on
-        answers: [],                  // what happened on each question
-        points: 0,
-        streak: 0,
-        bestStreak: 0,
-        result: null,                 // filled in when the game ends
-        reviewFilter: "all"           // "all" or "mistakes"
-    };
-
-    // ---------- 6. The card that holds every screen ----------
-    // The quiz is several screens down the page, so its card is built only when
-    // it is needed (see section 17). Until then these three are null.
-    let card = null;            // the glass card
-    let stage = null;           // the part of the card where the screens take turns
-    let live = null;            // the quiz's own line for screen-reader messages
-
-    let ui = {};                // shortcuts to the elements of the current screen
-    let paintScreen = null;     // re-writes the texts of the current screen
-    let busy = false;           // true while one screen fades into the next
-    let swapTimer = 0;
-    let resizeTimer = 0;
-    let onScreen = false;       // can you see the quiz? (see section 17)
-
-    function paint() {
-        if (paintScreen) paintScreen();
-    }
-
-    // ----- Numbers that count up on screen (the score, the result in %) -----
+    // Numbers that count up on screen (the score, the result in %)
     const counters = {};        // the ones counting right now, by name
 
     // Counts the number in "element" from "from" up to "to" in "duration" ms:
@@ -184,6 +168,68 @@
         Object.keys(counters).forEach(stopCounter);
     }
 
+    // ---------- 4. Best scores (saved in the browser) ----------
+    // Each mode has its own best score, because the timed mode can give more points
+    // (speed bonus). The points are saved as a number, the details of that game next to it:
+    //   no timer: "quiz.best" + "quiz.bestRun"     timed: "quiz.bestTimed" + "quiz.bestTimedRun"
+    function bestKeys(timed) {
+        return timed
+            ? { points: "quiz.bestTimed", details: "quiz.bestTimedRun" }
+            : { points: "quiz.best", details: "quiz.bestRun" };
+    }
+
+    function readBest(timed) {
+        const keys = bestKeys(timed);
+        const points = A.storage.get(keys.points, null);
+        if (typeof points !== "number" || !isFinite(points)) return null;
+        const details = A.storage.get(keys.details, null) || {};
+        return {
+            points: points,
+            correct: typeof details.correct === "number" ? details.correct : null,
+            total: typeof details.total === "number" ? details.total : QUESTIONS.length
+        };
+    }
+
+    function saveBest(timed, details) {
+        const keys = bestKeys(timed);
+        A.storage.set(keys.points, details.points);
+        A.storage.set(keys.details, details);
+    }
+
+    // ---------- 5. The state of the quiz ----------
+    const state = {
+        screen: "start",              // "start", "question" or "results"
+        timed: A.storage.get("quiz.timed", false) === true,   // the switch on the start screen
+        gameTimed: false,             // was the current game started in timed mode?
+        order: [],                    // question numbers in the order of this game
+        optionOrders: [],             // for each question: the order of its options
+        index: 0,                     // which question we are on
+        answers: [],                  // what happened on each question
+        points: 0,
+        streak: 0,
+        bestStreak: 0,
+        result: null,                 // filled in when the game ends
+        reviewFilter: "all"           // "all" or "mistakes"
+    };
+
+    // ---------- 6. The card and its screens ----------
+    // The quiz is several screens down the page, so its card is built only when
+    // it is needed (see section 17). Until then these three are null.
+    let card = null;            // the glass card
+    let stage = null;           // the part of the card where the screens take turns
+    let live = null;            // the quiz's own line for screen-reader messages
+
+    let ui = {};                // shortcuts to the elements of the current screen
+    let paintScreen = null;     // re-writes the texts of the current screen
+    let busy = false;           // true while one screen fades into the next
+    let swapTimer = 0;
+    let resizeTimer = 0;
+    let onScreen = false;       // can you see the quiz? (see section 17)
+
+    function paint() {
+        if (paintScreen) paintScreen();
+    }
+
     // Swaps the current screen for a new one: the old one fades out,
     // the card smoothly changes its height and the new one slides in.
     function showScreen(build, options) {
@@ -222,7 +268,7 @@
                     stage.classList.remove("is-resizing");
                     stage.style.height = "";
                     screen.classList.remove("qz-enter");
-                }, 650);
+                }, RESIZE_MS);
             }
 
             busy = false;
@@ -230,7 +276,7 @@
             // Bring the top of the card back into view (e.g. after "Next" on a phone)
             if (settings.reveal) {
                 const box = card.getBoundingClientRect();
-                if (box.top < 0 || box.top > window.innerHeight * 0.8) {
+                if (box.top < 0 || box.top > window.innerHeight * REVEAL_LINE) {
                     card.scrollIntoView({ block: "start", behavior: A.motion.ok() ? "smooth" : "auto" });
                 }
             }
@@ -247,7 +293,7 @@
             // The old screen only fades out now. It is not re-painted any more:
             // its data may be gone already (like the results after "Try again").
             paintScreen = null;
-            swapTimer = setTimeout(swap, 220);
+            swapTimer = setTimeout(swap, LEAVE_MS);
         } else {
             swap();
         }
@@ -510,8 +556,8 @@
         if (!counters.score) ui.score.textContent = A.format.number(state.points);
 
         // Streak counter: only shown from 2 correct answers in a row
-        ui.streak.hidden = state.streak < 2;
-        ui.streak.classList.toggle("is-hot", state.streak >= 4);
+        ui.streak.hidden = state.streak < STREAK_MIN;
+        ui.streak.classList.toggle("is-hot", state.streak >= STREAK_HOT);
         ui.streakText.textContent = t("quiz.q.streak", { n: state.streak });
         ui.streakSr.textContent = A.plural("quiz.q.streakSr", state.streak);
 
@@ -543,7 +589,7 @@
         if (record.base) bonus.push(["base", t("quiz.fb.base", { n: record.base })]);
         if (record.speed) bonus.push(["speed", "⚡ " + t("quiz.fb.speed", { n: record.speed })]);
         if (record.streakBonus) bonus.push(["streak", "🔥 " + t("quiz.fb.streak", { n: record.streakBonus })]);
-        if (record.lostStreak >= 2) bonus.push(["lost", t("quiz.fb.streakLost")]);
+        if (record.lostStreak >= STREAK_MIN) bonus.push(["lost", t("quiz.fb.streakLost")]);
         ui.fbBonus.replaceChildren(...bonus.map((item) => {
             const chip = document.createElement("li");
             chip.className = "qz-bonus qz-bonus-" + item[0];
@@ -559,7 +605,7 @@
     }
 
     // "Quit" needs two presses, so one accidental tap doesn't end the game.
-    // After the first press the button asks "Sure?" for 4 seconds.
+    // After the first press the button asks "Sure?" for 4 seconds (QUIT_CONFIRM_MS).
     let quitArmed = false;
     let quitTimer = 0;
 
@@ -577,7 +623,7 @@
         paintQuit();
         A.announce(t("quiz.q.quitHint"), { region: live });
         clearTimeout(quitTimer);
-        quitTimer = setTimeout(disarmQuit, 4000);
+        quitTimer = setTimeout(disarmQuit, QUIT_CONFIRM_MS);
     }
 
     function disarmQuit() {
@@ -636,7 +682,7 @@
         // The clock only runs while you can actually see the question.
         // A long pause between two frames counts as 100 ms at most.
         const running = onScreen && !timer.blocked;
-        if (running) timer.remaining -= A.util.clamp(now - timer.last, 0, 100);
+        if (running) timer.remaining -= A.util.clamp(now - timer.last, 0, MAX_FRAME_MS);
         timer.last = now;
         drawTimer(!running);
 
@@ -662,13 +708,14 @@
         timer.seconds = seconds;
         ui.timerNum.textContent = String(seconds);
         ui.timerSr.textContent = t("quiz.q.timeLeft", { time: A.plural("quiz.seconds", seconds) });
-        ui.timer.classList.toggle("is-warning", seconds <= 10 && seconds > 5);
-        ui.timer.classList.toggle("is-danger", seconds <= 5);
-        if (seconds <= 5 && seconds > 0 && timer.active) A.dom.replay(ui.timerNum, "is-tick");
+        ui.timer.classList.toggle("is-warning", seconds <= WARNING_SECONDS && seconds > DANGER_SECONDS);
+        ui.timer.classList.toggle("is-danger", seconds <= DANGER_SECONDS);
+        // The last seconds tick, and screen readers hear once that time is running out
+        if (seconds <= DANGER_SECONDS && seconds > 0 && timer.active) A.dom.replay(ui.timerNum, "is-tick");
 
-        if (seconds === 5 && !timer.warned && timer.active) {
+        if (seconds === DANGER_SECONDS && !timer.warned && timer.active) {
             timer.warned = true;
-            A.announce(t("quiz.q.timeLeft", { time: A.plural("quiz.seconds", 5) }), { region: live });
+            A.announce(t("quiz.q.timeLeft", { time: A.plural("quiz.seconds", DANGER_SECONDS) }), { region: live });
         }
     }
 
@@ -695,14 +742,14 @@
             streakBonus: 0,
             points: 0,
             lostStreak: 0,
-            praise: 1 + Math.floor(Math.random() * PRAISE_COUNT)
+            praise: A.util.randomInt(1, PRAISE_COUNT)     // which "Correct!" message
         };
 
         if (correct) {
             state.streak += 1;
             record.base = BASE_POINTS;
             if (state.gameTimed) record.speed = Math.round(SPEED_BONUS_MAX * Math.min(1, secondsLeft / TIME_LIMIT));
-            if (state.streak >= 2) record.streakBonus = Math.min(STREAK_BONUS_MAX, (state.streak - 1) * STREAK_STEP);
+            if (state.streak >= STREAK_MIN) record.streakBonus = Math.min(STREAK_BONUS_MAX, (state.streak - 1) * STREAK_STEP);
             record.points = record.base + record.speed + record.streakBonus;
         } else {
             record.lostStreak = state.streak;
@@ -733,7 +780,7 @@
             ui.scorePop.textContent = "+" + A.format.number(record.points);
             A.dom.replay(ui.scorePop, "is-popping");
         }
-        if (state.streak >= 2) A.dom.replay(ui.streak, "is-bump");
+        if (state.streak >= STREAK_MIN) A.dom.replay(ui.streak, "is-bump");
 
         // The message for screen readers: result, points, right answer, explanation
         const parts = [feedbackTitle(record)];
@@ -753,7 +800,7 @@
         requestAnimationFrame(() => {
             if (!ui.next || !ui.next.isConnected) return;
             const topSpace = A.layout.navHeight() + SCROLL_GAP;
-            const bottomSpace = A.layout.px("--launcher-room", 96) + SCROLL_GAP;
+            const bottomSpace = A.layout.px("--launcher-room", LAUNCHER_ROOM) + SCROLL_GAP;
             // The feedback is still sliding in from a little lower (its "is-in" animation):
             // measure where it will stop, not where it is now
             const slide = new DOMMatrixReadOnly(getComputedStyle(ui.feedback).transform).m42;
@@ -790,7 +837,7 @@
     function animateScore(from, to) {
         stopCounter("score");
         if (!ui.score) return;
-        if (A.motion.ok()) countUp("score", ui.score, from, to, 700);
+        if (A.motion.ok()) countUp("score", ui.score, from, to, SCORE_COUNT_MS);
         else ui.score.textContent = A.format.number(to);
     }
 
@@ -885,6 +932,8 @@
     }
 
     // ---------- 12. RESULTS screen ----------
+    let ringShown = false;      // has the score ring filled up? (until then the % shows 0)
+
     function buildResults() {
         const result = state.result;
         const rank = result.rank;
@@ -1110,8 +1159,6 @@
     }
 
     // The score ring fills up and the percentage counts up
-    let ringShown = false;
-
     function animateResults() {
         const result = state.result;
         const bar = stage.querySelector(".qz-res-bar");
@@ -1144,7 +1191,7 @@
         });
 
         const ring = ui.ring;
-        countUp("percent", ui.percent, 0, result.percent, 1400, () => {
+        countUp("percent", ui.percent, 0, result.percent, PERCENT_COUNT_MS, () => {
             ringShown = true;
             if (ring.isConnected) A.dom.replay(ring, "is-done");
         });
@@ -1199,7 +1246,7 @@
             ui.copy.classList.add("is-copied");
             clearTimeout(copiedTimer);
             const button = ui.copy;
-            copiedTimer = setTimeout(() => button.classList.remove("is-copied"), 2200);
+            copiedTimer = setTimeout(() => button.classList.remove("is-copied"), COPIED_MS);
         };
 
         if (navigator.clipboard && window.isSecureContext) {
@@ -1232,7 +1279,8 @@
         return ok;
     }
 
-    // ---------- 15. Keyboard: number keys to answer, Enter for the next question ----------
+    // ---------- 15. Keyboard: number keys and Enter ----------
+    // The number keys answer (1 for the first answer, ...), Enter goes to the next question
     document.addEventListener("keydown", (event) => {
         if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
         if (state.screen !== "question" || busy) return;
@@ -1289,7 +1337,7 @@
         }
     });
 
-    // ---------- 17. Building the quiz ----------
+    // ---------- 17. Building the quiz (only when it is needed) ----------
     // The card and its start screen are built when the quiz comes near the screen,
     // when the browser has a quiet moment after loading, or when ensure() is called
     // first (by AICompass.quiz.start). With a link like #quiz, core builds it at once.
@@ -1317,7 +1365,7 @@
 
     const ensure = A.whenNeeded(mount, build);
 
-    // ---------- 18. Public API + Ctrl+K commands ----------
+    // ---------- 18. Ctrl+K commands and the public API ----------
     // AICompass.quiz.start(): scrolls to the quiz and starts it.
     // A game that is already running just continues.
     // Optional: start({ timed: true }) to choose the mode.
@@ -1342,12 +1390,8 @@
             } else {
                 startGame({ forceFocus: true, reveal: false });
             }
-        }, 80);
+        }, START_DELAY);
     }
-
-    // Other features use AICompass.quiz.start() (AICompass.startQuiz is the older name)
-    A.feature("quiz", { start: startQuiz });
-    A.startQuiz = startQuiz;
 
     A.registerCommand({
         id: "quiz-start",
@@ -1366,4 +1410,8 @@
         keywords: "quiz timed timer speed fast challenge тест таймер на время скорость быстро испытание",
         run: () => startQuiz({ timed: true })
     });
+
+    // Other features use AICompass.quiz.start() (AICompass.startQuiz is the older name)
+    A.feature("quiz", { start: startQuiz });
+    A.startQuiz = startQuiz;
 })();
