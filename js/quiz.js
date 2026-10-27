@@ -26,13 +26,14 @@
     const STREAK_STEP = 10;         // 2 in a row: +10, 3 in a row: +20, ...
     const STREAK_BONUS_MAX = 50;    // ...but never more than +50
     const PRAISE_COUNT = 4;         // how many different "Correct!" messages we have
-    const BOTTOM_SPACE = 104;       // px kept free at the bottom of the screen (assistant button)
-    const TOP_SPACE = 84;           // px kept free at the top of the screen (navigation bar)
+    const SCROLL_GAP = 8;           // px kept free below the menu bar and above the assistant's button
     const ON_SCREEN_MARGIN = "-25% 0px";   // "on screen" = the quiz reaches into the middle half of the window
     const CONFETTI_DELAY = 950;     // ms after the results appear (the ring is almost full then)
     const CONFETTI_MS = 3000;       // how long the confetti of a new best score falls
-    const TIMER_LENGTH = 2 * Math.PI * 27;   // length of the timer ring (radius 27)
-    const RESULT_LENGTH = 2 * Math.PI * 66;  // length of the results ring (radius 66)
+    const TIMER_RADIUS = 27;        // the countdown ring (an SVG circle in a 64 × 64 picture)
+    const RESULT_RADIUS = 66;       // the score ring of the results (in a 160 × 160 picture)
+    const TIMER_LENGTH = 2 * Math.PI * TIMER_RADIUS;     // the length of a ring is its circumference
+    const RESULT_LENGTH = 2 * Math.PI * RESULT_RADIUS;
 
     // ---------- 2. The questions ----------
     // The texts live in the translations below ("quiz.q1.text", "quiz.q1.o1", ...).
@@ -413,8 +414,8 @@
         const timer = state.gameTimed
             ? '<div class="qz-timer" role="timer">' +
                   '<svg viewBox="0 0 64 64" aria-hidden="true">' +
-                      '<circle class="qz-timer-track" cx="32" cy="32" r="27"></circle>' +
-                      '<circle class="qz-timer-bar" cx="32" cy="32" r="27" stroke-dasharray="' + TIMER_LENGTH.toFixed(2) + '"></circle>' +
+                      '<circle class="qz-timer-track" cx="32" cy="32" r="' + TIMER_RADIUS + '"></circle>' +
+                      '<circle class="qz-timer-bar" cx="32" cy="32" r="' + TIMER_RADIUS + '" stroke-dasharray="' + TIMER_LENGTH.toFixed(2) + '"></circle>' +
                   "</svg>" +
                   '<span class="qz-timer-num" aria-hidden="true">' + TIME_LIMIT + "</span>" +
                   '<span class="sr-only qz-timer-sr"></span>' +
@@ -760,14 +761,20 @@
 
         // Make sure the explanation and the "Next" button can be seen.
         // The button stops above the assistant's round button in the bottom corner,
-        // but we never scroll so far that the top of the explanation disappears.
+        // but we never scroll so far that the top of the explanation disappears
+        // under the menu bar. (Both sizes come from the CSS and are smaller on phones.)
         requestAnimationFrame(() => {
             if (!ui.next || !ui.next.isConnected) return;
-            const box = ui.next.getBoundingClientRect();
-            const feedbackTop = ui.feedback.getBoundingClientRect().top;
-            const lowest = window.innerHeight - BOTTOM_SPACE;
-            const distance = Math.min(box.bottom - lowest, feedbackTop - TOP_SPACE);
-            if (box.bottom > lowest && distance > 0) {
+            const topSpace = A.layout.navHeight() + SCROLL_GAP;
+            const bottomSpace = A.layout.px("--launcher-room", 96) + SCROLL_GAP;
+            // The feedback is still sliding in from a little lower (its "is-in" animation):
+            // measure where it will stop, not where it is now
+            const slide = new DOMMatrixReadOnly(getComputedStyle(ui.feedback).transform).m42;
+            const nextBottom = ui.next.getBoundingClientRect().bottom - slide;
+            const feedbackTop = ui.feedback.getBoundingClientRect().top - slide;
+            const lowest = window.innerHeight - bottomSpace;
+            const distance = Math.min(nextBottom - lowest, feedbackTop - topSpace);
+            if (nextBottom > lowest && distance > 0) {
                 window.scrollBy({ top: distance, behavior: A.motion.ok() ? "smooth" : "auto" });
             }
         });
@@ -958,8 +965,8 @@
                                 "</linearGradient>" +
                             "</defs>" +
                             '<circle class="qz-res-ticks" cx="80" cy="80" r="77"></circle>' +
-                            '<circle class="qz-res-track" cx="80" cy="80" r="66"></circle>' +
-                            '<circle class="qz-res-bar" cx="80" cy="80" r="66" stroke="url(#qz-ring-gradient)" stroke-dasharray="' + RESULT_LENGTH.toFixed(2) + '" stroke-dashoffset="' + RESULT_LENGTH.toFixed(2) + '"></circle>' +
+                            '<circle class="qz-res-track" cx="80" cy="80" r="' + RESULT_RADIUS + '"></circle>' +
+                            '<circle class="qz-res-bar" cx="80" cy="80" r="' + RESULT_RADIUS + '" stroke="url(#qz-ring-gradient)" stroke-dasharray="' + RESULT_LENGTH.toFixed(2) + '" stroke-dashoffset="' + RESULT_LENGTH.toFixed(2) + '"></circle>' +
                         "</svg>" +
                         '<div class="qz-res-center" aria-hidden="true">' +
                             '<strong class="qz-res-percent"><span data-ref="percent">0</span><span class="qz-res-pct">%</span></strong>' +
