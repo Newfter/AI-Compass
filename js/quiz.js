@@ -29,6 +29,8 @@
     const BOTTOM_SPACE = 104;       // px kept free at the bottom of the screen (assistant button)
     const TOP_SPACE = 84;           // px kept free at the top of the screen (navigation bar)
     const ON_SCREEN_MARGIN = "-25% 0px";   // "on screen" = the quiz reaches into the middle half of the window
+    const CONFETTI_DELAY = 950;     // ms after the results appear (the ring is almost full then)
+    const CONFETTI_MS = 3000;       // how long the confetti of a new best score falls
     const TIMER_LENGTH = 2 * Math.PI * 27;   // length of the timer ring (radius 27)
     const RESULT_LENGTH = 2 * Math.PI * 66;  // length of the results ring (radius 66)
 
@@ -1107,7 +1109,6 @@
 
     // The score ring fills up and the percentage counts up
     let ringShown = false;
-    let confettiTimer = 0;
 
     function animateResults() {
         const result = state.result;
@@ -1148,128 +1149,27 @@
 
         if (result.isNewBest) {
             clearTimeout(confettiTimer);
-            confettiTimer = setTimeout(() => {
-                if (state.screen === "results" && ui.ring && ui.ring.isConnected) burstConfetti(ui.ring);
-            }, 950);
+            confettiTimer = setTimeout(burstConfetti, CONFETTI_DELAY);
         }
     }
 
     // ---------- 13. Confetti (only for a new best score) ----------
-    let confetti = null;
+    // effects.js draws it: one burst from the middle of the score ring.
+    let confettiTimer = 0;
+    let confettiUntil = 0;      // until then, confetti that the quiz started may still be falling
 
-    function confettiColors() {
-        return ["--accent", "--accent-2", "--accent-3", "--success", "--warning"]
-            .map((name) => A.cssVar(name))
-            .filter(Boolean);
+    function burstConfetti() {
+        if (!A.effects || state.screen !== "results" || !ui.ring || !ui.ring.isConnected) return;
+        A.effects.confetti({ origin: ui.ring, duration: CONFETTI_MS });
+        confettiUntil = performance.now() + CONFETTI_MS;
     }
 
-    function burstConfetti(origin) {
-        if (!A.motion.ok() || document.hidden) return;
-        stopConfetti();
-
-        const canvas = document.createElement("canvas");
-        canvas.className = "qz-confetti";
-        canvas.setAttribute("aria-hidden", "true");
-        const context = canvas.getContext("2d");
-        if (!context) return;
-        document.body.appendChild(canvas);
-
-        // Sharp on retina screens, but never more than 2x (faster)
-        const ratio = Math.min(2, window.devicePixelRatio || 1);
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        canvas.width = Math.round(width * ratio);
-        canvas.height = Math.round(height * ratio);
-        context.setTransform(ratio, 0, 0, ratio, 0, 0);
-
-        const box = origin.getBoundingClientRect();
-        const x = box.left + box.width / 2;
-        const y = box.top + box.height / 2;
-        const count = width < 600 ? 90 : 150;
-        const pieces = [];
-        for (let i = 0; i < count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 220 + Math.random() * 560;
-            pieces.push({
-                x: x,
-                y: y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 260,
-                size: 5 + Math.random() * 7,
-                shape: Math.random() < 0.3 ? "circle" : "strip",
-                turn: Math.random() * Math.PI * 2,
-                spin: (Math.random() - 0.5) * 14,
-                color: i
-            });
-        }
-
-        confetti = {
-            canvas: canvas,
-            context: context,
-            width: width,
-            height: height,
-            pieces: pieces,
-            colors: confettiColors(),
-            start: performance.now(),
-            last: performance.now(),
-            frame: 0
-        };
-        confetti.frame = requestAnimationFrame(drawConfetti);
-    }
-
-    function drawConfetti(now) {
-        const party = confetti;
-        if (!party) return;
-        const dt = Math.min(0.05, (now - party.last) / 1000);
-        party.last = now;
-        const age = (now - party.start) / 1000;
-        const fade = age > 2.2 ? Math.max(0, 1 - (age - 2.2) / 0.9) : 1;
-        const context = party.context;
-
-        context.clearRect(0, 0, party.width, party.height);
-        context.globalAlpha = fade;
-
-        let alive = 0;
-        party.pieces.forEach((piece) => {
-            // Gravity pulls down, air slows everything down
-            piece.vy += 980 * dt;
-            piece.vx *= 1 - 1.6 * dt;
-            piece.vy *= 1 - 1.1 * dt;
-            piece.x += piece.vx * dt;
-            piece.y += piece.vy * dt;
-            piece.turn += piece.spin * dt;
-            if (piece.y > party.height + 30) return;
-            alive++;
-
-            context.save();
-            context.translate(piece.x, piece.y);
-            context.rotate(piece.turn);
-            context.fillStyle = party.colors[piece.color % party.colors.length] || "#9b6dff";
-            if (piece.shape === "circle") {
-                context.beginPath();
-                context.arc(0, 0, piece.size * 0.38, 0, Math.PI * 2);
-                context.fill();
-            } else {
-                // Squashing the width looks like a strip of paper flipping over
-                const flip = Math.abs(Math.cos(piece.turn * 1.7));
-                context.fillRect(-piece.size / 2 * flip, -piece.size * 0.3, piece.size * flip, piece.size * 0.6);
-            }
-            context.restore();
-        });
-
-        if (alive > 0 && fade > 0 && !document.hidden) {
-            party.frame = requestAnimationFrame(drawConfetti);
-        } else {
-            stopConfetti();
-        }
-    }
-
+    // A new game or the start screen stops the quiz's confetti, but never the
+    // confetti of another feature (finishing every lesson celebrates with it too)
     function stopConfetti() {
         clearTimeout(confettiTimer);
-        if (!confetti) return;
-        cancelAnimationFrame(confetti.frame);
-        confetti.canvas.remove();
-        confetti = null;
+        if (A.effects && performance.now() < confettiUntil) A.effects.stopConfetti();
+        confettiUntil = 0;
     }
 
     // ---------- 14. "Copy my result" ----------
@@ -1392,11 +1292,6 @@
             timer.seconds = -1;
             drawTimer(!timer.frame);
         }
-    });
-
-    // Confetti colours follow the theme
-    A.onThemeChange(() => {
-        if (confetti) confetti.colors = confettiColors();
     });
 
     // ---------- 17. Public API + Ctrl+K commands ----------

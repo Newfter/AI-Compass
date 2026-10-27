@@ -9,7 +9,7 @@
    7. Question screen: feedback after an answer
    8. Results screen (ring, rank, tiles, buttons)
    9. Results screen: review list
-  10. Confetti + helpers
+  10. Helpers
   11. Responsive
   12. Reduced motion / calm mode
    All colours come from the variables in style.css,
@@ -1744,16 +1744,7 @@ details[open] .qz-ri-chevron {
     text-align: left;
 }
 
-/* ===== 10. CONFETTI + HELPERS ===== */
-
-.qz-confetti {
-    position: fixed;
-    inset: 0;
-    z-index: 450;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-}
+/* ===== 10. HELPERS ===== */
 
 .qz-copy-area {
     position: fixed;
