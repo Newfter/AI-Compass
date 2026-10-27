@@ -141,17 +141,6 @@
         return A.lessons ? A.lessons.title(number) : "";
     }
 
-    // Is a pop-up window (lesson reader, command palette...) covering the page?
-    function dialogOpen() {
-        const dialogs = document.querySelectorAll('[aria-modal="true"], dialog[open]');
-        for (let i = 0; i < dialogs.length; i++) {
-            const dialog = dialogs[i];
-            if (mount.contains(dialog)) continue;
-            if (dialog.getClientRects().length > 0 && getComputedStyle(dialog).visibility !== "hidden") return true;
-        }
-        return false;
-    }
-
     function isTypingField(element) {
         return Boolean(element && element.closest && (element.isContentEditable || element.closest("input, textarea, select")));
     }
@@ -644,8 +633,7 @@
         remaining: 0,      // milliseconds left
         last: 0,
         frame: 0,
-        checkedAt: 0,
-        blocked: false,    // a pop-up window covers the page
+        blocked: A.overlays.hasModal(),   // a pop-up window covers the page
         seconds: -1,
         warned: false
     };
@@ -671,7 +659,7 @@
     }
 
     function resumeTimer() {
-        if (!timer.active || timer.frame || !onScreen || document.hidden) return;
+        if (!timer.active || timer.frame || !onScreen || document.hidden || timer.blocked) return;
         timer.last = performance.now();
         timer.frame = requestAnimationFrame(tickTimer);
     }
@@ -679,12 +667,6 @@
     function tickTimer(now) {
         timer.frame = 0;
         if (!timer.active) return;
-
-        // Checking for pop-ups is a bit slow, so only every 300 ms
-        if (now - timer.checkedAt > 300) {
-            timer.checkedAt = now;
-            timer.blocked = dialogOpen();
-        }
 
         // The clock only runs while you can actually see the question
         const running = onScreen && !document.hidden && !timer.blocked;
@@ -698,8 +680,9 @@
             return;
         }
 
-        // Off screen or in a hidden tab the loop stops; the observers start it again
-        if (onScreen && !document.hidden) timer.frame = requestAnimationFrame(tickTimer);
+        // Off screen, in a hidden tab or under a pop-up window the loop stops;
+        // resumeTimer() starts it again
+        if (running) timer.frame = requestAnimationFrame(tickTimer);
     }
 
     function drawTimer(paused) {
@@ -1403,7 +1386,7 @@
     document.addEventListener("keydown", (event) => {
         if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
         if (state.screen !== "question" || busy) return;
-        if (isTypingField(event.target) || dialogOpen()) return;
+        if (isTypingField(event.target) || A.overlays.hasModal()) return;
 
         // Only when the quiz is on screen (or has the focus)
         const focusInside = card.contains(document.activeElement);
@@ -1453,6 +1436,15 @@
 
     document.addEventListener("visibilitychange", () => {
         if (!document.hidden) resumeTimer();
+    });
+
+    // A pop-up window that shuts out the page (the lesson reader, the command palette,
+    // the chat on phones) pauses the countdown; it goes on when the last one closes
+    A.overlays.onChange((detail) => {
+        timer.blocked = detail.modal;
+        if (!timer.active) return;
+        if (timer.blocked) drawTimer(true);
+        else resumeTimer();
     });
 
     // core.js has already translated every [data-i18n] element;
