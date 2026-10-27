@@ -1879,8 +1879,19 @@
         if (chip) chip.hidden = !isDone;
     }
 
-    // Reading progress bar + highlight of the current part in the list
+    // Reading progress bar + highlight of the current part in the list ("scroll spy").
+    // After a click in the list, the clicked part is the current one until that scroll
+    // has ended: a short part near the end can't reach the top, so the spy alone
+    // would pick the part below it.
     let scrollFrame = 0;
+    const spy = { held: false, hold: 0, timer: 0, target: 0 };
+
+    function markCurrentPart(name) {
+        parts.toc.querySelectorAll("[data-goto]").forEach(function (link) {
+            if (link.getAttribute("data-goto") === name) link.setAttribute("aria-current", "true");
+            else link.removeAttribute("aria-current");
+        });
+    }
 
     function onReaderScroll() {
         const box = parts.scroll;
@@ -1888,7 +1899,9 @@
         const ratio = max > 0 ? Math.min(1, box.scrollTop / max) : 1;
         reader.scrollRatio = ratio;
         parts.progress.style.transform = "scaleX(" + ratio.toFixed(4) + ")";
+        if (spy.held) return;
 
+        // The current part is the last one whose top is above 35% of the box
         const limit = box.getBoundingClientRect().top + box.clientHeight * 0.35;
         const sections = parts.article.querySelectorAll("[data-part]");
         let active = sections.length ? sections[0].getAttribute("data-part") : "";
@@ -1896,25 +1909,64 @@
             if (section.getBoundingClientRect().top <= limit) active = section.getAttribute("data-part");
         });
         if (ratio > 0.985 && sections.length) active = sections[sections.length - 1].getAttribute("data-part");
-        parts.toc.querySelectorAll("[data-goto]").forEach(function (link) {
-            if (link.getAttribute("data-goto") === active) link.setAttribute("aria-current", "true");
-            else link.removeAttribute("aria-current");
+        markCurrentPart(active);
+    }
+
+    // The hold ends when the scroll ends ("scrollend"; browsers without it: when the
+    // scroll events stop), or as soon as you scroll yourself with the wheel or a finger.
+    // If the reader is somewhere else by then, the spy takes over again at once.
+    const HAS_SCROLLEND = "onscrollend" in window;
+
+    function holdSpy(target) {
+        spy.held = true;
+        spy.hold += 1;
+        spy.target = target;
+        waitForScrollEnd(HAS_SCROLLEND ? 3000 : 1000);
+    }
+
+    // A safety net in case the end of the scroll is never reported
+    function waitForScrollEnd(wait) {
+        clearTimeout(spy.timer);
+        spy.timer = setTimeout(endHold, wait);
+    }
+
+    // Lets go one frame later, so the frame that is already waiting for the last
+    // scroll event still sees the hold
+    function endHold() {
+        if (!spy.held) return;
+        const hold = spy.hold;
+        clearTimeout(spy.timer);
+        requestAnimationFrame(function () {
+            if (!spy.held || spy.hold !== hold) return;   // a newer click holds it now
+            spy.held = false;
+            if (Math.abs(parts.scroll.scrollTop - spy.target) > 4) onReaderScroll();
         });
     }
 
+    function releaseSpy() {
+        clearTimeout(spy.timer);
+        spy.held = false;
+    }
+
     parts.scroll.addEventListener("scroll", function () {
+        if (spy.held) waitForScrollEnd(HAS_SCROLLEND ? 3000 : 250);
         if (scrollFrame) return;
         scrollFrame = requestAnimationFrame(function () {
             scrollFrame = 0;
             onReaderScroll();
         });
     }, { passive: true });
+    parts.scroll.addEventListener("scrollend", endHold);
+    parts.scroll.addEventListener("wheel", endHold, { passive: true });
+    parts.scroll.addEventListener("touchstart", endHold, { passive: true });
 
     function goToPart(name) {
         const target = parts.article.querySelector('[data-part="' + name + '"]');
         if (!target) return;
         const box = parts.scroll;
         const top = target.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 18;
+        markCurrentPart(name);
+        holdSpy(Math.max(0, Math.min(top, box.scrollHeight - box.clientHeight)));
         box.scrollTo({ top: top, behavior: A.reducedMotion ? "auto" : "smooth" });
         const heading = target.querySelector("[tabindex='-1']");
         if (heading) heading.focus({ preventScroll: true });
@@ -1927,6 +1979,7 @@
         reader.lesson = n;
         renderLessonContent();
         updateReaderChrome();
+        releaseSpy();
         parts.scroll.scrollTop = 0;
         onReaderScroll();
         setHash("#lesson-" + n);
@@ -2034,6 +2087,7 @@
         reader.open = false;
         stopSpeaking();
         stopLab(true);
+        releaseSpy();
         readerEl.classList.remove("is-open");
         document.body.classList.remove("lsn-reading");
         updatePaused();
