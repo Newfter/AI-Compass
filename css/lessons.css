@@ -87,13 +87,6 @@
     to { transform: translateX(250%); }
 }
 
-/* Decorative loops stop while the lessons are off screen or behind the reader */
-[data-feature="lessons"].is-paused *,
-[data-feature="lessons"].is-paused *::before,
-[data-feature="lessons"].is-paused *::after {
-    animation-play-state: paused !important;
-}
-
 /* Sci-fi corner brackets */
 .lsn-hud-corners {
     position: absolute;

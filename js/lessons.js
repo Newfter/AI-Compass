@@ -20,6 +20,7 @@
     const t = A.t;
     const esc = A.escapeHTML;
     const TOTAL = 6;
+    const READER_ID = "lesson-reader";     // the reader's name among the pop-up windows (A.overlays)
 
     // ---------- 1. The six lessons ----------
     // The texts live in the translations below (keys "lessons.l1.title", ...).
@@ -69,36 +70,9 @@
 
     // ---------- 10. Small helpers ----------
 
-    // Picks the right plural form. English has two forms (1 lesson / 2 lessons),
-    // Russian has three (1 урок / 2 урока / 5 уроков).
-    function plural(key, n, values) {
-        let form = n === 1 ? "one" : "many";
-        if (A.lang === "ru") {
-            const lastDigit = n % 10;
-            const lastTwo = n % 100;
-            if (lastDigit === 1 && lastTwo !== 11) form = "one";
-            else if (lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14)) form = "few";
-            else form = "many";
-        }
-        return t(key + "." + form, Object.assign({ n: n }, values || {}));
-    }
-
     // 3 -> "03"
     function pad(n) {
         return String(n).padStart(2, "0");
-    }
-
-    // Numbers the local way: 0.5 in English, 0,5 in Russian, with a real minus sign
-    function formatNumber(value, digits) {
-        if (Math.abs(value) < 0.5 * Math.pow(10, -digits)) value = 0;
-        return value.toLocaleString(A.lang === "ru" ? "ru-RU" : "en-US", {
-            minimumFractionDigits: digits,
-            maximumFractionDigits: digits
-        }).replace("-", "−");
-    }
-
-    function formatPercent(value) {
-        return Math.round(value * 100) + "%";
     }
 
     function lessonKey(n, part) {
@@ -119,13 +93,6 @@
             const again = box.querySelector('[data-fid="' + fid + '"]');
             if (again) again.focus({ preventScroll: true });
         }
-    }
-
-    // Screen readers read text put into an aria-live element
-    function announce(live, text) {
-        if (!live) return;
-        live.textContent = "";
-        setTimeout(function () { live.textContent = text; }, 60);
     }
 
     // ---------- 11. Saved progress ----------
@@ -311,10 +278,10 @@
         const percent = Math.round((done / TOTAL) * 100);
 
         hud.root.classList.toggle("is-complete", done === TOTAL);
-        hud.count.textContent = plural("lessons.hud.count", done, { total: TOTAL });
+        hud.count.textContent = A.plural("lessons.hud.count", done, { total: TOTAL });
         hud.sub.textContent = done === TOTAL
             ? t("lessons.hud.allDone")
-            : plural("lessons.hud.left", TOTAL - done) + " · " + t("lessons.hud.upNext", { title: lessonTitle(next) });
+            : A.plural("lessons.hud.left", TOTAL - done) + " · " + t("lessons.hud.upNext", { title: lessonTitle(next) });
 
         // Buttons
         hud.continueButton.hidden = done === TOTAL;
@@ -369,33 +336,33 @@
         if (reader.open) updateReaderChrome();
     }
 
-    // Start the ring animation the first time the panel scrolls into view
-    if ("IntersectionObserver" in window) {
-        const ringObserver = new IntersectionObserver(function (entries) {
-            if (entries.some(function (entry) { return entry.isIntersecting; })) {
-                ringObserver.disconnect();
-                ringStarted = true;
-                setRing(Math.round((completed.size / TOTAL) * 100));
-            }
-        }, { threshold: 0.3 });
-        ringObserver.observe(hud.root);
-    } else {
+    // The ring counts up the first time the panel comes into view
+    let stopRingWatch = null;
+    stopRingWatch = A.whenVisible(hud.root, function (visible) {
+        if (!visible || ringStarted) return;
         ringStarted = true;
-    }
+        setRing(Math.round((completed.size / TOTAL) * 100));
+        if (stopRingWatch) stopRingWatch();
+    }, { threshold: 0.3 });
 
-    // Pause the decorative CSS loops while the lessons are off screen (saves battery)
+    // The decorative loops (ring ticks, glowing lines...) pause while the lessons are
+    // off screen (whenVisible sets data-paused then) and while the reader covers them
     let mountVisible = true;
+    let readerCovers = false;
 
     function updatePaused() {
-        mount.classList.toggle("is-paused", !mountVisible || reader.open);
+        mount.toggleAttribute("data-paused", !mountVisible || readerCovers);
     }
 
-    if ("IntersectionObserver" in window) {
-        new IntersectionObserver(function (entries) {
-            mountVisible = entries[entries.length - 1].isIntersecting;
-            updatePaused();
-        }).observe(mount);
-    }
+    A.whenVisible(mount, function (visible) {
+        mountVisible = visible;
+        updatePaused();
+    }, { pauseAnimations: true });
+
+    A.overlays.onChange(function (detail) {
+        readerCovers = detail.open.indexOf(READER_ID) !== -1;
+        updatePaused();
+    });
 
     // ---------- 14. Completing lessons ----------
     function setCompleted(n, isDone) {
@@ -423,7 +390,7 @@
         if (!resetArmed) {
             resetArmed = true;
             updateHUD();
-            announce(hud.live, t("lessons.hud.resetAsk"));
+            A.announce(t("lessons.hud.resetAsk"), { region: hud.live });
             clearTimeout(resetTimer);
             resetTimer = setTimeout(function () {
                 resetArmed = false;
@@ -460,16 +427,6 @@
         if (cert.root.hidden) return;
         cancelAnimationFrame(certFrame);
         certFrame = requestAnimationFrame(drawCertificate);
-    }
-
-    function roundedRect(ctx, x, y, width, height, radius) {
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.arcTo(x + width, y, x + width, y + height, radius);
-        ctx.arcTo(x + width, y + height, x, y + height, radius);
-        ctx.arcTo(x, y + height, x, y, radius);
-        ctx.arcTo(x, y, x + width, y, radius);
-        ctx.closePath();
     }
 
     // Writes text and makes the font smaller until it fits the given width
@@ -521,15 +478,17 @@
         const ctx = canvas.getContext("2d");
         const W = canvas.width;
         const H = canvas.height;
+        // The theme's colours (a canvas can't use CSS variables): rgba(name, alpha)
+        const rgba = function (name, alpha) {
+            return A.colors.rgba(A.colors.rgb(name), alpha === undefined ? 1 : alpha);
+        };
         const color = {
-            bg: A.cssVar("--bg") || "#060812",
-            text: A.cssVar("--text") || "#eef1ff",
-            muted: A.cssVar("--text-muted") || "#aab5d0",
-            accent: A.cssVar("--accent") || "#9b6dff",
-            accent2: A.cssVar("--accent-2") || "#50e3ff",
-            success: A.cssVar("--success") || "#3ee6a0",
-            rgb: A.cssVar("--accent-rgb") || "155, 109, 255",
-            rgb2: A.cssVar("--accent-2-rgb") || "80, 227, 255"
+            bg: rgba("--bg"),
+            text: rgba("--text"),
+            muted: rgba("--text-muted"),
+            accent: rgba("--accent"),
+            accent2: rgba("--accent-2"),
+            success: rgba("--success")
         };
         const fonts = {
             display: A.cssVar("--font-display") || "sans-serif",
@@ -550,17 +509,17 @@
         ctx.fillStyle = color.bg;
         ctx.fillRect(0, 0, W, H);
         let glow = ctx.createRadialGradient(260, 160, 0, 260, 160, 900);
-        glow.addColorStop(0, "rgba(" + color.rgb + ", 0.30)");
-        glow.addColorStop(1, "rgba(" + color.rgb + ", 0)");
+        glow.addColorStop(0, rgba("--accent", 0.3));
+        glow.addColorStop(1, rgba("--accent", 0));
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, W, H);
         glow = ctx.createRadialGradient(W - 220, H - 160, 0, W - 220, H - 160, 800);
-        glow.addColorStop(0, "rgba(" + color.rgb2 + ", 0.20)");
-        glow.addColorStop(1, "rgba(" + color.rgb2 + ", 0)");
+        glow.addColorStop(0, rgba("--accent-2", 0.2));
+        glow.addColorStop(1, rgba("--accent-2", 0));
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, W, H);
 
-        ctx.strokeStyle = "rgba(" + color.rgb + ", 0.07)";
+        ctx.strokeStyle = rgba("--accent", 0.07);
         ctx.lineWidth = 1;
         for (let x = 0; x <= W; x += 40) {
             ctx.beginPath();
@@ -576,12 +535,12 @@
         }
 
         // Frames and corner brackets
-        roundedRect(ctx, 36, 36, W - 72, H - 72, 40);
+        A.canvas.roundRect(ctx, 36, 36, W - 72, H - 72, 40);
         ctx.strokeStyle = gradient;
         ctx.lineWidth = 4;
         ctx.stroke();
-        roundedRect(ctx, 60, 60, W - 120, H - 120, 28);
-        ctx.strokeStyle = "rgba(" + color.rgb2 + ", 0.25)";
+        A.canvas.roundRect(ctx, 60, 60, W - 120, H - 120, 28);
+        ctx.strokeStyle = rgba("--accent-2", 0.25);
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.strokeStyle = color.accent2;
@@ -606,15 +565,15 @@
 
         // The name, with a glow
         ctx.save();
-        ctx.shadowColor = "rgba(" + color.rgb + ", 0.55)";
+        ctx.shadowColor = rgba("--accent", 0.55);
         ctx.shadowBlur = 36;
         ctx.fillStyle = color.text;
         fitText(ctx, name, W / 2, 448, 1240, "700", 100, fonts.display);
         ctx.restore();
         const line = ctx.createLinearGradient(W / 2 - 380, 0, W / 2 + 380, 0);
-        line.addColorStop(0, "rgba(" + color.rgb2 + ", 0)");
+        line.addColorStop(0, rgba("--accent-2", 0));
         line.addColorStop(0.5, color.accent2);
-        line.addColorStop(1, "rgba(" + color.rgb + ", 0)");
+        line.addColorStop(1, rgba("--accent", 0));
         ctx.fillStyle = line;
         ctx.fillRect(W / 2 - 380, 492, 760, 3);
 
@@ -627,7 +586,7 @@
             const y = 700;
             ctx.beginPath();
             ctx.arc(x, y, 54, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(" + color.rgb + ", 0.14)";
+            ctx.fillStyle = rgba("--accent", 0.14);
             ctx.fill();
             ctx.strokeStyle = gradient;
             ctx.lineWidth = 3;
@@ -649,8 +608,7 @@
         });
 
         // Date and seal
-        const locale = A.lang === "ru" ? "ru-RU" : "en-GB";
-        const date = new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
+        const date = A.format.date(new Date());
         ctx.textAlign = "left";
         ctx.fillStyle = color.muted;
         ctx.font = "500 26px " + fonts.mono;
@@ -662,7 +620,7 @@
         ctx.textAlign = "center";
         ctx.beginPath();
         ctx.arc(sealX, sealY, 78, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(" + color.rgb2 + ", 0.10)";
+        ctx.fillStyle = rgba("--accent-2", 0.1);
         ctx.fill();
         ctx.strokeStyle = gradient;
         ctx.lineWidth = 4;
@@ -862,7 +820,7 @@
                 state.answers[index] = button.getAttribute("data-sort");
                 draw();
                 const isRight = state.answers[index] === SORT_ANSWERS[index];
-                announce(shell.live, t(isRight ? "lessons.w1.right" : "lessons.w1.wrong") + " " + t("lessons.w1.e" + (index + 1)));
+                A.announce(t(isRight ? "lessons.w1.right" : "lessons.w1.wrong") + " " + t("lessons.w1.e" + (index + 1)), { region: shell.live });
                 return;
             }
             if (event.target.closest('[data-lab="reset"]')) {
@@ -1023,8 +981,8 @@
 
             const error = state.history[state.history.length - 1];
             view.querySelector('[data-stat="step"]').textContent = t("lessons.w2.steps", { n: state.step });
-            view.querySelector('[data-stat="error"]').textContent = t("lessons.w2.error", { e: formatNumber(error, 1) });
-            view.querySelector('[data-stat="predict"]').textContent = plural("lessons.w2.predict", Math.round(model(10)));
+            view.querySelector('[data-stat="error"]').textContent = t("lessons.w2.error", { e: A.format.number(error, 1) });
+            view.querySelector('[data-stat="predict"]').textContent = A.plural("lessons.w2.predict", Math.round(model(10)));
 
             // The error curve
             const maxSteps = Math.max(60, state.history.length - 1);
@@ -1047,7 +1005,7 @@
             fitStep(state);
             if (state.done && state.running) {
                 state.running = false;
-                announce(shell.live, t("lessons.w2.done"));
+                A.announce(t("lessons.w2.done"), { region: shell.live });
             }
             update();
         }
@@ -1076,9 +1034,9 @@
             if (action === "step") {
                 if (state.running) setRunning(false);
                 stepOnce();
-                announce(shell.live, t("lessons.w2.steps", { n: state.step }) + ". " +
-                    t("lessons.w2.error", { e: formatNumber(state.history[state.history.length - 1], 1) }) +
-                    (state.done ? " " + t("lessons.w2.done") : ""));
+                A.announce(t("lessons.w2.steps", { n: state.step }) + ". " +
+                    t("lessons.w2.error", { e: A.format.number(state.history[state.history.length - 1], 1) }) +
+                    (state.done ? " " + t("lessons.w2.done") : ""), { region: shell.live });
             } else if (action === "auto") {
                 setRunning(!state.running);
             } else if (action === "reset") {
@@ -1180,24 +1138,24 @@
                 edge.style.strokeWidth = (1.5 + Math.abs(weight) * 2.2).toFixed(1);
                 edge.style.opacity = (0.3 + Math.min(1, Math.abs(weight) / 3) * 0.7).toFixed(2);
                 edge.classList.toggle("is-negative", weight < 0);
-                view.querySelector('[data-tag="' + i + '"]').textContent = formatNumber(weight, 1);
-                view.querySelector('[data-in="' + i + '"]').textContent = formatNumber(state["x" + i], 2);
+                view.querySelector('[data-tag="' + i + '"]').textContent = A.format.number(weight, 1);
+                view.querySelector('[data-in="' + i + '"]').textContent = A.format.number(state["x" + i], 2);
             });
-            view.querySelector("[data-z]").textContent = "z=" + formatNumber(z, 2);
-            view.querySelector("[data-out]").textContent = formatPercent(output);
+            view.querySelector("[data-z]").textContent = "z=" + A.format.number(z, 2);
+            view.querySelector("[data-out]").textContent = A.format.percent(output);
             view.querySelector(".lsn-neuron-svg").style.setProperty("--lsn-out", output.toFixed(3));
 
             NEURON_SLIDERS.forEach(function (slider) {
-                const text = formatNumber(state[slider.key], slider.digits);
+                const text = A.format.number(state[slider.key], slider.digits);
                 view.querySelector('[data-value="' + slider.key + '"]').textContent = text;
                 view.querySelector('[data-key="' + slider.key + '"]').setAttribute("aria-valuetext", text);
             });
 
-            const bias = state.b < 0 ? "− " + formatNumber(-state.b, 1) : "+ " + formatNumber(state.b, 1);
+            const bias = state.b < 0 ? "− " + A.format.number(-state.b, 1) : "+ " + A.format.number(state.b, 1);
             view.querySelector("[data-formula]").textContent =
-                "z = " + formatNumber(state.x1, 2) + " × " + formatNumber(state.w1, 1) +
-                " + " + formatNumber(state.x2, 2) + " × " + formatNumber(state.w2, 1) +
-                " " + bias + " = " + formatNumber(z, 2) + "   →   σ(z) = " + formatPercent(output);
+                "z = " + A.format.number(state.x1, 2) + " × " + A.format.number(state.w1, 1) +
+                " + " + A.format.number(state.x2, 2) + " × " + A.format.number(state.w2, 1) +
+                " " + bias + " = " + A.format.number(z, 2) + "   →   σ(z) = " + A.format.percent(output);
             view.querySelector("[data-meter]").style.width = (output * 100).toFixed(1) + "%";
 
             const isYes = output >= 0.5;
@@ -1205,7 +1163,7 @@
             verdict.textContent = t("lessons.w3.output") + ": " + t(isYes ? "lessons.w3.yes" : "lessons.w3.no");
             verdict.classList.toggle("is-yes", isYes);
             if (shouldAnnounce && lastAnswer !== null && lastAnswer !== isYes) {
-                announce(shell.live, t("lessons.w3.decision", { answer: t(isYes ? "lessons.w3.yes" : "lessons.w3.no") }));
+                A.announce(t("lessons.w3.decision", { answer: t(isYes ? "lessons.w3.yes" : "lessons.w3.no") }), { region: shell.live });
             }
             lastAnswer = isYes;
         }
@@ -1290,10 +1248,10 @@
             const probabilities = wordProbabilities(state.temp);
             rows.forEach(function (row, i) {
                 row.querySelector(".lsn-bar-fill").style.width = (probabilities[i] * 100).toFixed(1) + "%";
-                row.querySelector(".lsn-bar-value").textContent = formatPercent(probabilities[i]);
+                row.querySelector(".lsn-bar-value").textContent = A.format.percent(probabilities[i]);
                 row.classList.toggle("is-picked", state.last === i);
             });
-            const temperature = formatNumber(state.temp, 1);
+            const temperature = A.format.number(state.temp, 1);
             view.querySelector("[data-temp-value]").textContent = temperature;
             view.querySelector("#lsn-temp").setAttribute("aria-valuetext", temperature);
             let note = "lessons.w4.tempMid";
@@ -1315,25 +1273,14 @@
 
         function generate() {
             const probabilities = wordProbabilities(state.temp);
-            let roll = Math.random();
-            let picked = probabilities.length - 1;
-            for (let i = 0; i < probabilities.length; i++) {
-                roll -= probabilities[i];
-                if (roll <= 0) {
-                    picked = i;
-                    break;
-                }
-            }
+            const picked = A.util.sampleWeighted(probabilities);
             state.last = picked;
             state.history.unshift(picked);
             state.history = state.history.slice(0, 10);
             updateBars();
             updateSentence();
-            // Restart the little "pop" animation on the new word
-            blank.classList.remove("is-pop");
-            void blank.offsetWidth;
-            blank.classList.add("is-pop");
-            announce(shell.live, t("lessons.w4.picked", { word: word(picked), p: formatPercent(probabilities[picked]) }));
+            A.dom.replay(blank, "is-pop");   // the little "pop" on the new word
+            A.announce(t("lessons.w4.picked", { word: word(picked), p: A.format.percent(probabilities[picked]) }), { region: shell.live });
         }
 
         box.oninput = function (event) {
@@ -1415,8 +1362,8 @@
                 state.found[i] = true;
                 draw();
                 const found = state.found.filter(Boolean).length;
-                if (found === DAY_MOMENTS.length && wasFound < found) announce(shell.live, t("lessons.w5.all"));
-                else if (wasFound < found) announce(shell.live, t("lessons.w5.found", { n: found, total: DAY_MOMENTS.length }));
+                if (found === DAY_MOMENTS.length && wasFound < found) A.announce(t("lessons.w5.all"), { region: shell.live });
+                else if (wasFound < found) A.announce(t("lessons.w5.found", { n: found, total: DAY_MOMENTS.length }), { region: shell.live });
                 return;
             }
             if (event.target.closest('[data-lab="reset"]')) {
@@ -1495,7 +1442,7 @@
                 draw();
                 const key = "lessons.w6.s" + (s + 1);
                 const isBest = state.choices[s] === DILEMMA_BEST[s];
-                announce(shell.live, t(isBest ? "lessons.w6.best" : "lessons.w6.notBest") + " " + t(key + "f" + (state.choices[s] + 1)));
+                A.announce(t(isBest ? "lessons.w6.best" : "lessons.w6.notBest") + " " + t(key + "f" + (state.choices[s] + 1)), { region: shell.live });
                 return;
             }
             if (event.target.closest('[data-lab="reset"]')) {
@@ -1623,7 +1570,6 @@
     // (inert), keeps Tab inside the panel and closes the reader with Esc, when the page
     // goes to another section and when a Ctrl+K command runs. We only report when the
     // reader opens and closes.
-    const READER_ID = "lesson-reader";
     const overlay = A.overlays.register(READER_ID, {
         root: readerEl,          // the panel and the backdrop around it
         element: panel,
@@ -1940,7 +1886,7 @@
         const box = parts.scroll;
         const top = target.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 18;
         markCurrentPart(name);
-        holdSpy(Math.max(0, Math.min(top, box.scrollHeight - box.clientHeight)));
+        holdSpy(A.util.clamp(top, 0, box.scrollHeight - box.clientHeight));
         box.scrollTo({ top: top, behavior: A.motion.ok() ? "smooth" : "auto" });
         const heading = target.querySelector("[tabindex='-1']");
         if (heading) heading.focus({ preventScroll: true });
@@ -1957,11 +1903,7 @@
         parts.scroll.scrollTop = 0;
         onReaderScroll();
         setHash("#lesson-" + n);
-        if (A.motion.ok()) {
-            parts.article.classList.remove("is-entering");
-            void parts.article.offsetWidth;   // restart the fade-in animation
-            parts.article.classList.add("is-entering");
-        }
+        if (A.motion.ok()) A.dom.replay(parts.article, "is-entering");   // the fade-in
         const title = parts.article.querySelector("#lsn-reader-title");
         if (title) title.focus({ preventScroll: true });
     }
@@ -1984,22 +1926,13 @@
         onReaderScroll();
     }
 
-    // Moves the keyboard focus to the heading of a page section (without scrolling)
-    function focusSectionHeading(sectionId) {
-        const section = document.getElementById(sectionId);
-        const heading = section && section.querySelector("h1, h2");
-        if (!heading) return;
-        if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
-        heading.focus({ preventScroll: true });
-    }
-
     // "Try it on this site": close the reader and jump to the right place
     function runTryIt() {
         const target = LESSONS[reader.lesson - 1].tryIt;
         closeReader({ restoreFocus: false });
         requestAnimationFrame(function () {
             const sectionId = target === "classifier" || target === "predictor" ? "lab" : target;
-            focusSectionHeading(sectionId);
+            A.dom.focusHeading(sectionId);   // the focus waits there if the feature moves it nowhere
             if (sectionId === "lab" && A.lab) A.lab.open(target);
             else if (sectionId === "quiz" && A.quiz) A.quiz.start();
             else A.navigate(sectionId);
@@ -2046,9 +1979,7 @@
         document.body.classList.add("lsn-reading");
         readerEl.hidden = false;
         readerEl.classList.remove("is-closing");
-        void readerEl.offsetWidth;   // lets the opening animation start from the beginning
-        readerEl.classList.add("is-open");
-        updatePaused();
+        A.dom.replay(readerEl, "is-open");   // the opening animation starts from the beginning
         overlay.opened();            // before the focus moves into the reader
         showLesson(n);
     }
@@ -2064,7 +1995,6 @@
         releaseSpy();
         readerEl.classList.remove("is-open");
         document.body.classList.remove("lsn-reading");
-        updatePaused();
         overlay.closed();            // before the focus goes back to the page
         if (!settings.keepHash) setHash(reader.previousHash);
 
