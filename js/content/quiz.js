@@ -1,8 +1,10 @@
 /* =========================================================
-   AI COMPASS — TEXTS: QUIZ
-   Every word in English and in Russian (informal "ты").
+   AI COMPASS — TEXTS AND DATA: QUIZ
+   Every word in English and in Russian (informal "ты"),
+   then the list of questions and the ranks (at the bottom).
    Used by js/quiz.js (and the quiz section of index.html).
    To change a text, change it here (in both languages).
+   Numbers in {braces} are filled in by js/quiz.js from the data.
    ========================================================= */
 
 // The section's title and subtitle on the page (index.html)
@@ -29,7 +31,12 @@ window.AICompass.addTranslations({
         // Start screen
         "quiz.start.kicker": "Mission briefing",
         "quiz.start.title": "Ready for the AI Challenge?",
-        "quiz.start.text": "Twelve questions about how AI works, where it came from and how to use it wisely. After every answer you'll see a short explanation, so you learn while you play.",
+        "quiz.start.text": "{questions} about how AI works, where it came from and how to use it wisely. After every answer you'll see a short explanation, so you learn while you play.",
+        // {questions} above: the number of questions in words. The ".12" text spells out
+        // the number the quiz has today; any other number uses the plural forms.
+        "quiz.questionCount.12": "Twelve questions",
+        "quiz.questionCount.one": "{n} question",
+        "quiz.questionCount.many": "{n} questions",
         "quiz.start.questions.one": "question",
         "quiz.start.questions.many": "questions",
         "quiz.start.minutes.one": "minute",
@@ -39,8 +46,8 @@ window.AICompass.addTranslations({
         "quiz.start.bestWith": "{label} · {correct}/{total}",
         "quiz.start.rulesTitle": "How it works",
         "quiz.start.rule1": "Multiple-choice and true-or-false questions on AI basics, history, safety and ethics",
-        "quiz.start.rule2": "<strong>100 points</strong> for each correct answer, plus a <strong>streak bonus</strong> for correct answers in a row",
-        "quiz.start.rule3": "Press <kbd>1</kbd>–<kbd>4</kbd> to answer and <kbd>Enter</kbd> for the next question",
+        "quiz.start.rule2": "<strong>{points}</strong> for each correct answer, plus a <strong>streak bonus</strong> for correct answers in a row",
+        "quiz.start.rule3": "Press <kbd>1</kbd>–<kbd>{last}</kbd> to answer and <kbd>Enter</kbd> for the next question",
         "quiz.start.rule3Touch": "Tap an answer to lock it in, then tap <strong>Next question</strong> to move on",
         "quiz.start.rule4": "Every answer comes with an explanation, and at the end you can review them all",
         "quiz.start.button": "Start the challenge",
@@ -227,7 +234,11 @@ window.AICompass.addTranslations({
 
         "quiz.start.kicker": "Брифинг миссии",
         "quiz.start.title": "Пройдёшь ИИ-испытание?",
-        "quiz.start.text": "Двенадцать вопросов о том, как работает ИИ, откуда он взялся и как пользоваться им с умом. После каждого ответа появится короткое объяснение, так что ты учишься прямо во время игры.",
+        "quiz.start.text": "{questions} о том, как работает ИИ, откуда он взялся и как пользоваться им с умом. После каждого ответа появится короткое объяснение, так что ты учишься прямо во время игры.",
+        "quiz.questionCount.12": "Двенадцать вопросов",
+        "quiz.questionCount.one": "{n} вопрос",
+        "quiz.questionCount.few": "{n} вопроса",
+        "quiz.questionCount.many": "{n} вопросов",
         "quiz.start.questions.one": "вопрос",
         "quiz.start.questions.few": "вопроса",
         "quiz.start.questions.many": "вопросов",
@@ -239,8 +250,8 @@ window.AICompass.addTranslations({
         "quiz.start.bestWith": "{label} · {correct}/{total}",
         "quiz.start.rulesTitle": "Как это работает",
         "quiz.start.rule1": "Вопросы с вариантами ответа и «верно или неверно» — об основах ИИ, его истории, безопасности и этике",
-        "quiz.start.rule2": "<strong>100 очков</strong> за каждый верный ответ и <strong>бонус за серию</strong> верных ответов подряд",
-        "quiz.start.rule3": "Нажимай <kbd>1</kbd>–<kbd>4</kbd>, чтобы ответить, и <kbd>Enter</kbd>, чтобы перейти к следующему вопросу",
+        "quiz.start.rule2": "<strong>{points}</strong> за каждый верный ответ и <strong>бонус за серию</strong> верных ответов подряд",
+        "quiz.start.rule3": "Нажимай <kbd>1</kbd>–<kbd>{last}</kbd>, чтобы ответить, и <kbd>Enter</kbd>, чтобы перейти к следующему вопросу",
         "quiz.start.rule3Touch": "Коснись ответа, чтобы выбрать его, а потом нажми <strong>«Следующий вопрос»</strong>",
         "quiz.start.rule4": "К каждому ответу есть объяснение, а в конце можно разобрать все вопросы",
         "quiz.start.button": "Начать испытание",
@@ -417,4 +428,38 @@ window.AICompass.addTranslations({
         "quiz.q12.o4": "Пользоваться им как угодно, лишь бы учитель не догадался",
         "quiz.q12.explain": "ИИ может быть отличным помощником в учёбе, но за свою работу отвечаешь ты. Соблюдай правила школы, проверяй факты в надёжных источниках, думай своей головой и честно говори, когда и как тебе помогал ИИ."
     }
+});
+
+// The questions and the ranks (js/quiz.js reads them with AICompass.content.get("quiz"))
+window.AICompass.content.set("quiz", {
+    // Every question has its texts above: "quiz.q1.text", "quiz.q1.o1" … "quiz.q1.o4"
+    // and "quiz.q1.explain". In the texts the FIRST option is always the right one,
+    // so "correct" is 0 for every multiple-choice ("choice") question. Don't worry:
+    // the options are shuffled every game.
+    // True-or-false questions ("truefalse"): correct 0 means "True", 1 means "False".
+    // topic: "quiz.topic.…" above. learn: the number of the lesson that explains it,
+    // or "timeline" (the history section).
+    questions: [
+        { key: "q1", type: "choice", topic: "basics", correct: 0, learn: 1 },
+        { key: "q2", type: "choice", topic: "ml", correct: 0, learn: 2 },
+        { key: "q3", type: "truefalse", topic: "data", correct: 1, learn: 2 },
+        { key: "q4", type: "truefalse", topic: "nn", correct: 1, learn: 3 },
+        { key: "q5", type: "choice", topic: "genai", correct: 0, learn: 4 },
+        { key: "q6", type: "truefalse", topic: "hallucination", correct: 0, learn: 4 },
+        { key: "q7", type: "choice", topic: "bias", correct: 0, learn: 6 },
+        { key: "q8", type: "choice", topic: "privacy", correct: 0, learn: 6 },
+        { key: "q9", type: "choice", topic: "everyday", correct: 0, learn: 5 },
+        { key: "q10", type: "choice", topic: "history", correct: 0, learn: "timeline" },
+        { key: "q11", type: "truefalse", topic: "history", correct: 0, learn: "timeline" },
+        { key: "q12", type: "choice", topic: "responsible", correct: 0, learn: 6 }
+    ],
+
+    // The rank you get for a number of correct answers ("min" or more).
+    // The names are "quiz.rank.…" above. If you add questions, check these numbers too.
+    ranks: [
+        { id: "rookie", min: 0, emoji: "🌱" },
+        { id: "explorer", min: 5, emoji: "🧭" },
+        { id: "expert", min: 8, emoji: "🚀" },
+        { id: "master", min: 11, emoji: "🧠" }
+    ]
 });

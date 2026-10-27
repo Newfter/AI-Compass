@@ -1,10 +1,10 @@
 /* =========================================================
    AI COMPASS — THE AI CHALLENGE (QUIZ)
-   Twelve questions about AI inside one glass card with three screens:
+   Questions about AI inside one glass card with three screens:
    1. START    rules, best score, "timed mode" switch
    2. QUESTION progress, score, streak, timer ring, answers, feedback
    3. RESULTS  score ring, rank, new best + confetti, answer review
-   Keyboard: 1-4 answer, Enter goes to the next question.
+   Keyboard: number keys answer, Enter goes to the next question.
    Other files can call window.AICompass.startQuiz().
    The language can change at any moment: the quiz keeps its place
    and simply re-writes its texts in the other language.
@@ -15,7 +15,8 @@
 
     const A = window.AICompass;
     const mount = document.querySelector('[data-feature="quiz"]');
-    if (!A || !mount) return;
+    const data = A && A.content.get("quiz");      // the questions and ranks (js/content/quiz.js)
+    if (!A || !mount || !data) return;
 
     const t = A.t;
 
@@ -26,6 +27,8 @@
     const STREAK_STEP = 10;         // 2 in a row: +10, 3 in a row: +20, ...
     const STREAK_BONUS_MAX = 50;    // ...but never more than +50
     const PRAISE_COUNT = 4;         // how many different "Correct!" messages we have
+    const CHOICE_OPTIONS = 4;       // answers of a multiple-choice question ("o1" … "o4" in the texts)
+    const SECONDS_PER_QUESTION = 25;   // about how long one question takes (to read, answer and learn)
     const SCROLL_GAP = 8;           // px kept free below the menu bar and above the assistant's button
     const ON_SCREEN_MARGIN = "-25% 0px";   // "on screen" = the quiz reaches into the middle half of the window
     const CONFETTI_DELAY = 950;     // ms after the results appear (the ring is almost full then)
@@ -35,37 +38,11 @@
     const TIMER_LENGTH = 2 * Math.PI * TIMER_RADIUS;     // the length of a ring is its circumference
     const RESULT_LENGTH = 2 * Math.PI * RESULT_RADIUS;
 
-    // ---------- 2. The questions ----------
-    // The texts live in the translations below ("quiz.q1.text", "quiz.q1.o1", ...).
-    // In the translations the FIRST option is always the right one,
-    // so "correct" is 0 for every multiple-choice question. Don't worry:
-    // the options are shuffled every game.
-    // True/false questions: correct 0 means "True", 1 means "False".
-    // learn: the lesson (1-6) that explains the topic, or "timeline".
-    const QUESTIONS = [
-        { key: "q1", type: "choice", topic: "basics", correct: 0, learn: 1 },
-        { key: "q2", type: "choice", topic: "ml", correct: 0, learn: 2 },
-        { key: "q3", type: "truefalse", topic: "data", correct: 1, learn: 2 },
-        { key: "q4", type: "truefalse", topic: "nn", correct: 1, learn: 3 },
-        { key: "q5", type: "choice", topic: "genai", correct: 0, learn: 4 },
-        { key: "q6", type: "truefalse", topic: "hallucination", correct: 0, learn: 4 },
-        { key: "q7", type: "choice", topic: "bias", correct: 0, learn: 6 },
-        { key: "q8", type: "choice", topic: "privacy", correct: 0, learn: 6 },
-        { key: "q9", type: "choice", topic: "everyday", correct: 0, learn: 5 },
-        { key: "q10", type: "choice", topic: "history", correct: 0, learn: "timeline" },
-        { key: "q11", type: "truefalse", topic: "history", correct: 0, learn: "timeline" },
-        { key: "q12", type: "choice", topic: "responsible", correct: 0, learn: 6 }
-    ];
-
-    // Ranks by the number of correct answers (out of 12)
-    const RANKS = [
-        { id: "rookie", min: 0, emoji: "🌱" },
-        { id: "explorer", min: 5, emoji: "🧭" },
-        { id: "expert", min: 8, emoji: "🚀" },
-        { id: "master", min: 11, emoji: "🧠" }
-    ];
-
-    // Every text (English and Russian) is in js/content/quiz.js
+    // ---------- 2. The questions and ranks ----------
+    // They live in js/content/quiz.js, next to every text (English and Russian).
+    const QUESTIONS = data.questions;
+    const RANKS = data.ranks;           // by the number of correct answers
+    const PLAY_MINUTES = Math.max(1, Math.round(QUESTIONS.length * SECONDS_PER_QUESTION / 60));
 
     // ---------- 4. Small helpers ----------
     // (Plurals, number formats, shuffling, motion and screen-reader messages
@@ -74,6 +51,13 @@
     // A translated piece of text. The data-i18n attribute lets core.js
     // re-translate it by itself when the language changes.
     const text = A.i18nHTML;
+
+    // "Twelve questions": the texts can spell out the exact number the quiz has
+    // ("quiz.questionCount.12"); any other number uses the plural forms ("13 questions")
+    function questionCount() {
+        const exactKey = "quiz.questionCount." + QUESTIONS.length;
+        return A.has(exactKey) ? t(exactKey) : A.plural("quiz.questionCount", QUESTIONS.length);
+    }
 
     function optionKey(question, original) {
         if (question.type === "truefalse") return original === 0 ? "quiz.true" : "quiz.false";
@@ -280,7 +264,8 @@
     // ---------- 7. START screen ----------
     function buildStart() {
         // Rule 3 has two versions: keyboard shortcuts, or "tap" for touch screens.
-        // CSS shows the one that fits the device.
+        // CSS shows the one that fits the device. paintStart() writes the texts
+        // of the rules, because some of them contain numbers.
         const rules = [
             ["🧩", "quiz.start.rule1"],
             ["🔥", "quiz.start.rule2"],
@@ -289,11 +274,11 @@
         ].map((rule, index) => {
             let content =
                 '<span class="qz-rule-icon' + (rule[2] ? " qz-for-keys" : "") + '" aria-hidden="true">' + rule[0] + "</span>" +
-                text(rule[1], "qz-rule-text" + (rule[2] ? " qz-for-keys" : ""));
+                '<span class="qz-rule-text' + (rule[2] ? " qz-for-keys" : "") + '" data-key="' + rule[1] + '"></span>';
             if (rule[2]) {
                 content +=
                     '<span class="qz-rule-icon qz-for-touch" aria-hidden="true">' + rule[2] + "</span>" +
-                    text(rule[3], "qz-rule-text qz-for-touch");
+                    '<span class="qz-rule-text qz-for-touch" data-key="' + rule[3] + '"></span>';
             }
             return '<li class="qz-rule" style="--i:' + index + '">' + content + "</li>";
         }).join("");
@@ -311,13 +296,13 @@
                     '<div class="qz-start-intro">' +
                         '<p class="qz-kicker mono">' + text("quiz.start.kicker") + "</p>" +
                         '<h3 class="qz-start-title" tabindex="-1">' + text("quiz.start.title") + "</h3>" +
-                        '<p class="qz-start-text">' + text("quiz.start.text") + "</p>" +
+                        '<p class="qz-start-text" data-ref="startText"></p>' +
                     "</div>" +
                 "</div>" +
 
                 '<ul class="qz-tiles qz-start-tiles">' +
                     '<li class="qz-tile"><strong class="qz-tile-value">' + QUESTIONS.length + '</strong><span class="qz-tile-label" data-ref="questionsLabel"></span></li>' +
-                    '<li class="qz-tile"><strong class="qz-tile-value">~5</strong><span class="qz-tile-label" data-ref="minutesLabel"></span></li>' +
+                    '<li class="qz-tile"><strong class="qz-tile-value">~' + PLAY_MINUTES + '</strong><span class="qz-tile-label" data-ref="minutesLabel"></span></li>' +
                     '<li class="qz-tile qz-tile-best">' +
                         '<span class="qz-tile-icon" aria-hidden="true" data-ref="bestIcon"></span>' +
                         '<strong class="qz-tile-value" data-ref="bestValue"></strong>' +
@@ -353,6 +338,7 @@
             ui[element.getAttribute("data-ref")] = element;
         });
         ui.timedSwitch = screen.querySelector(".qz-switch");
+        ui.rules = Array.prototype.slice.call(screen.querySelectorAll(".qz-rule-text"));
 
         ui.timedSwitch.addEventListener("click", () => setTimed(!state.timed));
         screen.querySelector(".qz-start-button").addEventListener("click", () => startGame());
@@ -365,8 +351,9 @@
         // The "best score" tile shows the record of the mode that is switched on
         const best = readBest(state.timed);
         const bestLabel = t(state.timed ? "quiz.start.bestTimed" : "quiz.start.bestRelaxed");
+        ui.startText.textContent = t("quiz.start.text", { questions: questionCount() });
         ui.questionsLabel.textContent = A.plural("quiz.start.questions", QUESTIONS.length);
-        ui.minutesLabel.textContent = A.plural("quiz.start.minutes", 5);
+        ui.minutesLabel.textContent = A.plural("quiz.start.minutes", PLAY_MINUTES);
         ui.bestValue.textContent = best ? A.format.number(best.points) : "—";
         ui.bestValue.parentNode.classList.toggle("is-empty", !best);
         ui.bestIcon.textContent = state.timed ? "⏱️" : "🌿";
@@ -379,6 +366,14 @@
         });
         ui.timedState.textContent = t(state.timed ? "quiz.timed.on" : "quiz.timed.off");
         ui.timedSwitch.setAttribute("aria-checked", String(state.timed));
+
+        // The rules: our own texts with a little HTML (<strong>, <kbd>), so they go in as HTML.
+        // Unchanged ones are left alone (this runs again on every click of the switch).
+        const numbers = { points: A.plural("quiz.points", BASE_POINTS), last: CHOICE_OPTIONS };
+        ui.rules.forEach((element) => {
+            const html = t(element.getAttribute("data-key"), numbers);
+            if (element.innerHTML !== html) element.innerHTML = html;
+        });
     }
 
     function setTimed(value) {
@@ -830,7 +825,9 @@
         state.gameTimed = state.timed;
         state.order = A.util.shuffle(QUESTIONS.map((question, index) => index));
         state.optionOrders = state.order.map((index) =>
-            QUESTIONS[index].type === "truefalse" ? [0, 1] : A.util.shuffle([0, 1, 2, 3])
+            QUESTIONS[index].type === "truefalse"
+                ? [0, 1]
+                : A.util.shuffle(Array.from({ length: CHOICE_OPTIONS }, (value, option) => option))
         );
         state.index = 0;
         state.answers = [];
@@ -1243,7 +1240,7 @@
         return ok;
     }
 
-    // ---------- 15. Keyboard: 1-4 to answer, Enter for the next question ----------
+    // ---------- 15. Keyboard: number keys to answer, Enter for the next question ----------
     document.addEventListener("keydown", (event) => {
         if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
         if (state.screen !== "question" || busy) return;
@@ -1255,7 +1252,8 @@
 
         const answered = Boolean(state.answers[state.index]);
 
-        if (!answered && /^[1-4]$/.test(event.key)) {
+        // Number keys: 1 for the first answer, 2 for the second, ...
+        if (!answered && /^[1-9]$/.test(event.key)) {
             const button = ui.options && ui.options[Number(event.key) - 1];
             if (!button) return;
             event.preventDefault();
