@@ -1565,7 +1565,6 @@
         closeTimer: 0,
         scrollRatio: 0,
         cleanupLab: null,
-        inerted: [],
         previousHash: "",
         renderedLang: ""
     };
@@ -1644,6 +1643,24 @@
         complete: readerEl.querySelector('[data-action="complete"]'),
         completeText: ref(readerEl, "completeText")
     };
+
+    // The reader is a pop-up window of the page (see "overlays" in core.js). While it is
+    // open, core stops the page from scrolling, makes the rest of the page unreachable
+    // (inert), keeps Tab inside the panel and closes the reader with Esc, when the page
+    // goes to another section and when a Ctrl+K command runs. We only report when the
+    // reader opens and closes.
+    const READER_ID = "lesson-reader";
+    const overlay = A.overlays.register(READER_ID, {
+        root: readerEl,          // the panel and the backdrop around it
+        element: panel,
+        modal: true,
+        closeOnNavigate: true,
+        // Esc and a plain close give the focus back to the button that opened the reader.
+        // After "navigate" or "command" the place you go to takes the focus.
+        close: function (reason) {
+            closeReader({ restoreFocus: reason === "escape" || reason === "close" });
+        }
+    });
 
     // The full text of one lesson
     function articleHTML(n) {
@@ -1956,57 +1973,10 @@
         requestAnimationFrame(function () {
             const sectionId = target === "classifier" || target === "predictor" ? "lab" : target;
             focusSectionHeading(sectionId);
-            if (sectionId === "lab" && typeof A.openLab === "function") A.openLab(target);
-            else if (sectionId === "quiz" && typeof A.startQuiz === "function") A.startQuiz();
-            else A.scrollToSection(sectionId);
+            if (sectionId === "lab" && A.lab) A.lab.open(target);
+            else if (sectionId === "quiz" && A.quiz) A.quiz.start();
+            else A.navigate(sectionId);
         });
-    }
-
-    // ----- Keeping the page still and the focus inside while the reader is open -----
-    function lockPage() {
-        const gap = window.innerWidth - document.documentElement.clientWidth;
-        document.body.style.overflow = "hidden";
-        if (gap > 0) document.body.style.paddingRight = gap + "px";
-        reader.inerted = [];
-        document.querySelectorAll('body > header, body > main, body > footer, body > .skip-link, [data-feature="assistant"]').forEach(function (element) {
-            if (!element.inert) {
-                element.inert = true;
-                reader.inerted.push(element);
-            }
-        });
-    }
-
-    function unlockPage() {
-        document.body.style.overflow = "";
-        document.body.style.paddingRight = "";
-        reader.inerted.forEach(function (element) { element.inert = false; });
-        reader.inerted = [];
-    }
-
-    function focusableIn(root) {
-        return Array.prototype.slice.call(root.querySelectorAll(
-            'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )).filter(function (element) {
-            return !element.disabled && !element.closest("[hidden]") && element.getClientRects().length > 0;
-        });
-    }
-
-    function trapFocus(event) {
-        const items = focusableIn(panel);
-        if (!items.length) return;
-        const first = items[0];
-        const last = items[items.length - 1];
-        const active = document.activeElement;
-        if (!panel.contains(active)) {
-            event.preventDefault();
-            first.focus();
-        } else if (event.shiftKey && active === first) {
-            event.preventDefault();
-            last.focus();
-        } else if (!event.shiftKey && active === last) {
-            event.preventDefault();
-            first.focus();
-        }
     }
 
     function setHash(hash) {
@@ -2044,16 +2014,15 @@
         // Without a button to come back to, closing returns to the lesson's card
         if (!reader.opener) scrollCardIntoView(n);
         const hash = window.location.hash;
-        reader.previousHash = /^#lesson-\d$/.test(hash) ? "" : hash;
+        reader.previousHash = /^#lesson-\d+$/.test(hash) ? "" : hash;
 
-        wrapPaletteCommands();
-        lockPage();
         document.body.classList.add("lsn-reading");
         readerEl.hidden = false;
         readerEl.classList.remove("is-closing");
         void readerEl.offsetWidth;   // lets the opening animation start from the beginning
         readerEl.classList.add("is-open");
         updatePaused();
+        overlay.opened();            // before the focus moves into the reader
         showLesson(n);
     }
 
@@ -2068,7 +2037,7 @@
         readerEl.classList.remove("is-open");
         document.body.classList.remove("lsn-reading");
         updatePaused();
-        unlockPage();
+        overlay.closed();            // before the focus goes back to the page
         if (!settings.keepHash) setHash(reader.previousHash);
 
         const finish = function () {
@@ -2129,25 +2098,19 @@
         }
     });
 
+    // ← and → go to the previous / next lesson. (Esc and Tab are handled by core.)
     document.addEventListener("keydown", function (event) {
-        if (!reader.open) return;
-        // Only react when the focus is in the reader (or lost on the page body),
-        // so a palette or another dialog on top keeps its own keys.
+        if (!reader.open || A.overlays.top() !== READER_ID) return;
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+        if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        // Only when the focus is in the reader (or lost on the page body),
+        // and never while typing or moving a slider
         const target = event.target;
         if (!readerEl.contains(target) && target !== document.body && target !== document.documentElement) return;
-
-        if (event.key === "Escape") {
-            event.preventDefault();
-            closeReader();
-        } else if (event.key === "Tab") {
-            trapFocus(event);
-        } else if ((event.key === "ArrowLeft" || event.key === "ArrowRight") &&
-                   !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
-            const tag = target.tagName;
-            if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
-            event.preventDefault();
-            goRelative(event.key === "ArrowLeft" ? -1 : 1);
-        }
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
+        event.preventDefault();
+        goRelative(event.key === "ArrowLeft" ? -1 : 1);
     });
 
     // ---------- 25. Reading aloud (the browser's built-in speech) ----------
@@ -2294,59 +2257,6 @@
     A.openLesson = A.lessons.open;
     A.closeLesson = A.lessons.close;
 
-    // While the reader is open, anything that takes you to another part of the page
-    // would happen hidden behind it. So these close the reader first:
-    // 1) AICompass.scrollToSection(), used by the lab, quiz, glossary and assistant
-    let handingOver = false;   // true while another feature takes over from the reader
-    const coreScrollToSection = A.scrollToSection;
-    A.scrollToSection = function (id) {
-        if (reader.open || handingOver) {
-            closeReader({ restoreFocus: false });   // does nothing if it is already closed
-            focusSectionHeading(id);
-        }
-        return coreScrollToSection.apply(A, arguments);
-    };
-
-    // 2) Ctrl+K commands that go somewhere, like "Go to Glossary" or "Ask Compass Bot",
-    //    and the glossary / assistant functions the palette calls directly.
-    //    Quick actions (theme, language...) and the lesson commands keep the reader open.
-    //    This runs every time the reader opens, so things added later are included.
-    const KEEP_READER_GROUPS = ["cmd.groupActions", "lessons.cmdGroup"];
-
-    // Wraps owner[name] so it closes the reader before it runs
-    function closeReaderFirst(owner, name, sectionId) {
-        const original = owner && owner[name];
-        if (typeof original !== "function" || original.lsnClosesReader) return;
-        const wrapped = function () {
-            if (!reader.open) return original.apply(this, arguments);
-            closeReader({ restoreFocus: false });
-            // The focus goes to the section's heading, or back to the button that opened
-            // the reader. The feature can still move it (for example into its own text box).
-            if (sectionId) focusSectionHeading(sectionId);
-            else if (canTakeFocus(reader.opener)) reader.opener.focus({ preventScroll: true });
-            handingOver = true;
-            try {
-                return original.apply(this, arguments);
-            } finally {
-                handingOver = false;
-            }
-        };
-        wrapped.lsnClosesReader = true;
-        owner[name] = wrapped;
-    }
-
-    function wrapPaletteCommands() {
-        (A.commands || []).forEach(function (command) {
-            if (!command || KEEP_READER_GROUPS.indexOf(command.group) !== -1) return;
-            const section = /^go-([a-z]+)$/.exec(String(command.id || ""));
-            closeReaderFirst(command, "run", section ? section[1] : "");
-        });
-        closeReaderFirst(A.glossary, "show", "glossary");
-        if (A.assistant) {
-            ["open", "ask", "toggle"].forEach(function (name) { closeReaderFirst(A.assistant, name); });
-        }
-    }
-
     // ---------- 27. Language and theme changes ----------
     A.onLanguageChange(function () {
         updateHUD();
@@ -2386,10 +2296,11 @@
     updateHUD();
     updateCards();
 
-    // A link like index.html#lesson-3 opens that lesson
+    // A link like index.html#lesson-3 opens that lesson (0: the address names no lesson)
     function lessonFromHash() {
-        const match = /^#lesson-([1-6])$/.exec(window.location.hash);
-        return match ? Number(match[1]) : 0;
+        const match = /^#lesson-(\d+)$/.exec(window.location.hash);
+        const n = match ? Number(match[1]) : 0;
+        return n >= 1 && n <= TOTAL ? n : 0;
     }
 
     // The Back / Forward buttons change the hash: open the lesson, or close the reader
@@ -2399,14 +2310,10 @@
         else if (reader.open) closeReader({ keepHash: true });
     });
 
-    function openFromHash() {
+    // Opened once every script has run, so the whole page (and every
+    // command of the Ctrl+K palette) is ready behind the reader
+    A.ready(function () {
         const n = lessonFromHash();
         if (n) openLesson(n);
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", openFromHash);
-    } else {
-        openFromHash();
-    }
+    });
 })();
