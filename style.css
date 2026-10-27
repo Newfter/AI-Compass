@@ -902,11 +902,13 @@ button.chip:hover,
 
 /* ===== 10. TOASTS (small pop-up messages) ===== */
 
+/* --toast-bottom: how far above the bottom edge toasts appear. A window that
+   has buttons at the bottom (like the lesson reader) can raise it while it is open. */
 .toast-stack {
     position: fixed;
     left: 16px;
     right: 16px;
-    bottom: 24px;
+    bottom: calc(var(--toast-bottom, 24px) + env(safe-area-inset-bottom, 0px));
     z-index: var(--z-toast);
     display: flex;
     flex-direction: column;
@@ -956,8 +958,8 @@ button.chip:hover,
 
 /* On smaller screens toasts sit above the assistant button and its hint bubble */
 @media (max-width: 1200px) {
-    .toast-stack {
-        bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+    :root {
+        --toast-bottom: 100px;
     }
 }
 

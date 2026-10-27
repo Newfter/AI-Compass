@@ -36,13 +36,13 @@
 
 /* While a lesson is open, pop-up messages appear above the reader's bottom bar,
    so they never cover the "Mark as complete" button */
-.lsn-reading .toast-stack {
-    bottom: calc(max(24px, (100vh - 960px) / 2) + 92px);
+.lsn-reading {
+    --toast-bottom: calc(max(24px, (100vh - 960px) / 2) + 92px);
 }
 
 @media (max-width: 640px) {
-    .lsn-reading .toast-stack {
-        bottom: 82px;
+    .lsn-reading {
+        --toast-bottom: 82px;
     }
 }
 
