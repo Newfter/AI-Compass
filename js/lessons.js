@@ -385,8 +385,8 @@
         }
     }
 
-    // Reset needs two clicks, so progress is not lost by accident
-    function onResetClick() {
+    // Reset needs two presses, so progress is not lost by accident
+    function onResetClick(event) {
         if (!resetArmed) {
             resetArmed = true;
             updateHUD();
@@ -398,6 +398,8 @@
             }, 4000);
             return;
         }
+        // The second click of a double-click (or a double tap) is not a second press
+        if (event.detail > 1) return;
         clearTimeout(resetTimer);
         resetArmed = false;
         completed.clear();
@@ -666,7 +668,9 @@
         } catch (error) {}
     }
 
-    cert.input.value = A.storage.get("lessons.certName", "") || "";
+    // The saved name: only a text, and never longer than the box allows (maxlength)
+    const savedName = A.storage.get("lessons.certName", "");
+    cert.input.value = typeof savedName === "string" ? savedName.slice(0, cert.input.maxLength) : "";
     cert.input.addEventListener("input", function () {
         A.storage.set("lessons.certName", cert.input.value);
         scheduleCertificate();
@@ -685,8 +689,13 @@
         } else if (event.target.closest('[data-ref="certToggle"]')) {
             toggleCertificate();
         } else if (event.target.closest('[data-ref="reset"]')) {
-            onResetClick();
+            onResetClick(event);
         }
+    });
+
+    // Holding Enter down on a button repeats its click: on Reset only a new press counts
+    hud.reset.addEventListener("keydown", function (event) {
+        if (event.repeat && event.key === "Enter") event.preventDefault();
     });
 
     // A click anywhere on a card opens it (the button is the keyboard way in)
@@ -1548,6 +1557,7 @@
 
     const panel = readerEl.querySelector(".lsn-reader-panel");
     const parts = {
+        backdrop: readerEl.querySelector(".lsn-reader-backdrop"),
         progress: ref(readerEl, "progress"),
         crumb: ref(readerEl, "crumb"),
         keys: ref(readerEl, "keys"),
@@ -2025,10 +2035,19 @@
     }
 
     // ----- Clicks and keys inside the reader -----
+    // A click on the backdrop around the panel closes the reader, but only when the
+    // press also started there, and not as the second click of a double-click
+    // (the first click may have opened the reader from a lesson card under it).
+    let pressOnBackdrop = false;
+    readerEl.addEventListener("pointerdown", function (event) {
+        pressOnBackdrop = event.target === parts.backdrop;
+    });
+
     readerEl.addEventListener("click", function (event) {
         const target = event.target.closest("[data-action], [data-option], [data-goto]");
         if (!target || !readerEl.contains(target)) return;
         if (target.getAttribute("aria-disabled") === "true") return;
+        if (target === parts.backdrop && (!pressOnBackdrop || event.detail > 1)) return;
 
         if (target.hasAttribute("data-option")) {
             answerCheck(Number(target.getAttribute("data-option")));
