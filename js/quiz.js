@@ -138,9 +138,7 @@
     }
 
     function lessonTitle(number) {
-        if (!Array.isArray(A.lessons)) return "";
-        const lesson = A.lessons.find((item) => item.number === number);
-        return lesson && typeof lesson.title === "function" ? lesson.title() : "";
+        return A.lessons ? A.lessons.title(number) : "";
     }
 
     // Is a pop-up window (lesson reader, command palette...) covering the page?
@@ -1494,6 +1492,8 @@
         setTimeout(() => startGame({ forceFocus: true, reveal: false }), 80);
     }
 
+    // Other features use AICompass.quiz.start() (AICompass.startQuiz is the older name)
+    A.feature("quiz", { start: startQuiz });
     A.startQuiz = startQuiz;
 
     A.registerCommand({

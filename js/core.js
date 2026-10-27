@@ -1068,6 +1068,7 @@ function navigate(id, options) {
     if (settings.keepOverlays !== true) {
         closeAll({ reason: "navigate", navigating: true, except: settings.keepOverlays });
     }
+    buildParts(target);
     target.scrollIntoView({ behavior: motionOK() ? "smooth" : "auto", block: settings.block || "start" });
     if (settings.focus !== false) dom.focusHeading(target);
     return true;
@@ -1219,10 +1220,14 @@ function onSection(callback) {
 // browser has a quiet moment after the page loaded, or when ensure() is called
 // (whichever comes first). Returns ensure(): call it before anything that needs
 // the part to be built (a command, a link to it...). options:
-//   eager: true     build right away (e.g. the address points into this part)
+//   eager: true     build right away
 //   margin          how close counts as "near" (default: one and a half screens)
+// Everything is built at once when the address points inside the page (#lab,
+// #term-bias...), and the parts above a section are built before jumping to it,
+// so the browser scrolls to the right place.
 let pageLoaded = document.readyState === "complete";
 const afterLoad = [];
+const waitingParts = new Set();     // { element, ensure } of the parts not built yet
 
 window.addEventListener("load", function () {
     pageLoaded = true;
@@ -1242,19 +1247,22 @@ function whenNeeded(element, init, options) {
     const settings = options || {};
     let done = false;
     let observer = null;
+    const part = { element: element, ensure: ensure };
 
     function ensure() {
         if (done) return;
         done = true;
+        waitingParts.delete(part);
         if (observer) observer.disconnect();
         init();
         layoutChanged();
     }
 
-    if (settings.eager || !element || !hasIntersectionObserver) {
+    if (settings.eager || !element || !hasIntersectionObserver || location.hash.length > 1) {
         ensure();
         return ensure;
     }
+    waitingParts.add(part);
     observer = new IntersectionObserver(function (entries) {
         if (entries.some(function (entry) { return entry.isIntersecting; })) ensure();
     }, { rootMargin: (settings.margin || "150%") + " 0px" });
@@ -1262,6 +1270,33 @@ function whenNeeded(element, init, options) {
     whenIdle(ensure);
     return ensure;
 }
+
+// Builds the parts that are still waiting: all of them, or only the ones above
+// "target" and inside it (enough to know where target is on the page)
+function buildParts(target) {
+    waitingParts.forEach(function (part) {
+        const element = part.element;
+        if (!target || target === element || target.contains(element) ||
+            (element.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+            part.ensure();
+        }
+    });
+}
+
+// A link to a place on the page (#timeline, #term-bias): build what comes before it first
+document.addEventListener("click", function (event) {
+    if (!waitingParts.size || !event.target.closest) return;
+    const link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+    let id = link.getAttribute("href").slice(1);
+    try {
+        id = decodeURIComponent(id);
+    } catch (error) {
+        return;
+    }
+    const target = id && document.getElementById(id);
+    if (target) buildParts(target);
+}, true);
 
 // ----- The menu on small screens (a window that doesn't shut out the page) -----
 function setUpMenu() {
@@ -1506,6 +1541,7 @@ window.AICompass = {
     layoutChanged: layoutChanged,
     onSection: onSection,
     whenNeeded: whenNeeded,
+    buildParts: buildParts,
     whenIdle: whenIdle,
 
     // 11. commands

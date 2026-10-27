@@ -699,6 +699,7 @@ AIC.registerCommand({
     icon: "⚡",
     title: function () { return AIC.t("neural.cmdStorm"); },
     keywords: "neural network storm neurons fire brain background нейронная сеть шторм нейроны мозг фон",
+    keepOverlays: true,
     run: function () { runStorm("neural.stormToast"); }
 });
 

@@ -2240,6 +2240,8 @@
             icon: lesson.icon,
             title: function () { return t("lessons.cmdOpen", { title: lessonTitle(lesson.number) }); },
             keywords: "lesson урок " + lesson.number + " " + lesson.keywords,
+            // An open reader stays open and switches to this lesson
+            keepOverlays: ["lesson-reader"],
             // The palette gives the focus back before running a command, so the
             // focused element is where the reader returns to when it closes
             run: function () { openLesson(lesson.number, document.activeElement); }
@@ -2252,18 +2254,45 @@
         icon: "▶️",
         title: function () { return t("lessons.cmdContinue"); },
         keywords: "continue next lesson learning продолжить следующий урок обучение",
+        keepOverlays: ["lesson-reader"],
         run: function () { openLesson(nextLesson() || 1, document.activeElement); }
     });
 
-    // Other features open a lesson with AICompass.openLesson(3).
-    // Closing the reader brings the focus back to the button they used.
-    A.openLesson = function (number) {
-        openLesson(number, document.activeElement);
-    };
+    // Other features use AICompass.lessons (AICompass.openLesson and closeLesson are
+    // older names). Closing the reader brings the focus back to "opener": the button
+    // they used (by default, whatever has the focus).
+    A.feature("lessons", {
+        count: TOTAL,
+        // [{ number, icon, title(), description() }] in order
+        list: function () {
+            return LESSONS.map(function (lesson) {
+                return {
+                    number: lesson.number,
+                    icon: lesson.icon,
+                    title: function () { return lessonTitle(lesson.number); },
+                    description: function () { return t(lessonKey(lesson.number, "desc")); }
+                };
+            });
+        },
+        title: function (number) {
+            return number >= 1 && number <= TOTAL ? lessonTitle(number) : "";
+        },
+        // The numbers of the finished lessons, smallest first
+        completed: function () {
+            return Array.from(completed).sort(function (a, b) { return a - b; });
+        },
+        isCompleted: function (number) { return completed.has(number); },
+        // The first lesson that is not finished yet (0 when all are)
+        next: nextLesson,
+        open: function (number, opener) {
+            openLesson(number, opener || document.activeElement);
+        },
+        close: function () { closeReader({ restoreFocus: false }); },
+        isOpen: function () { return reader.open; }
+    });
 
-    A.closeLesson = function () {
-        closeReader({ restoreFocus: false });
-    };
+    A.openLesson = A.lessons.open;
+    A.closeLesson = A.lessons.close;
 
     // While the reader is open, anything that takes you to another part of the page
     // would happen hidden behind it. So these close the reader first:
@@ -2317,15 +2346,6 @@
             ["open", "ask", "toggle"].forEach(function (name) { closeReaderFirst(A.assistant, name); });
         }
     }
-
-    A.lessons = LESSONS.map(function (lesson) {
-        return {
-            number: lesson.number,
-            icon: lesson.icon,
-            title: function () { return lessonTitle(lesson.number); },
-            description: function () { return t(lessonKey(lesson.number, "desc")); }
-        };
-    });
 
     // ---------- 27. Language and theme changes ----------
     A.onLanguageChange(function () {

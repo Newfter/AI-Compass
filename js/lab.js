@@ -2800,10 +2800,13 @@ AIC.onLanguageChange((lang) => {
 });
 
 // ----- Opening the lab from other parts of the site -----
-AIC.openLab = function (tab) {
+// AICompass.lab.open("classifier" | "predictor") (AICompass.openLab is the older name)
+function openLab(tab) {
     selectTab(tab === "predictor" ? "predictor" : "classifier", false);
     AIC.scrollToSection("lab");
-};
+}
+AIC.feature("lab", { open: openLab });
+AIC.openLab = openLab;
 
 AIC.registerCommand({
     id: "lab-classifier",

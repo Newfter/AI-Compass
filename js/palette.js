@@ -330,7 +330,7 @@
                 groupName: groupName,
                 groupFolded: fold(groupName),
                 order: order,
-                run: command.run,
+                command: command,
                 remember: true
             });
         });
@@ -853,7 +853,8 @@
         close();
         setTimeout(function () {
             try {
-                item.run();
+                // Core closes the windows that are in the way, then runs it
+                A.runCommand(item.command || { run: item.run });
             } catch (error) {
                 if (window.console) console.warn("AI Compass palette: command failed", item.id, error);
             }

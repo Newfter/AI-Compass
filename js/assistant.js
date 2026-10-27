@@ -107,9 +107,7 @@
 
     // ----- Lessons (from js/lessons.js, if it is there) -----
     function lessonTitle(number) {
-        if (!Array.isArray(A.lessons)) return "";
-        const lesson = A.lessons.find(function (item) { return item && item.number === number; });
-        return lesson && typeof lesson.title === "function" ? safely(lesson.title, "") : "";
+        return A.lessons ? safely(function () { return A.lessons.title(number); }, "") : "";
     }
 
     function lessonName(number) {
@@ -120,8 +118,7 @@
     }
 
     function completedLessons() {
-        const saved = A.storage.get("lessons.completed", []);
-        return Array.isArray(saved) ? saved.map(Number).filter(function (n) { return n >= 1 && n <= 6; }) : [];
+        return A.lessons ? A.lessons.completed() : [];
     }
 
     // ----- Glossary (from js/glossary.js, if it is there) -----
