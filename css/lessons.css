@@ -11,39 +11,24 @@
    The confetti for "every lesson done" comes from effects.js.
    All colours come from the variables in style.css,
    so both the dark and the light theme look right.
+   Text in an accent colour uses the --text-* versions (darker in the
+   light theme, so small text stays readable); borders, dots and glows
+   use the bright --accent-* colours.
    ========================================================= */
 
-[data-feature="lessons"] [hidden],
-.lsn-reader [hidden],
-.lsn-reader[hidden] {
-    display: none !important;
-}
-
-/* Text versions of the bright accent colours. In the light theme the cyan,
-   green and amber are too pale for small text on white, so they are mixed
-   with a bit of the text colour. Borders, dots and glows keep the bright ones. */
+/* The reader's measurements. They sit on :root because the toast position
+   (outside the reader, just below) is computed from them too. */
 :root {
-    --lsn-ink-2: var(--accent-2);
-    --lsn-ink-ok: var(--success);
-    --lsn-ink-warn: var(--warning);
+    --lsn-reader-pad: 24px;      /* space around the reader window */
+    --lsn-reader-max-h: 960px;   /* the window's greatest height */
+    --lsn-reader-foot-h: 77px;   /* its bottom bar: 52px buttons + 2 x 12px padding + 1px border */
 }
 
-:root[data-theme="light"] {
-    --lsn-ink-2: color-mix(in srgb, var(--accent-2) 72%, var(--text));
-    --lsn-ink-ok: color-mix(in srgb, var(--success) 72%, var(--text));
-    --lsn-ink-warn: color-mix(in srgb, var(--warning) 80%, var(--text));
-}
-
-/* While a lesson is open, pop-up messages appear above the reader's bottom bar,
-   so they never cover the "Mark as complete" button */
+/* While a lesson is open, pop-up messages appear just above the reader's bottom bar,
+   so they never cover the "Mark as complete" button. The first part is the space
+   below the window: the padding, or more when the screen is taller than the window. */
 .lsn-reading {
-    --toast-bottom: calc(max(24px, (100vh - 960px) / 2) + 92px);
-}
-
-@media (max-width: 640px), (max-height: 500px) {
-    .lsn-reading {
-        --toast-bottom: 82px;
-    }
+    --toast-bottom: calc(max(var(--lsn-reader-pad), (100vh - var(--lsn-reader-max-h)) / 2) + var(--lsn-reader-foot-h) + 15px);
 }
 
 .lsn-arrow {
@@ -80,11 +65,7 @@
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
     transform: translateX(-100%);
-    animation: lsn-sweep 6s linear infinite;
-}
-
-@keyframes lsn-sweep {
-    to { transform: translateX(250%); }
+    animation: aic-sweep 6s linear infinite;
 }
 
 /* Sci-fi corner brackets */
@@ -119,10 +100,16 @@
 }
 
 .lsn-ring svg {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    transform: rotate(-90deg);
     overflow: visible;
+}
+
+/* The progress starts at the top */
+.lsn-ring-chart {
+    transform: rotate(-90deg);
 }
 
 .lsn-stop-a {
@@ -138,17 +125,17 @@
     stop-opacity: 0;
 }
 
+/* The dotted outer ring turns slowly. Its whole <svg> turns (not the circle
+   inside it), so the browser can turn it without laying out the page again. */
 .lsn-ring-ticks {
+    animation: aic-spin 40s linear infinite;
+}
+
+.lsn-ring-ticks circle {
     fill: none;
     stroke: rgba(var(--accent-2-rgb), 0.35);
     stroke-width: 1.2;
     stroke-dasharray: 1 5;
-    transform-origin: 50% 50%;
-    animation: lsn-spin 40s linear infinite;
-}
-
-@keyframes lsn-spin {
-    to { transform: rotate(360deg); }
 }
 
 .lsn-ring-track {
@@ -194,7 +181,7 @@
 
 .lsn-hud-label {
     margin-bottom: 6px;
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 11.5px;
     font-weight: 600;
     letter-spacing: 2.2px;
@@ -234,7 +221,7 @@
 
 .lsn-reset.is-armed {
     border-color: var(--danger);
-    color: var(--danger);
+    color: var(--text-danger);
 }
 
 /* The lesson map: numbered nodes joined by lines */
@@ -302,7 +289,7 @@
 .lsn-node:hover {
     transform: scale(1.08);
     border-color: var(--accent-2);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
 }
 
 .lsn-node-num,
@@ -312,7 +299,7 @@
 
 .lsn-node-check {
     display: none;
-    color: #ffffff;
+    color: var(--on-accent);
     font-family: var(--font-body);
     font-size: 17px;
     font-weight: 800;
@@ -334,7 +321,7 @@
 
 .lsn-step.is-next .lsn-node {
     border-color: var(--accent-2);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
 }
 
 /* A pulsing ring around the next lesson */
@@ -366,7 +353,7 @@
 }
 
 .lsn-step.is-next .lsn-step-label {
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
 }
 
 /* ===== 2. CERTIFICATE ===== */
@@ -561,7 +548,7 @@
     border: 1px solid rgba(var(--accent-2-rgb), 0.45);
     border-radius: 999px;
     background: rgba(var(--accent-2-rgb), 0.1);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.2px;
@@ -587,7 +574,7 @@
     border-color: var(--success);
     background: var(--surface-2);
     background: color-mix(in srgb, var(--success) 13%, transparent);
-    color: var(--lsn-ink-ok);
+    color: var(--text-success);
 }
 
 .lsn-card-icon {
@@ -690,7 +677,7 @@
     z-index: var(--z-reader);
     display: grid;
     place-items: center;
-    padding: 24px;
+    padding: var(--lsn-reader-pad);
 }
 
 .lsn-reader-backdrop {
@@ -710,7 +697,7 @@
     display: flex;
     flex-direction: column;
     width: min(1140px, 100%);
-    height: min(100%, 960px);
+    height: min(100%, var(--lsn-reader-max-h));
     overflow: hidden;
     border: 1px solid var(--border-strong);
     border-radius: 26px;
@@ -830,7 +817,7 @@
 
 .lsn-tool:hover {
     border-color: var(--accent-2);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     box-shadow: 0 0 18px rgba(var(--accent-2-rgb), 0.2);
 }
 
@@ -840,7 +827,7 @@
 
 .lsn-tool-close:hover {
     border-color: var(--danger);
-    color: var(--danger);
+    color: var(--text-danger);
     box-shadow: none;
 }
 
@@ -872,7 +859,7 @@
 .lsn-tool-listen.is-on {
     border-color: var(--accent-2);
     background: rgba(var(--accent-2-rgb), 0.12);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
 }
 
 .lsn-tool-listen.is-on .lsn-wave i {
@@ -982,7 +969,7 @@
 .lsn-toc-num {
     flex-shrink: 0;
     min-width: 20px;
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 11px;
 }
 
@@ -992,6 +979,7 @@
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 12px;
+    min-height: var(--lsn-reader-foot-h);
     padding: 12px 16px;
     border-top: 1px solid var(--border);
     background: var(--surface-solid);
@@ -1055,7 +1043,7 @@
 
 .lsn-nav.is-finish .lsn-nav-small,
 .lsn-nav.is-finish .lsn-nav-arrow {
-    color: var(--lsn-ink-ok);
+    color: var(--text-success);
 }
 
 .lsn-nav[aria-disabled="true"] {
@@ -1075,7 +1063,7 @@
     border-color: var(--success);
     background: var(--surface-2);
     background: color-mix(in srgb, var(--success) 14%, var(--surface-solid));
-    color: var(--lsn-ink-ok);
+    color: var(--text-success);
     box-shadow: 0 0 24px color-mix(in srgb, var(--success) 25%, transparent);
 }
 
@@ -1160,7 +1148,7 @@
 
 .lsn-chip-done {
     border-color: var(--success);
-    color: var(--lsn-ink-ok);
+    color: var(--text-success);
 }
 
 .lsn-article-title {
@@ -1202,7 +1190,7 @@
 
 .lsn-part-num {
     flex-shrink: 0;
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 13px;
     font-weight: 600;
     text-shadow: 0 0 12px rgba(var(--accent-2-rgb), 0.5);
@@ -1258,7 +1246,7 @@
 
 .lsn-note-label {
     margin-bottom: 4px;
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 11.5px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -1266,11 +1254,11 @@
 }
 
 .lsn-note-fact .lsn-note-label {
-    color: var(--accent-3);
+    color: var(--text-accent-3);
 }
 
 .lsn-note-tip .lsn-note-label {
-    color: var(--accent);
+    color: var(--text-accent);
 }
 
 /* Key ideas */
@@ -1300,7 +1288,7 @@
     height: 30px;
     border-radius: 9px;
     background: var(--gradient-button);
-    color: #ffffff;
+    color: var(--on-accent);
     font-size: 12px;
     font-weight: 600;
     box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.35);
@@ -1338,7 +1326,7 @@
 }
 
 .lsn-try-label {
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 11.5px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -1420,7 +1408,7 @@
     height: 32px;
     border: 1px solid var(--border-strong);
     border-radius: 10px;
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 13px;
     font-weight: 600;
 }
@@ -1491,11 +1479,11 @@
 
 .lsn-feedback-box.is-correct .lsn-feedback-title,
 .lsn-feedback-done {
-    color: var(--lsn-ink-ok);
+    color: var(--text-success);
 }
 
 .lsn-feedback-box.is-wrong .lsn-feedback-title {
-    color: var(--lsn-ink-warn);
+    color: var(--text-warning);
 }
 
 .lsn-feedback-done {
@@ -1527,7 +1515,7 @@
     border: 1px solid rgba(var(--accent-2-rgb), 0.4);
     border-radius: 999px;
     background: rgba(var(--accent-2-rgb), 0.08);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.6px;
@@ -1607,7 +1595,7 @@
 
 .lsn-lab-status.is-done,
 .lsn-lab-win {
-    color: var(--lsn-ink-ok);
+    color: var(--text-success);
     font-weight: 700;
 }
 
@@ -1650,7 +1638,7 @@
 
 .lsn-pill:not([aria-disabled="true"]):hover {
     border-color: var(--accent-2);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
 }
 
 .lsn-pill[aria-disabled="true"] {
@@ -1662,7 +1650,7 @@
     opacity: 1;
     border-color: var(--accent-2);
     background: rgba(var(--accent-2-rgb), 0.14);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
 }
 
 /* -- Lab 1: AI or not AI? -- */
@@ -1710,11 +1698,11 @@
 }
 
 .lsn-sort-item.is-right .lsn-sort-feedback strong {
-    color: var(--lsn-ink-ok);
+    color: var(--text-success);
 }
 
 .lsn-sort-item.is-wrong .lsn-sort-feedback strong {
-    color: var(--lsn-ink-warn);
+    color: var(--text-warning);
 }
 
 /* -- Lab 2: watch a model learn -- */
@@ -1835,7 +1823,7 @@
 }
 
 .lsn-stat-step {
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -2041,7 +2029,7 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--surface-2);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 13px;
     text-align: center;
 }
@@ -2146,14 +2134,14 @@
 }
 
 .lsn-verdict {
-    color: var(--lsn-ink-warn);
+    color: var(--text-warning);
     font-family: var(--font-display);
     font-size: 17px;
     font-weight: 600;
 }
 
 .lsn-verdict.is-yes {
-    color: var(--lsn-ink-ok);
+    color: var(--text-success);
 }
 
 /* -- Lab 4: be the language model -- */
@@ -2185,7 +2173,7 @@
     border-bottom-color: transparent;
     border-radius: 8px;
     background: rgba(var(--accent-2-rgb), 0.14);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
 }
 
 .lsn-blank.is-pop {
@@ -2302,7 +2290,7 @@
 
 .lsn-history-chip.is-new {
     border-color: var(--accent-2);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     animation: lsn-pop 0.4s var(--ease);
 }
 
@@ -2353,7 +2341,7 @@
 
 .lsn-moment.is-found .lsn-moment-time {
     border-color: var(--accent-2);
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
 }
 
 .lsn-moment-card {
@@ -2381,7 +2369,7 @@
 }
 
 .lsn-moment-button:hover .lsn-moment-hint {
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
 }
 
 .lsn-moment-icon {
@@ -2415,7 +2403,7 @@
 }
 
 .lsn-moment-ai strong {
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
 }
 
 .lsn-progress-mini {
@@ -2448,7 +2436,7 @@
 }
 
 .lsn-dilemma-tag {
-    color: var(--lsn-ink-2);
+    color: var(--text-accent-2);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -2517,11 +2505,11 @@
 }
 
 .lsn-dilemma-feedback.is-good strong {
-    color: var(--lsn-ink-ok);
+    color: var(--text-success);
 }
 
 .lsn-dilemma-feedback.is-bad strong {
-    color: var(--lsn-ink-warn);
+    color: var(--text-warning);
 }
 
 /* ===== 7. RESPONSIVE ===== */
@@ -2708,13 +2696,14 @@
 /* Phones, and screens too short for a framed window (a phone held sideways):
    the reader covers the whole screen, with a compact top and bottom bar */
 @media (max-width: 640px), (max-height: 500px) {
-    .lsn-reader {
-        padding: 0;
+    :root {
+        --lsn-reader-pad: 0px;
+        --lsn-reader-max-h: 100vh;   /* as tall as the screen */
+        --lsn-reader-foot-h: 69px;   /* 48px buttons + 2 x 10px padding + 1px border */
     }
 
     .lsn-reader-panel {
         width: 100%;
-        height: 100%;
         border: none;
         border-radius: 0;
     }
@@ -2757,17 +2746,9 @@
     }
 }
 
+/* At 400px and less, js/lessons.js also hides the word on the "Listen" button
+   with the .sr-only class (screen readers still read it) */
 @media (max-width: 400px) {
-    /* Text hidden visually but still read by screen readers */
-    .lsn-tool-listen [data-ref="listenText"] {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
-        white-space: nowrap;
-    }
-
     .lsn-sentence {
         padding: 14px;
     }

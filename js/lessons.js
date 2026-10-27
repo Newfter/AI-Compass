@@ -153,14 +153,16 @@
         <div class="lsn-hud card" data-reveal>
             <span class="lsn-hud-corners" aria-hidden="true"></span>
             <div class="lsn-ring" aria-hidden="true">
-                <svg viewBox="0 0 100 100" focusable="false">
+                <svg class="lsn-ring-ticks" viewBox="0 0 100 100" focusable="false">
+                    <circle cx="50" cy="50" r="48" transform="rotate(-90 50 50)"></circle>
+                </svg>
+                <svg class="lsn-ring-chart" viewBox="0 0 100 100" focusable="false">
                     <defs>
                         <linearGradient id="lsn-ring-gradient" x1="0" y1="0" x2="1" y2="1">
                             <stop offset="0" class="lsn-stop-a"></stop>
                             <stop offset="1" class="lsn-stop-b"></stop>
                         </linearGradient>
                     </defs>
-                    <circle class="lsn-ring-ticks" cx="50" cy="50" r="48"></circle>
                     <circle class="lsn-ring-track" cx="50" cy="50" r="40" pathLength="100"></circle>
                     <circle class="lsn-ring-fill" cx="50" cy="50" r="40" pathLength="100" data-ref="ringFill"></circle>
                 </svg>
@@ -1579,6 +1581,12 @@
         complete: readerEl.querySelector('[data-action="complete"]'),
         completeText: ref(readerEl, "completeText")
     };
+
+    // On very narrow screens the "Listen" button shows only its sound bars. The word
+    // is hidden with the shared .sr-only class, so screen readers still read it.
+    A.onMedia("(max-width: 400px)", function (narrow) {
+        parts.listenText.classList.toggle("sr-only", narrow);
+    });
 
     // The reader is a pop-up window of the page (see "overlays" in core.js). While it is
     // open, core stops the page from scrolling, makes the rest of the page unreachable
