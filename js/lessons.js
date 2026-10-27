@@ -288,7 +288,7 @@
     function setRing(target) {
         cancelAnimationFrame(ringFrame);
         hud.ringFill.style.strokeDashoffset = String(100 - target);
-        if (A.reducedMotion) {
+        if (!A.motion.ok()) {
             ringValue = target;
             hud.percent.textContent = String(target);
             return;
@@ -411,7 +411,7 @@
         }
         // The very last lesson gets one big message instead of two small ones
         if (completed.size === TOTAL && before < TOTAL) {
-            launchConfetti();
+            if (A.effects) A.effects.confetti();   // two bursts from the bottom corners
             A.toast(t("lessons.toast.all"), "🏆");
         } else {
             A.toast(t("lessons.toast.done", { title: lessonTitle(n) }), "✅");
@@ -442,81 +442,6 @@
         hud.continueButton.focus();
     }
 
-    // ---------- 15. Confetti when every lesson is done ----------
-    function launchConfetti() {
-        if (A.reducedMotion) return;
-        const canvas = document.createElement("canvas");
-        canvas.className = "lsn-confetti";
-        canvas.setAttribute("aria-hidden", "true");
-        document.body.appendChild(canvas);
-
-        const ratio = Math.min(window.devicePixelRatio || 1, 2);
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        canvas.width = Math.round(width * ratio);
-        canvas.height = Math.round(height * ratio);
-        const ctx = canvas.getContext("2d");
-        ctx.scale(ratio, ratio);
-
-        const colors = ["--accent", "--accent-2", "--accent-3", "--success", "--warning"].map(function (name) {
-            return A.cssVar(name) || "#9b6dff";
-        });
-
-        // Two bursts: one from each bottom corner
-        const pieces = [];
-        for (let i = 0; i < 180; i++) {
-            const fromLeft = i % 2 === 0;
-            const angle = ((fromLeft ? -62 : -118) + (Math.random() - 0.5) * 46) * Math.PI / 180;
-            const speed = 11 + Math.random() * 10;
-            pieces.push({
-                x: fromLeft ? -10 : width + 10,
-                y: height * 0.85,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                size: 6 + Math.random() * 7,
-                spin: Math.random() * Math.PI,
-                spinSpeed: (Math.random() - 0.5) * 0.35,
-                color: colors[i % colors.length],
-                shape: i % 3
-            });
-        }
-
-        const start = performance.now();
-        const duration = 3000;
-        let last = start;
-
-        function frame(now) {
-            const elapsed = now - start;
-            const dt = Math.min(3, (now - last) / 16.7);   // keeps the speed the same on 60 Hz and 120 Hz screens
-            last = now;
-            ctx.clearRect(0, 0, width, height);
-            ctx.globalAlpha = Math.max(0, Math.min(1, (duration - elapsed) / 700));
-            pieces.forEach(function (piece) {
-                piece.vy += 0.32 * dt;
-                piece.vx *= Math.pow(0.985, dt);
-                piece.vy *= Math.pow(0.985, dt);
-                piece.x += piece.vx * dt;
-                piece.y += piece.vy * dt;
-                piece.spin += piece.spinSpeed * dt;
-                ctx.save();
-                ctx.translate(piece.x, piece.y);
-                ctx.rotate(piece.spin);
-                ctx.fillStyle = piece.color;
-                if (piece.shape === 1) {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, piece.size / 2.6, 0, Math.PI * 2);
-                    ctx.fill();
-                } else {
-                    ctx.fillRect(-piece.size / 2, -piece.size / 4, piece.size, piece.shape === 2 ? piece.size / 5 : piece.size / 2);
-                }
-                ctx.restore();
-            });
-            if (elapsed < duration) requestAnimationFrame(frame);
-            else canvas.remove();
-        }
-        requestAnimationFrame(frame);
-    }
-
     // ---------- 16. The certificate ----------
     let certFrame = 0;
 
@@ -527,7 +452,7 @@
         hud.certToggle.setAttribute("aria-expanded", String(show));
         if (show) {
             drawCertificate();
-            cert.root.scrollIntoView({ behavior: A.reducedMotion ? "auto" : "smooth", block: "nearest" });
+            cert.root.scrollIntoView({ behavior: A.motion.ok() ? "smooth" : "auto", block: "nearest" });
         }
     }
 
@@ -815,15 +740,64 @@
         openLesson(Number(card.getAttribute("data-lesson")), card.querySelector("[data-open]"));
     });
 
-    // A soft light follows the mouse over a card
-    grid.addEventListener("pointermove", function (event) {
-        if (event.pointerType !== "mouse") return;
-        const card = event.target.closest(".lsn-card");
-        if (!card) return;
+    // A soft coloured light follows the mouse over a card (the CSS draws it at --mx / --my).
+    // Like the glare of effects.js, it only follows a real mouse, and only while
+    // animations are on. The card's place on the page is read once, when the mouse
+    // comes onto it, and --mx / --my are written at most once per frame.
+    const finePointer = A.media(A.queries.finePointer);
+    const cardLight = { card: null, left: 0, top: 0, x: 0, y: 0, frame: 0 };
+
+    function cardLightOn() {
+        return A.motion.ok() && finePointer.matches;
+    }
+
+    function lightCard(card) {
         const box = card.getBoundingClientRect();
-        card.style.setProperty("--mx", Math.round(event.clientX - box.left) + "px");
-        card.style.setProperty("--my", Math.round(event.clientY - box.top) + "px");
+        cardLight.card = card;
+        cardLight.left = box.left + window.scrollX;   // page coordinates: still right after a scroll
+        cardLight.top = box.top + window.scrollY;
+    }
+
+    function drawCardLight() {
+        cardLight.frame = 0;
+        const card = cardLight.card;
+        if (!card) return;
+        card.style.setProperty("--mx", Math.round(cardLight.x + window.scrollX - cardLight.left) + "px");
+        card.style.setProperty("--my", Math.round(cardLight.y + window.scrollY - cardLight.top) + "px");
+    }
+
+    function followPointer(card, event) {
+        if (event.pointerType !== "mouse" || !cardLightOn()) return;
+        if (cardLight.card !== card) lightCard(card);
+        cardLight.x = event.clientX;
+        cardLight.y = event.clientY;
+        if (!cardLight.frame) cardLight.frame = requestAnimationFrame(drawCardLight);
+    }
+
+    // Motion off (or no mouse any more): the light goes back to its resting place
+    function resetCardLight() {
+        cancelAnimationFrame(cardLight.frame);
+        cardLight.frame = 0;
+        cardLight.card = null;
+        cards.forEach(function (card) {
+            card.style.removeProperty("--mx");
+            card.style.removeProperty("--my");
+        });
+    }
+
+    cards.forEach(function (card) {
+        card.addEventListener("pointerenter", function (event) {
+            if (event.pointerType === "mouse" && cardLightOn()) lightCard(card);
+            followPointer(card, event);
+        });
+        card.addEventListener("pointermove", function (event) { followPointer(card, event); });
+        card.addEventListener("pointerleave", function () {
+            if (cardLight.card === card) cardLight.card = null;
+        });
     });
+
+    A.motion.onChange(function () { if (!cardLightOn()) resetCardLight(); });
+    A.onMedia(A.queries.finePointer, function () { if (!cardLightOn()) resetCardLight(); }, { immediate: false });
 
     // ---------- 18. Mini-lab 1: AI or not AI? ----------
     const SORT_ANSWERS = ["not", "ai", "ai", "not", "ai"];
@@ -1967,7 +1941,7 @@
         const top = target.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 18;
         markCurrentPart(name);
         holdSpy(Math.max(0, Math.min(top, box.scrollHeight - box.clientHeight)));
-        box.scrollTo({ top: top, behavior: A.reducedMotion ? "auto" : "smooth" });
+        box.scrollTo({ top: top, behavior: A.motion.ok() ? "smooth" : "auto" });
         const heading = target.querySelector("[tabindex='-1']");
         if (heading) heading.focus({ preventScroll: true });
     }
@@ -1983,7 +1957,7 @@
         parts.scroll.scrollTop = 0;
         onReaderScroll();
         setHash("#lesson-" + n);
-        if (!A.reducedMotion) {
+        if (A.motion.ok()) {
             parts.article.classList.remove("is-entering");
             void parts.article.offsetWidth;   // restart the fade-in animation
             parts.article.classList.add("is-entering");
@@ -2098,7 +2072,7 @@
             readerEl.hidden = true;
             readerEl.classList.remove("is-closing");
         };
-        if (A.reducedMotion) {
+        if (!A.motion.ok()) {
             finish();
         } else {
             readerEl.classList.add("is-closing");
@@ -2179,7 +2153,7 @@
         const box = parts.scroll.getBoundingClientRect();
         const rect = element.getBoundingClientRect();
         if (rect.top < box.top + 40 || rect.bottom > box.bottom - 40) {
-            element.scrollIntoView({ block: "center", behavior: A.reducedMotion ? "auto" : "smooth" });
+            element.scrollIntoView({ block: "center", behavior: A.motion.ok() ? "smooth" : "auto" });
         }
     }
 

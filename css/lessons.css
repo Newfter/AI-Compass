@@ -6,9 +6,9 @@
    4. Lesson reader (full-screen dialog)
    5. Lesson text, key ideas, "try it", "check yourself"
    6. Mini-labs (shared parts + one block per lab)
-   7. Confetti
-   8. Responsive
-   9. Reduced motion
+   7. Responsive
+   8. Calm mode and reduced motion
+   The confetti for "every lesson done" comes from effects.js.
    All colours come from the variables in style.css,
    so both the dark and the light theme look right.
    ========================================================= */
@@ -2531,18 +2531,7 @@
     color: var(--lsn-ink-warn);
 }
 
-/* ===== 7. CONFETTI ===== */
-
-.lsn-confetti {
-    position: fixed;
-    inset: 0;
-    z-index: 560;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-}
-
-/* ===== 8. RESPONSIVE ===== */
+/* ===== 7. RESPONSIVE ===== */
 
 @media (max-width: 1024px) {
     .lsn-grid {
@@ -2795,22 +2784,10 @@
     }
 }
 
-/* ===== 9. REDUCED MOTION ===== */
+/* ===== 8. CALM MODE AND REDUCED MOTION =====
+   core.js puts "fx-motion-off" on <html> for both, and style.css then stops every
+   animation and transition. Only this is left: the panel never sits shifted. */
 
-@media (prefers-reduced-motion: reduce) {
-    .lsn-hud::before,
-    .lsn-ring-ticks,
-    .lsn-step.is-linked::before,
-    .lsn-step.is-next .lsn-node::after,
-    .lsn-article-icon,
-    .lsn-edge-out,
-    .lsn-cursor,
-    .lsn-lab-led,
-    .lsn-reader-pulse {
-        animation: none;
-    }
-
-    .lsn-reader-panel {
-        transform: none;
-    }
+html.fx-motion-off .lsn-reader-panel {
+    transform: none;
 }
