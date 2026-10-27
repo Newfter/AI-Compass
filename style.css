@@ -1164,6 +1164,8 @@ button.chip:hover,
 
 /* Animations of something off screen (or in a hidden tab) wait: AICompass.whenVisible */
 [data-paused],
+[data-paused]::before,
+[data-paused]::after,
 [data-paused] *,
 [data-paused] *::before,
 [data-paused] *::after {
