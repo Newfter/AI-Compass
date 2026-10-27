@@ -122,15 +122,6 @@
         A.storage.set(keys.details, details);
     }
 
-    // Older versions kept one best score for both modes.
-    // If that one came from a timed game, move it to the timed place.
-    const oldRun = A.storage.get("quiz.bestRun", null);
-    if (oldRun && oldRun.timed === true && readBest(true) === null && readBest(false) !== null) {
-        saveBest(true, Object.assign({}, oldRun, { points: readBest(false).points }));
-        A.storage.remove("quiz.best");
-        A.storage.remove("quiz.bestRun");
-    }
-
     // ---------- 5. The state of the quiz ----------
     const state = {
         screen: "start",              // "start", "question" or "results"
@@ -276,6 +267,9 @@
 
         if (animate) {
             oldScreen.classList.add("qz-leave");
+            // The old screen only fades out now. It is not re-painted any more:
+            // its data may be gone already (like the results after "Try again").
+            paintScreen = null;
             swapTimer = setTimeout(swap, 220);
         } else {
             swap();
@@ -506,11 +500,12 @@
         });
         ui.next.addEventListener("click", goNext);
         ui.quit.addEventListener("click", pressQuit);
+        // Holding Enter down repeats the key, and every repeat would click again:
+        // that is not a second press either
+        ui.quit.addEventListener("keydown", (event) => {
+            if (event.repeat && event.key === "Enter") event.preventDefault();
+        });
         disarmQuit();
-
-        // Coming back to a question that is already answered (e.g. startQuiz() again)
-        const record = state.answers[state.index];
-        if (record) markOptions(record);
 
         paintScreen = paintQuestion;
         return screen;
@@ -580,9 +575,12 @@
     let quitArmed = false;
     let quitTimer = 0;
 
-    function pressQuit() {
+    function pressQuit(event) {
         if (state.screen !== "question" || busy) return;
         if (quitArmed) {
+            // The second click of a double-click (or of a bouncy mouse) is not a second press.
+            // (Keyboard presses have detail 0.)
+            if (event && event.detail > 1) return;
             disarmQuit();
             backToStart();
             return;
@@ -732,11 +730,13 @@
         const active = document.activeElement;
         const keepFocus = card.contains(active) || active === document.body || !active;
 
-        markOptions(record, true);
+        markOptions(record);
         ui.feedback.hidden = false;
         ui.feedback.classList.remove("is-good", "is-bad", "is-timeout");
         ui.feedback.classList.add(record.timeout ? "is-timeout" : record.correct ? "is-good" : "is-bad");
         A.dom.replay(ui.feedback, "is-in");
+        // Only one glow at a time: with both classes the red one would always win
+        card.classList.remove("is-flash-good", "is-flash-bad");
         A.dom.replay(card, correct ? "is-flash-good" : "is-flash-bad");
         paint();
 
@@ -774,7 +774,7 @@
     }
 
     // Colours the options: green for the right one, red for a wrong pick
-    function markOptions(record, animate) {
+    function markOptions(record) {
         const question = currentQuestion();
         const order = state.optionOrders[state.index];
         ui.options.forEach((button, position) => {
@@ -789,7 +789,6 @@
             button.classList.toggle("is-dim", !isRight && !isPicked);
             button.querySelector(".qz-sr-correct").hidden = !isRight;
             button.querySelector(".qz-sr-picked").hidden = !isPicked;
-            if (!animate) button.classList.add("no-anim");
         });
     }
 
@@ -820,6 +819,7 @@
         const settings = options || {};
         stopTimer();
         stopConfetti();
+        card.classList.remove("is-flash-good", "is-flash-bad");
         state.gameTimed = state.timed;
         state.order = A.util.shuffle(QUESTIONS.map((question, index) => index));
         state.optionOrders = state.order.map((index) =>
@@ -841,7 +841,8 @@
         });
     }
 
-    function finishGame() {
+    function finishGame(options) {
+        const settings = options || {};
         stopTimer();
         const total = state.order.length;
         const correct = state.answers.filter((record) => record && record.correct).length;
@@ -872,7 +873,12 @@
         };
         state.screen = "results";
         ringShown = false;
-        showScreen(buildResults, { focus: ".qz-res-title", reveal: true, after: animateResults });
+        showScreen(buildResults, {
+            focus: ".qz-res-title",
+            forceFocus: settings.forceFocus,
+            reveal: settings.reveal !== false,
+            after: animateResults
+        });
     }
 
     function backToStart() {
@@ -1304,16 +1310,20 @@
         if (wantsMode) setTimed(settings.timed);
         A.scrollToSection("quiz");
 
-        const running = state.screen === "question" && state.answers.filter(Boolean).length < state.order.length;
-        if (running && (!wantsMode || settings.timed === state.gameTimed)) {
-            // Focus after the command palette (if any) has closed and given focus back
-            setTimeout(() => {
+        // Act after the command palette (if any) has closed and given the focus back
+        setTimeout(() => {
+            const playing = state.screen === "question";
+            if (playing && state.answers.filter(Boolean).length === state.order.length) {
+                // Every question is answered already: show the results first, so the
+                // score isn't lost. A new game (in either mode) can start from there.
+                finishGame({ forceFocus: true, reveal: false });
+            } else if (playing && (!wantsMode || settings.timed === state.gameTimed)) {
                 const heading = stage.querySelector(".qz-question-text");
                 if (heading) heading.focus({ preventScroll: true });
-            }, 80);
-            return;
-        }
-        setTimeout(() => startGame({ forceFocus: true, reveal: false }), 80);
+            } else {
+                startGame({ forceFocus: true, reveal: false });
+            }
+        }, 80);
     }
 
     // Other features use AICompass.quiz.start() (AICompass.startQuiz is the older name)

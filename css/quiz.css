@@ -1088,10 +1088,6 @@
     opacity: 0.45;
 }
 
-.qz-option.no-anim {
-    animation: none;
-}
-
 @keyframes qz-shake {
     15% { transform: translateX(-7px); }
     30% { transform: translateX(6px); }
