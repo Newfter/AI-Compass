@@ -1172,7 +1172,9 @@ button.chip:hover,
 
 /* ===== 13. REDUCED MOTION AND CALM MODE =====
    core.js puts "fx-motion-off" on <html> when the device asks for less motion
-   or calm mode is on. The @media block does the same before scripts run. */
+   or calm mode is on. The @media block does the same before scripts run.
+   Transitions are switched off completely (0s): with a tiny duration, inherited
+   properties like visibility would still change one nested level per frame. */
 
 html.fx-motion-off {
     scroll-behavior: auto;
@@ -1183,7 +1185,7 @@ html.fx-motion-off *::before,
 html.fx-motion-off *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0s !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1196,6 +1198,6 @@ html.fx-motion-off *::after {
     *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+        transition-duration: 0s !important;
     }
 }

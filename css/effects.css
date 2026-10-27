@@ -488,42 +488,22 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
     pointer-events: none;
 }
 
-/* ===== 11. CALM MODE (our own switch to pause animations) ===== */
+/* ===== 11. CALM MODE AND REDUCED MOTION =====
+   core.js puts "fx-motion-off" on <html> for both; style.css stops every
+   animation then. Here: the effects that follow the mouse disappear. */
 
-html.fx-calm {
-    scroll-behavior: auto;
-}
-
-html.fx-calm *,
-html.fx-calm *::before,
-html.fx-calm *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-}
-
-html.fx-calm .fx-spotlight,
-html.fx-calm .fx-glare,
-html.fx-calm .fx-ripple {
+html.fx-motion-off .fx-spotlight,
+html.fx-motion-off .fx-glare,
+html.fx-motion-off .fx-ripple {
     display: none;
 }
 
-/* ===== 12. REDUCED MOTION ===== */
-
-@media (prefers-reduced-motion: reduce) {
-    .fx-spotlight,
-    .fx-glare,
-    .fx-ripple {
-        display: none;
-    }
-
-    .fx-rail-dot,
-    .fx-rail-label {
-        transition: none;
-    }
+html.fx-motion-off .fx-rail-dot,
+html.fx-motion-off .fx-rail-label {
+    transition: none;
 }
 
-/* ===== 13. PRINTING ===== */
+/* ===== 12. PRINTING ===== */
 
 @media print {
     .scroll-progress,
