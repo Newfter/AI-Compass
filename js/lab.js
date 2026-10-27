@@ -16,11 +16,11 @@
 (function () {
     "use strict";
 
-    const AIC = window.AICompass;
+    const A = window.AICompass;
     const mount = document.querySelector('[data-feature="lab"]');
-    if (!AIC || !mount) return;
+    if (!A || !mount) return;
 
-    const t = AIC.t;
+    const t = A.t;
 
     // Every text (English and Russian) is in js/content/lab.js
 
@@ -35,7 +35,7 @@
     // English: "dot|dots". Russian: "точка|точки|точек" (1 / 2-4 / 5+).
     function plural(n, key) {
         const forms = t(key).split("|");
-        if (AIC.lang === "ru") {
+        if (A.lang === "ru") {
             const mod10 = n % 10;
             const mod100 = n % 100;
             if (mod10 === 1 && mod100 !== 11) return forms[0];
@@ -48,9 +48,9 @@
     // Numbers in the style of the current language ("0.25" or "0,25")
     const numberFormats = {};
     function fmt(value, digits) {
-        const id = AIC.lang + digits;
+        const id = A.lang + digits;
         if (!numberFormats[id]) {
-            numberFormats[id] = new Intl.NumberFormat(AIC.lang === "ru" ? "ru-RU" : "en-US", {
+            numberFormats[id] = new Intl.NumberFormat(A.lang === "ru" ? "ru-RU" : "en-US", {
                 minimumFractionDigits: digits,
                 maximumFractionDigits: digits
             });
@@ -61,9 +61,9 @@
     // Very big counts get short, so they fit their box: "1.2M" or "1,2 млн"
     function fmtCount(n) {
         if (n < 1e6) return fmt(n, 0);
-        const id = AIC.lang + "compact";
+        const id = A.lang + "compact";
         if (!numberFormats[id]) {
-            numberFormats[id] = new Intl.NumberFormat(AIC.lang === "ru" ? "ru-RU" : "en-US", {
+            numberFormats[id] = new Intl.NumberFormat(A.lang === "ru" ? "ru-RU" : "en-US", {
                 notation: "compact",
                 maximumFractionDigits: 1
             });
@@ -82,7 +82,7 @@
 
     // Big decorative animations are skipped in reduced-motion and calm mode
     function calmMode() {
-        return AIC.reducedMotion || Boolean(AIC.effects && AIC.effects.calm) ||
+        return A.reducedMotion || Boolean(A.effects && A.effects.calm) ||
             document.documentElement.classList.contains("fx-calm");
     }
 
@@ -115,17 +115,17 @@
     function readColors() {
         const light = document.documentElement.getAttribute("data-theme") === "light";
         colors = {
-            a: toRGB(AIC.cssVar("--accent-rgb"), [155, 109, 255]),
-            b: toRGB(AIC.cssVar("--accent-2-rgb"), [80, 227, 255]),
-            pink: toRGB(AIC.cssVar("--accent-3-rgb"), [255, 106, 213]),
-            base: toRGB(AIC.cssVar("--surface-solid"), [16, 22, 42]),
-            text: toRGB(AIC.cssVar("--text"), [238, 241, 255]),
+            a: toRGB(A.cssVar("--accent-rgb"), [155, 109, 255]),
+            b: toRGB(A.cssVar("--accent-2-rgb"), [80, 227, 255]),
+            pink: toRGB(A.cssVar("--accent-3-rgb"), [255, 106, 213]),
+            base: toRGB(A.cssVar("--surface-solid"), [16, 22, 42]),
+            text: toRGB(A.cssVar("--text"), [238, 241, 255]),
             // small labels on the diagram: the dim grey is too pale on white, so the light theme uses a darker one
-            dim: toRGB(AIC.cssVar(light ? "--text-muted" : "--text-dim"), [125, 137, 168]),
-            danger: toRGB(AIC.cssVar("--danger"), [255, 92, 122]),
+            dim: toRGB(A.cssVar(light ? "--text-muted" : "--text-dim"), [125, 137, 168]),
+            danger: toRGB(A.cssVar("--danger"), [255, 92, 122]),
             light: light
         };
-        colors.mono = AIC.cssVar("--font-mono") || "monospace";
+        colors.mono = A.cssVar("--font-mono") || "monospace";
     }
 
     // Gives a canvas a sharp backing size (device pixel ratio capped at 2)
@@ -485,7 +485,7 @@
     const SPEEDS = { slow: 20, normal: 120, fast: 480 };   // training epochs per second
     const FRAME_BUDGET = 10;                                // at most 10 ms of learning per frame, so the page stays smooth
     const STUCK_EPOCHS = 2500;                              // after this many epochs without success we give a hint
-    const savedSettings = AIC.storage.get("lab.nn", {}) || {};
+    const savedSettings = A.storage.get("lab.nn", {}) || {};
 
     const settings = {
         lr: LR_OPTIONS.indexOf(savedSettings.lr) >= 0 ? savedSettings.lr : 0.03,
@@ -496,7 +496,7 @@
     };
 
     function saveSettings() {
-        AIC.storage.set("lab.nn", settings);
+        A.storage.set("lab.nn", settings);
     }
 
     // Builds a network with small random weights
@@ -1446,7 +1446,7 @@
         nn.training = false;
         nn.learned = true;
         updateTrainButton();
-        AIC.toast(t("lab.toastLearned", { n: fmt(nn.epoch, 0), epochs: plural(nn.epoch, "lab.pluralEpochs") }), "🎯");
+        A.toast(t("lab.toastLearned", { n: fmt(nn.epoch, 0), epochs: plural(nn.epoch, "lab.pluralEpochs") }), "🎯");
         announceStats();
     }
 
@@ -1454,16 +1454,16 @@
     function checkStuck() {
         if (nn.stuckHinted || nn.epoch < STUCK_EPOCHS || nn.acc === null || nn.acc >= 0.95) return;
         nn.stuckHinted = true;
-        AIC.toast(t("lab.toastStuck"), "🧩");
+        A.toast(t("lab.toastStuck"), "🧩");
     }
 
     function setTraining(on) {
         if (on && !nn.points.length) {
-            AIC.toast(t("lab.toastEmpty"), "✦");
+            A.toast(t("lab.toastEmpty"), "✦");
             return;
         }
         if (on && !(nn.points.some((p) => p.label === 0) && nn.points.some((p) => p.label === 1))) {
-            AIC.toast(t("lab.toastOneClass"), "⚖️");
+            A.toast(t("lab.toastOneClass"), "⚖️");
         }
         // Training again after "Learned it!" means: keep going, don't stop by yourself
         if (on && nn.learned) nn.keepGoing = true;
@@ -1528,7 +1528,7 @@
 
     function addPoint(x, y, label) {
         if (nn.points.length >= MAX_POINTS) {
-            if (!nn.maxWarned) AIC.toast(t("lab.toastMax", { n: MAX_POINTS }), "✋");
+            if (!nn.maxWarned) A.toast(t("lab.toastMax", { n: MAX_POINTS }), "✋");
             nn.maxWarned = true;
             return false;
         }
@@ -1763,7 +1763,7 @@
 
     $('[data-action="step"]').addEventListener("click", () => {
         if (!nn.points.length) {
-            AIC.toast(t("lab.toastEmpty"), "✦");
+            A.toast(t("lab.toastEmpty"), "✦");
             return;
         }
         if (nn.training) setTraining(false);
@@ -2174,7 +2174,7 @@
 
     // ----- State of the predictor -----
     const lm = {
-        lang: AIC.lang,
+        lang: A.lang,
         model: null,
         taught: [],
         temperature: 0.7,
@@ -2204,13 +2204,13 @@
         field: $(".lab-lm-field")
     };
 
-    const savedTemp = Number(AIC.storage.get("lab.temperature", 0.7));
+    const savedTemp = Number(A.storage.get("lab.temperature", 0.7));
     lm.temperature = isFinite(savedTemp) ? clamp(Math.round(savedTemp * 10) / 10, 0, 2) : 0.7;
     lmEls.temp.value = String(lm.temperature);
 
     function loadModel() {
-        lm.lang = AIC.lang;
-        const taught = AIC.storage.get("lab.taught." + lm.lang, []);
+        lm.lang = A.lang;
+        const taught = A.storage.get("lab.taught." + lm.lang, []);
         lm.taught = Array.isArray(taught) ? taught.filter((s) => typeof s === "string").slice(0, MAX_TAUGHT) : [];
         lm.model = buildModel(CORPUS[lm.lang].concat(lm.taught));
     }
@@ -2562,22 +2562,22 @@
             return;
         }
         lm.taught.push(sentence.slice(0, 140));
-        AIC.storage.set("lab.taught." + lm.lang, lm.taught);
+        A.storage.set("lab.taught." + lm.lang, lm.taught);
         lm.model = buildModel(CORPUS[lm.lang].concat(lm.taught));
         lmEls.teachInput.value = "";
         renderLmStats();
         renderPredictor();
-        AIC.toast(t("lab.lmTeachToast"), "🧠");
+        A.toast(t("lab.lmTeachToast"), "🧠");
     });
 
     lmEls.forget.addEventListener("click", () => {
         lm.taught = [];
-        AIC.storage.remove("lab.taught." + lm.lang);
+        A.storage.remove("lab.taught." + lm.lang);
         lm.model = buildModel(CORPUS[lm.lang]);
         renderLmStats();
         renderPredictor();
         lmEls.teachInput.focus();
-        AIC.toast(t("lab.lmTeachForgot"), "🧹");
+        A.toast(t("lab.lmTeachForgot"), "🧹");
     });
 
     // ----- Typing, buttons and the slider -----
@@ -2618,7 +2618,7 @@
 
     lmEls.temp.addEventListener("input", () => {
         lm.temperature = clamp(Number(lmEls.temp.value) || 0, 0, 2);
-        AIC.storage.set("lab.temperature", lm.temperature);
+        A.storage.set("lab.temperature", lm.temperature);
         // only the "chance to be picked" lines change
         if (lm.lastResult) {
             const chances = pickChances(lm.lastResult.list, lm.temperature);
@@ -2659,7 +2659,7 @@
             }
         });
         if (name !== "predictor") stopAuto(false);
-        AIC.storage.set("lab.tab", name);
+        A.storage.set("lab.tab", name);
         measureAll();
         schedule();
     }
@@ -2749,7 +2749,7 @@
     });
 
     // ----- Theme: read the new colours and redraw everything -----
-    AIC.onThemeChange(() => {
+    A.onThemeChange(() => {
         readColors();
         makeSprites();
         nn.dirty.net = true;
@@ -2780,7 +2780,7 @@
         schedule();
     }
 
-    AIC.onLanguageChange((lang) => {
+    A.onLanguageChange((lang) => {
         if (lang !== lm.lang) {
             stopAuto(false);
             // If the text is exactly a starter, it switches to the same starter in the new language.
@@ -2793,7 +2793,7 @@
             } else {
                 lm.starter = null;
             }
-            AIC.applyTranslations(mount);
+            A.applyTranslations(mount);
         }
         refreshTexts();
         renderPredictor();
@@ -2803,27 +2803,27 @@
     // AICompass.lab.open("classifier" | "predictor") (AICompass.openLab is the older name)
     function openLab(tab) {
         selectTab(tab === "predictor" ? "predictor" : "classifier", false);
-        AIC.scrollToSection("lab");
+        A.scrollToSection("lab");
     }
-    AIC.feature("lab", { open: openLab });
-    AIC.openLab = openLab;
+    A.feature("lab", { open: openLab });
+    A.openLab = openLab;
 
-    AIC.registerCommand({
+    A.registerCommand({
         id: "lab-classifier",
         group: "lab.cmdGroup",
         icon: "🧠",
         title: function () { return t("lab.cmdNN"); },
         keywords: "lab neural network train teach classifier dots points machine learning лаборатория нейросеть нейронная сеть обучить обучение машина точки классификатор",
-        run: function () { AIC.openLab("classifier"); }
+        run: function () { A.openLab("classifier"); }
     });
 
-    AIC.registerCommand({
+    A.registerCommand({
         id: "lab-predictor",
         group: "lab.cmdGroup",
         icon: "💬",
         title: function () { return t("lab.cmdLM"); },
         keywords: "lab next word predictor language model chatbot text autocomplete gpt лаборатория следующее слово предсказатель языковая модель чат-бот текст автодополнение",
-        run: function () { AIC.openLab("predictor"); }
+        run: function () { A.openLab("predictor"); }
     });
 
     // ----- First draw -----
@@ -2832,11 +2832,11 @@
     // The circle is a good first example: you can watch the line bend into a ring in a few seconds
     nn.points = makePreset("circle");
     $$(".lab-preset").forEach((chip) => chip.classList.toggle("active", chip.getAttribute("data-preset") === "circle"));
-    AIC.applyTranslations(mount);
+    A.applyTranslations(mount);
     pointsChanged();
     updateDiagramLabel();
     refreshTexts();
     renderPredictor();
-    selectTab(AIC.storage.get("lab.tab", "classifier"), false);
+    selectTab(A.storage.get("lab.tab", "classifier"), false);
 
 })();
