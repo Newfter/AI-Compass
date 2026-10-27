@@ -43,6 +43,13 @@
 
 /* ===== 1. THE CARD ===== */
 
+/* js/quiz.js builds the quiz only when it comes near the screen. Until then the
+   empty mount keeps about the height of the start screen, so the page doesn't jump
+   (the other sizes are in "Responsive"). */
+.js [data-feature="quiz"]:empty {
+    min-height: 760px;
+}
+
 .qz-card {
     max-width: 920px;
     margin: 0 auto;
@@ -1754,6 +1761,10 @@ details[open] .qz-ri-chevron {
 /* ===== 11. RESPONSIVE ===== */
 
 @media (max-width: 860px) {
+    .js [data-feature="quiz"]:empty {
+        min-height: 800px;
+    }
+
     .qz-card {
         padding: 30px 26px 32px;
     }
@@ -1764,6 +1775,10 @@ details[open] .qz-ri-chevron {
 }
 
 @media (max-width: 720px) {
+    .js [data-feature="quiz"]:empty {
+        min-height: 1040px;
+    }
+
     .qz-options {
         grid-template-columns: 1fr;
     }
@@ -1839,6 +1854,10 @@ details[open] .qz-ri-chevron {
 }
 
 @media (max-width: 560px) {
+    .js [data-feature="quiz"]:empty {
+        min-height: 1250px;
+    }
+
     .qz-card {
         padding: 24px 18px 26px;
         border-radius: 20px;

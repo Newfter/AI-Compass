@@ -120,23 +120,18 @@
     };
 
     // ---------- 6. The card that holds every screen ----------
-    mount.innerHTML =
-        '<div class="qz-card card" data-reveal>' +
-            '<span class="qz-corners" aria-hidden="true"></span>' +
-            '<div class="qz-stage"></div>' +
-            '<p class="sr-only qz-live" aria-live="polite" aria-atomic="true"></p>' +
-        "</div>";
-
-    const card = mount.querySelector(".qz-card");
-    const stage = mount.querySelector(".qz-stage");
-    const live = mount.querySelector(".qz-live");
+    // The quiz is several screens down the page, so its card is built only when
+    // it is needed (see section 17). Until then these three are null.
+    let card = null;            // the glass card
+    let stage = null;           // the part of the card where the screens take turns
+    let live = null;            // the quiz's own line for screen-reader messages
 
     let ui = {};                // shortcuts to the elements of the current screen
     let paintScreen = null;     // re-writes the texts of the current screen
     let busy = false;           // true while one screen fades into the next
     let swapTimer = 0;
     let resizeTimer = 0;
-    let onScreen = false;       // can you see the quiz? (see section 16)
+    let onScreen = false;       // can you see the quiz? (see section 17)
 
     function paint() {
         if (paintScreen) paintScreen();
@@ -204,8 +199,9 @@
 
         const swap = () => {
             // Height on screen now (maybe in the middle of an earlier change),
-            // then free the height again so the new screen can be measured
-            const fromHeight = stage.getBoundingClientRect().height;
+            // then free the height again so the new screen can be measured.
+            // (Measuring makes the browser lay out the page, so only when it is needed.)
+            const fromHeight = animate ? stage.getBoundingClientRect().height : 0;
             stage.classList.remove("is-resizing");
             stage.style.height = "";
             stopCounters();
@@ -1268,15 +1264,7 @@
         }
     });
 
-    // ---------- 16. Watching visibility, language and theme ----------
-    // The countdown, the 1-4 keys and the decorations only work while you can see
-    // the quiz: core tells us when it comes on or goes off screen (or the browser
-    // tab is hidden), and pauses its CSS animations meanwhile (data-paused).
-    A.whenVisible(mount, (visible) => {
-        onScreen = visible;
-        if (visible) resumeTimer();
-    }, { pauseAnimations: true, rootMargin: ON_SCREEN_MARGIN });
-
+    // ---------- 16. Pop-up windows, calm mode and the language ----------
     // A pop-up window that shuts out the page (the lesson reader, the command palette,
     // the chat on phones) pauses the countdown; it goes on when the last one closes
     A.overlays.onChange((detail) => {
@@ -1301,11 +1289,40 @@
         }
     });
 
-    // ---------- 17. Public API + Ctrl+K commands ----------
-    // AICompass.startQuiz(): scrolls to the quiz and starts it.
+    // ---------- 17. Building the quiz ----------
+    // The card and its start screen are built when the quiz comes near the screen,
+    // when the browser has a quiet moment after loading, or when ensure() is called
+    // first (by AICompass.quiz.start). With a link like #quiz, core builds it at once.
+    function build() {
+        mount.innerHTML =
+            '<div class="qz-card card" data-reveal>' +
+                '<span class="qz-corners" aria-hidden="true"></span>' +
+                '<div class="qz-stage"></div>' +
+                '<p class="sr-only qz-live" aria-live="polite" aria-atomic="true"></p>' +
+            "</div>";
+        card = mount.querySelector(".qz-card");
+        stage = mount.querySelector(".qz-stage");
+        live = mount.querySelector(".qz-live");
+
+        // The countdown, the number keys and the decorations only work while you can see
+        // the quiz: core tells us when it comes on or goes off screen (or the browser
+        // tab is hidden), and pauses its CSS animations meanwhile (data-paused).
+        A.whenVisible(mount, (visible) => {
+            onScreen = visible;
+            if (visible) resumeTimer();
+        }, { pauseAnimations: true, rootMargin: ON_SCREEN_MARGIN });
+
+        showScreen(buildStart);
+    }
+
+    const ensure = A.whenNeeded(mount, build);
+
+    // ---------- 18. Public API + Ctrl+K commands ----------
+    // AICompass.quiz.start(): scrolls to the quiz and starts it.
     // A game that is already running just continues.
-    // Optional: startQuiz({ timed: true }) to choose the mode.
+    // Optional: start({ timed: true }) to choose the mode.
     function startQuiz(options) {
+        ensure();
         const settings = options || {};
         const wantsMode = typeof settings.timed === "boolean";
         if (wantsMode) setTimed(settings.timed);
@@ -1349,7 +1366,4 @@
         keywords: "quiz timed timer speed fast challenge тест таймер на время скорость быстро испытание",
         run: () => startQuiz({ timed: true })
     });
-
-    // ---------- 18. Start ----------
-    showScreen(buildStart);
 })();
