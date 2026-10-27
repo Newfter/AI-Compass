@@ -72,10 +72,6 @@
         return rank;
     }
 
-    function lessonTitle(number) {
-        return A.lessons ? A.lessons.title(number) : "";
-    }
-
     function isTypingField(element) {
         return Boolean(element && element.closest && (element.isContentEditable || element.closest("input, textarea, select")));
     }
@@ -910,7 +906,7 @@
                 : '<p class="qz-ri-line is-right">' + text("quiz.review.rightAnswer", "qz-ri-label") + " " + text(optionKey(question, question.correct), "qz-ri-value") + "</p>";
 
             let learn = "";
-            if (typeof question.learn === "number" && typeof A.openLesson === "function") {
+            if (typeof question.learn === "number" && A.lessons) {
                 learn = '<button class="btn btn-ghost btn-small qz-ri-learn" type="button" data-lesson="' + question.learn + '"><span aria-hidden="true">📚</span><span class="qz-ri-learn-text"></span></button>';
             } else if (question.learn === "timeline" && document.getElementById("timeline")) {
                 learn = '<button class="btn btn-ghost btn-small qz-ri-learn" type="button" data-section="timeline"><span aria-hidden="true">🕰️</span>' + text("quiz.review.timeline") + "</button>";
@@ -1035,14 +1031,14 @@
             const button = event.target.closest(".qz-ri-learn");
             if (!button) return;
             const lesson = Number(button.getAttribute("data-lesson"));
-            if (lesson && typeof A.openLesson === "function") {
+            if (lesson && A.lessons) {
                 // The lesson opens on top of the page. We hand over this button, so that
                 // closing the lesson brings you right back here, to your review.
                 // (Some browsers don't focus a clicked button, so we do it ourselves.)
                 button.focus({ preventScroll: true });
-                A.openLesson(lesson, button);
+                A.lessons.open(lesson, button);
             } else if (button.getAttribute("data-section")) {
-                A.scrollToSection(button.getAttribute("data-section"));
+                A.navigate(button.getAttribute("data-section"));
             }
         });
 
@@ -1075,7 +1071,7 @@
         // "Learn more" buttons use the lesson titles in the current language
         ui.reviewList.querySelectorAll(".qz-ri-learn[data-lesson]").forEach((button) => {
             const n = Number(button.getAttribute("data-lesson"));
-            const title = lessonTitle(n);
+            const title = A.lessons ? A.lessons.title(n) : "";
             button.querySelector(".qz-ri-learn-text").textContent = title
                 ? t("quiz.review.lesson", { n: n, title: title })
                 : t("quiz.review.lessonPlain", { n: n });
@@ -1313,7 +1309,8 @@
         const settings = options || {};
         const wantsMode = typeof settings.timed === "boolean";
         if (wantsMode) setTimed(settings.timed);
-        A.scrollToSection("quiz");
+        // Core closes the pop-up windows in the way and scrolls; the focus is moved below
+        A.navigate("quiz", { focus: false });
 
         // Act after the command palette (if any) has closed and given the focus back
         setTimeout(() => {
