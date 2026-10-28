@@ -200,21 +200,21 @@
     }
 
     mount.innerHTML = `
-        <div class="lsn-hud card" data-reveal>
-            <span class="lsn-hud-corners" aria-hidden="true"></span>
-            <div class="lsn-ring" aria-hidden="true">
-                <svg class="lsn-ring-ticks" viewBox="0 0 100 100" focusable="false">
+        <div class="lsn-hud card ui-scan" data-reveal>
+            <span class="lsn-hud-corners ui-corners" aria-hidden="true"></span>
+            <div class="lsn-ring ui-ring" aria-hidden="true">
+                <svg class="lsn-ring-ticks ui-ring-ticks" viewBox="0 0 100 100" focusable="false">
                     <circle cx="50" cy="50" r="48" transform="rotate(-90 50 50)"></circle>
                 </svg>
-                <svg class="lsn-ring-chart" viewBox="0 0 100 100" focusable="false">
+                <svg class="lsn-ring-chart ui-ring-chart" viewBox="0 0 100 100" focusable="false">
                     <defs>
                         <linearGradient id="lsn-ring-gradient" x1="0" y1="0" x2="1" y2="1">
                             <stop offset="0" class="lsn-stop-a"></stop>
                             <stop offset="1" class="lsn-stop-b"></stop>
                         </linearGradient>
                     </defs>
-                    <circle class="lsn-ring-track" cx="50" cy="50" r="40" pathLength="100"></circle>
-                    <circle class="lsn-ring-fill" cx="50" cy="50" r="40" pathLength="100" data-ref="ringFill"></circle>
+                    <circle class="lsn-ring-track ui-ring-track" cx="50" cy="50" r="40" pathLength="100"></circle>
+                    <circle class="lsn-ring-fill ui-ring-bar" cx="50" cy="50" r="40" pathLength="100" data-ref="ringFill"></circle>
                 </svg>
                 <span class="lsn-ring-value"><span data-ref="percent">0</span><small>%</small></span>
             </div>
@@ -1137,7 +1137,7 @@
                 <div class="lsn-slider">
                     <label for="${id}">${t(slider.label)}</label>
                     <output for="${id}" class="mono" data-value="${slider.key}"></output>
-                    <input class="lsn-range" type="range" id="${id}" data-key="${slider.key}" data-fid="w3-${slider.key}"
+                    <input class="lsn-range ui-range" type="range" id="${id}" data-key="${slider.key}" data-fid="w3-${slider.key}"
                            min="${slider.min}" max="${slider.max}" step="${slider.step}" value="${state[slider.key]}">
                 </div>`;
         }
@@ -1291,7 +1291,7 @@
                 <div class="lsn-slider lsn-temp">
                     <label for="lsn-temp">${t("lessons.w4.temp")}</label>
                     <output for="lsn-temp" class="mono" data-temp-value></output>
-                    <input class="lsn-range" type="range" id="lsn-temp" data-fid="w4-temp" min="0.2" max="2" step="0.1" value="${state.temp}">
+                    <input class="lsn-range ui-range" type="range" id="lsn-temp" data-fid="w4-temp" min="0.2" max="2" step="0.1" value="${state.temp}">
                     <div class="lsn-temp-scale" aria-hidden="true"><span>❄ ${t("lessons.w4.low")}</span><span>${t("lessons.w4.high")} 🔥</span></div>
                 </div>
                 <p class="lsn-temp-note" data-temp-note></p>
@@ -1476,7 +1476,7 @@
                         else if (o === chosen) stateClass = " is-chosen";
                         else stateClass = " is-dim";
                     }
-                    return `<button type="button" class="lsn-choice${stateClass}" data-s="${s}" data-o="${o}" data-fid="w6-${s}-${o}"
+                    return `<button type="button" class="lsn-choice ui-option${stateClass}" data-s="${s}" data-o="${o}" data-fid="w6-${s}-${o}"
                                 aria-pressed="${chosen === o}"${hasChosen ? ' aria-disabled="true"' : ""}>${t(key + "o" + (o + 1))}</button>`;
                 }).join("");
 
@@ -1784,7 +1784,7 @@
                     stateClass = " is-dim";
                 }
             }
-            return `<button type="button" class="lsn-option${stateClass}" data-option="${i}" data-fid="option-${i}"
+            return `<button type="button" class="lsn-option ui-option${stateClass}" data-option="${i}" data-fid="option-${i}"
                         aria-pressed="${chosen === i}"${answered ? ' aria-disabled="true"' : ""}>
                         <span class="lsn-option-mark mono" aria-hidden="true">${mark}</span>
                         <span class="lsn-option-text">${t(lessonKey(n, "a" + (i + 1)))}</span>

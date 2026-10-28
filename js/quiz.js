@@ -353,14 +353,14 @@
                     '<ul class="qz-rules">' + rules + "</ul>" +
                 "</div>" +
 
-                '<button class="qz-switch" type="button" role="switch" aria-checked="false" aria-labelledby="qz-timed-label" aria-describedby="qz-timed-desc">' +
+                '<button class="qz-switch ui-switch" type="button" role="switch" aria-checked="false" aria-labelledby="qz-timed-label" aria-describedby="qz-timed-desc">' +
                     '<span class="qz-switch-icon" aria-hidden="true">⏱️</span>' +
                     '<span class="qz-switch-text">' +
                         '<strong id="qz-timed-label">' + text("quiz.timed.label") + "</strong>" +
                         '<small id="qz-timed-desc" data-ref="timedDesc"></small>' +
                     "</span>" +
                     '<span class="qz-switch-state mono" aria-hidden="true" data-ref="timedState"></span>' +
-                    '<span class="qz-switch-track" aria-hidden="true"><span class="qz-switch-thumb"></span></span>' +
+                    '<span class="qz-switch-track ui-switch-track" aria-hidden="true"><span class="qz-switch-thumb ui-switch-knob"></span></span>' +
                 "</button>" +
 
                 '<div class="qz-start-actions">' +
@@ -432,7 +432,7 @@
         const isLast = state.index === total - 1;
 
         const options = order.map((original, position) =>
-            '<button class="qz-option" type="button" data-position="' + position + '" style="--i:' + position + '">' +
+            '<button class="qz-option ui-option" type="button" data-position="' + position + '" style="--i:' + position + '">' +
                 '<kbd class="qz-key" aria-hidden="true">' + (position + 1) + "</kbd>" +
                 text(optionKey(question, original), "qz-option-text") +
                 '<span class="qz-mark" aria-hidden="true"></span>' +
@@ -445,10 +445,10 @@
         for (let i = 0; i < total; i++) segments += '<span class="qz-seg"></span>';
 
         const timer = state.gameTimed
-            ? '<div class="qz-timer" role="timer">' +
-                  '<svg viewBox="0 0 64 64" aria-hidden="true">' +
-                      '<circle class="qz-timer-track" cx="32" cy="32" r="' + TIMER_RADIUS + '"></circle>' +
-                      '<circle class="qz-timer-bar" cx="32" cy="32" r="' + TIMER_RADIUS + '" stroke-dasharray="' + TIMER_LENGTH.toFixed(2) + '"></circle>' +
+            ? '<div class="qz-timer ui-ring" role="timer">' +
+                  '<svg class="ui-ring-chart" viewBox="0 0 64 64" aria-hidden="true">' +
+                      '<circle class="qz-timer-track ui-ring-track" cx="32" cy="32" r="' + TIMER_RADIUS + '"></circle>' +
+                      '<circle class="qz-timer-bar ui-ring-bar" cx="32" cy="32" r="' + TIMER_RADIUS + '" stroke-dasharray="' + TIMER_LENGTH.toFixed(2) + '"></circle>' +
                   "</svg>" +
                   '<span class="qz-timer-num" aria-hidden="true">' + TIME_LIMIT + "</span>" +
                   '<span class="sr-only qz-timer-sr"></span>' +
@@ -997,17 +997,17 @@
         const screen = A.dom.fromHTML(
             '<div class="qz-screen qz-results rank-' + rank.id + '">' +
                 '<div class="qz-res-hero">' +
-                    '<div class="qz-res-ring" data-ref="ring">' +
-                        '<svg viewBox="0 0 160 160" aria-hidden="true">' +
+                    '<div class="qz-res-ring ui-ring" data-ref="ring">' +
+                        '<svg class="ui-ring-chart" viewBox="0 0 160 160" aria-hidden="true">' +
                             "<defs>" +
                                 '<linearGradient id="qz-ring-gradient" x1="0" y1="0" x2="1" y2="1">' +
                                     '<stop class="qz-stop-a" offset="0"></stop>' +
                                     '<stop class="qz-stop-b" offset="1"></stop>' +
                                 "</linearGradient>" +
                             "</defs>" +
-                            '<circle class="qz-res-ticks" cx="80" cy="80" r="77"></circle>' +
-                            '<circle class="qz-res-track" cx="80" cy="80" r="' + RESULT_RADIUS + '"></circle>' +
-                            '<circle class="qz-res-bar" cx="80" cy="80" r="' + RESULT_RADIUS + '" stroke="url(#qz-ring-gradient)" stroke-dasharray="' + RESULT_LENGTH.toFixed(2) + '" stroke-dashoffset="' + RESULT_LENGTH.toFixed(2) + '"></circle>' +
+                            '<circle class="qz-res-ticks ui-ring-ticks" cx="80" cy="80" r="77"></circle>' +
+                            '<circle class="qz-res-track ui-ring-track" cx="80" cy="80" r="' + RESULT_RADIUS + '"></circle>' +
+                            '<circle class="qz-res-bar ui-ring-bar" cx="80" cy="80" r="' + RESULT_RADIUS + '" stroke="url(#qz-ring-gradient)" stroke-dasharray="' + RESULT_LENGTH.toFixed(2) + '" stroke-dashoffset="' + RESULT_LENGTH.toFixed(2) + '"></circle>' +
                         "</svg>" +
                         '<div class="qz-res-center" aria-hidden="true">' +
                             '<strong class="qz-res-percent gradient-text"><span data-ref="percent">0</span><span class="qz-res-pct">%</span></strong>' +
@@ -1346,8 +1346,8 @@
     // first (by AICompass.quiz.start). With a link like #quiz, core builds it at once.
     function build() {
         mount.innerHTML =
-            '<div class="qz-card card" data-reveal>' +
-                '<span class="qz-corners" aria-hidden="true"></span>' +
+            '<div class="qz-card card ui-scan" data-reveal>' +
+                '<span class="qz-corners ui-corners" aria-hidden="true"></span>' +
                 '<div class="qz-stage"></div>' +
                 '<p class="sr-only qz-live" aria-live="polite" aria-atomic="true"></p>' +
             "</div>";
