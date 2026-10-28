@@ -1242,7 +1242,7 @@
         const memory = tiltMemory.get(host);
         if (!memory) return;
         host.classList.remove("fx-tilting");
-        host.style.transition = joinTransitions(memory.base, "transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)");
+        host.style.transition = joinTransitions(memory.base, "transform 0.7s var(--ease)");     // the site's curve (style.css)
         host.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
         clearTimeout(memory.timer);
         memory.timer = setTimeout(() => {
