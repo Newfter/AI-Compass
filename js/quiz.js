@@ -339,11 +339,11 @@
                 "</div>" +
 
                 '<ul class="qz-tiles qz-start-tiles">' +
-                    '<li class="qz-tile"><strong class="qz-tile-value">' + QUESTIONS.length + '</strong><span class="qz-tile-label" data-ref="questionsLabel"></span></li>' +
-                    '<li class="qz-tile"><strong class="qz-tile-value">~' + PLAY_MINUTES + '</strong><span class="qz-tile-label" data-ref="minutesLabel"></span></li>' +
+                    '<li class="qz-tile"><strong class="qz-tile-value gradient-text">' + QUESTIONS.length + '</strong><span class="qz-tile-label" data-ref="questionsLabel"></span></li>' +
+                    '<li class="qz-tile"><strong class="qz-tile-value gradient-text">~' + PLAY_MINUTES + '</strong><span class="qz-tile-label" data-ref="minutesLabel"></span></li>' +
                     '<li class="qz-tile qz-tile-best">' +
                         '<span class="qz-tile-icon" aria-hidden="true" data-ref="bestIcon"></span>' +
-                        '<strong class="qz-tile-value" data-ref="bestValue"></strong>' +
+                        '<strong class="qz-tile-value gradient-text" data-ref="bestValue"></strong>' +
                         '<span class="qz-tile-label" data-ref="bestLabel"></span>' +
                     "</li>" +
                 "</ul>" +
@@ -465,7 +465,7 @@
                     '<div class="qz-hud-right">' +
                         '<div class="qz-score">' +
                             '<span class="qz-score-label mono">' + text("quiz.q.score") + "</span>" +
-                            '<strong class="qz-score-value" data-ref="score"></strong>' +
+                            '<strong class="qz-score-value gradient-text" data-ref="score"></strong>' +
                             '<span class="qz-score-pop mono" aria-hidden="true" data-ref="scorePop"></span>' +
                         "</div>" +
                         '<div class="qz-streak" data-ref="streak" hidden>' +
@@ -986,7 +986,7 @@
         ].map((tile, index) =>
             '<li class="qz-tile qz-tile-' + tile[0] + '" style="--i:' + index + '">' +
                 '<span class="qz-tile-icon" aria-hidden="true">' + tile[2] + "</span>" +
-                '<strong class="qz-tile-value" data-ref="tile-' + tile[0] + '"></strong>' +
+                '<strong class="qz-tile-value gradient-text" data-ref="tile-' + tile[0] + '"></strong>' +
                 text(tile[1], "qz-tile-label") +
             "</li>"
         ).join("");
@@ -1007,7 +1007,7 @@
                             '<circle class="qz-res-bar" cx="80" cy="80" r="' + RESULT_RADIUS + '" stroke="url(#qz-ring-gradient)" stroke-dasharray="' + RESULT_LENGTH.toFixed(2) + '" stroke-dashoffset="' + RESULT_LENGTH.toFixed(2) + '"></circle>' +
                         "</svg>" +
                         '<div class="qz-res-center" aria-hidden="true">' +
-                            '<strong class="qz-res-percent"><span data-ref="percent">0</span><span class="qz-res-pct">%</span></strong>' +
+                            '<strong class="qz-res-percent gradient-text"><span data-ref="percent">0</span><span class="qz-res-pct">%</span></strong>' +
                             '<span class="qz-res-caption mono">' + text("quiz.res.ringCaption") + "</span>" +
                         "</div>" +
                         '<span class="sr-only" data-ref="ringSr"></span>' +
@@ -1016,7 +1016,7 @@
                         '<p class="qz-kicker mono">' + text("quiz.res.kicker") + "</p>" +
                         '<h3 class="qz-res-title" tabindex="-1">' +
                             '<span class="qz-rank-emoji" aria-hidden="true">' + rank.emoji + "</span>" +
-                            text("quiz.rank." + rank.id, "qz-rank-name") +
+                            text("quiz.rank." + rank.id, "qz-rank-name gradient-text") +
                         "</h3>" +
                         '<p class="qz-res-text">' + text("quiz.rank." + rank.id + "Text") + "</p>" +
                         '<p class="qz-best' + (result.isNewBest ? " is-new" : "") + '" data-ref="best">' +

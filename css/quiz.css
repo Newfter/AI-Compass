@@ -256,16 +256,13 @@
     background: var(--surface-2);
 }
 
+/* The numbers of the tiles, the score, the % in the ring and the rank name are
+   gradient text: js/quiz.js gives them the .gradient-text class of style.css */
 .qz-tile-value {
     font-family: var(--font-display);
     font-size: clamp(20px, 2.6vw, 26px);
     font-weight: 700;
     line-height: 1.15;
-    background: var(--gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: var(--accent);
     font-variant-numeric: tabular-nums;
     overflow-wrap: anywhere;
 }
@@ -648,11 +645,6 @@
     font-size: 22px;
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    background: var(--gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: var(--accent);
 }
 
 /* "+150" flies up from the score */
@@ -1332,11 +1324,6 @@
     letter-spacing: -0.03em;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
-    background: var(--gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: var(--accent);
 }
 
 /* A smaller "%" so that even "100%" fits inside the ring */
@@ -1388,14 +1375,6 @@
     background: rgba(var(--accent-rgb), 0.12);
     box-shadow: var(--glow);
     font-size: 28px;
-}
-
-.qz-rank-name {
-    background: var(--gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: var(--accent);
 }
 
 .qz-res-text {
