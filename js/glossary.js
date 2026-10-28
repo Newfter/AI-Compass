@@ -656,27 +656,6 @@
 
     // ---------- 4. Small helpers ----------
 
-    // Picks the right plural form. English has two (1 term / 2 terms),
-    // Russian has three (1 термин / 2 термина / 5 терминов).
-    function pluralForm(n) {
-        if (A.lang !== "ru") return n === 1 ? "one" : "many";
-        const lastDigit = n % 10;
-        const lastTwo = n % 100;
-        if (lastDigit === 1 && lastTwo !== 11) return "one";
-        if (lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14)) return "few";
-        return "many";
-    }
-
-    function plural(key, n, values) {
-        return t(key + "." + pluralForm(n), Object.assign({ n: n }, values || {}));
-    }
-
-    // Animations are skipped when the device asks for less motion
-    // or when "calm mode" (from effects.js) is on
-    function motionOK() {
-        return !A.reducedMotion && !document.documentElement.classList.contains("fx-calm");
-    }
-
     // Lower case, and "ё" counts as "е", so "черный" also finds "чёрный"
     function normalize(text) {
         return String(text).toLowerCase().replace(/ё/g, "е");
@@ -1066,6 +1045,7 @@
     // Handy references to the parts we update later
     const root = mount.querySelector(".gl");
     const ui = {
+        console: root.querySelector(".gl-console"),
         input: root.querySelector(".gl-input"),
         clear: root.querySelector(".gl-clear"),
         random: root.querySelector(".gl-random"),
@@ -1307,7 +1287,7 @@
 
         // Remember where cards are now, to animate them to their new place
         const before = new Map();
-        const canAnimate = animate && motionOK();
+        const canAnimate = animate && A.motion.ok();
         if (canAnimate) {
             TERMS.forEach(function (term) {
                 const el = cards[term.id].el;
@@ -1323,7 +1303,7 @@
         placeCards(visible.concat(sorted.filter(function (term) { return !visibleIds.has(term.id); })));
 
         // Counter, reset button, empty state and "show all"
-        ui.count.textContent = plural("glossary.count", visible.length, { total: TERMS.length });
+        ui.count.textContent = A.plural("glossary.count", visible.length, { total: TERMS.length });
         ui.countBar.style.transform = "scaleX(" + (visible.length / TERMS.length).toFixed(3) + ")";
         ui.reset.hidden = !filtersActive();
         ui.clear.hidden = !state.query;
@@ -1338,7 +1318,7 @@
 
         ui.foot.hidden = filtersActive() || TERMS.length <= PREVIEW_COUNT;
         ui.moreBtn.setAttribute("aria-expanded", String(state.showAll));
-        ui.moreText.textContent = state.showAll ? t("glossary.showLess") : plural("glossary.showAll", TERMS.length);
+        ui.moreText.textContent = state.showAll ? t("glossary.showLess") : A.plural("glossary.showAll", TERMS.length);
 
         // Tell screen readers the new count a moment after typing stops
         if (announce) {
@@ -1372,6 +1352,7 @@
     function animateCards(before) {
         let entering = 0;
         const screenBottom = window.innerHeight + 200;
+        const ease = A.motion.ease;
 
         Array.prototype.forEach.call(ui.grid.children, function (el) {
             if (el.hidden) return;
@@ -1389,13 +1370,13 @@
                 if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
                     animation = el.animate(
                         [{ transform: "translate(" + dx + "px, " + dy + "px)" }, { transform: "none" }],
-                        { duration: 420, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }
+                        { duration: 420, easing: ease }
                     );
                 }
             } else {
                 animation = el.animate(
                     [{ opacity: 0, transform: "translateY(14px) scale(0.96)" }, { opacity: 1, transform: "none" }],
-                    { duration: 380, delay: Math.min(entering++, 8) * 35, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" }
+                    { duration: 380, delay: Math.min(entering++, 8) * 35, easing: ease, fill: "backwards" }
                 );
             }
             if (animation) running.set(el, animation);
@@ -1460,17 +1441,6 @@
         el._glSpotTimer = setTimeout(function () { el.classList.remove("is-spotlight"); }, 2600);
     }
 
-    // Browsers try to keep what you are looking at in place when content above it
-    // changes ("scroll anchoring"). That would stop our own scrolling to a card,
-    // so it is switched off for a moment while the list changes.
-    function pauseScrollAnchoring() {
-        const html = document.documentElement;
-        html.style.overflowAnchor = "none";
-        requestAnimationFrame(function () {
-            requestAnimationFrame(function () { html.style.overflowAnchor = ""; });
-        });
-    }
-
     // Scrolls so the whole card, at its opened size, is on screen
     // (centred if it fits, otherwise its top just under the menu)
     function scrollToCard(card) {
@@ -1478,10 +1448,10 @@
         for (let element = card.el; element; element = element.offsetParent) top += element.offsetTop;
         const inner = card.el.querySelector(".gl-more-inner");
         const height = card.el.offsetHeight + Math.max(0, inner.scrollHeight - inner.offsetHeight);
-        const nav = parseFloat(A.cssVar("--nav-height")) || 76;
+        const nav = A.layout.navHeight();
         const room = window.innerHeight - nav;
         const y = height + 32 < room ? top - nav - (room - height) / 2 : top - nav - 16;
-        window.scrollTo({ top: Math.max(0, y), behavior: motionOK() ? "smooth" : "auto" });
+        window.scrollTo({ top: Math.max(0, y), behavior: A.motion.ok() ? "smooth" : "auto" });
     }
 
     // Scrolls to a term, opens it and makes it glow.
@@ -1492,8 +1462,9 @@
         options = options || {};
 
         if (card.el.hidden) {
-            // Hidden by a filter: clear the filters so it can be seen
-            pauseScrollAnchoring();
+            // Hidden by a filter: clear the filters so it can be seen.
+            // (Scroll anchoring would fight our own scrolling to the card, so it waits.)
+            A.dom.pauseScrollAnchoring();
             if (filtersActive()) resetFilters();
             state.showAll = true;
             render(false);
@@ -1565,16 +1536,18 @@
 
     // On phones the long example doesn't fit in the search box, so a shorter text
     // is shown there. data-i18n-attr tells core.js which text to use after a language change.
-    const narrowScreen = window.matchMedia("(max-width: 640px)");
-
-    function updatePlaceholder() {
-        const key = narrowScreen.matches ? "glossary.searchPlaceholderShort" : "glossary.searchPlaceholder";
+    // (A.onMedia calls this now, and again whenever the screen crosses the phone width.)
+    A.onMedia(A.queries.phone, function (phone) {
+        const key = phone ? "glossary.searchPlaceholderShort" : "glossary.searchPlaceholder";
         ui.input.setAttribute("data-i18n-attr", "placeholder:" + key);
         ui.input.placeholder = t(key);
-    }
+    });
 
-    if (narrowScreen.addEventListener) narrowScreen.addEventListener("change", updatePlaceholder);
-    else if (narrowScreen.addListener) narrowScreen.addListener(updatePlaceholder);
+    // The light scanning the console's top edge and the floating orb of the empty
+    // state loop forever: they pause while off screen (A.whenVisible sets data-paused).
+    [ui.console, ui.empty].forEach(function (element) {
+        A.whenVisible(element, function () {}, { pauseAnimations: true });
+    });
 
     ui.filterToggle.addEventListener("click", function () {
         const open = !root.classList.contains("filters-open");
@@ -1596,10 +1569,10 @@
 
     ui.random.addEventListener("click", function () {
         const dice = ui.random.querySelector(".gl-dice");
-        if (motionOK() && dice.animate) {
+        if (A.motion.ok() && dice.animate) {
             dice.animate(
                 [{ transform: "rotate(0) scale(1)" }, { transform: "rotate(200deg) scale(1.25)" }, { transform: "rotate(360deg) scale(1)" }],
-                { duration: 550, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }
+                { duration: 550, easing: A.motion.ease }
             );
         }
         // Focus stays on the button (so you can roll again); screen readers hear the term
@@ -1648,7 +1621,6 @@
 
     // ---------- 18. Start ----------
     showTerm = show;
-    updatePlaceholder();
     buildLetters();
     sortCards();
     render(false);
