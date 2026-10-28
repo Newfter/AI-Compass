@@ -2,8 +2,8 @@
    AI COMPASS — LAB: GUESS THE LINE (the sample experiment)
    A few dots and a line y = a·x + b that the computer fits to them by
    gradient descent: it measures how wrong the line is (the loss), works
-   out which way is downhill (the gradient) and takes a small step, again
-   and again. It is small on purpose: it is the template for every lab
+   out which way is uphill (the gradient) and takes a small step the other
+   way, downhill, again and again. It is small on purpose: it is the template for every lab
    experiment (the hub's contract, the kit, the store, the announcer).
    Its tests: dev/tests/sample.test.js and dev/tests/sample-maths.js.
 
