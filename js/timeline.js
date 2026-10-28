@@ -206,7 +206,8 @@
         hudCount = root.querySelector(".tl-hud-count");
         sections = Array.prototype.slice.call(root.querySelectorAll(".tl-era"));
         items = Array.prototype.slice.call(root.querySelectorAll(".tl-item")).map(function (element) {
-            // on: the line has reached its dot (null: not known yet); visible: not filtered out
+            // on: the line has reached its dot (null while filtered out: checked again when
+            // it comes back); visible: not filtered out
             return { el: element, node: element.querySelector(".tl-node"), key: element.getAttribute("data-key"), on: false, visible: true };
         });
 
