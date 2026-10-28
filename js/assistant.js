@@ -1444,7 +1444,8 @@
         typingRow: null,
         prefill: "",      // the "Define " text the bot put in the message box
         focusBefore: null, // where the focus was when the chat opened
-        drawn: false      // the saved messages are drawn when the chat first opens
+        drawn: false,     // the saved messages are drawn when the chat first opens
+        stale: false      // the language changed while the chat was closed: redraw it on opening
     };
 
     function fillBotRow(row, message) {
@@ -1656,6 +1657,7 @@
     }
 
     function renderAll() {
+        state.stale = false;
         ui.log.innerHTML = "";
         chat.messages.forEach(function (message) {
             ui.log.appendChild(buildRow(message, false));
@@ -1675,6 +1677,7 @@
     // On language change: redraw the bot's answers in the new language,
     // quietly (so screen readers don't read the whole chat again)
     function retranslateMessages() {
+        state.stale = false;
         ui.log.setAttribute("aria-live", "off");
         ui.log.querySelectorAll(".cb-msg--bot").forEach(function (row) {
             const id = Number(row.getAttribute("data-id"));
@@ -2085,6 +2088,7 @@
 
         dismissTip(true);
         drawSaved();
+        if (state.stale) retranslateMessages();     // the language changed while it was closed
         if (!chat.messages.length) addBotMessage("welcome", {}, false);
         // The search index is built in small idle steps now, so the first
         // question is answered at once (js/search.js)
@@ -2353,7 +2357,10 @@
     // The window's labels are translated by core (data-i18n).
     // Here we redraw the answers and the typing status.
     A.onLanguageChange(function () {
-        retranslateMessages();
+        // A closed chat is redrawn when it opens again: its answers from the site
+        // need the search index of the new language, which takes a moment to build
+        if (state.open) retranslateMessages();
+        else state.stale = true;
         if (state.open && A.search) A.search.ready();       // the other language's index
         ui.statusText.textContent = t(state.busy ? "assistant.statusTyping" : "assistant.status");
         // "Define " the bot typed for you (and you didn't change) -> "Что такое "
