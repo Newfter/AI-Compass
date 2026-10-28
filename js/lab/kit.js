@@ -734,9 +734,10 @@
     /* =========================================================
        5. DISPLAYS: STAT TILES, STATUS, LEGENDS, BARS
        ========================================================= */
-    // A number with its label. trend: "up" | "down" | "flat" (an arrow), or "auto" to compare
-    // each new value with the one before. better: "up" (default) or "down" says which way is
-    // good, so the arrow is green or red (for a loss, down is good).
+    // A number with its label. trend: "up" | "down" | "flat" (an arrow), or "auto": the arrow
+    // shows which way the number went the last time it changed (setting the same number again,
+    // as every redraw and language switch does, keeps the arrow). better: "up" (default) or
+    // "down" says which way is good, so the arrow is green or red (for a loss, down is good).
     // A single change counts up (when animations are on); quick changes are written at once.
     function stat(options) {
         const settings = options || {};
@@ -773,8 +774,8 @@
             current = value;
             if (newTrend !== undefined) {
                 trend = newTrend;
-            } else if (settings.trend === "auto" && isNumber(previous) && isNumber(value)) {
-                trend = value > previous ? "up" : value < previous ? "down" : "flat";
+            } else if (settings.trend === "auto" && isNumber(previous) && isNumber(value) && value !== previous) {
+                trend = value > previous ? "up" : "down";
             }
 
             const now = performance.now();
