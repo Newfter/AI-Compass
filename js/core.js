@@ -9,7 +9,8 @@
     4. theme         light / dark and the colour of the address bar
     5. motion        reduced motion (device) + calm mode (our own switch),
                      and numbers that count up
-    6. helpers       small tools: maths and easing, page elements, colours, canvas
+    6. helpers       small tools: maths and easing, page elements, buttons that
+                     need a second press, colours, canvas
     7. screen        media queries, visibility, resizing, layout sizes
     8. announce      messages for screen readers
     9. overlays      pop-up windows: scroll lock, focus, the Esc key
@@ -637,6 +638,59 @@
             return box.firstElementChild;
         }
     };
+
+    // ----- Buttons that need a second press -----
+    // For a button that loses something ("Reset progress", "Quit"): the first press only
+    // arms it (the feature shows "Sure?"), a second press within a few seconds confirms.
+    // The second click of a double-click (or double tap) and a held-down Enter key are not
+    // a second press, so nothing is lost by accident.
+    //   const reset = A.confirmPress(button, {
+    //       onArm: function () { paint(); A.announce(t("lessons.hud.resetAsk")); },
+    //       onDisarm: paint,             // after the wait, after disarm(), and just before onConfirm
+    //       onConfirm: resetProgress,
+    //       enabled: function () { return !busy; },   // optional: presses are ignored while false
+    //       timeout: 4000                // optional: how long it stays armed (ms)
+    //   });
+    //   reset.armed      true between the two presses (paint the button from it)
+    //   reset.disarm()   back to the first state, e.g. when the screen changes
+    // A button that has left the page gets no more calls.
+    const CONFIRM_TIME = 4000;
+
+    function confirmPress(button, options) {
+        const settings = options || {};
+        let armed = false;
+        let timer = 0;
+
+        function disarm() {
+            clearTimeout(timer);
+            if (!armed) return;
+            armed = false;
+            if (settings.onDisarm && button.isConnected) settings.onDisarm();
+        }
+
+        button.addEventListener("click", function (event) {
+            if (settings.enabled && !settings.enabled()) return;
+            if (!armed) {
+                armed = true;
+                timer = setTimeout(disarm, settings.timeout || CONFIRM_TIME);
+                if (settings.onArm) settings.onArm(event);
+                return;
+            }
+            if (event.detail > 1) return;   // the second click of a double-click
+            disarm();
+            if (settings.onConfirm) settings.onConfirm(event);
+        });
+
+        // Holding Enter down repeats the click: only a new press counts
+        button.addEventListener("keydown", function (event) {
+            if (event.repeat && event.key === "Enter") event.preventDefault();
+        });
+
+        return {
+            get armed() { return armed; },
+            disarm: disarm
+        };
+    }
 
     // ----- Colours (for canvas drawings, which can't use CSS variables directly) -----
     // "#9b6dff", "155, 109, 255" or "rgb(155, 109, 255)" -> [155, 109, 255]
@@ -1686,6 +1740,7 @@
         canvas: canvas,
         cssVar: cssVar,
         escapeHTML: escapeHTML,
+        confirmPress: confirmPress,
 
         // 7. screen
         breakpoints: breakpoints,
