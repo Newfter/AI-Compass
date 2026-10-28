@@ -137,8 +137,8 @@
     // The whole card. It is made only when the lab is needed (build(), section 10),
     // and its empty data-i18n holders get their texts at that moment.
     function labHTML() {
-        return '<div class="lab card" data-reveal>' +
-            '<span class="lab-corners" aria-hidden="true"></span>' +
+        return '<div class="lab card ui-scan" data-reveal>' +
+            '<span class="lab-corners ui-corners" aria-hidden="true"></span>' +
             '<div class="lab-top">' +
                 '<div class="lab-tabs" role="tablist" data-active="classifier" data-i18n-attr="aria-label:lab.tablistLabel">' +
                     '<span class="lab-tab-glow" aria-hidden="true"></span>' +
@@ -196,7 +196,7 @@
                 '</div>' +
                 '<div class="lab-board" tabindex="0" role="application" data-i18n-attr="aria-label:lab.boardLabel">' +
                     '<canvas class="lab-board-canvas" aria-hidden="true"></canvas>' +
-                    '<span class="lab-board-corners" aria-hidden="true"></span>' +
+                    '<span class="lab-board-corners ui-corners" aria-hidden="true"></span>' +
                     '<span class="lab-scan" aria-hidden="true"></span>' +
                     '<div class="lab-board-empty" aria-hidden="true">' +
                         '<span class="lab-empty-icon">✦</span>' +
@@ -274,7 +274,7 @@
                                 '<label for="lab-neurons" data-i18n="lab.neurons"></label>' +
                                 '<output class="lab-range-value mono" for="lab-neurons" data-out="neurons">' + DEFAULT_SETTINGS.hidden + '</output>' +
                             '</div>' +
-                            '<input type="range" id="lab-neurons" class="lab-range" min="' + MIN_NEURONS + '" max="' + MAX_NEURONS + '" step="1" value="' + DEFAULT_SETTINGS.hidden + '" aria-describedby="lab-neurons-hint">' +
+                            '<input type="range" id="lab-neurons" class="lab-range ui-range" min="' + MIN_NEURONS + '" max="' + MAX_NEURONS + '" step="1" value="' + DEFAULT_SETTINGS.hidden + '" aria-describedby="lab-neurons-hint">' +
                             '<small id="lab-neurons-hint" data-i18n="lab.neuronsHint"></small>' +
                         '</div>' +
                         '<div class="lab-field lab-field-speed">' +
@@ -287,8 +287,8 @@
                         '</div>' +
                         '<div class="lab-field lab-field-layer">' +
                             '<span class="lab-field-label" aria-hidden="true">&nbsp;</span>' +
-                            '<button type="button" class="lab-switch" role="switch" aria-checked="false" aria-describedby="lab-layer-hint">' +
-                                '<span class="lab-switch-track" aria-hidden="true"><span class="lab-switch-knob"></span></span>' +
+                            '<button type="button" class="lab-switch ui-switch" role="switch" aria-checked="false" aria-describedby="lab-layer-hint">' +
+                                '<span class="lab-switch-track ui-switch-track" aria-hidden="true"><span class="lab-switch-knob ui-switch-knob"></span></span>' +
                                 '<span data-i18n="lab.layer2"></span>' +
                             '</button>' +
                             '<small id="lab-layer-hint" data-i18n="lab.layer2Hint"></small>' +
@@ -387,7 +387,7 @@
                             '<label for="lab-temp" data-i18n="lab.lmTemp"></label>' +
                             '<output class="lab-range-value mono" for="lab-temp" data-out="temp"></output>' +
                         '</div>' +
-                        '<input type="range" id="lab-temp" class="lab-range lab-range-temp" min="' + TEMPERATURE.min + '" max="' + TEMPERATURE.max + '" step="' + TEMPERATURE.step + '" value="' + TEMPERATURE.start + '">' +
+                        '<input type="range" id="lab-temp" class="lab-range lab-range-temp ui-range" min="' + TEMPERATURE.min + '" max="' + TEMPERATURE.max + '" step="' + TEMPERATURE.step + '" value="' + TEMPERATURE.start + '">' +
                     '</div>' +
                 '</div>' +
             '</div>' +

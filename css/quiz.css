@@ -16,17 +16,13 @@
    12. Reduced motion / calm mode
    All colours come from the variables in style.css,
    so both the dark and the light theme look right.
-   ========================================================= */
-
-/* Coloured text, and the badges, borders and glows that go with it, use the
+   Coloured text, and the badges, borders and glows that go with it, use the
    readable accent colours of style.css (--text-success, --text-danger,
    --text-warning, --text-accent-2, --text-accent-3): the normal accents in the
    dark theme, a little darker in the light theme, where the bright ones are too
-   pale on white for small text (WCAG AA, 4.5:1). */
-[data-feature="quiz"] {
-    /* small grey labels: a little stronger than --text-dim, so they stay readable */
-    --qz-dim: color-mix(in srgb, var(--text-dim) 82%, var(--text));
-}
+   pale on white for small text (WCAG AA, 4.5:1). Small grey labels use
+   --text-label.
+   ========================================================= */
 
 /* ===== 1. THE CARD ===== */
 
@@ -46,7 +42,7 @@
     background:
         radial-gradient(ellipse at 100% 0%, rgba(var(--accent-2-rgb), 0.12), transparent 50%),
         radial-gradient(ellipse at 0% 100%, rgba(var(--accent-rgb), 0.16), transparent 55%),
-        var(--surface);
+        var(--glass);
     transition: box-shadow 0.5s ease, border-color 0.5s ease;
 }
 
@@ -65,42 +61,13 @@
     mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 70%);
 }
 
-/* A thin light that slowly scans along the top edge */
-.qz-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1;
-    width: 36%;
-    height: 1px;
-    pointer-events: none;
-    background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
-    transform: translateX(-100%);
-    animation: qz-scan 7s linear infinite;
-}
-
-@keyframes qz-scan {
-    to { transform: translateX(290%); }
-}
-
-/* Sci-fi corner brackets */
+/* The scanning light on the top edge (.ui-scan) and the corner brackets
+   (.ui-corners) come from css/components.css; the quiz card is bigger, so
+   its brackets are a little longer */
 .qz-corners {
-    position: absolute;
-    inset: 12px;
+    --corners-inset: 12px;
+    --corners-size: 16px;
     z-index: 0;
-    pointer-events: none;
-    background:
-        linear-gradient(var(--accent-2), var(--accent-2)) top left / 16px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) top left / 1.5px 16px,
-        linear-gradient(var(--accent-2), var(--accent-2)) top right / 16px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) top right / 1.5px 16px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / 16px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / 1.5px 16px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / 16px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / 1.5px 16px;
-    background-repeat: no-repeat;
-    opacity: 0.5;
 }
 
 /* A short coloured glow after each answer */
@@ -208,7 +175,7 @@
 
 .qz-mini-title {
     margin-bottom: 12px;
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 2px;
@@ -396,7 +363,7 @@
 .qz-tile-best.is-empty .qz-tile-value {
     background: none;
     -webkit-text-fill-color: currentColor;
-    color: var(--qz-dim);
+    color: var(--text-label);
 }
 
 .qz-rules-box {
@@ -466,8 +433,18 @@
     text-align: center;
 }
 
-/* Timed-mode switch: the whole row is one big button */
+/* Timed-mode switch: the whole row is one big button. The track and the knob
+   are .ui-switch-track and .ui-switch-knob (css/components.css), a little bigger
+   here, and cyan when on. */
 .qz-switch {
+    --switch-width: 50px;
+    --switch-height: 28px;
+    --knob: 20px;
+    --switch-on: rgba(var(--accent-2-rgb), 0.2);
+    --switch-on-border: var(--accent-2);
+    --switch-on-glow: none;
+    --knob-on: var(--accent-2);
+    --knob-on-glow: 0 0 12px var(--accent-2);
     display: flex;
     align-items: center;
     gap: 14px;
@@ -518,7 +495,7 @@
 
 .qz-switch-state {
     flex: none;
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 11px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -526,39 +503,6 @@
 
 .qz-switch[aria-checked="true"] .qz-switch-state {
     color: var(--text-accent-2);
-}
-
-.qz-switch-track {
-    position: relative;
-    flex: none;
-    width: 50px;
-    height: 28px;
-    border: 1px solid var(--border-strong);
-    border-radius: 999px;
-    background: var(--surface-solid);
-    transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.qz-switch-thumb {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--text-dim);
-    transition: transform 0.35s var(--ease), background 0.3s ease, box-shadow 0.3s ease;
-}
-
-.qz-switch[aria-checked="true"] .qz-switch-track {
-    border-color: var(--accent-2);
-    background: rgba(var(--accent-2-rgb), 0.2);
-}
-
-.qz-switch[aria-checked="true"] .qz-switch-thumb {
-    transform: translateX(22px);
-    background: var(--accent-2);
-    box-shadow: 0 0 12px var(--accent-2);
 }
 
 .qz-start-actions {
@@ -633,7 +577,7 @@
 }
 
 .qz-score-label {
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 11px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -725,37 +669,20 @@
     40% { transform: scale(1.18); }
 }
 
-/* Countdown ring */
+/* Countdown ring: a .ui-ring (css/components.css) in the text colour, which
+   turns amber and then red as the time runs out */
 .qz-timer {
-    position: relative;
-    flex: none;
+    --ring-size: 54px;
+    --ring-stroke: 4;
+    --ring-track: rgba(var(--accent-2-rgb), 0.15);
+    --ring-glow: drop-shadow(0 0 4px currentColor);
     display: grid;
     place-items: center;
-    width: 54px;
-    height: 54px;
     color: var(--text-accent-2);
 }
 
-.qz-timer svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-}
-
-.qz-timer-track {
-    fill: none;
-    stroke: rgba(var(--accent-2-rgb), 0.15);
-    stroke-width: 4;
-}
-
 .qz-timer-bar {
-    fill: none;
     stroke: currentColor;
-    stroke-width: 4;
-    stroke-linecap: round;
-    filter: drop-shadow(0 0 4px currentColor);
     transition: stroke 0.3s ease;
 }
 
@@ -852,7 +779,7 @@
 }
 
 .qz-type {
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 11.5px;
     letter-spacing: 1.6px;
     text-transform: uppercase;
@@ -910,28 +837,23 @@
     gap: 12px;
 }
 
+/* The answers are .ui-option buttons (css/components.css: box, hover and the
+   right / wrong / faded states). The quiz's are bigger, and they use the readable
+   green and red of style.css, like the rest of the quiz. */
 .qz-option {
+    --option-height: 68px;
+    --option-pad: 14px 16px;
+    --option-radius: 16px;
+    --option-bg: var(--surface-2);
+    --option-border: var(--border);
+    --option-good: var(--text-success);
+    --option-bad: var(--text-danger);
     position: relative;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    width: 100%;
-    min-height: 68px;
-    padding: 14px 16px;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    background: var(--surface-2);
-    color: var(--text);
     font-size: 15.5px;
-    font-weight: 600;
     line-height: 1.42;
-    text-align: left;
-    transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s var(--ease), box-shadow 0.25s ease, opacity 0.35s ease;
 }
 
 .qz-option:not(.is-locked):hover {
-    border-color: var(--accent-2);
-    background: var(--surface-hover);
     box-shadow: 0 10px 30px rgba(var(--accent-2-rgb), 0.12);
     transform: translateY(-2px);
 }
@@ -939,10 +861,6 @@
 .qz-option:not(.is-locked):active,
 .qz-option.is-pressed {
     transform: scale(0.98);
-}
-
-.qz-option.is-locked {
-    cursor: default;
 }
 
 .qz-key {
@@ -989,9 +907,6 @@
 }
 
 .qz-option.is-correct {
-    border-color: var(--text-success);
-    background: var(--surface-2);
-    background: color-mix(in srgb, var(--text-success) 13%, var(--surface-2));
     box-shadow: 0 0 0 1px var(--text-success), 0 0 34px color-mix(in srgb, var(--text-success) 22%, transparent);
     animation: qz-correct 0.7s var(--ease);
 }
@@ -1018,9 +933,6 @@
 }
 
 .qz-option.is-wrong {
-    border-color: var(--text-danger);
-    background: var(--surface-2);
-    background: color-mix(in srgb, var(--text-danger) 12%, var(--surface-2));
     box-shadow: 0 0 0 1px var(--text-danger);
     animation: qz-shake 0.5s ease;
 }
@@ -1038,10 +950,6 @@
 
 .qz-option.is-wrong .qz-mark::before {
     content: "✗";
-}
-
-.qz-option.is-dim {
-    opacity: 0.45;
 }
 
 @keyframes qz-shake {
@@ -1230,7 +1138,7 @@
 }
 
 .qz-bonus-lost {
-    color: var(--qz-dim);
+    color: var(--text-label);
 }
 
 .qz-fb-actions {
@@ -1242,7 +1150,7 @@
 }
 
 .qz-hint {
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 12px;
 }
 
@@ -1255,18 +1163,11 @@
     margin-bottom: 26px;
 }
 
+/* The result ring: a big .ui-ring (css/components.css) */
 .qz-res-ring {
-    position: relative;
-    flex: none;
-    width: 176px;
-    height: 176px;
-}
-
-.qz-res-ring svg {
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    transform: rotate(-90deg);
+    --ring-size: 176px;
+    --ring-stroke: 11;
+    --ring-glow: drop-shadow(0 0 7px rgba(var(--accent-2-rgb), 0.55));
 }
 
 .qz-stop-a {
@@ -1282,21 +1183,6 @@
     stroke: var(--border-strong);
     stroke-width: 1.5;
     stroke-dasharray: 2 6;
-    transform-origin: 80px 80px;
-    animation: aic-spin 40s linear infinite;
-}
-
-.qz-res-track {
-    fill: none;
-    stroke: rgba(var(--accent-rgb), 0.14);
-    stroke-width: 11;
-}
-
-.qz-res-bar {
-    fill: none;
-    stroke-width: 11;
-    stroke-linecap: round;
-    filter: drop-shadow(0 0 7px rgba(var(--accent-2-rgb), 0.55));
 }
 
 .qz-res-bar.is-animated {
@@ -1334,7 +1220,7 @@
 }
 
 .qz-res-caption {
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 11px;
     letter-spacing: 1.8px;
     text-transform: uppercase;
@@ -1596,7 +1482,7 @@
 
 .qz-ri-num {
     flex: none;
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 12px;
 }
 
@@ -1610,7 +1496,7 @@
 
 .qz-ri-points {
     flex: none;
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 12px;
 }
 
@@ -1648,7 +1534,7 @@ details[open] .qz-ri-chevron {
 }
 
 .qz-ri-label {
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-family: var(--font-mono);
     font-size: 12px;
     letter-spacing: 0.5px;
@@ -1689,7 +1575,7 @@ details[open] .qz-ri-chevron {
 
 /* ===== 11. RESPONSIVE ===== */
 
-@media (max-width: 860px) {
+@media (max-width: 900px) {
     .js [data-feature="quiz"]:empty {
         min-height: 800px;
     }
@@ -1782,7 +1668,7 @@ details[open] .qz-ri-chevron {
     }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 480px) {
     .js [data-feature="quiz"]:empty {
         min-height: 1250px;
     }
@@ -1793,7 +1679,7 @@ details[open] .qz-ri-chevron {
     }
 
     .qz-corners {
-        inset: 8px;
+        --corners-inset: 8px;
     }
 
     .qz-start-tiles {
@@ -1953,7 +1839,7 @@ details[open] .qz-ri-chevron {
 }
 
 /* Phones and tablets have no keyboard shortcuts to remind about */
-@media (hover: none) and (pointer: coarse) {
+@media (hover: none), (pointer: coarse) {
     .qz-hint {
         display: none;
     }
@@ -1974,11 +1860,6 @@ details[open] .qz-ri-chevron {
 /* ===== 12. REDUCED MOTION / CALM MODE =====
    core.js puts "fx-motion-off" on <html> for both, and style.css then stops every
    animation and transition. Only what needs more than that is here. */
-
-/* No scanning light on the card at all */
-html.fx-motion-off .qz-card::before {
-    display: none;
-}
 
 /* "New best score!" waits 1.2 s for its entrance: without the animation it is there at once */
 html.fx-motion-off .qz-best.is-new {

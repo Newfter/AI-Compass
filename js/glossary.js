@@ -331,10 +331,10 @@
     const ICON_RESET = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
     function categoryChip(id) {
-        return '<button class="chip gl-chip" type="button" data-cat="' + id + '" aria-pressed="' + (id === "all") + '">' +
-            '<span class="gl-chip-dot" aria-hidden="true"></span>' +
+        return '<button class="chip gl-chip ui-chip" type="button" data-cat="' + id + '" aria-pressed="' + (id === "all") + '">' +
+            '<span class="gl-chip-dot ui-chip-dot" aria-hidden="true"></span>' +
             text("glossary.cat." + id) +
-            '<span class="gl-chip-count mono">0</span>' +
+            '<span class="gl-chip-count ui-chip-count mono">0</span>' +
         "</button>";
     }
 
@@ -390,9 +390,9 @@
     function build() {
         mount.innerHTML =
             '<div class="gl">' +
-                '<div class="gl-console card" data-reveal>' +
-                    '<span class="gl-corner gl-corner-tl" aria-hidden="true"></span>' +
-                    '<span class="gl-corner gl-corner-br" aria-hidden="true"></span>' +
+                '<div class="gl-console card ui-scan" data-reveal>' +
+                    '<span class="gl-corner gl-corner-tl ui-corners" aria-hidden="true"></span>' +
+                    '<span class="gl-corner gl-corner-br ui-corners" aria-hidden="true"></span>' +
 
                     '<div class="gl-console-head">' +
                         '<p class="gl-kicker mono"><span class="gl-kicker-dot" aria-hidden="true"></span>' + text("glossary.kicker") + "</p>" +

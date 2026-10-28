@@ -23,15 +23,6 @@
 
 .tl {
     position: relative;
-    /* Cards cast a soft shadow, and a faint glow once the line reaches them.
-       Both are lighter in the light theme. */
-    --tl-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
-    --tl-card-glow: 0 0 32px rgba(var(--accent-2-rgb), 0.08);
-}
-
-[data-theme="light"] .tl {
-    --tl-card-shadow: 0 12px 30px rgba(30, 30, 80, 0.08);
-    --tl-card-glow: 0 0 28px rgba(var(--accent-2-rgb), 0.1);
 }
 
 /* ===== 1. THE FILTER BAR ===== */
@@ -52,8 +43,6 @@
     border: 1px solid var(--border-strong);
     border-radius: 20px;
     background: var(--nav-bg);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    backdrop-filter: blur(16px) saturate(140%);
     box-shadow: var(--shadow);
 }
 
@@ -63,12 +52,17 @@
     gap: 6px;
 }
 
+/* The chips are .ui-chip buttons with a dot and a count (css/components.css);
+   the dot of the chosen era lights up */
 .tl-chip {
     justify-content: center;
     min-width: 44px;
-    min-height: 40px;
-    padding: 7px 8px 7px 14px;
     font-size: 13.5px;
+}
+
+.tl-chip[aria-pressed="true"] {
+    --chip-dot: var(--accent-2);
+    --chip-dot-glow: 0 0 8px var(--accent-2);
 }
 
 /* When the chips need two rows (e.g. Russian on a narrow laptop), the bar
@@ -77,34 +71,6 @@
 .tl.is-stacked .tl-bar {
     position: relative;
     top: auto;
-}
-
-.tl-chip-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--text-dim);
-    transition: background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.tl-chip[aria-pressed="true"] .tl-chip-dot {
-    background: var(--accent-2);
-    box-shadow: 0 0 8px var(--accent-2);
-}
-
-.tl-chip-count {
-    min-width: 24px;
-    padding: 2px 7px;
-    border-radius: 999px;
-    background: var(--surface-hover);
-    color: var(--text-muted);
-    font-size: 11px;
-    text-align: center;
-}
-
-.tl-chip[aria-pressed="true"] .tl-chip-count {
-    background: rgba(var(--accent-2-rgb), 0.18);
-    color: var(--text-accent-2);
 }
 
 /* "1997 · 06/15" on the right of the bar */
@@ -384,12 +350,10 @@
 .tl-card {
     min-width: 0;
     padding: 22px 24px 24px;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
     background:
         linear-gradient(160deg, rgba(var(--accent-rgb), 0.08), transparent 50%),
-        var(--surface);
-    box-shadow: var(--tl-card-shadow);
+        var(--glass);
+    box-shadow: var(--shadow-card);
     transition: border-color 0.5s ease, box-shadow 0.5s ease, transform 0.35s var(--ease);
 }
 
@@ -544,7 +508,7 @@
 
 .tl-item.is-reached .tl-card {
     border-color: rgba(var(--accent-2-rgb), 0.32);
-    box-shadow: var(--tl-card-shadow), var(--tl-card-glow);
+    box-shadow: var(--shadow-card), var(--shadow-card-glow);
 }
 
 .tl-item.is-reached .tl-card::before {
@@ -738,8 +702,7 @@
 }
 
 /* Bigger touch targets on phones and on touch screens */
-@media (max-width: 640px), (pointer: coarse) {
-    .tl-chip,
+@media (max-width: 640px), (hover: none), (pointer: coarse) {
     .tl-term {
         min-height: 44px;
     }

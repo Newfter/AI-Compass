@@ -85,10 +85,10 @@
 
     // ---------- 3. Building the timeline ----------
     function chipHTML(era) {
-        return '<button class="chip tl-chip" type="button" data-era="' + era + '" aria-pressed="' + (era === "all") + '">' +
-            '<span class="tl-chip-dot" aria-hidden="true"></span>' +
+        return '<button class="chip tl-chip ui-chip" type="button" data-era="' + era + '" aria-pressed="' + (era === "all") + '">' +
+            '<span class="tl-chip-dot ui-chip-dot" aria-hidden="true"></span>' +
             text("timeline.era." + era) +
-            '<span class="tl-chip-count mono">' + countIn(era) + "</span>" +
+            '<span class="tl-chip-count ui-chip-count mono">' + countIn(era) + "</span>" +
         "</button>";
     }
 

@@ -13,19 +13,6 @@
 
 /* ===== 1. THE CARD, TABS AND SHARED PARTS ===== */
 
-/* Small grey labels. Coloured text uses the --text-* colours of style.css, but
-   there is no shared colour for small grey text yet (TODO(core): one token for it,
-   the quiz needs one too). In the light theme --text-dim is too pale for 10-12px
-   letters on the tinted boxes, so the lab uses the darker --text-muted there
-   (about 6.6:1 instead of 5:1 contrast). */
-.lab {
-    --lab-dim-text: var(--text-dim);
-}
-
-[data-theme="light"] .lab {
-    --lab-dim-text: var(--text-muted);
-}
-
 /* js/lab.js builds the lab only when it is needed (near the screen, or in a quiet
    moment after the page loaded). Until then its empty box keeps about the height of
    the tab it will open on, so the page below doesn't jump: the "Teach the machine"
@@ -39,67 +26,17 @@
     min-height: 1410px;
 }
 
-/* The lab card is big and its canvases change every frame, so instead of
-   blurring the animated page behind it (slow), it uses an almost solid glass colour. */
 .lab {
     padding: 26px;
     overflow: hidden;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
     background:
         radial-gradient(ellipse at 0% 0%, rgba(var(--accent-rgb), 0.16), transparent 50%),
         radial-gradient(ellipse at 100% 100%, rgba(var(--accent-2-rgb), 0.08), transparent 50%),
-        var(--surface-solid);
-    background:
-        radial-gradient(ellipse at 0% 0%, rgba(var(--accent-rgb), 0.16), transparent 50%),
-        radial-gradient(ellipse at 100% 100%, rgba(var(--accent-2-rgb), 0.08), transparent 50%),
-        color-mix(in srgb, var(--surface-solid) 93%, transparent);
+        var(--glass);
 }
 
-/* Glass buttons inside the lab don't need their own blur either */
-.lab .btn-ghost {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-}
-
-/* A thin light that slowly sweeps along the top edge: 40% of the card wide, it starts
-   just left of the card and aic-sweep (style.css) moves it 2.5 widths, out on the right */
-.lab::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 40%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
-    transform: translateX(-100%);
-    animation: aic-sweep 7s linear infinite;
-    pointer-events: none;
-}
-
-/* Sci-fi corner brackets: an "L" in each corner, made of two thin lines each.
-   --corner-inset: distance from the edge, --corner-size: length of a line,
-   --corner-line: its thickness */
-.lab-corners,
-.lab-board-corners {
-    --corner-inset: 10px;
-    --corner-size: 14px;
-    --corner-line: 1.5px;
-    position: absolute;
-    inset: var(--corner-inset);
-    pointer-events: none;
-    background:
-        linear-gradient(var(--accent-2), var(--accent-2)) top left / var(--corner-size) var(--corner-line),
-        linear-gradient(var(--accent-2), var(--accent-2)) top left / var(--corner-line) var(--corner-size),
-        linear-gradient(var(--accent-2), var(--accent-2)) top right / var(--corner-size) var(--corner-line),
-        linear-gradient(var(--accent-2), var(--accent-2)) top right / var(--corner-line) var(--corner-size),
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / var(--corner-size) var(--corner-line),
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / var(--corner-line) var(--corner-size),
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / var(--corner-size) var(--corner-line),
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / var(--corner-line) var(--corner-size);
-    background-repeat: no-repeat;
-    opacity: 0.5;
-}
+/* The scanning light on the top edge (.ui-scan) and the corner brackets of the
+   card and the drawing board (.ui-corners) come from css/components.css */
 
 .lab-top {
     position: relative;
@@ -193,7 +130,7 @@
 
 .lab-tab-sub {
     margin-top: 3px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 10px;
     letter-spacing: 1.6px;
     transition: color 0.25s ease;
@@ -207,7 +144,7 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.6px;
@@ -271,7 +208,7 @@
 
 .lab-box-note {
     margin-top: 10px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 12.5px;
     line-height: 1.5;
 }
@@ -299,7 +236,7 @@
     display: none;
 }
 
-@media (hover: none) {
+@media (hover: none), (pointer: coarse) {
     .lab-hint-mouse {
         display: none;
     }
@@ -432,7 +369,7 @@
 }
 
 .lab-board-corners {
-    --corner-inset: 12px;
+    --corners-inset: 12px;
     opacity: 0.6;
 }
 
@@ -533,12 +470,6 @@
     margin-right: 4px;
 }
 
-/* Selected / hovered chips use the readable cyan (the same as style.css in the dark theme) */
-.lab button.chip:hover,
-.lab .chip.active {
-    color: var(--text-accent-2);
-}
-
 .lab-preset {
     min-height: 44px;
     padding: 8px 14px;
@@ -602,7 +533,7 @@
 
 .lab-hint {
     margin-top: 10px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 13px;
     line-height: 1.55;
 }
@@ -720,7 +651,7 @@
 }
 
 .lab-stat dt {
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 1.4px;
@@ -744,7 +675,7 @@
 .lab-stat-sub {
     display: block;
     margin-top: 2px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 10.5px;
     white-space: nowrap;
 }
@@ -800,7 +731,7 @@
     display: grid;
     place-items: center;
     padding: 0 10px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 12.5px;
     text-align: center;
 }
@@ -851,7 +782,7 @@
 .lab-field small {
     display: block;
     margin-top: 6px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 12px;
     line-height: 1.4;
 }
@@ -894,7 +825,8 @@
     border-color: var(--accent-2);
 }
 
-/* Sliders */
+/* Sliders: the row with the label and the value. The slider itself is a
+   .ui-range (css/components.css); lab.js sets its --fill from the value. */
 .lab-range-head {
     display: flex;
     align-items: baseline;
@@ -911,72 +843,6 @@
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
-}
-
-/* --fill: how much of the line is coloured (lab.js sets it from the value),
-   --track: the line's thickness, --thumb: the round handle (with its border) */
-.lab-range {
-    --fill: 50%;
-    --track: 6px;
-    --thumb: 22px;
-    --thumb-border: 3px;
-    -webkit-appearance: none;
-    appearance: none;
-    display: block;
-    width: 100%;
-    height: 44px;           /* a big, finger-friendly area to grab... */
-    margin: -4px 0;         /* ...that may overlap the space around it a little */
-    background: transparent;
-    cursor: pointer;
-}
-
-.lab-range::-webkit-slider-runnable-track {
-    height: var(--track);
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) var(--fill), var(--border-strong) var(--fill));
-}
-
-.lab-range::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: var(--thumb);
-    height: var(--thumb);
-    margin-top: calc((var(--track) - var(--thumb)) / 2);    /* centred on the line */
-    border: var(--thumb-border) solid var(--accent-2);
-    border-radius: 50%;
-    background: var(--surface-solid);
-    box-shadow: 0 0 0 4px rgba(var(--accent-2-rgb), 0.15), 0 0 16px rgba(var(--accent-2-rgb), 0.5);
-    transition: transform 0.2s var(--ease);
-}
-
-.lab-range:active::-webkit-slider-thumb {
-    transform: scale(1.15);
-}
-
-.lab-range::-moz-range-track {
-    height: var(--track);
-    border-radius: 999px;
-    background: var(--border-strong);
-}
-
-.lab-range::-moz-range-progress {
-    height: var(--track);
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-}
-
-/* Firefox adds the border around the size, so the handle ends up just as big */
-.lab-range::-moz-range-thumb {
-    width: calc(var(--thumb) - 2 * var(--thumb-border));
-    height: calc(var(--thumb) - 2 * var(--thumb-border));
-    border: var(--thumb-border) solid var(--accent-2);
-    border-radius: 50%;
-    background: var(--surface-solid);
-    box-shadow: 0 0 0 4px rgba(var(--accent-2-rgb), 0.15), 0 0 16px rgba(var(--accent-2-rgb), 0.5);
-}
-
-.lab-range:focus-visible {
-    outline: 2px solid var(--accent-2);
-    outline-offset: 2px;
 }
 
 /* Speed: three connected buttons */
@@ -1011,13 +877,9 @@
     box-shadow: inset 0 0 0 1px rgba(var(--accent-2-rgb), 0.45);
 }
 
-/* On / off switch. --switch-width and --switch-height: the track, --knob: the round
-   knob. The knob sits in the middle of the track's height and slides along by
-   (width - height), so it keeps the same gap at both ends. */
+/* On / off switch: the button with its label. The track and the knob are
+   .ui-switch-track and .ui-switch-knob (css/components.css). */
 .lab-switch {
-    --switch-width: 46px;
-    --switch-height: 26px;
-    --knob: 18px;
     display: inline-flex;
     align-items: center;
     gap: 11px;
@@ -1027,39 +889,6 @@
     font-weight: 700;
     line-height: 1.3;
     text-align: left;
-}
-
-.lab-switch-track {
-    position: relative;
-    flex: none;
-    width: var(--switch-width);
-    height: var(--switch-height);
-    border: 1px solid var(--border-strong);
-    border-radius: 999px;
-    background: var(--surface-solid);
-    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-}
-
-.lab-switch-knob {
-    position: absolute;
-    top: calc((var(--switch-height) - 2px - var(--knob)) / 2);     /* 2px: the track's border */
-    left: calc((var(--switch-height) - 2px - var(--knob)) / 2);
-    width: var(--knob);
-    height: var(--knob);
-    border-radius: 50%;
-    background: var(--text-dim);
-    transition: transform 0.3s var(--ease), background 0.25s ease;
-}
-
-.lab-switch[aria-checked="true"] .lab-switch-track {
-    border-color: transparent;
-    background: var(--gradient-button);
-    box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.45);
-}
-
-.lab-switch[aria-checked="true"] .lab-switch-knob {
-    background: var(--on-accent);
-    transform: translateX(calc(var(--switch-width) - var(--switch-height)));
 }
 
 /* The live network diagram */
@@ -1318,7 +1147,7 @@
 }
 
 .lab-lm-input::placeholder {
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-weight: 500;
 }
 
@@ -1522,7 +1351,7 @@
 
 .lab-cands-legend {
     margin-top: 10px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 12.5px;
     line-height: 1.5;
 }
@@ -1624,7 +1453,7 @@
 }
 
 .lab-tokens-empty {
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 13.5px;
 }
 
@@ -1677,7 +1506,7 @@
 }
 
 .lab-teach-input::placeholder {
-    color: var(--lab-dim-text);
+    color: var(--text-label);
 }
 
 .lab-teach-btn {
@@ -1738,7 +1567,7 @@
 
 /* ===== 6. RESPONSIVE ===== */
 
-@media (max-width: 1020px) {
+@media (max-width: 1024px) {
     .js [data-feature="lab"]:empty {
         min-height: 2900px;
     }
@@ -1814,7 +1643,7 @@
     }
 
     .lab-corners {
-        --corner-inset: 7px;
+        --corners-inset: 7px;
     }
 
     .lab-tab {

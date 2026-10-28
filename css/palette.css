@@ -1,6 +1,6 @@
 /* =========================================================
    AI COMPASS — COMMAND PALETTE (Ctrl + K)
-   1. The blurred layer over the page
+   1. The dimmed layer over the page
    2. The window and its search box
    3. Results, groups and highlighted letters
    4. Empty state and footer
@@ -19,10 +19,7 @@
     align-items: flex-start;
     justify-content: center;
     padding: 12vh 16px 16px;
-    background: rgba(var(--accent-rgb), 0.08);
-    background: color-mix(in srgb, var(--bg) 60%, transparent);
-    -webkit-backdrop-filter: blur(10px) saturate(130%);
-    backdrop-filter: blur(10px) saturate(130%);
+    background: var(--backdrop);
     opacity: 0;
     transition: opacity 0.18s ease;
 }
@@ -440,7 +437,7 @@
 }
 
 /* Touch screens: no keyboard hints, an X instead of "Esc", bigger rows */
-@media (pointer: coarse) {
+@media (hover: none), (pointer: coarse) {
     .cp-hint {
         display: none;
     }

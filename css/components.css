@@ -1,0 +1,397 @@
+/* =========================================================
+   AI COMPASS — SHARED COMPONENTS
+   Small visual parts that several features use, each written once.
+   A feature puts the ui-... class next to its own class in its HTML
+   template, and changes only the custom properties listed below.
+   To change all sliders on the site, change the one .ui-range rule here
+   (the same for every other component).
+   This file loads right after style.css, so a feature's own CSS file
+   (loaded later) can set the custom properties of a component.
+
+   1. Corner brackets: .ui-corners
+      Used by: lessons progress panel, lab card and drawing board,
+      quiz card, glossary control panel.
+      --corners-inset   distance from the card's edge (10px)
+      --corners-size    length of each line (14px)
+      --corners-line    thickness of each line (1.5px)
+      --corner-tl, --corner-tr, --corner-bl, --corner-br
+                        colour of each corner (cyan; transparent hides one)
+   2. Light that scans along a card's top edge: .ui-scan (on the card)
+      Used by: lessons progress panel, lab card, quiz card, glossary
+      control panel. No custom properties.
+   3. Range sliders: .ui-range (on the <input type="range">)
+      Used by: lab (neurons, temperature), lessons mini-labs (neuron,
+      temperature).
+      --fill            how much of the line is coloured: js/lab.js sets it
+                        from the value; the whole line when nothing sets it
+   4. On/off switches: .ui-switch (the button), .ui-switch-track, .ui-switch-knob
+      Used by: lab ("new layer" switch), quiz (timed mode).
+      --switch-width, --switch-height   the track (46 x 26px)
+      --knob                            the round knob (18px)
+      --switch-on, --switch-on-border, --switch-on-glow
+                                        the track when on (the button gradient)
+      --knob-on, --knob-on-glow         the knob when on (white)
+   5. Filter chips with a dot and a count: .ui-chip, .ui-chip-dot, .ui-chip-count
+      Used by: glossary categories, timeline eras. The buttons are
+      .chip too (style.css: colours, hover, pressed).
+      --chip-dot        colour of the dot (grey)
+      --chip-dot-glow   its glow (none)
+   6. Answer options: .ui-option
+      Used by: lessons "check yourself" and "what would you do?",
+      quiz answers. JavaScript adds the states: .is-correct or .is-best
+      (green), .is-wrong (red), .is-chosen (picked but not the best: amber),
+      .is-dim (the other options, faded); aria-disabled="true" or
+      .is-locked once the question is answered.
+      --option-height, --option-pad, --option-radius   size (56px, 12px 16px, 14px)
+      --option-bg, --option-border                     colours at rest
+      --option-good, --option-bad, --option-picked     colours of the states
+   7. Progress rings: .ui-ring (the box), .ui-ring-chart (the <svg> with the
+      track and the bar), .ui-ring-ticks, .ui-ring-track, .ui-ring-bar
+      Used by: lessons progress panel, quiz countdown, quiz result.
+      --ring-size       width and height (104px)
+      --ring-stroke     thickness of the track and the bar (SVG units)
+      --ring-track      colour of the track
+      --ring-glow       the glow around the bar (a CSS filter)
+      The colour of the bar, and how fast it moves, belong to each feature.
+   8. Calm mode and reduced motion
+   All colours come from the variables in style.css.
+   ========================================================= */
+
+/* ===== 1. CORNER BRACKETS =====
+   An "L" in each corner, each one made of two thin lines (one gradient
+   per line), on a layer that covers the card. */
+
+.ui-corners {
+    --corners-inset: 10px;
+    --corners-size: 14px;
+    --corners-line: 1.5px;
+    --corner-tl: var(--accent-2);
+    --corner-tr: var(--accent-2);
+    --corner-bl: var(--accent-2);
+    --corner-br: var(--accent-2);
+    position: absolute;
+    inset: var(--corners-inset);
+    pointer-events: none;
+    background:
+        linear-gradient(var(--corner-tl), var(--corner-tl)) top left / var(--corners-size) var(--corners-line),
+        linear-gradient(var(--corner-tl), var(--corner-tl)) top left / var(--corners-line) var(--corners-size),
+        linear-gradient(var(--corner-tr), var(--corner-tr)) top right / var(--corners-size) var(--corners-line),
+        linear-gradient(var(--corner-tr), var(--corner-tr)) top right / var(--corners-line) var(--corners-size),
+        linear-gradient(var(--corner-bl), var(--corner-bl)) bottom left / var(--corners-size) var(--corners-line),
+        linear-gradient(var(--corner-bl), var(--corner-bl)) bottom left / var(--corners-line) var(--corners-size),
+        linear-gradient(var(--corner-br), var(--corner-br)) bottom right / var(--corners-size) var(--corners-line),
+        linear-gradient(var(--corner-br), var(--corner-br)) bottom right / var(--corners-line) var(--corners-size);
+    background-repeat: no-repeat;
+    opacity: 0.55;
+}
+
+/* ===== 2. LIGHT THAT SCANS ALONG THE TOP EDGE =====
+   30% of the card wide: it fades in on the left, runs to the right edge
+   and fades out there (so it never sticks out, even from a card that
+   doesn't cut off what overflows). The card needs a position (.card has one). */
+
+.ui-scan::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    width: 30%;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
+    animation: ui-scan 6s ease-in-out infinite;
+}
+
+@keyframes ui-scan {
+    0% { transform: translateX(-20%); opacity: 0; }
+    15% { opacity: 1; }
+    85% { opacity: 1; }
+    /* 233% of its own width (30% of the card) ends exactly at the right edge */
+    100% { transform: translateX(233%); opacity: 0; }
+}
+
+/* ===== 3. RANGE SLIDERS =====
+   A coloured line with a round handle (dark inside, with a cyan ring).
+   The input is 44px tall, so a finger can grab it easily; the negative
+   margin lets that area overlap the space around it a little.
+   --range-line: the line's thickness, --range-thumb: the handle's size
+   (border included), --range-thumb-border: the ring. */
+
+.ui-range {
+    --fill: 100%;
+    --range-line: 6px;
+    --range-thumb: 22px;
+    --range-thumb-border: 3px;
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 44px;
+    margin: -4px 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.ui-range::-webkit-slider-runnable-track {
+    height: var(--range-line);
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) var(--fill), var(--border-strong) var(--fill));
+}
+
+.ui-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: var(--range-thumb);
+    height: var(--range-thumb);
+    margin-top: calc((var(--range-line) - var(--range-thumb)) / 2);    /* centred on the line */
+    border: var(--range-thumb-border) solid var(--accent-2);
+    border-radius: 50%;
+    background: var(--surface-solid);
+    box-shadow: 0 0 0 4px rgba(var(--accent-2-rgb), 0.15), 0 0 16px rgba(var(--accent-2-rgb), 0.5);
+    transition: transform 0.2s var(--ease);
+}
+
+.ui-range:active::-webkit-slider-thumb {
+    transform: scale(1.15);
+}
+
+/* Firefox draws the coloured part itself (-moz-range-progress) */
+.ui-range::-moz-range-track {
+    height: var(--range-line);
+    border-radius: 999px;
+    background: var(--border-strong);
+}
+
+.ui-range::-moz-range-progress {
+    height: var(--range-line);
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+/* Firefox adds the border around the size, so the handle ends up just as big */
+.ui-range::-moz-range-thumb {
+    width: calc(var(--range-thumb) - 2 * var(--range-thumb-border));
+    height: calc(var(--range-thumb) - 2 * var(--range-thumb-border));
+    border: var(--range-thumb-border) solid var(--accent-2);
+    border-radius: 50%;
+    background: var(--surface-solid);
+    box-shadow: 0 0 0 4px rgba(var(--accent-2-rgb), 0.15), 0 0 16px rgba(var(--accent-2-rgb), 0.5);
+}
+
+.ui-range:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+}
+
+/* ===== 4. ON / OFF SWITCHES =====
+   The button has role="switch" and aria-checked. The knob sits in the middle
+   of the track's height and slides along by (width - height), so it keeps
+   the same gap at both ends. */
+
+.ui-switch {
+    --switch-width: 46px;
+    --switch-height: 26px;
+    --knob: 18px;
+    --switch-on: var(--gradient-button);
+    --switch-on-border: transparent;
+    --switch-on-glow: 0 0 16px rgba(var(--accent-rgb), 0.45);
+    --knob-on: var(--on-accent);
+    --knob-on-glow: none;
+}
+
+.ui-switch-track {
+    position: relative;
+    flex: none;
+    width: var(--switch-width);
+    height: var(--switch-height);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--surface-solid);
+    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.ui-switch-knob {
+    position: absolute;
+    top: calc((var(--switch-height) - 2px - var(--knob)) / 2);     /* 2px: the track's border */
+    left: calc((var(--switch-height) - 2px - var(--knob)) / 2);
+    width: var(--knob);
+    height: var(--knob);
+    border-radius: 50%;
+    background: var(--text-dim);
+    transition: transform 0.3s var(--ease), background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.ui-switch[aria-checked="true"] .ui-switch-track {
+    border-color: var(--switch-on-border);
+    background: var(--switch-on);
+    box-shadow: var(--switch-on-glow);
+}
+
+.ui-switch[aria-checked="true"] .ui-switch-knob {
+    background: var(--knob-on);
+    box-shadow: var(--knob-on-glow);
+    transform: translateX(calc(var(--switch-width) - var(--switch-height)));
+}
+
+/* ===== 5. FILTER CHIPS WITH A DOT AND A COUNT ===== */
+
+.ui-chip {
+    min-height: 40px;
+    padding: 7px 8px 7px 14px;
+}
+
+/* --chip-dot and --chip-dot-glow are read here with a default, so a feature
+   can set them on the chip (or on anything around it) */
+.ui-chip-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--chip-dot, var(--text-dim));
+    box-shadow: var(--chip-dot-glow, none);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ui-chip-count {
+    min-width: 26px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--surface-hover);
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ui-chip[aria-pressed="true"] .ui-chip-count {
+    background: rgba(var(--accent-2-rgb), 0.18);
+    color: var(--text-accent-2);
+}
+
+/* Bigger touch targets on phones and on touch screens */
+@media (max-width: 640px), (hover: none), (pointer: coarse) {
+    .ui-chip {
+        min-height: 44px;
+    }
+}
+
+/* ===== 6. ANSWER OPTIONS =====
+   A full-width button. The letter or mark inside it, and how it moves on
+   hover, belong to each feature. */
+
+.ui-option {
+    --option-height: 56px;
+    --option-pad: 12px 16px;
+    --option-radius: 14px;
+    --option-bg: var(--surface-solid);
+    --option-border: var(--border-strong);
+    --option-good: var(--success);
+    --option-bad: var(--danger);
+    --option-picked: var(--warning);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: var(--option-height);
+    padding: var(--option-pad);
+    border: 1px solid var(--option-border);
+    border-radius: var(--option-radius);
+    background: var(--option-bg);
+    color: var(--text);
+    font-weight: 600;
+    text-align: left;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s var(--ease), box-shadow 0.2s ease, opacity 0.3s ease;
+}
+
+/* Answered: no more hover, and the mouse shows it can't be clicked */
+.ui-option:not([aria-disabled="true"]):not(.is-locked):hover {
+    border-color: var(--accent-2);
+    background: color-mix(in srgb, var(--accent-2) 7%, var(--option-bg));
+}
+
+.ui-option[aria-disabled="true"],
+.ui-option.is-locked {
+    cursor: default;
+}
+
+/* The states: the colour on the border, and 12% of it in the background
+   (the first background is for browsers without color-mix) */
+.ui-option.is-correct,
+.ui-option.is-best {
+    border-color: var(--option-good);
+    background: var(--option-bg);
+    background: color-mix(in srgb, var(--option-good) 12%, var(--option-bg));
+}
+
+.ui-option.is-wrong {
+    border-color: var(--option-bad);
+    background: var(--option-bg);
+    background: color-mix(in srgb, var(--option-bad) 12%, var(--option-bg));
+}
+
+.ui-option.is-chosen {
+    border-color: var(--option-picked);
+    background: var(--option-bg);
+    background: color-mix(in srgb, var(--option-picked) 12%, var(--option-bg));
+}
+
+.ui-option.is-dim {
+    opacity: 0.5;
+}
+
+/* ===== 7. PROGRESS RINGS =====
+   Each <svg> fills the box; the chart is turned a quarter back, so the
+   progress starts at the top. The bar's length comes from JavaScript
+   (stroke-dashoffset). */
+
+.ui-ring {
+    --ring-size: 104px;
+    --ring-stroke: 7;
+    --ring-track: rgba(var(--accent-rgb), 0.14);
+    --ring-glow: drop-shadow(0 0 6px rgba(var(--accent-2-rgb), 0.55));
+    position: relative;
+    flex: none;
+    width: var(--ring-size);
+    height: var(--ring-size);
+}
+
+.ui-ring svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.ui-ring-chart {
+    transform: rotate(-90deg);
+}
+
+/* A dotted outer ring that turns slowly around its own middle */
+.ui-ring-ticks {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: aic-spin 40s linear infinite;
+}
+
+.ui-ring-track {
+    fill: none;
+    stroke: var(--ring-track);
+    stroke-width: var(--ring-stroke);
+}
+
+.ui-ring-bar {
+    fill: none;
+    stroke-width: var(--ring-stroke);
+    stroke-linecap: round;
+    filter: var(--ring-glow);
+}
+
+/* ===== 8. CALM MODE AND REDUCED MOTION =====
+   style.css stops every animation and transition under html.fx-motion-off;
+   the scanning light would then stand still at the left edge, so it is hidden. */
+
+html.fx-motion-off .ui-scan::before {
+    display: none;
+}
