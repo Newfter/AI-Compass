@@ -34,7 +34,8 @@
      A.lab.define(id, spec)        an experiment's file registers it (see above)
      A.lab.open(id, { focus })     opens that experiment and scrolls to the lab. focus: true
                                    moves the keyboard focus to its title; without it, the focus
-                                   goes to the lab's heading. False for an id not in the catalogue.
+                                   goes to the lab's heading. An id that isn't in the catalogue
+                                   shows the grid with a note, and returns false.
      A.lab.close()                 back to the grid of all experiments
      A.lab.list()                  [{ id, titleKey, hookKey, ideaKey, level }], in the catalogue's order
      A.lab.current()               the id of the experiment in the stage, or null
@@ -435,7 +436,7 @@
 
     // Calls one function of the running experiment; an error in it is reported, not thrown
     function call(name) {
-        if (!live || typeof live.controller[name] !== "function") return;
+        if (!live || !live.controller || typeof live.controller[name] !== "function") return;
         try {
             live.controller[name]();
         } catch (error) {
@@ -445,7 +446,7 @@
 
     // pause() when the stage can't be seen, resume() when it can again (each once)
     function updateVisibility() {
-        if (!live) return;
+        if (!live || !live.controller) return;
         if (!onScreen && !live.paused) {
             live.paused = true;
             call("pause");
@@ -485,10 +486,16 @@
             track: function (kind, detail) { track(id, kind, detail); },
             visible: function () { return live === record && onScreen; }
         };
+        // The stage may have appeared a moment ago: ask the page, not the last report
+        // (so that ctx.visible() is right during create() already)
+        onScreen = onScreenNow(stage);
+        live = record;
         try {
             record.controller = spec.create(element, record.ctx) || {};
         } catch (error) {
             report(error);
+            live = null;
+            record.announcer.cancel();
             status = "error";
             showError();
             return false;
@@ -496,10 +503,7 @@
         LIFE_CYCLE.forEach(function (name) {
             if (typeof record.controller[name] !== "function") report(new Error("lab " + id + ": the controller has no " + name + "()"));
         });
-        live = record;
         status = "ready";
-        // The stage may have appeared a moment ago: ask the page, not the last report
-        onScreen = onScreenNow(stage);
         updateVisibility();
         if (A.motion.ok()) A.dom.replay(element, "lab-panel-in");
         return true;
@@ -799,15 +803,17 @@
             if (current && status !== "waiting") setHash(LINK_PREFIX + current);
             return;
         }
-        if (byId[target.id]) {
-            open(target.id, { go: true });
-            return;
-        }
-        // No such experiment: the grid, with a note that says so
+        if (byId[target.id]) open(target.id, { go: true });
+        else showUnknown(target.id);
+    }
+
+    // A link (or a feature) named an experiment that isn't in the catalogue: the grid,
+    // with a note that says so
+    function showUnknown(id) {
         ensure();
         close({ quiet: true, focus: false });
-        showNotice(target.id);
-        A.navigate("lab", { focus: false });
+        showNotice(id);
+        A.navigate("lab");
     }
 
     window.addEventListener("hashchange", followLink);
@@ -819,7 +825,8 @@
     /* =========================================================
        10. COMMANDS AND AICompass.lab (what other features use)
        ========================================================= */
-    // One Ctrl+K palette command per experiment: "Open lab: Teach the machine"
+    // One Ctrl+K palette command per experiment: "Open lab: Teach the machine". Like every
+    // section link, it moves the focus to the lab's heading (the experiment's title is next).
     CATALOGUE.forEach(function (entry) {
         A.registerCommand({
             id: "lab-" + entry.id,
@@ -827,13 +834,18 @@
             icon: entry.emoji || "🧪",
             title: function () { return t("lab.cmdOpen", { title: t(entry.titleKey) }); },
             keywords: entry.keywords || "",
-            run: function () { open(entry.id, { go: true, focus: true }); }
+            run: function () { open(entry.id, { go: true }); }
         });
     });
 
-    // AICompass.lab.open("predictor"), from Compass Bot, the lessons and the palette
+    // AICompass.lab.open("predictor"), from Compass Bot, the lessons and the search.
+    // An id that isn't in the catalogue shows the grid, with a note (false).
     function openLab(id, how) {
         const options = how || {};
+        if (!byId[id]) {
+            showUnknown(String(id));
+            return false;
+        }
         return open(id, { go: true, focus: options.focus === true });
     }
 

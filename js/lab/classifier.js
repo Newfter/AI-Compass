@@ -565,6 +565,7 @@
         lastDiagram: 0,
         lastMaps: 0,
         preset: null,            // the example on the board (its chip is lit), or null
+        autoStarted: false,      // it started learning by itself once (see autoStart)
         announceFrame: 0,        // the frames booked to read the numbers out after Step
         // What must be worked out or drawn again at the next frame
         dirty: { net: true, maps: true, board: true, diagram: true, chart: true, stats: true }
@@ -578,6 +579,14 @@
         nn.net = createNetwork();
         nn.points = makePreset("circle");
         nn.preset = "circle";
+    }
+
+    // The first time you see the network, it starts learning by itself (unless
+    // animations are off): the line bends into a ring before your eyes. Once per visit.
+    function autoStart() {
+        if (nn.autoStarted || paused || !hub || !hub.visible()) return;
+        nn.autoStarted = true;
+        if (A.motion.ok() && nn.points.length && nn.epoch === 0) setTraining(true);
     }
 
     // Keeps up to LOSS_HISTORY loss values; when full it keeps every second one
@@ -1906,7 +1915,8 @@
         setUpControls();
 
         // What it shows: the first opening's example, or what you left last time.
-        // Nothing runs until you press Train (also when it was training when it closed).
+        // Nothing runs until you press Train (also when it was training when it closed),
+        // except the very first time (autoStart, at the end).
         nn.training = false;
         selectClass(nn.selected);
         markPreset(nn.preset);
@@ -1927,6 +1937,7 @@
         // The pixel ratio changes when the window moves to a screen with sharper pixels.
         // No box changes size then, so the size watcher misses it.
         stopRatio = A.onPixelRatioChange(measureAll);
+        autoStart();
 
         return {
             pause: pause,
@@ -1953,6 +1964,7 @@
         paused = false;
         nn.dirty.board = true;
         schedule();
+        autoStart();
     }
 
     // Closing: stop everything. The hub empties the stage afterwards.
