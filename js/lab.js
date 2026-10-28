@@ -690,14 +690,16 @@
             open(button.getAttribute("data-exp"), { focus: event.detail === 0, reveal: fromGrid });
         });
         picker.addEventListener("keydown", onPickerKey);
-        // A card under the pointer (or a finger), or in focus, is about to be opened: its files
-        // start loading now, so that the click finds them ready. Nothing runs until it opens.
+        // A card under the mouse pointer, or in focus, is about to be opened: its files start
+        // loading now, so that the click finds them ready. Nothing runs until it opens.
         picker.addEventListener("pointerover", prefetch);
         picker.addEventListener("focusin", prefetch);
     }
 
     const prefetched = {};
     function prefetch(event) {
+        // A finger touches a card at the start of every scroll too: on touch, files load on the tap
+        if (event.pointerType === "touch") return;
         const button = event.target.closest(".lab-pick");
         const id = button && button.getAttribute("data-exp");
         if (!id || prefetched[id] || specs[id]) return;
