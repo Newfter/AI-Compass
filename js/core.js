@@ -39,13 +39,13 @@
     5  A.motion.ok() / reduced / calm / setCalm(on) / toggleCalm() / onChange(callback) / ease
        A.reducedMotion (the device setting only)
        A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value }
-    6  A.util.clamp / lerp / easeOut / randomInt / pick / shuffle / sampleWeighted /
-              debounce / frameThrottle
+    6  A.util.clamp / lerp / easeOut / random / randomInt / pick / shuffle /
+              sampleWeighted / debounce / frameThrottle
        A.dom.focusable / focusHeading / pauseScrollAnchoring / replay / fromHTML
        A.confirmPress(button, { onArm, onDisarm, onConfirm, enabled, timeout })
            -> { armed, disarm() }: a button that needs a second press
-       A.colors.parse / rgb(cssName) / rgba(color, alpha)   A.canvas.pixelRatio / fit / roundRect
-       A.cssVar(name)   A.escapeHTML(text)
+       A.colors.parse / rgb(cssName) / rgba(color, alpha) / mix(a, b, amount)
+       A.canvas.pixelRatio / fit / roundRect   A.cssVar(name)   A.escapeHTML(text)
     7  A.breakpoints   A.queries   A.media(query)   A.onMedia(query, callback)
        A.whenVisible(element, callback, options)   A.onResize(callback, options)
        A.onPixelRatioChange(callback)   A.layout.px / navHeight
@@ -571,6 +571,12 @@
             return 1 - Math.pow(1 - p, 3);
         },
 
+        // A number from min up to max, with decimals (max itself never comes out).
+        // Example: random(0.62, 0.92) -> 0.7731...   For whole numbers use randomInt.
+        random: function (min, max) {
+            return min + Math.random() * (max - min);
+        },
+
         // A whole number from min to max (both included)
         randomInt: function (min, max) {
             return min + Math.floor(Math.random() * (max - min + 1));
@@ -781,6 +787,13 @@
 
         rgba: function (color, alpha) {
             return "rgba(" + Math.round(color[0]) + "," + Math.round(color[1]) + "," + Math.round(color[2]) + "," + alpha + ")";
+        },
+
+        // Mixes two [r, g, b] colours: amount 0 gives a, 1 gives b, 0.5 the colour halfway.
+        // Returns a new [r, g, b] of whole numbers.
+        // Example: mix([0, 0, 0], [255, 255, 255], 0.5) -> [128, 128, 128]
+        mix: function (a, b, amount) {
+            return [0, 1, 2].map(function (i) { return Math.round(util.lerp(a[i], b[i], amount)); });
         }
     };
 
