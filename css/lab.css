@@ -6,32 +6,37 @@
    4. Explanation panels
    5. "Next-word predictor"
    6. Responsive
-   7. Reduced motion
+   7. Calm mode and reduced motion
    All colours come from the variables in style.css,
    so both the dark and the light theme look right.
    ========================================================= */
 
 /* ===== 1. THE CARD, TABS AND SHARED PARTS ===== */
 
-/* Colours for small text. In the light theme the bright cyan, the green and the
-   dim grey are too pale for tiny letters, so they are mixed with the text colour
-   (still the same hue, just darker) to stay easy to read (WCAG AA contrast). */
+/* Small grey labels. Coloured text uses the --text-* colours of style.css, but
+   there is no shared colour for small grey text yet (TODO(core): one token for it,
+   the quiz needs one too). In the light theme --text-dim is too pale for 10-12px
+   letters on the tinted boxes, so the lab uses the darker --text-muted there
+   (about 6.6:1 instead of 5:1 contrast). */
 .lab {
-    --lab-cyan-text: var(--accent-2);
-    --lab-green-text: var(--success);
-    --lab-warning-text: var(--warning);
     --lab-dim-text: var(--text-dim);
 }
 
 [data-theme="light"] .lab {
-    --lab-cyan-text: color-mix(in srgb, var(--accent-2) 70%, var(--text));
-    --lab-green-text: color-mix(in srgb, var(--success) 70%, var(--text));
-    --lab-warning-text: color-mix(in srgb, var(--warning) 70%, var(--text));
     --lab-dim-text: var(--text-muted);
 }
 
-[data-feature="lab"] [hidden] {
-    display: none !important;
+/* js/lab.js builds the lab only when it is needed (near the screen, or in a quiet
+   moment after the page loaded). Until then its empty box keeps about the height of
+   the tab it will open on, so the page below doesn't jump: the "Teach the machine"
+   tab, or the shorter predictor tab when that was the last one used (js/lab.js puts
+   the saved tab in data-lab-tab). Smaller screens: see "6. Responsive". */
+.js [data-feature="lab"]:empty {
+    min-height: 1900px;
+}
+
+.js [data-feature="lab"][data-lab-tab="predictor"]:empty {
+    min-height: 1410px;
 }
 
 /* The lab card is big and its canvases change every frame, so instead of
@@ -57,7 +62,8 @@
     backdrop-filter: none;
 }
 
-/* A thin light that slowly sweeps along the top edge */
+/* A thin light that slowly sweeps along the top edge: 40% of the card wide, it starts
+   just left of the card and aic-sweep (style.css) moves it 2.5 widths, out on the right */
 .lab::before {
     content: "";
     position: absolute;
@@ -67,37 +73,32 @@
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
     transform: translateX(-100%);
-    animation: lab-sweep 7s linear infinite;
+    animation: aic-sweep 7s linear infinite;
     pointer-events: none;
 }
 
-@keyframes lab-sweep {
-    to { transform: translateX(250%); }
-}
-
-/* Sci-fi corner brackets */
+/* Sci-fi corner brackets: an "L" in each corner, made of two thin lines each.
+   --corner-inset: distance from the edge, --corner-size: length of a line,
+   --corner-line: its thickness */
 .lab-corners,
 .lab-board-corners {
+    --corner-inset: 10px;
+    --corner-size: 14px;
+    --corner-line: 1.5px;
     position: absolute;
-    inset: 10px;
+    inset: var(--corner-inset);
     pointer-events: none;
     background:
-        linear-gradient(var(--accent-2), var(--accent-2)) top left / 14px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) top left / 1.5px 14px,
-        linear-gradient(var(--accent-2), var(--accent-2)) top right / 14px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) top right / 1.5px 14px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / 14px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / 1.5px 14px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / 14px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / 1.5px 14px;
+        linear-gradient(var(--accent-2), var(--accent-2)) top left / var(--corner-size) var(--corner-line),
+        linear-gradient(var(--accent-2), var(--accent-2)) top left / var(--corner-line) var(--corner-size),
+        linear-gradient(var(--accent-2), var(--accent-2)) top right / var(--corner-size) var(--corner-line),
+        linear-gradient(var(--accent-2), var(--accent-2)) top right / var(--corner-line) var(--corner-size),
+        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / var(--corner-size) var(--corner-line),
+        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / var(--corner-line) var(--corner-size),
+        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / var(--corner-size) var(--corner-line),
+        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / var(--corner-line) var(--corner-size);
     background-repeat: no-repeat;
     opacity: 0.5;
-}
-
-/* Decorative loops stop while the lab is off screen */
-.lab.is-offscreen *,
-.lab.is-offscreen::before {
-    animation-play-state: paused !important;
 }
 
 .lab-top {
@@ -140,9 +141,9 @@
     transform: translateX(100%);
 }
 
+/* The tabs come after the glow in the HTML, so they are drawn on top of it */
 .lab-tab {
     position: relative;
-    z-index: 1;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -199,7 +200,7 @@
 }
 
 .lab-tab[aria-selected="true"] .lab-tab-sub {
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
 }
 
 .lab-live {
@@ -227,12 +228,7 @@
     inset: -4px;
     border: 1px solid var(--success);
     border-radius: 50%;
-    animation: lab-ring 2s ease-out infinite;
-}
-
-@keyframes lab-ring {
-    from { transform: scale(0.6); opacity: 1; }
-    to { transform: scale(1.8); opacity: 0; }
+    animation: aic-pulse-ring 2s ease-out infinite;
 }
 
 .lab-panel-in {
@@ -245,7 +241,7 @@
 }
 
 .lab-mini-label {
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 2px;
@@ -403,7 +399,7 @@
 
 .lab-tool:hover:not(:disabled) {
     border-color: var(--accent-2);
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
 }
 
 .lab-tool:disabled {
@@ -428,41 +424,6 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-.lab-board:focus-visible {
-    outline: 2px solid var(--accent-2);
-    outline-offset: 3px;
-    border-radius: 20px;
-}
-
-/* style.css gives every focused control 6px corners. Inside the lab the
-   controls keep their own rounded shape, so the focus ring follows it. */
-.lab-tab:focus-visible,
-.lab-cand:focus-visible {
-    border-radius: 13px;
-}
-
-.lab-class:focus-visible {
-    border-radius: 11px;
-}
-
-.lab-tool:focus-visible,
-.lab-lm-clear:focus-visible,
-.lab-teach-input:focus-visible {
-    border-radius: 12px;
-}
-
-.lab .btn:focus-visible {
-    border-radius: 14px;
-}
-
-.lab .btn-small:focus-visible {
-    border-radius: 11px;
-}
-
-.lab .chip:focus-visible {
-    border-radius: 999px;
-}
-
 .lab-board-canvas {
     position: absolute;
     inset: 0;
@@ -471,7 +432,7 @@
 }
 
 .lab-board-corners {
-    inset: 12px;
+    --corner-inset: 12px;
     opacity: 0.6;
 }
 
@@ -546,7 +507,7 @@
     border-radius: 9px;
     background: var(--surface-solid);
     background: color-mix(in srgb, var(--surface-solid) 86%, transparent);
-    color: var(--accent);
+    color: var(--text-accent);
     font-size: 11.5px;
     font-weight: 600;
     white-space: pre;
@@ -556,7 +517,7 @@
 }
 
 .lab-readout.is-b {
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
 }
 
 /* Example datasets */
@@ -575,7 +536,7 @@
 /* Selected / hovered chips use the readable cyan (the same as style.css in the dark theme) */
 .lab button.chip:hover,
 .lab .chip.active {
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
 }
 
 .lab-preset {
@@ -704,7 +665,7 @@
 
 .lab-status[data-status="training"] {
     border-color: rgba(var(--accent-2-rgb), 0.4);
-    color: var(--lab-green-text);
+    color: var(--text-success);
 }
 
 .lab-status[data-status="training"] .lab-status-dot {
@@ -719,7 +680,7 @@
 
 .lab-status[data-status="done"] {
     border-color: rgba(var(--accent-2-rgb), 0.5);
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
 }
 
 .lab-status[data-status="done"] .lab-status-dot {
@@ -946,36 +907,41 @@
     padding: 2px 8px;
     border-radius: 8px;
     background: rgba(var(--accent-2-rgb), 0.12);
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
 }
 
+/* --fill: how much of the line is coloured (lab.js sets it from the value),
+   --track: the line's thickness, --thumb: the round handle (with its border) */
 .lab-range {
     --fill: 50%;
+    --track: 6px;
+    --thumb: 22px;
+    --thumb-border: 3px;
     -webkit-appearance: none;
     appearance: none;
     display: block;
     width: 100%;
-    height: 44px;           /* a big, finger-friendly area to grab */
-    margin: -4px 0;
+    height: 44px;           /* a big, finger-friendly area to grab... */
+    margin: -4px 0;         /* ...that may overlap the space around it a little */
     background: transparent;
     cursor: pointer;
 }
 
 .lab-range::-webkit-slider-runnable-track {
-    height: 6px;
+    height: var(--track);
     border-radius: 999px;
     background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) var(--fill), var(--border-strong) var(--fill));
 }
 
 .lab-range::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 22px;
-    height: 22px;
-    margin-top: -8px;
-    border: 3px solid var(--accent-2);
+    width: var(--thumb);
+    height: var(--thumb);
+    margin-top: calc((var(--track) - var(--thumb)) / 2);    /* centred on the line */
+    border: var(--thumb-border) solid var(--accent-2);
     border-radius: 50%;
     background: var(--surface-solid);
     box-shadow: 0 0 0 4px rgba(var(--accent-2-rgb), 0.15), 0 0 16px rgba(var(--accent-2-rgb), 0.5);
@@ -987,21 +953,22 @@
 }
 
 .lab-range::-moz-range-track {
-    height: 6px;
+    height: var(--track);
     border-radius: 999px;
     background: var(--border-strong);
 }
 
 .lab-range::-moz-range-progress {
-    height: 6px;
+    height: var(--track);
     border-radius: 999px;
     background: linear-gradient(90deg, var(--accent), var(--accent-2));
 }
 
+/* Firefox adds the border around the size, so the handle ends up just as big */
 .lab-range::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border: 3px solid var(--accent-2);
+    width: calc(var(--thumb) - 2 * var(--thumb-border));
+    height: calc(var(--thumb) - 2 * var(--thumb-border));
+    border: var(--thumb-border) solid var(--accent-2);
     border-radius: 50%;
     background: var(--surface-solid);
     box-shadow: 0 0 0 4px rgba(var(--accent-2-rgb), 0.15), 0 0 16px rgba(var(--accent-2-rgb), 0.5);
@@ -1040,12 +1007,17 @@
 
 .lab-seg button[aria-pressed="true"] {
     background: rgba(var(--accent-2-rgb), 0.14);
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
     box-shadow: inset 0 0 0 1px rgba(var(--accent-2-rgb), 0.45);
 }
 
-/* On / off switch */
+/* On / off switch. --switch-width and --switch-height: the track, --knob: the round
+   knob. The knob sits in the middle of the track's height and slides along by
+   (width - height), so it keeps the same gap at both ends. */
 .lab-switch {
+    --switch-width: 46px;
+    --switch-height: 26px;
+    --knob: 18px;
     display: inline-flex;
     align-items: center;
     gap: 11px;
@@ -1060,8 +1032,8 @@
 .lab-switch-track {
     position: relative;
     flex: none;
-    width: 46px;
-    height: 26px;
+    width: var(--switch-width);
+    height: var(--switch-height);
     border: 1px solid var(--border-strong);
     border-radius: 999px;
     background: var(--surface-solid);
@@ -1070,10 +1042,10 @@
 
 .lab-switch-knob {
     position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
+    top: calc((var(--switch-height) - 2px - var(--knob)) / 2);     /* 2px: the track's border */
+    left: calc((var(--switch-height) - 2px - var(--knob)) / 2);
+    width: var(--knob);
+    height: var(--knob);
     border-radius: 50%;
     background: var(--text-dim);
     transition: transform 0.3s var(--ease), background 0.25s ease;
@@ -1086,8 +1058,8 @@
 }
 
 .lab-switch[aria-checked="true"] .lab-switch-knob {
-    background: #ffffff;
-    transform: translateX(20px);
+    background: var(--on-accent);
+    transform: translateX(calc(var(--switch-width) - var(--switch-height)));
 }
 
 /* The live network diagram */
@@ -1191,7 +1163,7 @@
     height: 34px;
     border-radius: 10px;
     background: var(--gradient-button);
-    color: #ffffff;
+    color: var(--on-accent);
     font-family: var(--font-mono);
     font-size: 16px;
     box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.4);
@@ -1229,7 +1201,7 @@
 }
 
 .lab-step-num {
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -1292,7 +1264,7 @@
 }
 
 .lab-hood em {
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
     font-family: var(--font-mono);
     font-style: normal;
     font-size: 12.5px;
@@ -1350,9 +1322,11 @@
     font-weight: 500;
 }
 
+/* The focus shows as a glow. The outline is transparent: it is invisible here, but
+   in Windows High Contrast mode (which removes shadows) it becomes a visible ring. */
 .lab-lm-input:focus-visible {
-    outline: none;
-    border-radius: 18px;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
     border-color: var(--accent-2);
     box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.35), 0 0 30px rgba(var(--accent-2-rgb), 0.15);
 }
@@ -1519,7 +1493,7 @@
 
 .lab-cand-item:first-child .lab-cand-rank {
     border-color: rgba(var(--accent-2-rgb), 0.5);
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
 }
 
 .lab-cand-word {
@@ -1535,7 +1509,7 @@
 }
 
 .lab-cand-pct {
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
     font-size: 14px;
     font-weight: 600;
 }
@@ -1635,7 +1609,7 @@
 }
 
 .lab-tok.is-new small {
-    color: var(--lab-warning-text);
+    color: var(--text-warning);
 }
 
 .lab-tok.is-typing {
@@ -1669,16 +1643,12 @@
     background: var(--surface);
 }
 
+/* The numbers are gradient text: lab.js gives them the .gradient-text class of style.css */
 .lab-lm-stat strong {
     display: block;
     font-size: 22px;
     font-weight: 600;
     line-height: 1.2;
-    background: var(--gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: var(--accent);
 }
 
 .lab-lm-stat span {
@@ -1724,13 +1694,13 @@
 }
 
 .lab-teach-status.is-error {
-    color: var(--danger);
+    color: var(--text-danger);
 }
 
 .lab-link-btn {
     min-height: 44px;
     margin-top: 2px;
-    color: var(--lab-cyan-text);
+    color: var(--text-accent-2);
     font-size: 13px;
     font-weight: 700;
     text-decoration: underline;
@@ -1769,6 +1739,14 @@
 /* ===== 6. RESPONSIVE ===== */
 
 @media (max-width: 1020px) {
+    .js [data-feature="lab"]:empty {
+        min-height: 2900px;
+    }
+
+    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
+        min-height: 2080px;
+    }
+
     .lab-nn,
     .lab-lm {
         grid-template-columns: minmax(0, 1fr);
@@ -1790,6 +1768,14 @@
 }
 
 @media (max-width: 720px) {
+    .js [data-feature="lab"]:empty {
+        min-height: 3200px;
+    }
+
+    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
+        min-height: 2380px;
+    }
+
     .lab-top {
         flex-direction: column;
         align-items: stretch;
@@ -1814,13 +1800,21 @@
 }
 
 @media (max-width: 640px) {
+    .js [data-feature="lab"]:empty {
+        min-height: 3550px;
+    }
+
+    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
+        min-height: 2450px;
+    }
+
     .lab {
         padding: 16px;
         border-radius: 20px;
     }
 
     .lab-corners {
-        inset: 7px;
+        --corner-inset: 7px;
     }
 
     .lab-tab {
@@ -1908,6 +1902,14 @@
 }
 
 @media (max-width: 480px) {
+    .js [data-feature="lab"]:empty {
+        min-height: 3900px;
+    }
+
+    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
+        min-height: 2850px;
+    }
+
     .lab-tab-icon {
         display: none;
     }
@@ -1953,18 +1955,11 @@
     }
 }
 
-/* ===== 7. REDUCED MOTION ===== */
+/* ===== 7. CALM MODE AND REDUCED MOTION =====
+   style.css already stops every animation and transition under html.fx-motion-off
+   (core.js sets it for reduced motion and for calm mode). The lab only adds: */
 
-@media (prefers-reduced-motion: reduce) {
-    .lab::before,
-    .lab-scan,
-    .lab-live-dot::after,
-    .lab-empty-icon,
-    .lab-tok {
-        animation: none !important;
-    }
-
-    .lab-cand:hover {
-        transform: none;
-    }
+/* a candidate doesn't slide to the right under the mouse */
+html.fx-motion-off .lab-cand:hover {
+    transform: none;
 }
