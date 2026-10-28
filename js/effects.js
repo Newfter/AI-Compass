@@ -595,18 +595,20 @@
     // The hero is on screen from the start, so it never waits for JavaScript:
     // index.html marks its blocks as "revealed" and css/effects.css lets them
     // rise in one after another from the very first frame.
-    // How long until the part around this element starts to appear?
-    // (0 when it can be seen already, or when it isn't part of such an entrance)
-    function entranceWait(element) {
-        const host = element.closest("[data-reveal].revealed");
+    // How long until the part of the hero around this element starts to appear
+    // (plus "after" ms, if given)? 0 when that time has passed, or when the
+    // element isn't part of the hero's entrance. (Only the hero has one, and
+    // asking the browser for its animations costs a style update.)
+    function entranceWait(element, after) {
+        const host = element.closest(".hero [data-reveal].revealed");
         if (!host || revealTimes.has(host) || !host.getAnimations) return 0;
         let wait = 0;
         host.getAnimations({ subtree: true }).forEach((animation) => {
             const effect = animation.effect;
             const time = animation.currentTime;
             if (!effect || !effect.target || !effect.target.contains(element) || time === null) return;
-            const delay = effect.getTiming().delay;
-            if (time < delay) wait = Math.max(wait, delay - time);
+            const start = effect.getTiming().delay + (after || 0);
+            if (time < start) wait = Math.max(wait, start - time);
         });
         return wait;
     }
@@ -781,6 +783,8 @@
     }
 
     // A text came onto the screen (or left it). It decodes once a fifth of it can be seen.
+    // In the hero, which rises in with CSS, it waits like a text in an appearing card:
+    // until SCRAMBLE_AFTER_CARD after its part of the hero starts to appear.
     function onScrambleView(entries) {
         entries.forEach((entry) => {
             const element = entry.target;
@@ -788,7 +792,7 @@
             else onScreenNow.delete(element);
             if (entry.isIntersecting && entry.intersectionRatio >= SCRAMBLE_VISIBLE && scramblePending.has(element) && hostShown(element)) {
                 scramblePending.delete(element);
-                scramble(element, 0);
+                scramble(element, entranceWait(element, SCRAMBLE_AFTER_CARD));
             }
         });
     }
