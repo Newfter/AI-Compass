@@ -27,7 +27,7 @@
     "use strict";
 
     const root = document.documentElement;
-    const PREFIX = "aic:";
+    const PREFIX = "aic:";      // before every storage key; the theme script in index.html reads "aic:theme" itself
 
     // Errors in one listener must not stop the others: report them and go on
     function report(error) {
@@ -134,10 +134,10 @@
     // Some texts show a number or a word that comes from the data, like the number of
     // lessons. The feature that knows it registers it once, by name:
     //     A.setTextValue("lessonCount", LESSONS.length);
-    //     A.setTextValue("questionCount", function () { return A.plural("quiz.questionCount", 12); });
+    //     A.setTextValue("questionCount", function () { return A.plural("quiz.questionCount", QUESTIONS.length); });
     // Then any text can say {lessonCount}: t(), A.plural() and the data-i18n elements of
     // the page fill it in, also after a language change. A function is asked again each
-    // time, so it can answer with words in the current language ("Twelve questions").
+    // time, so it can answer in the current language ("12 questions" / "12 вопросов").
     // Numbers are written the local way (A.format.number). Values passed to t() itself
     // win over these. A text that depends on a number names it on its element, and gets
     // the plural form that suits it (see plural() below):
@@ -173,7 +173,8 @@
     }
 
     // t("quiz.title") returns the text in the current language.
-    // Optional values fill in {placeholders}: t("quiz.score", { score: 5 })
+    // Optional values fill in {placeholders}: t("quiz.q.counter", { n: 3, total: 12 }) -> "Question 3 / 12"
+    // (a value set with setTextValue() fills its {name} without being passed)
     function t(key, values) {
         const text = lookup(key);
         return text === undefined ? key : fill(text, values);
@@ -216,7 +217,7 @@
     }
 
     // A translated piece of HTML that core re-translates by itself when the language changes:
-    // i18nHTML("quiz.start", "qz-label") -> <span class="qz-label" data-i18n="quiz.start">Start</span>
+    // i18nHTML("quiz.q.next", "qz-label") -> <span class="qz-label" data-i18n="quiz.q.next">Next question</span>
     function i18nHTML(key, className, tag) {
         tag = tag || "span";
         return "<" + tag + (className ? ' class="' + className + '"' : "") + ' data-i18n="' + key + '">' + t(key) + "</" + tag + ">";

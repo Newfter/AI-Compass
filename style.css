@@ -106,6 +106,9 @@
     /* Text and icons on top of an accent colour or the button gradient */
     --on-accent: #ffffff;
     --accent-strong: #6844c8;
+    /* The edge of the gradient button: a light rim, and a thin shine along its top */
+    --button-rim: rgba(190, 170, 255, 0.35);
+    --button-shine: rgba(255, 255, 255, 0.2);
 
     /* Layers, from the back to the front (z-index) */
     --z-bg-grid: -3;      /* the grid pattern */
@@ -326,8 +329,8 @@ textarea:focus-visible,
 .btn-primary {
     background: var(--gradient-button);
     color: var(--on-accent);
-    border-color: rgba(190, 170, 255, 0.35);
-    box-shadow: 0 10px 35px rgba(var(--accent-rgb), 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: var(--button-rim);
+    box-shadow: 0 10px 35px rgba(var(--accent-rgb), 0.3), inset 0 1px 0 var(--button-shine);
 }
 
 .btn-primary:hover {
