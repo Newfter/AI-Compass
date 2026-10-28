@@ -137,14 +137,17 @@
     const CAR_SIZE = { world: 14, min: 8 };        // a car is 14 world units long (its circle), but never shorter than 8 px
     const LEADER_SCALE = 1.5;            // the leader is drawn this much bigger
     const RANK_COLORS = { low: 0.25 };   // the last car gets kit.scale(0.25), the first one kit.scale(1)
-    const HUD_PAD = 10;                  // px: the generation and the time, in the top left corner
+    const HUD_PAD = 6;                   // px: the generation and the time, in the top left corner...
+    const PILL = { x: 8, y: 11, alpha: 0.85 };     // ...on a pill (px around the text), like "Draw here"
     const DRAW_FADE = 0.3;               // draw mode: the old track shows this faintly
     const RAY_LABELS = ["←60°", "←30°", "0°", "30°→", "60°→"];   // the sensors in the brain diagram, left to right
     const CHART_HEIGHT = 200;            // px
     const BRAIN = {
         height: 210,                     // px: the diagram's canvas
-        left: 64,                        // px kept for the input labels...
+        left: 64,                        // px kept for the input labels (at least)...
         right: 92,                       // ...and for the outputs' names and values
+        gap: 6,                          // px between a label and its neuron...
+        edge: 6,                         // ...and between a label and the canvas's edge
         pad: 14,                         // px above the first neuron and below the last one
         radius: 7,                       // px: a neuron
         bigWeight: 2                     // a weight this big (or bigger) gets the thickest, strongest line
@@ -930,10 +933,23 @@
         }
 
         g.font = kit.font(12, 600);
+        drawPill(g, frame.hud, HUD_PAD, HUD_PAD + PILL.y, c, false);
+    }
+
+    // A canvas text on a pill of the background colour, so the track under it doesn't cross
+    // the words. (x, y): the pill's left end (or its middle, centred) and its middle height
+    function drawPill(g, text, x, y, c, centred) {
+        const width = g.measureText(text).width + 2 * PILL.x;
+        const left = centred ? x - width / 2 : x;
+        g.fillStyle = kit.alpha(c.surface, PILL.alpha);
+        g.beginPath();
+        if (g.roundRect) g.roundRect(left, y - PILL.y, width, 2 * PILL.y, PILL.y);
+        else g.rect(left, y - PILL.y, width, 2 * PILL.y);
+        g.fill();
         g.fillStyle = c.muted;
-        g.textAlign = "left";
-        g.textBaseline = "top";
-        g.fillText(frame.hud, HUD_PAD, HUD_PAD);
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.fillText(text, left + width / 2, y);
     }
 
     // Draw mode: the edge of the field, and the line drawn so far (or a short "draw here")
@@ -946,10 +962,7 @@
         const points = frame.stroke ? frame.stroke.points : [];
         if (points.length === 0) {
             g.font = kit.font(13, 600);
-            g.fillStyle = c.muted;
-            g.textAlign = "center";
-            g.textBaseline = "middle";
-            g.fillText(frame.hereText, fit.left + (WORLD.width * fit.scale) / 2, fit.top + (WORLD.height * fit.scale) / 2);
+            drawPill(g, frame.hereText, fit.left + (WORLD.width * fit.scale) / 2, fit.top + (WORLD.height * fit.scale) / 2, c, true);
             return;
         }
         g.beginPath();
@@ -975,7 +988,13 @@
         const height = view.height;
         g.clearRect(0, 0, width, height);
         if (!width || !height || !car) return;
-        const x = [BRAIN.left, (BRAIN.left + width - BRAIN.right) / 2, width - BRAIN.right];
+        // room for the labels: at least BRAIN.left and BRAIN.right, more for longer words ("скорость")
+        g.font = kit.font(11);
+        const room = BRAIN.radius + BRAIN.gap + BRAIN.edge;
+        const widest = function (texts) { return Math.max.apply(null, texts.map(function (text) { return g.measureText(text).width; })); };
+        const left = Math.max(BRAIN.left, room + widest(labels.inputs));
+        const right = Math.max(BRAIN.right, room + widest(labels.outputs.map(function (text) { return text + " " + A.format.number(-0.99, { digits: 2 }); })));
+        const x = [left, (left + width - right) / 2, width - right];
         // the y of neuron i of a column with count neurons: spread evenly from top to bottom
         function yOf(count, i) {
             return BRAIN.pad + ((height - 2 * BRAIN.pad) * (i + 0.5)) / count;
@@ -993,14 +1012,13 @@
         for (let h = 0; h < HIDDEN; h++) drawNeuron(g, x[1], yOf(HIDDEN, h), (car.activity.hidden[h] + 1) / 2, c);
         for (let o = 0; o < OUTPUTS; o++) drawNeuron(g, x[2], yOf(OUTPUTS, o), (car.activity.output[o] + 1) / 2, c);
 
-        g.font = kit.font(11);
         g.fillStyle = c.muted;
         g.textBaseline = "middle";
         g.textAlign = "right";
-        labels.inputs.forEach(function (text, i) { g.fillText(text, x[0] - BRAIN.radius - 6, yOf(INPUTS, i)); });
+        labels.inputs.forEach(function (text, i) { g.fillText(text, x[0] - BRAIN.radius - BRAIN.gap, yOf(INPUTS, i)); });
         g.textAlign = "left";
         labels.outputs.forEach(function (text, o) {
-            g.fillText(text + " " + A.format.number(car.activity.output[o], { digits: 2 }), x[2] + BRAIN.radius + 6, yOf(OUTPUTS, o));
+            g.fillText(text + " " + A.format.number(car.activity.output[o], { digits: 2 }), x[2] + BRAIN.radius + BRAIN.gap, yOf(OUTPUTS, o));
         });
     }
 
@@ -1072,6 +1090,7 @@
         let lastBrain = -Infinity;
         let lastChart = -Infinity;
         let chartDirty = true;
+        let ticksRun = 0;             // ticks of every race so far (for the speed test)
 
         // ----- The page: kit parts, plus the brain panel (Small helpers) -----
         const ui = kit.layout(stage, { side: true });
@@ -1292,6 +1311,7 @@
             below = 0;
             reference = null;
             transferNote.hidden = true;
+            transferNote.textContent = "";        // no stale text in the old language
             setNote(null);
             chartDirty = true;
             startRace(brains);
@@ -1320,6 +1340,7 @@
                 startRace(next);
                 return;
             }
+            ticksRun += 1;
             if (!stepRace(race, track)) endGeneration();
         }
 
@@ -1797,7 +1818,7 @@
             inspect: function () {
                 return {
                     state: state, mode: mode, speed: speed, trackId: trackId, seed: seed, generation: generation,
-                    cars: race.cars.length, driving: race.driving, ticks: race.ticks, resting: Boolean(next),
+                    cars: race.cars.length, driving: race.driving, ticks: race.ticks, ticksRun: ticksRun, resting: Boolean(next),
                     best: history.best.slice(), average: history.average.slice(), laps: history.laps.slice(),
                     bestEver: bestEver ? bestEver.fitness : null, bestLap: bestLap, firstLap: firstLap,
                     settings: Object.assign({}, settings), stuck: stuck, below: below, mine: Boolean(mine),
