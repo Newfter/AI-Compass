@@ -449,11 +449,12 @@
 
 /* ===== 5. SEGMENTED CONTROLS AND CHIPS ===== */
 
-/* Connected options, one chosen (role="radiogroup"); long words may wrap */
+/* Connected options, one chosen (role="radiogroup"). The options share the width
+   equally; an option whose word needs more gets it (a word is never cut in the
+   middle), and on a narrow phone the options move to a second row instead. */
 .lk-seg {
-    display: grid;
-    grid-auto-columns: minmax(0, 1fr);
-    grid-auto-flow: column;
+    display: flex;
+    flex-wrap: wrap;
     gap: 2px;
     padding: 2px;
     border: 1px solid var(--border-strong);
@@ -463,10 +464,11 @@
 
 .lk-seg-option {
     display: inline-flex;
+    flex: 1 1 0;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    min-width: 0;
+    max-width: 100%;            /* so a word wider than the whole control may still wrap */
     min-height: 38px;
     padding: 4px 6px;
     border-radius: 9px;
@@ -475,7 +477,7 @@
     font-weight: 700;
     line-height: 1.15;
     text-align: center;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
     transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -562,6 +564,7 @@
 .lk-stat {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 1fr auto;            /* the values line up in a row of tiles */
     grid-template-areas:
         "label label"
         "value trend";
@@ -576,6 +579,7 @@
 
 .lk-stat-label {
     grid-area: label;
+    align-self: start;
     color: var(--text-label);
     font-family: var(--font-mono);
     font-size: var(--lk-mini);
