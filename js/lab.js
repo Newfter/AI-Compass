@@ -375,13 +375,22 @@
     }
 
     // A link to an experiment that isn't in the catalogue: a note above the grid
+    // (the name is kept, so that the note can be written again in another language)
+    let unknownId = null;
+
     function showNotice(id) {
-        notice.textContent = t("lab.hub.unknown", { id: id });
+        unknownId = id;
+        writeNotice();
         notice.hidden = false;
         A.announce(notice.textContent);
     }
 
+    function writeNotice() {
+        if (unknownId !== null) notice.textContent = t("lab.hub.unknown", { id: unknownId });
+    }
+
     function hideNotice() {
+        unknownId = null;
         notice.hidden = true;
         notice.textContent = "";
     }
@@ -749,6 +758,7 @@
     // The language changed: core has translated every data-i18n text already
     function languageChanged() {
         updateStates();
+        writeNotice();
         if (current) updateNav();
         call("language");
     }
