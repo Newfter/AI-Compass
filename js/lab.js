@@ -5,8 +5,9 @@
    the lab's hub. It owns:
     - the catalogue (js/content/lab.js) and the picker: a grid of
       experiment cards, or a compact rail while one is open;
-    - loading: an experiment's files are loaded only when it opens
-      (the lab kit first, once; then the experiment's styles, texts and code);
+    - loading: an experiment's files are loaded only when it opens, or a
+      moment before, when its card is under the pointer or in focus (the lab
+      kit first, once; then the experiment's styles, texts and code);
     - the life cycle: create, pause, resume, language, theme, destroy;
     - links like #lab/predictor, the Ctrl+K commands, remembering the
       last experiment, and the progress events.
@@ -652,9 +653,10 @@
        8. BUILDING THE LAB
        The lab sits far down the page, so its card is made only when it is
        needed (near the screen, a quiet moment after the page loaded, or
-       when something opens it). An experiment's files load only when it
-       opens: on a new visit, the last one opens once the lab is close to
-       the screen; on a first visit, the grid shows.
+       when something opens it). An experiment's files load when it opens
+       (or its card is about to be clicked): on a new visit, the last one
+       opens once the lab is close to the screen; on a first visit, the grid
+       shows.
        ========================================================= */
     // A double click counts as one click: the grid and the rail swap places when an
     // experiment opens or closes, so the second click would land on what came under the
@@ -674,6 +676,20 @@
             open(button.getAttribute("data-exp"), { focus: event.detail === 0, reveal: fromGrid });
         });
         picker.addEventListener("keydown", onPickerKey);
+        // A card under the pointer (or a finger), or in focus, is about to be opened: its files
+        // start loading now, so that the click finds them ready. Nothing runs until it opens.
+        picker.addEventListener("pointerover", prefetch);
+        picker.addEventListener("focusin", prefetch);
+    }
+
+    const prefetched = {};
+    function prefetch(event) {
+        const button = event.target.closest(".lab-pick");
+        const id = button && button.getAttribute("data-exp");
+        if (!id || prefetched[id] || specs[id]) return;
+        prefetched[id] = true;
+        // A file that fails is asked for again when the experiment opens (and says so then)
+        loadExperiment(id).catch(function () { prefetched[id] = false; });
     }
 
     function onPickerKey(event) {
