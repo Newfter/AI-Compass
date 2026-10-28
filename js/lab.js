@@ -652,11 +652,19 @@
        opens: on a new visit, the last one opens once the lab is close to
        the screen; on a first visit, the grid shows.
        ========================================================= */
+    // A double click counts as one click: the grid and the rail swap places when an
+    // experiment opens or closes, so the second click would land on what came under the
+    // pointer ("All experiments" twice would open the card that appears under it).
+    // event.detail counts the clicks in a row (it is 0 for Enter or Space).
+    function doubleClick(event) {
+        return event.detail > 1;
+    }
+
     // ----- The picker: click, Enter or Space opens; the arrow keys move between cards -----
     function setUpPicker() {
         picker.addEventListener("click", function (event) {
             const button = event.target.closest(".lab-pick");
-            if (!button) return;
+            if (!button || doubleClick(event)) return;
             const fromGrid = status === "grid";
             // event.detail is 0 for a click made with the keyboard (Enter or Space)
             open(button.getAttribute("data-exp"), { focus: event.detail === 0, reveal: fromGrid });
@@ -693,7 +701,7 @@
     function setUpHeader() {
         card.addEventListener("click", function (event) {
             const button = event.target.closest("[data-hub]");
-            if (!button) return;
+            if (!button || doubleClick(event)) return;
             const action = button.getAttribute("data-hub");
             if (action === "all") close({ reveal: true });
             else if (action === "prev") step(-1);
@@ -706,6 +714,8 @@
     function retry() {
         if (!current || status !== "error") return;
         const id = current;
+        // The button goes away with the message: the focus waits on the experiment's title
+        if (stage.contains(document.activeElement)) headTitle.focus({ preventScroll: true });
         status = "loading";
         loadToken++;
         showSkeleton(id);
@@ -808,10 +818,11 @@
     }
 
     // A link (or a feature) named an experiment that isn't in the catalogue: the grid,
-    // with a note that says so
+    // with a note that says so. The address names what shows: #lab.
     function showUnknown(id) {
         ensure();
         close({ quiet: true, focus: false });
+        setHash("#lab");
         showNotice(id);
         A.navigate("lab");
     }
