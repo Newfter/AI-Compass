@@ -1,9 +1,20 @@
 /* =========================================================
    AI COMPASS — VISUAL EFFECTS
-   Styles for js/effects.js and js/neural-bg.js:
-   scroll bar, reveal animations, decoding text, typewriter,
-   tilt glare, spotlight, magnetic buttons, ripples, mini-map,
-   calm mode, reduced motion and printing.
+   Styles for js/effects.js and js/neural-bg.js.
+   Sections of this file:
+    1. Neural background canvas
+    2. Scroll progress bar
+    3. Reveal on scroll (and the hero's entrance)
+    4. Decoding text
+    5. Typewriter words
+    6. Tilt glare + glowing card border
+    7. Cursor spotlight
+    8. Magnetic main buttons
+    9. Button ripple
+   10. Section mini-map
+   11. Confetti
+   12. Calm mode and reduced motion
+   13. Printing
    ========================================================= */
 
 /* ===== 1. NEURAL BACKGROUND CANVAS ===== */
@@ -23,37 +34,59 @@
     top: 0;
     left: 0;
     right: 0;
-    z-index: 150;
+    z-index: var(--z-progress);
     height: 3px;
     pointer-events: none;
 }
 
+/* The coloured bar is a full-width stripe, squeezed to the part you have
+   scrolled with scaleX(). js/effects.js sets --fx-progress (0 to 1).
+   Changing a transform is cheap: the page needs no new layout while you scroll. */
 .scroll-progress span {
-    position: relative;
     display: block;
-    width: 0;
     height: 100%;
     border-radius: 0 3px 3px 0;
     background: var(--gradient);
-    box-shadow: 0 0 10px rgba(var(--accent-2-rgb), 0.55), 0 0 2px rgba(var(--accent-rgb), 0.8);
+    transform: scaleX(var(--fx-progress, 0));
+    transform-origin: left;
 }
 
-/* A bright "comet head" at the end of the bar */
-.scroll-progress span::after {
+/* The glow and the bright "comet head" would get thinner if they were squeezed
+   too, so they sit on full-width layers of their own that slide along with
+   the end of the bar (translateX instead of scaleX) */
+.scroll-progress::before,
+.scroll-progress::after {
     content: "";
     position: absolute;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+}
+
+/* The glow. At the very top of the page its layer waits just left of the
+   screen, and its light would still shine into the corner, so it only
+   shows once you have scrolled (js/effects.js adds "is-active") */
+.scroll-progress::before {
+    top: 0;
+    height: 100%;
+    border-radius: 0 3px 3px 0;
+    box-shadow: 0 0 10px rgba(var(--accent-2-rgb), 0.55), 0 0 2px rgba(var(--accent-rgb), 0.8);
+    transform: translateX(calc((var(--fx-progress, 0) - 1) * 100%));
+    opacity: 0;
+}
+
+/* The head reaches 4px past the end of the bar */
+.scroll-progress::after {
     top: 50%;
-    right: -4px;
-    width: 28px;
     height: 9px;
-    border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(var(--accent-2-rgb), 0.95), rgba(var(--accent-2-rgb), 0));
-    transform: translateY(-50%);
+    background: radial-gradient(closest-side, rgba(var(--accent-2-rgb), 0.95), rgba(var(--accent-2-rgb), 0)) right center / 28px 100% no-repeat;
+    transform: translate(calc((var(--fx-progress, 0) - 1) * 100% + 4px), -50%);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
-.scroll-progress.is-active span::after {
+.scroll-progress.is-active::before,
+.scroll-progress.is-active::after {
     opacity: 1;
 }
 
@@ -95,6 +128,52 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
 
 [data-reveal].fx-reveal-list > * {
     animation: fx-reveal-up 0.85s var(--ease) calc(var(--fx-delay, 0ms) + var(--fx-item-delay, 0ms)) backwards;
+}
+
+/* The hero is on screen from the very start. Waiting for JavaScript would mean
+   hiding it again after it was drawn, so index.html marks its blocks as
+   "revealed" and they rise in with pure CSS from the first frame, one after
+   another, just like cards that scroll into view.
+   (Calm mode switches it off, and it never plays twice: see section 12.) */
+@media (prefers-reduced-motion: no-preference) {
+    .hero [data-reveal] {
+        animation: fx-reveal-up 0.95s var(--ease) var(--fx-delay, 0ms) backwards;
+    }
+
+    .hero-title {
+        --fx-delay: 90ms;
+    }
+
+    .hero-subtitle {
+        --fx-delay: 180ms;
+    }
+
+    .hero-buttons {
+        --fx-delay: 270ms;
+    }
+
+    /* The numbers: the list fades in quickly and its items rise one by one
+       (js/effects.js counts each number up as soon as its item appears) */
+    .hero .hero-stats {
+        --fx-delay: 360ms;
+        animation: fx-reveal-fade 0.3s ease var(--fx-delay) backwards;
+    }
+
+    .hero-stats > li {
+        animation: fx-reveal-up 0.85s var(--ease) calc(var(--fx-delay) + var(--fx-item-delay, 0ms)) backwards;
+    }
+
+    .hero-stats > li:nth-child(2) {
+        --fx-item-delay: 85ms;
+    }
+
+    .hero-stats > li:nth-child(3) {
+        --fx-item-delay: 170ms;
+    }
+
+    .hero-stats > li:nth-child(4) {
+        --fx-item-delay: 255ms;
+    }
 }
 
 @keyframes fx-reveal-up {
@@ -143,7 +222,9 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     opacity: 1;
 }
 
-/* Short texts keep a fixed width while decoding */
+/* While decoding, js/effects.js keeps the text's box at its exact size;
+   a text on one line also stays on one line (wider random letters would
+   otherwise wrap below the box) */
 .fx-scramble-lock {
     white-space: nowrap;
 }
@@ -177,7 +258,7 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     border-radius: 1px;
     background: var(--accent-2);
     box-shadow: 0 0 8px rgba(var(--accent-2-rgb), 0.8);
-    animation: fx-caret-blink 1s steps(1) infinite;
+    animation: aic-blink 1s steps(1) infinite;
 }
 
 /* On a line of its own, the word sits in the middle of that line */
@@ -209,12 +290,6 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     pointer-events: none;
 }
 
-@keyframes fx-caret-blink {
-    50% {
-        opacity: 0;
-    }
-}
-
 /* ===== 6. TILT GLARE + GLOWING CARD BORDER ===== */
 
 [data-tilt].fx-tilting {
@@ -237,7 +312,9 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     opacity: 1;
 }
 
-/* A soft light spot that follows the cursor (tilt cards only) */
+/* A soft light spot that follows the cursor (tilt cards only).
+   js/effects.js puts the cursor position on the card itself: --fx-x and --fx-y
+   (0% to 100%), so the card's own styles can follow the cursor too. */
 .fx-glare-full {
     background: radial-gradient(circle at var(--fx-x, 50%) var(--fx-y, 50%), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%);
 }
@@ -246,20 +323,36 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     background: radial-gradient(circle at var(--fx-x, 50%) var(--fx-y, 50%), rgba(var(--accent-rgb), 0.07), rgba(var(--accent-rgb), 0) 55%);
 }
 
-/* The border lights up near the cursor (a ring cut out with a mask) */
-.fx-glare::before {
-    content: "";
+/* The border lights up near the cursor: a ring cut out with a mask... */
+.fx-glare-ring {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
+    overflow: hidden;
     padding: 1px;
     border-radius: inherit;
-    background: radial-gradient(240px circle at var(--fx-x, 50%) var(--fx-y, 50%), rgba(var(--accent-2-rgb), 0.9), rgba(var(--accent-rgb), 0.45) 40%, rgba(var(--accent-rgb), 0) 72%);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* ...with a light spot inside it. Its middle starts at the top left corner
+   and js/effects.js moves it under the cursor with a transform. Moving it
+   repaints nothing, even on a huge card (painting the light at a new place
+   on every mouse move cost seconds on the big lab card) */
+.fx-glare-spot {
+    position: absolute;
+    top: -240px;
+    left: -240px;
+    width: 480px;
+    height: 480px;
+    background: radial-gradient(240px circle at center, rgba(var(--accent-2-rgb), 0.9), rgba(var(--accent-rgb), 0.45) 40%, rgba(var(--accent-rgb), 0) 72%);
+}
+
+.fx-lit > .fx-glare .fx-glare-spot {
+    will-change: transform;
 }
 
 /* ===== 7. CURSOR SPOTLIGHT ===== */
@@ -268,7 +361,7 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: -1;
+    z-index: calc(var(--z-bg) + 1);   /* just in front of the neural background */
     width: 560px;
     height: 560px;
     border-radius: 50%;
@@ -324,7 +417,7 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
 }
 
 .btn-primary > .fx-ripple > span {
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 70%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--on-accent) 42%, transparent) 0%, transparent 70%);
 }
 
 @keyframes fx-ripple {
@@ -347,7 +440,7 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
         position: fixed;
         top: 50%;
         right: 18px;
-        z-index: 90;
+        z-index: var(--z-rail);
         display: block;
         transform: translateY(-50%);
     }
@@ -472,12 +565,12 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
     font-variant-numeric: tabular-nums;
 }
 
+/* The focus ring hugs the round link */
 .fx-rail-link:focus-visible {
     outline-offset: 0;
-    border-radius: 50%;
 }
 
-/* ===== CONFETTI (AICompass.effects.confetti) ===== */
+/* ===== 11. CONFETTI (AICompass.effects.confetti) ===== */
 
 .fx-confetti {
     position: fixed;
@@ -488,7 +581,7 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
     pointer-events: none;
 }
 
-/* ===== 11. CALM MODE AND REDUCED MOTION =====
+/* ===== 12. CALM MODE AND REDUCED MOTION =====
    core.js puts "fx-motion-off" on <html> for both; style.css stops every
    animation then. Here: the effects that follow the mouse disappear. */
 
@@ -503,7 +596,17 @@ html.fx-motion-off .fx-rail-label {
     transition: none;
 }
 
-/* ===== 12. PRINTING ===== */
+/* The hero shows at once (its entrance has delays, which would still apply).
+   Turning animations back on would start its entrance again, so after the
+   first switch js/effects.js marks the hero "fx-entered": it stays as it is. */
+html.fx-motion-off .hero [data-reveal],
+html.fx-motion-off .hero-stats > li,
+.hero.fx-entered [data-reveal],
+.hero.fx-entered .hero-stats > li {
+    animation: none;
+}
+
+/* ===== 13. PRINTING ===== */
 
 @media print {
     .scroll-progress,
