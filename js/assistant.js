@@ -1490,6 +1490,35 @@
     const TIP_SECONDS = 10;
     let footerVisible = false;
 
+    // ----- The orb rests when nobody needs it -----
+    // Its four loops (float, breathe, spin, blink) keep the computer busy at
+    // every scroll position, so they only run while the orb is "awake"
+    // (.is-awake): for a while after the page loads, while the mouse is over
+    // it, and for a few seconds when it gets the keyboard focus or shows the
+    // hint. The rest of the time they wait, still, where they are
+    // (css/assistant.css, section 1).
+    const ORB_START_SECONDS = 12;
+    const ORB_WAKE_SECONDS = 5;
+    const orb = { timer: 0, hovered: false };
+
+    function wakeOrb(seconds) {
+        clearTimeout(orb.timer);
+        ui.root.classList.add("is-awake");
+        orb.timer = setTimeout(function () {
+            if (!orb.hovered) ui.root.classList.remove("is-awake");
+        }, seconds * 1000);
+    }
+
+    ui.launcher.addEventListener("pointerenter", function () {
+        orb.hovered = true;
+        wakeOrb(ORB_WAKE_SECONDS);
+    });
+    ui.launcher.addEventListener("pointerleave", function () {
+        orb.hovered = false;
+        wakeOrb(ORB_WAKE_SECONDS);
+    });
+    ui.launcher.addEventListener("focus", function () { wakeOrb(ORB_WAKE_SECONDS); });
+
     function showTipLater() {
         if (A.storage.get("assistant.tipDismissed", false)) return;
         const visits = Number(A.storage.get("assistant.tipVisits", 0)) || 0;
@@ -1503,6 +1532,7 @@
             ui.root.classList.add("has-tip");
             void ui.tip.offsetWidth;
             ui.tip.classList.add("is-visible");
+            wakeOrb(TIP_SECONDS);
             // Hide again later, without remembering it (it may come back next visit)
             state.tipTimer = setTimeout(function () { dismissTip(false); }, TIP_SECONDS * 1000);
         }, 2200);
@@ -1623,5 +1653,6 @@
     load();
     if (chat.messages.length) renderAll();
     updateSendButton();
+    wakeOrb(ORB_START_SECONDS);
     showTipLater();
 })();

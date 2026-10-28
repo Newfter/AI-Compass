@@ -158,6 +158,26 @@
     transform: scale(1);
 }
 
+/* The orb rests when nobody needs it: its loops wait, still, where they are
+   (they keep the computer busy at every scroll position). assistant.js wakes
+   it (.is-awake) after the page loads, while the mouse is over it, and when
+   it gets the focus or shows the hint. Under a window such as the palette
+   (the page is inert then) it always rests. */
+.cb-root:not(.is-awake) .cb-orb--launcher,
+.cb-root:not(.is-awake) .cb-orb--launcher .cb-orb-halo,
+.cb-root:not(.is-awake) .cb-orb--launcher .cb-orb-ring,
+[inert] .cb-orb--launcher,
+[inert] .cb-orb--launcher .cb-orb-halo,
+[inert] .cb-orb--launcher .cb-orb-ring {
+    animation-play-state: paused;
+}
+
+/* Resting eyes stay open (a paused blink could leave them half shut) */
+.cb-root:not(.is-awake) .cb-orb--launcher .cb-eye,
+[inert] .cb-orb--launcher .cb-eye {
+    animation: none;
+}
+
 @keyframes cb-float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
