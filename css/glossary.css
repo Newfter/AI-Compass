@@ -427,6 +427,12 @@
     box-shadow: 0 0 16px rgba(var(--accent-2-rgb), 0.2);
 }
 
+/* The hover rule above is stronger than the pressed one, so under the mouse a pressed
+   letter takes the hover colour. In the light theme it keeps its own colour, as before. */
+[data-theme="light"] .gl-letter[aria-pressed="true"] {
+    color: var(--text-accent-2);
+}
+
 .gl-letter:disabled {
     opacity: 0.3;
     cursor: default;
