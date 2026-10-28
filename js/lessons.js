@@ -1,13 +1,33 @@
 /* =========================================================
    AI COMPASS — LESSONS
-   Six interactive lessons. This file builds:
-   1. a progress panel (ring, lesson map, continue / reset)
-   2. a grid of lesson cards
-   3. a full-screen lesson reader with a mini-lab, key ideas,
-      a "check yourself" question and previous / next buttons
-   4. a downloadable certificate when every lesson is done
-   It also adds "Open lesson" commands to the Ctrl+K palette
-   and window.AICompass.openLesson(number) for other features.
+   Six short interactive lessons about AI. This file builds a
+   progress panel (ring, lesson map, continue / reset), a grid of
+   lesson cards, a full-screen lesson reader (text, a mini-lab, key
+   ideas, a "check yourself" question, previous / next) and a
+   certificate to download once every lesson is done.
+   Sections of this file:
+    1. Settings
+    2. The lessons (icon, colour, mini-lab, palette keywords)
+    3. Small helpers
+    4. Saved progress
+    5. Progress panel and cards (built once)
+    6. Updating the panel and the cards
+    7. Completing lessons
+    8. The certificate
+    9. Clicks on the panel and the cards
+   10. Mini-lab 1: AI or not AI?
+   11. Mini-lab 2: watch a model learn
+   12. Mini-lab 3: play with a neuron
+   13. Mini-lab 4: be the language model
+   14. Mini-lab 5: spot the hidden AI
+   15. Mini-lab 6: what would you do?
+   16. The lesson reader
+   17. Reading aloud
+   18. Language and theme changes
+   19. Start (and links like #lesson-3)
+   20. Ctrl+K commands and the public API
+   Other features use AICompass.lessons (see the last section).
+   Every text (English and Russian) is in js/content/lessons.js
    ========================================================= */
 
 (function () {
@@ -19,10 +39,29 @@
 
     const t = A.t;
     const esc = A.escapeHTML;
-    const TOTAL = 6;
 
-    // ---------- 1. The six lessons ----------
-    // The texts live in the translations below (keys "lessons.l1.title", ...).
+    // ---------- 1. Settings ----------
+    // Numbers you may want to change. Times are in milliseconds, sizes in CSS pixels.
+    // (Each mini-lab keeps its own numbers at the start of its section.)
+    const READER_ID = "lesson-reader";            // the reader's name among the pop-up windows (A.overlays in core.js)
+    const RING_COUNT_UP_TIME = 900;               // the percentage in the progress ring counts up for this long
+    const RESET_CONFIRM_TIME = 4000;              // "Reset progress" waits this long for the second press
+    const READER_CLOSE_TIME = 260;                // a closing reader is hidden after this (it has mostly faded out by then)
+    const TEXT_SIZES = ["s", "m", "l"];           // the reader's text sizes, in the order the "A A" button goes through them
+    const NARROW_SCREEN = "(max-width: 400px)";   // here the "Listen" button shows only its sound bars
+    const PART_TOP_GAP = 18;                      // space left above a part when the contents list jumps to it
+    const SPY_LINE = 0.35;                        // a part is the current one once its top is in the upper 35% of the reader
+    const SPY_BOTTOM = 0.985;                     // scrolled this far down (98.5%), the last part is the current one
+    const SCROLL_END_LIMIT = 3000;                // a jump in the reader counts as finished after this at the latest
+    const SCROLL_START_TIME = 1000;               // browsers without the "scrollend" event: a jump must start within this time
+    const SCROLL_QUIET_TIME = 250;                // ... and has finished after this long without a scroll event
+    const SPEAK_MARGIN = 40;                      // the sentence read aloud stays at least this far inside the reader
+    const NO_VOICE_WARNING_GAP = 5000;            // "no voice" is shown at most once in this time
+    const CERT_ICON_STEP = 190;                   // the space between the lesson icons on the certificate (canvas pixels)
+    const DOWNLOAD_CLEANUP_TIME = 4000;           // the certificate's temporary download address is freed after this
+
+    // ---------- 2. The lessons ----------
+    // The texts are in js/content/lessons.js (keys "lessons.l1.title", ...).
     // rgb: which accent colour the lesson uses. lab: which mini-lab it shows.
     // correct: index (0, 1 or 2) of the right answer to "Check yourself".
     // notes: which sections have a small highlighted box, and its type.
@@ -65,22 +104,14 @@
         }
     ];
 
-    // Every text (English and Russian) is in js/content/lessons.js
+    const TOTAL = LESSONS.length;
 
-    // ---------- 10. Small helpers ----------
+    // ---------- 3. Small helpers ----------
+    // (Only what core.js has no helper for.)
 
-    // Picks the right plural form. English has two forms (1 lesson / 2 lessons),
-    // Russian has three (1 урок / 2 урока / 5 уроков).
-    function plural(key, n, values) {
-        let form = n === 1 ? "one" : "many";
-        if (A.lang === "ru") {
-            const lastDigit = n % 10;
-            const lastTwo = n % 100;
-            if (lastDigit === 1 && lastTwo !== 11) form = "one";
-            else if (lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14)) form = "few";
-            else form = "many";
-        }
-        return t(key + "." + form, Object.assign({ n: n }, values || {}));
+    // The element inside root marked data-ref="name"
+    function ref(root, name) {
+        return root.querySelector('[data-ref="' + name + '"]');
     }
 
     // 3 -> "03"
@@ -88,25 +119,19 @@
         return String(n).padStart(2, "0");
     }
 
-    // Numbers the local way: 0.5 in English, 0,5 in Russian, with a real minus sign
-    function formatNumber(value, digits) {
-        if (Math.abs(value) < 0.5 * Math.pow(10, -digits)) value = 0;
-        return value.toLocaleString(A.lang === "ru" ? "ru-RU" : "en-US", {
-            minimumFractionDigits: digits,
-            maximumFractionDigits: digits
-        }).replace("-", "−");
-    }
-
-    function formatPercent(value) {
-        return Math.round(value * 100) + "%";
-    }
-
+    // lessonKey(2, "title") -> "lessons.l2.title"
     function lessonKey(n, part) {
         return "lessons.l" + n + "." + part;
     }
 
     function lessonTitle(n) {
         return t(lessonKey(n, "title"));
+    }
+
+    // An animation curve: fast at first, then gently slowing down (0 -> 0, 1 -> 1)
+    // TODO(core): A.util.easeOut(progress); quiz.js has the same curve twice
+    function easeOut(progress) {
+        return 1 - Math.pow(1 - progress, 3);
     }
 
     // Redraws a part of the page from scratch, but keeps the keyboard focus on
@@ -121,14 +146,7 @@
         }
     }
 
-    // Screen readers read text put into an aria-live element
-    function announce(live, text) {
-        if (!live) return;
-        live.textContent = "";
-        setTimeout(function () { live.textContent = text; }, 60);
-    }
-
-    // ---------- 11. Saved progress ----------
+    // ---------- 4. Saved progress ----------
     const savedCompleted = A.storage.get("lessons.completed", []);
     const completed = new Set(
         (Array.isArray(savedCompleted) ? savedCompleted : []).filter(function (n) {
@@ -151,7 +169,7 @@
         return 0;
     }
 
-    // ---------- 12. Progress panel + cards (built once) ----------
+    // ---------- 5. Progress panel and cards (built once) ----------
     function cardHTML(lesson) {
         const n = lesson.number;
         return `
@@ -185,14 +203,16 @@
         <div class="lsn-hud card" data-reveal>
             <span class="lsn-hud-corners" aria-hidden="true"></span>
             <div class="lsn-ring" aria-hidden="true">
-                <svg viewBox="0 0 100 100" focusable="false">
+                <svg class="lsn-ring-ticks" viewBox="0 0 100 100" focusable="false">
+                    <circle cx="50" cy="50" r="48" transform="rotate(-90 50 50)"></circle>
+                </svg>
+                <svg class="lsn-ring-chart" viewBox="0 0 100 100" focusable="false">
                     <defs>
                         <linearGradient id="lsn-ring-gradient" x1="0" y1="0" x2="1" y2="1">
                             <stop offset="0" class="lsn-stop-a"></stop>
                             <stop offset="1" class="lsn-stop-b"></stop>
                         </linearGradient>
                     </defs>
-                    <circle class="lsn-ring-ticks" cx="50" cy="50" r="48"></circle>
                     <circle class="lsn-ring-track" cx="50" cy="50" r="40" pathLength="100"></circle>
                     <circle class="lsn-ring-fill" cx="50" cy="50" r="40" pathLength="100" data-ref="ringFill"></circle>
                 </svg>
@@ -236,10 +256,6 @@
         <div class="lsn-grid">${LESSONS.map(cardHTML).join("")}</div>
     `;
 
-    function ref(root, name) {
-        return root.querySelector('[data-ref="' + name + '"]');
-    }
-
     const hud = {
         root: mount.querySelector(".lsn-hud"),
         ringFill: ref(mount, "ringFill"),
@@ -277,7 +293,7 @@
 
     const steps = Array.prototype.slice.call(hud.path.querySelectorAll(".lsn-step"));
 
-    // ---------- 13. Updating the panel and the cards ----------
+    // ---------- 6. Updating the panel and the cards ----------
     let ringValue = 0;
     let ringFrame = 0;
     let ringStarted = false;
@@ -288,7 +304,7 @@
     function setRing(target) {
         cancelAnimationFrame(ringFrame);
         hud.ringFill.style.strokeDashoffset = String(100 - target);
-        if (A.reducedMotion) {
+        if (!A.motion.ok()) {
             ringValue = target;
             hud.percent.textContent = String(target);
             return;
@@ -296,8 +312,8 @@
         const from = ringValue;
         const start = performance.now();
         function step(now) {
-            const progress = Math.min(1, (now - start) / 900);
-            const eased = 1 - Math.pow(1 - progress, 3);
+            const progress = Math.min(1, (now - start) / RING_COUNT_UP_TIME);
+            const eased = easeOut(progress);
             ringValue = Math.round(from + (target - from) * eased);
             hud.percent.textContent = String(ringValue);
             if (progress < 1) ringFrame = requestAnimationFrame(step);
@@ -311,10 +327,10 @@
         const percent = Math.round((done / TOTAL) * 100);
 
         hud.root.classList.toggle("is-complete", done === TOTAL);
-        hud.count.textContent = plural("lessons.hud.count", done, { total: TOTAL });
+        hud.count.textContent = A.plural("lessons.hud.count", done, { total: TOTAL });
         hud.sub.textContent = done === TOTAL
             ? t("lessons.hud.allDone")
-            : plural("lessons.hud.left", TOTAL - done) + " · " + t("lessons.hud.upNext", { title: lessonTitle(next) });
+            : A.plural("lessons.hud.left", TOTAL - done) + " · " + t("lessons.hud.upNext", { title: lessonTitle(next) });
 
         // Buttons
         hud.continueButton.hidden = done === TOTAL;
@@ -369,35 +385,35 @@
         if (reader.open) updateReaderChrome();
     }
 
-    // Start the ring animation the first time the panel scrolls into view
-    if ("IntersectionObserver" in window) {
-        const ringObserver = new IntersectionObserver(function (entries) {
-            if (entries.some(function (entry) { return entry.isIntersecting; })) {
-                ringObserver.disconnect();
-                ringStarted = true;
-                setRing(Math.round((completed.size / TOTAL) * 100));
-            }
-        }, { threshold: 0.3 });
-        ringObserver.observe(hud.root);
-    } else {
+    // The ring counts up the first time the panel comes into view
+    let stopRingWatch = null;
+    stopRingWatch = A.whenVisible(hud.root, function (visible) {
+        if (!visible || ringStarted) return;
         ringStarted = true;
-    }
+        setRing(Math.round((completed.size / TOTAL) * 100));
+        if (stopRingWatch) stopRingWatch();
+    }, { threshold: 0.3 });
 
-    // Pause the decorative CSS loops while the lessons are off screen (saves battery)
+    // The decorative loops (ring ticks, glowing lines...) pause while the lessons are
+    // off screen (whenVisible sets data-paused then) and while the reader covers them
     let mountVisible = true;
+    let readerCovers = false;
 
     function updatePaused() {
-        mount.classList.toggle("is-paused", !mountVisible || reader.open);
+        mount.toggleAttribute("data-paused", !mountVisible || readerCovers);
     }
 
-    if ("IntersectionObserver" in window) {
-        new IntersectionObserver(function (entries) {
-            mountVisible = entries[entries.length - 1].isIntersecting;
-            updatePaused();
-        }).observe(mount);
-    }
+    A.whenVisible(mount, function (visible) {
+        mountVisible = visible;
+        updatePaused();
+    }, { pauseAnimations: true });
 
-    // ---------- 14. Completing lessons ----------
+    A.overlays.onChange(function (detail) {
+        readerCovers = detail.open.indexOf(READER_ID) !== -1;
+        updatePaused();
+    });
+
+    // ---------- 7. Completing lessons ----------
     function setCompleted(n, isDone) {
         const before = completed.size;
         if (isDone) completed.add(n);
@@ -411,26 +427,28 @@
         }
         // The very last lesson gets one big message instead of two small ones
         if (completed.size === TOTAL && before < TOTAL) {
-            launchConfetti();
-            A.toast(t("lessons.toast.all"), "🏆");
+            if (A.effects) A.effects.confetti();   // two bursts from the bottom corners
+            A.toast(A.plural("lessons.toast.all", TOTAL), "🏆");
         } else {
             A.toast(t("lessons.toast.done", { title: lessonTitle(n) }), "✅");
         }
     }
 
-    // Reset needs two clicks, so progress is not lost by accident
-    function onResetClick() {
+    // Reset needs two presses, so progress is not lost by accident
+    function onResetClick(event) {
         if (!resetArmed) {
             resetArmed = true;
             updateHUD();
-            announce(hud.live, t("lessons.hud.resetAsk"));
+            A.announce(t("lessons.hud.resetAsk"), { region: hud.live });
             clearTimeout(resetTimer);
             resetTimer = setTimeout(function () {
                 resetArmed = false;
                 updateHUD();
-            }, 4000);
+            }, RESET_CONFIRM_TIME);
             return;
         }
+        // The second click of a double-click (or a double tap) is not a second press
+        if (event.detail > 1) return;
         clearTimeout(resetTimer);
         resetArmed = false;
         completed.clear();
@@ -442,82 +460,8 @@
         hud.continueButton.focus();
     }
 
-    // ---------- 15. Confetti when every lesson is done ----------
-    function launchConfetti() {
-        if (A.reducedMotion) return;
-        const canvas = document.createElement("canvas");
-        canvas.className = "lsn-confetti";
-        canvas.setAttribute("aria-hidden", "true");
-        document.body.appendChild(canvas);
-
-        const ratio = Math.min(window.devicePixelRatio || 1, 2);
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        canvas.width = Math.round(width * ratio);
-        canvas.height = Math.round(height * ratio);
-        const ctx = canvas.getContext("2d");
-        ctx.scale(ratio, ratio);
-
-        const colors = ["--accent", "--accent-2", "--accent-3", "--success", "--warning"].map(function (name) {
-            return A.cssVar(name) || "#9b6dff";
-        });
-
-        // Two bursts: one from each bottom corner
-        const pieces = [];
-        for (let i = 0; i < 180; i++) {
-            const fromLeft = i % 2 === 0;
-            const angle = ((fromLeft ? -62 : -118) + (Math.random() - 0.5) * 46) * Math.PI / 180;
-            const speed = 11 + Math.random() * 10;
-            pieces.push({
-                x: fromLeft ? -10 : width + 10,
-                y: height * 0.85,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                size: 6 + Math.random() * 7,
-                spin: Math.random() * Math.PI,
-                spinSpeed: (Math.random() - 0.5) * 0.35,
-                color: colors[i % colors.length],
-                shape: i % 3
-            });
-        }
-
-        const start = performance.now();
-        const duration = 3000;
-        let last = start;
-
-        function frame(now) {
-            const elapsed = now - start;
-            const dt = Math.min(3, (now - last) / 16.7);   // keeps the speed the same on 60 Hz and 120 Hz screens
-            last = now;
-            ctx.clearRect(0, 0, width, height);
-            ctx.globalAlpha = Math.max(0, Math.min(1, (duration - elapsed) / 700));
-            pieces.forEach(function (piece) {
-                piece.vy += 0.32 * dt;
-                piece.vx *= Math.pow(0.985, dt);
-                piece.vy *= Math.pow(0.985, dt);
-                piece.x += piece.vx * dt;
-                piece.y += piece.vy * dt;
-                piece.spin += piece.spinSpeed * dt;
-                ctx.save();
-                ctx.translate(piece.x, piece.y);
-                ctx.rotate(piece.spin);
-                ctx.fillStyle = piece.color;
-                if (piece.shape === 1) {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, piece.size / 2.6, 0, Math.PI * 2);
-                    ctx.fill();
-                } else {
-                    ctx.fillRect(-piece.size / 2, -piece.size / 4, piece.size, piece.shape === 2 ? piece.size / 5 : piece.size / 2);
-                }
-                ctx.restore();
-            });
-            if (elapsed < duration) requestAnimationFrame(frame);
-            else canvas.remove();
-        }
-        requestAnimationFrame(frame);
-    }
-
-    // ---------- 16. The certificate ----------
+    // ---------- 8. The certificate ----------
+    // A picture drawn on a <canvas> (only while it is shown) that can be saved as a PNG file
     let certFrame = 0;
 
     function toggleCertificate(force) {
@@ -527,7 +471,7 @@
         hud.certToggle.setAttribute("aria-expanded", String(show));
         if (show) {
             drawCertificate();
-            cert.root.scrollIntoView({ behavior: A.reducedMotion ? "auto" : "smooth", block: "nearest" });
+            cert.root.scrollIntoView({ behavior: A.motion.ok() ? "smooth" : "auto", block: "nearest" });
         }
     }
 
@@ -535,16 +479,6 @@
         if (cert.root.hidden) return;
         cancelAnimationFrame(certFrame);
         certFrame = requestAnimationFrame(drawCertificate);
-    }
-
-    function roundedRect(ctx, x, y, width, height, radius) {
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.arcTo(x + width, y, x + width, y + height, radius);
-        ctx.arcTo(x + width, y + height, x, y + height, radius);
-        ctx.arcTo(x, y + height, x, y, radius);
-        ctx.arcTo(x, y, x + width, y, radius);
-        ctx.closePath();
     }
 
     // Writes text and makes the font smaller until it fits the given width
@@ -596,15 +530,17 @@
         const ctx = canvas.getContext("2d");
         const W = canvas.width;
         const H = canvas.height;
+        // The theme's colours (a canvas can't use CSS variables): rgba(name, alpha)
+        const rgba = function (name, alpha) {
+            return A.colors.rgba(A.colors.rgb(name), alpha === undefined ? 1 : alpha);
+        };
         const color = {
-            bg: A.cssVar("--bg") || "#060812",
-            text: A.cssVar("--text") || "#eef1ff",
-            muted: A.cssVar("--text-muted") || "#aab5d0",
-            accent: A.cssVar("--accent") || "#9b6dff",
-            accent2: A.cssVar("--accent-2") || "#50e3ff",
-            success: A.cssVar("--success") || "#3ee6a0",
-            rgb: A.cssVar("--accent-rgb") || "155, 109, 255",
-            rgb2: A.cssVar("--accent-2-rgb") || "80, 227, 255"
+            bg: rgba("--bg"),
+            text: rgba("--text"),
+            muted: rgba("--text-muted"),
+            accent: rgba("--accent"),
+            accent2: rgba("--accent-2"),
+            success: rgba("--success")
         };
         const fonts = {
             display: A.cssVar("--font-display") || "sans-serif",
@@ -625,17 +561,17 @@
         ctx.fillStyle = color.bg;
         ctx.fillRect(0, 0, W, H);
         let glow = ctx.createRadialGradient(260, 160, 0, 260, 160, 900);
-        glow.addColorStop(0, "rgba(" + color.rgb + ", 0.30)");
-        glow.addColorStop(1, "rgba(" + color.rgb + ", 0)");
+        glow.addColorStop(0, rgba("--accent", 0.3));
+        glow.addColorStop(1, rgba("--accent", 0));
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, W, H);
         glow = ctx.createRadialGradient(W - 220, H - 160, 0, W - 220, H - 160, 800);
-        glow.addColorStop(0, "rgba(" + color.rgb2 + ", 0.20)");
-        glow.addColorStop(1, "rgba(" + color.rgb2 + ", 0)");
+        glow.addColorStop(0, rgba("--accent-2", 0.2));
+        glow.addColorStop(1, rgba("--accent-2", 0));
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, W, H);
 
-        ctx.strokeStyle = "rgba(" + color.rgb + ", 0.07)";
+        ctx.strokeStyle = rgba("--accent", 0.07);
         ctx.lineWidth = 1;
         for (let x = 0; x <= W; x += 40) {
             ctx.beginPath();
@@ -651,12 +587,12 @@
         }
 
         // Frames and corner brackets
-        roundedRect(ctx, 36, 36, W - 72, H - 72, 40);
+        A.canvas.roundRect(ctx, 36, 36, W - 72, H - 72, 40);
         ctx.strokeStyle = gradient;
         ctx.lineWidth = 4;
         ctx.stroke();
-        roundedRect(ctx, 60, 60, W - 120, H - 120, 28);
-        ctx.strokeStyle = "rgba(" + color.rgb2 + ", 0.25)";
+        A.canvas.roundRect(ctx, 60, 60, W - 120, H - 120, 28);
+        ctx.strokeStyle = rgba("--accent-2", 0.25);
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.strokeStyle = color.accent2;
@@ -681,28 +617,31 @@
 
         // The name, with a glow
         ctx.save();
-        ctx.shadowColor = "rgba(" + color.rgb + ", 0.55)";
+        ctx.shadowColor = rgba("--accent", 0.55);
         ctx.shadowBlur = 36;
         ctx.fillStyle = color.text;
         fitText(ctx, name, W / 2, 448, 1240, "700", 100, fonts.display);
         ctx.restore();
         const line = ctx.createLinearGradient(W / 2 - 380, 0, W / 2 + 380, 0);
-        line.addColorStop(0, "rgba(" + color.rgb2 + ", 0)");
+        line.addColorStop(0, rgba("--accent-2", 0));
         line.addColorStop(0.5, color.accent2);
-        line.addColorStop(1, "rgba(" + color.rgb + ", 0)");
+        line.addColorStop(1, rgba("--accent", 0));
         ctx.fillStyle = line;
         ctx.fillRect(W / 2 - 380, 492, 760, 3);
 
+        // "for completing all six lessons": the number as a word when the texts have one
+        const countWord = "lessons.cert.count." + TOTAL;
         ctx.fillStyle = color.muted;
-        fitText(ctx, t("lessons.cert.for"), W / 2, 566, 1240, "500", 34, fonts.body);
+        fitText(ctx, A.plural("lessons.cert.for", TOTAL, A.has(countWord) ? { n: t(countWord) } : null),
+            W / 2, 566, 1240, "500", 34, fonts.body);
 
-        // The six lessons with check marks
+        // Every lesson with a check mark, in one row around the middle
         LESSONS.forEach(function (lesson, index) {
-            const x = W / 2 + (index - 2.5) * 190;
+            const x = W / 2 + (index - (TOTAL - 1) / 2) * CERT_ICON_STEP;
             const y = 700;
             ctx.beginPath();
             ctx.arc(x, y, 54, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(" + color.rgb + ", 0.14)";
+            ctx.fillStyle = rgba("--accent", 0.14);
             ctx.fill();
             ctx.strokeStyle = gradient;
             ctx.lineWidth = 3;
@@ -724,20 +663,19 @@
         });
 
         // Date and seal
-        const locale = A.lang === "ru" ? "ru-RU" : "en-GB";
-        const date = new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
+        const date = A.format.date(new Date());
         ctx.textAlign = "left";
         ctx.fillStyle = color.muted;
         ctx.font = "500 26px " + fonts.mono;
         ctx.fillText(t("lessons.cert.date", { date: date }), 132, H - 128);
 
-        // The round "6/6" seal sits low enough to leave space under the lesson names
+        // The round "6/6" seal (lessons done / all lessons) sits low enough to leave space under the lesson names
         const sealX = W - 220;
         const sealY = H - 168;
         ctx.textAlign = "center";
         ctx.beginPath();
         ctx.arc(sealX, sealY, 78, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(" + color.rgb2 + ", 0.10)";
+        ctx.fillStyle = rgba("--accent-2", 0.1);
         ctx.fill();
         ctx.strokeStyle = gradient;
         ctx.lineWidth = 4;
@@ -751,9 +689,9 @@
         ctx.setLineDash([]);
         ctx.fillStyle = gradient;
         ctx.font = "700 40px " + fonts.display;
-        ctx.fillText("6/6", sealX, sealY + 7);
+        ctx.fillText(completed.size + "/" + TOTAL, sealX, sealY + 7);
         ctx.fillStyle = color.muted;
-        fitText(ctx, t("lessons.cert.lessons").toUpperCase(), sealX, sealY + 36, 100, "600", 16, fonts.mono);
+        fitText(ctx, A.plural("lessons.cert.lessons", TOTAL).toUpperCase(), sealX, sealY + 36, 100, "600", 16, fonts.mono);
         ctx.restore();
 
         canvas.setAttribute("aria-label", t("lessons.cert.preview", { name: name }));
@@ -768,7 +706,7 @@
             document.body.appendChild(link);
             link.click();
             link.remove();
-            if (isBlob) setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+            if (isBlob) setTimeout(function () { URL.revokeObjectURL(url); }, DOWNLOAD_CLEANUP_TIME);
             A.toast(t("lessons.toast.cert"), "🏆");
         }
         try {
@@ -783,14 +721,16 @@
         } catch (error) {}
     }
 
-    cert.input.value = A.storage.get("lessons.certName", "") || "";
+    // The saved name: only a text, and never longer than the box allows (maxlength)
+    const savedName = A.storage.get("lessons.certName", "");
+    cert.input.value = typeof savedName === "string" ? savedName.slice(0, cert.input.maxLength) : "";
     cert.input.addEventListener("input", function () {
         A.storage.set("lessons.certName", cert.input.value);
         scheduleCertificate();
     });
     cert.download.addEventListener("click", downloadCertificate);
 
-    // ---------- 17. Clicks on the panel and the cards ----------
+    // ---------- 9. Clicks on the panel and the cards ----------
     hud.root.addEventListener("click", function (event) {
         const node = event.target.closest("[data-open]");
         if (node) {
@@ -802,8 +742,13 @@
         } else if (event.target.closest('[data-ref="certToggle"]')) {
             toggleCertificate();
         } else if (event.target.closest('[data-ref="reset"]')) {
-            onResetClick();
+            onResetClick(event);
         }
+    });
+
+    // Holding Enter down on a button repeats its click: on Reset only a new press counts
+    hud.reset.addEventListener("keydown", function (event) {
+        if (event.repeat && event.key === "Enter") event.preventDefault();
     });
 
     // A click anywhere on a card opens it (the button is the keyboard way in)
@@ -815,17 +760,65 @@
         openLesson(Number(card.getAttribute("data-lesson")), card.querySelector("[data-open]"));
     });
 
-    // A soft light follows the mouse over a card
-    grid.addEventListener("pointermove", function (event) {
-        if (event.pointerType !== "mouse") return;
-        const card = event.target.closest(".lsn-card");
-        if (!card) return;
+    // A soft coloured light follows the mouse over a card (the CSS draws it at --mx / --my).
+    // Like the glare of effects.js, it only follows a real mouse, and only while
+    // animations are on (with the motion off, css/lessons.css hides the light).
+    // The card's place on the page is read once, when the mouse comes onto it,
+    // and --mx / --my are written at most once per frame.
+    const finePointer = A.media(A.queries.finePointer);
+    const cardLight = { card: null, left: 0, top: 0, x: 0, y: 0, frame: 0 };
+
+    function cardLightOn() {
+        return A.motion.ok() && finePointer.matches;
+    }
+
+    function lightCard(card) {
         const box = card.getBoundingClientRect();
-        card.style.setProperty("--mx", Math.round(event.clientX - box.left) + "px");
-        card.style.setProperty("--my", Math.round(event.clientY - box.top) + "px");
+        cardLight.card = card;
+        cardLight.left = box.left + window.scrollX;   // page coordinates: still right after a scroll
+        cardLight.top = box.top + window.scrollY;
+    }
+
+    function drawCardLight() {
+        cardLight.frame = 0;
+        const card = cardLight.card;
+        if (!card) return;
+        card.style.setProperty("--mx", Math.round(cardLight.x + window.scrollX - cardLight.left) + "px");
+        card.style.setProperty("--my", Math.round(cardLight.y + window.scrollY - cardLight.top) + "px");
+    }
+
+    function followPointer(card, event) {
+        if (event.pointerType !== "mouse" || !cardLightOn()) return;
+        if (cardLight.card !== card) lightCard(card);
+        cardLight.x = event.clientX;
+        cardLight.y = event.clientY;
+        if (!cardLight.frame) cardLight.frame = requestAnimationFrame(drawCardLight);
+    }
+
+    // Motion off (or no mouse any more): the light goes back to its resting place
+    function resetCardLight() {
+        cancelAnimationFrame(cardLight.frame);
+        cardLight.frame = 0;
+        cardLight.card = null;
+        cards.forEach(function (card) {
+            card.style.removeProperty("--mx");
+            card.style.removeProperty("--my");
+        });
+    }
+
+    cards.forEach(function (card) {
+        const follow = function (event) { followPointer(card, event); };
+        card.addEventListener("pointerenter", follow);
+        card.addEventListener("pointermove", follow);
+        card.addEventListener("pointerleave", function () {
+            if (cardLight.card === card) cardLight.card = null;
+        });
     });
 
-    // ---------- 18. Mini-lab 1: AI or not AI? ----------
+    A.motion.onChange(function () { if (!cardLightOn()) resetCardLight(); });
+    A.onMedia(A.queries.finePointer, function () { if (!cardLightOn()) resetCardLight(); }, { immediate: false });
+
+    // ---------- 10. Mini-lab 1: AI or not AI? ----------
     const SORT_ANSWERS = ["not", "ai", "ai", "not", "ai"];
 
     // Every mini-lab gets a view (redrawn) and a hidden live region (for screen readers)
@@ -888,7 +881,7 @@
                 state.answers[index] = button.getAttribute("data-sort");
                 draw();
                 const isRight = state.answers[index] === SORT_ANSWERS[index];
-                announce(shell.live, t(isRight ? "lessons.w1.right" : "lessons.w1.wrong") + " " + t("lessons.w1.e" + (index + 1)));
+                A.announce(t(isRight ? "lessons.w1.right" : "lessons.w1.wrong") + " " + t("lessons.w1.e" + (index + 1)), { region: shell.live });
                 return;
             }
             if (event.target.closest('[data-lab="reset"]')) {
@@ -903,12 +896,16 @@
         return null;
     }
 
-    // ---------- 19. Mini-lab 2: watch a model learn (a line learns with gradient descent) ----------
+    // ---------- 11. Mini-lab 2: watch a model learn (a line learns with gradient descent) ----------
     // Pretend data: hours of study -> test score
     const FIT_HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     const FIT_SCORES = [33, 45, 46, 58, 56, 69, 71, 78, 85];
     const FIT_START = { a: -0.2, b: 0.6 };   // the line starts sloping the wrong way
     const FIT_RATE = 0.6;                     // the "learning rate": how big each nudge is
+    const FIT_STOP_CHANGE = 0.005;            // learning stops when a step changes the error by less than this...
+    const FIT_MAX_STEPS = 300;                // ... or after this many steps
+    const FIT_STEP_TIME = 70;                 // "Auto" takes one step every 70 ms
+    const FIT_CHART_STEPS = 60;               // the error chart is at least this many steps wide
 
     // Average error of the line "score = a * hours + b", in points (root mean square)
     function fitError(a, b) {
@@ -936,7 +933,7 @@
         const error = fitError(state.a, state.b);
         const previous = state.history[state.history.length - 1];
         state.history.push(error);
-        state.done = Math.abs(previous - error) < 0.005 || state.step >= 300;
+        state.done = Math.abs(previous - error) < FIT_STOP_CHANGE || state.step >= FIT_MAX_STEPS;
     }
 
     function freshFit() {
@@ -1049,11 +1046,11 @@
 
             const error = state.history[state.history.length - 1];
             view.querySelector('[data-stat="step"]').textContent = t("lessons.w2.steps", { n: state.step });
-            view.querySelector('[data-stat="error"]').textContent = t("lessons.w2.error", { e: formatNumber(error, 1) });
-            view.querySelector('[data-stat="predict"]').textContent = plural("lessons.w2.predict", Math.round(model(10)));
+            view.querySelector('[data-stat="error"]').textContent = t("lessons.w2.error", { e: A.format.number(error, 1) });
+            view.querySelector('[data-stat="predict"]').textContent = A.plural("lessons.w2.predict", Math.round(model(10)));
 
             // The error curve
-            const maxSteps = Math.max(60, state.history.length - 1);
+            const maxSteps = Math.max(FIT_CHART_STEPS, state.history.length - 1);
             const lx = function (i) { return lossLeft + (i / maxSteps) * (lossRight - lossLeft); };
             const ly = function (value) { return lossBottom - (Math.min(value, lossMax) / lossMax) * (lossBottom - lossTop); };
             const coords = state.history.map(function (value, i) { return lx(i).toFixed(1) + "," + ly(value).toFixed(1); });
@@ -1073,14 +1070,14 @@
             fitStep(state);
             if (state.done && state.running) {
                 state.running = false;
-                announce(shell.live, t("lessons.w2.done"));
+                A.announce(t("lessons.w2.done"), { region: shell.live });
             }
             update();
         }
 
         function loop(now) {
             if (!state.running) return;
-            if (now - lastTime >= 70) {
+            if (now - lastTime >= FIT_STEP_TIME) {
                 lastTime = now;
                 stepOnce();
             }
@@ -1102,9 +1099,9 @@
             if (action === "step") {
                 if (state.running) setRunning(false);
                 stepOnce();
-                announce(shell.live, t("lessons.w2.steps", { n: state.step }) + ". " +
-                    t("lessons.w2.error", { e: formatNumber(state.history[state.history.length - 1], 1) }) +
-                    (state.done ? " " + t("lessons.w2.done") : ""));
+                A.announce(t("lessons.w2.steps", { n: state.step }) + ". " +
+                    t("lessons.w2.error", { e: A.format.number(state.history[state.history.length - 1], 1) }) +
+                    (state.done ? " " + t("lessons.w2.done") : ""), { region: shell.live });
             } else if (action === "auto") {
                 setRunning(!state.running);
             } else if (action === "reset") {
@@ -1119,7 +1116,7 @@
         return function () { cancelAnimationFrame(frame); };
     }
 
-    // ---------- 20. Mini-lab 3: play with a neuron ----------
+    // ---------- 12. Mini-lab 3: play with a neuron ----------
     // Starts on "Go to the park!" (z = 0.35), so the "Try this" hint can flip it
     const NEURON_START = { x1: 0.9, x2: 0.2, w1: 1.5, w2: 2.5, b: -1.5 };
     const NEURON_SLIDERS = [
@@ -1206,24 +1203,24 @@
                 edge.style.strokeWidth = (1.5 + Math.abs(weight) * 2.2).toFixed(1);
                 edge.style.opacity = (0.3 + Math.min(1, Math.abs(weight) / 3) * 0.7).toFixed(2);
                 edge.classList.toggle("is-negative", weight < 0);
-                view.querySelector('[data-tag="' + i + '"]').textContent = formatNumber(weight, 1);
-                view.querySelector('[data-in="' + i + '"]').textContent = formatNumber(state["x" + i], 2);
+                view.querySelector('[data-tag="' + i + '"]').textContent = A.format.number(weight, 1);
+                view.querySelector('[data-in="' + i + '"]').textContent = A.format.number(state["x" + i], 2);
             });
-            view.querySelector("[data-z]").textContent = "z=" + formatNumber(z, 2);
-            view.querySelector("[data-out]").textContent = formatPercent(output);
+            view.querySelector("[data-z]").textContent = "z=" + A.format.number(z, 2);
+            view.querySelector("[data-out]").textContent = A.format.percent(output);
             view.querySelector(".lsn-neuron-svg").style.setProperty("--lsn-out", output.toFixed(3));
 
             NEURON_SLIDERS.forEach(function (slider) {
-                const text = formatNumber(state[slider.key], slider.digits);
+                const text = A.format.number(state[slider.key], slider.digits);
                 view.querySelector('[data-value="' + slider.key + '"]').textContent = text;
                 view.querySelector('[data-key="' + slider.key + '"]').setAttribute("aria-valuetext", text);
             });
 
-            const bias = state.b < 0 ? "− " + formatNumber(-state.b, 1) : "+ " + formatNumber(state.b, 1);
+            const bias = state.b < 0 ? "− " + A.format.number(-state.b, 1) : "+ " + A.format.number(state.b, 1);
             view.querySelector("[data-formula]").textContent =
-                "z = " + formatNumber(state.x1, 2) + " × " + formatNumber(state.w1, 1) +
-                " + " + formatNumber(state.x2, 2) + " × " + formatNumber(state.w2, 1) +
-                " " + bias + " = " + formatNumber(z, 2) + "   →   σ(z) = " + formatPercent(output);
+                "z = " + A.format.number(state.x1, 2) + " × " + A.format.number(state.w1, 1) +
+                " + " + A.format.number(state.x2, 2) + " × " + A.format.number(state.w2, 1) +
+                " " + bias + " = " + A.format.number(z, 2) + "   →   σ(z) = " + A.format.percent(output);
             view.querySelector("[data-meter]").style.width = (output * 100).toFixed(1) + "%";
 
             const isYes = output >= 0.5;
@@ -1231,7 +1228,7 @@
             verdict.textContent = t("lessons.w3.output") + ": " + t(isYes ? "lessons.w3.yes" : "lessons.w3.no");
             verdict.classList.toggle("is-yes", isYes);
             if (shouldAnnounce && lastAnswer !== null && lastAnswer !== isYes) {
-                announce(shell.live, t("lessons.w3.decision", { answer: t(isYes ? "lessons.w3.yes" : "lessons.w3.no") }));
+                A.announce(t("lessons.w3.decision", { answer: t(isYes ? "lessons.w3.yes" : "lessons.w3.no") }), { region: shell.live });
             }
             lastAnswer = isYes;
         }
@@ -1256,7 +1253,7 @@
         return null;
     }
 
-    // ---------- 21. Mini-lab 4: be the language model ----------
+    // ---------- 13. Mini-lab 4: be the language model ----------
     // How much the model "likes" each word (made-up scores called logits)
     const WORD_LOGITS = [2.2, 1.5, 1.2, 0.8, 0.4, -0.2];
 
@@ -1316,10 +1313,10 @@
             const probabilities = wordProbabilities(state.temp);
             rows.forEach(function (row, i) {
                 row.querySelector(".lsn-bar-fill").style.width = (probabilities[i] * 100).toFixed(1) + "%";
-                row.querySelector(".lsn-bar-value").textContent = formatPercent(probabilities[i]);
+                row.querySelector(".lsn-bar-value").textContent = A.format.percent(probabilities[i]);
                 row.classList.toggle("is-picked", state.last === i);
             });
-            const temperature = formatNumber(state.temp, 1);
+            const temperature = A.format.number(state.temp, 1);
             view.querySelector("[data-temp-value]").textContent = temperature;
             view.querySelector("#lsn-temp").setAttribute("aria-valuetext", temperature);
             let note = "lessons.w4.tempMid";
@@ -1341,25 +1338,14 @@
 
         function generate() {
             const probabilities = wordProbabilities(state.temp);
-            let roll = Math.random();
-            let picked = probabilities.length - 1;
-            for (let i = 0; i < probabilities.length; i++) {
-                roll -= probabilities[i];
-                if (roll <= 0) {
-                    picked = i;
-                    break;
-                }
-            }
+            const picked = A.util.sampleWeighted(probabilities);
             state.last = picked;
             state.history.unshift(picked);
             state.history = state.history.slice(0, 10);
             updateBars();
             updateSentence();
-            // Restart the little "pop" animation on the new word
-            blank.classList.remove("is-pop");
-            void blank.offsetWidth;
-            blank.classList.add("is-pop");
-            announce(shell.live, t("lessons.w4.picked", { word: word(picked), p: formatPercent(probabilities[picked]) }));
+            A.dom.replay(blank, "is-pop");   // the little "pop" on the new word
+            A.announce(t("lessons.w4.picked", { word: word(picked), p: A.format.percent(probabilities[picked]) }), { region: shell.live });
         }
 
         box.oninput = function (event) {
@@ -1386,7 +1372,7 @@
         return null;
     }
 
-    // ---------- 22. Mini-lab 5: spot the hidden AI ----------
+    // ---------- 14. Mini-lab 5: spot the hidden AI ----------
     const DAY_MOMENTS = [
         { time: "07:00", icon: "📱" },
         { time: "08:10", icon: "🚌" },
@@ -1441,8 +1427,8 @@
                 state.found[i] = true;
                 draw();
                 const found = state.found.filter(Boolean).length;
-                if (found === DAY_MOMENTS.length && wasFound < found) announce(shell.live, t("lessons.w5.all"));
-                else if (wasFound < found) announce(shell.live, t("lessons.w5.found", { n: found, total: DAY_MOMENTS.length }));
+                if (found === DAY_MOMENTS.length && wasFound < found) A.announce(t("lessons.w5.all"), { region: shell.live });
+                else if (wasFound < found) A.announce(t("lessons.w5.found", { n: found, total: DAY_MOMENTS.length }), { region: shell.live });
                 return;
             }
             if (event.target.closest('[data-lab="reset"]')) {
@@ -1458,8 +1444,16 @@
         return null;
     }
 
-    // ---------- 23. Mini-lab 6: what would you do? ----------
+    // ---------- 15. Mini-lab 6: what would you do? ----------
     const DILEMMA_BEST = [1, 1, 2];   // the most responsible option in each situation
+
+    // "Three real-life situations...": the number of situations, as a word when
+    // the texts have one ("lessons.w6.count.3"), otherwise in digits
+    function dilemmaIntro() {
+        const count = DILEMMA_BEST.length;
+        const word = "lessons.w6.count." + count;
+        return A.plural("lessons.w6.intro", count, A.has(word) ? { n: t(word) } : null);
+    }
 
     function mountDilemmaLab(box, state) {
         const shell = labShell(box);
@@ -1521,7 +1515,7 @@
                 draw();
                 const key = "lessons.w6.s" + (s + 1);
                 const isBest = state.choices[s] === DILEMMA_BEST[s];
-                announce(shell.live, t(isBest ? "lessons.w6.best" : "lessons.w6.notBest") + " " + t(key + "f" + (state.choices[s] + 1)));
+                A.announce(t(isBest ? "lessons.w6.best" : "lessons.w6.notBest") + " " + t(key + "f" + (state.choices[s] + 1)), { region: shell.live });
                 return;
             }
             if (event.target.closest('[data-lab="reset"]')) {
@@ -1536,7 +1530,9 @@
         return null;
     }
 
-    // Which mini-lab each lesson uses, and how a fresh one starts
+    // Which mini-lab each lesson uses, and how a fresh one starts.
+    // intro: the text under the lab's title, for a lab whose text counts something
+    // (the others simply use "lessons.w<lesson>.intro")
     const LAB_TYPES = {
         sort: { mount: mountSortLab, fresh: function () { return { answers: SORT_ANSWERS.map(function () { return null; }) }; } },
         fit: { mount: mountFitLab, fresh: freshFit },
@@ -1548,7 +1544,11 @@
                 return { open: DAY_MOMENTS.map(function () { return false; }), found: DAY_MOMENTS.map(function () { return false; }) };
             }
         },
-        dilemmas: { mount: mountDilemmaLab, fresh: function () { return { choices: DILEMMA_BEST.map(function () { return null; }) }; } }
+        dilemmas: {
+            mount: mountDilemmaLab,
+            intro: dilemmaIntro,
+            fresh: function () { return { choices: DILEMMA_BEST.map(function () { return null; }) }; }
+        }
     };
 
     function mountLab(n, box) {
@@ -1557,7 +1557,16 @@
         return type.mount(box, labState[n]);
     }
 
-    // ---------- 24. The lesson reader (a full-screen dialog) ----------
+    // The text under the mini-lab's title in lesson n
+    function labIntro(n) {
+        const type = LAB_TYPES[LESSONS[n - 1].lab];
+        return type.intro ? type.intro() : t("lessons.w" + n + ".intro");
+    }
+
+    // ---------- 16. The lesson reader (a full-screen dialog) ----------
+    // Its empty frame (about 50 elements) is built once, here at start-up: that costs
+    // less than a millisecond. The lesson text, its mini-lab and the contents list
+    // are built each time a lesson is shown.
     const reader = {
         open: false,
         lesson: 0,
@@ -1565,14 +1574,11 @@
         closeTimer: 0,
         scrollRatio: 0,
         cleanupLab: null,
-        inerted: [],
-        previousHash: "",
-        renderedLang: ""
+        previousHash: ""
     };
 
-    const SIZES = ["s", "m", "l"];
     let textSize = A.storage.get("lessons.textSize", "m");
-    if (SIZES.indexOf(textSize) === -1) textSize = "m";
+    if (TEXT_SIZES.indexOf(textSize) === -1) textSize = "m";
 
     const readerEl = document.createElement("div");
     readerEl.className = "lsn-reader";
@@ -1628,6 +1634,7 @@
 
     const panel = readerEl.querySelector(".lsn-reader-panel");
     const parts = {
+        backdrop: readerEl.querySelector(".lsn-reader-backdrop"),
         progress: ref(readerEl, "progress"),
         crumb: ref(readerEl, "crumb"),
         keys: ref(readerEl, "keys"),
@@ -1644,6 +1651,29 @@
         complete: readerEl.querySelector('[data-action="complete"]'),
         completeText: ref(readerEl, "completeText")
     };
+
+    // On very narrow screens the "Listen" button shows only its sound bars. The word
+    // is hidden with the shared .sr-only class, so screen readers still read it.
+    A.onMedia(NARROW_SCREEN, function (narrow) {
+        parts.listenText.classList.toggle("sr-only", narrow);
+    });
+
+    // The reader is a pop-up window of the page (see "overlays" in core.js). While it is
+    // open, core stops the page from scrolling, makes the rest of the page unreachable
+    // (inert), keeps Tab inside the panel and closes the reader with Esc, when the page
+    // goes to another section and when a Ctrl+K command runs. We only report when the
+    // reader opens and closes.
+    const overlay = A.overlays.register(READER_ID, {
+        root: readerEl,          // the panel and the backdrop around it
+        element: panel,
+        modal: true,
+        closeOnNavigate: true,
+        // Esc and a plain close give the focus back to the button that opened the reader.
+        // After "navigate" or "command" the place you go to takes the focus.
+        close: function (reason) {
+            closeReader({ restoreFocus: reason === "escape" || reason === "close" });
+        }
+    });
 
     // The full text of one lesson
     function articleHTML(n) {
@@ -1680,7 +1710,7 @@
                 <div class="lsn-lab-head">
                     <p class="lsn-lab-label mono"><span class="lsn-lab-led" aria-hidden="true"></span>${t("lessons.reader.miniLab")}</p>
                     <h3 class="lsn-lab-title" id="lsn-lab-title" tabindex="-1" data-fid="part-lab">${t("lessons.w" + n + ".title")}</h3>
-                    <p class="lsn-lab-intro">${t("lessons.w" + n + ".intro")}</p>
+                    <p class="lsn-lab-intro">${labIntro(n)}</p>
                 </div>
                 <div class="lsn-lab-body" data-ref="lab"></div>
             </section>
@@ -1802,7 +1832,6 @@
 
     function renderLessonContent() {
         const n = reader.lesson;
-        reader.renderedLang = A.lang;
         stopLab(false);
         panel.style.setProperty("--lsn-rgb", "var(" + LESSONS[n - 1].rgb + ")");
         parts.article.innerHTML = articleHTML(n);
@@ -1862,8 +1891,19 @@
         if (chip) chip.hidden = !isDone;
     }
 
-    // Reading progress bar + highlight of the current part in the list
+    // Reading progress bar + highlight of the current part in the list ("scroll spy").
+    // After a click in the list, the clicked part is the current one until that scroll
+    // has ended: a short part near the end can't reach the top, so the spy alone
+    // would pick the part below it.
     let scrollFrame = 0;
+    const spy = { held: false, hold: 0, timer: 0, target: 0 };
+
+    function markCurrentPart(name) {
+        parts.toc.querySelectorAll("[data-goto]").forEach(function (link) {
+            if (link.getAttribute("data-goto") === name) link.setAttribute("aria-current", "true");
+            else link.removeAttribute("aria-current");
+        });
+    }
 
     function onReaderScroll() {
         const box = parts.scroll;
@@ -1871,34 +1911,75 @@
         const ratio = max > 0 ? Math.min(1, box.scrollTop / max) : 1;
         reader.scrollRatio = ratio;
         parts.progress.style.transform = "scaleX(" + ratio.toFixed(4) + ")";
+        if (spy.held) return;
 
-        const limit = box.getBoundingClientRect().top + box.clientHeight * 0.35;
+        // The current part is the last one whose top is above the spy line
+        const limit = box.getBoundingClientRect().top + box.clientHeight * SPY_LINE;
         const sections = parts.article.querySelectorAll("[data-part]");
         let active = sections.length ? sections[0].getAttribute("data-part") : "";
         sections.forEach(function (section) {
             if (section.getBoundingClientRect().top <= limit) active = section.getAttribute("data-part");
         });
-        if (ratio > 0.985 && sections.length) active = sections[sections.length - 1].getAttribute("data-part");
-        parts.toc.querySelectorAll("[data-goto]").forEach(function (link) {
-            if (link.getAttribute("data-goto") === active) link.setAttribute("aria-current", "true");
-            else link.removeAttribute("aria-current");
+        if (ratio > SPY_BOTTOM && sections.length) active = sections[sections.length - 1].getAttribute("data-part");
+        markCurrentPart(active);
+    }
+
+    // The hold ends when the scroll ends ("scrollend"; browsers without it: when the
+    // scroll events stop), or as soon as you scroll yourself with the wheel or a finger.
+    // If the reader is somewhere else by then, the spy takes over again at once.
+    const HAS_SCROLLEND = "onscrollend" in window;
+
+    function holdSpy(target) {
+        spy.held = true;
+        spy.hold += 1;
+        spy.target = target;
+        waitForScrollEnd(HAS_SCROLLEND ? SCROLL_END_LIMIT : SCROLL_START_TIME);
+    }
+
+    // A safety net in case the end of the scroll is never reported
+    function waitForScrollEnd(wait) {
+        clearTimeout(spy.timer);
+        spy.timer = setTimeout(endHold, wait);
+    }
+
+    // Lets go one frame later, so the frame that is already waiting for the last
+    // scroll event still sees the hold
+    function endHold() {
+        if (!spy.held) return;
+        const hold = spy.hold;
+        clearTimeout(spy.timer);
+        requestAnimationFrame(function () {
+            if (!spy.held || spy.hold !== hold) return;   // a newer click holds it now
+            spy.held = false;
+            if (Math.abs(parts.scroll.scrollTop - spy.target) > 4) onReaderScroll();
         });
     }
 
+    function releaseSpy() {
+        clearTimeout(spy.timer);
+        spy.held = false;
+    }
+
     parts.scroll.addEventListener("scroll", function () {
+        if (spy.held) waitForScrollEnd(HAS_SCROLLEND ? SCROLL_END_LIMIT : SCROLL_QUIET_TIME);
         if (scrollFrame) return;
         scrollFrame = requestAnimationFrame(function () {
             scrollFrame = 0;
             onReaderScroll();
         });
     }, { passive: true });
+    parts.scroll.addEventListener("scrollend", endHold);
+    parts.scroll.addEventListener("wheel", endHold, { passive: true });
+    parts.scroll.addEventListener("touchstart", endHold, { passive: true });
 
     function goToPart(name) {
         const target = parts.article.querySelector('[data-part="' + name + '"]');
         if (!target) return;
         const box = parts.scroll;
-        const top = target.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 18;
-        box.scrollTo({ top: top, behavior: A.reducedMotion ? "auto" : "smooth" });
+        const top = target.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - PART_TOP_GAP;
+        markCurrentPart(name);
+        holdSpy(A.util.clamp(top, 0, box.scrollHeight - box.clientHeight));
+        box.scrollTo({ top: top, behavior: A.motion.ok() ? "smooth" : "auto" });
         const heading = target.querySelector("[tabindex='-1']");
         if (heading) heading.focus({ preventScroll: true });
     }
@@ -1910,14 +1991,11 @@
         reader.lesson = n;
         renderLessonContent();
         updateReaderChrome();
+        releaseSpy();
         parts.scroll.scrollTop = 0;
         onReaderScroll();
         setHash("#lesson-" + n);
-        if (!A.reducedMotion) {
-            parts.article.classList.remove("is-entering");
-            void parts.article.offsetWidth;   // restart the fade-in animation
-            parts.article.classList.add("is-entering");
-        }
+        if (A.motion.ok()) A.dom.replay(parts.article, "is-entering");   // the fade-in
         const title = parts.article.querySelector("#lsn-reader-title");
         if (title) title.focus({ preventScroll: true });
     }
@@ -1933,20 +2011,11 @@
     }
 
     function cycleTextSize() {
-        textSize = SIZES[(SIZES.indexOf(textSize) + 1) % SIZES.length];
+        textSize = TEXT_SIZES[(TEXT_SIZES.indexOf(textSize) + 1) % TEXT_SIZES.length];
         A.storage.set("lessons.textSize", textSize);
         readerEl.setAttribute("data-size", textSize);
         updateReaderChrome();
         onReaderScroll();
-    }
-
-    // Moves the keyboard focus to the heading of a page section (without scrolling)
-    function focusSectionHeading(sectionId) {
-        const section = document.getElementById(sectionId);
-        const heading = section && section.querySelector("h1, h2");
-        if (!heading) return;
-        if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
-        heading.focus({ preventScroll: true });
     }
 
     // "Try it on this site": close the reader and jump to the right place
@@ -1955,58 +2024,11 @@
         closeReader({ restoreFocus: false });
         requestAnimationFrame(function () {
             const sectionId = target === "classifier" || target === "predictor" ? "lab" : target;
-            focusSectionHeading(sectionId);
-            if (sectionId === "lab" && typeof A.openLab === "function") A.openLab(target);
-            else if (sectionId === "quiz" && typeof A.startQuiz === "function") A.startQuiz();
-            else A.scrollToSection(sectionId);
+            A.dom.focusHeading(sectionId);   // the focus waits there if the feature moves it nowhere
+            if (sectionId === "lab" && A.lab) A.lab.open(target);
+            else if (sectionId === "quiz" && A.quiz) A.quiz.start();
+            else A.navigate(sectionId);
         });
-    }
-
-    // ----- Keeping the page still and the focus inside while the reader is open -----
-    function lockPage() {
-        const gap = window.innerWidth - document.documentElement.clientWidth;
-        document.body.style.overflow = "hidden";
-        if (gap > 0) document.body.style.paddingRight = gap + "px";
-        reader.inerted = [];
-        document.querySelectorAll('body > header, body > main, body > footer, body > .skip-link, [data-feature="assistant"]').forEach(function (element) {
-            if (!element.inert) {
-                element.inert = true;
-                reader.inerted.push(element);
-            }
-        });
-    }
-
-    function unlockPage() {
-        document.body.style.overflow = "";
-        document.body.style.paddingRight = "";
-        reader.inerted.forEach(function (element) { element.inert = false; });
-        reader.inerted = [];
-    }
-
-    function focusableIn(root) {
-        return Array.prototype.slice.call(root.querySelectorAll(
-            'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )).filter(function (element) {
-            return !element.disabled && !element.closest("[hidden]") && element.getClientRects().length > 0;
-        });
-    }
-
-    function trapFocus(event) {
-        const items = focusableIn(panel);
-        if (!items.length) return;
-        const first = items[0];
-        const last = items[items.length - 1];
-        const active = document.activeElement;
-        if (!panel.contains(active)) {
-            event.preventDefault();
-            first.focus();
-        } else if (event.shiftKey && active === first) {
-            event.preventDefault();
-            last.focus();
-        } else if (!event.shiftKey && active === last) {
-            event.preventDefault();
-            first.focus();
-        }
     }
 
     function setHash(hash) {
@@ -2044,16 +2066,13 @@
         // Without a button to come back to, closing returns to the lesson's card
         if (!reader.opener) scrollCardIntoView(n);
         const hash = window.location.hash;
-        reader.previousHash = /^#lesson-\d$/.test(hash) ? "" : hash;
+        reader.previousHash = /^#lesson-\d+$/.test(hash) ? "" : hash;
 
-        wrapPaletteCommands();
-        lockPage();
         document.body.classList.add("lsn-reading");
         readerEl.hidden = false;
         readerEl.classList.remove("is-closing");
-        void readerEl.offsetWidth;   // lets the opening animation start from the beginning
-        readerEl.classList.add("is-open");
-        updatePaused();
+        A.dom.replay(readerEl, "is-open");   // the opening animation starts from the beginning
+        overlay.opened();            // before the focus moves into the reader
         showLesson(n);
     }
 
@@ -2065,21 +2084,21 @@
         reader.open = false;
         stopSpeaking();
         stopLab(true);
+        releaseSpy();
         readerEl.classList.remove("is-open");
         document.body.classList.remove("lsn-reading");
-        updatePaused();
-        unlockPage();
+        overlay.closed();            // before the focus goes back to the page
         if (!settings.keepHash) setHash(reader.previousHash);
 
         const finish = function () {
             readerEl.hidden = true;
             readerEl.classList.remove("is-closing");
         };
-        if (A.reducedMotion) {
+        if (!A.motion.ok()) {
             finish();
         } else {
             readerEl.classList.add("is-closing");
-            reader.closeTimer = setTimeout(finish, 260);
+            reader.closeTimer = setTimeout(finish, READER_CLOSE_TIME);
         }
 
         if (settings.restoreFocus !== false) {
@@ -2098,10 +2117,19 @@
     }
 
     // ----- Clicks and keys inside the reader -----
+    // A click on the backdrop around the panel closes the reader, but only when the
+    // press also started there, and not as the second click of a double-click
+    // (the first click may have opened the reader from a lesson card under it).
+    let pressOnBackdrop = false;
+    readerEl.addEventListener("pointerdown", function (event) {
+        pressOnBackdrop = event.target === parts.backdrop;
+    });
+
     readerEl.addEventListener("click", function (event) {
         const target = event.target.closest("[data-action], [data-option], [data-goto]");
         if (!target || !readerEl.contains(target)) return;
         if (target.getAttribute("aria-disabled") === "true") return;
+        if (target === parts.backdrop && (!pressOnBackdrop || event.detail > 1)) return;
 
         if (target.hasAttribute("data-option")) {
             answerCheck(Number(target.getAttribute("data-option")));
@@ -2129,28 +2157,22 @@
         }
     });
 
+    // ← and → go to the previous / next lesson. (Esc and Tab are handled by core.)
     document.addEventListener("keydown", function (event) {
-        if (!reader.open) return;
-        // Only react when the focus is in the reader (or lost on the page body),
-        // so a palette or another dialog on top keeps its own keys.
+        if (!reader.open || A.overlays.top() !== READER_ID) return;
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+        if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        // Only when the focus is in the reader (or lost on the page body),
+        // and never while typing or moving a slider
         const target = event.target;
         if (!readerEl.contains(target) && target !== document.body && target !== document.documentElement) return;
-
-        if (event.key === "Escape") {
-            event.preventDefault();
-            closeReader();
-        } else if (event.key === "Tab") {
-            trapFocus(event);
-        } else if ((event.key === "ArrowLeft" || event.key === "ArrowRight") &&
-                   !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
-            const tag = target.tagName;
-            if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
-            event.preventDefault();
-            goRelative(event.key === "ArrowLeft" ? -1 : 1);
-        }
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
+        event.preventDefault();
+        goRelative(event.key === "ArrowLeft" ? -1 : 1);
     });
 
-    // ---------- 25. Reading aloud (the browser's built-in speech) ----------
+    // ---------- 17. Reading aloud (the browser's built-in speech) ----------
     const canSpeak = "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function";
     const speech = { active: false, session: 0, element: null, warnedAt: 0 };
 
@@ -2161,8 +2183,8 @@
         element.classList.add("is-speaking");
         const box = parts.scroll.getBoundingClientRect();
         const rect = element.getBoundingClientRect();
-        if (rect.top < box.top + 40 || rect.bottom > box.bottom - 40) {
-            element.scrollIntoView({ block: "center", behavior: A.reducedMotion ? "auto" : "smooth" });
+        if (rect.top < box.top + SPEAK_MARGIN || rect.bottom > box.bottom - SPEAK_MARGIN) {
+            element.scrollIntoView({ block: "center", behavior: A.motion.ok() ? "smooth" : "auto" });
         }
     }
 
@@ -2220,7 +2242,7 @@
                 if (event.error === "interrupted" || event.error === "canceled") return;
                 stopSpeaking();
                 // Only warn once every few seconds, even if the button is pressed again
-                if (!started && Date.now() - speech.warnedAt > 5000) {
+                if (!started && Date.now() - speech.warnedAt > NO_VOICE_WARNING_GAP) {
                     speech.warnedAt = Date.now();
                     A.toast(t("lessons.reader.noSpeech"), "🔇");
                 }
@@ -2232,7 +2254,67 @@
         updateReaderChrome();
     }
 
-    // ---------- 26. Commands for the Ctrl+K palette + API for other features ----------
+    // ---------- 18. Language and theme changes ----------
+    A.onLanguageChange(function () {
+        updateHUD();
+        updateCards();
+        if (!cert.root.hidden) drawCertificate();
+        if (!reader.open) return;
+
+        // Re-draw the open lesson in the new language, keeping its place, answers and focus
+        const ratio = reader.scrollRatio;
+        const active = document.activeElement;
+        const focusWasInside = Boolean(active) && readerEl.contains(active);
+        const fid = focusWasInside ? active.getAttribute("data-fid") : null;
+        stopSpeaking();
+        renderLessonContent();
+        updateReaderChrome();
+        const box = parts.scroll;
+        box.scrollTop = ratio * (box.scrollHeight - box.clientHeight);
+        onReaderScroll();
+        if (focusWasInside && !active.isConnected) {
+            const again = fid ? readerEl.querySelector('[data-fid="' + fid + '"]') : null;
+            const target = again || parts.article.querySelector("#lsn-reader-title");
+            if (target) target.focus({ preventScroll: true });
+        }
+    });
+
+    A.onThemeChange(function () {
+        scheduleCertificate();
+    });
+
+    // Fonts arrive a little later: redraw the certificate with them
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(scheduleCertificate);
+    }
+
+    // ---------- 19. Start ----------
+    updateHUD();
+    updateCards();
+
+    // A link like index.html#lesson-3 opens that lesson (0: the address names no lesson)
+    function lessonFromHash() {
+        const match = /^#lesson-(\d+)$/.exec(window.location.hash);
+        const n = match ? Number(match[1]) : 0;
+        return n >= 1 && n <= TOTAL ? n : 0;
+    }
+
+    // The Back / Forward buttons change the hash: open the lesson, or close the reader
+    window.addEventListener("hashchange", function () {
+        const n = lessonFromHash();
+        if (n) openLesson(n, document.activeElement);
+        else if (reader.open) closeReader({ keepHash: true });
+    });
+
+    // Opened once every script has run, so the whole page (and every
+    // command of the Ctrl+K palette) is ready behind the reader
+    A.ready(function () {
+        const n = lessonFromHash();
+        if (n) openLesson(n);
+    });
+
+    // ---------- 20. Ctrl+K commands and the public API ----------
+    // One command per lesson, plus "continue where I stopped"
     LESSONS.forEach(function (lesson) {
         A.registerCommand({
             id: "lesson-" + lesson.number,
@@ -2241,7 +2323,7 @@
             title: function () { return t("lessons.cmdOpen", { title: lessonTitle(lesson.number) }); },
             keywords: "lesson урок " + lesson.number + " " + lesson.keywords,
             // An open reader stays open and switches to this lesson
-            keepOverlays: ["lesson-reader"],
+            keepOverlays: [READER_ID],
             // The palette gives the focus back before running a command, so the
             // focused element is where the reader returns to when it closes
             run: function () { openLesson(lesson.number, document.activeElement); }
@@ -2254,7 +2336,7 @@
         icon: "▶️",
         title: function () { return t("lessons.cmdContinue"); },
         keywords: "continue next lesson learning продолжить следующий урок обучение",
-        keepOverlays: ["lesson-reader"],
+        keepOverlays: [READER_ID],
         run: function () { openLesson(nextLesson() || 1, document.activeElement); }
     });
 
@@ -2293,120 +2375,4 @@
 
     A.openLesson = A.lessons.open;
     A.closeLesson = A.lessons.close;
-
-    // While the reader is open, anything that takes you to another part of the page
-    // would happen hidden behind it. So these close the reader first:
-    // 1) AICompass.scrollToSection(), used by the lab, quiz, glossary and assistant
-    let handingOver = false;   // true while another feature takes over from the reader
-    const coreScrollToSection = A.scrollToSection;
-    A.scrollToSection = function (id) {
-        if (reader.open || handingOver) {
-            closeReader({ restoreFocus: false });   // does nothing if it is already closed
-            focusSectionHeading(id);
-        }
-        return coreScrollToSection.apply(A, arguments);
-    };
-
-    // 2) Ctrl+K commands that go somewhere, like "Go to Glossary" or "Ask Compass Bot",
-    //    and the glossary / assistant functions the palette calls directly.
-    //    Quick actions (theme, language...) and the lesson commands keep the reader open.
-    //    This runs every time the reader opens, so things added later are included.
-    const KEEP_READER_GROUPS = ["cmd.groupActions", "lessons.cmdGroup"];
-
-    // Wraps owner[name] so it closes the reader before it runs
-    function closeReaderFirst(owner, name, sectionId) {
-        const original = owner && owner[name];
-        if (typeof original !== "function" || original.lsnClosesReader) return;
-        const wrapped = function () {
-            if (!reader.open) return original.apply(this, arguments);
-            closeReader({ restoreFocus: false });
-            // The focus goes to the section's heading, or back to the button that opened
-            // the reader. The feature can still move it (for example into its own text box).
-            if (sectionId) focusSectionHeading(sectionId);
-            else if (canTakeFocus(reader.opener)) reader.opener.focus({ preventScroll: true });
-            handingOver = true;
-            try {
-                return original.apply(this, arguments);
-            } finally {
-                handingOver = false;
-            }
-        };
-        wrapped.lsnClosesReader = true;
-        owner[name] = wrapped;
-    }
-
-    function wrapPaletteCommands() {
-        (A.commands || []).forEach(function (command) {
-            if (!command || KEEP_READER_GROUPS.indexOf(command.group) !== -1) return;
-            const section = /^go-([a-z]+)$/.exec(String(command.id || ""));
-            closeReaderFirst(command, "run", section ? section[1] : "");
-        });
-        closeReaderFirst(A.glossary, "show", "glossary");
-        if (A.assistant) {
-            ["open", "ask", "toggle"].forEach(function (name) { closeReaderFirst(A.assistant, name); });
-        }
-    }
-
-    // ---------- 27. Language and theme changes ----------
-    A.onLanguageChange(function () {
-        updateHUD();
-        updateCards();
-        if (!cert.root.hidden) drawCertificate();
-        // Core also sends this event once when the page starts: nothing to redo then
-        if (!reader.open || reader.renderedLang === A.lang) return;
-
-        // Re-draw the open lesson in the new language, keeping its place, answers and focus
-        const ratio = reader.scrollRatio;
-        const active = document.activeElement;
-        const focusWasInside = Boolean(active) && readerEl.contains(active);
-        const fid = focusWasInside ? active.getAttribute("data-fid") : null;
-        stopSpeaking();
-        renderLessonContent();
-        updateReaderChrome();
-        const box = parts.scroll;
-        box.scrollTop = ratio * (box.scrollHeight - box.clientHeight);
-        onReaderScroll();
-        if (focusWasInside && !active.isConnected) {
-            const again = fid ? readerEl.querySelector('[data-fid="' + fid + '"]') : null;
-            const target = again || parts.article.querySelector("#lsn-reader-title");
-            if (target) target.focus({ preventScroll: true });
-        }
-    });
-
-    A.onThemeChange(function () {
-        scheduleCertificate();
-    });
-
-    // Fonts arrive a little later: redraw the certificate with them
-    if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(scheduleCertificate);
-    }
-
-    // ---------- 28. Start ----------
-    updateHUD();
-    updateCards();
-
-    // A link like index.html#lesson-3 opens that lesson
-    function lessonFromHash() {
-        const match = /^#lesson-([1-6])$/.exec(window.location.hash);
-        return match ? Number(match[1]) : 0;
-    }
-
-    // The Back / Forward buttons change the hash: open the lesson, or close the reader
-    window.addEventListener("hashchange", function () {
-        const n = lessonFromHash();
-        if (n) openLesson(n, document.activeElement);
-        else if (reader.open) closeReader({ keepHash: true });
-    });
-
-    function openFromHash() {
-        const n = lessonFromHash();
-        if (n) openLesson(n);
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", openFromHash);
-    } else {
-        openFromHash();
-    }
 })();

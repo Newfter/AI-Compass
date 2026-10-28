@@ -90,7 +90,9 @@ window.AICompass.addTranslations({
 
         "lessons.toast.done": "Lesson complete: {title}",
         "lessons.toast.undone": "Lesson marked as not completed",
-        "lessons.toast.all": "All 6 lessons completed! You're an AI explorer now.",
+        // {n} is the number of lessons
+        "lessons.toast.all.one": "All lessons completed! You're an AI explorer now.",
+        "lessons.toast.all.many": "All {n} lessons completed! You're an AI explorer now.",
         "lessons.toast.reset": "Lesson progress reset",
         "lessons.toast.cert": "Certificate downloaded!",
 
@@ -102,10 +104,14 @@ window.AICompass.addTranslations({
         "lessons.cert.download": "Download PNG",
         "lessons.cert.preview": "Certificate preview for {name}",
         "lessons.cert.heading": "Certificate of completion",
-        "lessons.cert.for": "for successfully completing all six AI Compass lessons",
+        // {n} is the number of lessons: as a word when "lessons.cert.count.<number>" has one, otherwise in digits
+        "lessons.cert.for.one": "for successfully completing the AI Compass lesson",
+        "lessons.cert.for.many": "for successfully completing all {n} AI Compass lessons",
+        "lessons.cert.count.6": "six",
         "lessons.cert.defaultName": "AI Explorer",
         "lessons.cert.date": "Issued on {date}",
-        "lessons.cert.lessons": "lessons",
+        "lessons.cert.lessons.one": "lesson",
+        "lessons.cert.lessons.many": "lessons",
 
         "lessons.cmdGroup": "Lessons",
         "lessons.cmdOpen": "Open lesson: {title}",
@@ -181,7 +187,9 @@ window.AICompass.addTranslations({
 
         "lessons.toast.done": "Урок пройден: {title}",
         "lessons.toast.undone": "Отметка о прохождении снята",
-        "lessons.toast.all": "Все 6 уроков пройдены! Теперь ты настоящий исследователь ИИ.",
+        "lessons.toast.all.one": "Пройден {n} урок из {n}! Теперь ты настоящий исследователь ИИ.",
+        "lessons.toast.all.few": "Все {n} урока пройдены! Теперь ты настоящий исследователь ИИ.",
+        "lessons.toast.all.many": "Все {n} уроков пройдены! Теперь ты настоящий исследователь ИИ.",
         "lessons.toast.reset": "Прогресс уроков сброшен",
         "lessons.toast.cert": "Сертификат скачан!",
 
@@ -193,10 +201,15 @@ window.AICompass.addTranslations({
         "lessons.cert.download": "Скачать PNG",
         "lessons.cert.preview": "Предпросмотр сертификата: {name}",
         "lessons.cert.heading": "Сертификат о прохождении",
-        "lessons.cert.for": "за успешное прохождение всех шести уроков AI Compass",
+        "lessons.cert.for.one": "за успешное прохождение {n} урока AI Compass",
+        "lessons.cert.for.few": "за успешное прохождение всех {n} уроков AI Compass",
+        "lessons.cert.for.many": "за успешное прохождение всех {n} уроков AI Compass",
+        "lessons.cert.count.6": "шести",
         "lessons.cert.defaultName": "Исследователь ИИ",
         "lessons.cert.date": "Дата выдачи: {date}",
-        "lessons.cert.lessons": "уроков",
+        "lessons.cert.lessons.one": "урок",
+        "lessons.cert.lessons.few": "урока",
+        "lessons.cert.lessons.many": "уроков",
 
         "lessons.cmdGroup": "Уроки",
         "lessons.cmdOpen": "Открыть урок: {title}",
@@ -621,7 +634,10 @@ window.AICompass.addTranslations({
 
         // Mini-lab 6: what would you do?
         "lessons.w6.title": "What would you do?",
-        "lessons.w6.intro": "Three real-life situations. Pick what you'd do, and find out why it matters.",
+        // {n} is the number of situations: as a word when "lessons.w6.count.<number>" has one, otherwise in digits
+        "lessons.w6.intro.one": "{n} real-life situation. Pick what you'd do, and find out why it matters.",
+        "lessons.w6.intro.many": "{n} real-life situations. Pick what you'd do, and find out why it matters.",
+        "lessons.w6.count.3": "Three",
         "lessons.w6.situation": "Situation {n}",
         "lessons.w6.s1": "📹 A video shows a famous person saying something shocking. It already has 2 million views.",
         "lessons.w6.s1o1": "Share it right away — everyone's talking about it",
@@ -764,7 +780,10 @@ window.AICompass.addTranslations({
 
         // Мини-лаборатория 6: а как поступишь ты?
         "lessons.w6.title": "А как поступишь ты?",
-        "lessons.w6.intro": "Три жизненные ситуации. Выбери, что сделаешь, и узнай, почему это важно.",
+        "lessons.w6.intro.one": "{n} жизненная ситуация. Выбери, что сделаешь, и узнай, почему это важно.",
+        "lessons.w6.intro.few": "{n} жизненные ситуации. Выбери, что сделаешь, и узнай, почему это важно.",
+        "lessons.w6.intro.many": "{n} жизненных ситуаций. Выбери, что сделаешь, и узнай, почему это важно.",
+        "lessons.w6.count.3": "Три",
         "lessons.w6.situation": "Ситуация {n}",
         "lessons.w6.s1": "📹 В видео известный человек говорит что-то шокирующее. У ролика уже 2 миллиона просмотров.",
         "lessons.w6.s1o1": "Сразу поделиться — все же это обсуждают",
