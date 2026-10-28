@@ -1,15 +1,27 @@
 /* =========================================================
    AI COMPASS — TIMELINE ("A Short History of AI")
-   This file builds:
-   1. era filter chips (All, Early ideas, Ups & downs, ...)
-      in a bar that sticks to the top while you read
-   2. a vertical timeline: a glowing line fills up as you
-      scroll, and every milestone lights up when the line
-      reaches it
-   3. "In the glossary" buttons that jump to the matching
-      term in the glossary (js/glossary.js)
-   All the texts are translations, so core.js switches the
-   language by itself and nothing is lost.
+   15 milestones of AI, from 1950 to today:
+   - era chips (All, Early ideas, Ups & downs, ...) in a bar that
+     sticks under the menu while you read;
+   - a glowing line that fills as you scroll; every milestone lights
+     up when the line reaches it, and a small read-out in the bar
+     shows the year and how many milestones you have passed;
+   - "In the glossary" buttons that open the matching term in the
+     glossary (js/glossary.js).
+   The timeline sits far down the page, so it is only built when it
+   comes near the screen (or when the browser has a quiet moment).
+   Sections of this file:
+    1. Settings
+    2. Small helpers
+    3. Building the timeline
+    4. The line that fills as you scroll
+    5. Era filter
+    6. Glossary buttons and keyboard focus
+    7. Language and motion changes
+    8. Start
+   The eras, the milestones and every text (English and Russian) are
+   in js/content/timeline.js. The timeline has no API of its own; its
+   term buttons use AICompass.glossary.
    ========================================================= */
 
 (function () {
@@ -17,51 +29,42 @@
 
     const A = window.AICompass;
     const mount = document.querySelector('[data-feature="timeline"]');
-    if (!A || !mount) return;
+    const data = A && A.content.get("timeline");
+    if (!A || !mount || !data) return;
 
     const t = A.t;
     const esc = A.escapeHTML;
-
-    // The line is "filled" up to this point of the screen (60% from the top)
-    const READ_LINE = 0.6;
-    const VIEW_MARGIN = "120px 0px";    // the line follows the scroll this close to the screen
-    const GLIDE_SPEED = 10;             // how fast the fill catches up (higher = faster)
-    const GLIDE_FIRST_STEP = 0.016;     // seconds: the first gliding step (one frame)
-    const GLIDE_MAX_STEP = 0.05;        // seconds: the longest step (after a slow frame)
-    const GLIDE_SNAP = 0.5;             // px: this close counts as "arrived"
-    const BAR_GAP = 12;                 // px between the menu and the stuck bar (css/timeline.css)
-
-    // ---------- 1. Eras and milestones ----------
-    // key: the start of the translation keys ("timeline.e1.title", ...)
-    // datetime: the year for the <time> element (empty if it is not one year)
-    // terms: glossary terms to link to
-    const ERAS = ["early", "ups", "deep", "gen"];
-
-    const EVENTS = [
-        { key: "e1", era: "early", icon: "🤔", datetime: "1950", terms: ["turing-test"] },
-        { key: "e2", era: "early", icon: "🏫", datetime: "1956", terms: ["ai"] },
-        { key: "e3", era: "early", icon: "🔗", datetime: "1958", terms: ["neuron"] },
-        { key: "e4", era: "early", icon: "💬", datetime: "1966", terms: ["chatbot"] },
-        { key: "e5", era: "ups", icon: "❄️", datetime: "", terms: [] },
-        { key: "e6", era: "ups", icon: "♟️", datetime: "1997", terms: ["algorithm"] },
-        { key: "e7", era: "ups", icon: "🎙️", datetime: "2011", terms: ["nlp"] },
-        { key: "e8", era: "deep", icon: "🖼️", datetime: "2012", terms: ["deep-learning", "computer-vision"] },
-        { key: "e9", era: "deep", icon: "🎨", datetime: "2014", terms: ["generative-ai", "deepfake"] },
-        { key: "e10", era: "deep", icon: "⚫", datetime: "2016", terms: ["reinforcement"] },
-        { key: "e11", era: "deep", icon: "⚡", datetime: "2017", terms: ["transformer"] },
-        { key: "e12", era: "deep", icon: "🧬", datetime: "2020", terms: ["deep-learning"] },
-        { key: "e13", era: "gen", icon: "🚀", datetime: "2022", terms: ["chatbot", "llm"] },
-        { key: "e14", era: "gen", icon: "🏅", datetime: "2024", terms: ["neural-network"] },
-        { key: "e15", era: "gen", icon: "📱", datetime: "", terms: ["bias", "privacy"], today: true }
-    ];
-
-    // Every text (English and Russian) is in js/content/timeline.js
-
-    // ---------- 3. Small helpers ----------
-
     // A translated piece of text: <span class="..." data-i18n="key">text</span>.
     // data-i18n lets core.js re-translate it by itself.
     const text = A.i18nHTML;
+
+    const ERAS = data.eras;         // ["early", "ups", "deep", "gen"]
+    const EVENTS = data.events;     // { key, era, icon, datetime, terms, today }
+
+    // ---------- 1. Settings ----------
+    const READ_LINE = 0.6;              // the line is filled up to this point of the screen (60% down)
+    const VIEW_MARGIN = "120px 0px";    // the line follows the scroll this close to the screen
+    const GLIDE_SPEED = 10;             // how fast the fill catches up with the scroll (higher = faster)
+    const GLIDE_FIRST_STEP = 0.016;     // seconds: the first gliding step (one frame)
+    const GLIDE_MAX_STEP = 0.05;        // seconds: the longest step (after a slow frame)
+    const GLIDE_SNAP = 0.5;             // px: this close to the scroll position counts as "arrived"
+    const DOT_REACH = 2;                // px: a dot lights up this close to the end of the fill
+    const WIDE_SCREEN = "(min-width: 900px)";  // two columns, and the bar may stick (css/timeline.css)
+    const BAR_GAP = 12;                 // px between the menu and the stuck bar (css/timeline.css)
+    const FILTER_SPACE = 24;            // px left above the timeline when a filter scrolls back up
+    const FOCUS_GAP = 8;                // px: a focused button closer than this to the stuck bar...
+    const FOCUS_SPACE = 16;             // ...is scrolled to this far below it
+    const FADE_OUT_MS = 240;            // a new era filter: the old milestones fade out,
+    const RISE_IN_MS = 520;             // then the new ones rise in
+    const RISE_STAGGER_MS = 70;         // one after another (this much later each)
+    const RISE_STAGGER_MAX = 8;         // but never more than 8 steps later
+
+    // ---------- 2. Small helpers ----------
+
+    // How many milestones an era has ("all": every one)
+    function countIn(era) {
+        return EVENTS.filter(function (event) { return era === "all" || event.era === era; }).length;
+    }
 
     // Distance from the top of an ancestor, ignoring animations (transforms)
     function offsetWithin(element, ancestor) {
@@ -80,13 +83,12 @@
         return A.glossary ? A.glossary.term(id) : null;
     }
 
-    // ---------- 4. Building the page ----------
+    // ---------- 3. Building the timeline ----------
     function chipHTML(era) {
-        const count = era === "all" ? EVENTS.length : EVENTS.filter(function (event) { return event.era === era; }).length;
         return '<button class="chip tl-chip" type="button" data-era="' + era + '" aria-pressed="' + (era === "all") + '">' +
             '<span class="tl-chip-dot" aria-hidden="true"></span>' +
             text("timeline.era." + era) +
-            '<span class="tl-chip-count mono">' + count + "</span>" +
+            '<span class="tl-chip-count mono">' + countIn(era) + "</span>" +
         "</button>";
     }
 
@@ -105,6 +107,8 @@
         "</div>";
     }
 
+    // One milestone: its dot on the line, a big "ghost" year, and its card.
+    // On wide screens the cards take turns on the left and on the right.
     function eventHTML(event, index) {
         const side = index % 2 === 0 ? "left" : "right";
         const k = "timeline." + event.key + ".";
@@ -147,8 +151,8 @@
         "</section>";
     }
 
-    mount.innerHTML =
-        '<div class="tl">' +
+    function timelineHTML() {
+        return '<div class="tl">' +
             '<div class="tl-bar">' +
                 '<div class="tl-filters" role="group" data-i18n-attr="aria-label:timeline.filterLabel" aria-label="' + esc(t("timeline.filterLabel")) + '">' +
                     ["all"].concat(ERAS).map(chipHTML).join("") +
@@ -170,25 +174,66 @@
                 ERAS.map(eraHTML).join("") +
             "</div>" +
         "</div>";
+    }
 
-    // Handy references
-    const root = mount.querySelector(".tl");
-    const bar = root.querySelector(".tl-bar");
-    const filters = root.querySelector(".tl-filters");
-    const live = root.querySelector(".tl-live");
-    const wrap = root.querySelector(".tl-wrap");
-    const line = root.querySelector(".tl-line");
-    const fill = root.querySelector(".tl-fill");
-    const head = root.querySelector(".tl-head");
-    const hudYear = root.querySelector(".tl-hud-year");
-    const hudCount = root.querySelector(".tl-hud-count");
-    const sections = Array.prototype.slice.call(root.querySelectorAll(".tl-era"));
-    const items = Array.prototype.slice.call(root.querySelectorAll(".tl-item")).map(function (element) {
-        // on: the line has reached its dot (null: not known yet); visible: not filtered out
-        return { el: element, node: element.querySelector(".tl-node"), key: element.getAttribute("data-key"), on: false, visible: true };
-    });
+    // The parts of the timeline the code below works with (set by build())
+    let root = null;            // .tl, everything
+    let bar = null;             // the bar with the chips and the read-out
+    let filters = null;         // the chips
+    let live = null;            // the screen reader announcement
+    let wrap = null;            // the line and the eras
+    let line = null;            // the line, with its fill and its bright "comet" head
+    let fill = null;
+    let head = null;
+    let hudYear = null;         // the read-out: the year...
+    let hudCount = null;        // ...and "06/15"
+    let sections = [];          // the eras (<section class="tl-era">)
+    let items = [];             // the milestones: { el, node, key, on, visible }
 
-    // ---------- 5. The line that fills as you scroll ----------
+    // Builds the timeline and starts everything that follows it
+    function build() {
+        mount.innerHTML = timelineHTML();
+
+        root = mount.querySelector(".tl");
+        bar = root.querySelector(".tl-bar");
+        filters = root.querySelector(".tl-filters");
+        live = root.querySelector(".tl-live");
+        wrap = root.querySelector(".tl-wrap");
+        line = root.querySelector(".tl-line");
+        fill = root.querySelector(".tl-fill");
+        head = root.querySelector(".tl-head");
+        hudYear = root.querySelector(".tl-hud-year");
+        hudCount = root.querySelector(".tl-hud-count");
+        sections = Array.prototype.slice.call(root.querySelectorAll(".tl-era"));
+        items = Array.prototype.slice.call(root.querySelectorAll(".tl-item")).map(function (element) {
+            // on: the line has reached its dot (null: not known yet); visible: not filtered out
+            return { el: element, node: element.querySelector(".tl-node"), key: element.getAttribute("data-key"), on: false, visible: true };
+        });
+
+        filters.addEventListener("click", onChipClick);
+        root.addEventListener("click", onTermClick);
+        wrap.addEventListener("focusin", onFocusIn);
+
+        // Wide screens: two columns, cards slide in from their own side
+        A.onMedia(WIDE_SCREEN, function (matches) {
+            wide = matches;
+            root.classList.toggle("is-wide", matches);
+        });
+
+        // The line: measured after size changes, drawn while the page scrolls (section 4)
+        A.onLayout(measure);
+        A.onScroll(onScroll);
+        A.whenVisible(wrap, onVisible, { rootMargin: VIEW_MARGIN });
+
+        // The blinking read-out dot, the comet's ripple and the "today" ring pause
+        // while the timeline is off screen (core sets data-paused, style.css pauses them)
+        A.whenVisible(root, function () {}, { pauseAnimations: true });
+
+        A.onLanguageChange(onLanguageChange);
+        A.motion.onChange(onMotionChange);
+    }
+
+    // ---------- 4. The line that fills as you scroll ----------
     // Core does the page's scroll work once per frame, in two phases (js/core.js):
     //   measure()   A.onLayout, only after the page changed size (a new window size,
     //               a filter, a new language, web fonts...). It only READS the page:
@@ -273,6 +318,14 @@
         if ((inView || jump) && (fresh || !frame)) follow(performance.now());
     }
 
+    // The timeline came on or near the screen, or went away (also: another browser tab)
+    function onVisible(visible) {
+        inView = visible;
+        // Going away puts the line in place at once, so it is right when you come back
+        if (!visible) jump = true;
+        redraw();
+    }
+
     // Moves the line towards the scroll position (now: the time in ms)
     function follow(now) {
         if (!layout || !scroll) return;
@@ -304,6 +357,11 @@
         follow(now);
     }
 
+    // Draws once in the next frame (after a change that is not a scroll)
+    function redraw() {
+        if (!frame) frame = requestAnimationFrame(nextStep);
+    }
+
     // Draws the line, the dots and the read-out (only what changed)
     function draw() {
         const length = layout.lineLength;
@@ -328,7 +386,7 @@
         let reached = 0;
         let lastReached = null;
         layout.nodes.forEach(function (node) {
-            const on = node.y - layout.lineTop <= shown + 2;
+            const on = node.y - layout.lineTop <= shown + DOT_REACH;
             if (on !== node.item.on) {
                 node.item.on = on;
                 node.item.el.classList.toggle("is-reached", on);
@@ -349,36 +407,19 @@
         }
     }
 
-    // Draws once in the next frame (after a change that is not a scroll)
-    function redraw() {
-        if (!frame) frame = requestAnimationFrame(nextStep);
-    }
-
-    A.onLayout(measure);
-    A.onScroll(onScroll);
-
-    // Only follow the scroll while the timeline is on (or near) the screen. Going off
-    // screen (or to another browser tab) puts the line in place at once, so it is
-    // right when you come back. Core reads the last report of the browser.
-    A.whenVisible(wrap, function (visible) {
-        inView = visible;
-        if (!visible) jump = true;
-        redraw();
-    }, { rootMargin: VIEW_MARGIN });
-
-    // The blinking HUD dot, the comet's ripple and the "today" ring pause while
-    // the timeline is off screen (core sets data-paused, style.css pauses them)
-    A.whenVisible(root, function () {}, { pauseAnimations: true });
-
-    // ---------- 6. Era filter ----------
+    // ---------- 5. Era filter ----------
     let currentEra = "all";
-    let filterToken = 0;
-    let running = [];
+    let filterToken = 0;        // a newer click makes older animations give up
+    let running = [];           // the filter's animations that are still running
+
+    function onChipClick(event) {
+        const chip = event.target.closest(".tl-chip");
+        if (chip) setEra(chip.getAttribute("data-era"));
+    }
 
     // Tells screen readers how many milestones are shown now
     function announce() {
-        const count = EVENTS.filter(function (event) { return currentEra === "all" || event.era === currentEra; }).length;
-        A.announce(A.plural("timeline.showing", count), { region: live });
+        A.announce(A.plural("timeline.showing", countIn(currentEra)), { region: live });
     }
 
     function showsEra(section, era) {
@@ -405,7 +446,7 @@
             if (token !== filterToken) return;
             // The room to leave above the timeline: under the bar, or under the menu
             // where the bar doesn't stick
-            let space = A.layout.navHeight() + 24;
+            let space = A.layout.navHeight() + FILTER_SPACE;
             if (layout && layout.barSticky) space += BAR_GAP + layout.barHeight;
 
             A.dom.pauseScrollAnchoring();
@@ -428,7 +469,7 @@
                     Array.prototype.forEach.call(section.querySelectorAll(".tl-era-head, .tl-item"), function (element) {
                         running.push(element.animate(
                             [{ opacity: 0, transform: "translateY(28px)" }, { opacity: 1, transform: "none" }],
-                            { duration: 520, delay: Math.min(index++, 8) * 70, easing: A.motion.ease, fill: "backwards" }
+                            { duration: RISE_IN_MS, delay: Math.min(index++, RISE_STAGGER_MAX) * RISE_STAGGER_MS, easing: A.motion.ease, fill: "backwards" }
                         ));
                     });
                 });
@@ -442,7 +483,7 @@
             const fades = leaving.map(function (section) {
                 return section.animate(
                     [{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(-14px) scale(0.98)" }],
-                    { duration: 240, easing: "ease-in", fill: "forwards" }
+                    { duration: FADE_OUT_MS, easing: "ease-in", fill: "forwards" }
                 );
             });
             running = fades.slice();
@@ -458,16 +499,12 @@
         }
     }
 
-    filters.addEventListener("click", function (event) {
-        const chip = event.target.closest(".tl-chip");
-        if (chip) setEra(chip.getAttribute("data-era"));
-    });
-
-    // ---------- 7. Glossary buttons ----------
-    root.addEventListener("click", function (event) {
+    // ---------- 6. Glossary buttons and keyboard focus ----------
+    // "In the glossary" buttons open the term there (the glossary scrolls to it)
+    function onTermClick(event) {
         const button = event.target.closest(".tl-term");
         if (button && A.glossary) A.glossary.show(button.getAttribute("data-term"), { focus: true });
-    });
+    }
 
     // Keyboard focus must never hide under the sticky bar. The CSS scroll-margin
     // helps when the browser scrolls by itself, but a button that is already on
@@ -477,17 +514,18 @@
         if (!layout || !layout.barSticky) return;
         const barBottom = bar.getBoundingClientRect().bottom;
         const top = element.getBoundingClientRect().top;
-        if (top < barBottom + 8) {
-            window.scrollBy({ top: top - barBottom - 16, behavior: A.motion.ok() ? "smooth" : "auto" });
+        if (top < barBottom + FOCUS_GAP) {
+            window.scrollBy({ top: top - barBottom - FOCUS_SPACE, behavior: A.motion.ok() ? "smooth" : "auto" });
         }
     }
 
-    wrap.addEventListener("focusin", function (event) {
+    function onFocusIn(event) {
         const element = event.target;
         // Wait one frame, so the browser's own scrolling has happened first
         requestAnimationFrame(function () { keepClearOfBar(element); });
-    });
+    }
 
+    // The term names come from the glossary, in the current language
     function updateTermButtons() {
         root.querySelectorAll(".tl-term").forEach(function (button) {
             const term = glossaryTerm(button.getAttribute("data-term"));
@@ -497,16 +535,9 @@
         });
     }
 
-    // ---------- 8. Cards slide in from their own side on wide screens ----------
-    // (the same 900px as the one-column layout in css/timeline.css)
-    A.onMedia("(min-width: 900px)", function (matches) {
-        wide = matches;
-        root.classList.toggle("is-wide", matches);
-    });
-
-    // ---------- 9. Language changes ----------
+    // ---------- 7. Language and motion changes ----------
     // core.js has already translated every [data-i18n] text; we only update our extras
-    A.onLanguageChange(function () {
+    function onLanguageChange() {
         updateTermButtons();
         // Quietly forget the last announcement (it was in the old language)
         A.announce("", { region: live, delay: 0 });
@@ -514,14 +545,17 @@
         drawn.hud = "";
         // The texts have new lengths: core measures (and draws) again in the next frame
         A.layoutChanged();
-    });
+    }
 
     // Calm mode or the device's "reduce motion" setting changed
-    A.motion.onChange(function () {
+    function onMotionChange() {
         jump = true;
         redraw();
-    });
+    }
 
-    // Core measures (and draws) once the page is laid out, again after web fonts
-    // arrive and when the page has loaded.
+    // ---------- 8. Start ----------
+    // Built when it comes near the screen, when the browser has a quiet moment after
+    // the page loaded, or at once for a link to a place in the page (#timeline).
+    // css/timeline.css keeps its room meanwhile, so nothing below it jumps.
+    A.whenNeeded(mount, build);
 })();

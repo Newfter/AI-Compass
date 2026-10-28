@@ -18,6 +18,13 @@
     display: none !important;
 }
 
+/* Until js/timeline.js builds the timeline (when it comes near the screen), its
+   place keeps about the height it will have (measured in English), so the page
+   below doesn't jump. Smaller screens: see 8. Phones and tablets. */
+.js [data-feature="timeline"]:empty {
+    min-height: 7400px;
+}
+
 .tl {
     position: relative;
 }
@@ -603,12 +610,20 @@
 
 /* Not enough room for the read-out next to the chips */
 @media (max-width: 1100px) {
+    .js [data-feature="timeline"]:empty {
+        min-height: 8000px;
+    }
+
     .tl-hud {
         display: none;
     }
 }
 
 @media (max-width: 899px) {
+    .js [data-feature="timeline"]:empty {
+        min-height: 6700px;
+    }
+
     /* The chips may need two rows here, so the bar scrolls away with the page */
     .tl-bar {
         position: relative;
@@ -661,6 +676,10 @@
 }
 
 @media (max-width: 640px) {
+    .js [data-feature="timeline"]:empty {
+        min-height: 9400px;
+    }
+
     .tl-bar {
         margin-bottom: 36px;
         padding: 10px;
