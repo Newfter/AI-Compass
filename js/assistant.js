@@ -1314,9 +1314,13 @@
                 safely(function () { ui.input.setSelectionRange(end, end); });
             }
         }
+        // "Start the quiz": a moment to read the answer, then the bot does it
+        // (not if the chat was restarted in the meantime)
         if (job.auto) {
             const action = job.auto;
-            setTimeout(function () { runAction(action); }, 650);
+            setTimeout(function () {
+                if (job.generation === state.generation) runAction(action);
+            }, 650);
         }
     }
 
@@ -1359,22 +1363,12 @@
 
     /* =========================================================
        8. BUTTONS INSIDE MESSAGES (ACTIONS)
-       Everything that talks to other features is "defensive":
-       if a feature is missing, we simply scroll to its section.
+       They use the other features' public APIs (AICompass.lessons, .quiz,
+       .lab, .glossary). If a feature is missing from the page, the bot
+       simply goes to its section.
        ========================================================= */
 
     const LEAVING = ["lesson", "quiz", "lab", "glossary", "section"];
-
-    // After "Go to: Glossary" the keyboard focus moves to that section's heading
-    // (only if nothing else took it), so Tab continues from there
-    function focusHeading(id) {
-        const section = document.getElementById(id);
-        const heading = section && section.querySelector("h1, h2");
-        const active = document.activeElement;
-        if (!heading || (active && active !== document.body && active !== ui.launcher)) return;
-        if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
-        heading.focus({ preventScroll: true });
-    }
 
     function runAction(action) {
         // The chat would cover the place we go to (on phones all of it, on computers
@@ -1385,29 +1379,29 @@
         switch (action.act) {
             case "lesson": {
                 const n = Number(action.arg) || 1;
-                if (typeof A.openLesson === "function") safely(function () { A.openLesson(n); });
-                else A.scrollToSection("lessons");
+                // When the reader closes, the focus comes back to the round button
+                if (A.lessons) safely(function () { A.lessons.open(n, ui.launcher); });
+                else A.navigate("lessons");
                 break;
             }
             case "quiz":
-                if (typeof A.startQuiz === "function") safely(function () { A.startQuiz(); });
-                else A.scrollToSection("quiz");
+                if (A.quiz) safely(function () { A.quiz.start(); });
+                else A.navigate("quiz");
                 break;
             case "lab":
-                if (typeof A.openLab === "function") safely(function () { A.openLab(action.arg === "predictor" ? "predictor" : "classifier"); });
-                else A.scrollToSection("lab");
+                if (A.lab) safely(function () { A.lab.open(action.arg === "predictor" ? "predictor" : "classifier"); });
+                else A.navigate("lab");
                 break;
             case "glossary":
                 // { focus: true }: the keyboard focus moves to the term card too
-                if (A.glossary && typeof A.glossary.show === "function") safely(function () { A.glossary.show(action.arg, { focus: true }); });
-                else A.scrollToSection("glossary");
+                if (A.glossary) safely(function () { A.glossary.show(action.arg, { focus: true }); });
+                else A.navigate("glossary");
                 break;
-            case "section": {
-                const id = SECTIONS[action.arg] ? action.arg : "home";
-                A.scrollToSection(id);
-                focusHeading(id);
+            case "section":
+                // Scrolls there and moves the keyboard focus to the section's heading,
+                // so Tab continues from there
+                A.navigate(SECTIONS[action.arg] ? action.arg : "home");
                 break;
-            }
             case "lang": {
                 const target = action.arg === "ru" ? "ru" : "en";
                 chat.hinted = true;
