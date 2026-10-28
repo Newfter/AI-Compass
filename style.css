@@ -43,6 +43,9 @@
     --text: #eef1ff;
     --text-muted: #aab5d0;
     --text-dim: #8793b2;
+    /* Small grey labels (10-13px letters): --text-dim made a little stronger with
+       the text colour, at least 5.5:1 on the page and card colours of both themes */
+    --text-label: color-mix(in srgb, var(--text-dim) 82%, var(--text));
 
     /* Accent colours (violet, cyan, pink). The -rgb versions are for see-through
        colours: rgba(var(--accent-rgb), 0.3) */
@@ -93,6 +96,7 @@
     --text: #12162b;
     --text-muted: #4a5470;
     --text-dim: #5d6785;
+    --text-label: color-mix(in srgb, var(--text-dim) 82%, var(--text));
 
     --accent: #6b3fe0;
     --accent-2: #07728f;
