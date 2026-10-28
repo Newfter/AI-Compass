@@ -92,6 +92,9 @@
     // On a new visit, the last experiment opens once the lab is this close to the screen
     // (one screen away). Before that, nothing of it is loaded.
     const NEAR_MARGIN = "100% 0px";
+    // A link like #lab/predictor opened in a new tab keeps the lab in view while the page
+    // is still loading, and this long after it loaded (see "9. Links")
+    const HOLD_AFTER_LOAD = 1000;         // ms
 
     /* =========================================================
        2. SMALL HELPERS
@@ -849,10 +852,47 @@
         A.navigate("lab");
     }
 
+    // A link opened in a new tab: the page above the lab still changes a little while it
+    // loads (the web fonts arrive, and the texts take their final size). For #lab the browser
+    // keeps the section in view by itself, but there is no element with the id
+    // "lab/predictor", so here the hub does it: until the page and its fonts have loaded
+    // (and a moment more), the lab goes back to its place after each change of the page's
+    // layout. Scrolling, a tap, a click or a key stops it at once: the page is yours.
+    const YOUR_MOVES = ["wheel", "touchstart", "pointerdown", "keydown"];
+    let holding = false;
+
+    function holdInView() {
+        if (holding) return;
+        holding = true;
+        const stopLayout = A.onLayout(function () {
+            if (holding) requestAnimationFrame(goBack);
+        });
+        function goBack() {
+            // Where the lab already is, this doesn't move the page
+            if (holding) A.navigate("lab", { focus: false, keepOverlays: true });
+        }
+        function stop() {
+            if (!holding) return;
+            holding = false;
+            stopLayout();
+            YOUR_MOVES.forEach(function (name) { window.removeEventListener(name, stop, true); });
+        }
+        YOUR_MOVES.forEach(function (name) { window.addEventListener(name, stop, { capture: true, passive: true }); });
+        function afterFonts() {
+            const fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+            fonts.then(function () { setTimeout(stop, HOLD_AFTER_LOAD); });
+        }
+        if (document.readyState === "complete") afterFonts();
+        else window.addEventListener("load", afterFonts, { once: true });
+    }
+
     window.addEventListener("hashchange", followLink);
     // On page load, once every script has run (so a link to the lab finds the whole page ready)
     A.ready(function () {
-        if (linkTarget()) followLink();
+        const target = linkTarget();
+        if (!target) return;
+        followLink();
+        if (!target.grid) holdInView();
     });
 
     /* =========================================================
