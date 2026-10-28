@@ -1039,6 +1039,13 @@ button.chip:hover,
         align-items: stretch;
         gap: 4px;
         padding: 12px 24px 20px;
+        /* Never taller than the screen under the bar: on a phone held sideways the
+           links scroll inside the panel instead of running off the bottom of the screen
+           (dvh follows the phone's address bar; vh is for older browsers) */
+        max-height: calc(100vh - var(--nav-height));
+        max-height: calc(100dvh - var(--nav-height));
+        overflow-y: auto;
+        overscroll-behavior: contain;
         border-bottom: 1px solid var(--border);
         background: var(--nav-bg);
         -webkit-backdrop-filter: blur(16px);
