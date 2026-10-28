@@ -457,7 +457,7 @@
         }
 
         // A glossary term mentioned anywhere in the search ("what is a transformer?")
-        if (A.glossary && typeof A.glossary.find === "function" && query.length >= 2) {
+        if (A.glossary && query.length >= 2) {
             let term = null;
             try {
                 term = A.glossary.find(rawQuery);
@@ -495,7 +495,7 @@
         // Always offer to ask Compass Bot. It joins the bot's own group
         // (so there is only one "Compass Bot" heading) and is always its last item.
         const text = String(rawQuery).trim();
-        if (A.assistant && typeof A.assistant.ask === "function" && text.length >= 2) {
+        if (A.assistant && text.length >= 2) {
             const title = t("palette.askBot", { query: text.slice(0, ASK_MAX) });
             found.push({
                 id: "ask-bot",

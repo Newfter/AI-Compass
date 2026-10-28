@@ -147,10 +147,7 @@
         return A.plural("assistant.lessonWords", n);
     }
 
-    // ----- Glossary (from js/glossary.js, if it is there) -----
-    function hasGlossary() {
-        return Boolean(A.glossary && typeof A.glossary.find === "function");
-    }
+    // ----- Glossary (AICompass.glossary, if the glossary is on the page) -----
 
     // Always returns { id, term, definition } as plain text, or null
     function cleanTerm(found) {
@@ -163,18 +160,18 @@
     }
 
     function glossaryFind(text) {
-        if (!hasGlossary() || !text) return null;
+        if (!A.glossary || !text) return null;
         return cleanTerm(safely(function () { return A.glossary.find(text); }, null));
     }
 
     function glossaryRandom() {
-        if (!A.glossary || typeof A.glossary.random !== "function") return null;
+        if (!A.glossary) return null;
         return cleanTerm(safely(function () { return A.glossary.random(); }, null));
     }
 
     // A stored term in the current language (the glossary may know it by id)
     function glossaryRefresh(saved) {
-        if (A.glossary && typeof A.glossary.term === "function") {
+        if (A.glossary) {
             const fresh = cleanTerm(safely(function () { return A.glossary.term(saved.id); }, null));
             if (fresh) return fresh;
         }
