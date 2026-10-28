@@ -2854,6 +2854,7 @@
     }
 
     function build() {
+        mount.removeAttribute("data-lab-tab");   // only the empty mount needs it (see below)
         mount.innerHTML = labHTML();
         findElements();
         // The HTML has empty text holders: they are filled in this once
@@ -2889,6 +2890,10 @@
         A.onThemeChange(themeChanged);
         A.onLanguageChange(languageChanged);
     }
+
+    // Until it is built, the empty mount keeps about the height of the tab the lab will
+    // open on (lab.css), so the page below doesn't jump when the lab fills in
+    mount.setAttribute("data-lab-tab", A.storage.get("lab.tab", "classifier"));
 
     // The toolkit calls build() when the lab is needed; ensure() builds it at once if it is not built yet
     const ensure = A.whenNeeded(mount, build);

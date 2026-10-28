@@ -28,10 +28,15 @@
 
 /* js/lab.js builds the lab only when it is needed (near the screen, or in a quiet
    moment after the page loaded). Until then its empty box keeps about the height of
-   the "Teach the machine" tab (the predictor tab is shorter), so the page below
-   doesn't jump. Smaller screens: see "6. Responsive". */
+   the tab it will open on, so the page below doesn't jump: the "Teach the machine"
+   tab, or the shorter predictor tab when that was the last one used (js/lab.js puts
+   the saved tab in data-lab-tab). Smaller screens: see "6. Responsive". */
 .js [data-feature="lab"]:empty {
     min-height: 1900px;
+}
+
+.js [data-feature="lab"][data-lab-tab="predictor"]:empty {
+    min-height: 1410px;
 }
 
 /* The lab card is big and its canvases change every frame, so instead of
@@ -1738,6 +1743,10 @@
         min-height: 2900px;
     }
 
+    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
+        min-height: 2080px;
+    }
+
     .lab-nn,
     .lab-lm {
         grid-template-columns: minmax(0, 1fr);
@@ -1761,6 +1770,10 @@
 @media (max-width: 720px) {
     .js [data-feature="lab"]:empty {
         min-height: 3200px;
+    }
+
+    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
+        min-height: 2380px;
     }
 
     .lab-top {
@@ -1789,6 +1802,10 @@
 @media (max-width: 640px) {
     .js [data-feature="lab"]:empty {
         min-height: 3550px;
+    }
+
+    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
+        min-height: 2450px;
     }
 
     .lab {
@@ -1887,6 +1904,10 @@
 @media (max-width: 480px) {
     .js [data-feature="lab"]:empty {
         min-height: 3900px;
+    }
+
+    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
+        min-height: 2850px;
     }
 
     .lab-tab-icon {
