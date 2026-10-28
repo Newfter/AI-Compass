@@ -1446,6 +1446,14 @@
     // ---------- 15. Mini-lab 6: what would you do? ----------
     const DILEMMA_BEST = [1, 1, 2];   // the most responsible option in each situation
 
+    // "Three real-life situations...": the number of situations, as a word when
+    // the texts have one ("lessons.w6.count.3"), otherwise in digits
+    function dilemmaIntro() {
+        const count = DILEMMA_BEST.length;
+        const word = "lessons.w6.count." + count;
+        return A.plural("lessons.w6.intro", count, A.has(word) ? { n: t(word) } : null);
+    }
+
     function mountDilemmaLab(box, state) {
         const shell = labShell(box);
 
@@ -1521,7 +1529,9 @@
         return null;
     }
 
-    // Which mini-lab each lesson uses, and how a fresh one starts
+    // Which mini-lab each lesson uses, and how a fresh one starts.
+    // intro: the text under the lab's title, for a lab whose text counts something
+    // (the others simply use "lessons.w<lesson>.intro")
     const LAB_TYPES = {
         sort: { mount: mountSortLab, fresh: function () { return { answers: SORT_ANSWERS.map(function () { return null; }) }; } },
         fit: { mount: mountFitLab, fresh: freshFit },
@@ -1533,13 +1543,23 @@
                 return { open: DAY_MOMENTS.map(function () { return false; }), found: DAY_MOMENTS.map(function () { return false; }) };
             }
         },
-        dilemmas: { mount: mountDilemmaLab, fresh: function () { return { choices: DILEMMA_BEST.map(function () { return null; }) }; } }
+        dilemmas: {
+            mount: mountDilemmaLab,
+            intro: dilemmaIntro,
+            fresh: function () { return { choices: DILEMMA_BEST.map(function () { return null; }) }; }
+        }
     };
 
     function mountLab(n, box) {
         const type = LAB_TYPES[LESSONS[n - 1].lab];
         if (!labState[n]) labState[n] = type.fresh();
         return type.mount(box, labState[n]);
+    }
+
+    // The text under the mini-lab's title in lesson n
+    function labIntro(n) {
+        const type = LAB_TYPES[LESSONS[n - 1].lab];
+        return type.intro ? type.intro() : t("lessons.w" + n + ".intro");
     }
 
     // ---------- 16. The lesson reader (a full-screen dialog) ----------
@@ -1689,7 +1709,7 @@
                 <div class="lsn-lab-head">
                     <p class="lsn-lab-label mono"><span class="lsn-lab-led" aria-hidden="true"></span>${t("lessons.reader.miniLab")}</p>
                     <h3 class="lsn-lab-title" id="lsn-lab-title" tabindex="-1" data-fid="part-lab">${t("lessons.w" + n + ".title")}</h3>
-                    <p class="lsn-lab-intro">${t("lessons.w" + n + ".intro")}</p>
+                    <p class="lsn-lab-intro">${labIntro(n)}</p>
                 </div>
                 <div class="lsn-lab-body" data-ref="lab"></div>
             </section>
