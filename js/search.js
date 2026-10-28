@@ -44,8 +44,8 @@
      open(type, id, from)      opens a document; false if there is no such one
      passage(type, id, options) -> { text, from, to, count } or null
                                1-3 whole sentences of a document, for Compass Bot:
-                               the best ones for options.query (never starting with
-                               "This is called..." without the sentence before it),
+                               the best ones for options.query (a sentence that
+                               points back, "This is called bias.", never starts them),
                                or sentences options.from (up to options.to) of options.count
      document(type, id) -> { type, id, title, section, label, icon, text } or null
      refresh()                 forgets the indexes: the next query builds them again
@@ -160,9 +160,9 @@
     const SNIPPET_MAX = 150;    // letters in a snippet: a longer sentence is cut around the match,
     const SNIPPET_LATE = 60;    // ...and so is one whose first match comes after this many letters,
     const SNIPPET_LEAD = 24;    // ...keeping about this many letters before the first match
-    const PASSAGE_MAX = 260;    // letters in a passage for the bot (whole sentences only)
-    const PASSAGE_SENTENCES = 3; // ...and at most 3 sentences (a passage that would start with
-                                 // "This is called..." takes the sentence before it too: passageOf)
+    const PASSAGE_MAX = 260;    // letters in a passage for the bot (whole sentences only;
+                                // "This is called bias." may go past it: see passageOf)
+    const PASSAGE_SENTENCES = 3;
 
     // ----- Building a little at a time (see ready()) -----
     const SLICE_MS = 8;         // work at most 8 ms in a row, so the page stays smooth
@@ -1022,7 +1022,8 @@
         return Boolean(first) && LEANS_BACK.has(first);
     }
 
-    // 1-3 whole sentences of a document (at most PASSAGE_MAX letters, or one sentence).
+    // 1-3 whole sentences of a document (at most PASSAGE_MAX letters, or one sentence;
+    // a sentence that points back can make an answer for a query a little longer).
     // options.from/to: those sentences; options.query: the best ones for it.
     function passageOf(index, doc, options) {
         const sentences = sentencesOf(doc);
@@ -1052,16 +1053,18 @@
             if (!doc.named || valueOf(index, doc.title, marks) === 0) {
                 let bestValue = -1;
                 for (let start = 0; start < count; start++) {
-                    const end = grow(start);
-                    const value = valueOf(index, sentences.slice(start, end).join(" "), marks);
+                    // "This is called bias." never starts a passage: the student would
+                    // not see what "this" is. When it comes right after the sentences
+                    // that fit, it is added (even past PASSAGE_MAX) if it holds more
+                    // of the query words.
+                    if (start > 0 && leansBack(sentences[start])) continue;
+                    let end = grow(start);
+                    let value = valueOf(index, sentences.slice(start, end).join(" "), marks);
+                    if (end < count && end - start < PASSAGE_SENTENCES && leansBack(sentences[end])) {
+                        const longer = valueOf(index, sentences.slice(start, end + 1).join(" "), marks);
+                        if (longer > value) { end++; value = longer; }
+                    }
                     if (value > bestValue) { bestValue = value; from = start; to = end; }
-                }
-                // "This is called bias." needs the sentence before it: the passage shows
-                // that one too, and drops its last sentence if the query words don't need it
-                if (from > 0 && leansBack(sentences[from])) {
-                    from--;
-                    const shorter = from + PASSAGE_SENTENCES;
-                    if (shorter < to && valueOf(index, sentences.slice(from, shorter).join(" "), marks) >= bestValue) to = shorter;
                 }
             }
         }
