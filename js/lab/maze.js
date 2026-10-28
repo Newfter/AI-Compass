@@ -53,9 +53,12 @@
     const EPSILON_FLOOR = 0.01;          // ...but not below this
 
     // ----- Running -----
-    const SPEED = { watch: 6, fast: 60, turbo: Infinity };   // moves per second (Turbo: all that fit in a frame)
-    const TURBO_BUDGET = 5;              // ms of moves per frame; drawing gets the rest of the kit's 8 ms
-    const TURBO_PAINT_MS = 100;          // in Turbo the numbers and charts are written 10 times a second
+    const SPEED = { watch: 6, fast: 60, turbo: 1000 };   // moves per second; Turbo: calls per second (see tick())
+    const FRAME_MS = 7;                  // Turbo: a frame's script (moves and drawing) stays near 7 ms, inside the
+                                         // lab's 8 ms budget; the moves get what the drawing leaves...
+    const TURBO_BUDGET = 5;              // ...but at most 5 ms
+    const BATCH = 32;                    // Turbo looks at the clock after every 32 moves
+    const TURBO_PAINT_MS = 200;          // in Turbo the numbers and charts are written 5 times a second
     const SHOW_RATE = 6;                 // squares per second when "Show the best path" walks it
     const SLIDE = 0.6;                   // in Watch mode the robot slides for this part of a move's time, then rests
     const BUMP = 0.18;                   // ...and a bump into a wall nudges it this far (in squares)
@@ -789,6 +792,9 @@
             let dirty = true;                 // the numbers on the page need writing again
             let lastPaint = 0;
             let resumeOnShow = false;         // running when the hub paused us
+            const turbo = { ms: TURBO_BUDGET, rest: 1, start: 0, moves: 0 };   // Turbo's time per frame (ms):
+                                              // for moves, for the rest of the frame (a running average),
+                                              // when this frame's moves started and how long they took
 
             // ----- The page: kit parts, plus the inspector's small grid -----
             const ui = kit.layout(stage, { side: true });
@@ -977,8 +983,14 @@
             ] });
             ui.bottom.append(idea, toy, explain.element, challenges.element);
 
-            const loop = kit.loop({ rate: SPEED[speed], budget: TURBO_BUDGET, update: tick, draw: function (info) { render(info.progress); } });
+            const loop = kit.loop({ rate: SPEED[speed], budget: TURBO_BUDGET, update: tick, draw: frame });
             scene.onResize(function () { render(1); });
+            // Calm mode switched on or off (the hub doesn't tell us): the glows go or come back at once
+            const offMotion = A.motion.onChange(function () {
+                tileCache = null;
+                trail.length = 0;
+                changed();
+            });
 
             // ----- The inspector: the selected square's four scores around a small square -----
             function makeInspector() {
@@ -1076,14 +1088,35 @@
                 dirty = true;
             }
 
-            // The loop's step: a training move, or the next square of the best path
+            // The loop's step: a training move, or the next square of the best path. In Turbo the
+            // loop calls this 1000 times a second: the first call of a frame makes all the moves
+            // that fit in turboMs, the other calls of that frame do nothing.
             function tick() {
-                if (!showing) {
+                if (showing) {
+                    route.shown += 1;
+                    if (route.shown >= route.cells.length) stopShow();
+                } else if (speed !== "turbo") {
                     trainMove();
-                    return;
+                } else if (!turbo.start) {
+                    turbo.start = performance.now();
+                    const until = turbo.start + turbo.ms;
+                    do {
+                        for (let i = 0; i < BATCH && loop.running(); i++) trainMove();
+                    } while (loop.running() && performance.now() < until);
+                    turbo.moves = performance.now() - turbo.start;
                 }
-                route.shown += 1;
-                if (route.shown >= route.cells.length) stopShow();
+            }
+
+            // The loop's drawing, once per frame. In Turbo it also times the frame: when the rest
+            // of the frame is slow (a slow computer), the moves get less time, so that the whole
+            // frame stays near FRAME_MS.
+            function frame(info) {
+                render(info.progress);
+                if (turbo.start) {
+                    turbo.rest = 0.9 * turbo.rest + 0.1 * (performance.now() - turbo.start - turbo.moves);
+                    turbo.ms = A.util.clamp(FRAME_MS - turbo.rest, 1, TURBO_BUDGET);
+                    turbo.start = 0;
+                }
             }
 
             function stopShow() {
@@ -1608,6 +1641,7 @@
                 },
                 destroy: function () {
                     loop.stop();
+                    offMotion();
                     scene.destroy();
                     movesView.destroy();
                     rewardView.destroy();
