@@ -1271,13 +1271,14 @@
         return { reply: "quizAsk", data: { q: key, order: question.trueFalse ? order : A.util.shuffle(order), answer: -1, miss: miss } };
     }
 
-    // The quiz question the bot asked last, if it is still open (or null)
+    // The quiz question the bot asked last, if it is still open (or null).
+    // Other answers may have come after it ("quiz me", "hello", then "2").
     function openQuestion() {
         for (let i = chat.messages.length - 1; i >= 0; i--) {
             const message = chat.messages[i];
-            if (message.from !== "bot") continue;
+            if (message.from !== "bot" || message.reply !== "quizAsk") continue;
             const data = message.data || {};
-            return message.reply === "quizAsk" && !(Number.isInteger(data.answer) && data.answer >= 0) ? message : null;
+            return Number.isInteger(data.answer) && data.answer >= 0 ? null : message;
         }
         return null;
     }
