@@ -1,8 +1,8 @@
 /* =========================================================
    AI COMPASS — COMMAND PALETTE (Ctrl + K)
    1. The dimmed layer over the page
-   2. The window and its search box
-   3. Results, groups and highlighted letters
+   2. The window, its search box, notes and tips
+   3. Results, groups, highlighted letters and results from the site
    4. Empty state and footer
    5. Phones
    6. Less motion
@@ -186,6 +186,16 @@
     font-size: 12px;
 }
 
+/* A tip under the search box: "Type one more letter..." or
+   "No commands match ..., but the site's texts do." */
+.cp-tip {
+    padding: 8px 18px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
 /* ===== 3. RESULTS ===== */
 
 .cp-body {
@@ -356,6 +366,19 @@
     line-height: 1.4;
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+
+/* "Found on the site": where the text is (in colour), then its best
+   sentence, with the words you typed in bold */
+.cp-source {
+    color: var(--text-accent-2);
+    font-weight: 600;
+}
+
+.cp-snippet mark {
+    background: none;
+    color: var(--text);
+    font-weight: 700;
 }
 
 .cp-enter {

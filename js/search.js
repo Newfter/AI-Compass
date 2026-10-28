@@ -152,8 +152,9 @@
 
     // ----- Results -----
     const LIMIT = 8;            // results when the caller does not say
-    const SNIPPET_MAX = 150;    // letters in a snippet: a longer sentence is cut around the match
-    const SNIPPET_LEAD = 40;    // ...keeping about this many letters before the first match
+    const SNIPPET_MAX = 150;    // letters in a snippet: a longer sentence is cut around the match,
+    const SNIPPET_LATE = 60;    // ...and so is one whose first match comes after this many letters,
+    const SNIPPET_LEAD = 24;    // ...keeping about this many letters before the first match
     const PASSAGE_MAX = 260;    // letters in a passage for the bot (whole sentences only)
     const PASSAGE_SENTENCES = 3;
 
@@ -966,13 +967,15 @@
             if (value > bestValue) { best = i; bestValue = value; }
         });
         let text = sentences[best];
-        if (text.length > SNIPPET_MAX) {
-            const part = /[\p{L}\p{N}]+/gu;
-            let first = 0, match;
-            while ((match = part.exec(text))) {
-                const word = clean(match[0]);
-                if (!STOP.has(word) && marks.has(stem(word))) { first = match.index; break; }
-            }
+        // Where the first word you typed is: a snippet often shows on one line,
+        // so a long sentence (or a late match) starts a few words before it
+        const part = /[\p{L}\p{N}]+/gu;
+        let first = 0, match;
+        while ((match = part.exec(text))) {
+            const word = clean(match[0]);
+            if (!STOP.has(word) && marks.has(stem(word))) { first = match.index; break; }
+        }
+        if (text.length > SNIPPET_MAX || first > SNIPPET_LATE) {
             let start = Math.max(0, first - SNIPPET_LEAD);
             if (start > 0) start = text.indexOf(" ", start) + 1 || start;          // start at a word
             let end = Math.min(text.length, start + SNIPPET_MAX);
@@ -1168,13 +1171,15 @@
                 const k = "quiz." + (question && question.key) + ".";
                 if (!A.has(k + "text")) return null;
                 const topic = A.has("quiz.topic." + question.topic) ? t("quiz.topic." + question.topic) : "";
+                // A true-or-false statement may be false: it never shows as if it were a fact
+                const statement = t(k + "text");
                 // the right answer is found too, but never shown in a snippet
                 const answer = question.type === "truefalse"
                     ? (question.correct === 0 ? "quiz.true" : "quiz.false")
                     : k + "o" + ((Number(question.correct) || 0) + 1);
                 return {
                     id: question.key,
-                    title: t(k + "text"),
+                    title: question.type === "truefalse" ? t("search.trueFalse", { text: statement }) : statement,
                     heading: topic,
                     text: A.has(k + "explain") ? t(k + "explain") : "",
                     keywords: A.has(answer) ? t(answer) : "",

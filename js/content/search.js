@@ -23,6 +23,7 @@ window.AICompass.addTranslations({
         "search.glossaryLabel": "Glossary · {title}",
         "search.timeline": "History · {year}",
         "search.quiz": "Quiz · {topic}",
+        "search.trueFalse": "True or false: {text}",
         "search.lab": "AI Lab",
         "search.labLabel": "AI Lab · {title}",
         "search.page": "Page · {name}"
@@ -34,6 +35,7 @@ window.AICompass.addTranslations({
         "search.glossaryLabel": "Словарь · {title}",
         "search.timeline": "История · {year}",
         "search.quiz": "Тест · {topic}",
+        "search.trueFalse": "Верно или нет: {text}",
         "search.lab": "ИИ-лаборатория",
         "search.labLabel": "ИИ-лаборатория · {title}",
         "search.page": "Страница · {name}"
