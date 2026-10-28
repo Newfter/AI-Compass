@@ -746,6 +746,27 @@
         return set.charAt(Math.floor(Math.random() * set.length));
     }
 
+    // How many lines does the element's text take up? A Range gives one box per
+    // piece of text on each line (the element's own box would always count as one).
+    // A box that starts below the middle of the line before it begins a new line.
+    function textLines(element) {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        let lines = 0;
+        let lineTop = -Infinity;
+        let lineHeight = 0;
+        Array.from(range.getClientRects())
+            .filter((box) => box.width > 0 && box.height > 0)
+            .sort((a, b) => a.top - b.top)
+            .forEach((box) => {
+                if (box.top < lineTop + lineHeight / 2) return;            // same line
+                lines++;
+                lineTop = box.top;
+                lineHeight = box.height;
+            });
+        return lines;
+    }
+
     function registerScramble(element) {
         if (scrambleTargets.has(element)) return;
         scrambleTargets.add(element);
@@ -834,18 +855,20 @@
         const gradientText = /text/.test(style.backgroundClip + " " + style.webkitBackgroundClip);
         const width = style.width;                    // the real size, even while its card is still zooming in
         const height = style.height;
-        const shortLine = style.display.indexOf("inline-") === 0 && element.getClientRects().length === 1;
+        const oneLine = textLines(element) === 1;
 
         // Gradient text (background-clip: text) can't show see-through letters
         if (gradientText) element.classList.add("fx-scramble-clip");
 
         // The box keeps its exact size while the letters change, so nothing
-        // around it moves (PERF-06). Short one-line texts also stay on one line.
-        // (Plain inline text has no box size of its own: its size reads "auto".)
+        // around it moves (PERF-06). (Plain inline text has no box size of its
+        // own: its size reads "auto".) A text on one line also stays on one line:
+        // the random letters can be wider than the real ones, and in the fixed
+        // box the last one would drop onto a second line below it.
         run.lockedSize = { width: element.style.width, height: element.style.height };
         if (width.endsWith("px")) element.style.width = width;
         if (height.endsWith("px")) element.style.height = height;
-        if (shortLine) element.classList.add("fx-scramble-lock");
+        if (oneLine) element.classList.add("fx-scramble-lock");
 
         // What you see is hidden from screen readers; they read the real text
         const visual = document.createElement("span");

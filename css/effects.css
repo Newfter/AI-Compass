@@ -223,7 +223,8 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
 }
 
 /* While decoding, js/effects.js keeps the text's box at its exact size;
-   short one-line texts also stay on one line */
+   a text on one line also stays on one line (wider random letters would
+   otherwise wrap below the box) */
 .fx-scramble-lock {
     white-space: nowrap;
 }
