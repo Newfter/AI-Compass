@@ -169,7 +169,8 @@ window.AICompass.addTranslations({
         "lab.lmLegend": "The bar shows how likely the model thinks each word is. The pink line shows its chance to be picked at the current creativity.",
         "lab.lmAuto": "Auto-write",
         "lab.lmStop": "Stop",
-        "lab.lmAutoLabel": "Let the model write up to 12 words",
+        // {n}: how many words auto-write adds at most (AUTO_WORDS in js/lab.js)
+        "lab.lmAutoLabel": "Let the model write up to {n} words",
         "lab.lmTemp": "Creativity (temperature)",
         "lab.lmTemp0": "always the top word",
         "lab.lmTemp1": "predictable",
@@ -354,7 +355,7 @@ window.AICompass.addTranslations({
         "lab.lmLegend": "Полоска показывает, насколько вероятно слово по мнению модели. Розовая линия — шанс, что его выберут при текущей креативности.",
         "lab.lmAuto": "Дописать",
         "lab.lmStop": "Стоп",
-        "lab.lmAutoLabel": "Пусть модель допишет до 12 слов",
+        "lab.lmAutoLabel": "Пусть модель допишет до {n} слов",
         "lab.lmTemp": "Креативность (температура)",
         "lab.lmTemp0": "всегда самое вероятное слово",
         "lab.lmTemp1": "предсказуемо",

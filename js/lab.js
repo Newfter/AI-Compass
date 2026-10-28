@@ -310,7 +310,7 @@
             '<div class="lab-lm-main">' +
                 '<label class="lab-lm-label" for="lab-lm-input" data-i18n="lab.lmPromptLabel"></label>' +
                 '<div class="lab-lm-field">' +
-                    '<textarea id="lab-lm-input" class="lab-lm-input" rows="3" maxlength="400" spellcheck="false" autocomplete="off" autocapitalize="sentences" data-i18n-attr="placeholder:lab.lmPlaceholder"></textarea>' +
+                    '<textarea id="lab-lm-input" class="lab-lm-input" rows="3" maxlength="' + MAX_TEXT + '" spellcheck="false" autocomplete="off" autocapitalize="sentences" data-i18n-attr="placeholder:lab.lmPlaceholder"></textarea>' +
                     '<button type="button" class="lab-lm-clear" data-i18n-attr="aria-label:lab.lmClear,title:lab.lmClear">' + icons.close + '</button>' +
                 '</div>' +
                 '<div class="lab-starters" role="group" aria-labelledby="lab-starters-title">' +
@@ -330,7 +330,7 @@
                     '<button type="button" class="btn btn-primary lab-auto" data-action="auto" aria-describedby="lab-auto-hint">' +
                         '<span class="lab-auto-icon"></span><span class="lab-auto-text"></span>' +
                     '</button>' +
-                    '<span class="sr-only" id="lab-auto-hint" data-i18n="lab.lmAutoLabel"></span>' +
+                    '<span class="sr-only" id="lab-auto-hint"></span>' +
                     '<div class="lab-temp">' +
                         '<div class="lab-range-head">' +
                             '<label for="lab-temp" data-i18n="lab.lmTemp"></label>' +
@@ -355,7 +355,7 @@
                     '<div class="lab-box-head"><h3 class="lab-mini-label mono" id="lab-teach-title" data-i18n="lab.lmTeachTitle"></h3></div>' +
                     '<form class="lab-teach" novalidate>' +
                         '<label class="sr-only" for="lab-teach-input" data-i18n="lab.lmTeachLabel"></label>' +
-                        '<input type="text" id="lab-teach-input" class="lab-teach-input" maxlength="140" autocomplete="off" aria-describedby="lab-teach-status" data-i18n-attr="placeholder:lab.lmTeachPlaceholder">' +
+                        '<input type="text" id="lab-teach-input" class="lab-teach-input" maxlength="' + MAX_TEACH + '" autocomplete="off" aria-describedby="lab-teach-status" data-i18n-attr="placeholder:lab.lmTeachPlaceholder">' +
                         '<button type="submit" class="btn btn-ghost btn-small lab-teach-btn" data-i18n="lab.lmTeachButton"></button>' +
                     '</form>' +
                     '<p class="lab-teach-status" id="lab-teach-status" aria-live="polite"></p>' +
@@ -387,7 +387,8 @@
        ========================================================= */
     const MAX_POINTS = 400;
     const SPEEDS = { slow: 20, normal: 120, fast: 480 };   // training epochs per second
-    const FRAME_BUDGET = 10;                                // at most 10 ms of learning per frame, so the page stays smooth
+    const FRAME_BUDGET = 10;                                // at most 10 ms of learning + drawing per frame, so the page stays smooth
+    const MAPS_EVERY = 33;                                  // while training, the board's colours are worked out at most every 33 ms (30 times a second)
     const STUCK_EPOCHS = 2500;                              // after this many epochs without success we give a hint
     const savedSettings = A.storage.get("lab.nn", {}) || {};
 
@@ -630,14 +631,19 @@
         cursor: null,            // keyboard cursor on the board
         stroke: null,            // mouse "painting" in progress
         tap: null,               // touch tap in progress
+        touchTimer: 0,           // hides the guess shown after a tap
+        maxWarned: false,        // the "board is full" message was shown
         stepBudget: 0,
         lastTick: 0,
+        drawCost: 0,             // how long drawing takes (ms, a smooth average)
         stuckHinted: false,
         lastStats: 0,
         lastAnnounce: 0,
         lastDiagram: 0,
+        lastMaps: 0,
         autoStarted: false,
-        dirty: { net: true, board: true, diagram: true, chart: true, stats: true }
+        // What must be worked out or drawn again at the next frame
+        dirty: { net: true, maps: true, board: true, diagram: true, chart: true, stats: true }
     };
 
     // The board starts with the circle example: you can watch the line bend into a ring in a few seconds
@@ -708,8 +714,11 @@
         data[index + 3] = 255;
     }
 
-    // Asks the network about every spot of the board, every neuron and every dot
-    function refreshNetwork() {
+    // Asks the network about every spot of the board (the coloured background and the
+    // 50 / 50 line), and makes every neuron's small map for the diagram.
+    // This is the most expensive drawing work: while training it runs at most about
+    // 30 times a second (see redraw), when paused it runs at once.
+    function refreshMaps() {
         const net = nn.net;
         const data = heat.image.data;
         const strength = colors.light ? 0.5 : 0.62;
@@ -760,12 +769,10 @@
             }
         }
         atlas.ctx.putImageData(atlas.image, 0, 0);
-
-        // 3. The network's guess for every dot
-        scoreDots();
     }
 
     // The network's guess for every dot, the loss and the accuracy
+    // (cheap: one question per dot, so it runs whenever the network changes)
     function scoreDots() {
         const net = nn.net;
         const points = nn.points;
@@ -1197,7 +1204,7 @@
         if (spot) {
             // The network's answer for the spot you point at
             ctx.fillStyle = A.colors.rgba(spotP >= 0.5 ? colors.b : colors.a, 1);
-            ctx.fillText(Math.round(spotP * 100) + "%", outX, outY + 8);
+            ctx.fillText(A.format.percent(spotP, { small: false }), outX, outY + 8);
         }
     }
 
@@ -1244,17 +1251,12 @@
         const elapsed = nn.lastTick ? Math.min(100, now - nn.lastTick) : 16.7;
         nn.lastTick = now;
 
-        if (wantsTraining()) {
-            // The speed is in epochs per second, so it is the same on 60 Hz and 120 Hz screens
-            nn.stepBudget += (SPEEDS[settings.speed] * elapsed) / 1000;
-            let steps = Math.floor(nn.stepBudget);
-            nn.stepBudget -= steps;
-            const started = performance.now();
-            while (steps-- > 0 && performance.now() - started < FRAME_BUDGET) trainStep();
-            nn.dirty.net = true;
-        }
+        if (wantsTraining()) train(elapsed);
 
+        // The drawing time is measured: learning leaves room for it in the next frames
+        const drawStart = performance.now();
         redraw(now);
+        nn.drawCost += (performance.now() - drawStart - nn.drawCost) * 0.2;
 
         // Tell screen-reader users how it's going, but not too often
         if (wantsTraining() && now - nn.lastAnnounce > 6000) {
@@ -1264,29 +1266,53 @@
 
         if (wantsTraining()) checkStuck();
 
-        if (wantsTraining() || nn.dirty.diagram || nn.dirty.stats) schedule();
+        if (wantsTraining() || nn.dirty.maps || nn.dirty.diagram || nn.dirty.stats) schedule();
         else nn.lastTick = 0;    // the loop sleeps; the next frame starts fresh
     }
 
-    // Draws whatever changed since the last time
-    function redraw(now) {
+    // The epochs of this frame. The speed is in epochs per second, so it is the same
+    // on 60 Hz and 120 Hz screens. Learning and drawing share FRAME_BUDGET: learning
+    // gets the time the drawing does not need, but always at least half of it
+    // (on a slow computer the drawing alone can take longer than the whole budget).
+    function train(elapsed) {
+        nn.stepBudget += (SPEEDS[settings.speed] * elapsed) / 1000;
+        let steps = Math.floor(nn.stepBudget);
+        nn.stepBudget -= steps;
+        if (steps < 1) return;
+        const budget = Math.max(FRAME_BUDGET / 2, FRAME_BUDGET - nn.drawCost);
+        const started = performance.now();
+        while (steps-- > 0 && performance.now() - started < budget) trainStep();
+        nn.dirty.net = true;
+    }
+
+    // Draws whatever changed since the last time.
+    // force: draw it all now, without waiting (a canvas that was just resized is blank)
+    function redraw(now, force) {
         const dirty = nn.dirty;
         if (!colors) readColors();
 
+        // The network (or the dots) changed: score every dot again
         if (dirty.net) {
-            refreshNetwork();
+            scoreDots();
             dirty.net = false;
-            dirty.board = true;
+            dirty.maps = true;
             dirty.diagram = true;
             dirty.stats = true;
             checkLearned();
+        }
+        // While training, the board's colours follow about 30 times a second
+        if (dirty.maps && (force || !nn.training || now - nn.lastMaps >= MAPS_EVERY)) {
+            refreshMaps();
+            dirty.maps = false;
+            dirty.board = true;
+            nn.lastMaps = now;
         }
         if (dirty.board) {
             drawBoard();
             dirty.board = false;
         }
         // The diagram and the numbers don't need 60 updates a second
-        if (dirty.diagram && (!nn.training || now - nn.lastDiagram > 45)) {
+        if (dirty.diagram && (force || !nn.training || now - nn.lastDiagram > 45)) {
             drawDiagram();
             dirty.diagram = false;
             nn.lastDiagram = now;
@@ -1295,7 +1321,7 @@
             drawChart();
             dirty.chart = false;
         }
-        if (dirty.stats && (!nn.training || now - nn.lastStats > 110)) {
+        if (dirty.stats && (force || !nn.training || now - nn.lastStats > 110)) {
             updateStats();
             dirty.stats = false;
             nn.lastStats = now;
@@ -1349,13 +1375,17 @@
         updateStatus();
     }
 
+    // Are there dots of both classes (something to tell apart)?
+    function hasBothClasses() {
+        return nn.points.some((p) => p.label === 0) && nn.points.some((p) => p.label === 1);
+    }
+
     // When every dot is right and the loss is tiny, training pauses by itself.
     // This happens only once: if you press Train again, it keeps going until you pause.
     function checkLearned() {
         if (!nn.training || nn.learned || nn.keepGoing) return;
         if (nn.acc !== 1 || nn.loss === null || nn.loss > 0.025) return;
-        const hasBoth = nn.points.some((p) => p.label === 0) && nn.points.some((p) => p.label === 1);
-        if (!hasBoth) return;
+        if (!hasBothClasses()) return;
         nn.training = false;
         nn.learned = true;
         updateTrainButton();
@@ -1375,8 +1405,11 @@
             A.toast(t("lab.toastEmpty"), "✦");
             return;
         }
-        if (on && !(nn.points.some((p) => p.label === 0) && nn.points.some((p) => p.label === 1))) {
+        // With one class there is nothing to learn (training would never finish).
+        // The Step button still works, to watch what happens.
+        if (on && !hasBothClasses()) {
             A.toast(t("lab.toastOneClass"), "⚖️");
+            return;
         }
         // Training again after "Learned it!" means: keep going, don't stop by yourself
         if (on && nn.learned) nn.keepGoing = true;
@@ -1402,6 +1435,7 @@
     }
 
     // ----- Dots -----
+    // Remembers the dots as they are now, for Undo
     function pushUndo() {
         nn.undo.push(nn.points.slice());
         if (nn.undo.length > 60) nn.undo.shift();
@@ -1411,9 +1445,13 @@
         nn.learned = false;
         nn.keepGoing = false;
         nn.dirty.net = true;
+        // Below the limit again: the next refused dot shows the "board is full" message again
+        if (nn.points.length < MAX_POINTS) nn.maxWarned = false;
         $(".lab-board-empty").hidden = nn.points.length > 0;
         updateEditButtons();
-        if (!nn.points.length && nn.training) {
+        // Training stops when there is nothing (left) to tell apart
+        if (nn.training && !hasBothClasses()) {
+            if (nn.points.length) A.toast(t("lab.toastOneClass"), "⚖️");
             nn.training = false;
             updateTrainButton();
         }
@@ -1439,14 +1477,27 @@
         clearButton.disabled = clearOff;
     }
 
-    function addPoint(x, y, label) {
-        if (nn.points.length >= MAX_POINTS) {
-            if (!nn.maxWarned) A.toast(t("lab.toastMax", { n: MAX_POINTS }), "✋");
-            nn.maxWarned = true;
-            return false;
-        }
-        nn.points.push({ x: A.util.clamp(x, -1, 1), y: A.util.clamp(y, -1, 1), label: label });
+    // Is the board full? The first dot that does not fit shows a message.
+    function boardFull() {
+        if (nn.points.length < MAX_POINTS) return false;
+        if (!nn.maxWarned) A.toast(t("lab.toastMax", { n: MAX_POINTS }), "✋");
+        nn.maxWarned = true;
         return true;
+    }
+
+    function addPoint(spot, label) {
+        nn.points.push({ x: A.util.clamp(spot.x, -1, 1), y: A.util.clamp(spot.y, -1, 1), label: label });
+    }
+
+    // One click, tap or Enter: one new dot, one Undo step and one message for screen readers.
+    // Nothing happens (not even an Undo step) when the board is full.
+    function addDot(spot, label) {
+        if (boardFull()) return;
+        pushUndo();
+        addPoint(spot, label);
+        markPreset(null);
+        pointsChanged();
+        announceAdded(label);
     }
 
     function className(label) {
@@ -1472,7 +1523,6 @@
     function loadPreset(name) {
         pushUndo();
         nn.points = makePreset(name);
-        nn.maxWarned = false;
         pointsChanged();
         resetNetwork();
         markPreset(name);
@@ -1520,14 +1570,14 @@
         // then Ctrl+Z, A / B and Backspace work right after clicking
         board.el.focus({ preventScroll: true });
         nn.cursor = null;
-        pushUndo();
-        markPreset(null);
-        if (addPoint(spot.x, spot.y, label)) announceAdded(label);
-        nn.stroke = { id: event.pointerId, last: spot, label: label };
+        addDot(spot, label);
+        // "painted": the dots this drag adds after the first one (they share its Undo step)
+        nn.stroke = { id: event.pointerId, last: spot, label: label, painted: 0 };
         try {
             board.el.setPointerCapture(event.pointerId);
         } catch (error) {}
-        pointsChanged();
+        nn.dirty.board = true;
+        schedule();
     }
 
     function onPointerMove(event) {
@@ -1541,11 +1591,11 @@
         // Hold and drag to paint: a new dot every little while
         if (nn.stroke && nn.stroke.id === event.pointerId) {
             const last = nn.stroke.last;
-            if (Math.hypot(spot.x - last.x, spot.y - last.y) > 0.07) {
-                if (addPoint(spot.x, spot.y, nn.stroke.label)) {
-                    nn.stroke.last = spot;
-                    pointsChanged();
-                }
+            if (Math.hypot(spot.x - last.x, spot.y - last.y) > 0.07 && !boardFull()) {
+                addPoint(spot, nn.stroke.label);
+                nn.stroke.last = spot;
+                nn.stroke.painted++;
+                pointsChanged();
             }
         }
         nn.dirty.board = true;
@@ -1572,16 +1622,14 @@
         if (nn.tap && nn.tap.id === event.pointerId && event.type === "pointerup") {
             const tap = nn.tap;
             nn.tap = null;
-            pushUndo();
-            markPreset(null);
-            if (addPoint(tap.spot.x, tap.spot.y, tap.label)) announceAdded(tap.label);
-            pointsChanged();
+            addDot(tap.spot, tap.label);
             showTouchSpot(tap.spot, tap.label);
         }
         if (event.type === "pointercancel") nn.tap = null;
         if (nn.stroke && nn.stroke.id === event.pointerId) {
+            // The first dot was announced already: a drag that painted more says the new total once
+            if (nn.stroke.painted > 0) announceAdded(nn.stroke.label);
             nn.stroke = null;
-            if (nn.points.length) announceAdded(nn.points[nn.points.length - 1].label);
         }
     }
 
@@ -1628,10 +1676,9 @@
         } else if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
             if (!nn.cursor) nn.cursor = { x: 0, y: 0, label: nn.selected };
-            pushUndo();
-            markPreset(null);
-            if (addPoint(nn.cursor.x, nn.cursor.y, nn.selected)) announceAdded(nn.selected);
-            pointsChanged();
+            addDot(nn.cursor, nn.selected);
+            nn.dirty.board = true;     // the cursor may have just appeared
+            schedule();
         } else if (event.code === "KeyA" || event.code === "KeyB") {
             event.preventDefault();
             selectClass(event.code === "KeyA" ? 0 : 1);
@@ -1764,13 +1811,25 @@
     const START = "<s>";
     const END = "</s>";
     const WORD_RE = /[\p{L}\p{N}'’-]+/gu;
+    const WORD_END = /[\p{L}\p{N}'’-]+$/u;    // the same kind of word, at the very end of a text
     const HAS_LETTER = /[\p{L}\p{N}]/u;
-    const MAX_TAUGHT = 50;
-    const AUTO_WORDS = 12;
+    const DISCOUNT = 0.3;          // how much of every count is set aside for words never seen there
+    const MAX_TAUGHT = 50;         // sentences you can teach (in each language)
+    const MAX_TEACH = 140;         // the longest sentence you can teach
+    const MAX_TEXT = 400;          // the longest text in the box
+    const AUTO_WORDS = 12;         // auto-write adds up to 12 words...
+    const AUTO_STOP = MAX_TEXT - 40;   // ...and stops early when the text is this long
 
     // Splits text into words (keeps letters of every alphabet, digits, ' and -)
     function wordsOf(text) {
         return (String(text).match(WORD_RE) || []).filter((word) => HAS_LETTER.test(word));
+    }
+
+    // Does the text end in the middle of a word (a word still being typed)?
+    // "I like piz" and "AI-" do; "I like pizza ", "pizza." and "pizza 🍕" do not.
+    function endsMidWord(text) {
+        const tail = text.match(WORD_END);
+        return Boolean(tail) && HAS_LETTER.test(tail[0]);
     }
 
     function addCount(map, key, word) {
@@ -1857,14 +1916,13 @@
     // a small part is left for all other words, using the shorter context.
     function backoff(context, lower) {
         if (!context) return lower;
-        const discount = 0.3;
         const result = new Map();
         let seenLowerMass = 0;
         context.counts.forEach((count, word) => {
-            result.set(word, (count - discount) / context.total);
+            result.set(word, (count - DISCOUNT) / context.total);
             seenLowerMass += lower.get(word) || 0;
         });
-        const leftover = (discount * context.counts.size) / context.total;
+        const leftover = (DISCOUNT * context.counts.size) / context.total;
         const unseenMass = 1 - seenLowerMass;
         if (unseenMass > 1e-9) {
             lower.forEach((p, word) => {
@@ -1892,6 +1950,49 @@
             count: trigram ? trigram.total : (bigram ? bigram.total : 0),
             oneCount: bigram ? bigram.total : 0
         };
+    }
+
+    // The chance of ONE word after "previous": exactly the number predictNext() gives
+    // (the same sums in the same order), without making the whole list of every word.
+    // The token view needs it for every word you typed, at every key press.
+    function probOf(model, previous, word) {
+        const p1 = previous.length ? previous[previous.length - 1] : START;
+        const p2 = previous.length > 1 ? previous[previous.length - 2] : START;
+        const bigram = model.bigrams.get(p1);
+        const trigram = model.trigrams.get(p2 + " " + p1);
+        const unigram = (w) => model.unigramDist.get(w);
+        const afterOne = (w) => backoffOne(bigram, unigram, w);
+        return backoffOne(trigram, afterOne, word) || 0;
+    }
+
+    // backoff() for one word. lower(word) is the shorter context's chance of a word
+    // (undefined for a word it does not have, like Map.get). Gives undefined for a word
+    // that backoff() would leave out of its list.
+    function backoffOne(context, lower, word) {
+        if (!context) return lower(word);
+        if (context.seenLowerMass === undefined) {
+            // Worked out once for each context (the model is made again when it changes)
+            let seenLowerMass = 0;
+            let keptSum = 0;
+            context.counts.forEach((count, seen) => {
+                seenLowerMass += lower(seen) || 0;
+                keptSum += (count - DISCOUNT) / context.total;
+            });
+            context.seenLowerMass = seenLowerMass;
+            context.keptSum = keptSum;
+        }
+        const count = context.counts.get(word);
+        const unseenMass = 1 - context.seenLowerMass;
+        if (unseenMass > 1e-9) {
+            if (count) return (count - DISCOUNT) / context.total;
+            const p = lower(word);
+            if (p === undefined) return undefined;
+            const leftover = (DISCOUNT * context.counts.size) / context.total;
+            return (leftover * p) / unseenMass;
+        }
+        // The rare case where the seen words already have all of the shorter list's
+        // probability: backoff() keeps only them, scaled up so they add up to 1
+        return count ? ((count - DISCOUNT) / context.total) / context.keptSum : undefined;
     }
 
     function topWords(dist, limit, filter) {
@@ -1943,9 +2044,8 @@
         const cut = Math.max(text.lastIndexOf("."), text.lastIndexOf("!"), text.lastIndexOf("?"), text.lastIndexOf("…"));
         const sentence = text.slice(cut + 1);
         const previous = wordsOf(sentence).map((word) => word.toLowerCase());
-        const finished = text.trim() === "" || /[\s.,!?…;:]$/.test(text);
         let partial = "";
-        if (!finished && previous.length) partial = previous.pop();
+        if (endsMidWord(text) && previous.length) partial = previous.pop();
         return { previous: previous, partial: partial };
     }
 
@@ -2049,22 +2149,18 @@
     // Shows each word coloured by how much the model expected it
     function renderTokens() {
         const text = lmEls.input.value;
-        const container = lmEls.tokens;
-        container.textContent = "";
-
         const tokens = [];
         let unknown = 0;
         let known = 0;
         const sentences = text.split(/[.!?…]+/);
-        const endsMidWord = text.trim() !== "" && !/[\s.,!?…;:]$/.test(text);
+        const typingLast = endsMidWord(text);
         sentences.forEach((sentence, s) => {
             const original = wordsOf(sentence);
             const previous = [];
             original.forEach((word, i) => {
                 const lower = word.toLowerCase();
-                const isLast = s === sentences.length - 1 && i === original.length - 1;
-                const typing = isLast && endsMidWord;
-                const p = lm.model.unigrams.has(lower) ? (predictNext(lm.model, previous).dist.get(lower) || 0) : 0;
+                const typing = typingLast && s === sentences.length - 1 && i === original.length - 1;
+                const p = lm.model.unigrams.has(lower) ? probOf(lm.model, previous, lower) : 0;
                 if (!typing) {
                     if (p === 0) unknown++;
                     else known++;
@@ -2076,37 +2172,60 @@
 
         lmEls.notice.hidden = !(known + unknown >= 2 && unknown / (known + unknown) > 0.5);
 
+        const box = lmEls.tokens;
         if (!tokens.length) {
+            box.textContent = "";
             const empty = document.createElement("p");
             empty.className = "lab-tokens-empty";
             empty.textContent = t("lab.lmTokensEmpty");
-            container.appendChild(empty);
+            box.appendChild(empty);
             return;
         }
+        const note = box.querySelector(".lab-tokens-empty");
+        if (note) note.remove();
 
-        tokens.slice(-40).forEach((token) => {
-            const chip = document.createElement("span");
-            chip.className = "lab-tok";
-            const word = document.createElement("span");
-            word.textContent = token.word;
-            const value = document.createElement("small");
-            value.className = "mono";
-            if (token.typing) {
-                chip.classList.add("is-typing");
-                value.textContent = "…";
-            } else if (token.p === 0) {
-                chip.classList.add("is-new");
-                value.textContent = t("lab.lmTokenNew");
-            } else {
-                // log scale: 100% -> 1, 10% -> 0.67, 1% -> 0.33, 0.1% -> 0
-                const glow = A.util.clamp((Math.log10(token.p) + 3) / 3, 0, 1);
-                chip.style.setProperty("--p", glow.toFixed(3));
-                value.textContent = A.format.percent(token.p);
+        // The chips already in the box are kept and only get their new word and colour.
+        // New chips are added at the end: only they fade in, so nothing flickers.
+        const shown = tokens.slice(-40);
+        const chips = box.children;
+        const added = document.createDocumentFragment();
+        shown.forEach((token, i) => {
+            let chip = chips[i];
+            if (!chip) {
+                chip = document.createElement("span");
+                chip.className = "lab-tok";
+                chip.appendChild(document.createElement("span"));
+                const value = document.createElement("small");
+                value.className = "mono";
+                chip.appendChild(value);
+                added.appendChild(chip);
             }
-            chip.appendChild(word);
-            chip.appendChild(value);
-            container.appendChild(chip);
+            fillChip(chip, token);
         });
+        while (chips.length > shown.length) box.lastElementChild.remove();
+        box.appendChild(added);
+    }
+
+    // Puts a word and its chance into a chip (only what changed is written)
+    function fillChip(chip, token) {
+        let value;
+        let glow = "";
+        if (token.typing) {
+            value = "…";
+        } else if (token.p === 0) {
+            value = t("lab.lmTokenNew");
+        } else {
+            value = A.format.percent(token.p);
+            // log scale: 100% -> 1, 10% -> 0.67, 1% -> 0.33, 0.1% -> 0
+            glow = A.util.clamp((Math.log10(token.p) + 3) / 3, 0, 1).toFixed(3);
+        }
+        const word = chip.firstElementChild;
+        const small = chip.lastElementChild;
+        if (word.textContent !== token.word) word.textContent = token.word;
+        if (small.textContent !== value) small.textContent = value;
+        chip.classList.toggle("is-typing", token.typing);
+        chip.classList.toggle("is-new", !token.typing && token.p === 0);
+        if (chip.style.getPropertyValue("--p") !== glow) chip.style.setProperty("--p", glow);
     }
 
     function renderLmStats() {
@@ -2150,25 +2269,25 @@
         const input = lmEls.input;
         let text = input.value;
         const state = readText(text);
+        // The half-typed word at the end of the text (null when the last word is finished)
+        const typed = state.partial ? text.match(WORD_END) : null;
 
         if (word === END) {
             input.value = text.replace(/[\s,;:]+$/, "") + ". ";
-        } else if (lm.mode === "complete" && state.partial) {
+        } else if (lm.mode === "complete" && typed) {
             // replace the half-typed word
-            const typed = text.match(/[\p{L}\p{N}'’-]+$/u);
-            const start = typed ? text.length - typed[0].length : text.length;
-            const keepCapital = typed && typed[0].charAt(0) !== typed[0].charAt(0).toLowerCase();
-            input.value = text.slice(0, start) + displayWord(word, state.previous.length === 0 || keepCapital) + " ";
+            const keepCapital = typed[0].charAt(0) !== typed[0].charAt(0).toLowerCase();
+            input.value = text.slice(0, text.length - typed[0].length) + displayWord(word, state.previous.length === 0 || keepCapital) + " ";
         } else {
             if (text && !/\s$/.test(text)) text += " ";
             input.value = text + displayWord(word, state.previous.length === 0 && !state.partial) + " ";
         }
-        if (input.value.length > 400) input.value = input.value.slice(0, 400);
+        if (input.value.length > MAX_TEXT) input.value = input.value.slice(0, MAX_TEXT);
         input.scrollTop = input.scrollHeight;
         renderPredictor();
     }
 
-    // ----- Auto-write: the model writes up to 12 words by itself -----
+    // ----- Auto-write: the model writes up to AUTO_WORDS words by itself -----
     // finishWord: true = a word that is half typed gets finished (the Stop button),
     // false = it is taken back (for example when you click a candidate instead).
     function stopAuto(announceDone, finishWord) {
@@ -2200,8 +2319,9 @@
         lm.writer = job;
         updateAutoButton();
 
+        // The first new word needs a space before it ("piz" + " " + "next", "pizza." + " " + "Then")
         const input = lmEls.input;
-        if (input.value.trim() && !/[\s.,!?…;:]$/.test(input.value)) input.value += " ";
+        if (input.value && !/\s$/.test(input.value) && input.value.length < MAX_TEXT) input.value += " ";
         renderPredictor();
 
         const calm = !A.motion.ok();
@@ -2213,7 +2333,7 @@
                 stopAuto(false);
                 return;
             }
-            if (job.count >= AUTO_WORDS || input.value.length > 360) {
+            if (job.count >= AUTO_WORDS || input.value.length > AUTO_STOP) {
                 stopAuto(true);
                 return;
             }
@@ -2289,7 +2409,7 @@
             lmEls.teachStatus.classList.add("is-error");
             return;
         }
-        lm.taught.push(sentence.slice(0, 140));
+        lm.taught.push(sentence.slice(0, MAX_TEACH));
         A.storage.set("lab.taught." + lm.lang, lm.taught);
         lm.model = buildModel(CORPUS[lm.lang].concat(lm.taught));
         lmEls.teachInput.value = "";
@@ -2371,9 +2491,13 @@
     // The tab list, its two buttons and the two panels (findElements() finds them)
     let tabEls = null;
 
+    // A ResizeObserver tells us when a canvas box changes size (all current browsers have one)
+    const canWatchSizes = "ResizeObserver" in window;
+
     // Shows one tab. options.focus: move the keyboard focus to its button.
-    // options.start: the call made while the lab is being built. The lab is not on
-    // screen yet, so there is no fade-in, and the size watcher measures the canvases.
+    // options.start: the call made while the lab is being built (it is not on screen
+    // yet, so there is no fade-in). The canvases of a tab that appears are measured
+    // by the size watcher, just before the browser paints.
     function selectTab(name, options) {
         const how = options || {};
         if (TABS.indexOf(name) < 0) name = "classifier";
@@ -2392,7 +2516,7 @@
         });
         if (name !== "predictor") stopAuto(false);
         A.storage.set("lab.tab", name);
-        if (!how.start) measureAll();
+        if (!how.start && !canWatchSizes) measureAll();
         schedule();
     }
 
@@ -2425,6 +2549,7 @@
         const chartH = chart.wrap.clientHeight;
         const diagramW = diagram.wrap.clientWidth;
         const diagramH = diagram.wrap.clientHeight;
+        let resized = false;
 
         if (boardSize && (boardSize !== board.size || ratio !== board.ratio)) {
             board.size = boardSize;
@@ -2432,6 +2557,7 @@
             board.ctx = A.canvas.fit(board.canvas, boardSize, boardSize);
             board.sprites = null;       // the dots are made again for the new size
             nn.dirty.board = true;
+            resized = true;
         }
 
         if (chartW && (chartW !== chart.w || chartH !== chart.h || ratio !== chart.ratio)) {
@@ -2440,6 +2566,7 @@
             chart.ratio = ratio;
             chart.ctx = A.canvas.fit(chart.canvas, chartW, chartH);
             nn.dirty.chart = true;
+            resized = true;
         }
 
         if (diagramW && (diagramW !== diagram.w || diagramH !== diagram.h || ratio !== diagram.ratio)) {
@@ -2448,8 +2575,27 @@
             diagram.ratio = ratio;
             diagram.ctx = A.canvas.fit(diagram.canvas, diagramW, diagramH);
             nn.dirty.diagram = true;
+            resized = true;
         }
+
+        // A canvas with a new size is blank until it is drawn again. Near the screen it
+        // is drawn right here: the size watcher runs just before the browser paints,
+        // so the blank canvas is never shown. (Far away it waits until the lab comes near.)
+        if (resized && labNear) redraw(performance.now(), true);
         schedule();
+    }
+
+    // The pixel ratio changes when the window moves to a screen with sharper pixels
+    // (or with the browser zoom). No box changes size, so the size watcher misses it:
+    // a media query for the current ratio tells us, and is then made again for the new one.
+    // TODO(core): neural-bg.js needs the same watcher; a shared A.onPixelRatioChange(callback)
+    // in core would serve both (audit LE-12).
+    function watchPixelRatio() {
+        const stop = A.onMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)", () => {
+            stop();
+            watchPixelRatio();
+            measureAll();
+        }, { immediate: false });
     }
 
     // ----- Pause when the lab is off screen or the browser tab is hidden -----
@@ -2485,7 +2631,7 @@
         if (section.id !== "lab" || labNear) return;
         onLabNear(true);
         measureAll();
-        redraw(performance.now());
+        redraw(performance.now(), true);
     }
 
     // ----- Theme: the canvases get the new colours -----
@@ -2493,7 +2639,9 @@
     function themeChanged() {
         colors = null;
         board.sprites = null;
-        nn.dirty.net = true;
+        nn.dirty.maps = true;
+        nn.dirty.board = true;
+        nn.dirty.diagram = true;
         nn.dirty.chart = true;
         schedule();
     }
@@ -2512,6 +2660,7 @@
         updateLrLabels();
         updateTrainButton();
         updateAutoButton();
+        lmEls.autoHint.textContent = t("lab.lmAutoLabel", { n: AUTO_WORDS });
         updateDiagramLabel();
         updateStats();
         renderLmStats();
@@ -2591,7 +2740,8 @@
             teachStatus: $(".lab-teach-status"),
             forget: $('[data-action="forget"]'),
             live: $('[data-live="lm"]'),
-            field: $(".lab-lm-field")
+            field: $(".lab-lm-field"),
+            autoHint: $("#lab-auto-hint")
         };
         tabEls = { list: $(".lab-tabs"), buttons: $$(".lab-tab"), panels: $$(".lab-panel") };
     }
@@ -2617,13 +2767,14 @@
         renderPredictor();
         selectTab(A.storage.get("lab.tab", "classifier"), { start: true });
 
-        // Canvas sizes follow their boxes
-        if ("ResizeObserver" in window) {
+        // Canvas sizes follow their boxes and the screen's pixel ratio
+        if (canWatchSizes) {
             const resizer = new ResizeObserver(measureAll);
             [board.el, chart.wrap, diagram.wrap].forEach((element) => resizer.observe(element));
         } else {
             A.onResize(measureAll);
         }
+        watchPixelRatio();
         // On screen or not, near or far, theme and language
         A.whenVisible(labCard, onLabVisible, { threshold: 0.05, pauseAnimations: true });
         A.whenVisible(labCard, onLabNear, { rootMargin: "50% 0px" });
