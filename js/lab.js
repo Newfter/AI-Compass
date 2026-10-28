@@ -541,7 +541,7 @@
     //   go: true        scroll to the lab (commands, links, other features)
     //   reveal: true    scroll a little if the stage's header is out of view (opened from the grid)
     //   quiet: true     the page opens it by itself (the last experiment): no event,
-    //                   no message, the address stays
+    //                   no message, the address stays (unless it is #lab)
     // Opening the experiment that is already open (or loading) changes nothing,
     // so a double click or two links in a row build it once.
     function open(id, how) {
@@ -565,7 +565,10 @@
             if (!options.quiet && A.track) A.track("lab.use", { exp: id });
             load(id, entry, !options.quiet);
         }
-        if (!options.quiet) setHash(LINK_PREFIX + id);
+        // The address names the open experiment. Opening quietly leaves it alone, unless it
+        // already points at the lab (#lab, the menu link): then it names the experiment too,
+        // as it does for that link while an experiment is open (see followLink)
+        if (!options.quiet || window.location.hash === "#lab") setHash(LINK_PREFIX + id);
         if (options.go) {
             // The palette, a link, Compass Bot or a lesson: go to the lab. The focus goes to the
             // experiment's title (focus: true) or, as for any section, to the lab's heading.
