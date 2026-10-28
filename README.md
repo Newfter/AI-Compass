@@ -1,6 +1,6 @@
 # AI Compass
 
-AI Compass is a free website that teaches teenagers about artificial intelligence, in English and in Russian. It has short lessons with mini-labs, two live AI experiments, a quiz, a glossary, a history timeline, a chat helper (Compass Bot) and a search window for the whole site (Ctrl+K).
+AI Compass is a free website that teaches teenagers about artificial intelligence, in English and in Russian. It has short lessons with mini-labs, two live AI experiments, a quiz, a glossary, a history timeline, a chat helper (Compass Bot), a search window for the whole site (Ctrl+K), and My Compass, where learners see their XP, level, badges and streak.
 
 It is plain HTML, CSS and JavaScript: no libraries, no frameworks, no build step. The files in this folder are exactly what visitors get.
 
@@ -49,6 +49,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `css/timeline.css` | The history timeline. |
 | `css/assistant.css` | Compass Bot. |
 | `css/palette.css` | The Ctrl+K command palette. |
+| `css/journey.css` | My Compass: the button in the menu, the badge picture in a toast, and the dashboard window. |
 | `js/core.js` | The toolkit that every other script uses (`window.AICompass`, called `A`): saved settings, texts and languages, the theme, calm mode, pop-up windows, scrolling to sections, Ctrl+K commands and toasts. It is loaded first. |
 | `js/effects.js` | Small touches: the scroll progress bar, cards that rise in, numbers that count up, typewriter words, tilting cards, the mouse spotlight, magnetic buttons, ripples, the section mini-map and confetti. |
 | `js/neural-bg.js` | The animated "brain" drawn behind the page. |
@@ -60,6 +61,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/assistant.js` | Compass Bot, the chat helper in the corner: its prepared answers, answers looked up in the site, follow-ups ("tell me more") and "quiz me". |
 | `js/palette.js` | The Ctrl+K search window. |
 | `js/search.js` | The site search (`A.search`): finds things in the lessons, glossary, timeline, quiz, AI Lab and page texts, in the current language, with typos, synonyms and the wrong keyboard layout. The Ctrl+K palette and Compass Bot use it. |
+| `js/journey.js` | My Compass: counts XP from the progress events, and keeps the level, the badges and the streak in this browser. It also draws the button in the menu. |
+| `js/journey-panel.js` | The My Compass window (the dashboard). It is loaded the first time the window opens. |
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
@@ -71,6 +74,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/assistant.js` | Compass Bot's texts, fun facts and jokes, and its "brain" (the words it listens for and its answers). |
 | `js/content/palette.js` | The texts of the Ctrl+K palette. |
 | `js/content/search.js` | The search's texts and word lists: little words it skips (also words that only judge, like "good" or "лучше"), words that mean the same thing ("нейросеть" = "neural network"), words that point back to the sentence before ("This is called..."), and the parts of the page it searches. |
+| `js/content/journey.js` | My Compass: its texts, the XP table, the levels and the badges. |
 | `README.md` | This guide. |
 
 
@@ -157,7 +161,7 @@ A.on("activity", function (activity) {
 });
 ```
 
-Nothing leaves the browser: these events are only for features on the same page (for example "My Compass", which will count them).
+Nothing leaves the browser: these events are only for features on the same page (for example "My Compass", which turns them into XP with the table in `js/content/journey.js`).
 
 | Part | Event | Detail | When |
 | --- | --- | --- | --- |
@@ -179,6 +183,10 @@ Nothing leaves the browser: these events are only for features on the same page 
 | Core | `language.change` | `{ lang }` | the language changes |
 | | `theme.change` | `{ theme }` | the theme changes |
 | | `settings.change` | `{ name, value }` | a setting changes (today: `name: "calm"`) |
+| My Compass | `journey.open` | `{}` | the window opens |
+| | `journey.export` | `{ how }` | the progress is saved to a file (`how: "file"`) or copied as text (`how: "text"`) |
+
+My Compass also sends its own event, `"journey"`, after a new level (`{ type: "level", level, name }`) or a new badge (`{ type: "badge", id, name }`), and offers `A.journey`: `xp()`, `level()`, `badges()`, `streak()`, `open()`, `export()` and `import(data)`.
 
 **Adding an event:** call `A.track("part.something", { ... })` where it happens, list it in your file's header, and add a row here. Listeners must not count the same thing twice: the same event can come many times (for example `lesson.open`).
 
