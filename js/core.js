@@ -7,7 +7,8 @@
    THE PARTS OF THIS FILE
     1. storage       saving settings in the browser
     2. events        A.on / A.emit (the "aic:..." events)
-    3. texts         translations, plurals, values inside texts, number formats, language
+    3. texts         translations, plurals, values inside texts, number formats, language,
+                     text typed with the other keyboard layout
     4. theme         light / dark and the colour of the address bar
     5. motion        reduced motion (device) + calm mode (our own switch),
                      and numbers that count up
@@ -34,6 +35,7 @@
        A.setTextValue(name, value)   A.textValue(name): a {name} that any text can show
        in the HTML: data-i18n="key", data-i18n-attr="aria-label:key", data-i18n-plural="name"
        A.format.number(n, options)   A.format.percent(share, options)   A.format.date(date, options)
+       A.switchLayout(text): "ntcn" -> "тест", the same keys in the other keyboard layout
        A.lang   A.locale   A.setLanguage(lang)   A.toggleLanguage()   A.onLanguageChange(callback)
     4  A.theme   A.setTheme(theme)   A.toggleTheme()   A.onThemeChange(callback)
     5  A.motion.ok() / reduced / calm / setCalm(on) / toggleCalm() / onChange(callback) / ease
@@ -144,7 +146,7 @@
     }
 
     /* =========================================================
-       3. TEXTS: TRANSLATIONS, PLURALS, VALUES INSIDE TEXTS, NUMBERS
+       3. TEXTS: TRANSLATIONS, PLURALS, VALUES INSIDE TEXTS, NUMBERS, KEYBOARD LAYOUTS
        ========================================================= */
     const LANGUAGES = ["en", "ru"];
 
@@ -325,6 +327,22 @@
     // A date: "27 October 2026" / "27 октября 2026 г."
     function formatDate(date, options) {
         return formatter("date", options || { day: "numeric", month: "long", year: "numeric" }).format(date);
+    }
+
+    // ----- Typed with the other keyboard layout -----
+    // switchLayout(text) gives the letters of the same keys in the other layout, so a search
+    // that finds nothing can try again: "ntcn" -> "тест", "ьщвуд" -> "model".
+    // Pass lower-case text. Other characters (digits, spaces, "?") stay as they are.
+    const LAYOUT_EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`";
+    const LAYOUT_RU = "йцукенгшщзхъфывапролджэячсмитьбюё";
+
+    function switchLayout(text) {
+        return String(text).split("").map(function (char) {
+            let index = LAYOUT_EN.indexOf(char);
+            if (index !== -1) return LAYOUT_RU.charAt(index);
+            index = LAYOUT_RU.indexOf(char);
+            return index !== -1 ? LAYOUT_EN.charAt(index) : char;
+        }).join("");
     }
 
     // ----- Translating the page -----
@@ -1820,6 +1838,7 @@
         setTextValue: setTextValue,
         textValue: textValue,
         format: { number: formatNumber, percent: formatPercent, date: formatDate },
+        switchLayout: switchLayout,
         get lang() { return state.lang; },
         get locale() { return LOCALES[state.lang]; },
         setLanguage: setLanguage,
