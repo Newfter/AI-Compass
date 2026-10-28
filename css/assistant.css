@@ -202,13 +202,13 @@
 
 .cb-tip {
     position: fixed;
-    right: 100px;
+    right: var(--launcher-clearance);
     bottom: 34px;
     z-index: 300;
     display: flex;
     align-items: center;
     gap: 2px;
-    max-width: calc(100vw - 124px);
+    max-width: calc(100vw - var(--launcher-clearance) - 24px);
     padding: 4px 4px 4px 6px;
     border: 1px solid var(--border-strong);
     border-radius: 18px 18px 6px 18px;
@@ -300,13 +300,13 @@
 .cb-panel {
     position: fixed;
     right: 24px;
-    bottom: 100px;
+    bottom: var(--launcher-clearance);
     z-index: 301;
     display: flex;
     flex-direction: column;
     width: 380px;
-    height: min(620px, calc(100vh - 124px));
-    height: min(620px, calc(100dvh - 124px));
+    height: min(620px, calc(100vh - var(--launcher-clearance) - 24px));
+    height: min(620px, calc(100dvh - var(--launcher-clearance) - 24px));
     overflow: hidden;
     border: 1px solid var(--border-strong);
     border-radius: 24px;
@@ -905,9 +905,9 @@
 /* Short desktop windows */
 @media (min-width: 641px) and (max-height: 700px) {
     .cb-panel {
-        height: calc(100vh - 112px);
-        height: calc(100dvh - 112px);
-        bottom: 96px;
+        height: calc(100vh - var(--launcher-room) - 16px);
+        height: calc(100dvh - var(--launcher-room) - 16px);
+        bottom: var(--launcher-room);
     }
 }
 
@@ -1100,7 +1100,7 @@
     .cb-panel {
         top: 8px;
         bottom: 8px;
-        right: 100px;
+        right: var(--launcher-clearance);
         height: auto;
         transform-origin: 100% 100%;
     }
