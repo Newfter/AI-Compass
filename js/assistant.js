@@ -1,6 +1,10 @@
 /* =========================================================
    AI COMPASS — COMPASS BOT (the floating assistant)
-   A friendly chat helper in the bottom-right corner.
+   A friendly chat helper in the bottom-right corner: a glowing round
+   button, a short "Ask me" hint on the first visits, and a chat window
+   (above the button on computers, an almost full-screen sheet on
+   phones). Its answers can have buttons that open a lesson, start the
+   quiz, open the lab, show a glossary word or go to a part of the page.
 
    Important: Compass Bot is NOT a real AI. It is a small
    "rule-based" chatbot, like ELIZA from 1966: it looks for
@@ -8,18 +12,22 @@
    The chat window says this honestly, too.
 
    Sections of this file:
-    1. Translations
+    1. Settings
     2. Small helpers
     3. Answers the bot can give (drawn in the current language)
-    4. The bot's "brain": keywords and intents
+    4. The bot's "brain": finding what the person wants
     5. Building the chat window
     6. Showing messages
     7. Typing dots and the reply queue
     8. Buttons inside messages (actions)
     9. Opening and closing the chat
    10. Saving the chat for this tab (sessionStorage)
-   11. Little extras: the "Ask me" hint and eyes that follow you
-   12. Language, Ctrl+K commands, public API and start-up
+   11. Little extras: the "Ask me" hint, the resting orb, eyes that follow you
+   12. Language and start-up
+   13. Ctrl+K commands and the public API
+   Other features use AICompass.assistant (see the last section).
+   Every text (English and Russian) is in js/content/assistant.js,
+   and so are the bot's word lists and simple answers (its "brain").
    ========================================================= */
 
 (function () {
@@ -32,17 +40,32 @@
     const t = A.t;
     const esc = A.escapeHTML;
 
-    // The bot's word lists and simple answers: js/content/assistant.js
+    // The bot's word lists and simple answers (its "brain"): js/content/assistant.js
     const brain = A.content.get("assistant");
     if (!brain) return;
 
-    // Every text (English and Russian) is in js/content/assistant.js
+    /* =========================================================
+       1. SETTINGS
+       ========================================================= */
 
-    const MAX_MESSAGES = 80;
-    const SESSION_KEY = "assistant.chat";     // sessionStorage "aic:assistant.chat"
+    const MAX_MESSAGES = 80;              // a longer chat forgets its oldest messages
+    const MAX_LENGTH = 300;               // letters in one message
+    const SESSION_KEY = "assistant.chat"; // the chat in sessionStorage ("aic:assistant.chat")
+    const TYPING_MS = 500;                // the bot "types" this long before a short answer...
+    const TYPING_EXTRA_MS = 400;          // ...and up to this much longer before a long one
+    const NEXT_REPLY_MS = 150;            // a short pause between two answers in the queue
+    const ACTION_DELAY_MS = 650;          // time to read "Starting the quiz!" before the bot does it
+    const CLOSE_MS = 320;                 // the window's closing animation (css/assistant.css)
+    const TIP_DELAY_MS = 2200;            // the "Ask me" hint appears this long after the page loads...
+    const TIP_SECONDS = 10;               // ...and stays this long,
+    const TIP_VISITS = 3;                 // on the first 3 visits only
+    const ORB_START_SECONDS = 12;         // the orb moves this long after the page loads...
+    const ORB_WAKE_SECONDS = 5;           // ...and this long after the mouse or the focus was on it
+    const SHEET_CLOSE_PX = 90;            // phones: pull the sheet down this far to close it
 
     /* =========================================================
        2. SMALL HELPERS
+       (only what core.js does not have)
        ========================================================= */
 
     // "Machine-Learning?!" -> "machine learning" (also "ё" -> "е")
@@ -66,6 +89,7 @@
     }
 
     // Calls a function from another feature without crashing if it's missing or broken
+    // TODO(core): core.js has the same thing inside (safeCall) but does not share it
     function safely(callback, fallback) {
         try {
             return callback();
@@ -851,7 +875,7 @@
 
                 '<form class="cb-form" autocomplete="off">' +
                     '<label class="sr-only" for="cb-input" data-i18n="assistant.inputLabel">' + t("assistant.inputLabel") + "</label>" +
-                    '<input class="cb-input" id="cb-input" type="text" maxlength="300" enterkeyhint="send" spellcheck="true" ' +
+                    '<input class="cb-input" id="cb-input" type="text" maxlength="' + MAX_LENGTH + '" enterkeyhint="send" spellcheck="true" ' +
                         'data-i18n-attr="placeholder:assistant.placeholder" placeholder="' + esc(t("assistant.placeholder")) + '">' +
                     '<button type="submit" class="cb-send" disabled data-i18n-attr="aria-label:assistant.send,title:assistant.send" ' +
                         'aria-label="' + esc(t("assistant.send")) + '" title="' + esc(t("assistant.send")) + '">' + ICONS.send + "</button>" +
@@ -994,7 +1018,7 @@
     }
 
     function addUserMessage(text) {
-        return addMessage({ id: chat.nextId++, from: "user", text: String(text).slice(0, 300), time: Date.now() }, true);
+        return addMessage({ id: chat.nextId++, from: "user", text: String(text).slice(0, MAX_LENGTH), time: Date.now() }, true);
     }
 
     function addBotMessage(reply, data, animate) {
@@ -1048,11 +1072,11 @@
         }
     }
 
-    // 500–900 ms, a bit longer for long answers
+    // A bit longer for long answers (see TYPING_MS in the settings)
     function typingDelay(job) {
         const view = renderReply({ reply: job.reply, data: job.data || {} });
         const length = plainText(view.html).length;
-        return Math.round(500 + Math.min(400, length * 1.1));
+        return Math.round(TYPING_MS + Math.min(TYPING_EXTRA_MS, length * 1.1));
     }
 
     function enqueue(job) {
@@ -1077,7 +1101,7 @@
             setTimeout(function () {
                 // A restarted chat has its own queue now: leave it alone
                 if (job.generation === state.generation) nextJob();
-            }, 150);
+            }, NEXT_REPLY_MS);
         }, typingDelay(job));
     }
 
@@ -1103,13 +1127,13 @@
             const action = job.auto;
             setTimeout(function () {
                 if (job.generation === state.generation) runAction(action);
-            }, 650);
+            }, ACTION_DELAY_MS);
         }
     }
 
     // A message typed by the person
     function sendText(text) {
-        const clean = String(text || "").trim().slice(0, 300);
+        const clean = String(text || "").trim().slice(0, MAX_LENGTH);
         if (!clean) return;
         addUserMessage(clean);
         const job = think(clean);
@@ -1364,8 +1388,7 @@
         scrollToEnd(false);
 
         // Let the browser draw the hidden state first, then animate in
-        void ui.panel.offsetWidth;
-        ui.panel.classList.add("is-visible");
+        A.dom.replay(ui.panel, "is-visible");
         ui.backdrop.classList.add("is-visible");
         ui.input.focus({ preventScroll: true });
     }
@@ -1385,7 +1408,7 @@
             ui.panel.hidden = true;
             ui.backdrop.hidden = true;
             fitToViewport();
-        }, A.motion.ok() ? 320 : 0);
+        }, A.motion.ok() ? CLOSE_MS : 0);
 
         // Focus goes back to the round button
         if (restoreFocus !== false || wasInside) ui.launcher.focus({ preventScroll: true });
@@ -1438,7 +1461,7 @@
         ui.panel.style.transform = "";
         // Far enough, or a quick flick down: close. Otherwise it slides back.
         const flick = drag.distance > 24 && drag.speed > 0.5;
-        if (event.type === "pointerup" && (drag.distance > 90 || flick)) closePanel(true);
+        if (event.type === "pointerup" && (drag.distance > SHEET_CLOSE_PX || flick)) closePanel(true);
     }
 
     ui.panel.addEventListener("pointerup", endDrag);
@@ -1479,15 +1502,13 @@
     }
 
     /* =========================================================
-       11. LITTLE EXTRAS
+       11. LITTLE EXTRAS: THE "ASK ME" HINT, THE RESTING ORB, EYES THAT FOLLOW YOU
        ========================================================= */
 
     // ----- The "Ask me" hint -----
     // Shown on the first few visits (until it is closed or the chat is opened).
     // It hides by itself after a few seconds, and while the footer is on
     // screen, so it never sits on top of the page's links for long.
-    const TIP_VISITS = 3;
-    const TIP_SECONDS = 10;
     let footerVisible = false;
 
     // ----- The orb rests when nobody needs it -----
@@ -1497,8 +1518,6 @@
     // it, and for a few seconds when it gets the keyboard focus or shows the
     // hint. The rest of the time they wait, still, where they are
     // (css/assistant.css, section 1).
-    const ORB_START_SECONDS = 12;
-    const ORB_WAKE_SECONDS = 5;
     const orb = { timer: 0, hovered: false };
 
     function wakeOrb(seconds) {
@@ -1530,12 +1549,11 @@
             A.storage.set("assistant.tipVisits", visits + 1);
             ui.tip.hidden = false;
             ui.root.classList.add("has-tip");
-            void ui.tip.offsetWidth;
-            ui.tip.classList.add("is-visible");
+            A.dom.replay(ui.tip, "is-visible");
             wakeOrb(TIP_SECONDS);
             // Hide again later, without remembering it (it may come back next visit)
             state.tipTimer = setTimeout(function () { dismissTip(false); }, TIP_SECONDS * 1000);
-        }, 2200);
+        }, TIP_DELAY_MS);
     }
 
     const footer = document.querySelector(".footer, footer");
@@ -1589,7 +1607,7 @@
     }, { passive: true });
 
     /* =========================================================
-       12. LANGUAGE, CTRL+K COMMANDS, PUBLIC API AND START-UP
+       12. LANGUAGE AND START-UP
        ========================================================= */
 
     // The window's labels are translated by core (data-i18n).
@@ -1603,6 +1621,17 @@
             state.prefill = ui.input.value;
         }
     });
+
+    // Start: bring back this tab's chat, then wake the orb and plan the hint
+    load();
+    if (chat.messages.length) renderAll();
+    updateSendButton();
+    wakeOrb(ORB_START_SECONDS);
+    showTipLater();
+
+    /* =========================================================
+       13. CTRL+K COMMANDS AND THE PUBLIC API
+       ========================================================= */
 
     A.registerCommand({
         id: "assistant-open",
@@ -1637,8 +1666,9 @@
         }
     });
 
-    // Other features (like the Ctrl+K palette) can talk to Compass Bot
-    A.assistant = {
+    // Other features (like the Ctrl+K palette) can talk to Compass Bot:
+    // AICompass.assistant.open(), .close(), .toggle(), .ask("what is AI?") and .isOpen
+    A.feature("assistant", {
         open: openPanel,
         close: function () { closePanel(true); },
         toggle: togglePanel,
@@ -1647,12 +1677,5 @@
             sendText(text);
         },
         get isOpen() { return state.open; }
-    };
-
-    // Start
-    load();
-    if (chat.messages.length) renderAll();
-    updateSendButton();
-    wakeOrb(ORB_START_SECONDS);
-    showTipLater();
+    });
 })();

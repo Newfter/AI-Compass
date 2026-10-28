@@ -6,16 +6,19 @@
    with the arrow keys and press Enter.
 
    Sections of this file:
-    1. Translations
+    1. Settings
     2. Building the window
     3. Fuzzy search (how results are found and scored)
     4. Collecting and grouping results
     5. Drawing the results
     6. Keyboard and mouse
     7. Opening, closing and running a command
-    8. Shortcuts and start-up
+    8. Shortcuts and the language
+    9. Public API
    The list of commands lives in AICompass.commands: every
    feature adds its own with AICompass.registerCommand().
+   Other features use AICompass.palette (see the last section).
+   Every text (English and Russian) is in js/content/palette.js
    ========================================================= */
 
 (function () {
@@ -28,12 +31,18 @@
     const t = A.t;
     const esc = A.escapeHTML;
 
-    // Every text (English and Russian) is in js/content/palette.js
+    /* =========================================================
+       1. SETTINGS
+       ========================================================= */
 
-    const RECENT_KEY = "palette.recent";
-    const RECENT_MAX = 5;
-    const GROUP_PREVIEW = 6;     // with an empty search, show at most 6 items per group
-    const STATUS_DELAY = 450;    // ms: the number of results is read out once you stop typing
+    const RECENT_KEY = "palette.recent";  // the commands you ran last (localStorage "aic:palette.recent")
+    const RECENT_MAX = 5;                 // how many of them are kept
+    const GROUP_PREVIEW = 6;              // with an empty search, show at most 6 items per group
+    const STATUS_DELAY = 450;             // ms: the number of results is read out once you stop typing
+    const CLOSE_MS = 180;                 // the window's closing animation (css/palette.css)
+    const RUN_DELAY_MS = 10;              // the command runs just after the window has closed
+    const PAGE_STEP = 5;                  // Page Up / Page Down move the selection this far
+    const ASK_MAX = 80;                   // letters of your search shown in "Ask Compass Bot: «...»"
 
     /* =========================================================
        2. BUILDING THE WINDOW
@@ -487,7 +496,7 @@
         // (so there is only one "Compass Bot" heading) and is always its last item.
         const text = String(rawQuery).trim();
         if (A.assistant && typeof A.assistant.ask === "function" && text.length >= 2) {
-            const title = t("palette.askBot", { query: text.slice(0, 80) });
+            const title = t("palette.askBot", { query: text.slice(0, ASK_MAX) });
             found.push({
                 id: "ask-bot",
                 icon: "🤖",
@@ -658,11 +667,11 @@
                 break;
             case "PageDown":
                 event.preventDefault();
-                setActive(Math.min(state.items.length - 1, state.active + 5), true);
+                setActive(Math.min(state.items.length - 1, state.active + PAGE_STEP), true);
                 break;
             case "PageUp":
                 event.preventDefault();
-                setActive(Math.max(0, state.active - 5), true);
+                setActive(Math.max(0, state.active - PAGE_STEP), true);
                 break;
             case "Enter":
                 if (event.target === ui.close) return;   // the close button handles its own Enter
@@ -800,7 +809,7 @@
             fitOverlay();
             ui.list.innerHTML = "";
             state.items = [];
-        }, A.motion.ok() ? 180 : 0);
+        }, A.motion.ok() ? CLOSE_MS : 0);
 
         // Focus goes back to where it was before (if that is still possible).
         // Something hidden in the meantime (a link in the mobile menu, say)
@@ -851,13 +860,15 @@
             } catch (error) {
                 if (window.console) console.warn("AI Compass palette: command failed", item.id, error);
             }
-        }, 10);
+        }, RUN_DELAY_MS);
     }
 
     /* =========================================================
-       8. SHORTCUTS AND START-UP
+       8. SHORTCUTS AND THE LANGUAGE
        ========================================================= */
 
+    // Is the person typing in a text box? (Then "/" is just a slash.)
+    // TODO(core): quiz.js, lessons.js and neural-bg.js have the same check (A.dom.isTyping?)
     function isTyping(element) {
         if (!element || !element.closest) return false;
         return Boolean(element.isContentEditable || element.closest("input, textarea, select, [contenteditable='true']"));
@@ -906,7 +917,12 @@
         if (active >= 0 && active < state.items.length) setActive(active, true);
     });
 
-    // Other features can open the palette too (AICompass.palette)
+    /* =========================================================
+       9. PUBLIC API
+       ========================================================= */
+
+    // Other features can open the palette too:
+    // AICompass.palette.open(), .close(), .toggle() and .isOpen
     A.feature("palette", {
         open: open,
         close: close,

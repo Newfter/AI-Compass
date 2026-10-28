@@ -117,6 +117,8 @@ window.AICompass.addTranslations({
         "assistant.r.hint.en": "By the way, the whole site is also available in English.",
 
         // ----- Fun facts (all checked) -----
+        // To add one, write "assistant.fact14" here AND in the Russian part:
+        // the bot counts the facts by itself
         "assistant.fact1": "The term <strong>“artificial intelligence”</strong> was coined by John McCarthy in 1955, in a proposal for a summer workshop at Dartmouth College in 1956. That workshop is often called the birth of AI.",
         "assistant.fact2": "<strong>ELIZA</strong>, one of the first chatbots, was made by Joseph Weizenbaum at MIT in 1966. Some people believed it really understood them — even though it only matched keywords, a bit like me!",
         "assistant.fact3": "In 1997, IBM's computer <strong>Deep Blue</strong> beat world chess champion Garry Kasparov in a six-game match.",
@@ -132,6 +134,7 @@ window.AICompass.addTranslations({
         "assistant.fact13": "Arthur Samuel made the term <strong>“machine learning”</strong> popular in 1959. His checkers program got better by playing game after game against itself.",
 
         // ----- Jokes (harmless!) -----
+        // To add one, write "assistant.joke6" here AND in the Russian part
         "assistant.joke1": "What kind of music do robots like? <strong>Heavy metal!</strong> 🤘",
         "assistant.joke2": "Why did the AI cross the road? Because its training data said that's what chickens do 🐔",
         "assistant.joke3": "I asked a machine-learning model to tell me a joke. It said: “Sorry, I'm still in training.” 🏋️",
