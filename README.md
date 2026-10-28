@@ -70,7 +70,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/timeline.js` | The timeline texts, the eras and every milestone. |
 | `js/content/assistant.js` | Compass Bot's texts, fun facts and jokes, and its "brain" (the words it listens for and its answers). |
 | `js/content/palette.js` | The texts of the Ctrl+K palette. |
-| `js/content/search.js` | The search's texts and word lists: little words it skips, words that mean the same thing ("нейросеть" = "neural network"), and the parts of the page it searches. |
+| `js/content/search.js` | The search's texts and word lists: little words it skips (also words that only judge, like "good" or "лучше"), words that mean the same thing ("нейросеть" = "neural network"), words that point back to the sentence before ("This is called..."), and the parts of the page it searches. |
 | `README.md` | This guide. |
 
 
