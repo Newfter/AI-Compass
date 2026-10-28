@@ -8,7 +8,7 @@
     3. texts         translations, plurals, number formats, language
     4. theme         light / dark and the colour of the address bar
     5. motion        reduced motion (device) + calm mode (our own switch)
-    6. helpers       small tools: maths, page elements, colours, canvas
+    6. helpers       small tools: maths and easing, page elements, colours, canvas
     7. screen        media queries, visibility, resizing, layout sizes
     8. announce      messages for screen readers
     9. overlays      pop-up windows: scroll lock, focus, the Esc key
@@ -376,6 +376,14 @@
 
         lerp: function (from, to, amount) {
             return from + (to - from) * amount;
+        },
+
+        // An animation curve: fast at first, then gently slowing down (a cubic "ease-out").
+        // progress 0..1 -> 0..1: easeOut(0) = 0, easeOut(0.5) = 0.875, easeOut(1) = 1
+        // Example: lerp(from, to, easeOut(progress)) moves a value from "from" to "to".
+        easeOut: function (progress) {
+            const p = util.clamp(progress, 0, 1);
+            return 1 - Math.pow(1 - p, 3);
         },
 
         // A whole number from min to max (both included)
