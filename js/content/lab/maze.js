@@ -148,7 +148,7 @@ window.AICompass.addTranslations({
         "lab.maze.ch3": "In “Near or far?”, find a γ that makes the robot go for the big battery. (Press Forget after you change γ.)",
         "lab.maze.ch3Why": "γ says how much future rewards count. With γ = 0.5, +10 six moves away is worth only about 0.1 now: less than +2 two moves away (about 0.85). With γ = 0.95 the far battery is worth about 7.2: patience pays.",
         "lab.maze.ch4": "In “Near or far?”, set γ to 0.9, ε to 0 and switch off “ε shrinks”. Press Forget and train 30 episodes. Does the robot find the big battery?",
-        "lab.maze.ch4Why": "With ε = 0 the robot never tries anything new: it grabs the first battery it finds and stops looking. Curiosity helps: set ε to 1 and switch on “ε shrinks” (explore a lot at first, then less and less), press Forget and train again."
+        "lab.maze.ch4Why": "With ε = 0 the robot stops trying new things as soon as something works: it grabs the first battery it finds and stops looking. Curiosity helps: set ε to 1 and switch on “ε shrinks” (explore a lot at first, then less and less), press Forget and train again."
     },
     ru: {
         // ----- Эксперимент -----
@@ -292,7 +292,7 @@ window.AICompass.addTranslations({
         "lab.maze.ch3": "В «Близко или далеко?» подбери такое γ, чтобы робот шёл к большой батарейке. (Изменив γ, нажми «Забыть всё».)",
         "lab.maze.ch3Why": "γ показывает, насколько важны будущие награды. При γ = 0,5 награда +10 в шести ходах сейчас стоит всего около 0,1 — меньше, чем +2 в двух ходах (около 0,85). При γ = 0,95 дальняя батарейка стоит около 7,2: терпение окупается.",
         "lab.maze.ch4": "В «Близко или далеко?» поставь γ = 0,9, ε = 0 и выключи «ε уменьшается со временем». Нажми «Забыть всё» и потренируй робота 30 эпизодов. Найдёт ли он большую батарейку?",
-        "lab.maze.ch4Why": "При ε = 0 робот никогда не пробует ничего нового: он хватается за первую найденную батарейку и больше не ищет. Помогает любопытство: поставь ε = 1 и включи «ε уменьшается со временем» (сначала много исследовать, потом всё меньше), нажми «Забыть всё» и потренируй снова."
+        "lab.maze.ch4Why": "При ε = 0 робот перестаёт пробовать новое, как только что-то сработало: он хватается за первую найденную батарейку и больше не ищет. Помогает любопытство: поставь ε = 1 и включи «ε уменьшается со временем» (сначала много исследовать, потом всё меньше), нажми «Забыть всё» и потренируй снова."
     }
 });
 
