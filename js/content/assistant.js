@@ -480,7 +480,8 @@ window.AICompass.content.set("assistant", {
             words: ["danger*", "scary", "scared", "afraid", "fear", "take over", "takeover", "rise of the machines",
                 "terminator", "skynet", "destroy", "evil", "replace jobs", "replace humans", "replace people",
                 "take my job", "take our jobs", "jobs", "safe", "safety", "risk*", "threat*", "deepfake*",
-                "deep fake*", "good or bad", "bad or good", "хорошо или плохо", "плохо или хорошо", "опас*", "захват*", "восстание машин", "восстан*", "терминатор*", "скайнет",
+                "deep fake*", "good or bad", "bad or good", "хорошо или плохо", "плохо или хорошо",
+                "опас*", "захват*", "восстание машин", "восстан*", "терминатор*", "скайнет",
                 "уничтож*", "злой", "замен*", "заберет*", "отберет*", "отнимет*", "мою работу", "нашу работу",
                 "без работы", "професси*", "угроз*", "риск*", "страшн*", "боюсь",
                 "бояться", "безопас*", "дипфейк*"]
