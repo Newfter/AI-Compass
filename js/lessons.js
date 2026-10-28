@@ -1,13 +1,33 @@
 /* =========================================================
    AI COMPASS — LESSONS
-   Six interactive lessons. This file builds:
-   1. a progress panel (ring, lesson map, continue / reset)
-   2. a grid of lesson cards
-   3. a full-screen lesson reader with a mini-lab, key ideas,
-      a "check yourself" question and previous / next buttons
-   4. a downloadable certificate when every lesson is done
-   It also adds "Open lesson" commands to the Ctrl+K palette
-   and window.AICompass.openLesson(number) for other features.
+   Six short interactive lessons about AI. This file builds a
+   progress panel (ring, lesson map, continue / reset), a grid of
+   lesson cards, a full-screen lesson reader (text, a mini-lab, key
+   ideas, a "check yourself" question, previous / next) and a
+   certificate to download once every lesson is done.
+   Sections of this file:
+    1. Settings
+    2. The lessons (icon, colour, mini-lab, palette keywords)
+    3. Small helpers
+    4. Saved progress
+    5. Progress panel and cards (built once)
+    6. Updating the panel and the cards
+    7. Completing lessons
+    8. The certificate
+    9. Clicks on the panel and the cards
+   10. Mini-lab 1: AI or not AI?
+   11. Mini-lab 2: watch a model learn
+   12. Mini-lab 3: play with a neuron
+   13. Mini-lab 4: be the language model
+   14. Mini-lab 5: spot the hidden AI
+   15. Mini-lab 6: what would you do?
+   16. The lesson reader
+   17. Reading aloud
+   18. Language and theme changes
+   19. Start (and links like #lesson-3)
+   20. Ctrl+K commands and the public API
+   Other features use AICompass.lessons (see the last section).
+   Every text (English and Russian) is in js/content/lessons.js
    ========================================================= */
 
 (function () {
@@ -19,10 +39,29 @@
 
     const t = A.t;
     const esc = A.escapeHTML;
-    const READER_ID = "lesson-reader";     // the reader's name among the pop-up windows (A.overlays)
 
-    // ---------- 1. The six lessons ----------
-    // The texts live in the translations below (keys "lessons.l1.title", ...).
+    // ---------- 1. Settings ----------
+    // Numbers you may want to change. Times are in milliseconds, sizes in CSS pixels.
+    // (Each mini-lab keeps its own numbers at the start of its section.)
+    const READER_ID = "lesson-reader";            // the reader's name among the pop-up windows (A.overlays in core.js)
+    const RING_COUNT_UP_TIME = 900;               // the percentage in the progress ring counts up for this long
+    const RESET_CONFIRM_TIME = 4000;              // "Reset progress" waits this long for the second press
+    const READER_CLOSE_TIME = 260;                // a closing reader is hidden after this (it has mostly faded out by then)
+    const TEXT_SIZES = ["s", "m", "l"];           // the reader's text sizes, in the order the "A A" button goes through them
+    const NARROW_SCREEN = "(max-width: 400px)";   // here the "Listen" button shows only its sound bars
+    const PART_TOP_GAP = 18;                      // space left above a part when the contents list jumps to it
+    const SPY_LINE = 0.35;                        // a part is the current one once its top is in the upper 35% of the reader
+    const SPY_BOTTOM = 0.985;                     // scrolled this far down (98.5%), the last part is the current one
+    const SCROLL_END_LIMIT = 3000;                // a jump in the reader counts as finished after this at the latest
+    const SCROLL_START_TIME = 1000;               // browsers without the "scrollend" event: a jump must start within this time
+    const SCROLL_QUIET_TIME = 250;                // ... and has finished after this long without a scroll event
+    const SPEAK_MARGIN = 40;                      // the sentence read aloud stays at least this far inside the reader
+    const NO_VOICE_WARNING_GAP = 5000;            // "no voice" is shown at most once in this time
+    const CERT_ICON_STEP = 190;                   // the space between the lesson icons on the certificate (canvas pixels)
+    const DOWNLOAD_CLEANUP_TIME = 4000;           // the certificate's temporary download address is freed after this
+
+    // ---------- 2. The lessons ----------
+    // The texts are in js/content/lessons.js (keys "lessons.l1.title", ...).
     // rgb: which accent colour the lesson uses. lab: which mini-lab it shows.
     // correct: index (0, 1 or 2) of the right answer to "Check yourself".
     // notes: which sections have a small highlighted box, and its type.
@@ -67,15 +106,20 @@
 
     const TOTAL = LESSONS.length;
 
-    // Every text (English and Russian) is in js/content/lessons.js
+    // ---------- 3. Small helpers ----------
+    // (Only what core.js has no helper for.)
 
-    // ---------- 10. Small helpers ----------
+    // The element inside root marked data-ref="name"
+    function ref(root, name) {
+        return root.querySelector('[data-ref="' + name + '"]');
+    }
 
     // 3 -> "03"
     function pad(n) {
         return String(n).padStart(2, "0");
     }
 
+    // lessonKey(2, "title") -> "lessons.l2.title"
     function lessonKey(n, part) {
         return "lessons.l" + n + "." + part;
     }
@@ -96,7 +140,7 @@
         }
     }
 
-    // ---------- 11. Saved progress ----------
+    // ---------- 4. Saved progress ----------
     const savedCompleted = A.storage.get("lessons.completed", []);
     const completed = new Set(
         (Array.isArray(savedCompleted) ? savedCompleted : []).filter(function (n) {
@@ -119,7 +163,7 @@
         return 0;
     }
 
-    // ---------- 12. Progress panel + cards (built once) ----------
+    // ---------- 5. Progress panel and cards (built once) ----------
     function cardHTML(lesson) {
         const n = lesson.number;
         return `
@@ -206,10 +250,6 @@
         <div class="lsn-grid">${LESSONS.map(cardHTML).join("")}</div>
     `;
 
-    function ref(root, name) {
-        return root.querySelector('[data-ref="' + name + '"]');
-    }
-
     const hud = {
         root: mount.querySelector(".lsn-hud"),
         ringFill: ref(mount, "ringFill"),
@@ -247,7 +287,7 @@
 
     const steps = Array.prototype.slice.call(hud.path.querySelectorAll(".lsn-step"));
 
-    // ---------- 13. Updating the panel and the cards ----------
+    // ---------- 6. Updating the panel and the cards ----------
     let ringValue = 0;
     let ringFrame = 0;
     let ringStarted = false;
@@ -266,7 +306,7 @@
         const from = ringValue;
         const start = performance.now();
         function step(now) {
-            const progress = Math.min(1, (now - start) / 900);
+            const progress = Math.min(1, (now - start) / RING_COUNT_UP_TIME);
             const eased = 1 - Math.pow(1 - progress, 3);
             ringValue = Math.round(from + (target - from) * eased);
             hud.percent.textContent = String(ringValue);
@@ -367,7 +407,7 @@
         updatePaused();
     });
 
-    // ---------- 14. Completing lessons ----------
+    // ---------- 7. Completing lessons ----------
     function setCompleted(n, isDone) {
         const before = completed.size;
         if (isDone) completed.add(n);
@@ -398,7 +438,7 @@
             resetTimer = setTimeout(function () {
                 resetArmed = false;
                 updateHUD();
-            }, 4000);
+            }, RESET_CONFIRM_TIME);
             return;
         }
         // The second click of a double-click (or a double tap) is not a second press
@@ -414,8 +454,8 @@
         hud.continueButton.focus();
     }
 
-    // ---------- 16. The certificate ----------
-    const CERT_ICON_STEP = 190;   // distance between the lesson icons on the certificate (canvas pixels)
+    // ---------- 8. The certificate ----------
+    // A picture drawn on a <canvas> (only while it is shown) that can be saved as a PNG file
     let certFrame = 0;
 
     function toggleCertificate(force) {
@@ -660,7 +700,7 @@
             document.body.appendChild(link);
             link.click();
             link.remove();
-            if (isBlob) setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+            if (isBlob) setTimeout(function () { URL.revokeObjectURL(url); }, DOWNLOAD_CLEANUP_TIME);
             A.toast(t("lessons.toast.cert"), "🏆");
         }
         try {
@@ -684,7 +724,7 @@
     });
     cert.download.addEventListener("click", downloadCertificate);
 
-    // ---------- 17. Clicks on the panel and the cards ----------
+    // ---------- 9. Clicks on the panel and the cards ----------
     hud.root.addEventListener("click", function (event) {
         const node = event.target.closest("[data-open]");
         if (node) {
@@ -760,11 +800,9 @@
     }
 
     cards.forEach(function (card) {
-        card.addEventListener("pointerenter", function (event) {
-            if (event.pointerType === "mouse" && cardLightOn()) lightCard(card);
-            followPointer(card, event);
-        });
-        card.addEventListener("pointermove", function (event) { followPointer(card, event); });
+        const follow = function (event) { followPointer(card, event); };
+        card.addEventListener("pointerenter", follow);
+        card.addEventListener("pointermove", follow);
         card.addEventListener("pointerleave", function () {
             if (cardLight.card === card) cardLight.card = null;
         });
@@ -773,7 +811,7 @@
     A.motion.onChange(function () { if (!cardLightOn()) resetCardLight(); });
     A.onMedia(A.queries.finePointer, function () { if (!cardLightOn()) resetCardLight(); }, { immediate: false });
 
-    // ---------- 18. Mini-lab 1: AI or not AI? ----------
+    // ---------- 10. Mini-lab 1: AI or not AI? ----------
     const SORT_ANSWERS = ["not", "ai", "ai", "not", "ai"];
 
     // Every mini-lab gets a view (redrawn) and a hidden live region (for screen readers)
@@ -851,12 +889,16 @@
         return null;
     }
 
-    // ---------- 19. Mini-lab 2: watch a model learn (a line learns with gradient descent) ----------
+    // ---------- 11. Mini-lab 2: watch a model learn (a line learns with gradient descent) ----------
     // Pretend data: hours of study -> test score
     const FIT_HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     const FIT_SCORES = [33, 45, 46, 58, 56, 69, 71, 78, 85];
     const FIT_START = { a: -0.2, b: 0.6 };   // the line starts sloping the wrong way
     const FIT_RATE = 0.6;                     // the "learning rate": how big each nudge is
+    const FIT_STOP_CHANGE = 0.005;            // learning stops when a step changes the error by less than this...
+    const FIT_MAX_STEPS = 300;                // ... or after this many steps
+    const FIT_STEP_TIME = 70;                 // "Auto" takes one step every 70 ms
+    const FIT_CHART_STEPS = 60;               // the error chart is at least this many steps wide
 
     // Average error of the line "score = a * hours + b", in points (root mean square)
     function fitError(a, b) {
@@ -884,7 +926,7 @@
         const error = fitError(state.a, state.b);
         const previous = state.history[state.history.length - 1];
         state.history.push(error);
-        state.done = Math.abs(previous - error) < 0.005 || state.step >= 300;
+        state.done = Math.abs(previous - error) < FIT_STOP_CHANGE || state.step >= FIT_MAX_STEPS;
     }
 
     function freshFit() {
@@ -1001,7 +1043,7 @@
             view.querySelector('[data-stat="predict"]').textContent = A.plural("lessons.w2.predict", Math.round(model(10)));
 
             // The error curve
-            const maxSteps = Math.max(60, state.history.length - 1);
+            const maxSteps = Math.max(FIT_CHART_STEPS, state.history.length - 1);
             const lx = function (i) { return lossLeft + (i / maxSteps) * (lossRight - lossLeft); };
             const ly = function (value) { return lossBottom - (Math.min(value, lossMax) / lossMax) * (lossBottom - lossTop); };
             const coords = state.history.map(function (value, i) { return lx(i).toFixed(1) + "," + ly(value).toFixed(1); });
@@ -1028,7 +1070,7 @@
 
         function loop(now) {
             if (!state.running) return;
-            if (now - lastTime >= 70) {
+            if (now - lastTime >= FIT_STEP_TIME) {
                 lastTime = now;
                 stepOnce();
             }
@@ -1067,7 +1109,7 @@
         return function () { cancelAnimationFrame(frame); };
     }
 
-    // ---------- 20. Mini-lab 3: play with a neuron ----------
+    // ---------- 12. Mini-lab 3: play with a neuron ----------
     // Starts on "Go to the park!" (z = 0.35), so the "Try this" hint can flip it
     const NEURON_START = { x1: 0.9, x2: 0.2, w1: 1.5, w2: 2.5, b: -1.5 };
     const NEURON_SLIDERS = [
@@ -1204,7 +1246,7 @@
         return null;
     }
 
-    // ---------- 21. Mini-lab 4: be the language model ----------
+    // ---------- 13. Mini-lab 4: be the language model ----------
     // How much the model "likes" each word (made-up scores called logits)
     const WORD_LOGITS = [2.2, 1.5, 1.2, 0.8, 0.4, -0.2];
 
@@ -1323,7 +1365,7 @@
         return null;
     }
 
-    // ---------- 22. Mini-lab 5: spot the hidden AI ----------
+    // ---------- 14. Mini-lab 5: spot the hidden AI ----------
     const DAY_MOMENTS = [
         { time: "07:00", icon: "📱" },
         { time: "08:10", icon: "🚌" },
@@ -1395,7 +1437,7 @@
         return null;
     }
 
-    // ---------- 23. Mini-lab 6: what would you do? ----------
+    // ---------- 15. Mini-lab 6: what would you do? ----------
     const DILEMMA_BEST = [1, 1, 2];   // the most responsible option in each situation
 
     function mountDilemmaLab(box, state) {
@@ -1494,7 +1536,7 @@
         return type.mount(box, labState[n]);
     }
 
-    // ---------- 24. The lesson reader (a full-screen dialog) ----------
+    // ---------- 16. The lesson reader (a full-screen dialog) ----------
     // Its empty frame (about 50 elements) is built once, here at start-up: that costs
     // less than a millisecond. The lesson text, its mini-lab and the contents list
     // are built each time a lesson is shown.
@@ -1505,13 +1547,11 @@
         closeTimer: 0,
         scrollRatio: 0,
         cleanupLab: null,
-        previousHash: "",
-        renderedLang: ""
+        previousHash: ""
     };
 
-    const SIZES = ["s", "m", "l"];
     let textSize = A.storage.get("lessons.textSize", "m");
-    if (SIZES.indexOf(textSize) === -1) textSize = "m";
+    if (TEXT_SIZES.indexOf(textSize) === -1) textSize = "m";
 
     const readerEl = document.createElement("div");
     readerEl.className = "lsn-reader";
@@ -1587,7 +1627,7 @@
 
     // On very narrow screens the "Listen" button shows only its sound bars. The word
     // is hidden with the shared .sr-only class, so screen readers still read it.
-    A.onMedia("(max-width: 400px)", function (narrow) {
+    A.onMedia(NARROW_SCREEN, function (narrow) {
         parts.listenText.classList.toggle("sr-only", narrow);
     });
 
@@ -1765,7 +1805,6 @@
 
     function renderLessonContent() {
         const n = reader.lesson;
-        reader.renderedLang = A.lang;
         stopLab(false);
         panel.style.setProperty("--lsn-rgb", "var(" + LESSONS[n - 1].rgb + ")");
         parts.article.innerHTML = articleHTML(n);
@@ -1847,14 +1886,14 @@
         parts.progress.style.transform = "scaleX(" + ratio.toFixed(4) + ")";
         if (spy.held) return;
 
-        // The current part is the last one whose top is above 35% of the box
-        const limit = box.getBoundingClientRect().top + box.clientHeight * 0.35;
+        // The current part is the last one whose top is above the spy line
+        const limit = box.getBoundingClientRect().top + box.clientHeight * SPY_LINE;
         const sections = parts.article.querySelectorAll("[data-part]");
         let active = sections.length ? sections[0].getAttribute("data-part") : "";
         sections.forEach(function (section) {
             if (section.getBoundingClientRect().top <= limit) active = section.getAttribute("data-part");
         });
-        if (ratio > 0.985 && sections.length) active = sections[sections.length - 1].getAttribute("data-part");
+        if (ratio > SPY_BOTTOM && sections.length) active = sections[sections.length - 1].getAttribute("data-part");
         markCurrentPart(active);
     }
 
@@ -1867,7 +1906,7 @@
         spy.held = true;
         spy.hold += 1;
         spy.target = target;
-        waitForScrollEnd(HAS_SCROLLEND ? 3000 : 1000);
+        waitForScrollEnd(HAS_SCROLLEND ? SCROLL_END_LIMIT : SCROLL_START_TIME);
     }
 
     // A safety net in case the end of the scroll is never reported
@@ -1895,7 +1934,7 @@
     }
 
     parts.scroll.addEventListener("scroll", function () {
-        if (spy.held) waitForScrollEnd(HAS_SCROLLEND ? 3000 : 250);
+        if (spy.held) waitForScrollEnd(HAS_SCROLLEND ? SCROLL_END_LIMIT : SCROLL_QUIET_TIME);
         if (scrollFrame) return;
         scrollFrame = requestAnimationFrame(function () {
             scrollFrame = 0;
@@ -1910,7 +1949,7 @@
         const target = parts.article.querySelector('[data-part="' + name + '"]');
         if (!target) return;
         const box = parts.scroll;
-        const top = target.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 18;
+        const top = target.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - PART_TOP_GAP;
         markCurrentPart(name);
         holdSpy(A.util.clamp(top, 0, box.scrollHeight - box.clientHeight));
         box.scrollTo({ top: top, behavior: A.motion.ok() ? "smooth" : "auto" });
@@ -1945,7 +1984,7 @@
     }
 
     function cycleTextSize() {
-        textSize = SIZES[(SIZES.indexOf(textSize) + 1) % SIZES.length];
+        textSize = TEXT_SIZES[(TEXT_SIZES.indexOf(textSize) + 1) % TEXT_SIZES.length];
         A.storage.set("lessons.textSize", textSize);
         readerEl.setAttribute("data-size", textSize);
         updateReaderChrome();
@@ -2032,7 +2071,7 @@
             finish();
         } else {
             readerEl.classList.add("is-closing");
-            reader.closeTimer = setTimeout(finish, 260);
+            reader.closeTimer = setTimeout(finish, READER_CLOSE_TIME);
         }
 
         if (settings.restoreFocus !== false) {
@@ -2106,7 +2145,7 @@
         goRelative(event.key === "ArrowLeft" ? -1 : 1);
     });
 
-    // ---------- 25. Reading aloud (the browser's built-in speech) ----------
+    // ---------- 17. Reading aloud (the browser's built-in speech) ----------
     const canSpeak = "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function";
     const speech = { active: false, session: 0, element: null, warnedAt: 0 };
 
@@ -2117,7 +2156,7 @@
         element.classList.add("is-speaking");
         const box = parts.scroll.getBoundingClientRect();
         const rect = element.getBoundingClientRect();
-        if (rect.top < box.top + 40 || rect.bottom > box.bottom - 40) {
+        if (rect.top < box.top + SPEAK_MARGIN || rect.bottom > box.bottom - SPEAK_MARGIN) {
             element.scrollIntoView({ block: "center", behavior: A.motion.ok() ? "smooth" : "auto" });
         }
     }
@@ -2176,7 +2215,7 @@
                 if (event.error === "interrupted" || event.error === "canceled") return;
                 stopSpeaking();
                 // Only warn once every few seconds, even if the button is pressed again
-                if (!started && Date.now() - speech.warnedAt > 5000) {
+                if (!started && Date.now() - speech.warnedAt > NO_VOICE_WARNING_GAP) {
                     speech.warnedAt = Date.now();
                     A.toast(t("lessons.reader.noSpeech"), "🔇");
                 }
@@ -2188,7 +2227,67 @@
         updateReaderChrome();
     }
 
-    // ---------- 26. Commands for the Ctrl+K palette + API for other features ----------
+    // ---------- 18. Language and theme changes ----------
+    A.onLanguageChange(function () {
+        updateHUD();
+        updateCards();
+        if (!cert.root.hidden) drawCertificate();
+        if (!reader.open) return;
+
+        // Re-draw the open lesson in the new language, keeping its place, answers and focus
+        const ratio = reader.scrollRatio;
+        const active = document.activeElement;
+        const focusWasInside = Boolean(active) && readerEl.contains(active);
+        const fid = focusWasInside ? active.getAttribute("data-fid") : null;
+        stopSpeaking();
+        renderLessonContent();
+        updateReaderChrome();
+        const box = parts.scroll;
+        box.scrollTop = ratio * (box.scrollHeight - box.clientHeight);
+        onReaderScroll();
+        if (focusWasInside && !active.isConnected) {
+            const again = fid ? readerEl.querySelector('[data-fid="' + fid + '"]') : null;
+            const target = again || parts.article.querySelector("#lsn-reader-title");
+            if (target) target.focus({ preventScroll: true });
+        }
+    });
+
+    A.onThemeChange(function () {
+        scheduleCertificate();
+    });
+
+    // Fonts arrive a little later: redraw the certificate with them
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(scheduleCertificate);
+    }
+
+    // ---------- 19. Start ----------
+    updateHUD();
+    updateCards();
+
+    // A link like index.html#lesson-3 opens that lesson (0: the address names no lesson)
+    function lessonFromHash() {
+        const match = /^#lesson-(\d+)$/.exec(window.location.hash);
+        const n = match ? Number(match[1]) : 0;
+        return n >= 1 && n <= TOTAL ? n : 0;
+    }
+
+    // The Back / Forward buttons change the hash: open the lesson, or close the reader
+    window.addEventListener("hashchange", function () {
+        const n = lessonFromHash();
+        if (n) openLesson(n, document.activeElement);
+        else if (reader.open) closeReader({ keepHash: true });
+    });
+
+    // Opened once every script has run, so the whole page (and every
+    // command of the Ctrl+K palette) is ready behind the reader
+    A.ready(function () {
+        const n = lessonFromHash();
+        if (n) openLesson(n);
+    });
+
+    // ---------- 20. Ctrl+K commands and the public API ----------
+    // One command per lesson, plus "continue where I stopped"
     LESSONS.forEach(function (lesson) {
         A.registerCommand({
             id: "lesson-" + lesson.number,
@@ -2197,7 +2296,7 @@
             title: function () { return t("lessons.cmdOpen", { title: lessonTitle(lesson.number) }); },
             keywords: "lesson урок " + lesson.number + " " + lesson.keywords,
             // An open reader stays open and switches to this lesson
-            keepOverlays: ["lesson-reader"],
+            keepOverlays: [READER_ID],
             // The palette gives the focus back before running a command, so the
             // focused element is where the reader returns to when it closes
             run: function () { openLesson(lesson.number, document.activeElement); }
@@ -2210,7 +2309,7 @@
         icon: "▶️",
         title: function () { return t("lessons.cmdContinue"); },
         keywords: "continue next lesson learning продолжить следующий урок обучение",
-        keepOverlays: ["lesson-reader"],
+        keepOverlays: [READER_ID],
         run: function () { openLesson(nextLesson() || 1, document.activeElement); }
     });
 
@@ -2249,64 +2348,4 @@
 
     A.openLesson = A.lessons.open;
     A.closeLesson = A.lessons.close;
-
-    // ---------- 27. Language and theme changes ----------
-    A.onLanguageChange(function () {
-        updateHUD();
-        updateCards();
-        if (!cert.root.hidden) drawCertificate();
-        // Core also sends this event once when the page starts: nothing to redo then
-        if (!reader.open || reader.renderedLang === A.lang) return;
-
-        // Re-draw the open lesson in the new language, keeping its place, answers and focus
-        const ratio = reader.scrollRatio;
-        const active = document.activeElement;
-        const focusWasInside = Boolean(active) && readerEl.contains(active);
-        const fid = focusWasInside ? active.getAttribute("data-fid") : null;
-        stopSpeaking();
-        renderLessonContent();
-        updateReaderChrome();
-        const box = parts.scroll;
-        box.scrollTop = ratio * (box.scrollHeight - box.clientHeight);
-        onReaderScroll();
-        if (focusWasInside && !active.isConnected) {
-            const again = fid ? readerEl.querySelector('[data-fid="' + fid + '"]') : null;
-            const target = again || parts.article.querySelector("#lsn-reader-title");
-            if (target) target.focus({ preventScroll: true });
-        }
-    });
-
-    A.onThemeChange(function () {
-        scheduleCertificate();
-    });
-
-    // Fonts arrive a little later: redraw the certificate with them
-    if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(scheduleCertificate);
-    }
-
-    // ---------- 28. Start ----------
-    updateHUD();
-    updateCards();
-
-    // A link like index.html#lesson-3 opens that lesson (0: the address names no lesson)
-    function lessonFromHash() {
-        const match = /^#lesson-(\d+)$/.exec(window.location.hash);
-        const n = match ? Number(match[1]) : 0;
-        return n >= 1 && n <= TOTAL ? n : 0;
-    }
-
-    // The Back / Forward buttons change the hash: open the lesson, or close the reader
-    window.addEventListener("hashchange", function () {
-        const n = lessonFromHash();
-        if (n) openLesson(n, document.activeElement);
-        else if (reader.open) closeReader({ keepHash: true });
-    });
-
-    // Opened once every script has run, so the whole page (and every
-    // command of the Ctrl+K palette) is ready behind the reader
-    A.ready(function () {
-        const n = lessonFromHash();
-        if (n) openLesson(n);
-    });
 })();
