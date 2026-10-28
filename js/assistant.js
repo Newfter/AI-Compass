@@ -79,12 +79,25 @@
         return A.format.date(timestamp, { hour: "2-digit", minute: "2-digit" });
     }
 
+    // A saved number as a whole number, 0 or more. A chat saved in this tab may
+    // be broken or come from another version of the site: a strange value
+    // becomes 0 (and never reaches the page as HTML).
+    function whole(value) {
+        return Number.isInteger(value) && value >= 0 ? value : 0;
+    }
+
     // How many texts the dictionary has for a list: assistant.fact1, assistant.fact2...
     // (add one in both languages and the bot uses it)
     function textCount(prefix) {
         let count = 0;
         while (A.has(prefix + (count + 1))) count++;
         return count;
+    }
+
+    // Text number n of such a list, or the first one if there is no text n
+    // (a fact saved before a fact was removed, or a broken value)
+    function listText(prefix, n) {
+        return A.has(prefix + whole(n)) ? t(prefix + whole(n)) : t(prefix + 1);
     }
 
     // ----- Lessons (AICompass.lessons, if the lessons are on the page) -----
@@ -215,7 +228,7 @@
     // Answers that are built from the message's data
     Object.assign(REPLIES, {
         greeting: function (data) {
-            return { html: t("assistant.r.greeting" + (((data.v || 0) % 3) + 1)) };
+            return { html: t("assistant.r.greeting" + ((whole(data.v) % 3) + 1)) };
         },
         history: function () {
             return {
@@ -225,29 +238,32 @@
         },
 
         recommend: function (data) {
-            if (!data.n) {
+            const n = whole(data.n);
+            const done = whole(data.done);
+            if (!n) {
                 const total = lessonTotal();
                 return { html: t("assistant.r.recAll", { total: total, lessons: lessonWord(total) }), actions: [quizAction()] };
             }
-            const lesson = lessonName(data.n);
-            if (!data.done) {
-                return { html: t("assistant.r.recStart", { lesson: lesson }), actions: [lessonAction(data.n)] };
+            if (!done) {
+                return { html: t("assistant.r.recStart", { lesson: lessonName(n) }), actions: [lessonAction(n)] };
             }
             return {
                 html: t("assistant.r.recNext", {
-                    count: data.done,
-                    lessons: lessonWord(data.done),
+                    count: done,
+                    lessons: lessonWord(done),
                     total: lessonTotal(),
-                    lesson: lesson
+                    lesson: lessonName(n)
                 }),
-                actions: [lessonAction(data.n)]
+                actions: [lessonAction(n)]
             };
         },
         lessonOpen: function (data) {
-            return { html: t("assistant.r.lessonOpen", { lesson: lessonName(data.n) }), actions: [lessonAction(data.n)] };
+            const n = whole(data.n);
+            return { html: t("assistant.r.lessonOpen", { lesson: lessonName(n) }), actions: [lessonAction(n)] };
         },
         lessonOffer: function (data) {
-            return { html: t("assistant.r.lessonOffer", { lesson: lessonName(data.n) }), actions: [lessonAction(data.n)] };
+            const n = whole(data.n);
+            return { html: t("assistant.r.lessonOffer", { lesson: lessonName(n) }), actions: [lessonAction(n)] };
         },
         lessonMissing: function () {
             const total = lessonTotal();
@@ -277,13 +293,13 @@
         },
         fact: function (data) {
             return {
-                html: t("assistant.r.fact", { fact: t("assistant.fact" + data.n) }),
+                html: t("assistant.r.fact", { fact: listText("assistant.fact", data.n) }),
                 actions: [askAction("fact", "assistant.act.fact", "💡")]
             };
         },
         joke: function (data) {
             return {
-                html: t("assistant.r.joke", { joke: t("assistant.joke" + data.n) }),
+                html: t("assistant.r.joke", { joke: listText("assistant.joke", data.n) }),
                 actions: [askAction("joke", "assistant.act.joke", "😄")]
             };
         },
@@ -561,8 +577,11 @@
     // Facts and jokes come out of a shuffled "bag", so none repeats before
     // all of them were told
     function nextFromBag(name, count) {
-        let bag = chat.bags[name];
-        if (!Array.isArray(bag) || !bag.length) {
+        // A saved bag keeps only numbers that exist (texts may have been removed)
+        let bag = (Array.isArray(chat.bags[name]) ? chat.bags[name] : []).filter(function (n) {
+            return whole(n) >= 1 && n <= count;
+        });
+        if (!bag.length) {
             const all = [];
             for (let i = 1; i <= count; i++) all.push(i);
             bag = A.util.shuffle(all);
@@ -1440,14 +1459,19 @@
         });
     }
 
+    // Does a saved message look like one this file wrote? (Its time must be a
+    // real date too: a broken one would stop the whole chat from starting.)
+    function isSavedMessage(message) {
+        if (!message || typeof message.id !== "number" || typeof message.time !== "number") return false;
+        if (isNaN(new Date(message.time).getTime())) return false;
+        return message.from === "user" ? typeof message.text === "string" : typeof message.reply === "string";
+    }
+
     function load() {
         const saved = A.storage.session.get(SESSION_KEY, null);
         if (!saved || saved.v !== 1 || !Array.isArray(saved.messages)) return;
 
-        chat.messages = saved.messages.filter(function (message) {
-            return message && typeof message.id === "number" && typeof message.time === "number" &&
-                (message.from === "user" ? typeof message.text === "string" : typeof message.reply === "string");
-        }).slice(-MAX_MESSAGES);
+        chat.messages = saved.messages.filter(isSavedMessage).slice(-MAX_MESSAGES);
         chat.bags = saved.bags && typeof saved.bags === "object" ? saved.bags : {};
         chat.last = saved.last && typeof saved.last === "object" ? saved.last : {};
         chat.hinted = Boolean(saved.hinted);
@@ -1471,7 +1495,9 @@
         const visits = Number(A.storage.get("assistant.tipVisits", 0)) || 0;
         if (visits >= TIP_VISITS) return;
         state.tipTimer = setTimeout(function () {
-            if (state.open || footerVisible) return;
+            // Not now (and this visit does not count): the chat is open, the footer
+            // is on screen, or a window such as the lesson reader covers the page
+            if (state.open || footerVisible || A.overlays.hasModal() || ui.root.closest("[inert]")) return;
             A.storage.set("assistant.tipVisits", visits + 1);
             ui.tip.hidden = false;
             ui.root.classList.add("has-tip");
