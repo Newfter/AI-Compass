@@ -47,7 +47,10 @@ window.AICompass.addTranslations({
 window.AICompass.content.set("search", {
     /* ----- Little words that are skipped -----
        They are in almost every sentence, so they would only add noise.
-       Question words are here too: "what is a token" searches for "token". */
+       Question words are here too: "what is a token" searches for "token".
+       So are words that only judge (good, bad, better, best...): they name
+       no topic, and a text that happens to use them ("rewards for good
+       results and penalties for bad ones") does not answer "is AI good or bad?". */
     stopWords: {
         en: [
             "a", "an", "the", "and", "or", "but", "if", "so", "of", "to", "in", "on", "at", "by",
@@ -61,7 +64,8 @@ window.AICompass.content.set("search", {
             "yes", "ok", "okay", "please", "just", "also", "too", "very", "really", "quite",
             "much", "many", "such", "as", "up", "out", "again", "only", "tell", "explain",
             "describe", "define", "definition", "mean", "means", "meaning", "know", "want",
-            "thing", "things", "something", "stuff", "get", "hi", "hello", "hey"
+            "thing", "things", "something", "stuff", "get", "hi", "hello", "hey",
+            "good", "bad", "better", "worse", "best", "worst"
         ],
         ru: [
             "а", "без", "более", "бы", "был", "была", "были", "было", "быть", "в", "вам", "вас",
@@ -78,7 +82,10 @@ window.AICompass.content.set("search", {
             "зачем", "почему", "привет", "ой", "вообще", "кому", "кого", "мой", "моя", "мое", "мои",
             "моего", "моей", "моему", "моим", "моих", "моими", "мою", "твой", "твоя", "твое", "твои",
             "твоего", "твоей", "твоих", "твоим", "твою", "свой", "своя", "свое", "свои", "своего",
-            "своей", "своих", "своим", "свою"
+            "своей", "своих", "своим", "свою",
+            "хорошо", "плохо", "хороший", "хорошая", "хорошее", "хорошие", "плохой", "плохая", "плохое",
+            "плохие", "лучше", "хуже", "лучший", "лучшая", "лучшее", "лучшие", "худший", "самый", "самая",
+            "самое", "самые"
         ]
     },
 
