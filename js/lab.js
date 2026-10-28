@@ -846,12 +846,14 @@
     }
 
     // A link (or a feature) named an experiment that isn't in the catalogue: the grid,
-    // with a note that says so. The address names what shows: #lab.
+    // with a note that says so. "#lab/" names none at all: just the grid, no note.
+    // The address names what shows: #lab.
     function showUnknown(id) {
         ensure();
         close({ quiet: true, focus: false });
         setHash("#lab");
-        showNotice(id);
+        if (id) showNotice(id);
+        else hideNotice();
         A.navigate("lab");
     }
 
