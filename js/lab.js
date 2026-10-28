@@ -607,6 +607,9 @@
         status = "grid";
         A.storage.remove("lab.last");
         setView("grid");
+        // The chips may have changed while it was open (resetting the "Try this" challenges
+        // saves them without an event)
+        updateStates();
         if (!options.quiet) setHash("#lab");
         if (hadFocus && options.focus !== false) pickOf(id).focus({ preventScroll: true });
         // The grid is taller than the rail: keep the card you came from in view
