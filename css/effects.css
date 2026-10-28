@@ -23,7 +23,7 @@
     top: 0;
     left: 0;
     right: 0;
-    z-index: 150;
+    z-index: var(--z-progress);
     height: 3px;
     pointer-events: none;
 }
@@ -241,7 +241,7 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     border-radius: 1px;
     background: var(--accent-2);
     box-shadow: 0 0 8px rgba(var(--accent-2-rgb), 0.8);
-    animation: fx-caret-blink 1s steps(1) infinite;
+    animation: aic-blink 1s steps(1) infinite;
 }
 
 /* On a line of its own, the word sits in the middle of that line */
@@ -271,12 +271,6 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     visibility: hidden;
     white-space: nowrap;
     pointer-events: none;
-}
-
-@keyframes fx-caret-blink {
-    50% {
-        opacity: 0;
-    }
 }
 
 /* ===== 6. TILT GLARE + GLOWING CARD BORDER ===== */
@@ -332,7 +326,7 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: -1;
+    z-index: calc(var(--z-bg) + 1);   /* just in front of the neural background */
     width: 560px;
     height: 560px;
     border-radius: 50%;
@@ -388,7 +382,7 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
 }
 
 .btn-primary > .fx-ripple > span {
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 70%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--on-accent) 42%, transparent) 0%, transparent 70%);
 }
 
 @keyframes fx-ripple {
@@ -411,7 +405,7 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
         position: fixed;
         top: 50%;
         right: 18px;
-        z-index: 90;
+        z-index: var(--z-rail);
         display: block;
         transform: translateY(-50%);
     }
@@ -536,9 +530,9 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
     font-variant-numeric: tabular-nums;
 }
 
+/* The focus ring hugs the round link */
 .fx-rail-link:focus-visible {
     outline-offset: 0;
-    border-radius: 50%;
 }
 
 /* ===== CONFETTI (AICompass.effects.confetti) ===== */
