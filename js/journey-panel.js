@@ -733,9 +733,13 @@
         return {};
     }
 
+    // A badge's description or hint. With a goal, a text with forms ("{n} day|{n} days")
+    // takes the goal's form; a text without "|" is used as it is (A.plural would show its key)
     function badgeText(badge, part) {
         const key = "journey.badge." + badge.id + "." + part;
-        return badge.goal ? A.plural(key, badge.goal) : t(key, badgeValues(badge));
+        if (!badge.goal) return t(key, badgeValues(badge));
+        if (t(key).indexOf("|") === -1) return t(key, { n: A.format.number(badge.goal) });
+        return A.plural(key, badge.goal);
     }
 
     function drawBadges() {
