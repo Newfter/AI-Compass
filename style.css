@@ -156,10 +156,10 @@
     --z-rail: 90;         /* the section map on the right */
     --z-nav: 100;         /* the menu bar */
     --z-progress: 150;    /* the scroll progress bar */
-    --z-launcher: 300;    /* the assistant's round button */
-    --z-sheet: 301;       /* the assistant's window */
+    --z-launcher: 300;    /* the assistant's round button, under the lesson reader */
     --z-reader: 500;      /* the lesson reader */
-    --z-confetti: 560;    /* confetti, above the reader */
+    --z-sheet: 520;       /* the assistant's window: over the reader, so Compass Bot can help while a lesson is open */
+    --z-confetti: 560;    /* confetti, above the reader and the assistant */
     --z-palette: 600;     /* the command palette */
     --z-toast: 700;       /* small pop-up messages */
     --z-skip: 1000;       /* the "Skip to content" link */
