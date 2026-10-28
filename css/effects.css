@@ -1,9 +1,20 @@
 /* =========================================================
    AI COMPASS — VISUAL EFFECTS
-   Styles for js/effects.js and js/neural-bg.js:
-   scroll bar, reveal animations, decoding text, typewriter,
-   tilt glare, spotlight, magnetic buttons, ripples, mini-map,
-   calm mode, reduced motion and printing.
+   Styles for js/effects.js and js/neural-bg.js.
+   Sections of this file:
+    1. Neural background canvas
+    2. Scroll progress bar
+    3. Reveal on scroll (and the hero's entrance)
+    4. Decoding text
+    5. Typewriter words
+    6. Tilt glare + glowing card border
+    7. Cursor spotlight
+    8. Magnetic main buttons
+    9. Button ripple
+   10. Section mini-map
+   11. Confetti
+   12. Calm mode and reduced motion
+   13. Printing
    ========================================================= */
 
 /* ===== 1. NEURAL BACKGROUND CANVAS ===== */
@@ -118,7 +129,7 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
    hiding it again after it was drawn, so index.html marks its blocks as
    "revealed" and they rise in with pure CSS from the first frame, one after
    another, just like cards that scroll into view.
-   (Calm mode switches it off in section 11.) */
+   (Calm mode switches it off in section 12.) */
 @media (prefers-reduced-motion: no-preference) {
     .hero [data-reveal] {
         animation: fx-reveal-up 0.95s var(--ease) var(--fx-delay, 0ms) backwards;
@@ -553,7 +564,7 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
     outline-offset: 0;
 }
 
-/* ===== CONFETTI (AICompass.effects.confetti) ===== */
+/* ===== 11. CONFETTI (AICompass.effects.confetti) ===== */
 
 .fx-confetti {
     position: fixed;
@@ -564,7 +575,7 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
     pointer-events: none;
 }
 
-/* ===== 11. CALM MODE AND REDUCED MOTION =====
+/* ===== 12. CALM MODE AND REDUCED MOTION =====
    core.js puts "fx-motion-off" on <html> for both; style.css stops every
    animation then. Here: the effects that follow the mouse disappear. */
 
@@ -585,7 +596,7 @@ html.fx-motion-off .hero-stats > li {
     animation: none;
 }
 
-/* ===== 12. PRINTING ===== */
+/* ===== 13. PRINTING ===== */
 
 @media print {
     .scroll-progress,

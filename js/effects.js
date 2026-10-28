@@ -1,18 +1,34 @@
 /* =========================================================
    AI COMPASS — VISUAL EFFECTS
-   Small touches that make the page feel alive:
-    1. scroll progress bar at the top
-    2. reveal on scroll                [data-reveal]
-    3. numbers that count up           [data-count]
-    4. "decoding" text                 [data-scramble] and .section-label
-    5. typewriter words                [data-rotator]
-    6. 3D tilt with a glare            [data-tilt]  (+ a glowing border on .card)
-    7. soft spotlight under the cursor
-    8. magnetic main buttons           .btn-primary
-    9. ripple when you press a button
-   10. section mini-map on the right (big screens)
-   11. calm mode: a command that pauses all animations
-   Everything respects the "reduce motion" setting of the device.
+   Small touches that make the page feel alive: a scroll progress bar,
+   cards that rise in, numbers that count up, "decoding" text, typewriter
+   words, tilting cards with a glare, a soft spotlight under the mouse,
+   magnetic buttons, ripples, a section mini-map and confetti.
+   Calm mode and the device's "reduce motion" setting switch the moving
+   ones off (A.motion in core.js).
+   Sections of this file:
+    1. Settings
+    2. Small helpers
+    3. Motion: calm mode, reduced motion and a real mouse
+    4. Watching the screen (what is near it, what is on it)
+    5. Scroll progress bar (+ everything that follows the scroll)
+    6. Reveal on scroll               [data-reveal]
+    7. Numbers that count up          [data-count]
+    8. "Decoding" text                [data-scramble] and .section-label
+    9. Typewriter words               [data-rotator]
+   10. Pointer effects (a real mouse only): 3D tilt with a glare on
+       [data-tilt], a glowing border on .card, a spotlight under the
+       cursor and magnetic main buttons (.btn-primary)
+   11. Ripple when you press a button
+   12. Section mini-map on the right (big screens)
+   13. Confetti (for big moments)
+   14. Finding elements (now, and when other features add more later)
+   15. Language changes
+   16. Start
+   17. Ctrl+K command (calm mode) and the public API
+   Other features use AICompass.effects (see the last section).
+   Every text (English and Russian) is in js/content/effects.js
+   The styles are in css/effects.css
    ========================================================= */
 
 (function () {
@@ -21,22 +37,46 @@
     const A = window.AICompass;
     if (!A) return;
 
+    const t = A.t;
     const root = document.documentElement;
     const finePointerQuery = A.media(A.queries.finePointer);
     const hasObserver = "IntersectionObserver" in window;
 
-    // Every text (English and Russian) is in js/content/effects.js
+    /* =========================================================
+       1. SETTINGS
+       Values you may want to change.
+       ========================================================= */
+    const NEAR_ZONE = 0.1;                    // "near the screen": up to 10% of the screen height above or below it
+    const BOTTOM_ZONE = 6;                    // px: this close to the end counts as "at the very bottom"
+    const SCRAMBLE_SELECTOR = "[data-scramble], .section-label";       // the texts that "decode"
+    // The random letters shown while a text decodes (Latin, Cyrillic, digits, symbols)
+    const GLYPHS_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ0123456789#%&*+=<>/\\|{}[]?!$@";
+    const GLYPHS_LOWER = "abcdefghijklmnopqrstuvwxyzабвгдежзиклмнопрстуфхцчшщэюя0123456789#%&*+=<>/\\|{}?!";
+    const RIPPLE_SELECTOR = ".btn, .icon-button, .chip";                // what ripples when it is pressed
+    const CONFETTI_COLORS = ["--accent", "--accent-2", "--accent-3", "--success", "--warning"];   // theme colours of the pieces
 
-    // ---------- Small helpers ----------
+    /* =========================================================
+       2. SMALL HELPERS (core.js has the rest: A.util, A.format, A.canvas...)
+       ========================================================= */
     // Sorts elements in the order they appear on the page
     function pageOrder(a, b) {
         if (a === b) return 0;
         return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
     }
 
-    // ---------- Motion settings ----------
-    // A.motion (core) knows both: "calm mode" (our own switch, saved in the browser)
-    // and "reduced motion" (the device settings). A.motion.ok() is false for either.
+    // The container itself (when it matches) and everything inside it that matches
+    function findAll(container, selector) {
+        const found = Array.from(container.querySelectorAll(selector));
+        if (container.matches && container.matches(selector)) found.unshift(container);
+        return found;
+    }
+
+    /* =========================================================
+       3. MOTION: CALM MODE, REDUCED MOTION AND A REAL MOUSE
+       A.motion (core) knows both: "calm mode" (our own switch, saved in
+       the browser) and "reduced motion" (the device settings).
+       A.motion.ok() is false for either.
+       ========================================================= */
     // Tilt, magnet and spotlight only make sense with a real mouse
     function fineOK() {
         return A.motion.ok() && finePointerQuery.matches;
@@ -47,6 +87,30 @@
         root.classList.toggle("reveal-ready", A.motion.ok() && hasObserver);
     }
 
+    // Calm mode or "reduce motion" was switched, or a mouse came or went:
+    // what still waits appears at once, and the moving things stop
+    function onMotionChange() {
+        updateModeClasses();
+        if (!A.motion.ok()) {
+            revealAll();
+            finishAllCounters();
+            stopAllScrambles();
+        }
+        if (!fineOK()) resetPointerEffects();
+        rotators.forEach(updateRotator);
+        // (older code listens for this event; new code uses A.motion.onChange)
+        document.dispatchEvent(new CustomEvent("aic:effects", { detail: { calm: A.motion.calm } }));
+    }
+
+    A.motion.onChange(onMotionChange);
+    A.onMedia(finePointerQuery, onMotionChange, { immediate: false });
+
+    /* =========================================================
+       4. WATCHING THE SCREEN
+       Which waiting elements are near the screen, and which are on it.
+       Reveal (6), numbers (7) and decoding texts (8) all use these lists
+       and observers.
+       ========================================================= */
     // Lists of everything the effects are working on
     const revealPending = new Set();
     const revealTimes = new WeakMap();                                    // when each card starts to appear
@@ -57,19 +121,19 @@
     const scrambleRuns = new Map();
     const rotators = new Map();
 
-    // Four "zones" watch the page:
+    // Five observers ("zones") watch the page:
     // - screenObserver: remembers what has already been on screen.
     //   Something you have seen is never hidden again (no blinking).
-    // - armObserver: a bit bigger than the screen. Things entering it get ready
-    //   (hidden, or set to 0) just before you can see them.
+    // - armObserver: a bit bigger than the screen (NEAR_ZONE). Things entering it
+    //   get ready (hidden, or set to 0) just before you can see them.
     // - viewObserver: the screen minus a bottom strip. Things entering it animate in.
     // - counterObserver: the whole screen. A number starts counting as soon as
     //   any part of it can be seen, so you never look at a "0" that waits.
+    // - scrambleObserver: the whole screen. A text decodes once a fifth of it can be seen.
     // The observers tell us where things are after each frame, so we never
     // measure the page ourselves (that would make the browser lay it out again).
     // Something already on the screen is never hidden: it simply stays visible.
     // Content far away from the screen is never hidden either, so the page always works.
-    const NEAR_ZONE = 0.1;                                                 // 10% of the screen height, above and below it
     const seenOnScreen = new WeakSet();
     const onScreenNow = new WeakSet();                                     // waiting cards, numbers and texts on screen right now
     const screenObserver = hasObserver ? new IntersectionObserver(onScreenSeen, { threshold: 0 }) : null;
@@ -79,13 +143,12 @@
     const scrambleObserver = hasObserver ? new IntersectionObserver(onScrambleView, { threshold: [0, 0.2] }) : null;
 
     /* =========================================================
-       1. SCROLL PROGRESS BAR (+ everything that follows the scroll)
+       5. SCROLL PROGRESS BAR (+ everything that follows the scroll)
        Core measures the page and calls onPageScroll(info) once per
        frame while it scrolls (A.onScroll). We only WRITE here and use
        core's numbers: measuring the page in every frame would make the
        browser lay it out again and again.
        ========================================================= */
-    const BOTTOM_ZONE = 6;                    // px: this close to the end counts as "at the very bottom"
     const progressWrap = document.querySelector(".scroll-progress");
     let lastProgress = "";
     let lastScroll = null;                    // core's latest numbers
@@ -128,8 +191,9 @@
 
     A.onScroll(onPageScroll);
 
+
     /* =========================================================
-       2. REVEAL ON SCROLL  [data-reveal]
+       6. REVEAL ON SCROLL  [data-reveal]
        data-reveal=""        slide up (default)
        data-reveal="left"    slide in from the left ("right", "zoom", "fade" also work)
        data-reveal="stagger" children appear one by one (lists do this by default)
@@ -393,7 +457,7 @@
     });
 
     /* =========================================================
-       3. COUNT-UP NUMBERS  [data-count="12"]
+       7. COUNT-UP NUMBERS  [data-count="12"]
        Optional: data-count-prefix="+" data-count-suffix="%".
        Changing data-count later animates to the new number.
        The real number stays in the page (good for screen readers)
@@ -609,15 +673,11 @@
     }
 
     /* =========================================================
-       4. TEXT DECODE ("SCRAMBLE")  [data-scramble] and .section-label
+       8. TEXT DECODE ("SCRAMBLE")  [data-scramble] and .section-label
        Random letters (Latin + Cyrillic + symbols) settle into the
        real text, left to right. Runs on load, after a language
        change and (for [data-scramble]) when you hover it.
        ========================================================= */
-    const SCRAMBLE_SELECTOR = "[data-scramble], .section-label";
-    const GLYPHS_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ0123456789#%&*+=<>/\\|{}[]?!$@";
-    const GLYPHS_LOWER = "abcdefghijklmnopqrstuvwxyzабвгдежзиклмнопрстуфхцчшщэюя0123456789#%&*+=<>/\\|{}?!";
-
     function randomGlyph(original) {
         if (/\s/.test(original)) return original;
         const lower = original !== original.toUpperCase();
@@ -794,7 +854,7 @@
     });
 
     /* =========================================================
-       5. TYPEWRITER WORDS  [data-rotator="hero.rotator"]
+       9. TYPEWRITER WORDS  [data-rotator="hero.rotator"]
        The translation "students|teachers|parents|everyone" is
        typed and deleted word by word, in the current language.
        ========================================================= */
@@ -852,7 +912,7 @@
     }
 
     function setRotatorWords(rotator) {
-        const words = A.t(rotator.key).split("|").map((word) => word.trim()).filter(Boolean);
+        const words = t(rotator.key).split("|").map((word) => word.trim()).filter(Boolean);
         const wordsKey = words.join("|");
         if (wordsKey === rotator.wordsKey) return;                          // same language, keep typing
 
@@ -973,7 +1033,7 @@
     }
 
     /* =========================================================
-       6-8. POINTER EFFECTS (mouse only)
+       10. POINTER EFFECTS (a real mouse only)
        tilt + glare on [data-tilt], glowing border on .card,
        spotlight under the cursor, magnetic .btn-primary
        ========================================================= */
@@ -1238,10 +1298,8 @@
     window.addEventListener("blur", resetPointerEffects);
 
     /* =========================================================
-       9. RIPPLE when a button is pressed
+       11. RIPPLE when a button is pressed
        ========================================================= */
-    const RIPPLE_SELECTOR = ".btn, .icon-button, .chip";
-
     // Only real controls ripple (a .chip can also be a plain label)
     function rippleTarget(event) {
         if (!(event.target instanceof Element)) return null;
@@ -1314,7 +1372,7 @@
     });
 
     /* =========================================================
-       10. SECTION MINI-MAP (right edge, big screens only)
+       12. SECTION MINI-MAP (right edge, big screens only)
        One dot per page section (A.sections in core.js has their names).
        Core decides which section you are in, so the map always agrees
        with the menu bar: onPageScroll() passes its numbers on to us.
@@ -1339,7 +1397,7 @@
         const nav = document.createElement("nav");
         nav.className = "fx-rail";
         nav.setAttribute("data-i18n-attr", "aria-label:effects.railLabel");
-        nav.setAttribute("aria-label", A.t("effects.railLabel"));
+        nav.setAttribute("aria-label", t("effects.railLabel"));
 
         const track = document.createElement("span");
         track.className = "fx-rail-track";
@@ -1362,7 +1420,7 @@
                     '<span class="fx-rail-number" aria-hidden="true">' + String(index + 1).padStart(2, "0") + "</span>" +
                     '<span data-i18n="' + section.key + '"></span>' +
                 "</span>";
-            link.querySelector("[data-i18n]").textContent = A.t(section.key);
+            link.querySelector("[data-i18n]").textContent = t(section.key);
             item.appendChild(link);
             list.appendChild(item);
             rail.links.push(link);
@@ -1411,158 +1469,11 @@
     }
 
     /* =========================================================
-       11. CALM MODE (command palette: "Calm mode: pause animations")
-       ========================================================= */
-    function onMotionChange() {
-        updateModeClasses();
-        if (!A.motion.ok()) {
-            revealAll();
-            finishAllCounters();
-            stopAllScrambles();
-        }
-        if (!fineOK()) resetPointerEffects();
-        rotators.forEach(updateRotator);
-        document.dispatchEvent(new CustomEvent("aic:effects", { detail: { calm: A.motion.calm } }));
-    }
-
-    function setCalm(value) {
-        A.motion.setCalm(value);
-    }
-
-    A.registerCommand({
-        id: "effects-calm",
-        group: "cmd.groupActions",
-        icon: "🧘",
-        title: function () { return A.t(A.motion.calm ? "effects.calmOff" : "effects.calmOn"); },
-        keywords: "calm motion animation animations effects pause reduce accessibility спокойный режим анимации анимация эффекты движение пауза",
-        keepOverlays: true,
-        run: function () {
-            const calm = A.motion.toggleCalm();
-            A.toast(A.t(calm ? "effects.toastCalmOn" : "effects.toastCalmOff"), calm ? "🧘" : "✨");
-        }
-    });
-
-    A.motion.onChange(onMotionChange);
-    A.onMedia(finePointerQuery, onMotionChange, { immediate: false });
-
-    /* =========================================================
-       FINDING ELEMENTS (now, and when other features add more later)
-       ========================================================= */
-    // The container itself (when it matches) and everything inside it that matches
-    function findAll(container, selector) {
-        const found = Array.from(container.querySelectorAll(selector));
-        if (container.matches && container.matches(selector)) found.unshift(container);
-        return found;
-    }
-
-    function scan(container) {
-        findAll(container, "[data-reveal]").forEach(registerReveal);
-        registerCounters(findAll(container, "[data-count]"));
-        findAll(container, SCRAMBLE_SELECTOR).forEach(registerScramble);
-        findAll(container, "[data-rotator]").forEach(registerRotator);
-    }
-
-    // Forget elements that were removed from the page
-    function prune() {
-        revealPending.forEach((element) => {
-            if (!element.isConnected) {
-                revealPending.delete(element);
-                clearFallback(element);
-                if (viewObserver) viewObserver.unobserve(element);
-                if (armObserver) armObserver.unobserve(element);
-                if (screenObserver) screenObserver.unobserve(element);
-            }
-        });
-        counters.forEach((counter, element) => {
-            if (!element.isConnected) {
-                stopCounter(counter);
-                counters.delete(element);
-                if (counterObserver) counterObserver.unobserve(element);
-                if (armObserver) armObserver.unobserve(element);
-            }
-        });
-        scrambleTargets.forEach((element) => {
-            if (!element.isConnected) {
-                stopScramble(element);
-                scrambleTargets.delete(element);
-                scramblePending.delete(element);
-                if (scrambleObserver) scrambleObserver.unobserve(element);
-            }
-        });
-        rotators.forEach((rotator, element) => {
-            if (!element.isConnected) {
-                clearTimeout(rotator.timer);
-                rotators.delete(element);
-                rotator.stopWatching();
-            }
-        });
-    }
-
-    let pruneTimer = 0;
-    const mutations = new MutationObserver((records) => {
-        let removed = false;
-        records.forEach((record) => {
-            if (record.type === "attributes") {
-                const element = record.target;
-                if (!element.hasAttribute(record.attributeName)) return;
-                if (record.attributeName === "data-count") registerCounters([element]);
-                else if (record.attributeName === "data-reveal") registerReveal(element);
-                else if (record.attributeName === "data-scramble") registerScramble(element);
-                return;
-            }
-            record.addedNodes.forEach((node) => {
-                if (node.nodeType === 1) scan(node);
-            });
-            if (record.removedNodes.length) removed = true;
-        });
-
-        if (removed && !pruneTimer) {
-            pruneTimer = setTimeout(() => {
-                pruneTimer = 0;
-                prune();
-            }, 2000);
-        }
-    });
-
-    /* =========================================================
-       LANGUAGE CHANGES
-       Core has already put the new text in place; we decode it
-       again and restart the typewriter with the new words.
-       ========================================================= */
-    A.onLanguageChange(() => {
-        prune();
-
-        // Texts on screen decode again. (The observer's last word is used:
-        // measuring here would lay out the whole page in the middle of the switch.)
-        const toDecode = [];
-        scrambleTargets.forEach((element) => {
-            stopScramble(element);
-            if (!A.motion.ok()) return;
-            scramblePending.add(element);
-            if (hostShown(element) && onScreenNow.has(element)) {
-                scramblePending.delete(element);
-                toDecode.push(element);
-            }
-        });
-        // They start once the new language has been drawn
-        if (toDecode.length) requestAnimationFrame(() => toDecode.forEach((element) => scramble(element, 60)));
-
-        rotators.forEach(setRotatorWords);
-
-        // Decimal commas differ between languages
-        counters.forEach((counter, element) => {
-            if (!counter.raf && !counter.timer && !counter.waiting) writeCounter(element, counter, counter.target);
-        });
-    });
-
-
-    /* =========================================================
-       12. CONFETTI (for big moments: every lesson done, a new best quiz score)
+       13. CONFETTI (for big moments: every lesson done, a new best quiz score)
        AICompass.effects.confetti()                    two bursts from the bottom corners
        AICompass.effects.confetti({ origin: element }) one burst from the middle of an element
        Options: count (pieces), duration (ms). Nothing happens when animations are off.
        ========================================================= */
-    const CONFETTI_COLORS = ["--accent", "--accent-2", "--accent-3", "--success", "--warning"];
     let party = null;
 
     function stopConfetti() {
@@ -1668,20 +1579,111 @@
     }
 
     /* =========================================================
-       Tools for other features, e.g.
-       if (AICompass.effects) AICompass.effects.scramble(element);
+       14. FINDING ELEMENTS (now, and when other features add more later)
        ========================================================= */
-    A.effects = {
-        get calm() { return A.motion.calm; },
-        setCalm: setCalm,
-        refresh: function (container) { scan(container || document.body); },
-        reveal: function (element) { if (element) reveal(element, 0); },
-        scramble: function (element) { if (element) scramble(element, 0); },
-        confetti: confetti,
-        stopConfetti: stopConfetti
-    };
+    function scan(container) {
+        findAll(container, "[data-reveal]").forEach(registerReveal);
+        registerCounters(findAll(container, "[data-count]"));
+        findAll(container, SCRAMBLE_SELECTOR).forEach(registerScramble);
+        findAll(container, "[data-rotator]").forEach(registerRotator);
+    }
 
-    /* ---------- Start ---------- */
+    // Forget elements that were removed from the page
+    function prune() {
+        revealPending.forEach((element) => {
+            if (!element.isConnected) {
+                revealPending.delete(element);
+                clearFallback(element);
+                if (viewObserver) viewObserver.unobserve(element);
+                if (armObserver) armObserver.unobserve(element);
+                if (screenObserver) screenObserver.unobserve(element);
+            }
+        });
+        counters.forEach((counter, element) => {
+            if (!element.isConnected) {
+                stopCounter(counter);
+                counters.delete(element);
+                if (counterObserver) counterObserver.unobserve(element);
+                if (armObserver) armObserver.unobserve(element);
+            }
+        });
+        scrambleTargets.forEach((element) => {
+            if (!element.isConnected) {
+                stopScramble(element);
+                scrambleTargets.delete(element);
+                scramblePending.delete(element);
+                if (scrambleObserver) scrambleObserver.unobserve(element);
+            }
+        });
+        rotators.forEach((rotator, element) => {
+            if (!element.isConnected) {
+                clearTimeout(rotator.timer);
+                rotators.delete(element);
+                rotator.stopWatching();
+            }
+        });
+    }
+
+    let pruneTimer = 0;
+    const mutations = new MutationObserver((records) => {
+        let removed = false;
+        records.forEach((record) => {
+            if (record.type === "attributes") {
+                const element = record.target;
+                if (!element.hasAttribute(record.attributeName)) return;
+                if (record.attributeName === "data-count") registerCounters([element]);
+                else if (record.attributeName === "data-reveal") registerReveal(element);
+                else if (record.attributeName === "data-scramble") registerScramble(element);
+                return;
+            }
+            record.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) scan(node);
+            });
+            if (record.removedNodes.length) removed = true;
+        });
+
+        if (removed && !pruneTimer) {
+            pruneTimer = setTimeout(() => {
+                pruneTimer = 0;
+                prune();
+            }, 2000);
+        }
+    });
+
+    /* =========================================================
+       15. LANGUAGE CHANGES
+       Core has already put the new text in place; we decode it
+       again and restart the typewriter with the new words.
+       ========================================================= */
+    A.onLanguageChange(() => {
+        prune();
+
+        // Texts on screen decode again. (The observer's last word is used:
+        // measuring here would lay out the whole page in the middle of the switch.)
+        const toDecode = [];
+        scrambleTargets.forEach((element) => {
+            stopScramble(element);
+            if (!A.motion.ok()) return;
+            scramblePending.add(element);
+            if (hostShown(element) && onScreenNow.has(element)) {
+                scramblePending.delete(element);
+                toDecode.push(element);
+            }
+        });
+        // They start once the new language has been drawn
+        if (toDecode.length) requestAnimationFrame(() => toDecode.forEach((element) => scramble(element, 60)));
+
+        rotators.forEach(setRotatorWords);
+
+        // Decimal commas differ between languages
+        counters.forEach((counter, element) => {
+            if (!counter.raf && !counter.timer && !counter.waiting) writeCounter(element, counter, counter.target);
+        });
+    });
+
+    /* =========================================================
+       16. START
+       ========================================================= */
     updateModeClasses();
     buildRail();
     scan(document.body);
@@ -1690,6 +1692,41 @@
         subtree: true,
         attributes: true,
         attributeFilter: ["data-count", "data-reveal", "data-scramble"]
+    });
+
+    /* =========================================================
+       17. CTRL+K COMMAND (CALM MODE) AND THE PUBLIC API
+       Other features use AICompass.effects, for example:
+           if (AICompass.effects) AICompass.effects.confetti();
+       ========================================================= */
+    A.registerCommand({
+        id: "effects-calm",
+        group: "cmd.groupActions",
+        icon: "🧘",
+        title: function () { return t(A.motion.calm ? "effects.calmOff" : "effects.calmOn"); },
+        keywords: "calm motion animation animations effects pause reduce accessibility спокойный режим анимации анимация эффекты движение пауза",
+        keepOverlays: true,
+        run: function () {
+            const calm = A.motion.toggleCalm();
+            A.toast(t(calm ? "effects.toastCalmOn" : "effects.toastCalmOff"), calm ? "🧘" : "✨");
+        }
+    });
+
+    A.feature("effects", {
+        // true while calm mode is on (core keeps the setting: A.motion.calm)
+        get calm() { return A.motion.calm; },
+        // calm mode on (true) or off (false)
+        setCalm: function (value) { A.motion.setCalm(value); },
+        // looks for effects inside container (the whole page without one). Rarely
+        // needed: new elements are found by themselves (section 14)
+        refresh: function (container) { scan(container || document.body); },
+        // shows a [data-reveal] element now, with its animation (the glossary uses it)
+        reveal: function (element) { if (element) reveal(element, 0); },
+        // decodes a text again
+        scramble: function (element) { if (element) scramble(element, 0); },
+        // confetti for big moments (lessons, quiz): see section 13
+        confetti: confetti,
+        stopConfetti: stopConfetti
     });
 
 })();

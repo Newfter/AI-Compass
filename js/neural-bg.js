@@ -12,6 +12,25 @@
    hero, half as often further down, and it stands still behind a
    full-screen window, in a hidden tab, in calm mode and with
    "reduce motion".
+   Sections of this file:
+    1. Settings
+    2. State
+    3. Small helpers
+    4. Colours and glow images for the current theme
+    5. Nodes
+    6. Canvas size
+    7. Signals (neurons firing)
+    8. Moving everything forward by one frame
+    9. Drawing
+   10. Animation loop (when it moves and when it rests)
+   11. Mouse, touch and clicks
+   12. Neural storm and the secret code
+   13. Reacting to the rest of the site
+   14. Start
+   15. Ctrl+K command and the public API
+   Other features use AICompass.neural (see the last section).
+   Every text (English and Russian) is in js/content/neural-bg.js
+   The styles are in css/effects.css (the canvas layer itself in style.css)
    ========================================================= */
 
 (function () {
@@ -24,9 +43,9 @@
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Every text (English and Russian) is in js/content/neural-bg.js
+    const t = A.t;
 
-    // ---------- Settings you can play with ----------
+    // ---------- 1. Settings you can play with ----------
     const MIN_NODES = 40;            // on phones
     const MAX_NODES = 110;           // on big screens
     const AREA_PER_NODE = 12500;     // one node for every 12 500 square pixels
@@ -45,7 +64,7 @@
     const SLOW_FRAME_MS = 12;        // a frame that takes longer to compute counts as "slow"
     const SECRET_CODE = "ArrowUp ArrowUp ArrowDown ArrowDown ArrowLeft ArrowRight ArrowLeft ArrowRight KeyB KeyA";
 
-    // ---------- State ----------
+    // ---------- 2. State ----------
     let width = 0;
     let height = 0;
     let dpr = 1;
@@ -73,7 +92,7 @@
 
     const mouse = { x: 0, y: 0, active: false, power: 0, releaseTimer: 0 };
 
-    // ---------- Small helpers (core has the rest: A.util, A.colors, A.canvas) ----------
+    // ---------- 3. Small helpers (core has the rest: A.util, A.colors, A.canvas) ----------
     // A random number between min and max (not only whole numbers)
     // TODO(core): A.util.random(min, max) would serve other canvases too
     function random(min, max) {
@@ -97,7 +116,7 @@
         }, { immediate: false });
     }
 
-    // ---------- Colours and glow images for the current theme ----------
+    // ---------- 4. Colours and glow images for the current theme ----------
     // A "sprite" is a tiny pre-drawn glowing dot. Copying it is much
     // faster than drawing a new glow for every node in every frame.
     function makeSprite(colour, light, hot) {
@@ -143,7 +162,7 @@
         });
     }
 
-    // ---------- Nodes ----------
+    // ---------- 5. Nodes ----------
     function makeNode(x, y) {
         const angle = Math.random() * Math.PI * 2;
         const depth = random(0.35, 1);                       // 1 = close to you, 0.35 = far away
@@ -198,7 +217,7 @@
         return list;
     }
 
-    // ---------- Canvas size ----------
+    // ---------- 6. Canvas size ----------
     function resize() {
         const rect = canvas.getBoundingClientRect();
         const newWidth = Math.max(1, Math.round(rect.width || window.innerWidth));
@@ -235,7 +254,7 @@
     A.onResize(resize);
     onPixelRatioChange(resize);                                          // sharp again on another monitor
 
-    // ---------- Signals (neurons firing) ----------
+    // ---------- 7. Signals (neurons firing) ----------
     function spawnPulse(from, to, depth) {
         const limit = stormTime > 0 ? MAX_PULSES * 2.5 : MAX_PULSES;
         if (pulses.length >= limit) return;
@@ -313,7 +332,7 @@
         }
     }
 
-    // ---------- Moving everything forward by one frame ----------
+    // ---------- 8. Moving everything forward by one frame ----------
     function update(dt) {
         // The cursor's pull fades in and out smoothly
         mouse.power += ((mouse.active ? 1 : 0) - mouse.power) * Math.min(1, dt * 5);
@@ -371,7 +390,7 @@
         updatePulses(dt);
     }
 
-    // ---------- Drawing ----------
+    // ---------- 9. Drawing ----------
     function drawLinks(strength) {
         const total = COLOR_LEVELS * ALPHA_LEVELS;
         for (let k = 0; k < total; k++) {
@@ -546,7 +565,7 @@
         draw(0);
     }
 
-    // ---------- Animation loop ----------
+    // ---------- 10. Animation loop (when it moves and when it rests) ----------
     // If the device can't keep up, use fewer nodes. What counts is how long
     // OUR work takes, not the time between frames: a 30 Hz screen (or the
     // half rate below the hero) is not a slow device.
@@ -627,7 +646,7 @@
         }
     }
 
-    // ---------- Mouse and touch ----------
+    // ---------- 11. Mouse, touch and clicks ----------
     function holdTouch() {
         clearTimeout(mouse.releaseTimer);
         mouse.releaseTimer = setTimeout(() => {
@@ -693,7 +712,7 @@
         burst(event.clientX, event.clientY);
     }, { passive: true });
 
-    // ---------- Neural storm (command palette + a secret code) ----------
+    // ---------- 12. Neural storm and the secret code ----------
     function storm() {
         if (!A.motion.ok() || document.hidden || !nodes.length) return false;
         stormTime = 3.5;
@@ -708,19 +727,9 @@
     }
 
     function runStorm(successKey) {
-        if (storm()) A.toast(A.t(successKey), "⚡");
-        else A.toast(A.t("neural.stormOff"), "💤");
+        if (storm()) A.toast(t(successKey), "⚡");
+        else A.toast(t("neural.stormOff"), "💤");
     }
-
-    A.registerCommand({
-        id: "neural-storm",
-        group: "cmd.groupActions",
-        icon: "⚡",
-        title: function () { return A.t("neural.cmdStorm"); },
-        keywords: "neural network storm neurons fire brain background нейронная сеть шторм нейроны мозг фон",
-        keepOverlays: true,
-        run: function () { runStorm("neural.stormToast"); }
-    });
 
     // The famous "Konami code": ↑ ↑ ↓ ↓ ← → ← → B A
     document.addEventListener("keydown", (event) => {
@@ -735,7 +744,7 @@
         }
     });
 
-    // ---------- Reacting to the rest of the site ----------
+    // ---------- 13. Reacting to the rest of the site ----------
     // The new colours are read in the next frame, when the browser restyles the
     // page anyway: reading them inside the click would force an extra restyle
     A.onThemeChange(() => {
@@ -765,15 +774,7 @@
         pageYKnown = true;
     });
 
-    // Other features can make the network react, e.g. after a correct answer:
-    // if (AICompass.neural) AICompass.neural.burst(x, y);
-    A.neural = {
-        burst: function (x, y) { return burst(x, y); },
-        storm: storm,
-        get running() { return running; }
-    };
-
-    // ---------- Start ----------
+    // ---------- 14. Start ----------
     // In the first frame, when every feature has built its part of the page:
     // reading the colours or measuring the canvas earlier would make the
     // browser style and lay out the page twice
@@ -781,6 +782,29 @@
         buildLook();
         resize();
         refresh();
+    });
+
+    // ---------- 15. Ctrl+K command and the public API ----------
+    A.registerCommand({
+        id: "neural-storm",
+        group: "cmd.groupActions",
+        icon: "⚡",
+        title: function () { return t("neural.cmdStorm"); },
+        keywords: "neural network storm neurons fire brain background нейронная сеть шторм нейроны мозг фон",
+        keepOverlays: true,
+        run: function () { runStorm("neural.stormToast"); }
+    });
+
+    // Other features can make the network react, for example after a correct answer:
+    //     if (AICompass.neural) AICompass.neural.burst(x, y);
+    // (No other file uses it yet. The command and the secret code use storm.)
+    A.feature("neural", {
+        // A ripple at x, y (screen pixels). false when animations are off.
+        burst: function (x, y) { return burst(x, y); },
+        // A neural storm for a few seconds. false when animations are off.
+        storm: storm,
+        // true while the network moves
+        get running() { return running; }
     });
 
 })();
