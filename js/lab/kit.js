@@ -1185,7 +1185,19 @@
         };
 
         if (settings.dismissible) {
-            const close = iconButton("close", "lab.kit.dismiss", { variant: "subtle", size: "sm", onClick: api.hide });
+            // The close button leaves with its note: the keyboard focus goes on to the next
+            // control on the page, instead of falling back to the top of the page
+            const close = iconButton("close", "lab.kit.dismiss", {
+                variant: "subtle",
+                size: "sm",
+                onClick: function () {
+                    const hadFocus = element.contains(document.activeElement);
+                    const controls = A.dom.focusable(document.body);
+                    const next = controls[controls.indexOf(close.element) + 1];
+                    api.hide();
+                    if (hadFocus && next) next.focus();
+                }
+            });
             close.element.classList.add("lk-hint-close");
             element.appendChild(close.element);
         }
