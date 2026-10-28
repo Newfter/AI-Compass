@@ -802,7 +802,10 @@
             const topSpace = A.layout.navHeight() + SCROLL_GAP;
             const bottomSpace = A.layout.px("--launcher-room", LAUNCHER_ROOM) + SCROLL_GAP;
             // The feedback is still sliding in from a little lower (its "is-in" animation):
-            // measure where it will stop, not where it is now
+            // measure where it will stop, not where it is now. The browser gives the
+            // feedback's current move (its CSS transform) as a matrix of numbers; "m42" is
+            // how many px it is moved down right now (the translateY of qz-feedback-in in
+            // quiz.css, 0 once the slide is over). The "Next" button moves with it.
             const slide = new DOMMatrixReadOnly(getComputedStyle(ui.feedback).transform).m42;
             const nextBottom = ui.next.getBoundingClientRect().bottom - slide;
             const feedbackTop = ui.feedback.getBoundingClientRect().top - slide;
