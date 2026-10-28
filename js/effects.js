@@ -665,12 +665,14 @@
         });
     }
 
-    function restoreWidth(run) {
-        if (run.lockedWidth !== null) {
-            run.element.style.width = run.lockedWidth;
-            run.element.classList.remove("fx-scramble-lock");
+    // Gives the element back its own size (and the rest of its look)
+    function restoreSize(run) {
+        if (run.lockedSize) {
+            run.element.style.width = run.lockedSize.width;
+            run.element.style.height = run.lockedSize.height;
+            run.lockedSize = null;
         }
-        run.element.classList.remove("fx-scrambling", "fx-scramble-clip");
+        run.element.classList.remove("fx-scrambling", "fx-scramble-clip", "fx-scramble-lock");
     }
 
     // Stops a running decode and puts the real text back
@@ -680,7 +682,7 @@
         clearTimeout(run.timer);
         cancelAnimationFrame(run.raf);
         if (run.visual && run.visual.parentNode === element) element.innerHTML = run.finalHTML;
-        restoreWidth(run);
+        restoreSize(run);
         scrambleRuns.delete(element);
     }
 
@@ -692,7 +694,7 @@
         stopScramble(element);
         if (!A.motion.ok() || !element.isConnected) return;
 
-        const run = { element: element, timer: 0, raf: 0, visual: null, finalHTML: "", lockedWidth: null };
+        const run = { element: element, timer: 0, raf: 0, visual: null, finalHTML: "", lockedSize: null };
         scrambleRuns.set(element, run);
         run.timer = setTimeout(() => beginScramble(run), delay || 0);
     }
@@ -711,16 +713,23 @@
         run.finalHTML = element.innerHTML;
         const letters = Array.from(text);
 
-        // Gradient text (background-clip: text) can't show see-through letters
+        // Everything is read before anything changes (one layout, not several)
         const style = getComputedStyle(element);
-        if (/text/.test(style.backgroundClip + " " + style.webkitBackgroundClip)) element.classList.add("fx-scramble-clip");
+        const gradientText = /text/.test(style.backgroundClip + " " + style.webkitBackgroundClip);
+        const width = style.width;                    // the real size, even while its card is still zooming in
+        const height = style.height;
+        const shortLine = style.display.indexOf("inline-") === 0 && element.getClientRects().length === 1;
 
-        // Short one-line texts keep their exact width, so nothing around them jumps
-        if (style.display.indexOf("inline-") === 0 && element.getClientRects().length === 1) {
-            run.lockedWidth = element.style.width;
-            element.style.width = element.offsetWidth + "px";
-            element.classList.add("fx-scramble-lock");
-        }
+        // Gradient text (background-clip: text) can't show see-through letters
+        if (gradientText) element.classList.add("fx-scramble-clip");
+
+        // The box keeps its exact size while the letters change, so nothing
+        // around it moves (PERF-06). Short one-line texts also stay on one line.
+        // (Plain inline text has no box size of its own: its size reads "auto".)
+        run.lockedSize = { width: element.style.width, height: element.style.height };
+        if (width.endsWith("px")) element.style.width = width;
+        if (height.endsWith("px")) element.style.height = height;
+        if (shortLine) element.classList.add("fx-scramble-lock");
 
         // What you see is hidden from screen readers; they read the real text
         const visual = document.createElement("span");
@@ -745,7 +754,7 @@
         const tick = (now) => {
             // Someone else changed the text meanwhile (e.g. a new language): stop quietly
             if (visual.parentNode !== element) {
-                restoreWidth(run);
+                restoreSize(run);
                 scrambleRuns.delete(element);
                 return;
             }
@@ -765,11 +774,12 @@
                 run.raf = requestAnimationFrame(tick);
             } else {
                 element.innerHTML = run.finalHTML;
-                restoreWidth(run);
+                restoreSize(run);
                 scrambleRuns.delete(element);
             }
         };
-        run.raf = requestAnimationFrame(tick);
+        // The first random letters go in right away: an empty box, even for one frame, would blink
+        tick(start);
     }
 
     // Hovering a [data-scramble] text decodes it again.

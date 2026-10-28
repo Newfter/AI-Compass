@@ -206,7 +206,8 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     opacity: 1;
 }
 
-/* Short texts keep a fixed width while decoding */
+/* While decoding, js/effects.js keeps the text's box at its exact size;
+   short one-line texts also stay on one line */
 .fx-scramble-lock {
     white-space: nowrap;
 }
