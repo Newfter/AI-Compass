@@ -33,6 +33,11 @@
     --bg-2: #0b1020;
     --surface: rgba(17, 23, 45, 0.72);
     --surface-solid: #10162a;
+    /* Cards and glass buttons that sit on the moving background: --surface-solid,
+       90% opaque. Nothing on this site blurs what is behind it (backdrop-filter):
+       the background moves, so the browser would blur it again on every frame,
+       and the page dropped from 60 to about 25 frames a second */
+    --glass: rgba(16, 22, 42, 0.9);
     --surface-2: rgba(29, 37, 68, 0.78);
     --surface-hover: rgba(36, 44, 82, 0.9);
     /* Lines around cards, fields and buttons */
@@ -79,8 +84,10 @@
     --shadow-card: 0 14px 34px rgba(0, 0, 0, 0.18);
     --shadow-card-hover: 0 18px 40px rgba(0, 0, 0, 0.22);
     --shadow-card-glow: 0 0 32px rgba(var(--accent-2-rgb), 0.08);
-    /* The glass of the menu bar, and the grid pattern behind the page */
-    --nav-bg: rgba(6, 8, 18, 0.78);
+    /* The menu bar (and the timeline's filter bar), the dimmed page behind an open
+       window (lesson reader, palette, Compass Bot on phones), the grid pattern */
+    --nav-bg: rgba(6, 8, 18, 0.9);
+    --backdrop: rgba(6, 8, 18, 0.88);
     --grid-line: rgba(135, 116, 255, 0.05);
 
     /* Form fields and scrollbars drawn by the browser follow the theme */
@@ -93,6 +100,7 @@
     --bg-2: #e8ecf9;
     --surface: rgba(255, 255, 255, 0.78);
     --surface-solid: #ffffff;
+    --glass: rgba(255, 255, 255, 0.9);
     --surface-2: rgba(238, 241, 252, 0.92);
     --surface-hover: rgba(255, 255, 255, 0.98);
     --border: rgba(80, 70, 180, 0.16);
@@ -128,7 +136,8 @@
     --shadow-card: 0 10px 28px rgba(30, 30, 80, 0.07);
     --shadow-card-hover: 0 14px 34px rgba(30, 30, 80, 0.1);
     --shadow-card-glow: 0 0 28px rgba(var(--accent-2-rgb), 0.1);
-    --nav-bg: rgba(244, 246, 253, 0.84);
+    --nav-bg: rgba(244, 246, 253, 0.9);
+    --backdrop: rgba(244, 246, 253, 0.88);
     --grid-line: rgba(90, 70, 200, 0.06);
 
     color-scheme: light;
@@ -399,11 +408,9 @@ textarea:focus-visible,
 }
 
 .btn-ghost {
-    background: var(--surface);
+    background: var(--glass);
     border-color: var(--border-strong);
     color: var(--text);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
 }
 
 .btn-ghost:hover {
@@ -453,9 +460,7 @@ button.chip:hover,
     position: relative;
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    background: var(--surface);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    background: var(--glass);
     box-shadow: var(--shadow);
 }
 
@@ -480,16 +485,14 @@ button.chip:hover,
     transition: border-color 0.3s ease;
 }
 
-/* The glass background lives on its own layer, so the mobile menu
-   panel inside the bar can blur the page with its own glass */
+/* The bar's background lives on its own layer, so it can fade in
+   once the page scrolls */
 .navbar::before {
     content: "";
     position: absolute;
     inset: 0;
     z-index: -1;
     background: var(--nav-bg);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    backdrop-filter: blur(16px) saturate(140%);
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
@@ -767,9 +770,7 @@ button.chip:hover,
     padding: 18px 14px;
     border: 1px solid var(--border);
     border-radius: 18px;
-    background: var(--surface);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    background: var(--glass);
 }
 
 .stat strong {
@@ -867,9 +868,7 @@ button.chip:hover,
     border-radius: 30px;
     background:
         radial-gradient(ellipse at top, rgba(var(--accent-rgb), 0.2), transparent 70%),
-        var(--surface);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+        var(--glass);
     box-shadow: var(--shadow);
     text-align: center;
 }
@@ -1072,20 +1071,13 @@ button.chip:hover,
         overflow-y: auto;
         overscroll-behavior: contain;
         border-bottom: 1px solid var(--border);
-        background: var(--nav-bg);
-        -webkit-backdrop-filter: blur(16px);
-        backdrop-filter: blur(16px);
+        /* Solid: the page would show through a see-through panel and make the
+           links hard to read (and blurring the moving page is slow) */
+        background: var(--bg);
         opacity: 0;
         visibility: hidden;
         transform: translateY(-8px);
         transition: opacity 0.25s ease, transform 0.25s var(--ease), visibility 0.25s;
-    }
-
-    /* Browsers without the glass blur get a solid panel, so text stays readable */
-    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-        .nav-links {
-            background: var(--bg-2);
-        }
     }
 
     .navbar.menu-open .nav-links {

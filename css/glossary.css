@@ -67,7 +67,7 @@
     background:
         radial-gradient(ellipse at 100% 0%, rgba(var(--accent-2-rgb), 0.1), transparent 55%),
         radial-gradient(ellipse at 0% 100%, rgba(var(--accent-rgb), 0.14), transparent 55%),
-        var(--surface);
+        var(--glass);
 }
 
 /* A thin light that slowly scans along the top edge */
@@ -478,13 +478,10 @@
     min-width: 0;
     padding: 22px 22px 14px;
     overflow: hidden;
-    /* Many cards: a solid-looking glass instead of an expensive blur */
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    background: rgba(var(--accent-rgb), 0.06);
+    background: var(--glass);
     background:
         linear-gradient(160deg, color-mix(in srgb, var(--gl-c) 10%, transparent), transparent 45%),
-        var(--surface);
+        var(--glass);
     box-shadow: var(--shadow-card);
     transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.35s var(--ease);
 }

@@ -52,7 +52,7 @@
     background:
         radial-gradient(ellipse at 0% 0%, rgba(var(--accent-rgb), 0.18), transparent 55%),
         radial-gradient(ellipse at 100% 100%, rgba(var(--accent-2-rgb), 0.1), transparent 55%),
-        var(--surface);
+        var(--glass);
 }
 
 /* A thin light that slowly sweeps along the top edge */
@@ -370,7 +370,7 @@
     border-color: var(--border-strong);
     background:
         radial-gradient(ellipse at 100% 0%, rgba(var(--accent-2-rgb), 0.14), transparent 55%),
-        var(--surface);
+        var(--glass);
     animation: lsn-rise 0.5s var(--ease) both;
 }
 
@@ -685,10 +685,7 @@
 .lsn-reader-backdrop {
     position: absolute;
     inset: 0;
-    background: var(--bg);
-    background: color-mix(in srgb, var(--bg) 78%, transparent);
-    -webkit-backdrop-filter: blur(12px) saturate(120%);
-    backdrop-filter: blur(12px) saturate(120%);
+    background: var(--backdrop);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
