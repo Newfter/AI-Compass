@@ -34,10 +34,8 @@
 
     // Every text (English and Russian) is in js/content/assistant.js
 
-    const FACT_COUNT = 13;
-    const JOKE_COUNT = 5;
     const MAX_MESSAGES = 80;
-    const SESSION_KEY = "aic:assistant.chat";
+    const SESSION_KEY = "assistant.chat";     // sessionStorage "aic:assistant.chat"
 
     /* =========================================================
        2. SMALL HELPERS
@@ -50,19 +48,6 @@
             .replace(/ё/g, "е")
             .replace(/[^\p{L}\p{N}]+/gu, " ")
             .trim();
-    }
-
-    // Correct word for a number: 1 lesson / 2 lessons, 1 урок / 2 урока / 5 уроков
-    function plural(n, forms) {
-        const list = forms.split("|");
-        if (A.lang === "ru") {
-            const mod10 = n % 10;
-            const mod100 = n % 100;
-            if (mod10 === 1 && mod100 !== 11) return list[0];
-            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return list[1];
-            return list[2] || list[1];
-        }
-        return n === 1 ? list[0] : list[1];
     }
 
     // Plain text from a piece of HTML, without running anything inside it
@@ -85,40 +70,40 @@
         }
     }
 
-    function randomInt(max) {
-        return Math.floor(Math.random() * max);
-    }
-
-    function calmMode() {
-        return document.documentElement.classList.contains("fx-calm");
-    }
-
-    function noMotion() {
-        return A.reducedMotion || calmMode();
-    }
-
     // Short "14:05" time for message bubbles
     function clockTime(timestamp) {
-        const date = new Date(timestamp);
-        const hours = String(date.getHours()).padStart(2, "0");
-        const minutes = String(date.getMinutes()).padStart(2, "0");
-        return hours + ":" + minutes;
+        return A.format.date(timestamp, { hour: "2-digit", minute: "2-digit" });
     }
 
-    // ----- Lessons (from js/lessons.js, if it is there) -----
-    function lessonTitle(number) {
-        return A.lessons ? safely(function () { return A.lessons.title(number); }, "") : "";
+    // How many texts the dictionary has for a list: assistant.fact1, assistant.fact2...
+    // (add one in both languages and the bot uses it)
+    function textCount(prefix) {
+        let count = 0;
+        while (A.has(prefix + (count + 1))) count++;
+        return count;
     }
 
+    // ----- Lessons (AICompass.lessons, if the lessons are on the page) -----
     function lessonName(number) {
-        const title = lessonTitle(number);
+        const title = A.lessons ? safely(function () { return A.lessons.title(number); }, "") : "";
         return title
             ? t("assistant.lessonName", { n: number, title: esc(title) })
             : t("assistant.lessonNameShort", { n: number });
     }
 
-    function completedLessons() {
-        return A.lessons ? A.lessons.completed() : [];
+    function lessonTotal() {
+        return A.lessons ? A.lessons.count : 0;
+    }
+
+    // Is there a lesson with this number? (Without the lessons on the page any
+    // number is fine: the button then simply goes to the lessons section.)
+    function lessonExists(number) {
+        return number >= 1 && (!A.lessons || number <= A.lessons.count);
+    }
+
+    // The word for a number of lessons: "lesson" / "lessons", "урок" / "урока" / "уроков"
+    function lessonWord(n) {
+        return A.plural("assistant.lessonWords", n);
     }
 
     // ----- Glossary (from js/glossary.js, if it is there) -----
@@ -156,16 +141,10 @@
         return again && again.id === saved.id ? again : saved;
     }
 
-    // ----- Site sections -----
-    const SECTIONS = {
-        home: { icon: "🏠", key: "cmd.home" },
-        lessons: { icon: "📚", key: "nav.lessons" },
-        lab: { icon: "🧪", key: "nav.lab" },
-        quiz: { icon: "🏆", key: "nav.quiz" },
-        glossary: { icon: "📖", key: "nav.glossary" },
-        timeline: { icon: "🕰️", key: "nav.timeline" },
-        about: { icon: "💡", key: "nav.about" }
-    };
+    // ----- Site sections (AICompass.sections: id, name and icon) -----
+    function sectionInfo(id) {
+        return A.sections.find(function (section) { return section.id === id; }) || null;
+    }
 
     /* =========================================================
        3. ANSWERS THE BOT CAN GIVE
@@ -185,7 +164,7 @@
             : { act: "lab", arg: "classifier", icon: "🧠", label: t("assistant.act.classifier") };
     }
     function sectionAction(id) {
-        const section = SECTIONS[id] || SECTIONS.home;
+        const section = sectionInfo(id) || sectionInfo("home");
         return { act: "section", arg: id, icon: section.icon, label: t("assistant.act.section", { section: t(section.key) }) };
     }
     function quizAction() {
@@ -253,7 +232,8 @@
 
         recommend: function (data) {
             if (!data.n) {
-                return { html: t("assistant.r.recAll"), actions: [quizAction()] };
+                const total = lessonTotal();
+                return { html: t("assistant.r.recAll", { total: total, lessons: lessonWord(total) }), actions: [quizAction()] };
             }
             const lesson = lessonName(data.n);
             if (!data.done) {
@@ -262,7 +242,8 @@
             return {
                 html: t("assistant.r.recNext", {
                     count: data.done,
-                    lessons: plural(data.done, t("assistant.lessonWords")),
+                    lessons: lessonWord(data.done),
+                    total: lessonTotal(),
                     lesson: lesson
                 }),
                 actions: [lessonAction(data.n)]
@@ -274,7 +255,13 @@
         lessonOffer: function (data) {
             return { html: t("assistant.r.lessonOffer", { lesson: lessonName(data.n) }), actions: [lessonAction(data.n)] };
         },
-        lessonMissing: simple("assistant.r.lessonMissing", function () { return [sectionAction("lessons")]; }),
+        lessonMissing: function () {
+            const total = lessonTotal();
+            return {
+                html: t("assistant.r.lessonMissing", { total: total, lessons: lessonWord(total) }),
+                actions: [sectionAction("lessons")]
+            };
+        },
         quiz: simple("assistant.r.quiz", function () { return [quizAction()]; }),
         quizOffer: simple("assistant.r.quizOffer", function () { return [quizAction()]; }),
         lab: simple("assistant.r.lab", function () { return [labAction("classifier"), labAction("predictor")]; }),
@@ -283,7 +270,7 @@
             return { html: t("assistant.r.themeOffer"), actions: [themeAction(data.to)] };
         },
         nav: function (data) {
-            const section = SECTIONS[data.id] || SECTIONS.home;
+            const section = sectionInfo(data.id) || sectionInfo("home");
             return {
                 html: t("assistant.r.nav", { section: t(section.key), icon: section.icon }),
                 actions: [sectionAction(data.id)]
@@ -801,18 +788,14 @@
     }
 
     // ----- Picking an answer for each intent -----
+    // Facts and jokes come out of a shuffled "bag", so none repeats before
+    // all of them were told
     function nextFromBag(name, count) {
         let bag = chat.bags[name];
         if (!Array.isArray(bag) || !bag.length) {
-            bag = [];
-            for (let i = 1; i <= count; i++) bag.push(i);
-            // Shuffle (Fisher–Yates)
-            for (let i = bag.length - 1; i > 0; i--) {
-                const j = randomInt(i + 1);
-                const swap = bag[i];
-                bag[i] = bag[j];
-                bag[j] = swap;
-            }
+            const all = [];
+            for (let i = 1; i <= count; i++) all.push(i);
+            bag = A.util.shuffle(all);
             // Never the same item twice in a row
             if (bag[0] === chat.last[name] && bag.length > 1) {
                 bag.push(bag.shift());
@@ -824,17 +807,10 @@
         return n;
     }
 
+    // The first lesson that is not finished (n: 0 when all are) and how many are
     function recommendAnswer() {
-        const done = completedLessons();
-        let next = 0;
-        for (let n = 1; n <= 6; n++) {
-            if (done.indexOf(n) === -1) {
-                next = n;
-                break;
-            }
-        }
-        const unique = done.filter(function (n, i) { return done.indexOf(n) === i; });
-        return { reply: "recommend", data: { n: next, done: unique.length } };
+        if (!A.lessons) return { reply: "recommend", data: { n: 1, done: 0 } };
+        return { reply: "recommend", data: { n: A.lessons.next(), done: A.lessons.completed().length } };
     }
 
     function defineRandomAnswer() {
@@ -893,11 +869,11 @@
                 const section = findSection(tokens) || "home";
                 return { reply: "nav", data: { id: section }, auto: { act: "section", arg: section } };
             }
-            case "fact": return { reply: "fact", data: { n: nextFromBag("fact", FACT_COUNT) } };
-            case "joke": return { reply: "joke", data: { n: nextFromBag("joke", JOKE_COUNT) } };
+            case "fact": return { reply: "fact", data: { n: nextFromBag("fact", textCount("assistant.fact")) } };
+            case "joke": return { reply: "joke", data: { n: nextFromBag("joke", textCount("assistant.joke")) } };
             case "define": return defineRandomAnswer();
-            case "greeting": return { reply: "greeting", data: { v: randomInt(3) } };
-            default: return REPLIES[id] ? { reply: id } : { reply: "fallback", data: { v: randomInt(2) } };
+            case "greeting": return { reply: "greeting", data: { v: A.util.randomInt(0, 2) } };
+            default: return REPLIES[id] ? { reply: id } : { reply: "fallback", data: { v: A.util.randomInt(0, 1) } };
         }
     }
 
@@ -927,7 +903,7 @@
     function think(text) {
         const norm = normalise(text);
         const tokens = norm ? norm.split(" ") : [];
-        if (!tokens.length) return { reply: "fallback", data: { v: randomInt(2) } };
+        if (!tokens.length) return { reply: "fallback", data: { v: A.util.randomInt(0, 1) } };
 
         // Someone who may be in danger always comes first
         if (needsSupport(tokens)) return { reply: "support", calm: true };
@@ -937,7 +913,7 @@
             norm.match(/(?:^|\s)(\d+)\s+(?:lesson|урок\S*)(?:\s|$)/);
         if (lessonMatch) {
             const n = Number(lessonMatch[1]);
-            if (n >= 1 && n <= 6) {
+            if (lessonExists(n)) {
                 return commandOrOffer({ reply: "lessonOpen", data: { n: n }, auto: { act: "lesson", arg: n } }, tokens);
             }
             return { reply: "lessonMissing" };
@@ -976,7 +952,7 @@
         const term = glossaryFind(text);
         if (term) return { reply: "glossary", data: term };
 
-        return { reply: "fallback", data: { v: randomInt(2) } };
+        return { reply: "fallback", data: { v: A.util.randomInt(0, 1) } };
     }
 
     /* =========================================================
@@ -1167,7 +1143,7 @@
 
     function scrollLogTo(top, smooth) {
         const log = ui.log;
-        if (smooth && !noMotion() && typeof log.scrollTo === "function") {
+        if (smooth && A.motion.ok() && typeof log.scrollTo === "function") {
             log.scrollTo({ top: top, behavior: "smooth" });
         } else {
             log.scrollTop = top;
@@ -1198,7 +1174,7 @@
             const first = ui.log.querySelector(".cb-msg");
             if (first) first.remove();
         }
-        const row = buildRow(message, animate && !noMotion());
+        const row = buildRow(message, animate && A.motion.ok());
         if (state.typingRow && state.typingRow.parentNode === ui.log) {
             ui.log.insertBefore(row, state.typingRow);
         } else {
@@ -1400,7 +1376,7 @@
             case "section":
                 // Scrolls there and moves the keyboard focus to the section's heading,
                 // so Tab continues from there
-                A.navigate(SECTIONS[action.arg] ? action.arg : "home");
+                A.navigate(sectionInfo(action.arg) ? action.arg : "home");
                 break;
             case "lang": {
                 const target = action.arg === "ru" ? "ru" : "en";
@@ -1605,7 +1581,7 @@
             ui.panel.hidden = true;
             ui.backdrop.hidden = true;
             fitToViewport();
-        }, noMotion() ? 0 : 320);
+        }, A.motion.ok() ? 320 : 0);
 
         // Focus goes back to the round button
         if (restoreFocus !== false || wasInside) ui.launcher.focus({ preventScroll: true });
@@ -1670,24 +1646,17 @@
        ========================================================= */
 
     function save() {
-        try {
-            sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-                v: 1,
-                messages: chat.messages,
-                bags: chat.bags,
-                last: chat.last,
-                hinted: chat.hinted
-            }));
-        } catch (error) {}
+        A.storage.session.set(SESSION_KEY, {
+            v: 1,
+            messages: chat.messages,
+            bags: chat.bags,
+            last: chat.last,
+            hinted: chat.hinted
+        });
     }
 
     function load() {
-        let saved = null;
-        try {
-            saved = JSON.parse(sessionStorage.getItem(SESSION_KEY));
-        } catch (error) {
-            saved = null;
-        }
+        const saved = A.storage.session.get(SESSION_KEY, null);
         if (!saved || saved.v !== 1 || !Array.isArray(saved.messages)) return;
 
         chat.messages = saved.messages.filter(function (message) {
@@ -1729,11 +1698,11 @@
     }
 
     const footer = document.querySelector(".footer, footer");
-    if (footer && "IntersectionObserver" in window) {
-        new IntersectionObserver(function (entries) {
-            footerVisible = entries[0].isIntersecting;
-            if (footerVisible && !ui.tip.hidden) dismissTip(false);
-        }).observe(footer);
+    if (footer) {
+        A.whenVisible(footer, function (visible) {
+            footerVisible = visible;
+            if (visible && !ui.tip.hidden) dismissTip(false);
+        });
     }
 
     function dismissTip(remember) {
@@ -1751,11 +1720,11 @@
     ui.tipClose.addEventListener("click", function () { dismissTip(true); });
 
     // ----- The orb's eyes follow the mouse (only with a mouse, and with motion on) -----
-    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const finePointer = A.media(A.queries.finePointer);
     const look = { x: 0, y: 0, frame: 0, center: null };
 
     // The button's centre is measured once and again only after a resize
-    window.addEventListener("resize", function () { look.center = null; }, { passive: true });
+    A.onResize(function () { look.center = null; });
 
     function updateLook() {
         look.frame = 0;
@@ -1772,7 +1741,7 @@
     }
 
     document.addEventListener("pointermove", function (event) {
-        if (state.open || !finePointer.matches || noMotion() || document.hidden) return;
+        if (state.open || !finePointer.matches || !A.motion.ok() || document.hidden) return;
         look.x = event.clientX;
         look.y = event.clientY;
         if (!look.frame) look.frame = requestAnimationFrame(updateLook);
