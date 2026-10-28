@@ -148,7 +148,8 @@
             const chart = kit.lineChart(chartView, {
                 series: [{ values: losses, colorIndex: 0, labelKey: "lab.kit.loss", fill: true }],
                 log: true,
-                xLabelKey: "lab.kit.stepCount"
+                xLabelKey: "lab.kit.stepCount",
+                yLabelKey: "lab.kit.loss"
             });
             const playButton = kit.button("lab.kit.play", { icon: "play", variant: "primary", onClick: togglePlay });
             const stepButton = kit.button("lab.kit.step", { icon: "step", onClick: stepOnce });
