@@ -1,6 +1,7 @@
 /* =========================================================
    AI COMPASS — TEXTS: HISTORY TIMELINE
-   Every word in English and in Russian (informal "ты").
+   Every word in English and in Russian (informal "ты"), and at the
+   end the eras and milestones themselves (icons, years, glossary links).
    Used by js/timeline.js (and the history section of index.html).
    To change a text, change it here (in both languages).
    ========================================================= */
@@ -44,7 +45,6 @@ window.AICompass.addTranslations({
         "timeline.inGlossary": "In the glossary:",
         "timeline.openTerm": "Open “{term}” in the glossary",
         "timeline.showing.one": "Showing {n} milestone",
-        "timeline.showing.few": "Showing {n} milestones",
         "timeline.showing.many": "Showing {n} milestones",
 
         "timeline.e1.year": "1950",
@@ -224,4 +224,34 @@ window.AICompass.addTranslations({
         "timeline.e15.text": "Сегодня ИИ помогает переводить тексты, обрабатывать фото, подбирать видео, поддерживать врачей и ускорять науку. Многие школьники учатся с помощью чат-ботов, и открытые вопросы важны не меньше самих технологий.",
         "timeline.e15.why": "Как сделать ИИ честным, безопасным и справедливым? Кто отвечает, если он ошибается? Как он изменит работу и учёбу? Ответы зависят от людей — и от тебя тоже."
     }
+});
+
+// The eras (in the order of their chips and on the page) and the milestones
+// (js/timeline.js reads them with AICompass.content.get("timeline")).
+// Every era has its texts above: "timeline.era.early", ".num", ".range", ".desc".
+window.AICompass.content.set("timeline", {
+    eras: ["early", "ups", "deep", "gen"],
+
+    // key: the start of the milestone's texts above ("timeline.e1.year", ".title",
+    // ".text", ".why"). era: the era it belongs to. icon: the emoji on its dot.
+    // datetime: the year for the <time> element ("" when it is not one year).
+    // terms: glossary terms it links to (their ids in js/content/glossary.js).
+    // today: true for the last one ("Why it matters" instead of "Why it mattered").
+    events: [
+        { key: "e1", era: "early", icon: "🤔", datetime: "1950", terms: ["turing-test"] },
+        { key: "e2", era: "early", icon: "🏫", datetime: "1956", terms: ["ai"] },
+        { key: "e3", era: "early", icon: "🔗", datetime: "1958", terms: ["neuron"] },
+        { key: "e4", era: "early", icon: "💬", datetime: "1966", terms: ["chatbot"] },
+        { key: "e5", era: "ups", icon: "❄️", datetime: "", terms: [] },
+        { key: "e6", era: "ups", icon: "♟️", datetime: "1997", terms: ["algorithm"] },
+        { key: "e7", era: "ups", icon: "🎙️", datetime: "2011", terms: ["nlp"] },
+        { key: "e8", era: "deep", icon: "🖼️", datetime: "2012", terms: ["deep-learning", "computer-vision"] },
+        { key: "e9", era: "deep", icon: "🎨", datetime: "2014", terms: ["generative-ai", "deepfake"] },
+        { key: "e10", era: "deep", icon: "⚫", datetime: "2016", terms: ["reinforcement"] },
+        { key: "e11", era: "deep", icon: "⚡", datetime: "2017", terms: ["transformer"] },
+        { key: "e12", era: "deep", icon: "🧬", datetime: "2020", terms: ["deep-learning"] },
+        { key: "e13", era: "gen", icon: "🚀", datetime: "2022", terms: ["chatbot", "llm"] },
+        { key: "e14", era: "gen", icon: "🏅", datetime: "2024", terms: ["neural-network"] },
+        { key: "e15", era: "gen", icon: "📱", datetime: "", terms: ["bias", "privacy"], today: true }
+    ]
 });
