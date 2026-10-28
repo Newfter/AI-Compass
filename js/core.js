@@ -129,11 +129,45 @@
         return text === undefined ? translations.en[key] : text;
     }
 
-    // Fills in {placeholders}: fill("{n} lessons", { n: 3 }) -> "3 lessons"
+    // ----- Values inside texts -----
+    // Some texts show a number or a word that comes from the data, like the number of
+    // lessons. The feature that knows it registers it once, by name:
+    //     A.setTextValue("lessonCount", LESSONS.length);
+    //     A.setTextValue("questionCount", function () { return A.plural("quiz.questionCount", 12); });
+    // Then any text can say {lessonCount}: t(), A.plural() and the data-i18n elements of
+    // the page fill it in, also after a language change. A function is asked again each
+    // time, so it can answer with words in the current language ("Twelve questions").
+    // Numbers are written the local way (A.format.number). Values passed to t() itself
+    // win over these. A text that depends on a number names it on its element, and gets
+    // the plural form that suits it (see plural() below):
+    //     <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">lessons</span>
+    const textValues = {
+        languageCount: LANGUAGES.length       // for texts like "2 languages"
+    };
+
+    function textValue(name) {
+        if (!Object.prototype.hasOwnProperty.call(textValues, name)) return undefined;
+        const value = textValues[name];
+        return typeof value === "function" ? value() : value;
+    }
+
+    function setTextValue(name, value) {
+        // The same number or word again: nothing to redo (a function may answer differently now)
+        if (textValues[name] === value && typeof value !== "function") return;
+        textValues[name] = value;
+        // Texts already on the page are filled in again (at start-up core translates them anyway)
+        if (pageReady) applyTranslations(document);
+    }
+
+    // Fills in {placeholders}: fill("{n} lessons", { n: 3 }) -> "3 lessons".
+    // A placeholder that "values" doesn't have takes a registered text value, if there is one.
     function fill(text, values) {
-        if (!values) return text;
+        if (text.indexOf("{") === -1) return text;
         return text.replace(/\{(\w+)\}/g, function (match, name) {
-            return Object.prototype.hasOwnProperty.call(values, name) ? values[name] : match;
+            if (values && Object.prototype.hasOwnProperty.call(values, name)) return values[name];
+            const value = textValue(name);
+            if (value === undefined) return match;
+            return typeof value === "number" ? formatNumber(value) : value;
         });
     }
 
@@ -255,13 +289,26 @@
         }
     }
 
+    // The text of a data-i18n element, with its {placeholders} filled in. With
+    // data-i18n-plural="name" it is the plural form that suits the text value "name".
+    function elementText(element, key) {
+        const countName = element.getAttribute("data-i18n-plural");
+        const count = countName ? Number(textValue(countName)) : NaN;
+        if (isFinite(count)) {
+            const forms = plural(key, count);
+            if (forms !== key) return forms;
+        }
+        const text = lookup(key);
+        return text === undefined ? undefined : fill(text);
+    }
+
     // Updates every element with data-i18n="key" (its content)
     // and data-i18n-attr="aria-label:key,placeholder:key" (its attributes).
     function applyTranslations(scope) {
         scope = scope || document;
 
         scope.querySelectorAll("[data-i18n]").forEach(function (element) {
-            const text = lookup(element.getAttribute("data-i18n"));
+            const text = elementText(element, element.getAttribute("data-i18n"));
             if (text !== undefined) setText(element, text);
         });
 
@@ -1608,6 +1655,8 @@
         plural: plural,
         pluralForm: pluralForm,
         i18nHTML: i18nHTML,
+        setTextValue: setTextValue,
+        textValue: textValue,
         format: { number: formatNumber, percent: formatPercent, date: formatDate },
         get lang() { return state.lang; },
         get locale() { return LOCALES[state.lang]; },
