@@ -693,7 +693,8 @@
     /* ---------- 8. The first run: what the learner did before My Compass ---------- */
     // The lessons already finished pay their XP (on no day: they were done before,
     // so the activity calendar and the streak stay honest). The badges this earns
-    // come quietly. TODO(quiz, glossary, lab): A.quiz.stats().best, A.glossary.explored()
+    // come quietly. "Start over" (section 10) starts from here too: the lessons stay
+    // finished, so their XP and badges must not be lost for good. TODO(quiz, glossary, lab): A.quiz.stats().best, A.glossary.explored()
     // and A.lab.tried() would let the quiz bests, the explored terms and the tried
     // experiments count here too (see the report); they are used when they exist.
     function firstRun() {
@@ -847,7 +848,8 @@
         toText: toText,
         readProgress: readProgress,
         replace: replaceState,
-        reset: function () { replaceState(freshState()); },
+        // "Start over": a new start from what the site still knows, as on a first visit
+        reset: function () { replaceState(firstRun()); },
         // The window tells when it opens and closes (the button and the #journey link follow)
         opened: function () {
             if (button) button.setAttribute("aria-expanded", "true");
