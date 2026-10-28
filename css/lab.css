@@ -1,30 +1,62 @@
 /* =========================================================
-   AI COMPASS — THE AI LAB
-   1. The card, tabs and shared parts
-   2. "Teach the machine": board, toolbar, presets, legend
-   3. "Teach the machine": buttons, stats, chart, settings, diagram
-   4. Explanation panels
-   5. "Next-word predictor"
-   6. Responsive
-   7. Calm mode and reduced motion
+   AI COMPASS — THE AI LAB (the hub and the lab's card)
+   The lab's card, its picker of experiments (a grid of cards, or a
+   rail while one is open), the header above the open experiment,
+   loading and errors, and the parts the first experiments share.
+   Each experiment has its own styles in css/lab/<id>.css, which
+   js/lab.js loads when it opens; the lab kit's are in css/lab/kit.css.
+    1. Reserved height (before the lab is built)
+    2. The card
+    3. The picker: a grid of experiment cards
+    4. The rail: the picker while an experiment is open
+    5. The header above the open experiment
+    6. The stage: loading and errors
+    7. Parts the first experiments share (boxes, labels, explanations)
+    8. Responsive
+    9. Calm mode and reduced motion
    All colours come from the variables in style.css,
    so both the dark and the light theme look right.
    ========================================================= */
 
-/* ===== 1. THE CARD, TABS AND SHARED PARTS ===== */
-
-/* js/lab.js builds the lab only when it is needed (near the screen, or in a quiet
-   moment after the page loaded). Until then its empty box keeps about the height of
-   the tab it will open on, so the page below doesn't jump: the "Teach the machine"
-   tab, or the shorter predictor tab when that was the last one used (js/lab.js puts
-   the saved tab in data-lab-tab). Smaller screens: see "6. Responsive". */
+/* ===== 1. RESERVED HEIGHT (BEFORE THE LAB IS BUILT) =====
+   js/lab.js builds the lab only when it is needed (near the screen, or in a quiet
+   moment after the page loaded). Until then its empty box keeps about the height
+   of what it will show, so the page below doesn't jump: the grid of experiments,
+   or the last experiment when there is one (js/lab.js puts its id in
+   data-lab-last). While an experiment's files load, its stage keeps about its
+   height in the same way (data-loading). Smaller screens: see "8. Responsive".
+   ADDING AN EXPERIMENT: add its two heights here and in section 8 (measure them:
+   the card with that experiment open, and its stage alone); others get the
+   default ones. */
 .js [data-feature="lab"]:empty {
-    min-height: 1900px;
+    min-height: 270px;
 }
 
-.js [data-feature="lab"][data-lab-tab="predictor"]:empty {
-    min-height: 1410px;
+.js [data-feature="lab"][data-lab-last]:empty {
+    min-height: 1500px;
 }
+
+.js [data-feature="lab"][data-lab-last="classifier"]:empty {
+    min-height: 1980px;
+}
+
+.js [data-feature="lab"][data-lab-last="predictor"]:empty {
+    min-height: 1500px;
+}
+
+.lab-stage[data-loading] {
+    min-height: 1250px;
+}
+
+.lab-stage[data-loading="classifier"] {
+    min-height: 1720px;
+}
+
+.lab-stage[data-loading="predictor"] {
+    min-height: 1250px;
+}
+
+/* ===== 2. THE CARD ===== */
 
 .lab {
     padding: 26px;
@@ -38,106 +70,31 @@
 /* The scanning light on the top edge (.ui-scan) and the corner brackets of the
    card and the drawing board (.ui-corners) come from css/components.css */
 
+/* The experiments' icons (<symbol>s from js/content/lab.js): drawn where a card uses them */
+.lab-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
 .lab-top {
     position: relative;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 14px 20px;
-    margin-bottom: 24px;
+    gap: 10px 20px;
+    margin-bottom: 18px;
 }
 
-/* Tabs: a segmented control with a glowing pill that slides */
-.lab-tabs {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: min(600px, 100%);
-    padding: 5px;
-    border: 1px solid var(--border-strong);
-    border-radius: 18px;
-    background: var(--surface-2);
-}
-
-.lab-tab-glow {
-    position: absolute;
-    top: 5px;
-    bottom: 5px;
-    left: 5px;
-    width: calc(50% - 5px);
-    border: 1px solid var(--border-strong);
-    border-radius: 13px;
-    background: linear-gradient(115deg, rgba(var(--accent-rgb), 0.3), rgba(var(--accent-2-rgb), 0.16));
-    box-shadow: 0 0 26px rgba(var(--accent-rgb), 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    transition: transform 0.5s var(--ease);
-    pointer-events: none;
-}
-
-.lab-tabs[data-active="predictor"] .lab-tab-glow {
-    transform: translateX(100%);
-}
-
-/* The tabs come after the glow in the HTML, so they are drawn on top of it */
-.lab-tab {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 60px;
-    padding: 10px 16px;
-    border-radius: 13px;
-    color: var(--text-muted);
-    text-align: left;
-    transition: color 0.25s ease;
-}
-
-.lab-tab:hover,
-.lab-tab[aria-selected="true"] {
-    color: var(--text);
-}
-
-.lab-tab-icon {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    border: 1px solid var(--border);
-    border-radius: 11px;
-    background: rgba(var(--accent-rgb), 0.12);
-    font-size: 18px;
-    transition: transform 0.4s var(--ease), box-shadow 0.3s ease;
-}
-
-.lab-tab[aria-selected="true"] .lab-tab-icon {
-    transform: scale(1.06);
-    box-shadow: 0 0 18px rgba(var(--accent-2-rgb), 0.3);
-}
-
-.lab-tab-text {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.lab-tab-title {
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.25;
-}
-
-.lab-tab-sub {
-    margin-top: 3px;
-    color: var(--text-label);
-    font-size: 10px;
-    letter-spacing: 1.6px;
-    transition: color 0.25s ease;
-}
-
-.lab-tab[aria-selected="true"] .lab-tab-sub {
+.lab-top-label {
     color: var(--text-accent-2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    line-height: 1.4;
+    text-transform: uppercase;
 }
 
 .lab-live {
@@ -168,6 +125,339 @@
     animation: aic-pulse-ring 2s ease-out infinite;
 }
 
+/* A link named an experiment that doesn't exist: a note above the grid */
+.lab-notice {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.4);
+    border-radius: 14px;
+    background: rgba(var(--accent-2-rgb), 0.08);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* ===== 3. THE PICKER: A GRID OF EXPERIMENT CARDS =====
+   One list of buttons (.lab-pick). As many columns as fit, each at least
+   300px wide (one column on phones). */
+
+.lab-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lab-pick-item {
+    display: flex;
+    min-width: 0;
+}
+
+.lab-pick {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface-2);
+    color: var(--text);
+    text-align: left;
+    transition: transform 0.3s var(--ease), border-color 0.25s ease, box-shadow 0.3s ease, background-color 0.25s ease;
+}
+
+.lab-pick:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-2);
+    box-shadow: 0 14px 34px rgba(var(--accent-rgb), 0.2);
+}
+
+.lab-pick-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.24), rgba(var(--accent-2-rgb), 0.1));
+    color: var(--text-accent-2);
+    transition: box-shadow 0.3s ease;
+}
+
+.lab-pick-icon svg {
+    width: 26px;
+    height: 26px;
+}
+
+.lab-pick:hover .lab-pick-icon {
+    box-shadow: 0 0 18px rgba(var(--accent-2-rgb), 0.3);
+}
+
+.lab-pick-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    gap: 6px;
+    min-width: 0;
+}
+
+/* The big idea: a small label in capitals */
+.lab-pick-idea {
+    color: var(--text-accent-2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.6px;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.lab-pick-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.lab-pick-hook {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+/* The level and the state chip, at the bottom of the card */
+.lab-pick-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+.lab-pick-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lab-pick-level-word {
+    color: var(--text-label);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+}
+
+.lab-pick-dots {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.lab-pick-dots i {
+    width: 8px;
+    height: 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+}
+
+.lab-pick-dots i.is-on {
+    border-color: var(--accent-2);
+    background: var(--accent-2);
+    box-shadow: 0 0 8px rgba(var(--accent-2-rgb), 0.6);
+}
+
+/* New / Tried / 2 / 4 challenges */
+.lab-pick-state {
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+.lab-pick-state[data-state="new"] {
+    border-color: rgba(var(--accent-2-rgb), 0.45);
+    background: rgba(var(--accent-2-rgb), 0.1);
+    color: var(--text-accent-2);
+}
+
+.lab-pick-state[data-state="challenges"] {
+    border-color: rgba(var(--accent-rgb), 0.45);
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--text-accent);
+}
+
+.lab-pick-state[data-state="complete"] {
+    border-color: currentColor;
+    color: var(--text-success);
+}
+
+/* ===== 4. THE RAIL: THE PICKER WHILE AN EXPERIMENT IS OPEN =====
+   The same buttons, small, in one row that scrolls sideways when it is too
+   long. The padding leaves room for the focus ring. */
+
+.lab[data-view="stage"] .lab-picker {
+    display: flex;
+    gap: 10px;
+    margin: -6px -6px 12px;
+    padding: 6px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+}
+
+.lab[data-view="stage"] .lab-pick-item {
+    flex: none;
+    scroll-snap-align: start;
+}
+
+.lab[data-view="stage"] .lab-pick {
+    align-items: center;
+    gap: 12px;
+    width: auto;
+    min-height: 56px;
+    padding: 8px 18px 8px 9px;
+    border-radius: 15px;
+}
+
+.lab[data-view="stage"] .lab-pick:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.lab[data-view="stage"] .lab-pick-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+}
+
+.lab[data-view="stage"] .lab-pick-icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+.lab[data-view="stage"] .lab-pick-body {
+    align-self: center;
+}
+
+.lab[data-view="stage"] .lab-pick-title {
+    font-size: 14.5px;
+    white-space: nowrap;
+}
+
+.lab[data-view="stage"] .lab-pick-idea,
+.lab[data-view="stage"] .lab-pick-hook,
+.lab[data-view="stage"] .lab-pick-meta {
+    display: none;
+}
+
+/* The open experiment: the glowing pill of the old tabs */
+.lab-pick[aria-current="true"] {
+    border-color: var(--border-strong);
+    background: linear-gradient(115deg, rgba(var(--accent-rgb), 0.3), rgba(var(--accent-2-rgb), 0.16));
+    box-shadow: 0 0 26px rgba(var(--accent-rgb), 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.lab[data-view="stage"] .lab-pick[aria-current="true"] .lab-pick-icon {
+    box-shadow: 0 0 18px rgba(var(--accent-2-rgb), 0.3);
+}
+
+/* ===== 5. THE HEADER ABOVE THE OPEN EXPERIMENT ===== */
+
+.lab-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px 20px;
+    margin-bottom: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+.lab-head-text {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    min-width: 0;
+}
+
+.lab-head-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.lab-head-idea {
+    padding: 3px 10px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.35);
+    border-radius: 999px;
+    background: rgba(var(--accent-2-rgb), 0.08);
+    color: var(--text-accent-2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.6px;
+    line-height: 1.4;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.lab-head-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lab-head-all {
+    min-height: 44px;
+}
+
+.lab-head-step {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--glass);
+    color: var(--text);
+    transition: border-color 0.25s ease, color 0.25s ease;
+}
+
+.lab-head-step:hover {
+    border-color: var(--accent-2);
+    color: var(--accent-2);
+}
+
+/* The first and the last experiment: the button stays (the focus is never lost) but does nothing */
+.lab-head-step[aria-disabled="true"] {
+    border-color: var(--border);
+    color: var(--text-dim);
+    cursor: not-allowed;
+}
+
+/* ===== 6. THE STAGE: LOADING AND ERRORS ===== */
+
+.lab-stage {
+    position: relative;
+}
+
+/* An experiment fades in when it opens */
 .lab-panel-in {
     animation: lab-panel-in 0.5s var(--ease) both;
 }
@@ -176,6 +466,104 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: none; }
 }
+
+/* While the files load: grey blocks in the shape of an experiment, with a light
+   that slides over them */
+.lab-skeleton {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 26px 28px;
+}
+
+.lab-skel-main,
+.lab-skel-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.lab-skel {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface-2);
+}
+
+.lab-skel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-2-rgb), 0.08), transparent);
+    transform: translateX(-100%);
+    animation: aic-slide 1.6s ease-in-out infinite;
+}
+
+.lab-skel-bar {
+    height: 48px;
+}
+
+.lab-skel-board {
+    aspect-ratio: 1 / 1;
+}
+
+.lab-skel-box {
+    height: 220px;
+}
+
+.lab-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+    color: var(--text-label);
+    font-size: 12px;
+    letter-spacing: 1.4px;
+}
+
+.lab-loading-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    animation: aic-blink 1.2s ease-in-out infinite;
+}
+
+/* The files didn't load: what happened, and "Try again" */
+.lab-error {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    padding: 48px 20px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 18px;
+    background: var(--surface-2);
+    text-align: center;
+}
+
+.lab-error-title {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.lab-error-text {
+    max-width: 46ch;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.lab-retry {
+    margin-top: 8px;
+}
+
+/* ===== 7. PARTS THE FIRST EXPERIMENTS SHARE =====
+   Boxes, small labels, field labels, the sliders' value pills and the
+   explanation panels of "Teach the machine" and the next-word predictor.
+   New experiments use the lab kit's parts instead (css/lab/kit.css). */
 
 .lab-mini-label {
     color: var(--text-accent-2);
@@ -206,568 +594,6 @@
     font-family: var(--font-mono);
 }
 
-.lab-box-note {
-    margin-top: 10px;
-    color: var(--text-label);
-    font-size: 12.5px;
-    line-height: 1.5;
-}
-
-.lab-dot {
-    flex: none;
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-
-.lab-dot-a {
-    background: var(--accent);
-    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.8);
-}
-
-.lab-dot-b {
-    background: var(--accent-2);
-    box-shadow: 0 0 10px rgba(var(--accent-2-rgb), 0.8);
-}
-
-/* Mouse and touch versions of the hints */
-.lab-hint-touch {
-    display: none;
-}
-
-@media (hover: none), (pointer: coarse) {
-    .lab-hint-mouse {
-        display: none;
-    }
-
-    .lab-hint-touch {
-        display: inline;
-    }
-}
-
-/* ===== 2. TEACH THE MACHINE: BOARD, TOOLBAR, PRESETS, LEGEND ===== */
-
-.lab-nn {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    gap: 26px 28px;
-    align-items: start;
-}
-
-.lab-nn-stage {
-    min-width: 0;
-}
-
-.lab-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 12px;
-}
-
-.lab-classpick {
-    display: flex;
-    gap: 4px;
-    padding: 4px;
-    border: 1px solid var(--border);
-    border-radius: 15px;
-    background: var(--surface-2);
-}
-
-.lab-class {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    min-height: 44px;
-    padding: 0 16px;
-    border: 1px solid transparent;
-    border-radius: 11px;
-    color: var(--text-muted);
-    font-size: 14px;
-    font-weight: 700;
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.lab-class:hover {
-    color: var(--text);
-}
-
-.lab-class-a[aria-pressed="true"] {
-    border-color: rgba(var(--accent-rgb), 0.6);
-    background: rgba(var(--accent-rgb), 0.18);
-    color: var(--text);
-    box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.25);
-}
-
-.lab-class-b[aria-pressed="true"] {
-    border-color: rgba(var(--accent-2-rgb), 0.6);
-    background: rgba(var(--accent-2-rgb), 0.14);
-    color: var(--text);
-    box-shadow: 0 0 18px rgba(var(--accent-2-rgb), 0.22);
-}
-
-.lab-class[aria-pressed="false"] .lab-dot {
-    box-shadow: none;
-    opacity: 0.7;
-}
-
-.lab-edit {
-    display: flex;
-    gap: 8px;
-}
-
-.lab-tool {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    min-height: 44px;
-    padding: 0 14px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--surface-2);
-    color: var(--text-muted);
-    font-size: 13.5px;
-    font-weight: 700;
-    transition: border-color 0.2s ease, color 0.2s ease;
-}
-
-.lab-tool:hover:not(:disabled) {
-    border-color: var(--accent-2);
-    color: var(--text-accent-2);
-}
-
-.lab-tool:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-/* The board where you place the dots */
-.lab-board {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    border: 1px solid var(--border-strong);
-    border-radius: 20px;
-    background: var(--surface-solid);
-    box-shadow: var(--shadow), 0 0 60px rgba(var(--accent-rgb), 0.14);
-    cursor: crosshair;
-    touch-action: manipulation;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.lab-board-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.lab-board-corners {
-    --corners-inset: 12px;
-    opacity: 0.6;
-}
-
-/* A scanning light that runs down the board while the network trains */
-.lab-scan {
-    position: absolute;
-    inset: 0;
-    border-bottom: 1px solid rgba(var(--accent-2-rgb), 0.55);
-    background: linear-gradient(to bottom, transparent calc(100% - 70px), rgba(var(--accent-2-rgb), 0.09));
-    opacity: 0;
-    transform: translateY(-100%);
-    pointer-events: none;
-}
-
-.lab.is-training .lab-scan {
-    opacity: 1;
-    animation: lab-scan 3.4s linear infinite;
-}
-
-@keyframes lab-scan {
-    from { transform: translateY(-100%); }
-    to { transform: translateY(2px); }
-}
-
-.lab-board-empty {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    width: min(82%, 300px);
-    padding: 18px 18px 16px;
-    border: 1px solid var(--border-strong);
-    border-radius: 16px;
-    background: var(--surface-solid);
-    background: color-mix(in srgb, var(--surface-solid) 88%, transparent);
-    color: var(--text-muted);
-    font-size: 13.5px;
-    line-height: 1.45;
-    text-align: center;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    box-shadow: var(--shadow);
-}
-
-.lab-board-empty strong {
-    color: var(--text);
-    font-size: 15px;
-}
-
-.lab-empty-icon {
-    color: var(--accent-2);
-    font-size: 22px;
-    line-height: 1;
-    text-shadow: 0 0 14px rgba(var(--accent-2-rgb), 0.7);
-    animation: lab-twinkle 2.4s ease-in-out infinite;
-}
-
-@keyframes lab-twinkle {
-    50% { transform: scale(1.25) rotate(45deg); opacity: 0.7; }
-}
-
-.lab-readout {
-    position: absolute;
-    left: 10px;
-    bottom: 10px;
-    max-width: calc(100% - 20px);
-    padding: 5px 10px;
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    background: var(--surface-solid);
-    background: color-mix(in srgb, var(--surface-solid) 86%, transparent);
-    color: var(--text-accent);
-    font-size: 11.5px;
-    font-weight: 600;
-    white-space: pre;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    pointer-events: none;
-}
-
-.lab-readout.is-b {
-    color: var(--text-accent-2);
-}
-
-/* Example datasets */
-.lab-presets {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin-top: 14px;
-}
-
-.lab-presets .lab-mini-label {
-    margin-right: 4px;
-}
-
-.lab-preset {
-    min-height: 44px;
-    padding: 8px 14px;
-    font-size: 13.5px;
-}
-
-.lab-preset svg {
-    flex: none;
-}
-
-.lab-ic-a {
-    fill: var(--accent);
-}
-
-.lab-ic-b {
-    fill: var(--accent-2);
-}
-
-.lab-ic-a-stroke {
-    stroke: var(--accent);
-}
-
-.lab-ic-b-stroke {
-    stroke: var(--accent-2);
-}
-
-.lab-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 18px;
-    margin-top: 14px;
-    color: var(--text-muted);
-    font-size: 12.5px;
-}
-
-.lab-legend li {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.lab-legend .lab-dot {
-    width: 10px;
-    height: 10px;
-}
-
-.lab-legend-line {
-    width: 20px;
-    height: 2px;
-    border-radius: 2px;
-    background: var(--text);
-    box-shadow: 0 0 8px var(--text);
-}
-
-.lab-legend-ring {
-    width: 13px;
-    height: 13px;
-    border: 1.6px dashed var(--danger);
-    border-radius: 50%;
-}
-
-.lab-hint {
-    margin-top: 10px;
-    color: var(--text-label);
-    font-size: 13px;
-    line-height: 1.55;
-}
-
-.lab-hint strong {
-    color: var(--text-muted);
-}
-
-/* ===== 3. TEACH THE MACHINE: BUTTONS, STATS, CHART, SETTINGS, DIAGRAM ===== */
-
-.lab-nn-side {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    min-width: 0;
-}
-
-.lab-run {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr;
-    gap: 10px;
-}
-
-.lab-run .btn {
-    padding: 12px 14px;
-}
-
-.lab-run .btn svg {
-    flex: none;
-}
-
-.lab-train-icon {
-    display: inline-flex;
-}
-
-.lab-train.is-training {
-    box-shadow: 0 10px 35px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(var(--accent-2-rgb), 0.5), 0 0 30px rgba(var(--accent-2-rgb), 0.3);
-}
-
-/* Status pill: ready / training / paused / learned */
-.lab-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 4px 10px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    color: var(--text-muted);
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 1.4px;
-}
-
-.lab-status-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--text-dim);
-}
-
-.lab-status[data-status="training"] {
-    border-color: rgba(var(--accent-2-rgb), 0.4);
-    color: var(--text-success);
-}
-
-.lab-status[data-status="training"] .lab-status-dot {
-    background: var(--success);
-    box-shadow: 0 0 10px var(--success);
-    animation: lab-blink 1s ease-in-out infinite;
-}
-
-.lab-status[data-status="paused"] .lab-status-dot {
-    background: var(--warning);
-}
-
-.lab-status[data-status="done"] {
-    border-color: rgba(var(--accent-2-rgb), 0.5);
-    color: var(--text-accent-2);
-}
-
-.lab-status[data-status="done"] .lab-status-dot {
-    background: var(--accent-2);
-    box-shadow: 0 0 10px var(--accent-2);
-}
-
-@keyframes lab-blink {
-    50% { opacity: 0.3; }
-}
-
-.lab-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-}
-
-/* The stats box measures its own width: when 4 numbers in a row would not
-   fit (for example on a 1024px laptop), they go 2 x 2 instead */
-.lab-statbox {
-    container-type: inline-size;
-}
-
-@container (max-width: 470px) {
-    .lab-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-.lab-stat {
-    position: relative;
-    min-width: 0;
-    padding: 10px 12px 12px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--surface);
-}
-
-.lab-stat dt {
-    color: var(--text-label);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1.4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.lab-stat dd {
-    margin-top: 3px;
-    color: var(--text);
-    font-size: 20px;
-    font-weight: 600;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-variant-numeric: tabular-nums;
-}
-
-.lab-stat-sub {
-    display: block;
-    margin-top: 2px;
-    color: var(--text-label);
-    font-size: 10.5px;
-    white-space: nowrap;
-}
-
-.lab-acc-bar {
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: 6px;
-    height: 3px;
-    overflow: hidden;
-    border-radius: 3px;
-    background: var(--border);
-}
-
-.lab-acc-bar span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--gradient);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.3s ease;
-}
-
-.lab-acc-bar.is-full span {
-    box-shadow: 0 0 10px var(--accent-2);
-}
-
-.lab-chart {
-    margin-top: 14px;
-}
-
-.lab-chart-head {
-    margin-bottom: 6px;
-}
-
-.lab-chart-wrap {
-    position: relative;
-    height: 76px;
-}
-
-.lab-chart-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.lab-chart-empty {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    padding: 0 10px;
-    color: var(--text-label);
-    font-size: 12.5px;
-    text-align: center;
-}
-
-/* Settings */
-.lab-fields {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-}
-
-.lab-field {
-    min-width: 0;
-}
-
-.lab-field-wide {
-    grid-column: 1 / -1;
-}
-
-/* In a narrow settings box the three speed buttons get the full width,
-   so long words like "Медленно" don't touch each other */
-.lab-settings {
-    container-type: inline-size;
-}
-
-@container (max-width: 450px) {
-    .lab-field-speed,
-    .lab-field-layer {
-        grid-column: 1 / -1;
-    }
-
-    .lab-field-layer .lab-field-label {
-        display: none;
-    }
-}
-
 .lab-field label,
 .lab-field-label,
 .lab-temp label {
@@ -777,52 +603,6 @@
     font-size: 13.5px;
     font-weight: 700;
     line-height: 1.3;
-}
-
-.lab-field small {
-    display: block;
-    margin-top: 6px;
-    color: var(--text-label);
-    font-size: 12px;
-    line-height: 1.4;
-}
-
-.lab-select {
-    position: relative;
-    display: block;
-}
-
-.lab-select::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    right: 15px;
-    width: 7px;
-    height: 7px;
-    border-right: 2px solid var(--text-muted);
-    border-bottom: 2px solid var(--text-muted);
-    transform: translateY(-70%) rotate(45deg);
-    pointer-events: none;
-}
-
-.lab-select select {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    min-height: 44px;
-    padding: 0 38px 0 14px;
-    border: 1px solid var(--border-strong);
-    border-radius: 12px;
-    background: var(--surface-solid);
-    color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 14px;
-    cursor: pointer;
-    transition: border-color 0.2s ease;
-}
-
-.lab-select select:hover {
-    border-color: var(--accent-2);
 }
 
 /* Sliders: the row with the label and the value. The slider itself is a
@@ -845,125 +625,7 @@
     white-space: nowrap;
 }
 
-/* Speed: three connected buttons */
-.lab-seg {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 2px;
-    padding: 2px;
-    border: 1px solid var(--border-strong);
-    border-radius: 12px;
-    background: var(--surface-solid);
-}
-
-.lab-seg button {
-    min-width: 0;
-    min-height: 44px;
-    padding: 0 4px;
-    border-radius: 9px;
-    color: var(--text-muted);
-    font-size: 12.5px;
-    font-weight: 700;
-    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.lab-seg button:hover {
-    color: var(--text);
-}
-
-.lab-seg button[aria-pressed="true"] {
-    background: rgba(var(--accent-2-rgb), 0.14);
-    color: var(--text-accent-2);
-    box-shadow: inset 0 0 0 1px rgba(var(--accent-2-rgb), 0.45);
-}
-
-/* On / off switch: the button with its label. The track and the knob are
-   .ui-switch-track and .ui-switch-knob (css/components.css). */
-.lab-switch {
-    display: inline-flex;
-    align-items: center;
-    gap: 11px;
-    min-height: 44px;
-    color: var(--text);
-    font-size: 13.5px;
-    font-weight: 700;
-    line-height: 1.3;
-    text-align: left;
-}
-
-/* The live network diagram */
-.lab-params {
-    color: var(--text-muted);
-    font-size: 11px;
-}
-
-.lab-diagram {
-    grid-column: 1 / -1;
-}
-
-.lab-diagram-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 270px;
-    align-items: center;
-    gap: 20px 28px;
-}
-
-.lab-diagram-info {
-    color: var(--text-muted);
-    font-size: 13.5px;
-    line-height: 1.6;
-}
-
-.lab-diagram-info strong {
-    color: var(--text);
-}
-
-.lab-diagram-wrap {
-    position: relative;
-    height: 300px;
-}
-
-.lab-diagram-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.lab-diagram-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 18px;
-    margin-top: 14px;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.lab-diagram-legend > span {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.lab-wline {
-    display: inline-block;
-    width: 22px;
-    height: 3px;
-    border-radius: 2px;
-}
-
-.lab-wline-pos {
-    background: var(--accent-2);
-    box-shadow: 0 0 8px rgba(var(--accent-2-rgb), 0.8);
-}
-
-.lab-wline-neg {
-    background: var(--accent);
-    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.8);
-}
-
-/* ===== 4. EXPLANATION PANELS ===== */
-
+/* The explanation panel ("What's happening?") */
 .lab-explain {
     grid-column: 1 / -1;
     padding: 26px;
@@ -1053,535 +715,42 @@
     color: var(--text);
 }
 
-.lab-tips {
-    margin-top: 20px;
-}
-
-.lab-tips ul {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px 22px;
-    margin-top: 10px;
-}
-
-.lab-tips li {
-    position: relative;
-    padding-left: 22px;
-    color: var(--text-muted);
-    font-size: 14px;
-    line-height: 1.55;
-}
-
-.lab-tips li::before {
-    content: "›";
-    position: absolute;
-    left: 5px;
-    top: -1px;
-    color: var(--accent-2);
-    font-weight: 800;
-}
-
-.lab-hood {
-    margin-top: 18px;
-    padding: 12px 16px;
-    border-left: 3px solid var(--accent);
-    border-radius: 0 12px 12px 0;
-    background: rgba(var(--accent-rgb), 0.08);
-    color: var(--text-muted);
-    font-size: 13.5px;
-    line-height: 1.6;
-}
-
-.lab-hood em {
-    color: var(--text-accent-2);
-    font-family: var(--font-mono);
-    font-style: normal;
-    font-size: 12.5px;
-}
-
-/* ===== 5. NEXT-WORD PREDICTOR ===== */
-
-.lab-lm {
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-    gap: 26px 28px;
-    align-items: start;
-}
-
-.lab-lm-main,
-.lab-lm-side {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    min-width: 0;
-}
-
-.lab-lm-side {
-    gap: 16px;
-}
-
-.lab-lm-label {
-    color: var(--text);
-    font-size: 15px;
-    font-weight: 700;
-}
-
-.lab-lm-field {
-    position: relative;
-}
-
-.lab-lm-input {
-    display: block;
-    width: 100%;
-    min-height: 124px;
-    padding: 16px 56px 16px 18px;
-    border: 1px solid var(--border-strong);
-    border-radius: 18px;
-    background: var(--surface-solid);
-    color: var(--text);
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 1.55;
-    resize: vertical;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease;
-}
-
-.lab-lm-input::placeholder {
-    color: var(--text-label);
-    font-weight: 500;
-}
-
-/* The focus shows as a glow. The outline is transparent: it is invisible here, but
-   in Windows High Contrast mode (which removes shadows) it becomes a visible ring. */
-.lab-lm-input:focus-visible {
-    outline: 2px solid transparent;
-    outline-offset: 2px;
-    border-color: var(--accent-2);
-    box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.35), 0 0 30px rgba(var(--accent-2-rgb), 0.15);
-}
-
-.lab-lm-field.is-writing .lab-lm-input {
-    border-color: var(--accent-3);
-    animation: lab-writing 1.4s ease-in-out infinite;
-}
-
-@keyframes lab-writing {
-    50% { box-shadow: 0 0 0 3px rgba(var(--accent-3-rgb), 0.2), 0 0 34px rgba(var(--accent-3-rgb), 0.25); }
-}
-
-.lab-lm-clear {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    color: var(--text-dim);
-    transition: color 0.2s ease, background 0.2s ease;
-}
-
-.lab-lm-clear:hover {
-    background: var(--surface-hover);
-    color: var(--danger);
-}
-
-.lab-starters {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-}
-
-.lab-starters .lab-mini-label {
-    margin-right: 2px;
-}
-
-.lab-starter {
-    min-height: 44px;
-    padding: 8px 14px;
-    font-size: 13.5px;
-    text-align: left;
-}
-
-.lab-lm-notice {
-    display: flex;
-    gap: 10px;
-    padding: 10px 14px;
-    border: 1px solid var(--warning);
-    border-radius: 12px;
-    background: var(--surface-2);
-    color: var(--text-muted);
-    font-size: 13.5px;
-    line-height: 1.5;
-}
-
-.lab-lm-notice::before {
-    content: "!";
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--warning);
-    color: var(--surface-solid);
-    font-weight: 800;
-    font-size: 13px;
-}
-
-.lab-predict .lab-box-head {
-    margin-bottom: 4px;
-}
-
-.lab-lm-context {
-    min-height: 1.5em;
-    margin-bottom: 12px;
-    color: var(--text-muted);
-    font-size: 13.5px;
-    line-height: 1.5;
-    overflow-wrap: anywhere;    /* a very long typed word wraps instead of sticking out */
-}
-
-.lab-cands {
-    display: grid;
-    gap: 8px;
-}
-
-.lab-cand {
-    position: relative;
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-height: 50px;
-    padding: 8px 14px 8px 10px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: 13px;
-    background: var(--surface-solid);
-    color: var(--text);
-    font-size: 16px;
-    font-weight: 700;
-    text-align: left;
-    transition: border-color 0.2s ease, transform 0.3s var(--ease), box-shadow 0.25s ease;
-}
-
-.lab-cand:hover {
-    border-color: var(--accent-2);
-    transform: translateX(4px);
-    box-shadow: 0 0 22px rgba(var(--accent-2-rgb), 0.15);
-}
-
-.lab-cand-item:first-child .lab-cand {
-    border-color: var(--border-strong);
-}
-
-.lab-cand-fill {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.32), rgba(var(--accent-2-rgb), 0.22));
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.55s var(--ease);
-}
-
-.lab-cand-pick {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 3px;
-    background: var(--accent-3);
-    box-shadow: 0 0 10px rgba(var(--accent-3-rgb), 0.7);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.45s var(--ease);
-}
-
-.lab-cand-rank,
-.lab-cand-word,
-.lab-cand-pct {
-    position: relative;
-}
-
-.lab-cand-rank {
-    display: grid;
-    place-items: center;
-    width: 28px;
-    height: 28px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface-2);
-    color: var(--text-muted);
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.lab-cand-item:first-child .lab-cand-rank {
-    border-color: rgba(var(--accent-2-rgb), 0.5);
-    color: var(--text-accent-2);
-}
-
-.lab-cand-word {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.lab-cand.is-end .lab-cand-word {
-    color: var(--text-muted);
-    font-weight: 600;
-    font-style: italic;
-}
-
-.lab-cand-pct {
-    color: var(--text-accent-2);
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.lab-cand.is-picked {
-    border-color: var(--accent-3);
-    box-shadow: 0 0 0 1px var(--accent-3), 0 0 28px rgba(var(--accent-3-rgb), 0.35);
-    transform: scale(1.02);
-}
-
-.lab-cands-legend {
-    margin-top: 10px;
-    color: var(--text-label);
-    font-size: 12.5px;
-    line-height: 1.5;
-}
-
-.lab-lm-controls {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: 14px 20px;
-}
-
-.lab-auto {
-    min-width: 168px;
-}
-
-.lab-auto-icon {
-    display: inline-flex;
-}
-
-.lab-auto.is-writing {
-    box-shadow: 0 10px 35px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(var(--accent-3-rgb), 0.6), 0 0 30px rgba(var(--accent-3-rgb), 0.35);
-}
-
-.lab-temp {
-    min-width: 0;
-}
-
-.lab-range-temp {
-    margin-top: 2px;
-}
-
-/* How expected was each word? */
-.lab-tokens {
-    display: flex;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    gap: 6px;
-    min-height: 60px;
-    max-height: 230px;
-    overflow-y: auto;
-}
-
-.lab-tok {
-    --p: 0;
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 100%;
-    padding: 5px 9px 4px;
-    border: 1px solid rgba(var(--accent-2-rgb), calc(0.14 + var(--p) * 0.66));
-    border-radius: 10px;
-    background: rgba(var(--accent-2-rgb), calc(0.03 + var(--p) * 0.26));
-    box-shadow: 0 0 calc(var(--p) * 16px) rgba(var(--accent-2-rgb), calc(var(--p) * 0.3));
-    color: var(--text);
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.2;
-    animation: lab-tok-in 0.35s var(--ease) both;
-}
-
-.lab-tok > span {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-@keyframes lab-tok-in {
-    from { opacity: 0; transform: translateY(4px); }
-}
-
-.lab-tok small {
-    margin-top: 2px;
-    color: var(--text);
-    font-size: 10px;
-    font-weight: 600;
-}
-
-.lab-tok.is-new {
-    border-style: dashed;
-    border-color: var(--warning);
-    background: transparent;
-    box-shadow: none;
-}
-
-.lab-tok.is-new small {
-    color: var(--text-warning);
-}
-
-.lab-tok.is-typing {
-    border-style: dotted;
-    border-color: var(--border-strong);
-    background: transparent;
-    box-shadow: none;
-}
-
-.lab-tok.is-typing > span {
-    color: var(--text-muted);
-}
-
-.lab-tokens-empty {
-    color: var(--text-label);
-    font-size: 13.5px;
-}
-
-/* What it knows */
-.lab-lm-stats {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-}
-
-.lab-lm-stat {
-    min-width: 0;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--surface);
-}
-
-/* The numbers are gradient text: lab.js gives them the .gradient-text class of style.css */
-.lab-lm-stat strong {
-    display: block;
-    font-size: 22px;
-    font-weight: 600;
-    line-height: 1.2;
-}
-
-.lab-lm-stat span {
-    display: block;
-    color: var(--text-muted);
-    font-size: 12px;
-    line-height: 1.35;
-}
-
-/* Teach it a sentence */
-.lab-teach {
-    display: flex;
-    gap: 8px;
-}
-
-.lab-teach-input {
-    flex: 1;
-    min-width: 0;
-    min-height: 44px;
-    padding: 0 14px;
-    border: 1px solid var(--border-strong);
-    border-radius: 12px;
-    background: var(--surface-solid);
-    color: var(--text);
-    font-size: 14px;
-}
-
-.lab-teach-input::placeholder {
-    color: var(--text-label);
-}
-
-.lab-teach-btn {
-    flex: none;
-    min-height: 44px;
-}
-
-.lab-teach-status {
-    margin-top: 8px;
-    color: var(--text-muted);
-    font-size: 12.5px;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-}
-
-.lab-teach-status.is-error {
-    color: var(--text-danger);
-}
-
-.lab-link-btn {
-    min-height: 44px;
-    margin-top: 2px;
-    color: var(--text-accent-2);
-    font-size: 13px;
-    font-weight: 700;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-/* Like ChatGPT, only smaller */
-.lab-real {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    margin-top: 16px;
-    padding: 18px;
-    border: 1px solid var(--border-strong);
-    border-radius: 16px;
-    background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.14), rgba(var(--accent-2-rgb), 0.08));
-}
-
-.lab-real-icon {
-    flex: none;
-    font-size: 30px;
-    line-height: 1;
-}
-
-.lab-real h4 {
-    margin-bottom: 6px;
-    font-size: 16px;
-}
-
-.lab-real p {
-    color: var(--text-muted);
-    font-size: 14px;
-    line-height: 1.65;
-}
-
-/* ===== 6. RESPONSIVE ===== */
+/* ===== 8. RESPONSIVE ===== */
 
 @media (max-width: 1024px) {
     .js [data-feature="lab"]:empty {
-        min-height: 2900px;
+        min-height: 290px;
     }
 
-    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
-        min-height: 2080px;
+    .js [data-feature="lab"][data-lab-last]:empty {
+        min-height: 2120px;
     }
 
-    .lab-nn,
-    .lab-lm {
+    .js [data-feature="lab"][data-lab-last="classifier"]:empty {
+        min-height: 3010px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="predictor"]:empty {
+        min-height: 2120px;
+    }
+
+    .lab-stage[data-loading] {
+        min-height: 1850px;
+    }
+
+    .lab-stage[data-loading="classifier"] {
+        min-height: 2750px;
+    }
+
+    .lab-stage[data-loading="predictor"] {
+        min-height: 1850px;
+    }
+
+    .lab-skeleton {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .lab-nn-stage {
+    .lab-skel-board {
         width: 100%;
         max-width: 600px;
         margin: 0 auto;
@@ -1598,43 +767,65 @@
 
 @media (max-width: 720px) {
     .js [data-feature="lab"]:empty {
-        min-height: 3200px;
+        min-height: 420px;
     }
 
-    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
-        min-height: 2380px;
+    .js [data-feature="lab"][data-lab-last]:empty {
+        min-height: 2440px;
     }
 
-    .lab-top {
-        flex-direction: column;
-        align-items: stretch;
+    .js [data-feature="lab"][data-lab-last="classifier"]:empty {
+        min-height: 3270px;
     }
 
-    .lab-tabs {
-        width: 100%;
+    .js [data-feature="lab"][data-lab-last="predictor"]:empty {
+        min-height: 2440px;
     }
 
-    .lab-live {
-        justify-content: center;
+    .lab-stage[data-loading] {
+        min-height: 2140px;
     }
 
-    .lab-tips ul,
+    .lab-stage[data-loading="classifier"] {
+        min-height: 2980px;
+    }
+
+    .lab-stage[data-loading="predictor"] {
+        min-height: 2140px;
+    }
+
     .lab-steps-3 {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .lab-diagram-body {
         grid-template-columns: minmax(0, 1fr);
     }
 }
 
 @media (max-width: 640px) {
     .js [data-feature="lab"]:empty {
-        min-height: 3550px;
+        min-height: 410px;
     }
 
-    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
-        min-height: 2450px;
+    .js [data-feature="lab"][data-lab-last]:empty {
+        min-height: 2500px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="classifier"]:empty {
+        min-height: 3600px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="predictor"]:empty {
+        min-height: 2500px;
+    }
+
+    .lab-stage[data-loading] {
+        min-height: 2240px;
+    }
+
+    .lab-stage[data-loading="classifier"] {
+        min-height: 3340px;
+    }
+
+    .lab-stage[data-loading="predictor"] {
+        min-height: 2240px;
     }
 
     .lab {
@@ -1646,47 +837,33 @@
         --corners-inset: 7px;
     }
 
-    .lab-tab {
-        gap: 9px;
-        min-height: 56px;
-        padding: 8px 10px;
+    .lab-pick {
+        gap: 14px;
+        padding: 16px;
     }
 
-    .lab-tab-icon {
-        width: 32px;
-        height: 32px;
-        font-size: 16px;
+    .lab-pick-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
     }
 
-    .lab-tab-title {
-        font-family: var(--font-body);
-        font-size: 14px;
-        font-weight: 800;
+    .lab-pick-icon svg {
+        width: 23px;
+        height: 23px;
     }
 
-    .lab-tab-sub {
-        font-size: 9px;
-        letter-spacing: 1px;
+    .lab-pick-title {
+        font-size: 17px;
     }
 
-    .lab-board {
-        border-radius: 16px;
+    .lab-head {
+        margin-bottom: 18px;
+        padding-top: 14px;
     }
 
-    .lab-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .lab-fields {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .lab-field-label[aria-hidden="true"] {
-        display: none;
-    }
-
-    .lab-diagram-wrap {
-        height: 270px;
+    .lab-head-title {
+        font-size: 20px;
     }
 
     .lab-box {
@@ -1708,87 +885,52 @@
     .lab-step-card {
         padding: 16px;
     }
-
-    .lab-lm-controls {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .lab-auto {
-        width: 100%;
-    }
-
-    /* 16px text stops phones from zooming in when you tap a field */
-    .lab-lm-input,
-    .lab-teach-input,
-    .lab-select select {
-        font-size: 16px;
-    }
-
-    .lab-real {
-        flex-direction: column;
-        gap: 10px;
-    }
 }
 
 @media (max-width: 480px) {
     .js [data-feature="lab"]:empty {
-        min-height: 3900px;
+        min-height: 490px;
     }
 
-    .js [data-feature="lab"][data-lab-tab="predictor"]:empty {
-        min-height: 2850px;
+    .js [data-feature="lab"][data-lab-last]:empty {
+        min-height: 2940px;
     }
 
-    .lab-tab-icon {
-        display: none;
+    .js [data-feature="lab"][data-lab-last="classifier"]:empty {
+        min-height: 3950px;
     }
 
-    .lab-run {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .js [data-feature="lab"][data-lab-last="predictor"]:empty {
+        min-height: 2940px;
     }
 
-    .lab-train {
-        grid-column: 1 / -1;
+    .lab-stage[data-loading] {
+        min-height: 2630px;
     }
 
-    .lab-toolbar {
-        flex-direction: column;
-        align-items: stretch;
+    .lab-stage[data-loading="classifier"] {
+        min-height: 3630px;
     }
 
-    .lab-classpick {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .lab-stage[data-loading="predictor"] {
+        min-height: 2630px;
     }
 
-    .lab-class {
-        justify-content: center;
-        padding: 0 10px;
-    }
-
-    .lab-edit {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .lab-tool {
-        justify-content: center;
-    }
-
-    .lab-presets .lab-mini-label {
+    /* "All experiments" takes the row, previous / next stay at its end */
+    .lab-head-nav {
         width: 100%;
     }
 
-    .lab-teach {
-        flex-direction: column;
+    .lab-head-all {
+        flex: 1;
     }
 }
 
-/* ===== 7. CALM MODE AND REDUCED MOTION =====
+/* ===== 9. CALM MODE AND REDUCED MOTION =====
    style.css already stops every animation and transition under html.fx-motion-off
    (core.js sets it for reduced motion and for calm mode). The lab only adds: */
 
-/* a candidate doesn't slide to the right under the mouse */
-html.fx-motion-off .lab-cand:hover {
+/* a card doesn't rise under the mouse */
+html.fx-motion-off .lab-pick:hover {
     transform: none;
 }
