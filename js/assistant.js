@@ -1112,10 +1112,8 @@
         busy: false,
         queue: [],
         generation: 0,    // goes up on "new chat", so old replies are dropped
-        lastFocus: null,
         hideTimer: 0,
         tipTimer: 0,
-        lockedScroll: null,
         typingRow: null,
         prefill: ""       // the "Define " text the bot put in the message box
     };
@@ -1513,22 +1511,30 @@
        Phones: an almost full-screen sheet that acts like a modal.
        ========================================================= */
 
-    const sheetQuery = window.matchMedia("(max-width: 640px)");
-
+    // Phones (640 px wide or less) get the sheet
     function isSheet() {
-        return sheetQuery.matches;
+        return A.media(A.queries.phone).matches;
     }
 
-    function lockScroll(lock) {
-        const body = document.body;
-        if (lock && !state.lockedScroll) {
-            state.lockedScroll = { overflow: body.style.overflow };
-            body.style.overflow = "hidden";
-        } else if (!lock && state.lockedScroll) {
-            body.style.overflow = state.lockedScroll.overflow;
-            state.lockedScroll = null;
+    // The chat is a pop-up window of the page (see "overlays" in core.js).
+    // - Phones: a modal sheet. Core stops the page from scrolling, makes the
+    //   rest of the page unreachable, keeps Tab inside, closes it with Esc and
+    //   when the page goes to another section.
+    // - Desktop: a window next to the page, which stays usable. Esc closes it
+    //   only while the focus is in the chat or on the round button.
+    // The options are functions, so they follow the screen width (see applyMode).
+    const overlay = A.overlays.register("assistant", {
+        root: ui.root,           // the round button, the hint, the backdrop and the chat
+        element: ui.panel,
+        modal: isSheet,
+        closeOnNavigate: isSheet,
+        escape: function () { return isSheet() ? "anywhere" : "inside"; },
+        // After Esc or a close the focus goes back to the round button. When the
+        // page moves on ("navigate", "command"), the place you go to takes it.
+        close: function (reason) {
+            closePanel(reason !== "navigate" && reason !== "command");
         }
-    }
+    });
 
     // Phones: keep the sheet exactly over the part of the screen you can see.
     // The visible part can be smaller than the page's "layout" area: when the
@@ -1554,12 +1560,14 @@
         ui.panel.style.setProperty("--cb-sheet-w", Math.round(viewport.width) + "px");
     }
 
+    // Sheet or window: set up the chat for the current width. Runs when the chat
+    // opens, and when the width crosses 640 px.
     function applyMode() {
         const sheet = isSheet();
         if (sheet) ui.panel.setAttribute("aria-modal", "true");
         else ui.panel.removeAttribute("aria-modal");
         ui.backdrop.hidden = !(state.open && sheet);
-        lockScroll(state.open && sheet);
+        overlay.update();        // core reads modal, closeOnNavigate and escape again
         fitToViewport();
     }
 
@@ -1569,13 +1577,7 @@
             ui.input.focus({ preventScroll: true });
             return;
         }
-        // Another window (the lesson reader) may cover the page and make the chat
-        // unusable behind it: close that window first (if its feature allows it)
-        if (ui.root.closest("[inert]") && typeof A.closeLesson === "function") safely(A.closeLesson);
-
         state.open = true;
-        const active = document.activeElement;
-        state.lastFocus = active && active !== document.body && !ui.panel.contains(active) ? active : null;
 
         dismissTip(true);
         if (!chat.messages.length) addBotMessage("welcome", {}, false);
@@ -1583,6 +1585,7 @@
         ui.panel.hidden = false;
         ui.root.classList.add("is-open");
         ui.launcher.setAttribute("aria-expanded", "true");
+        overlay.opened();        // before the focus moves in (see core.js)
         applyMode();
         scrollToEnd(false);
 
@@ -1600,7 +1603,7 @@
         ui.backdrop.classList.remove("is-visible");
         ui.root.classList.remove("is-open");
         ui.launcher.setAttribute("aria-expanded", "false");
-        lockScroll(false);
+        overlay.closed();        // before the focus goes back (see core.js)
 
         const wasInside = ui.panel.contains(document.activeElement);
         state.hideTimer = setTimeout(function () {
@@ -1623,42 +1626,10 @@
     ui.close.addEventListener("click", function () { closePanel(true); });
     ui.backdrop.addEventListener("click", function () { closePanel(true); });
 
-    // Esc closes (from the chat or the round button); on phones Tab stays inside the sheet
-    ui.root.addEventListener("keydown", function (event) {
-        if (!state.open) return;
-        if (event.key === "Escape") {
-            event.preventDefault();
-            event.stopPropagation();
-            closePanel(true);
-            return;
-        }
-        if (event.key === "Tab" && isSheet()) trapFocus(event);
-    });
+    // The width crossed 640 px (a phone turned, a window resized): sheet <-> window
+    A.onMedia(A.queries.phone, applyMode, { immediate: false });
 
-    function trapFocus(event) {
-        const items = Array.prototype.slice.call(ui.panel.querySelectorAll(
-            'button:not([disabled]), input, [href], [tabindex]:not([tabindex="-1"])'
-        )).filter(function (element) { return element.getClientRects().length > 0; });
-        if (!items.length) return;
-        const first = items[0];
-        const last = items[items.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-            event.preventDefault();
-            last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
-        }
-    }
-
-    if (sheetQuery.addEventListener) sheetQuery.addEventListener("change", applyMode);
-    else if (sheetQuery.addListener) sheetQuery.addListener(applyMode);
-
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", fitToViewport);
-        window.visualViewport.addEventListener("scroll", fitToViewport);
-    }
-    window.addEventListener("resize", fitToViewport, { passive: true });
+    A.onResize(fitToViewport, { viewport: true });
 
     // ----- Phones: pull the sheet down by its top edge to close it -----
     const drag = { id: null, startY: 0, lastY: 0, lastTime: 0, speed: 0, distance: 0 };
