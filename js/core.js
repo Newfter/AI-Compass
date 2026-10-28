@@ -7,7 +7,8 @@
     2. events        A.on / A.emit (the "aic:..." events)
     3. texts         translations, plurals, number formats, language
     4. theme         light / dark and the colour of the address bar
-    5. motion        reduced motion (device) + calm mode (our own switch)
+    5. motion        reduced motion (device) + calm mode (our own switch),
+                     and numbers that count up
     6. helpers       small tools: maths and easing, page elements, colours, canvas
     7. screen        media queries, visibility, resizing, layout sizes
     8. announce      messages for screen readers
@@ -365,6 +366,81 @@
         // The site's easing curve, for animations started from JavaScript
         get ease() { return cssVar("--ease"); }
     };
+
+    // ----- Numbers that count up -----
+    // countUp(element, from, to, duration, options) counts the number shown in "element"
+    // from "from" to "to" in "duration" milliseconds: fast at first, then slowing down.
+    //     A.countUp(scoreElement, 0, 120, 900);
+    // On every animation frame it writes A.format.number(Math.round(value)). Options:
+    //     format(value)    returns the text to show instead (decimals, a "%" sign...)
+    //     ease(progress)   another curve from 0..1 to 0..1 (default A.util.easeOut)
+    //     done()           runs once, when the number has arrived
+    // With animations off (A.motion.ok() is false, or turns false meanwhile) the end
+    // value is written at once. A new count-up on the same element replaces the running
+    // one. When the element has left the page, the count-up ends by itself.
+    // Returns { finish(), stop(), value }:
+    //     finish()   jumps to the end value and runs done (if it hasn't run yet)
+    //     stop()     stops where it is, without done
+    //     value      the number it has reached so far (not rounded)
+    const runningCounts = new Map();     // element -> its count-up
+
+    function countUp(element, from, to, duration, options) {
+        const settings = options || {};
+        const format = settings.format || function (value) { return formatNumber(Math.round(value)); };
+        const ease = settings.ease || util.easeOut;
+        const start = performance.now();
+        let frame = 0;
+        let ended = false;
+
+        const counter = {
+            value: from,
+            finish: function () {
+                if (ended) return;
+                stop();
+                write(to);
+                if (settings.done) settings.done();
+            },
+            stop: stop
+        };
+
+        function write(value) {
+            counter.value = value;
+            element.textContent = format(value);
+        }
+
+        function stop() {
+            ended = true;
+            cancelAnimationFrame(frame);
+            if (runningCounts.get(element) === counter) runningCounts.delete(element);
+        }
+
+        function step(now) {
+            // (the frame's time can be a hair earlier than "start": progress stays at 0 then)
+            const progress = util.clamp((now - start) / duration, 0, 1);
+            if (progress >= 1 || !element.isConnected) {
+                counter.finish();
+                return;
+            }
+            write(util.lerp(from, to, ease(progress)));
+            frame = requestAnimationFrame(step);
+        }
+
+        const previous = runningCounts.get(element);
+        if (previous) previous.stop();
+
+        if (!motionOK() || !(duration > 0) || from === to) {
+            counter.finish();
+        } else {
+            runningCounts.set(element, counter);
+            frame = requestAnimationFrame(step);
+        }
+        return counter;
+    }
+
+    // Animations switched off (calm mode): every number that is counting jumps to its end
+    on("motion", function (detail) {
+        if (!detail.ok) runningCounts.forEach(function (counter) { counter.finish(); });
+    });
 
     /* =========================================================
        6. HELPERS
@@ -1552,6 +1628,7 @@
         // 5. motion (reducedMotion = only the device setting; use motion.ok())
         motion: motion,
         get reducedMotion() { return reducedMotionQuery.matches; },
+        countUp: countUp,
 
         // 6. helpers
         util: util,
