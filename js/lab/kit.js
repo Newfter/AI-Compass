@@ -1371,9 +1371,9 @@
     // colors() reads the colours of the current theme from the CSS once and keeps them.
     // Every colour is a ready string for ctx.fillStyle. series has 8 colours for groups
     // ("group 1, group 2..."): use them in order, from the first one. They were checked with
-    // a colour-blindness simulation: neighbours in the list stay apart for people with red-
-    // green colour blindness, and so do the first three all together (see css/lab/kit.css).
-    // For more than three groups at once, add a second clue: kit.marker() shapes or labels.
+    // a colour-blindness simulation: any two of the first six stay apart for people with red-
+    // green colour blindness too (see css/lab/kit.css). For more than six groups at once, add
+    // a second clue: kit.marker() shapes or labels (a good idea with fewer groups, too).
     // In theme(), call kit.colors.invalidate() and draw again.
     let palette = null;
     let fonts = null;

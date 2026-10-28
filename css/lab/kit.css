@@ -32,34 +32,35 @@
    class 2..."), used in this order. kit.colors().series reads them for the
    canvas; kit.legend, chips and bars use them by number (colorIndex 0 = 1).
    They were checked with a colour-blindness simulation (Machado 2009,
-   distances in OKLab) on each theme's surface colour:
-   - neighbours in the list stay apart with red-green and blue-yellow
-     colour blindness, and so do the first three, all together;
+   distances in OKLab, every pair) on each theme's surface colour:
+   - any two of the first six stay apart for normal vision and for red-green
+     colour blindness (protanopia, deuteranopia), as far apart as the site's
+     own three accents (1, 2 and 4) are from each other;
    - every colour stands out against the background (contrast 3:1 or more).
-   1, 2 and 4 are the site's own accents. For more than three groups at once,
-   give each group a second clue too (a marker shape or a label).
+   7 and 8 are extras: with more than six groups at once, give each group a
+   second clue too (a marker shape or a label); it helps everyone anyway.
    The light theme has its own, darker set, checked against white. */
 :root,
 [data-theme="dark"] {
     --lk-series-1: var(--accent-2);   /* cyan */
     --lk-series-2: var(--accent);     /* violet */
-    --lk-series-3: #3bca54;           /* green */
+    --lk-series-3: #2bd489;           /* mint green */
     --lk-series-4: var(--accent-3);   /* pink */
     --lk-series-5: #ccba14;           /* gold */
-    --lk-series-6: #19affe;           /* blue */
+    --lk-series-6: #34aef9;           /* blue */
     --lk-series-7: #e05f00;           /* orange */
-    --lk-series-8: #fb9797;           /* salmon */
+    --lk-series-8: #d88093;           /* rose */
 }
 
 [data-theme="light"] {
     --lk-series-1: var(--accent-2);   /* teal */
     --lk-series-2: var(--accent);     /* violet */
-    --lk-series-3: #297d0f;           /* green */
+    --lk-series-3: #37893a;           /* green */
     --lk-series-4: var(--accent-3);   /* magenta */
-    --lk-series-5: #72630a;           /* olive gold */
-    --lk-series-6: #1364ce;           /* blue */
-    --lk-series-7: #e15d18;           /* orange */
-    --lk-series-8: #ac1b14;           /* brick red */
+    --lk-series-5: #6f6104;           /* olive gold */
+    --lk-series-6: #4675c9;           /* blue */
+    --lk-series-7: #d15741;           /* orange red */
+    --lk-series-8: #932033;           /* wine */
 }
 
 :root {
