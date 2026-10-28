@@ -482,9 +482,13 @@
     line-height: 1;
 }
 
-.lab-real h4 {
+/* (h5: style.css styles h1-h4 only, so the colour, line height and weight are given here) */
+.lab-real h5 {
     margin-bottom: 6px;
+    color: var(--text);
     font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 .lab-real p {

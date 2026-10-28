@@ -114,7 +114,7 @@
         const steps = [1, 2, 3].map((n) =>
             '<li class="lab-step-card">' +
                 '<span class="lab-step-num mono" aria-hidden="true">0' + n + '</span>' +
-                '<h4 data-i18n="lab.lmExplain' + n + 'Title"></h4>' +
+                '<h5 data-i18n="lab.lmExplain' + n + 'Title"></h5>' +
                 '<p data-i18n="lab.lmExplain' + n + 'Text"></p>' +
             '</li>').join("");
 
@@ -158,16 +158,16 @@
 
             '<div class="lab-lm-side">' +
                 '<section class="lab-box lab-tokens-box" aria-labelledby="lab-tokens-title">' +
-                    '<div class="lab-box-head"><h3 class="lab-mini-label mono" id="lab-tokens-title" data-i18n="lab.lmTokensTitle"></h3></div>' +
+                    '<div class="lab-box-head"><h4 class="lab-mini-label mono" id="lab-tokens-title" data-i18n="lab.lmTokensTitle"></h4></div>' +
                     '<div class="lab-tokens" data-lm="tokens"></div>' +
                     '<p class="lab-box-note" data-i18n="lab.lmTokensHint"></p>' +
                 '</section>' +
                 '<section class="lab-box" aria-labelledby="lab-knows-title">' +
-                    '<div class="lab-box-head"><h3 class="lab-mini-label mono" id="lab-knows-title" data-i18n="lab.lmStatsTitle"></h3></div>' +
+                    '<div class="lab-box-head"><h4 class="lab-mini-label mono" id="lab-knows-title" data-i18n="lab.lmStatsTitle"></h4></div>' +
                     '<div class="lab-lm-stats">' + stats + '</div>' +
                 '</section>' +
                 '<section class="lab-box" aria-labelledby="lab-teach-title">' +
-                    '<div class="lab-box-head"><h3 class="lab-mini-label mono" id="lab-teach-title" data-i18n="lab.lmTeachTitle"></h3></div>' +
+                    '<div class="lab-box-head"><h4 class="lab-mini-label mono" id="lab-teach-title" data-i18n="lab.lmTeachTitle"></h4></div>' +
                     '<form class="lab-teach" novalidate>' +
                         '<label class="sr-only" for="lab-teach-input" data-i18n="lab.lmTeachLabel"></label>' +
                         '<input type="text" id="lab-teach-input" class="lab-teach-input" maxlength="' + MAX_TEACH + '" autocomplete="off" aria-describedby="lab-teach-status" data-i18n-attr="placeholder:lab.lmTeachPlaceholder">' +
@@ -179,11 +179,11 @@
             '</div>' +
 
             '<section class="lab-explain" aria-labelledby="lab-explain-lm">' +
-                '<h3 class="lab-explain-title" id="lab-explain-lm"><span class="lab-explain-icon" aria-hidden="true">?</span><span data-i18n="lab.lmExplainTitle"></span></h3>' +
+                '<h4 class="lab-explain-title" id="lab-explain-lm"><span class="lab-explain-icon" aria-hidden="true">?</span><span data-i18n="lab.lmExplainTitle"></span></h4>' +
                 '<ol class="lab-steps lab-steps-3">' + steps + '</ol>' +
                 '<div class="lab-real">' +
                     '<span class="lab-real-icon" aria-hidden="true">🤖</span>' +
-                    '<div><h4 data-i18n="lab.lmRealTitle"></h4><p data-i18n="lab.lmRealText"></p></div>' +
+                    '<div><h5 data-i18n="lab.lmRealTitle"></h5><p data-i18n="lab.lmRealText"></p></div>' +
                 '</div>' +
             '</section>' +
             '<p class="sr-only" aria-live="polite" data-live="lm"></p>' +

@@ -606,7 +606,7 @@
     margin-bottom: 12px;
 }
 
-.lab-box-head h3 {
+.lab-box-head h4 {
     font-family: var(--font-mono);
 }
 
@@ -714,9 +714,13 @@
     letter-spacing: 1.5px;
 }
 
-.lab-step-card h4 {
+/* (h5: style.css styles h1-h4 only, so the colour, line height and weight are given here) */
+.lab-step-card h5 {
     margin: 8px 0 6px;
+    color: var(--text);
     font-size: 15.5px;
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 .lab-step-card p {

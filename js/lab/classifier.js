@@ -123,7 +123,7 @@
         const steps = [1, 2, 3, 4].map((n) =>
             '<li class="lab-step-card">' +
                 '<span class="lab-step-num mono" aria-hidden="true">0' + n + '</span>' +
-                '<h4 data-i18n="lab.explain' + n + 'Title"></h4>' +
+                '<h5 data-i18n="lab.explain' + n + 'Title"></h5>' +
                 '<p data-i18n="lab.explain' + n + 'Text"></p>' +
             '</li>').join("");
 
@@ -272,7 +272,7 @@
 
             // ----- Below: the explanation -----
             '<section class="lab-explain" aria-labelledby="lab-explain-nn">' +
-                '<h3 class="lab-explain-title" id="lab-explain-nn"><span class="lab-explain-icon" aria-hidden="true">?</span><span data-i18n="lab.explainTitle"></span></h3>' +
+                '<h4 class="lab-explain-title" id="lab-explain-nn"><span class="lab-explain-icon" aria-hidden="true">?</span><span data-i18n="lab.explainTitle"></span></h4>' +
                 '<ol class="lab-steps">' + steps + '</ol>' +
                 '<div class="lab-tips">' +
                     '<p class="lab-mini-label mono" data-i18n="lab.tipsTitle"></p>' +
