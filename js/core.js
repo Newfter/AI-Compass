@@ -20,7 +20,8 @@
    10. navigation    the page sections, A.navigate, one scroll pipeline, parts
                      built when needed, the menu bar
    11. commands      the command list of the Ctrl+K palette
-   12. features      how feature files share their API and content
+   12. features      how feature files share their API and content, and files
+                     loaded on demand
    13. toasts        small pop-up messages
        the toolkit   window.AICompass itself, and the built-in commands
    14. start-up      translating the page, the theme and language buttons
@@ -29,7 +30,8 @@
     1  A.storage.get(key, fallback) / set(key, value) / remove(key) / migrate(old, new)
        A.storage.session: the same, forgotten when the tab closes
     2  A.on(name, callback) -> stop()      A.emit(name, detail)
-       names: language, theme, motion, overlay, section, feature (sent as "aic:" + name)
+       names: language, theme, motion, overlay, section, feature, activity (sent as "aic:" + name)
+       A.track(type, detail): "the learner just did this" (the "activity" event)
     3  A.t(key, values)   A.has(key)   A.plural(key, n, values)   A.pluralForm(n)
        A.addTranslations({ en, ru })   A.applyTranslations(element)   A.i18nHTML(key, className, tag)
        A.setTextValue(name, value)   A.textValue(name): a {name} that any text can show
@@ -61,6 +63,7 @@
    11  A.registerCommand(command)   A.runCommand(id or command)   A.commands
    12  A.feature(name, api)   A.whenFeature(name) -> Promise   A.ready(callback)
        A.content.set(name, data) / get(name)
+       A.loadScript(src) / A.loadStyle(href) -> Promise: a file loaded on demand, once
    13  A.toast(text, icon)
    ========================================================= */
 
@@ -132,7 +135,7 @@
     /* =========================================================
        2. EVENTS
        Every event of the site is "aic:" + a name, sent on document:
-       language, theme, motion, overlay, section, feature.
+       language, theme, motion, overlay, section, feature, activity.
        ========================================================= */
     function emit(name, detail) {
         document.dispatchEvent(new CustomEvent(PREFIX + name, { detail: detail }));
@@ -143,6 +146,15 @@
         const listener = function (event) { callback(event.detail); };
         document.addEventListener(PREFIX + name, listener);
         return function () { document.removeEventListener(PREFIX + name, listener); };
+    }
+
+    // Progress events. A feature reports what the learner just did:
+    //     A.track("lesson.complete", { n: 3 });
+    // and anything that wants to know (for example "My Compass") listens:
+    //     A.on("activity", function (activity) { ... activity.type, activity.detail, activity.time ... });
+    // The types in use are listed in README.md ("Progress events").
+    function track(type, detail) {
+        emit("activity", { type: type, detail: detail || {}, time: Date.now() });
     }
 
     /* =========================================================
@@ -410,7 +422,10 @@
 
         // Features redraw their texts. At start-up nothing changed, so nothing is sent:
         // every feature already drew itself in the saved language.
-        if (changed) emit("language", { lang: lang });
+        if (changed) {
+            emit("language", { lang: lang });
+            track("language.change", { lang: lang });
+        }
     }
 
     /* =========================================================
@@ -441,7 +456,10 @@
             root.setAttribute("data-theme", theme);
         }
         updateThemeMeta();
-        if (changed) emit("theme", { theme: theme });
+        if (changed) {
+            emit("theme", { theme: theme });
+            track("theme.change", { theme: theme });
+        }
     }
 
     /* =========================================================
@@ -476,6 +494,7 @@
         calm = value;
         storage.set("motion.calm", calm);
         motionChanged();
+        track("settings.change", { name: "calm", value: calm });
     }
 
     const motion = {
@@ -1744,6 +1763,7 @@
        A.glossary, and A.whenFeature("glossary") (a Promise) resolves with it.
        A.ready(callback) runs once every script has run and the page is ready.
        Content files (js/content/) keep data with A.content.set("quiz", {...}).
+       A.loadScript / A.loadStyle load a file only when it is needed.
        ========================================================= */
     const featureAPIs = {};
     const featureWaiting = {};
@@ -1770,6 +1790,46 @@
     function ready(callback) {
         if (pageReady) setTimeout(function () { safeCall(callback); }, 0);
         else readyCallbacks.push(callback);
+    }
+
+    // ----- Files loaded on demand -----
+    // Big parts that most visitors never open (a lab experiment, the teacher kit)
+    // are not in index.html. Their feature loads them when they are needed:
+    //     A.loadScript("js/lab/maze.js").then(function () { ... it has run ... });
+    // Asking for the same file again returns the same Promise, so it loads once.
+    // If it fails (no network), the Promise rejects, and the next call tries again.
+    // Only for files that index.html does not load itself.
+    const loadingFiles = {};
+
+    function loadFile(tag, url) {
+        const key = tag + " " + url;
+        if (loadingFiles[key]) return loadingFiles[key];
+        loadingFiles[key] = new Promise(function (resolve, reject) {
+            const element = document.createElement(tag);
+            if (tag === "script") {
+                element.async = false;      // scripts asked for one after another run in that order
+                element.src = url;
+            } else {
+                element.rel = "stylesheet";
+                element.href = url;
+            }
+            element.addEventListener("load", function () { resolve(); });
+            element.addEventListener("error", function () {
+                delete loadingFiles[key];   // so that the next call tries again
+                element.remove();
+                reject(new Error("Could not load " + url));
+            });
+            document.head.appendChild(element);
+        });
+        return loadingFiles[key];
+    }
+
+    function loadScript(src) {
+        return loadFile("script", src);
+    }
+
+    function loadStyle(href) {
+        return loadFile("link", href);
     }
 
     const contentStore = {};
@@ -1826,6 +1886,7 @@
         storage: storage,
         on: on,
         emit: emit,
+        track: track,
 
         // 3. texts
         addTranslations: addTranslations,
@@ -1905,6 +1966,8 @@
         whenFeature: whenFeature,
         ready: ready,
         content: content,
+        loadScript: loadScript,
+        loadStyle: loadStyle,
 
         // 13. toasts
         toast: toast

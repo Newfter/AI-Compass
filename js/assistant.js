@@ -1134,6 +1134,7 @@
         if (!clean) return;
         addUserMessage(clean);
         const job = think(clean);
+        A.track("bot.ask", { typed: true });
 
         // Typed in the "other" alphabet? Offer the other language once
         // (not when the person is already talking about languages).
@@ -1159,6 +1160,7 @@
     // A chip or "Another fact" button: shows its label as the person's message
     function sendIntent(intent, label) {
         addUserMessage(label);
+        A.track("bot.ask", { intent: intent });
         enqueue(answerFor(intent, []));
     }
 

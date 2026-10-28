@@ -929,6 +929,7 @@
         card.toggle.setAttribute("aria-expanded", String(open));
         if (open) {
             state.open.add(id);
+            A.track("glossary.explore", { id: id });
             if (!state.explored.has(id)) {
                 state.explored.add(id);
                 A.storage.set("glossary.explored", Array.from(state.explored));

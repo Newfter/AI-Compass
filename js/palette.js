@@ -852,6 +852,7 @@
             return;
         }
         if (item.remember) remember(item.id);
+        A.track("palette.run", { id: item.id });
         close();
         setTimeout(function () {
             try {

@@ -391,6 +391,7 @@
             if (on !== node.item.on) {
                 node.item.on = on;
                 node.item.el.classList.toggle("is-reached", on);
+                if (on) trackEra(node.item.el.closest(".tl-era"));
             }
             if (on) {
                 reached++;
@@ -406,6 +407,16 @@
             hudYear.textContent = year;
             hudCount.textContent = count;
         }
+    }
+
+    // The first time the line reaches an era, it counts as visited (for "My Compass")
+    const visitedEras = new Set();
+
+    function trackEra(section) {
+        const era = section && section.getAttribute("data-era");
+        if (!era || visitedEras.has(era)) return;
+        visitedEras.add(era);
+        A.track("timeline.era", { era: era });
     }
 
     // ---------- 5. Era filter ----------

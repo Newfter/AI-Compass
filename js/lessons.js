@@ -416,10 +416,12 @@
     // ---------- 7. Completing lessons ----------
     function setCompleted(n, isDone) {
         const before = completed.size;
+        const wasDone = completed.has(n);
         if (isDone) completed.add(n);
         else completed.delete(n);
         saveCompleted();
         updateProgress();
+        if (isDone && !wasDone) A.track("lesson.complete", { n: n });
 
         if (!isDone) {
             A.toast(t("lessons.toast.undone"), "↩️");
@@ -699,6 +701,7 @@
 
     function downloadCertificate() {
         drawCertificate();
+        A.track("certificate.make", {});
         function save(url, isBlob) {
             const link = document.createElement("a");
             link.href = url;
@@ -1811,6 +1814,7 @@
         const n = reader.lesson;
         if (checkAnswers[n] !== undefined) return;
         checkAnswers[n] = choice;
+        A.track("lesson.check", { n: n, correct: choice === LESSONS[n - 1].correct });
         // A right answer completes the lesson automatically
         if (choice === LESSONS[n - 1].correct && !completed.has(n)) setCompleted(n, true);
         renderCheck();
@@ -1989,6 +1993,7 @@
         stopSpeaking();
         stopLab(true);
         reader.lesson = n;
+        A.track("lesson.open", { n: n });
         renderLessonContent();
         updateReaderChrome();
         releaseSpy();

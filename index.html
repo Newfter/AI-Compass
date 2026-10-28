@@ -105,6 +105,17 @@
                 <kbd class="palette-kbd">Ctrl K</kbd>
             </button>
 
+            <!-- "My Compass" (js/journey.js) and Settings (js/settings.js) show these two buttons once they are ready -->
+            <button class="icon-button journey-toggle" id="journey-toggle" type="button" hidden
+                    data-i18n-attr="aria-label:core.journeyLabel,title:core.journeyLabel">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor"/></svg>
+            </button>
+
+            <button class="icon-button settings-toggle" id="settings-toggle" type="button" hidden
+                    data-i18n-attr="aria-label:core.settingsLabel,title:core.settingsLabel">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+
             <button class="icon-button" id="theme-toggle" type="button"
                     data-i18n-attr="aria-label:core.themeLabel,title:core.themeLabel">
                 <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>
@@ -231,6 +242,13 @@
         </div>
     </section>
 
+    <!-- ===== FOR TEACHERS (js/teachers.js shows it once it is ready) ===== -->
+    <section class="section" id="teachers" hidden>
+        <div class="container">
+            <div data-feature="teachers"></div>
+        </div>
+    </section>
+
     <!-- ===== ABOUT ===== -->
     <section class="section" id="about">
         <div class="container">
@@ -286,9 +304,12 @@
     </div>
 </footer>
 
-<!-- Floating AI assistant (js/assistant.js) and command palette (js/palette.js) -->
+<!-- Floating AI assistant (js/assistant.js), command palette (js/palette.js),
+     "My Compass" (js/journey.js) and Settings (js/settings.js) -->
 <div data-feature="assistant"></div>
 <div data-feature="palette"></div>
+<div data-feature="journey"></div>
+<div data-feature="settings"></div>
 
 <!-- Small pop-up messages, e.g. "Lesson completed!" (AICompass.toast in js/core.js) -->
 <div class="toast-stack" id="toast-stack" aria-live="polite" data-overlay-keep></div>
