@@ -7,6 +7,8 @@
      languages (a search for one also finds the others);
    - related: one-way links ("chatgpt" also finds "chatbot", but a
      search for "chatbot" does not look for "chatgpt");
+   - everywhere: what every text of the site is about ("AI"), skipped
+     when a query has other words;
    - pages: the parts of the page searched as a whole (the hero,
      About and the section headers).
    Used by js/search.js (and through it by the Ctrl+K palette and
@@ -73,7 +75,10 @@ window.AICompass.content.set("search", {
             "ты", "у", "уже", "хотя", "чего", "чем", "что", "чтобы", "эта", "эти", "это", "этого",
             "этой", "этом", "этот", "эту", "я", "расскажи", "расскажите", "объясни",
             "объясните", "скажи", "скажите", "покажи", "пожалуйста", "значит", "означает",
-            "зачем", "почему", "привет", "ой", "вообще"
+            "зачем", "почему", "привет", "ой", "вообще", "кому", "кого", "мой", "моя", "мое", "мои",
+            "моего", "моей", "моему", "моим", "моих", "моими", "мою", "твой", "твоя", "твое", "твои",
+            "твоего", "твоей", "твоих", "твоим", "твою", "свой", "своя", "свое", "свои", "своего",
+            "своей", "своих", "своим", "свою"
         ]
     },
 
@@ -96,7 +101,7 @@ window.AICompass.content.set("search", {
         ["generative ai", "генеративный ии"],
         ["token", "токен"],
         ["prompt", "промпт"],
-        ["deepfake", "дипфейк"],
+        ["deepfake", "deep fake", "дипфейк"],
         ["robot", "робот"],
         ["algorithm", "алгоритм"],
         ["parameter", "weight", "параметр", "вес"],
@@ -112,8 +117,20 @@ window.AICompass.content.set("search", {
         ["eliza", "элиза"],
         ["voice assistant", "голосовой помощник"],
         ["recommendation", "рекомендация"],
-        ["black box", "черный ящик"]
+        ["black box", "черный ящик"],
+        // names from the timeline, typed apart or in Russian letters
+        ["alphago", "alpha go", "альфаго", "альфа го"],
+        ["alphafold", "alpha fold", "альфафолд"],
+        ["alexnet", "алекснет"],
+        ["deep blue", "дип блю"]
     ],
+
+    /* ----- What every text of the site is about -----
+       In a query with other words, these don't help to find the right
+       text, so they are skipped: "how does AI recognise faces?" looks
+       for "recognise faces", "AI winter" for "winter". Alone ("AI"), or
+       inside a longer name ("generative AI"), they still count. */
+    everywhere: ["ai", "artificial intelligence", "ии", "искусственный интеллект"],
 
     /* ----- One-way links -----
        A search for the word on the left also looks for the words on the right
@@ -125,6 +142,7 @@ window.AICompass.content.set("search", {
         "claude": ["chatbot", "large language model"],
         "copilot": ["chatbot", "large language model"],
         "гигачат": ["чат-бот", "большая языковая модель"],
+        "чатгпт": ["chatgpt", "чат-бот", "большая языковая модель"],
         "алиса": ["голосовой помощник", "чат-бот"],
         "siri": ["voice assistant"],
         "alexa": ["voice assistant"],

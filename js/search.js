@@ -35,7 +35,8 @@
          open(from)          goes there; "from" says who asked ("palette")
        The list also has "switched": the text that was searched instead
        when only the other keyboard layout found something ("ntcn" →
-       "тест"), otherwise "".
+       "тест"), otherwise ""; and "words": how many words of the query
+       counted (little words like "the" don't).
      register(type, adapter)   adds a source, or replaces the one of that type
      ready() -> Promise        builds the index a little at a time, when the
                                page is idle; then every query is instant
@@ -56,7 +57,7 @@
                   (their count, for example): the index is built again then.
                   A feature that registers late does the same.
      documents()  [{ id, title, section, text, keywords, name, heading,
-                     label, icon, open() }] in the current language:
+                     label, icon, weight, open() }] in the current language:
        id         unique within the source
        title      the result's title (each word counts x3)
        name       a term's name and its other names (x4, instead of the title)
@@ -65,6 +66,7 @@
        keywords   more words to find it by (x1), never shown
        section    where it is, shown with the title
        label      a short name for links (the section, if not given)
+       weight     its score is multiplied by this (1 if not given)
        open()     goes there
    The built-in sources (section 8):
      lessons    every section of every lesson, and each lesson's key ideas
@@ -138,6 +140,8 @@
     const PHRASE_BONUS = 0.3;   // +30% when the query's words stand together, in the same order
     const PHRASE_GAP = 2;       // "together": at most one other word between them
     const PHRASE_CHECKS = 40;   // only the best 40 documents are checked for that
+    const SUMMARY_WEIGHT = 0.8; // a lesson's key ideas repeat the words of its sections in a few
+                                // lines: they count 80 %, so the section that explains comes first
 
     // ----- Typos, completions, stems -----
     const TYPO_MIN = 5;         // a word of 5+ letters may have a typo: one letter wrong,
@@ -467,6 +471,7 @@
                     text: plain(item.text),
                     keepOverlays: item.keepOverlays || source.keepOverlays,
                     open: item.open,
+                    weight: Number(item.weight) > 0 ? Number(item.weight) : 1,
                     named: Boolean(item.name),
                     raw: {
                         name: plain(listOf([].concat(item.name || [])).join(" ")),
@@ -633,10 +638,13 @@
          "nueral netwrk" → [neural network (typo), нейросеть (synonym), ...]
          "chatgpt"       → [chatgpt, chatbot (synonym), large language model (synonym)]
          "neu" (typing)  → [neu, neural (prefix), neuron (prefix), ...]
+       "AI" is left out when another word of the query is on the site: every
+       text is about AI, so it would not help to find the right one.
        ========================================================= */
     let phrases = null;        // [{ stems, groups }] from the synonym list, longest first
     let groups = null;         // group number → [stems of each phrase in it]
     let related = null;        // stem → [stems of each phrase it also looks for]
+    let everywhere = null;     // "ai", "ии"...: skipped in a query with other words (as stems)
 
     function phraseStems(text) {
         return split(text, false).filter(function (word) { return !STOP.has(word); }).map(stem);
@@ -656,6 +664,7 @@
             });
         });
         phrases = Array.from(byText.values()).sort(function (a, b) { return b.stems.length - a.stems.length; });
+        everywhere = new Set(listOf(lists.everywhere).map(function (text) { return phraseStems(text).join(" "); }));
         // one-way links: each target brings its whole synonym group ("chatbot" → "чат-бот" too)
         related = new Map();
         Object.keys(lists.related || {}).forEach(function (word) {
@@ -753,20 +762,29 @@
             items.push(item);
         });
 
-        const concepts = [];
+        let concepts = [];
         for (let i = 0; i < items.length;) {
             const phrase = phraseAt(items, i);
-            if (phrase) {
-                concepts.push(phraseConcept(items.slice(i, i + phrase.stems.length), phrase));
-                i += phrase.stems.length;
-            } else {
-                concepts.push(wordConcept(items[i]));
-                i++;
-            }
+            const span = phrase ? phrase.stems.length : 1;
+            const concept = phrase ? phraseConcept(items.slice(i, i + span), phrase) : wordConcept(items[i]);
+            const typed = items.slice(i, i + span).map(function (item) { return item.stem; }).join(" ");
+            concept.everywhere = everywhere.has(typed);
+            if (concept.alternatives.length) concepts.push(concept);
+            i += span;
         }
+        // "AI" is left out when another word of the query is on the site
+        // ("how does AI recognise faces?"), but not while that word is still
+        // being typed ("ai w" keeps finding AI)
+        const others = concepts.filter(function (concept) { return !concept.everywhere; });
+        const onSite = others.some(function (concept) {
+            return concept.alternatives.some(function (alternative) {
+                return alternative.stems.every(function (s) { return index.postings.has(s); });
+            });
+        });
+        if (onSite) concepts = others;
         // For the phrase bonus: what each word may be, in the order typed
         const order = items.map(function (item) { return item.options.concat(item.more); });
-        return { concepts: concepts.filter(function (concept) { return concept.alternatives.length; }), order: order };
+        return { concepts: concepts, order: order };
     }
 
     // A few words that are in the synonym list: every phrase of their group(s)
@@ -835,10 +853,16 @@
                 });
                 const size = alternative.stems.length;
                 sums.forEach(function (sum, number) {
+                    // the best score of any form of the concept, and the best share of it found
+                    // (a name that holds "neural network" AND "neural net" covers it fully)
                     const value = alternative.weight * concept.span * sum / size;
+                    const part = alternative.weight * counts.get(number) / size;
                     const old = best.get(number);
-                    if (!old || value > old.value) {
-                        best.set(number, { value: value, part: alternative.weight * counts.get(number) / size });
+                    if (!old) {
+                        best.set(number, { value: value, part: part });
+                    } else {
+                        old.value = Math.max(old.value, value);
+                        old.part = Math.max(old.part, part);
                     }
                 });
             });
@@ -857,7 +881,7 @@
         totals.forEach(function (total, number) {
             const doc = docs[number];
             const factor = Number(boost[doc.type]) || 1;
-            found.push({ doc: doc, number: number, score: total.score * factor, match: total.covered / fullWeight });
+            found.push({ doc: doc, number: number, score: total.score * factor * doc.weight, match: total.covered / fullWeight });
         });
         sortFound(found);
 
@@ -873,6 +897,7 @@
             sortFound(found);
         }
         found.marks = marksOf(plan);
+        found.words = plan.concepts.length;
         return found;
     }
 
@@ -1078,6 +1103,9 @@
                 if (!A.has(key + "title")) continue;
                 const lessonTitle = t(key + "title");
                 const section = t("search.lesson", { n: A.format.number(n), title: lessonTitle });
+                // section: where it is ("Lesson 3 · Neural Networks");
+                // label: the part itself ("Lesson 3 · Inspired by the brain")
+                const name = function (title) { return t("search.lesson", { n: A.format.number(n), title: title }); };
                 for (let k = 1; A.has(key + "s" + k + ".h"); k++) {
                     const part = key + "s" + k + ".";
                     docs.push({
@@ -1087,6 +1115,7 @@
                         text: t(part + "p") + (A.has(part + "note") ? " " + t(part + "note") : ""),
                         keywords: section + (k === 1 && A.has(key + "desc") ? " " + t(key + "desc") : ""),
                         section: section,
+                        label: name(t(part + "h")),
                         open: openLesson.bind(null, n, "s" + k)
                     });
                 }
@@ -1098,6 +1127,8 @@
                         text: texts([key + "key1", key + "key2", key + "key3"]),
                         keywords: section,
                         section: section,
+                        label: name(t("search.keyIdeas")),
+                        weight: SUMMARY_WEIGHT,
                         open: openLesson.bind(null, n, "keys")
                     });
                 }
@@ -1287,6 +1318,7 @@
             };
         });
         results.switched = switched;
+        results.words = found.words || 0;
         lastQueryMs = Math.round((performance.now() - started) * 100) / 100;
         return results;
     }
