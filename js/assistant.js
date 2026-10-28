@@ -189,14 +189,14 @@
         return cleanTerm(A.util.attempt(function () { return A.glossary.random(); }, null));
     }
 
-    // A term by its id, with its example: { id, term, definition, example } as plain text, or null
+    // A term by its id, with its example: { id, term, definition, example, short } as plain text, or null
     function glossaryTerm(id) {
         if (!A.glossary || typeof id !== "string" || !id) return null;
         const found = A.util.attempt(function () { return A.glossary.term(id); }, null);
         const term = cleanTerm(found);
         if (!term) return null;
         term.example = plainText(found.example);
-        term.short = plainText(found.short);       // a short definition, if the glossary has one
+        term.short = plainText(found.short);       // a short definition: TODO(glossary), the terms have none yet
         return term;
     }
 
@@ -1217,7 +1217,7 @@
         return plain;
     }
 
-    // The option buttons, in the order shown: [{ index, number, label, state }]
+    // The option buttons, in the order shown: [{ index, number, label, state, chosen }]
     // state: "" (not answered), "right", "wrong" (the person's wrong pick) or "other"
     function quizOptions(question, data) {
         const answered = isChoice(data.answer, question.options.length) ? data.answer : -1;
