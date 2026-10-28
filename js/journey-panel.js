@@ -330,14 +330,17 @@
         }
         const best = quizBest();
         if (A.quiz && (!best || best.share < QUIZ_GOOD)) {
+            const mode = best && best.mode === "timed" ? "timed" : "classic";
+            // A quiz pays its XP once a day in each mode: once it has paid today, no reward is promised
+            const paidToday = Object.prototype.hasOwnProperty.call(host.state.awarded, "quiz." + mode + "@" + host.today());
             list.push({
                 icon: "perfect-quiz",
                 title: t(best ? "journey.next.quizAgain" : "journey.next.quiz"),
                 sub: best
                     ? t("journey.next.quizAgainText", { score: A.format.number(best.score), total: A.format.number(best.total) })
                     : t("journey.next.quizText"),
-                xp: rules.quiz.xp,
-                run: function () { A.quiz.start(best && best.mode === "timed" ? { timed: true } : undefined); }
+                xp: paidToday ? 0 : rules.quiz.xp,
+                run: function () { A.quiz.start(mode === "timed" ? { timed: true } : undefined); }
             });
         }
         const term = termOfDay();
@@ -397,7 +400,7 @@
                             '<span class="jr-step-title">' + esc(step.title) + "</span>" +
                             (step.sub ? '<span class="jr-step-sub">' + esc(step.sub) + "</span>" : "") +
                         "</span>" +
-                        '<span class="jr-step-xp mono">' + esc(t("journey.next.reward", { n: A.format.number(step.xp) })) + "</span>" +
+                        (step.xp ? '<span class="jr-step-xp mono">' + esc(t("journey.next.reward", { n: A.format.number(step.xp) })) + "</span>" : "") +
                     "</button>" +
                 "</li>";
             }).join("") + "</ul>";
