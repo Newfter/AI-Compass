@@ -1290,10 +1290,14 @@
                 return;
             }
             editButton.setPressed(false);
-            if (episode > 0 && !armed) {
+            // Ask first when editing loses something: what the robot has learned, or the user's
+            // own maze (there is one "My maze", and the first change to an example replaces it)
+            const replacesMine = Boolean(myMaze) && preset.id !== MINE;
+            if ((episode > 0 || replacesMine) && !armed) {
+                const question = replacesMine ? "lab.maze.editAskMine" : "lab.maze.editAsk";
                 armed = true;
-                askHint.show();
-                ctx.announce(t("lab.maze.editAsk"));
+                askHint.set(question);
+                ctx.announce(t(question));
                 return;
             }
             disarm();
