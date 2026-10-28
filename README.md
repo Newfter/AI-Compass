@@ -40,6 +40,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | --- | --- |
 | `index.html` | The page: the menu, the first screen (the "hero"), one `<section>` for each part of the site, and the list of styles and scripts. Each part has an empty `<div data-feature="...">` that its script fills. A small script in the `<head>` applies the saved theme and calm mode before the page is drawn. |
 | `style.css` | What the whole page shares: the design tokens (colours, fonts and sizes of both themes), buttons, cards, the menu, the hero, the section frames, toasts, the phone layout and calm mode. |
+| `css/components.css` | Small visual parts that several features share, each written once as a `ui-...` class: corner brackets, the light that scans along a card, sliders, on/off switches, filter chips, answer options and progress rings. |
 | `css/effects.css` | The visual effects and the neural network background. |
 | `css/lessons.css` | The lessons: progress panel, cards, the lesson reader, the mini-labs and the certificate. |
 | `css/lab.css` | The AI Lab. |
@@ -138,6 +139,10 @@ Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `
 **Pop-up windows** (the lesson reader, Compass Bot, the Ctrl+K palette, the phone menu) register with `A.overlays`. Core then treats them all the same way: a window that covers the page locks the page behind it, Esc closes the window on top, and the focus goes back to where it was.
 
 **Design tokens.** The colours, fonts, sizes, shadows and layers are CSS variables in section 1 of `style.css`, with one set for the dark theme and one for the light theme (`data-theme="light"` on `<html>`). Use them instead of writing a colour again: `color: var(--text-muted);`, `background: rgba(var(--accent-rgb), 0.12);`.
+
+**Shared components.** A visual part that several features use (corner brackets, sliders, on/off switches, chips...) is written once in `css/components.css`, as a `ui-...` class. A feature adds that class next to its own one in its HTML template, for example `<input class="lsn-range ui-range" type="range">`, and changes only the custom properties listed at the top of that file.
+
+**Screen sizes.** Every CSS file uses the same few widths (breakpoints), listed at the top of `style.css`. The three main ones are also in `js/core.js` as `A.breakpoints`: change both together.
 
 
 ## Recipes
@@ -438,7 +443,7 @@ These keep the code easy to read, as if one person wrote it all.
 - **Style:** 4 spaces to indent, double quotes, semicolons. Keep the style of the file you are in.
 - **Every text in both languages**, in `js/content/`. Russian uses the informal "ты".
 - **No hard-coded counts.** Never write "6 lessons" or "12 questions": count the data and use `{n}` and the plural forms (see [How the pieces talk](#how-the-pieces-talk)).
-- **No numbers out of nowhere.** A time, a size or a limit goes in the Settings block with a name (`const RESET_CONFIRM_TIME = 4000;`). Colours and sizes in CSS use the design tokens.
+- **No numbers out of nowhere.** A time, a size or a limit goes in the Settings block with a name (`const RESET_CONFIRM_TIME = 4000;`). Colours and sizes in CSS use the design tokens, and screen widths use the breakpoints at the top of `style.css`.
 - **Use the toolkit.** If `js/core.js` already does it (saving, plurals, pop-up windows, scrolling, random numbers...), use it instead of writing it again.
 - **Saved data.** Use `A.storage` (it adds the `aic:` prefix). Don't rename a saved key: people would lose their progress. If you really must, move the value with `A.storage.migrate(oldKey, newKey)`.
 - **Respect calm mode.** Before an animation, check `A.motion.ok()`.

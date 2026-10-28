@@ -97,7 +97,7 @@
     const $ = (selector) => mount.querySelector(selector);
     const $$ = (selector) => Array.prototype.slice.call(mount.querySelectorAll(selector));
 
-    // The filled part of a slider (.lab-range draws it from --fill)
+    // The filled part of a slider: its CSS colours the line from the start up to --fill
     function updateRangeFill(range) {
         const min = Number(range.min);
         const max = Number(range.max);
