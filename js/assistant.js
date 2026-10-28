@@ -1034,9 +1034,12 @@
         }, null) || [];
         // A text is about the question if its title holds one of the question's words,
         // or if the question has a few words: one word found somewhere in a long text
-        // is not enough ("what is photosynthesis?" is only an example in "Prompt")
+        // is not enough ("what is photosynthesis?" is only an example in "Prompt").
+        // A year is enough for the milestone of that year ("what happened in 1997?").
+        const years = question.text.match(/\d{4}/g) || [];
         const about = function (result) {
-            return result.titleHTML.indexOf("<mark>") !== -1 || results.words >= SITE_WORDS;
+            return result.titleHTML.indexOf("<mark>") !== -1 || results.words >= SITE_WORDS ||
+                years.some(function (year) { return String(result.section || "").indexOf(year) !== -1; });
         };
         const places = results.filter(function (result) { return result.match >= SITE_RELATED && about(result); });
         const top = results[0];
