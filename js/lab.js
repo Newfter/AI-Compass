@@ -140,7 +140,10 @@
        so it is turned back into a list here, and every entry is checked.
        ========================================================= */
     const stored = A.content.get("lab.catalogue") || {};
-    const byId = {};
+    // The experiments by id. Object.create(null) makes an object without the names every
+    // object has ("constructor", "toString"...), so a link like #lab/constructor is not
+    // taken for an experiment.
+    const byId = Object.create(null);
     const CATALOGUE = Object.keys(stored)
         .sort(function (a, b) { return Number(a) - Number(b); })
         .map(function (key) { return stored[key]; })
@@ -398,7 +401,7 @@
        Scripts run in the order they were asked for, so the texts are
        always there before the code that uses them.
        ========================================================= */
-    const specs = {};
+    const specs = Object.create(null);    // the experiments that registered, by id (see byId)
 
     function define(id, spec) {
         if (!spec || typeof spec.create !== "function") {
