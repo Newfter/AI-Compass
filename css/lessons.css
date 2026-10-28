@@ -2765,8 +2765,13 @@
 
 /* ===== 8. CALM MODE AND REDUCED MOTION =====
    core.js puts "fx-motion-off" on <html> for both, and style.css then stops every
-   animation and transition. Only this is left: the panel never sits shifted. */
+   animation and transition. Left for this file: the panel never sits shifted, and
+   the card light that follows the mouse is off (like the glare of effects.css). */
 
 html.fx-motion-off .lsn-reader-panel {
     transform: none;
+}
+
+html.fx-motion-off .lsn-card::before {
+    display: none;
 }

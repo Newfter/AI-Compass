@@ -762,8 +762,9 @@
 
     // A soft coloured light follows the mouse over a card (the CSS draws it at --mx / --my).
     // Like the glare of effects.js, it only follows a real mouse, and only while
-    // animations are on. The card's place on the page is read once, when the mouse
-    // comes onto it, and --mx / --my are written at most once per frame.
+    // animations are on (with the motion off, css/lessons.css hides the light).
+    // The card's place on the page is read once, when the mouse comes onto it,
+    // and --mx / --my are written at most once per frame.
     const finePointer = A.media(A.queries.finePointer);
     const cardLight = { card: null, left: 0, top: 0, x: 0, y: 0, frame: 0 };
 
