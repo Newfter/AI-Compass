@@ -9,6 +9,8 @@
      search for "chatbot" does not look for "chatgpt");
    - everywhere: what every text of the site is about ("AI"), skipped
      when a query has other words;
+   - leansBack: words that point back to the sentence before ("This
+     is called bias."): Compass Bot's answers never start with them;
    - pages: the parts of the page searched as a whole (the hero,
      About and the section headers).
    Used by js/search.js (and through it by the Ctrl+K palette and
@@ -138,6 +140,18 @@ window.AICompass.content.set("search", {
        for "recognise faces", "AI winter" for "winter". Alone ("AI"), or
        inside a longer name ("generative AI"), they still count. */
     everywhere: ["ai", "artificial intelligence", "ии", "искусственный интеллект"],
+
+    /* ----- Words that lean on the sentence before -----
+       A sentence that starts with one of them ("This is called bias.",
+       "Поэтому...") points back to the sentence before it. An answer of
+       Compass Bot never starts with such a sentence: it takes the one
+       before it too, so "this" has something to point to. */
+    leansBack: {
+        en: ["this", "that", "that's", "these", "those", "it", "it's", "its", "they", "their", "he", "she",
+            "his", "her", "such", "so", "then"],
+        ru: ["это", "этот", "эта", "эти", "этого", "этой", "этим", "этих", "так", "такой", "такая", "такое",
+            "такие", "поэтому", "он", "она", "оно", "они", "его", "её", "их", "тогда", "там"]
+    },
 
     /* ----- One-way links -----
        A search for the word on the left also looks for the words on the right

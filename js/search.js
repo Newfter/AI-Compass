@@ -44,8 +44,9 @@
      open(type, id, from)      opens a document; false if there is no such one
      passage(type, id, options) -> { text, from, to, count } or null
                                1-3 whole sentences of a document, for Compass Bot:
-                               the best ones for options.query, or sentences
-                               options.from (up to options.to) of options.count
+                               the best ones for options.query (never starting with
+                               "This is called..." without the sentence before it),
+                               or sentences options.from (up to options.to) of options.count
      document(type, id) -> { type, id, title, section, label, icon, text } or null
      refresh()                 forgets the indexes: the next query builds them again
      info() -> { lang, documents, words, buildMs, phases, queryMs, types }
@@ -160,7 +161,8 @@
     const SNIPPET_LATE = 60;    // ...and so is one whose first match comes after this many letters,
     const SNIPPET_LEAD = 24;    // ...keeping about this many letters before the first match
     const PASSAGE_MAX = 260;    // letters in a passage for the bot (whole sentences only)
-    const PASSAGE_SENTENCES = 3;
+    const PASSAGE_SENTENCES = 3; // ...and at most 3 sentences (a passage that would start with
+                                 // "This is called..." takes the sentence before it too: passageOf)
 
     // ----- Building a little at a time (see ready()) -----
     const SLICE_MS = 8;         // work at most 8 ms in a row, so the page stays smooth
@@ -237,6 +239,10 @@
     // Little words that are skipped: "the", "что" (js/content/search.js)
     const STOP = new Set(listOf(lists.stopWords && lists.stopWords.en)
         .concat(listOf(lists.stopWords && lists.stopWords.ru)).map(clean));
+
+    // Words that point back to the sentence before: "This is called bias." (section 8)
+    const LEANS_BACK = new Set(listOf(lists.leansBack && lists.leansBack.en)
+        .concat(listOf(lists.leansBack && lists.leansBack.ru)).map(clean));
 
     // ----- Stems: the end of a word is cut off, so different forms match -----
     // This is a light version of what search engines do. It doesn't need to be
@@ -1010,6 +1016,12 @@
         return markHTML(text, marks);
     }
 
+    // Does a sentence start with a word that points back ("This is called bias.")?
+    function leansBack(sentence) {
+        const first = split(sentence, false)[0];
+        return Boolean(first) && LEANS_BACK.has(first);
+    }
+
     // 1-3 whole sentences of a document (at most PASSAGE_MAX letters, or one sentence).
     // options.from/to: those sentences; options.query: the best ones for it.
     function passageOf(index, doc, options) {
@@ -1043,6 +1055,13 @@
                     const end = grow(start);
                     const value = valueOf(index, sentences.slice(start, end).join(" "), marks);
                     if (value > bestValue) { bestValue = value; from = start; to = end; }
+                }
+                // "This is called bias." needs the sentence before it: the passage shows
+                // that one too, and drops its last sentence if the query words don't need it
+                if (from > 0 && leansBack(sentences[from])) {
+                    from--;
+                    const shorter = from + PASSAGE_SENTENCES;
+                    if (shorter < to && valueOf(index, sentences.slice(from, shorter).join(" "), marks) >= bestValue) to = shorter;
                 }
             }
         }
