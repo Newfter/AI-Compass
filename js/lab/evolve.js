@@ -766,6 +766,1049 @@
     }
 
     /* =========================================================
+       6. DRAWING: THE TRACK, THE CARS, THE BRAIN
+       The world (WORLD.width × WORLD.height) is scaled to fit the canvas.
+       The track changes rarely, so it is drawn once into a hidden canvas
+       (the "layer") and copied onto the screen in every frame; only the
+       cars are drawn again each time.
+       ========================================================= */
+    // Where the world goes on a canvas: screen x = left + world x × scale
+    function fitWorld(view) {
+        const scale = Math.min(view.width / WORLD.width, view.height / WORLD.height);
+        return { scale: scale, left: (view.width - WORLD.width * scale) / 2, top: (view.height - WORLD.height * scale) / 2 };
+    }
+
+    // A closed line through points ({ x, y }), as a path
+    function traceLoop(g, points) {
+        g.beginPath();
+        points.forEach(function (p, i) {
+            if (i === 0) g.moveTo(p.x, p.y);
+            else g.lineTo(p.x, p.y);
+        });
+        g.closePath();
+    }
+
+    // The track, into the layer: the asphalt, the faint gates, the checkered start line and
+    // the two walls, glowing in the accent colour (no glow in calm mode)
+    function drawTrackLayer(layer, view, track, c, glow) {
+        layer.width = Math.max(1, Math.round(view.width * view.dpr));
+        layer.height = Math.max(1, Math.round(view.height * view.dpr));
+        const g = layer.getContext("2d");
+        const fit = fitWorld(view);
+        const pixel = 1 / fit.scale;                 // one screen pixel, in world units
+        // from here on, draw in world units
+        g.setTransform(view.dpr * fit.scale, 0, 0, view.dpr * fit.scale, view.dpr * fit.left, view.dpr * fit.top);
+        g.lineJoin = "round";
+
+        // the asphalt: the centre line, drawn as wide as the road
+        traceLoop(g, track.centre);
+        g.lineWidth = track.width;
+        g.strokeStyle = kit.alpha(c.text, c.light ? ASPHALT.light : ASPHALT.dark);
+        g.stroke();
+
+        // the gates (gate 0, the start line, comes next)
+        g.beginPath();
+        for (let k = 1; k < track.gates.length; k++) {
+            g.moveTo(track.gates[k].a.x, track.gates[k].a.y);
+            g.lineTo(track.gates[k].b.x, track.gates[k].b.y);
+        }
+        g.lineWidth = pixel;
+        g.strokeStyle = kit.alpha(c.text, GATE_ALPHA);
+        g.stroke();
+        drawStartLine(g, track, c);
+
+        // the walls (the glow's size is in real pixels: the transform doesn't change it)
+        if (glow) {
+            g.shadowColor = c.accent;
+            g.shadowBlur = WALL_GLOW * view.dpr;
+        }
+        g.lineWidth = WALL_WIDTH * pixel;
+        g.strokeStyle = c.accent;
+        traceLoop(g, track.left);
+        g.stroke();
+        traceLoop(g, track.right);
+        g.stroke();
+    }
+
+    // The start line: two rows of squares across the road, light and dark in turn
+    function drawStartLine(g, track, c) {
+        const gate = track.gates[0];
+        const p = track.centre[0];
+        const size = track.width / START_SQUARES;
+        const across = { x: (gate.b.x - gate.a.x) / track.width, y: (gate.b.y - gate.a.y) / track.width };   // one unit, left to right
+        const along = { x: p.dx / p.length, y: p.dy / p.length };                                             // one unit, forwards
+        for (let row = 0; row < 2; row++) {
+            for (let i = 0; i < START_SQUARES; i++) {
+                // the square's corner on the left wall side, then its four corners
+                const x = gate.a.x + across.x * i * size + along.x * (row - 1) * size;
+                const y = gate.a.y + across.y * i * size + along.y * (row - 1) * size;
+                g.beginPath();
+                g.moveTo(x, y);
+                g.lineTo(x + across.x * size, y + across.y * size);
+                g.lineTo(x + across.x * size + along.x * size, y + across.y * size + along.y * size);
+                g.lineTo(x + along.x * size, y + along.y * size);
+                g.closePath();
+                g.fillStyle = (i + row) % 2 === 0 ? kit.alpha(c.text, 0.75) : kit.alpha(c.bg, 0.75);
+                g.fill();
+            }
+        }
+    }
+
+    // A car as a small arrow pointing where it drives. size: px from tail to nose.
+    function drawCar(g, fit, car, size, color, outline) {
+        const x = fit.left + car.x * fit.scale;
+        const y = fit.top + car.y * fit.scale;
+        const cos = Math.cos(car.heading);
+        const sin = Math.sin(car.heading);
+        g.beginPath();
+        ARROW.forEach(function (corner, i) {
+            // the corner turned with the car, then moved to where the car is
+            const px = x + (corner[0] * cos - corner[1] * sin) * size;
+            const py = y + (corner[0] * sin + corner[1] * cos) * size;
+            if (i === 0) g.moveTo(px, py);
+            else g.lineTo(px, py);
+        });
+        g.closePath();
+        if (outline) {
+            g.lineJoin = "round";
+            g.lineWidth = 3;
+            g.strokeStyle = outline;
+            g.stroke();
+        }
+        g.fillStyle = color;
+        g.fill();
+    }
+
+    // A car's 5 sensors: a line from its nose to what each one sees, and a dot where it meets a wall
+    function drawRays(g, fit, car, c) {
+        const noseX = car.x + Math.cos(car.heading) * CAR.radius;
+        const noseY = car.y + Math.sin(car.heading) * CAR.radius;
+        g.lineWidth = 1.5;
+        for (let r = 0; r < RAY_ANGLES.length; r++) {
+            const angle = car.heading + (RAY_ANGLES[r] * Math.PI) / 180;
+            const distance = car.rays[r] * RAY_LENGTH;
+            const endX = fit.left + (noseX + Math.cos(angle) * distance) * fit.scale;
+            const endY = fit.top + (noseY + Math.sin(angle) * distance) * fit.scale;
+            g.beginPath();
+            g.moveTo(fit.left + noseX * fit.scale, fit.top + noseY * fit.scale);
+            g.lineTo(endX, endY);
+            g.strokeStyle = kit.alpha(c.accent2, car.rays[r] < 1 ? 0.8 : 0.35);
+            g.stroke();
+            if (car.rays[r] < 1) kit.marker(g, "dot", endX, endY, 3, c.warning);
+        }
+    }
+
+    // One frame of the track view. frame = { cars, leader, hud, drawing (draw mode), stroke,
+    // hereText }: the layer, then the stopped cars (grey), the others from the last to the
+    // first (brighter = further), and the leader on top, bigger, with its sensors
+    function drawScene(view, layer, frame, c) {
+        const g = view.ctx;
+        g.clearRect(0, 0, view.width, view.height);
+        if (!view.width || !view.height) return;
+        const fit = fitWorld(view);
+        g.globalAlpha = frame.drawing ? DRAW_FADE : 1;
+        g.drawImage(layer, 0, 0, view.width, view.height);
+        g.globalAlpha = 1;
+        if (frame.drawing) {
+            drawStroke(g, fit, frame, c);
+            return;
+        }
+
+        const size = Math.max(CAR_SIZE.min, CAR_SIZE.world * fit.scale);
+        const order = frame.cars.slice().sort(function (a, b) { return fitness(a) - fitness(b); });
+        order.forEach(function (car) {
+            if (car !== frame.leader && car.state !== "driving" && car.state !== "finished") drawCar(g, fit, car, size, kit.alpha(c.muted, 0.55), null);
+        });
+        order.forEach(function (car, i) {
+            if (car === frame.leader || (car.state !== "driving" && car.state !== "finished")) return;
+            const rank = order.length > 1 ? i / (order.length - 1) : 1;     // 0 for the last car, 1 for the first
+            drawCar(g, fit, car, size, kit.scale(RANK_COLORS.low + (1 - RANK_COLORS.low) * rank), null);
+        });
+        if (frame.leader) {
+            drawRays(g, fit, frame.leader, c);
+            drawCar(g, fit, frame.leader, size * LEADER_SCALE, kit.scale(1), c.surface);
+        }
+
+        g.font = kit.font(12, 600);
+        g.fillStyle = c.muted;
+        g.textAlign = "left";
+        g.textBaseline = "top";
+        g.fillText(frame.hud, HUD_PAD, HUD_PAD);
+    }
+
+    // Draw mode: the edge of the field, and the line drawn so far (or a short "draw here")
+    function drawStroke(g, fit, frame, c) {
+        g.setLineDash([6, 6]);
+        g.lineWidth = 1;
+        g.strokeStyle = kit.alpha(c.text, 0.4);
+        g.strokeRect(fit.left + 0.5, fit.top + 0.5, WORLD.width * fit.scale - 1, WORLD.height * fit.scale - 1);
+        g.setLineDash([]);
+        const points = frame.stroke ? frame.stroke.points : [];
+        if (points.length === 0) {
+            g.font = kit.font(13, 600);
+            g.fillStyle = c.muted;
+            g.textAlign = "center";
+            g.textBaseline = "middle";
+            g.fillText(frame.hereText, fit.left + (WORLD.width * fit.scale) / 2, fit.top + (WORLD.height * fit.scale) / 2);
+            return;
+        }
+        g.beginPath();
+        points.forEach(function (p, i) {
+            if (i === 0) g.moveTo(fit.left + p[0] * fit.scale, fit.top + p[1] * fit.scale);
+            else g.lineTo(fit.left + p[0] * fit.scale, fit.top + p[1] * fit.scale);
+        });
+        g.lineJoin = "round";
+        g.lineCap = "round";
+        g.lineWidth = 3;
+        g.strokeStyle = c.accent2;
+        g.stroke();
+        kit.marker(g, "dot", fit.left + points[0][0] * fit.scale, fit.top + points[0][1] * fit.scale, 5, c.success);
+    }
+
+    // The brain of a car as a small diagram: 6 inputs on the left, 8 hidden neurons in the
+    // middle, 2 outputs on the right. A line's colour shows its weight's sign (kit.diverge)
+    // and its thickness the weight's size; a circle's brightness shows its value right now.
+    // labels = { inputs: [6 texts], outputs: [2 texts] }
+    function drawBrain(view, car, labels, c) {
+        const g = view.ctx;
+        const width = view.width;
+        const height = view.height;
+        g.clearRect(0, 0, width, height);
+        if (!width || !height || !car) return;
+        const x = [BRAIN.left, (BRAIN.left + width - BRAIN.right) / 2, width - BRAIN.right];
+        // the y of neuron i of a column with count neurons: spread evenly from top to bottom
+        function yOf(count, i) {
+            return BRAIN.pad + ((height - 2 * BRAIN.pad) * (i + 0.5)) / count;
+        }
+
+        for (let h = 0; h < HIDDEN; h++) {
+            for (let i = 0; i < INPUTS; i++) drawLink(g, x[0], yOf(INPUTS, i), x[1], yOf(HIDDEN, h), car.weights[h * (INPUTS + 1) + i]);
+        }
+        for (let o = 0; o < OUTPUTS; o++) {
+            for (let h = 0; h < HIDDEN; h++) drawLink(g, x[1], yOf(HIDDEN, h), x[2], yOf(OUTPUTS, o), car.weights[HIDDEN_NUMBERS + o * (HIDDEN + 1) + h]);
+        }
+
+        // inputs are 0 … 1; hidden neurons and outputs are −1 … +1 (tanh)
+        for (let i = 0; i < INPUTS; i++) drawNeuron(g, x[0], yOf(INPUTS, i), car.inputs[i], c);
+        for (let h = 0; h < HIDDEN; h++) drawNeuron(g, x[1], yOf(HIDDEN, h), (car.activity.hidden[h] + 1) / 2, c);
+        for (let o = 0; o < OUTPUTS; o++) drawNeuron(g, x[2], yOf(OUTPUTS, o), (car.activity.output[o] + 1) / 2, c);
+
+        g.font = kit.font(11);
+        g.fillStyle = c.muted;
+        g.textBaseline = "middle";
+        g.textAlign = "right";
+        labels.inputs.forEach(function (text, i) { g.fillText(text, x[0] - BRAIN.radius - 6, yOf(INPUTS, i)); });
+        g.textAlign = "left";
+        labels.outputs.forEach(function (text, o) {
+            g.fillText(text + " " + A.format.number(car.activity.output[o], { digits: 2 }), x[2] + BRAIN.radius + 6, yOf(OUTPUTS, o));
+        });
+    }
+
+    function drawLink(g, x1, y1, x2, y2, weight) {
+        const size = Math.min(1, Math.abs(weight) / BRAIN.bigWeight);
+        g.beginPath();
+        g.moveTo(x1, y1);
+        g.lineTo(x2, y2);
+        g.lineWidth = 0.5 + 2.5 * size;
+        g.strokeStyle = kit.alpha(kit.diverge(clamp(weight / BRAIN.bigWeight, -1, 1)), 0.85);
+        g.stroke();
+    }
+
+    // value: 0 … 1 (dim … bright)
+    function drawNeuron(g, x, y, value, c) {
+        g.beginPath();
+        g.arc(x, y, BRAIN.radius, 0, Math.PI * 2);
+        g.fillStyle = kit.scale(value);
+        g.fill();
+        g.lineWidth = 1.5;
+        g.strokeStyle = kit.alpha(c.text, 0.35);
+        g.stroke();
+    }
+
+    /* =========================================================
+       7. THE EXPERIMENT
+       The page, and the life of a run: a population of brains races,
+       the race ends, the next generation is made, the next race starts.
+       ========================================================= */
+    function create(stage, ctx) {
+        // ----- The tracks: the presets (js/content/lab/evolve.js) and your own drawing -----
+        const content = A.content.get("lab.evolve") || {};
+        const presets = (content.tracks || []).filter(function (item) { return isTrackData(item.points, item.width); });
+        let mine = ctx.store.get("track", null, isSavedTrack);       // { v, points, width } or null
+        const built = {};                                               // id -> its built track
+
+        // ----- State -----
+        const settings = { population: POPULATION, rate: RATE.value, size: SIZE.value, crossover: false, keep: false };
+        let trackId = presets[0].id;
+        let track = trackOf(trackId);
+        let seed = 0;
+        let rng = null;
+        let race = null;              // this generation's cars
+        let generation = 1;
+        let made = null;              // { rate, size }: how this generation's brains were made (null: at random)
+        let next = null;              // the next generation's brains, waiting for their race...
+        let nextMade = null;          // ...and how they were made
+        let rest = 0;                 // Watch: ticks left to look at the finished race
+        const history = { best: [], average: [], laps: [] };     // per generation; laps: where the best car did more laps than ever before
+        let bestEver = null;          // { fitness, weights, generation }
+        let bestLap = null;           // seconds
+        let firstLap = null;          // the generation of the first full lap
+        let mostLaps = 0;             // the most laps a best car has driven in this run (the chart rings each new one)
+        let stuck = 0;                // challenge 2: generations with rate 0 and no better best car
+        let below = 0;                // challenge 3: generations in a row at the biggest size with a lower average...
+        let reference = null;         // ...than this one (the last average made with a smaller size)
+        let transfer = null;          // { from, lapped, result }: brains brought from another track
+        let state = "ready";          // "ready" | "running" | "paused" | "done"
+        let mode = "evolve";          // "evolve" | "champion" (a replay) | "draw"
+        let replay = null;            // the champion's race
+        let speed = "watch";
+        let stepping = false;         // Step in Fast or Turbo: the loop runs until the generation ends
+        let resumeOnShow = false;     // running when the hub paused us
+        let stroke = null;            // the drawing in progress: { id, points }
+        let note = null;              // what the explain panel's note says: a function -> [key, values]
+        const layer = document.createElement("canvas");     // the track, drawn once (section 6)
+        let layerKey = "";
+        let lastPaint = -Infinity;
+        let lastBrain = -Infinity;
+        let lastChart = -Infinity;
+        let chartDirty = true;
+
+        // ----- The page: kit parts, plus the brain panel (Small helpers) -----
+        const ui = kit.layout(stage, { side: true });
+        const scene = kit.canvas(ui.main, { aspect: WORLD.width / WORLD.height, minHeight: 200, labelKey: "lab.evolve.canvas" });
+        const legend = kit.legend(legendItems());
+        const drawHint = kit.hint({ key: "lab.evolve.drawHint", tone: "tip" });
+        const drawProblem = kit.hint({ tone: "warn" });
+        drawProblem.hide();
+        const drawBox = document.createElement("div");
+        drawBox.className = "ev-draw";
+        drawBox.hidden = true;
+        drawBox.append(drawHint.element, drawProblem.element,
+            kit.button("lab.evolve.cancel", { icon: "close", size: "sm", onClick: cancelDraw }).element);
+        const generationStat = kit.stat({ labelKey: "lab.evolve.generation", value: 1 });
+        const drivingStat = kit.stat({ labelKey: "lab.evolve.driving" });
+        const bestStat = kit.stat({ labelKey: "lab.evolve.bestFitness", format: oneDecimal });
+        const lapStat = kit.stat({ labelKey: "lab.evolve.bestLap", format: secondsText });
+        ui.main.append(legend.element, drawBox, kit.row([generationStat, drivingStat, bestStat, lapStat], { grid: true }));
+        const chartView = kit.canvas(ui.main, { height: CHART_HEIGHT, labelKey: "lab.evolve.chart" });
+        const chart = kit.lineChart(chartView, {
+            series: [
+                { values: history.best, colorIndex: 0, labelKey: "lab.evolve.best", marks: history.laps },
+                { values: history.average, colorIndex: 1, labelKey: "lab.evolve.average" }
+            ],
+            x0: 1,
+            yMin: 0,
+            format: oneDecimal,
+            xLabelKey: "lab.evolve.generation",
+            yLabelKey: "lab.evolve.fitness"
+        });
+        ui.main.appendChild(kit.legend([
+            { labelKey: "lab.evolve.best", colorIndex: 0, shape: "line" },
+            { labelKey: "lab.evolve.average", colorIndex: 1, shape: "line" }
+        ]).element);
+
+        const playButton = kit.button("lab.kit.play", { icon: "play", variant: "primary", onClick: togglePlay });
+        const stepButton = kit.button("lab.kit.step", { icon: "step", title: "lab.evolve.stepTitle", onClick: stepOnce });
+        const status = kit.status("ready");
+        const speedControl = kit.segmented({
+            labelKey: "lab.kit.speed",
+            options: [
+                { value: "watch", labelKey: "lab.kit.speedWatch" },
+                { value: "fast", labelKey: "lab.kit.speedFast" },
+                { value: "turbo", labelKey: "lab.kit.speedTurbo" }
+            ],
+            value: speed,
+            onChange: setSpeed
+        });
+        const trackSelect = kit.select({ labelKey: "lab.evolve.track", options: trackOptions(), value: trackId, onChange: chooseTrack });
+        const trackNote = document.createElement("p");
+        trackNote.className = "ev-note";
+        const championButton = kit.button("lab.evolve.champion", { icon: "sparkle", onClick: toggleChampion });
+
+        const brainPanel = disclosure("lab.evolve.brainTitle");
+        const brainView = kit.canvas(brainPanel.body, { height: BRAIN.height, labelKey: "lab.evolve.brainCanvas" });
+        const brainCaption = document.createElement("p");
+        brainCaption.className = "ev-note";
+        setKey(brainCaption, "lab.evolve.brainCaption");
+        brainPanel.body.append(kit.legend([
+            { labelKey: "lab.evolve.plus", color: "var(--accent-2)", shape: "line" },
+            { labelKey: "lab.evolve.minus", color: "var(--danger)", shape: "line" }
+        ]).element, brainCaption);
+
+        const populationSelect = kit.select({
+            labelKey: "lab.evolve.population", hintKey: "lab.evolve.populationHint", value: POPULATION,
+            options: POPULATIONS.map(function (n) { return { value: n, label: String(n) }; }),
+            onChange: setPopulation
+        });
+        const rateSlider = kit.slider({
+            labelKey: "lab.evolve.rate", hintKey: "lab.evolve.rateHint",
+            min: RATE.min, max: RATE.max, step: RATE.step, value: RATE.value,
+            format: function (value) { return A.format.percent(value); },
+            onInput: function (value) {
+                settings.rate = value;
+                render(true);
+            }
+        });
+        const sizeSlider = kit.slider({
+            labelKey: "lab.evolve.size", hintKey: "lab.evolve.sizeHint",
+            min: SIZE.min, max: SIZE.max, step: SIZE.step, value: SIZE.value,
+            onInput: function (value) { settings.size = value; }
+        });
+        const crossoverSwitch = kit.toggle({
+            labelKey: "lab.evolve.crossover", hintKey: "lab.evolve.crossoverHint",
+            onChange: function (on) { settings.crossover = on; }
+        });
+        const keepSwitch = kit.toggle({
+            labelKey: "lab.evolve.keep", hintKey: "lab.evolve.keepHint",
+            onChange: function (on) { settings.keep = on; }
+        });
+
+        const explain = kit.explain({ steps: [
+            { key: "lab.evolve.step1" }, { key: "lab.evolve.step2" }, { key: "lab.evolve.step3" },
+            { key: "lab.evolve.step4" }, { key: "lab.evolve.step5" }
+        ] });
+        const challenges = kit.challenges({ ctx: ctx, items: [
+            { key: "lab.evolve.ch1", insightKey: "lab.evolve.ch1Why", check: function (info) { return info.track === "oval" && info.lapped; } },
+            { key: "lab.evolve.ch2", insightKey: "lab.evolve.ch2Why", check: function (info) { return info.stuck >= STUCK_GENERATIONS; } },
+            { key: "lab.evolve.ch3", insightKey: "lab.evolve.ch3Why", check: function (info) { return info.below >= FALLS; } },
+            { key: "lab.evolve.ch4", insightKey: "lab.evolve.ch4Why", check: function (info) { return info.transferTested; } }
+        ] });
+        const idea = document.createElement("p");
+        idea.className = "ev-idea";
+        const real = document.createElement("p");
+        real.className = "ev-real";
+        setKey(real, "lab.evolve.real");
+        const transferNote = document.createElement("p");
+        transferNote.className = "ev-transfer";
+        transferNote.hidden = true;
+        writeIdea();
+
+        ui.top.append(
+            kit.row([
+                kit.toolbar([playButton, stepButton, kit.button("lab.evolve.startOver", { icon: "dice", variant: "subtle", onClick: startOver }), status]),
+                speedControl,
+                trackSelect
+            ]),
+            trackNote
+        );
+        ui.side.append(
+            kit.toolbar([championButton]),
+            brainPanel.element,
+            kit.group("lab.kit.settings", [populationSelect, rateSlider, sizeSlider, crossoverSwitch, keepSwitch])
+        );
+        ui.bottom.append(idea, real, explain.element, transferNote, challenges.element);
+
+        const loop = kit.loop({ rate: SPEEDS[speed], budget: LOOP_BUDGET, update: tick, draw: function () { render(false); } });
+        scene.onResize(function () { render(true); });
+        brainView.onResize(function () { render(true); });
+        brainPanel.element.addEventListener("toggle", function () { render(true); });
+        scene.canvas.addEventListener("pointerdown", onPointerDown);
+        scene.canvas.addEventListener("pointermove", onPointerMove);
+        scene.canvas.addEventListener("pointerup", onPointerUp);
+        scene.canvas.addEventListener("pointercancel", onPointerCancel);
+        // Calm mode switched on or off (the hub doesn't tell us): the walls' glow goes or comes back
+        const offMotion = A.motion.onChange(function () {
+            layerKey = "";
+            render(true);
+        });
+
+        // ----- The tracks -----
+        function defOf(id) {
+            if (id === "mine") return { id: "mine", titleKey: "lab.evolve.mine", noteKey: "lab.evolve.mineNote", seed: MY_SEED, width: mine.width, points: mine.points };
+            return presets.filter(function (item) { return item.id === id; })[0];
+        }
+
+        function trackOf(id) {
+            if (!built[id]) built[id] = buildTrack(defOf(id).points, defOf(id).width);
+            return built[id];
+        }
+
+        function trackOptions() {
+            const options = presets.map(function (item) { return { value: item.id, labelKey: item.titleKey }; });
+            if (mine) options.push({ value: "mine", labelKey: "lab.evolve.mine" });
+            options.push({ value: "draw", labelKey: "lab.evolve.draw" });
+            return options;
+        }
+
+        function trackName(id) {
+            return t(defOf(id).titleKey);
+        }
+
+        function chooseTrack(id) {
+            if (id === "draw") startDrawing();
+            else loadTrack(id);
+        }
+
+        // Puts the cars on another track. With "Keep the brains" on, this generation's brains
+        // go along (challenge 4); otherwise a new population starts from the track's own seed.
+        // quiet: no message for screen readers (when the experiment opens)
+        function loadTrack(id, quiet) {
+            if (mode === "draw") stopDrawing();
+            if (mode === "champion") leaveChampion();
+            halt();
+            const from = trackId;
+            // a new drawing of "My track" is a new track too
+            const keep = settings.keep && race !== null && (id !== from || id === "mine");
+            const brains = keep ? race.cars.map(function (car) { return car.weights; }) : null;
+            const lappedBefore = firstLap !== null || (transfer !== null && transfer.lapped);
+            trackId = id;
+            track = trackOf(id);
+            layerKey = "";
+            trackSelect.set(id);
+            setKey(trackNote, defOf(id).noteKey);
+            if (keep) {
+                transfer = { from: from, lapped: lappedBefore, result: null };
+                beginRun(brains);
+            } else {
+                freshPopulation(defOf(id).seed);
+            }
+            setState("ready");
+            if (!quiet) ctx.announce(t("lab.evolve.trackChosen", { track: trackName(id) }));
+        }
+
+        // ----- A run: generation 1, then one race after another -----
+        // A new population of random brains, made from a seed
+        function freshPopulation(newSeed) {
+            seed = newSeed;
+            rng = kit.rng(seed);
+            const brains = [];
+            for (let i = 0; i < settings.population; i++) brains.push(randomBrain(rng));
+            transfer = null;
+            beginRun(brains);
+        }
+
+        // Generation 1 of these brains: the history starts again
+        function beginRun(brains) {
+            generation = 1;
+            made = null;
+            history.best.length = 0;
+            history.average.length = 0;
+            history.laps.length = 0;
+            bestEver = null;
+            bestLap = null;
+            firstLap = null;
+            mostLaps = 0;
+            stuck = 0;
+            below = 0;
+            reference = null;
+            transferNote.hidden = true;
+            setNote(null);
+            chartDirty = true;
+            startRace(brains);
+        }
+
+        function startRace(brains) {
+            race = newRace(track, brains);
+            next = null;
+            rest = 0;
+        }
+
+        // One tick: the loop's update. The champion drives, or the finished race stays on
+        // screen a moment (Watch), or the next race starts, or the race goes on.
+        function tick() {
+            if (mode === "champion") {
+                if (!replay.over && !stepRace(replay, track)) endReplay();
+                return;
+            }
+            if (next) {
+                if (rest > 0) {
+                    rest -= 1;
+                    return;
+                }
+                generation += 1;
+                made = nextMade;
+                startRace(next);
+                return;
+            }
+            if (!stepRace(race, track)) endGeneration();
+        }
+
+        // The race is over: score every car, remember the best, check the challenges and
+        // make the next generation's brains
+        function endGeneration() {
+            const population = race.cars.map(function (car) { return { weights: car.weights, fitness: fitness(car) }; });
+            let bestIndex = 0;
+            let sum = 0;
+            population.forEach(function (member, i) {
+                sum += member.fitness;
+                if (member.fitness > population[bestIndex].fitness) bestIndex = i;
+            });
+            const best = population[bestIndex].fitness;
+            const average = sum / population.length;
+            const laps = Math.floor(race.cars[bestIndex].gates / GATES);
+            const lapNow = laps >= 1;
+            history.best.push(best);
+            history.average.push(average);
+            // a ring on the chart where the best car drove more laps than ever before (its first lap, its finish)
+            if (laps > mostLaps) {
+                mostLaps = laps;
+                history.laps.push(history.best.length - 1);
+            }
+            race.cars.forEach(function (car) {
+                car.laps.forEach(function (time) {
+                    if (bestLap === null || time < bestLap) bestLap = time;
+                });
+            });
+            const improved = !bestEver || best > bestEver.fitness;
+            if (improved) bestEver = { fitness: best, weights: copyBrain(race.cars[bestIndex].weights), generation: generation };
+
+            // Challenge 2: made with rate 0, and no better than before
+            stuck = made && made.rate === 0 && !improved ? stuck + 1 : 0;
+            // Challenge 3: made with the biggest size, and a lower average than before that size
+            if (made && made.size >= SIZE.max) {
+                below = reference !== null && average < reference ? below + 1 : 0;
+            } else {
+                below = 0;
+                reference = made ? average : null;
+            }
+            // Challenge 4: brains from another track, tested here for one generation
+            if (transfer && transfer.result === null) {
+                transfer.result = best;
+                writeTransfer();
+            }
+
+            if (lapNow && firstLap === null) {
+                firstLap = generation;
+                ctx.announce(t("lab.evolve.firstLap", { n: generation }));
+                ctx.track("milestone", { firstLap: generation, track: trackId });
+            } else if (speed === "watch" || stepping) {
+                ctx.announce(t("lab.evolve.genDone", { n: generation, result: resultText(best) }));
+            }
+            challenges.check({
+                track: trackId,
+                lapped: lapNow,
+                stuck: stuck,
+                below: below,
+                transferTested: Boolean(transfer && transfer.lapped && transfer.result !== null)
+            });
+
+            next = nextGeneration(population, { rate: settings.rate, size: settings.size, crossover: settings.crossover, count: settings.population }, rng);
+            nextMade = { rate: settings.rate, size: settings.size };
+            rest = speed === "watch" && !stepping ? REST_TICKS : 0;
+            chartDirty = true;
+            if (stepping) {
+                stopStepping();
+                setState("paused");
+            }
+        }
+
+        // ----- Play, Pause, Step, Speed, Start over -----
+        function setState(nextState) {
+            state = nextState;
+            status.set(nextState);
+            playButton.setLabel(nextState === "running" ? "lab.kit.pause" : "lab.kit.play");
+            playButton.setIcon(nextState === "running" ? "pause" : "play");
+            // A disabled button drops the keyboard focus: hand it to Play
+            if (nextState === "done" && document.activeElement === stepButton.element) playButton.element.focus();
+            stepButton.setDisabled(nextState === "done" || mode === "draw");
+            render(true);
+        }
+
+        // Stops the loop (and a Step that runs a whole generation)
+        function halt() {
+            loop.stop();
+            stopStepping();
+        }
+
+        function stopStepping() {
+            if (!stepping) return;
+            stepping = false;
+            loop.stop();
+            stepButton.setBusy(false);
+            loop.setRate(SPEEDS[speed]);
+        }
+
+        function togglePlay() {
+            if (state === "running") {
+                halt();
+                setState("paused");
+                return;
+            }
+            if (mode === "draw") cancelDraw();
+            if (mode === "champion" && replay.over) startReplay();      // the champion drives again
+            stopStepping();
+            loop.setRate(mode === "champion" ? SPEEDS.watch : SPEEDS[speed]);
+            setState("running");
+            loop.start();
+        }
+
+        // Watch (and the champion): one tick. Fast and Turbo: the rest of this generation, or
+        // the whole next one, as fast as the frame budget allows; then it pauses.
+        function stepOnce() {
+            if (stepping || mode === "draw") return;
+            if (state === "running") halt();
+            if (mode === "champion" || speed === "watch") {
+                rest = 0;
+                loop.step();
+                if (state !== "done") setState("paused");
+                return;
+            }
+            stepping = true;
+            stepButton.setBusy(true);
+            rest = 0;
+            loop.setRate(SPEEDS.turbo);
+            setState("running");
+            loop.start();
+        }
+
+        function setSpeed(value) {
+            speed = value;
+            if (!stepping && mode !== "champion") loop.setRate(SPEEDS[speed]);
+            if (speed !== "watch") rest = 0;
+            render(true);
+        }
+
+        // New random brains from a new seed, on the same track
+        function startOver() {
+            if (mode === "draw") cancelDraw();
+            if (mode === "champion") leaveChampion();
+            const wasRunning = state === "running" && !stepping;
+            halt();
+            freshPopulation(kit.newSeed());
+            ctx.announce(t("lab.evolve.newStart"));
+            setState(wasRunning ? "running" : "ready");
+            if (wasRunning) loop.start();
+        }
+
+        // The population size: before the first race it makes generation 1 again (from the
+        // same seed); later the next generation gets the new size
+        function setPopulation(value) {
+            settings.population = Number(value);
+            if (mode === "evolve" && state === "ready" && generation === 1 && race.ticks === 0 && !transfer) {
+                freshPopulation(seed);
+                render(true);
+            }
+        }
+
+        // ----- Watch the champion: the best brain ever, alone on the track -----
+        function toggleChampion() {
+            if (mode === "champion") {
+                leaveChampion();
+                return;
+            }
+            if (!bestEver) return;
+            if (mode === "draw") cancelDraw();
+            halt();
+            mode = "champion";
+            championButton.setLabel("lab.evolve.back");
+            championButton.setIcon("close");
+            startReplay();
+            loop.setRate(SPEEDS.watch);
+            setState("running");
+            loop.start();
+        }
+
+        function startReplay() {
+            replay = newRace(track, [bestEver.weights]);
+            replay.over = false;
+            setNote(null);
+        }
+
+        function endReplay() {
+            loop.stop();
+            replay.over = true;
+            const car = replay.cars[0];
+            setNote(function () {
+                return ["lab.evolve.championDone", { result: resultText(fitness(car)), time: secondsText(car.time) }];
+            });
+            ctx.announce(t("lab.evolve.championDone", { result: resultText(fitness(car)), time: secondsText(car.time) }));
+            setState("done");
+        }
+
+        function leaveChampion() {
+            loop.stop();
+            mode = "evolve";
+            replay = null;
+            championButton.setLabel("lab.evolve.champion");
+            championButton.setIcon("sparkle");
+            loop.setRate(SPEEDS[speed]);
+            setNote(null);
+            setState(generation === 1 && race.ticks === 0 && !next ? "ready" : "paused");
+        }
+
+        // ----- Draw a track -----
+        function startDrawing() {
+            if (mode === "champion") leaveChampion();
+            halt();
+            mode = "draw";
+            stroke = null;
+            drawBox.hidden = false;
+            drawProblem.hide();
+            scene.box.classList.add("ev-drawing");
+            setState(state === "running" ? "paused" : state);
+        }
+
+        function stopDrawing() {
+            mode = "evolve";
+            stroke = null;
+            drawBox.hidden = true;
+            scene.box.classList.remove("ev-drawing");
+        }
+
+        function cancelDraw() {
+            stopDrawing();
+            trackSelect.set(trackId);
+            setState(state);
+        }
+
+        // A pointer position as a point of the world (kept inside the field)
+        function worldPoint(event) {
+            const box = scene.canvas.getBoundingClientRect();
+            const fit = fitWorld(scene);
+            return [
+                clamp((event.clientX - box.left - fit.left) / fit.scale, 0, WORLD.width),
+                clamp((event.clientY - box.top - fit.top) / fit.scale, 0, WORLD.height)
+            ];
+        }
+
+        function onPointerDown(event) {
+            if (mode !== "draw" || stroke || (event.pointerType === "mouse" && event.button !== 0)) return;
+            event.preventDefault();
+            stroke = { id: event.pointerId, points: [worldPoint(event)] };
+            // keep getting this pointer's moves when it leaves the canvas
+            if (scene.canvas.setPointerCapture) scene.canvas.setPointerCapture(event.pointerId);
+            drawProblem.hide();
+            render(true);
+        }
+
+        function onPointerMove(event) {
+            if (!stroke || event.pointerId !== stroke.id) return;
+            const point = worldPoint(event);
+            const last = stroke.points[stroke.points.length - 1];
+            if (Math.hypot(point[0] - last[0], point[1] - last[1]) < STROKE_STEP) return;
+            stroke.points.push(point);
+            render(true);
+        }
+
+        function onPointerUp(event) {
+            if (!stroke || event.pointerId !== stroke.id) return;
+            const points = stroke.points;
+            stroke = null;
+            finishDrawing(points);
+        }
+
+        function onPointerCancel(event) {
+            if (!stroke || event.pointerId !== stroke.id) return;
+            stroke = null;
+            render(true);
+        }
+
+        // A finished drawing: a track to race on (saved as "My track"), or a kind hint and
+        // the old track stays
+        function finishDrawing(points) {
+            const controls = drawingToControls(points);
+            const problem = controls ? checkTrack(buildTrack(controls, DRAW.width)) : "tap";
+            if (problem) {
+                drawProblem.set(PROBLEMS[problem]);
+                ctx.announce(t(PROBLEMS[problem]));
+                render(true);
+                return;
+            }
+            mine = { v: SAVE_VERSION, points: controls, width: DRAW.width };
+            ctx.store.set("track", mine);
+            delete built.mine;
+            trackSelect.setOptions(trackOptions(), "mine");
+            loadTrack("mine");
+            setKey(trackNote, "lab.evolve.drawSaved");
+            ctx.announce(t("lab.evolve.drawSaved"));
+        }
+
+        // ----- Texts -----
+        // A key on an element: core writes it again after a language change
+        function setKey(element, key) {
+            element.setAttribute("data-i18n", key);
+            element.innerHTML = t(key);
+        }
+
+        // The explain panel's note: a function that returns [key, values], asked again after
+        // a language change (null hides the note)
+        function setNote(make) {
+            note = make;
+            if (note) explain.setText.apply(null, note());
+            else explain.setText(null);
+        }
+
+        function writeIdea() {
+            fillSentence(idea, t("lab.evolve.ideaLine"), {
+                gaLink: function () { return kit.termLink("genetic-algorithm", "lab.evolve.gaTerm"); },
+                paramsLink: function () { return kit.termLink("parameters", "lab.evolve.paramsTerm"); },
+                nnLink: function () { return kit.termLink("neural-network", "lab.evolve.nnTerm"); }
+            });
+        }
+
+        // Challenge 4 has happened: what the kept brains did here, and the word for it
+        function writeTransfer() {
+            const text = t("lab.evolve.transfer", { from: trackName(transfer.from), to: trackName(trackId), result: resultText(transfer.result) });
+            fillSentence(transferNote, text, {
+                overfitLink: function () { return kit.termLink("overfitting", "lab.evolve.overfitTerm"); }
+            });
+            transferNote.hidden = false;
+        }
+
+        // "1 lap and 14 gates" from a fitness (its whole part is the gates passed in order)
+        function resultText(score) {
+            const passed = Math.floor(score);
+            const laps = Math.floor(passed / GATES);
+            const gates = passed % GATES;
+            if (laps === 0) return A.plural("lab.evolve.gates", gates);
+            if (gates === 0) return A.plural("lab.evolve.laps", laps);
+            return t("lab.evolve.lapsAndGates", { laps: A.plural("lab.evolve.laps", laps), gates: A.plural("lab.evolve.gates", gates) });
+        }
+
+        function secondsText(seconds) {
+            return t("lab.evolve.seconds", { s: A.format.number(seconds, { digits: 1 }) });
+        }
+
+        function oneDecimal(value) {
+            return A.format.number(value, { digits: 1 });
+        }
+
+        function legendItems() {
+            const c = kit.colors();
+            return [
+                { labelKey: "lab.evolve.leader", color: kit.scale(1), shape: "triangle" },
+                { labelKey: "lab.evolve.others", color: kit.scale(0.6), shape: "triangle" },
+                { labelKey: "lab.evolve.stopped", color: kit.alpha(c.muted, 0.7), shape: "triangle" }
+            ];
+        }
+
+        function hudText() {
+            if (mode === "champion") return t("lab.evolve.hudChampion", { time: secondsText(replay.cars[0].time) });
+            if (next) return t("lab.evolve.hudOver", { n: generation });
+            return t("lab.evolve.hud", { n: generation, time: secondsText(race.ticks * TICK) });
+        }
+
+        // The canvas for screen readers: "Generation 7 on Oval. 12 of 40 cars still driving. ..."
+        function describeText(shown, leader) {
+            if (mode === "draw") return t("lab.evolve.describeDraw");
+            const name = trackName(trackId);
+            if (mode === "champion") return t("lab.evolve.describeChampion", { track: name, result: resultText(fitness(shown.cars[0])) });
+            const best = Math.max(bestEver ? bestEver.fitness : 0, leader ? fitness(leader) : 0);
+            return t(best >= 1 ? "lab.evolve.describe" : "lab.evolve.describeStart", {
+                gen: generation,
+                track: name,
+                driving: A.plural("lab.evolve.drivingCount", shown.driving, { total: shown.cars.length }),
+                result: resultText(best)
+            });
+        }
+
+        // The car to follow: the best one still driving (else the best of the race)
+        function leaderOf(shown) {
+            let leader = null;
+            let best = null;
+            shown.cars.forEach(function (car) {
+                if (car.state === "driving" && (!leader || fitness(car) > fitness(leader))) leader = car;
+                if (!best || fitness(car) > fitness(best)) best = car;
+            });
+            return leader || best;
+        }
+
+        // ----- Drawing everything (once per frame while running) -----
+        function render(force) {
+            const now = performance.now();
+            const c = kit.colors();
+            const shown = mode === "champion" ? replay : race;
+            const leader = leaderOf(shown);
+            const glow = A.motion.ok();
+            // the track's layer, drawn again only when something it shows has changed
+            const key = [scene.width, scene.height, scene.dpr, c.theme, glow, trackId].join("|");
+            if (key !== layerKey) {
+                drawTrackLayer(layer, scene, track, c, glow);
+                layerKey = key;
+            }
+            drawScene(scene, layer, {
+                cars: shown.cars, leader: leader, hud: hudText(),
+                drawing: mode === "draw", stroke: stroke, hereText: t("lab.evolve.drawHere")
+            }, c);
+            if (brainPanel.element.open && (force || now - lastBrain >= BRAIN_MS)) {
+                drawBrain(brainView, leader, brainLabels(), c);
+                lastBrain = now;
+            }
+            if (force || now - lastPaint >= (state === "running" ? PAINT_MS[speed] : 0)) {
+                paintNumbers(shown, leader);
+                lastPaint = now;
+            }
+            if (chartDirty && (force || state !== "running" || now - lastChart >= CHART_MS)) {
+                chart.draw();
+                chartDirty = false;
+                lastChart = now;
+            }
+        }
+
+        function brainLabels() {
+            return { inputs: RAY_LABELS.concat(t("lab.evolve.speed")), outputs: [t("lab.evolve.steer"), t("lab.evolve.gas")] };
+        }
+
+        // The stat tiles, the explain panel and the canvas description
+        function paintNumbers(shown, leader) {
+            generationStat.set(generation);
+            drivingStat.set(shown.driving + " / " + shown.cars.length);
+            bestStat.set(bestEver ? bestEver.fitness : null);
+            lapStat.set(bestLap);
+            championButton.setDisabled(!bestEver && mode !== "champion");
+            const rays = Array.prototype.map.call(leader.rays, function (value) { return A.format.number(value, { digits: 2 }); });
+            explain.setValues(0, { rays: rays.join(" · ") });
+            explain.setValues(2, { best: bestEver ? oneDecimal(bestEver.fitness) : "—" });
+            explain.setValues(3, { rate: A.format.percent(settings.rate) });
+            // the story follows the first generations: sensors, random brains, fitness, parents, evolution
+            explain.setStep(state === "ready" && generation === 1 ? 0 : Math.min(generation, 4));
+            scene.describe(describeText(shown, leader));
+        }
+
+        loadTrack(trackId, true);
+
+        // ----- The controller: the hub calls these -----
+        return {
+            pause: function () {
+                resumeOnShow = loop.running();
+                loop.stop();
+            },
+            resume: function () {
+                if (resumeOnShow && state === "running") loop.start();
+                resumeOnShow = false;
+            },
+            language: function () {
+                kit.relabel(stage);
+                writeIdea();
+                if (!transferNote.hidden) writeTransfer();
+                setNote(note);
+                chartDirty = true;
+                render(true);
+            },
+            theme: function () {
+                kit.colors.invalidate();
+                layerKey = "";
+                legend.update(legendItems());
+                chartDirty = true;
+                render(true);
+            },
+            destroy: function () {
+                loop.stop();
+                offMotion();
+                scene.canvas.removeEventListener("pointerdown", onPointerDown);
+                scene.canvas.removeEventListener("pointermove", onPointerMove);
+                scene.canvas.removeEventListener("pointerup", onPointerUp);
+                scene.canvas.removeEventListener("pointercancel", onPointerCancel);
+                scene.destroy();
+                chartView.destroy();
+                brainView.destroy();
+            },
+            // For dev/tests/evolve.test.js (the hub doesn't use it)
+            inspect: function () {
+                return {
+                    state: state, mode: mode, speed: speed, trackId: trackId, seed: seed, generation: generation,
+                    cars: race.cars.length, driving: race.driving, ticks: race.ticks, resting: Boolean(next),
+                    best: history.best.slice(), average: history.average.slice(), laps: history.laps.slice(),
+                    bestEver: bestEver ? bestEver.fitness : null, bestLap: bestLap, firstLap: firstLap,
+                    settings: Object.assign({}, settings), stuck: stuck, below: below, mine: Boolean(mine),
+                    transfer: transfer ? Object.assign({}, transfer) : null,
+                    replay: replay ? { over: replay.over, time: replay.cars[0].time, gates: replay.cars[0].gates } : null
+                };
+            }
+        };
+    }
+
+    /* =========================================================
        8. A.lab.define
        ========================================================= */
     A.lab.define("evolve", {
@@ -780,10 +1823,6 @@
             newRace: newRace, stepRace: stepRace, tournament: tournament, crossover: crossover, mutate: mutate,
             nextGeneration: nextGeneration
         },
-        // The page comes next; for now the stage stays empty
-        create: function (stage) {
-            stage.textContent = "";
-            return { pause: function () {}, resume: function () {}, language: function () {}, theme: function () {}, destroy: function () {} };
-        }
+        create: create
     });
 })();
