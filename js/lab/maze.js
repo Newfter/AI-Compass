@@ -46,9 +46,9 @@
     const TILES = ["empty", "wall", "pit", "small", "big", "start"];
 
     // ----- The learner (the sliders) -----
-    const ALPHA = { min: 0.01, max: 1, step: 0.01, value: 0.5 };     // α, the learning rate
-    const GAMMA = { min: 0, max: 0.99, step: 0.01, value: 0.9 };     // γ, how much the future counts
-    const EPSILON = { min: 0, max: 1, step: 0.01, value: 0.2 };      // ε, how often to explore
+    const ALPHA = { min: 0.01, max: 1, step: 0.01 };     // α, the learning rate
+    const GAMMA = { min: 0, max: 0.99, step: 0.01 };     // γ, how much the future counts
+    const EPSILON = { min: 0, max: 1, step: 0.01 };      // ε, how often to explore
     const SHRINK = 0.99;                 // "ε shrinks": ε × 0.99 after each episode...
     const EPSILON_FLOOR = 0.01;          // ...but not below this
 
@@ -724,6 +724,906 @@
     /* =========================================================
        6. THE EXPERIMENT
        ========================================================= */
+    // One open experiment: its state, its page and what its buttons do. -> the controller
+    function create(stage, ctx) {
+        const presets = A.content.get("lab.maze").presets;
+
+        // ----- Saved things (checked: saved data can be old, broken or edited by hand) -----
+        let myMaze = ctx.store.get("maze", null, isSavedMaze);
+        const saved = ctx.store.get("settings", null, isSavedSettings);
+
+        // A preset by its id ("mine" is the user's own maze); an unknown id gives the first
+        function presetById(id) {
+            if (id === MINE && myMaze) return { id: MINE, labelKey: "lab.maze.presetMine", aboutKey: "lab.maze.aboutMine", seed: MINE_SEED };
+            return presets.filter(function (p) { return p.id === id; })[0] || presets[0];
+        }
+
+        // ----- State. state: "ready" | "running" | "paused" | "done" -----
+        let preset = presetById(saved ? saved.preset : "");
+        const initial = saved || {
+            alpha: preset.alpha, gamma: preset.gamma, epsilon: preset.epsilon,
+            shrink: preset.shrink, slippery: preset.slippery, layer: true, speed: "watch"
+        };
+        const learner = { alpha: initial.alpha, gamma: initial.gamma, epsilon: initial.epsilon };
+        let epsilonStart = initial.epsilon;  // the ε the user chose (ε shrinks from here; Forget goes back)
+        let shrink = initial.shrink;
+        let layer = initial.layer;
+        let speed = initial.speed;
+        let world = null;
+        let worldVersion = 0;             // changes with the maze (the hidden canvas of tiles follows)
+        let Q = null;
+        let random = null;
+        let shortest = -1;
+        let state = "ready";
+        let s = 0;                        // the robot's square
+        let from = 0;                     // the square it came from (Watch mode slides from there)
+        let bump = -1;                    // the move that bumped into a wall, or -1
+        let moves = 0;                    // moves in this episode
+        let episode = 0;                  // the number of the episode in progress (or just finished)
+        let episodeReward = 0;
+        let episodeOver = true;           // the next move starts a new episode at the start
+        let lastEnd = null;               // how the last episode ended: "big", "small", "pit" or "limit"
+        let lastMoves = 0;
+        let last = null;                  // the last move and its update (learnMove's record)
+        let history = null;               // per finished episode, for the charts and the stats
+        let sinceForget = null;           // challenge 4: { episodes, big, greedy }
+        let slipperyEpisodes = 0;         // challenge 2: episodes on the slippery floor since Forget
+        const trail = [];
+        let route = null;                 // the best path being shown: { cells, moves, end, shown }
+        let showing = false;              // the loop walks the best path (no learning)
+        let stopAtEpisodeEnd = false;     // "Run 1 episode"
+        let note = null;                  // () -> [key, values]: the sentence under "What's happening?"
+        let editing = false;
+        let armed = false;                // "Edit the maze" was pressed once: the warning shows
+        let tool = "wall";
+        let painting = false;             // a mouse button is down in edit mode
+        let selected = 0;                 // the square in the inspector (the keyboard cursor)
+        let showCursor = false;           // the cursor is drawn once the user picks a square
+        let tileCache = null;             // { key, image }: the tiles, drawn once
+        let dirty = true;                 // the numbers on the page need writing again
+        let lastPaint = 0;
+        let resumeOnShow = false;         // running when the hub paused us
+        const turbo = { ms: TURBO_BUDGET, rest: 1, start: 0, moves: 0 };   // Turbo's time per frame (ms):
+                                          // for moves, for the rest of the frame (a running average),
+                                          // when this frame's moves started and how long they took
+
+        // ----- The page: kit parts, plus the inspector's small grid -----
+        const ui = kit.layout(stage, { side: true });
+        ui.root.classList.add("mz-root");
+
+        const presetSelect = kit.select({ labelKey: "lab.kit.presets", options: presetOptions(), value: preset.id, onChange: choosePreset });
+        const editButton = kit.button("lab.maze.edit", { icon: ICONS.edit, pressed: false, onClick: toggleEdit });
+        const about = document.createElement("p");
+        about.className = "mz-about";
+        instances += 1;
+        about.id = "mz-about-" + instances;
+        presetSelect.select.setAttribute("aria-describedby", about.id);
+        const askHint = kit.hint({ key: "lab.maze.editAsk", tone: "warn" });
+        askHint.hide();
+        const noWayHint = kit.hint({ key: "lab.maze.noWay", tone: "info" });
+        noWayHint.hide();
+        const toolPicker = kit.segmented({
+            labelKey: "lab.maze.tool",
+            options: ["wall", "pit", "small", "big", "start", "eraser"].map(function (name) {
+                return { value: name === "eraser" ? "empty" : name, labelKey: "lab.maze." + name, icon: ICONS[name] };
+            }),
+            value: tool,
+            onChange: function (value) { tool = value; }
+        });
+        const editBox = document.createElement("div");
+        editBox.className = "mz-edit";
+        editBox.hidden = true;
+        editBox.append(toolPicker.element, kit.hint({ key: "lab.maze.editHelp", tone: "tip" }).element);
+
+        const playButton = kit.button("lab.kit.play", { icon: "play", variant: "primary", onClick: togglePlay });
+        const stepButton = kit.button("lab.kit.step", { icon: "step", onClick: stepOnce });
+        const episodeButton = kit.button("lab.maze.runEpisode", { icon: ICONS.episode, onClick: runEpisode });
+        const pathButton = kit.button("lab.maze.bestPath", { icon: ICONS.route, onClick: showBestPath });
+        const forgetButton = kit.button("lab.maze.forget", { icon: "reset", variant: "subtle", onClick: function () { forget(true); } });
+        const status = kit.status("ready");
+
+        // Above the board: the maze to train on, and the training buttons
+        ui.top.append(presetSelect.element, about, kit.toolbar([playButton, stepButton, episodeButton, status]));
+
+        // The board: a canvas that the keyboard can reach (its label says how)
+        const scene = kit.canvas(ui.main, {
+            aspect: 1,
+            labelKey: function () { return t(editing ? "lab.maze.canvasEdit" : "lab.maze.canvas"); }
+        });
+        scene.box.classList.add("mz-board");
+        scene.canvas.tabIndex = 0;
+        scene.canvas.setAttribute("role", "application");
+        const legend = kit.legend([]);
+        const stats = {
+            episode: kit.stat({ labelKey: "lab.maze.statEpisode", value: 0 }),
+            moves: kit.stat({ labelKey: "lab.maze.statMoves", value: 0 }),
+            found: kit.stat({ labelKey: "lab.maze.statFound", format: function (v) { return A.format.percent(v); } }),
+            best: kit.stat({ labelKey: "lab.maze.statBest" })
+        };
+        const inspector = makeInspector();
+        // Under the board: what to do with the board, the edit tools, then the numbers
+        ui.main.append(
+            kit.toolbar([pathButton, forgetButton, editButton]),
+            askHint.element,
+            editBox,
+            noWayHint.element,
+            legend.element,
+            kit.row([stats.episode, stats.moves, stats.found, stats.best], { grid: true }),
+            kit.group("lab.maze.inspector", [inspector.element])
+        );
+        const speedPicker = kit.segmented({
+            labelKey: "lab.kit.speed",
+            options: [
+                { value: "watch", labelKey: "lab.kit.speedWatch" },
+                { value: "fast", labelKey: "lab.kit.speedFast" },
+                { value: "turbo", labelKey: "lab.kit.speedTurbo" }
+            ],
+            value: speed,
+            onChange: setSpeed
+        });
+        const alphaSlider = learnerSlider("alpha", ALPHA);
+        const gammaSlider = learnerSlider("gamma", GAMMA);
+        const epsilonSlider = learnerSlider("epsilon", EPSILON);
+        const slipperySwitch = settingSwitch("slippery", initial.slippery, null, function (on) {
+            world.slippery = on;
+            slipperyEpisodes = 0;
+        });
+        const shrinkSwitch = settingSwitch("shrink", shrink, function () {
+            return t("lab.maze.shrinkHint", { k: A.format.number(SHRINK), floor: A.format.number(EPSILON_FLOOR) });
+        }, function (on) { shrink = on; });
+        const layerSwitch = settingSwitch("layer", layer, null, function (on) { layer = on; });
+        // the sliders' own values (a saved 0.123 runs as the slider's 0.12)
+        learner.alpha = alphaSlider.value();
+        learner.gamma = gammaSlider.value();
+        learner.epsilon = epsilonSlider.value();
+        epsilonStart = learner.epsilon;
+
+        ui.side.appendChild(kit.group("lab.kit.settings", [speedPicker, alphaSlider, gammaSlider, epsilonSlider, slipperySwitch, shrinkSwitch, layerSwitch]));
+
+        // Charts: moves and reward per episode (faint: each episode; bold: the average of 10)
+        const charts = document.createElement("div");
+        charts.className = "mz-charts";
+        ui.bottom.appendChild(charts);
+        const movesView = kit.canvas(charts, { height: 160, labelKey: "lab.maze.chartMoves" });
+        const rewardView = kit.canvas(charts, { height: 160, labelKey: "lab.maze.chartReward" });
+        const movesChart = kit.lineChart(movesView, { series: [], xLabelKey: "lab.maze.episode", yLabelKey: "lab.maze.chartMoves" });
+        const rewardChart = kit.lineChart(rewardView, { series: [], xLabelKey: "lab.maze.episode", yLabelKey: "lab.maze.chartReward" });
+
+        const idea = document.createElement("p");
+        idea.className = "mz-idea";
+        idea.innerHTML = A.i18nHTML("lab.maze.ideaLine") + " ";
+        idea.append(kit.termLink("reinforcement", "lab.maze.term"), ". ");
+        idea.insertAdjacentHTML("beforeend", A.i18nHTML("lab.maze.realWorld"));
+        const toy = document.createElement("p");
+        toy.className = "mz-idea";
+        toy.innerHTML = A.i18nHTML("lab.maze.toyLine") + " ";
+        toy.append(kit.termLink("q-learning", "lab.maze.termQ"), ". ");
+        toy.insertAdjacentHTML("beforeend", A.i18nHTML("lab.maze.toyLine2"));
+        const explain = kit.explain({ steps: [
+            { key: "lab.maze.step1" },
+            { key: "lab.maze.step2" },
+            { key: "lab.maze.step3" },
+            { key: "lab.maze.step4" },
+            { key: "lab.maze.step5" }
+        ] });
+        const challenges = kit.challenges({ ctx: ctx, items: [
+            {
+                key: "lab.maze.ch1", insightKey: "lab.maze.ch1Why",
+                check: function (info) { return info.preset === "first" && reachesBattery(info.path) && info.path.moves.length === info.shortest; }
+            },
+            {
+                key: "lab.maze.ch2", insightKey: "lab.maze.ch2Why",
+                check: function (info) {
+                    return info.preset === "cliff" && info.slippery && info.slipperyEpisodes >= SAFE_EPISODES &&
+                        reachesBattery(info.path) && riskyMoves(world, info.path) === 0;
+                }
+            },
+            {
+                key: "lab.maze.ch3", insightKey: "lab.maze.ch3Why",
+                check: function (info) { return info.preset === "far" && info.episodes >= PATIENT_EPISODES && info.path.end === "big"; }
+            },
+            {
+                key: "lab.maze.ch4", insightKey: "lab.maze.ch4Why",
+                check: function (info) {
+                    const run = info.sinceForget;
+                    return info.preset === "far" && run.greedy && run.episodes >= LOCK_IN.episodes && run.big < LOCK_IN.share * run.episodes;
+                }
+            }
+        ] });
+        ui.bottom.append(idea, toy, explain.element, challenges.element);
+
+        const loop = kit.loop({ rate: SPEED[speed], budget: TURBO_BUDGET, update: tick, draw: frame });
+        scene.onResize(function () { render(1); });
+        // Calm mode switched on or off (the hub doesn't tell us): the glows go or come back at once
+        const offMotion = A.motion.onChange(function () {
+            tileCache = null;
+            trail.length = 0;
+            changed();
+        });
+
+        // α, γ or ε: a slider that changes the learner at once and is saved
+        function learnerSlider(name, range) {
+            return kit.slider({
+                labelKey: "lab.maze." + name, hintKey: "lab.maze." + name + "Hint",
+                min: range.min, max: range.max, step: range.step, value: learner[name],
+                onInput: function (value) {
+                    learner[name] = value;
+                    if (name === "epsilon") epsilonStart = value;      // ε shrinks from here
+                    dirty = true;
+                },
+                onChange: saveSettings
+            });
+        }
+
+        // An on/off setting: it is saved, and the page follows
+        function settingSwitch(name, checked, hintKey, onChange) {
+            return kit.toggle({
+                labelKey: "lab.maze." + name, checked: checked, hintKey: hintKey || "lab.maze." + name + "Hint",
+                onChange: function (on) {
+                    onChange(on);
+                    saveSettings();
+                    changed();
+                }
+            });
+        }
+
+        // ----- The inspector: the selected square's four scores around a small square -----
+        function makeInspector() {
+            const element = document.createElement("div");
+            element.className = "mz-inspector";
+            const name = document.createElement("p");
+            name.className = "mz-cell-name";
+            const grid = document.createElement("div");
+            grid.className = "mz-qgrid";
+            grid.setAttribute("role", "group");
+            const center = document.createElement("span");
+            center.className = "mz-q-center";
+            center.setAttribute("aria-hidden", "true");
+            center.innerHTML = kit.icons.up;
+            const items = DIRECTION_NAMES.map(function (key, a) {
+                const item = document.createElement("span");
+                item.className = "mz-q mz-q-" + ["up", "right", "down", "left"][a];
+                item.innerHTML = '<span class="mz-q-arrow" aria-hidden="true">' + kit.icons.up + '</span><span class="sr-only"></span><span class="mz-q-value"></span>';
+                grid.appendChild(item);
+                return { element: item, name: item.querySelector(".sr-only"), value: item.querySelector(".mz-q-value") };
+            });
+            grid.appendChild(center);
+            const noScores = document.createElement("p");
+            noScores.className = "mz-note";
+            const move = document.createElement("p");
+            move.className = "mz-update";
+            const formula = document.createElement("p");
+            formula.className = "mz-formula";
+            element.append(name, grid, noScores, move, formula);
+            return { element: element, name: name, grid: grid, center: center, items: items, noScores: noScores, move: move, formula: formula };
+        }
+
+        // ----- Training -----
+        function beginEpisode() {
+            s = world.start;
+            moves = 0;
+            episodeReward = 0;
+            episode += 1;
+            episodeOver = false;
+            trail.length = 0;
+        }
+
+        function endEpisode(end) {
+            episodeOver = true;
+            lastEnd = end;
+            lastMoves = moves;
+            history.moves.push(moves);
+            history.reward.push(episodeReward);
+            history.found.push(end === "small" || end === "big");
+            history.avgMoves.push(averageOfLast(history.moves, AVERAGE));
+            history.avgReward.push(averageOfLast(history.reward, AVERAGE));
+            // Old episodes leave the lists in big bites (cheaper than one at a time)
+            if (history.moves.length > 2 * HISTORY) {
+                const extra = history.moves.length - HISTORY;
+                ["moves", "reward", "found", "avgMoves", "avgReward"].forEach(function (name) { history[name].splice(0, extra); });
+                history.first += extra;
+            }
+            history.changed = true;
+            sinceForget.episodes += 1;
+            if (end === "big") sinceForget.big += 1;
+            if (learner.epsilon > 0 || shrink || learner.gamma < LOCK_IN.gamma) sinceForget.greedy = false;
+            if (world.slippery) slipperyEpisodes += 1;
+            if (shrink && learner.epsilon > EPSILON_FLOOR) learner.epsilon = Math.max(EPSILON_FLOOR, learner.epsilon * SHRINK);
+            if (stopAtEpisodeEnd) {
+                stopAtEpisodeEnd = false;
+                loop.stop();
+                setState("done");
+                note = function () { return ["lab.maze.episodeDone", episodeValues()]; };
+                ctx.announce(t("lab.maze.episodeDone", episodeValues()));
+            }
+        }
+
+        function episodeValues() {
+            return { n: episode, moves: A.plural("lab.maze.moves", lastMoves), end: t(END_KEYS[lastEnd]) };
+        }
+
+        // One move of training, with its update (the loop calls this at the chosen speed)
+        function trainMove() {
+            route = null;
+            if (episodeOver) beginEpisode();
+            const record = learnMove(world, Q, s, learner, random);
+            last = record;
+            from = s;
+            bump = record.next === s ? record.actual : -1;
+            s = record.next;
+            moves += 1;
+            episodeReward += record.reward;
+            if (speed !== "turbo" && A.motion.ok()) {
+                trail.push(s);
+                if (trail.length > TRAIL) trail.shift();
+            }
+            record.limit = !record.done && moves >= episodeLimit(world);
+            if (record.done) endEpisode(world.cells[s]);
+            else if (record.limit) endEpisode("limit");
+            dirty = true;
+        }
+
+        // The loop's step: a training move, or the next square of the best path. In Turbo the
+        // loop calls this 1000 times a second: the first call of a frame makes all the moves
+        // that fit in turbo.ms, the other calls of that frame do nothing.
+        function tick() {
+            if (showing) {
+                route.shown += 1;
+                if (route.shown >= route.cells.length) stopShow();
+            } else if (speed !== "turbo") {
+                trainMove();
+            } else if (!turbo.start) {
+                turbo.start = performance.now();
+                const until = turbo.start + turbo.ms;
+                do {
+                    for (let i = 0; i < BATCH && loop.running(); i++) trainMove();
+                } while (loop.running() && performance.now() < until);
+                turbo.moves = performance.now() - turbo.start;
+            }
+        }
+
+        // The loop's drawing, once per frame. In Turbo it also times the frame: when the rest
+        // of the frame is slow (a slow computer), the moves get less time, so that the whole
+        // frame stays near FRAME_MS.
+        function frame(info) {
+            render(info.progress);
+            if (turbo.start) {
+                turbo.rest = 0.9 * turbo.rest + 0.1 * (performance.now() - turbo.start - turbo.moves);
+                turbo.ms = A.util.clamp(FRAME_MS - turbo.rest, 1, TURBO_BUDGET);
+                turbo.start = 0;
+            }
+        }
+
+        function stopShow() {
+            if (!showing) return;
+            showing = false;
+            loop.stop();
+            loop.setRate(SPEED[speed]);
+        }
+
+        // ----- What the buttons do -----
+        function setState(next) {
+            state = next;
+            status.set(next);
+            playButton.setLabel(next === "running" ? "lab.kit.pause" : "lab.kit.play");
+            playButton.setIcon(next === "running" ? "pause" : "play");
+            dirty = true;
+        }
+
+        // Any button press takes back a waiting "edit the maze?" warning
+        function disarm() {
+            armed = false;
+            askHint.hide();
+        }
+
+        // Before training starts again: leave edit mode, stop the best-path show
+        function prepare() {
+            disarm();
+            leaveEdit(false);
+            stopShow();
+            note = null;
+        }
+
+        function togglePlay() {
+            if (state === "running") {
+                loop.stop();
+                stopAtEpisodeEnd = false;
+                setState("paused");
+                render(1);
+                return;
+            }
+            prepare();
+            stopAtEpisodeEnd = false;
+            setState("running");
+            loop.start();
+        }
+
+        function runEpisode() {
+            prepare();
+            stopAtEpisodeEnd = true;
+            setState("running");
+            loop.start();
+        }
+
+        function stepOnce() {
+            prepare();
+            loop.stop();
+            stopAtEpisodeEnd = false;
+            trainMove();
+            selected = last.s;
+            showCursor = true;
+            setState("paused");
+            ctx.announce(t("lab.maze.stepSay", {
+                dir: t(DIRECTION_KEYS[last.actual]), r: signed(last.reward), old: score(last.old), new: score(last.value)
+            }));
+            render(1);
+        }
+
+        function showBestPath() {
+            disarm();
+            leaveEdit(false);
+            if (state === "running") {
+                loop.stop();
+                setState("paused");
+            }
+            stopShow();
+            const path = greedyPath(Q, world);
+            route = { cells: path.cells, moves: path.moves, end: path.end, shown: A.motion.ok() ? 1 : path.cells.length };
+            from = s;
+            bump = -1;
+            note = function () { return [PATH_KEYS[route ? route.end : "unknown"], { moves: A.plural("lab.maze.moves", route ? route.moves.length : 0) }]; };
+            ctx.announce(t(PATH_KEYS[path.end], { moves: A.plural("lab.maze.moves", path.moves.length) }));
+            if (route.shown < route.cells.length) {
+                showing = true;
+                loop.setRate(SHOW_RATE);
+                loop.start();
+            }
+            changed();
+        }
+
+        function setSpeed(value) {
+            speed = value;
+            if (!showing) loop.setRate(SPEED[speed]);
+            trail.length = 0;
+            saveSettings();
+            changed();
+        }
+
+        // Forget everything: all scores back to 0, the numbers of the preset again
+        function forget(say) {
+            disarm();
+            stopShow();
+            loop.stop();
+            Q = newTable(world);
+            random = kit.rng(preset.seed);
+            learner.epsilon = epsilonStart;
+            s = world.start;
+            from = s;
+            bump = -1;
+            moves = 0;
+            episode = 0;
+            episodeReward = 0;
+            episodeOver = true;
+            lastEnd = null;
+            lastMoves = 0;
+            last = null;
+            history = { first: 1, moves: [], reward: [], found: [], avgMoves: [], avgReward: [], changed: true };
+            sinceForget = { episodes: 0, big: 0, greedy: true };
+            slipperyEpisodes = 0;
+            trail.length = 0;
+            route = null;
+            stopAtEpisodeEnd = false;
+            note = null;
+            setState("ready");
+            if (say) ctx.announce(t("lab.maze.forgotten"));
+            changed();
+        }
+
+        // A new maze (a preset, or the user's own): its world, its size, its legend
+        function loadPreset(id, applySettings) {
+            preset = presetById(id);
+            if (preset.id === MINE) world = makeWorld(myMaze.cols, myMaze.rows, myMaze.cells);
+            else world = worldFromRows(preset.maze, preset.rewards);
+            if (applySettings && preset.id !== MINE) {
+                learner.alpha = preset.alpha;
+                learner.gamma = preset.gamma;
+                epsilonStart = preset.epsilon;
+                shrink = preset.shrink;
+                alphaSlider.set(preset.alpha);
+                gammaSlider.set(preset.gamma);
+                epsilonSlider.set(preset.epsilon);
+                shrinkSwitch.set(preset.shrink);
+                slipperySwitch.set(preset.slippery);
+            }
+            world.slippery = slipperySwitch.checked();
+            worldVersion += 1;
+            shortest = shortestPath(world);
+            selected = world.start;
+            showCursor = false;
+            scene.box.style.aspectRatio = String(world.cols / world.rows);
+            scene.box.style.maxWidth = world.cols * MAX_SQUARE + 2 * BOARD_PAD + "px";
+            legend.update(legendItems());
+            forget(false);
+        }
+
+        function choosePreset(id) {
+            disarm();
+            leaveEdit(false);
+            loadPreset(id, true);
+            saveSettings();
+        }
+
+        function presetOptions() {
+            const options = presets.map(function (p) { return { value: p.id, labelKey: p.labelKey }; });
+            if (myMaze) options.push({ value: MINE, labelKey: "lab.maze.presetMine" });
+            return options;
+        }
+
+        // The legend: each tile with its reward (rewards come from the Settings or the preset)
+        function legendItems() {
+            const r = world.rewards;
+            function withReward(key, value) {
+                return function () { return t("lab.maze.withReward", { name: t(key), r: signed(value) }); };
+            }
+            return [
+                { labelKey: "lab.maze.wall", color: "var(--accent)", shape: "square" },
+                { labelKey: withReward("lab.maze.pit", r.pit), color: "var(--warning)", shape: "triangle" },
+                { labelKey: withReward("lab.maze.small", r.small), color: "var(--success)", shape: "dot" },
+                { labelKey: withReward("lab.maze.big", r.big), color: "var(--success)", shape: "diamond" },
+                { labelKey: "lab.maze.start", color: "var(--accent-2)", shape: "ring" },
+                { labelKey: function () { return t("lab.maze.moveCost", { r: signed(r.move) }); }, color: "var(--text-muted)", shape: "dash" }
+            ];
+        }
+
+        function saveSettings() {
+            ctx.store.set("settings", {
+                v: SAVE_VERSION, preset: preset.id, alpha: learner.alpha, gamma: learner.gamma, epsilon: epsilonStart,
+                shrink: shrink, slippery: world.slippery, layer: layer, speed: speed
+            });
+        }
+
+        // ----- Edit mode -----
+        function toggleEdit() {
+            if (editing) {
+                leaveEdit(true);
+                return;
+            }
+            editButton.setPressed(false);
+            if (episode > 0 && !armed) {
+                armed = true;
+                askHint.show();
+                ctx.announce(t("lab.maze.editAsk"));
+                return;
+            }
+            disarm();
+            stopShow();
+            forget(false);
+            editing = true;
+            editButton.setPressed(true);
+            editBox.hidden = false;
+            scene.box.classList.add("mz-editing");
+            kit.relabel(scene.box);
+            ctx.announce(t("lab.maze.editOn"));
+            changed();
+        }
+
+        function leaveEdit(say) {
+            if (!editing) return;
+            editing = false;
+            painting = false;
+            editButton.setPressed(false);
+            editBox.hidden = true;
+            scene.box.classList.remove("mz-editing");
+            kit.relabel(scene.box);
+            if (say) ctx.announce(t("lab.maze.editOff"));
+            changed();
+        }
+
+        // Paints the chosen tile on a square. The first change makes the maze the user's own.
+        function paint(square) {
+            if (square < 0 || !paintSquare(world, square, tool)) return;
+            myMaze = { v: SAVE_VERSION, cols: world.cols, rows: world.rows, cells: world.cells.slice() };
+            ctx.store.set("maze", myMaze);
+            if (preset.id !== MINE) {
+                preset = presetById(MINE);
+                presetSelect.setOptions(presetOptions(), MINE);
+                saveSettings();
+            }
+            worldVersion += 1;
+            shortest = shortestPath(world);
+            selected = square;
+            forget(false);
+        }
+
+        // ----- The board: mouse, touch and keyboard -----
+        // The square under the pointer, or -1
+        function squareAt(event) {
+            const box = scene.canvas.getBoundingClientRect();
+            const geo = boardGeometry(scene, world);
+            const x = Math.floor((event.clientX - box.left - geo.left) / geo.size);
+            const y = Math.floor((event.clientY - box.top - geo.top) / geo.size);
+            return x < 0 || y < 0 || x >= world.cols || y >= world.rows ? -1 : y * world.cols + x;
+        }
+
+        function select(square, say) {
+            if (square < 0) return;
+            selected = square;
+            showCursor = true;
+            if (say) ctx.announce(squareText(square));
+            changed();
+        }
+
+        // "Row 2, column 3: wall." plus the best move there
+        function squareText(square) {
+            const tile = world.cells[square];
+            let text = t("lab.maze.cell", { row: rowOf(world, square) + 1, col: colOf(world, square) + 1, tile: tileText(tile) });
+            if (tile === "wall" || isEnd(tile) || editing) return text;
+            const values = Q[square];
+            if (undecided(values)) return text + " " + t("lab.maze.cellNew");
+            return text + " " + t("lab.maze.cellBest", { dir: t(DIRECTION_KEYS[values.indexOf(bestScore(values))]) });
+        }
+
+        // A mouse paints while its button is down; a finger paints with a tap (the click
+        // below), so a finger can still scroll the page over the board
+        scene.canvas.addEventListener("pointerdown", function (event) {
+            if (!editing || event.pointerType === "touch" || event.button !== 0) return;
+            painting = true;
+            scene.canvas.setPointerCapture(event.pointerId);
+            paint(squareAt(event));
+        });
+        scene.canvas.addEventListener("pointermove", function (event) {
+            if (painting) paint(squareAt(event));
+        });
+        ["pointerup", "pointercancel", "lostpointercapture"].forEach(function (type) {
+            scene.canvas.addEventListener(type, function () { painting = false; });
+        });
+        scene.canvas.addEventListener("click", function (event) {
+            const square = squareAt(event);
+            if (editing) paint(square);
+            else select(square, false);
+        });
+        scene.canvas.addEventListener("keydown", function (event) {
+            const move = ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"].indexOf(event.key);
+            if (move !== -1) {
+                event.preventDefault();
+                const x = A.util.clamp(colOf(world, selected) + MOVES[move].x, 0, world.cols - 1);
+                const y = A.util.clamp(rowOf(world, selected) + MOVES[move].y, 0, world.rows - 1);
+                select(y * world.cols + x, true);
+            } else if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                if (editing) {
+                    paint(selected);
+                    select(selected, true);
+                } else {
+                    const values = Q[selected];
+                    showCursor = true;
+                    ctx.announce(squareText(selected) + (isEnd(world.cells[selected]) || world.cells[selected] === "wall" ? "" : " " +
+                        t("lab.maze.cellScores", { up: score(values[0]), right: score(values[1]), down: score(values[2]), left: score(values[3]) })));
+                    changed();
+                }
+            }
+        });
+
+        // ----- Everything on screen follows the state -----
+        // Something changed outside the loop: write and draw it now
+        function changed() {
+            dirty = true;
+            render(1);
+        }
+
+        function robotMood() {
+            if (!episodeOver || !lastEnd) return "normal";
+            return lastEnd === "pit" ? "sad" : lastEnd === "limit" ? "normal" : "happy";
+        }
+
+        // progress: how far the next move is (0..1), for the robot's slide in Watch mode
+        function drawBoard(progress) {
+            if (!scene.width || !scene.height) return;
+            const g = scene.ctx;
+            const c = kit.colors();
+            const motion = A.motion.ok();
+            const geo = boardGeometry(scene, world);
+            const key = [scene.width, scene.height, scene.dpr, c.theme, motion, worldVersion].join("|");
+            if (!tileCache || tileCache.key !== key) {
+                const image = document.createElement("canvas");
+                image.width = Math.round(scene.width * scene.dpr);
+                image.height = Math.round(scene.height * scene.dpr);
+                const ig = image.getContext("2d");
+                ig.setTransform(scene.dpr, 0, 0, scene.dpr, 0, 0);
+                drawTiles(ig, geo, world, c, motion);
+                tileCache = { key: key, image: image };
+            }
+            g.clearRect(0, 0, scene.width, scene.height);
+            g.drawImage(tileCache.image, 0, 0, scene.width, scene.height);
+            if (layer) drawValues(g, geo, world, Q, c);
+            drawStart(g, geo, world, c);
+            if (route) drawRoute(g, geo, world, route, c, motion);
+            if (motion && speed !== "turbo" && trail.length) drawTrail(g, geo, world, trail, c);
+            // The robot: it slides (Watch mode with motion), or stands on its square
+            let spot = centerOf(geo, world, s);
+            if (motion && speed === "watch" && state === "running" && !showing && progress < 1) {
+                const share = Math.min(1, progress / SLIDE);
+                const ease = share * share * (3 - 2 * share);
+                if (bump !== -1) {
+                    const push = Math.sin(Math.PI * ease) * BUMP * geo.size;
+                    spot = { x: spot.x + MOVES[bump].x * push, y: spot.y + MOVES[bump].y * push };
+                } else {
+                    const start = centerOf(geo, world, from);
+                    spot = { x: start.x + (spot.x - start.x) * ease, y: start.y + (spot.y - start.y) * ease };
+                }
+            }
+            drawRobot(g, spot.x, spot.y, geo.size, c, robotMood(), motion);
+            if (showCursor) drawCursor(g, geo, world, selected, c);
+        }
+
+        function render(progress) {
+            drawBoard(progress === undefined ? 1 : progress);
+            if (!dirty) return;
+            // In Turbo the numbers change too fast to read: write them 5 times a second
+            const now = performance.now();
+            if (state === "running" && speed === "turbo" && now - lastPaint < TURBO_PAINT_MS) return;
+            lastPaint = now;
+            dirty = false;
+            const path = greedyPath(Q, world);
+            if (history.changed) paintCharts();
+            paintStats(path);
+            paintInspector();
+            paintExplain();
+            paintBoardText(path);
+            setText(about, t(preset.aboutKey));
+            noWayHint.element.hidden = shortest !== -1;
+            challenges.check({
+                preset: preset.id, path: path, shortest: shortest, slippery: world.slippery, slipperyEpisodes: slipperyEpisodes,
+                episodes: sinceForget.episodes, sinceForget: sinceForget
+            });
+        }
+
+        function paintCharts() {
+            history.changed = false;
+            const skip = Math.max(0, history.moves.length - HISTORY);     // the episodes too old to show
+            movesChart.set({ x0: history.first + skip, series: [
+                { values: history.moves.slice(skip), colorIndex: 0, faint: true },
+                { values: history.avgMoves.slice(skip), colorIndex: 0, labelKey: "lab.maze.chartMovesAvg" }
+            ] });
+            rewardChart.set({ x0: history.first + skip, series: [
+                { values: history.reward.slice(skip), colorIndex: 1, faint: true },
+                { values: history.avgReward.slice(skip), colorIndex: 1, labelKey: "lab.maze.chartRewardAvg" }
+            ] });
+            movesChart.draw();
+            rewardChart.draw();
+        }
+
+        function paintStats(path) {
+            stats.episode.set(episode);
+            stats.moves.set(moves);
+            const recent = history.found.slice(-RECENT);
+            stats.found.set(recent.length ? recent.filter(Boolean).length / recent.length : null);
+            stats.best.set(reachesBattery(path) ? path.moves.length : null);
+            if (Math.abs(epsilonSlider.value() - learner.epsilon) >= EPSILON.step / 2) epsilonSlider.set(learner.epsilon);
+        }
+
+        function paintInspector() {
+            const tile = world.cells[selected];
+            const values = Q[selected];
+            setText(inspector.name, t("lab.maze.cell", { row: rowOf(world, selected) + 1, col: colOf(world, selected) + 1, tile: tileText(tile) }));
+            const scored = tile !== "wall" && !isEnd(tile);
+            inspector.grid.hidden = !scored;
+            inspector.noScores.hidden = scored;
+            setText(inspector.noScores, scored ? "" : t(tile === "wall" ? "lab.maze.wallNote" : "lab.maze.noScores"));
+            const label = t("lab.maze.scores");
+            if (inspector.grid.getAttribute("aria-label") !== label) inspector.grid.setAttribute("aria-label", label);
+            const top = bestScore(values);
+            const learned = !undecided(values);
+            const fresh = last && state !== "running" && last.s === selected;
+            inspector.items.forEach(function (item, a) {
+                setText(item.name, t(DIRECTION_NAMES[a]) + ": ");
+                setText(item.value, score(values[a]));
+                item.element.classList.toggle("is-best", learned && values[a] === top);
+                item.element.classList.toggle("is-low", values[a] < 0);
+                item.element.classList.toggle("is-updated", Boolean(fresh) && last.action === a);
+            });
+            // the small square in the middle: its colour on the board, and its best move
+            inspector.center.style.background = layer && explored(world, Q, selected) ? kit.alpha(kit.diverge(top / valueScale(world, Q)), TINT) : "";
+            inspector.center.setAttribute("data-best", learned ? String(values.indexOf(top)) : "");
+            // the last update, with its numbers (not while running: they change too fast)
+            const showUpdate = Boolean(last) && state !== "running" && !editing;
+            inspector.formula.hidden = !showUpdate;
+            if (!showUpdate) {
+                setText(inspector.move, state === "running" || editing ? "" : t("lab.maze.stepHint"));
+                return;
+            }
+            let text = t("lab.maze.lastMove", {
+                row: rowOf(world, last.s) + 1, col: colOf(world, last.s) + 1, dir: t(DIRECTION_KEYS[last.action]),
+                how: t(last.explore ? "lab.maze.howRandom" : "lab.maze.howBest"), r: signed(last.reward)
+            });
+            if (last.actual !== last.action) text += " " + t("lab.maze.slipped", { dir: t(DIRECTION_KEYS[last.actual]) });
+            setText(inspector.move, text);
+            setText(inspector.formula, formulaText(last));
+        }
+
+        // "Q = 1.20 + 0.5 × (−0.1 + 0.9 × 3.40 − 1.20) = 2.08". The scores are rounded, so
+        // when the rounded numbers don't give exactly the result, it says "≈".
+        function formulaText(m) {
+            const check = round2(m.old) + m.alpha * (m.reward + m.gamma * round2(m.bestNext) - round2(m.old));
+            return t("lab.maze.formula", {
+                old: score(m.old), alpha: A.format.number(m.alpha), r: A.format.number(m.reward), gamma: A.format.number(m.gamma),
+                next: term(m.bestNext), oldAgain: term(m.old), eq: round2(check) === round2(m.value) ? "=" : "≈", new: score(m.value)
+            });
+        }
+
+        function paintExplain() {
+            explain.setValues(1, {
+                eps: learner.epsilon,
+                how: last ? t(last.explore ? "lab.maze.howRandomLong" : "lab.maze.howBestLong") : ""
+            });
+            explain.setValues(2, { reward: last ? signed(last.reward) : "—", why: last ? whyText(last) : "" });
+            explain.setValues(3, { old: last ? score(last.old) : "—", new: last ? score(last.value) : "—" });
+            explain.setStep(state === "running" || state === "done" ? 4 : last ? 3 : 0);
+            if (note) {
+                const sentence = note();
+                explain.setText(sentence[0], sentence[1]);
+            } else {
+                explain.setText(null);
+            }
+        }
+
+        // Why the last move got its reward
+        function whyText(m) {
+            const cost = signed(world.rewards.move);
+            if (m.done) {
+                const tile = world.cells[m.next];
+                return t("lab.maze.whyEnd", { tile: t(TILE_KEYS[tile]), bonus: signed(world.rewards[tile]), cost: cost });
+            }
+            if (m.limit) return t("lab.maze.whyLimit");
+            return t(m.next === m.s ? "lab.maze.whyWall" : "lab.maze.whyMove", { cost: cost });
+        }
+
+        // The board in words, for screen readers
+        function paintBoardText(path) {
+            const lastText = lastEnd ? t("lab.maze.describeLast", { moves: A.plural("lab.maze.moves", lastMoves), end: t(END_KEYS[lastEnd]) })
+                : t("lab.maze.describeNone");
+            const bestText = reachesBattery(path) ? t("lab.maze.describeBest", { moves: A.plural("lab.maze.moves", path.moves.length) })
+                : t("lab.maze.describeNoBest");
+            scene.describe(t("lab.maze.describe", {
+                cols: world.cols, rows: world.rows, episode: episode,
+                robot: t("lab.maze.describeRobot", { row: rowOf(world, s) + 1, col: colOf(world, s) + 1 }),
+                last: lastText, best: bestText
+            }));
+        }
+
+        loadPreset(preset.id, false);
+
+        // ----- The controller: the hub calls these -----
+        return {
+            pause: function () {
+                resumeOnShow = loop.running();
+                loop.stop();
+            },
+            resume: function () {
+                if (resumeOnShow) loop.start();
+                resumeOnShow = false;
+            },
+            language: function () {
+                kit.relabel(stage);
+                history.changed = true;
+                changed();
+            },
+            theme: function () {
+                kit.colors.invalidate();
+                tileCache = null;
+                history.changed = true;
+                changed();
+            },
+            destroy: function () {
+                loop.stop();
+                offMotion();
+                scene.destroy();
+                movesView.destroy();
+                rewardView.destroy();
+            }
+        };
+    }
+
     A.lab.define("maze", {
         // The maths, for dev/tests/maze.math.js (the hub doesn't use it)
         maths: {
@@ -733,920 +1633,6 @@
             newTable: newTable, chooseAction: chooseAction, qUpdate: qUpdate, learnMove: learnMove, greedyPath: greedyPath,
             SHRINK: SHRINK, EPSILON_FLOOR: EPSILON_FLOOR, LOCK_IN: LOCK_IN
         },
-
-        create: function (stage, ctx) {
-            const presets = A.content.get("lab.maze").presets;
-
-            // ----- Saved things (checked: saved data can be old, broken or edited by hand) -----
-            let myMaze = ctx.store.get("maze", null, isSavedMaze);
-            const saved = ctx.store.get("settings", null, isSavedSettings);
-
-            // A preset by its id ("mine" is the user's own maze); an unknown id gives the first
-            function presetById(id) {
-                if (id === MINE && myMaze) return { id: MINE, labelKey: "lab.maze.presetMine", aboutKey: "lab.maze.aboutMine", seed: MINE_SEED };
-                return presets.filter(function (p) { return p.id === id; })[0] || presets[0];
-            }
-
-            // ----- State. state: "ready" | "running" | "paused" | "done" -----
-            let preset = presetById(saved ? saved.preset : "");
-            const initial = saved || {
-                alpha: preset.alpha, gamma: preset.gamma, epsilon: preset.epsilon,
-                shrink: preset.shrink, slippery: preset.slippery, layer: true, speed: "watch"
-            };
-            const learner = { alpha: initial.alpha, gamma: initial.gamma, epsilon: initial.epsilon };
-            let epsilonStart = initial.epsilon;  // the ε the user chose (ε shrinks from here; Forget goes back)
-            let shrink = initial.shrink;
-            let layer = initial.layer;
-            let speed = initial.speed;
-            let world = null;
-            let worldVersion = 0;             // changes with the maze (the hidden canvas of tiles follows)
-            let Q = null;
-            let random = null;
-            let shortest = -1;
-            let state = "ready";
-            let s = 0;                        // the robot's square
-            let from = 0;                     // the square it came from (Watch mode slides from there)
-            let bump = -1;                    // the move that bumped into a wall, or -1
-            let moves = 0;                    // moves in this episode
-            let episode = 0;                  // the number of the episode in progress (or just finished)
-            let episodeReward = 0;
-            let episodeOver = true;           // the next move starts a new episode at the start
-            let lastEnd = null;               // how the last episode ended: "big", "small", "pit" or "limit"
-            let lastMoves = 0;
-            let last = null;                  // the last move and its update (learnMove's record)
-            let history = null;               // per finished episode, for the charts and the stats
-            let sinceForget = null;           // challenge 4: { episodes, big, greedy }
-            let slipperyEpisodes = 0;         // challenge 2: episodes on the slippery floor since Forget
-            const trail = [];
-            let route = null;                 // the best path being shown: { cells, moves, end, shown }
-            let showing = false;              // the loop walks the best path (no learning)
-            let stopAtEpisodeEnd = false;     // "Run 1 episode"
-            let note = null;                  // () -> [key, values]: the sentence under "What's happening?"
-            let editing = false;
-            let armed = false;                // "Edit the maze" was pressed once: the warning shows
-            let tool = "wall";
-            let painting = false;             // a mouse button is down in edit mode
-            let selected = 0;                 // the square in the inspector (the keyboard cursor)
-            let showCursor = false;           // the cursor is drawn once the user picks a square
-            let tileCache = null;             // { key, image }: the tiles, drawn once
-            let dirty = true;                 // the numbers on the page need writing again
-            let lastPaint = 0;
-            let resumeOnShow = false;         // running when the hub paused us
-            const turbo = { ms: TURBO_BUDGET, rest: 1, start: 0, moves: 0 };   // Turbo's time per frame (ms):
-                                              // for moves, for the rest of the frame (a running average),
-                                              // when this frame's moves started and how long they took
-
-            // ----- The page: kit parts, plus the inspector's small grid -----
-            const ui = kit.layout(stage, { side: true });
-            ui.root.classList.add("mz-root");
-
-            const presetSelect = kit.select({ labelKey: "lab.kit.presets", options: presetOptions(), value: preset.id, onChange: choosePreset });
-            const editButton = kit.button("lab.maze.edit", { icon: ICONS.edit, pressed: false, onClick: toggleEdit });
-            const about = document.createElement("p");
-            about.className = "mz-about";
-            instances += 1;
-            about.id = "mz-about-" + instances;
-            presetSelect.select.setAttribute("aria-describedby", about.id);
-            const askHint = kit.hint({ key: "lab.maze.editAsk", tone: "warn" });
-            askHint.hide();
-            const noWayHint = kit.hint({ key: "lab.maze.noWay", tone: "info" });
-            noWayHint.hide();
-            const toolPicker = kit.segmented({
-                labelKey: "lab.maze.tool",
-                options: [
-                    { value: "wall", labelKey: "lab.maze.wall", icon: ICONS.wall },
-                    { value: "pit", labelKey: "lab.maze.pit", icon: ICONS.pit },
-                    { value: "small", labelKey: "lab.maze.small", icon: ICONS.small },
-                    { value: "big", labelKey: "lab.maze.big", icon: ICONS.big },
-                    { value: "start", labelKey: "lab.maze.start", icon: ICONS.start },
-                    { value: "empty", labelKey: "lab.maze.eraser", icon: ICONS.eraser }
-                ],
-                value: tool,
-                onChange: function (value) { tool = value; }
-            });
-            const editBox = document.createElement("div");
-            editBox.className = "mz-edit";
-            editBox.hidden = true;
-            editBox.append(toolPicker.element, kit.hint({ key: "lab.maze.editHelp", tone: "tip" }).element);
-
-            const playButton = kit.button("lab.kit.play", { icon: "play", variant: "primary", onClick: togglePlay });
-            const stepButton = kit.button("lab.kit.step", { icon: "step", onClick: stepOnce });
-            const episodeButton = kit.button("lab.maze.runEpisode", { icon: ICONS.episode, onClick: runEpisode });
-            const pathButton = kit.button("lab.maze.bestPath", { icon: ICONS.route, onClick: showBestPath });
-            const forgetButton = kit.button("lab.maze.forget", { icon: "reset", variant: "subtle", onClick: function () { forget(true); } });
-            const status = kit.status("ready");
-
-            // Above the board: the maze to train on, and the training buttons
-            ui.top.append(presetSelect.element, about, kit.toolbar([playButton, stepButton, episodeButton, status]));
-
-            // The board: a canvas that the keyboard can reach (its label says how)
-            const scene = kit.canvas(ui.main, {
-                aspect: 1,
-                labelKey: function () { return t(editing ? "lab.maze.canvasEdit" : "lab.maze.canvas"); }
-            });
-            scene.box.classList.add("mz-board");
-            scene.canvas.tabIndex = 0;
-            scene.canvas.setAttribute("role", "application");
-            const legend = kit.legend([]);
-            const stats = {
-                episode: kit.stat({ labelKey: "lab.maze.statEpisode", value: 0 }),
-                moves: kit.stat({ labelKey: "lab.maze.statMoves", value: 0 }),
-                found: kit.stat({ labelKey: "lab.maze.statFound", format: function (v) { return A.format.percent(v); } }),
-                best: kit.stat({ labelKey: "lab.maze.statBest" })
-            };
-            const inspector = makeInspector();
-            // Under the board: what to do with the board, the edit tools, then the numbers
-            ui.main.append(
-                kit.toolbar([pathButton, forgetButton, editButton]),
-                askHint.element,
-                editBox,
-                noWayHint.element,
-                legend.element,
-                kit.row([stats.episode, stats.moves, stats.found, stats.best], { grid: true }),
-                kit.group("lab.maze.inspector", [inspector.element])
-            );
-            const speedPicker = kit.segmented({
-                labelKey: "lab.kit.speed",
-                options: [
-                    { value: "watch", labelKey: "lab.kit.speedWatch" },
-                    { value: "fast", labelKey: "lab.kit.speedFast" },
-                    { value: "turbo", labelKey: "lab.kit.speedTurbo" }
-                ],
-                value: speed,
-                onChange: setSpeed
-            });
-            const alphaSlider = kit.slider({
-                labelKey: "lab.maze.alpha", min: ALPHA.min, max: ALPHA.max, step: ALPHA.step, value: learner.alpha,
-                hintKey: "lab.maze.alphaHint",
-                onInput: function (value) { learner.alpha = value; },
-                onChange: saveSettings
-            });
-            const gammaSlider = kit.slider({
-                labelKey: "lab.maze.gamma", min: GAMMA.min, max: GAMMA.max, step: GAMMA.step, value: learner.gamma,
-                hintKey: "lab.maze.gammaHint",
-                onInput: function (value) { learner.gamma = value; },
-                onChange: saveSettings
-            });
-            const epsilonSlider = kit.slider({
-                labelKey: "lab.maze.epsilon", min: EPSILON.min, max: EPSILON.max, step: EPSILON.step, value: learner.epsilon,
-                hintKey: "lab.maze.epsilonHint",
-                onInput: function (value) {
-                    learner.epsilon = value;
-                    epsilonStart = value;
-                    dirty = true;
-                },
-                onChange: saveSettings
-            });
-            const slipperySwitch = kit.toggle({
-                labelKey: "lab.maze.slippery", checked: initial.slippery, hintKey: "lab.maze.slipperyHint",
-                onChange: function (on) {
-                    world.slippery = on;
-                    slipperyEpisodes = 0;
-                    saveSettings();
-                    changed();
-                }
-            });
-            const shrinkSwitch = kit.toggle({
-                labelKey: "lab.maze.shrink", checked: shrink,
-                hintKey: function () { return t("lab.maze.shrinkHint", { k: A.format.number(SHRINK), floor: A.format.number(EPSILON_FLOOR) }); },
-                onChange: function (on) {
-                    shrink = on;
-                    saveSettings();
-                    changed();
-                }
-            });
-            const layerSwitch = kit.toggle({
-                labelKey: "lab.maze.layer", checked: layer, hintKey: "lab.maze.layerHint",
-                onChange: function (on) {
-                    layer = on;
-                    saveSettings();
-                    changed();
-                }
-            });
-            // the sliders' own values (a saved 0.123 runs as the slider's 0.12)
-            learner.alpha = alphaSlider.value();
-            learner.gamma = gammaSlider.value();
-            learner.epsilon = epsilonSlider.value();
-            epsilonStart = learner.epsilon;
-
-            ui.side.appendChild(kit.group("lab.kit.settings", [speedPicker, alphaSlider, gammaSlider, epsilonSlider, slipperySwitch, shrinkSwitch, layerSwitch]));
-
-            // Charts: moves and reward per episode (faint: each episode; bold: the average of 10)
-            const charts = document.createElement("div");
-            charts.className = "mz-charts";
-            ui.bottom.appendChild(charts);
-            const movesView = kit.canvas(charts, { height: 160, labelKey: "lab.maze.chartMoves" });
-            const rewardView = kit.canvas(charts, { height: 160, labelKey: "lab.maze.chartReward" });
-            const movesChart = kit.lineChart(movesView, { series: [], xLabelKey: "lab.maze.episode", yLabelKey: "lab.maze.chartMoves" });
-            const rewardChart = kit.lineChart(rewardView, { series: [], xLabelKey: "lab.maze.episode", yLabelKey: "lab.maze.chartReward" });
-
-            const idea = document.createElement("p");
-            idea.className = "mz-idea";
-            idea.innerHTML = A.i18nHTML("lab.maze.ideaLine") + " ";
-            idea.append(kit.termLink("reinforcement", "lab.maze.term"), ". ");
-            idea.insertAdjacentHTML("beforeend", A.i18nHTML("lab.maze.realWorld"));
-            const toy = document.createElement("p");
-            toy.className = "mz-idea";
-            toy.innerHTML = A.i18nHTML("lab.maze.toyLine") + " ";
-            toy.append(kit.termLink("q-learning", "lab.maze.termQ"), ". ");
-            toy.insertAdjacentHTML("beforeend", A.i18nHTML("lab.maze.toyLine2"));
-            const explain = kit.explain({ steps: [
-                { key: "lab.maze.step1" },
-                { key: "lab.maze.step2" },
-                { key: "lab.maze.step3" },
-                { key: "lab.maze.step4" },
-                { key: "lab.maze.step5" }
-            ] });
-            const challenges = kit.challenges({ ctx: ctx, items: [
-                {
-                    key: "lab.maze.ch1", insightKey: "lab.maze.ch1Why",
-                    check: function (info) { return info.preset === "first" && reachesBattery(info.path) && info.path.moves.length === info.shortest; }
-                },
-                {
-                    key: "lab.maze.ch2", insightKey: "lab.maze.ch2Why",
-                    check: function (info) {
-                        return info.preset === "cliff" && info.slippery && info.slipperyEpisodes >= SAFE_EPISODES &&
-                            reachesBattery(info.path) && riskyMoves(world, info.path) === 0;
-                    }
-                },
-                {
-                    key: "lab.maze.ch3", insightKey: "lab.maze.ch3Why",
-                    check: function (info) { return info.preset === "far" && info.episodes >= PATIENT_EPISODES && info.path.end === "big"; }
-                },
-                {
-                    key: "lab.maze.ch4", insightKey: "lab.maze.ch4Why",
-                    check: function (info) {
-                        const run = info.sinceForget;
-                        return info.preset === "far" && run.greedy && run.episodes >= LOCK_IN.episodes && run.big < LOCK_IN.share * run.episodes;
-                    }
-                }
-            ] });
-            ui.bottom.append(idea, toy, explain.element, challenges.element);
-
-            const loop = kit.loop({ rate: SPEED[speed], budget: TURBO_BUDGET, update: tick, draw: frame });
-            scene.onResize(function () { render(1); });
-            // Calm mode switched on or off (the hub doesn't tell us): the glows go or come back at once
-            const offMotion = A.motion.onChange(function () {
-                tileCache = null;
-                trail.length = 0;
-                changed();
-            });
-
-            // ----- The inspector: the selected square's four scores around a small square -----
-            function makeInspector() {
-                const element = document.createElement("div");
-                element.className = "mz-inspector";
-                const name = document.createElement("p");
-                name.className = "mz-cell-name";
-                const grid = document.createElement("div");
-                grid.className = "mz-qgrid";
-                grid.setAttribute("role", "group");
-                const center = document.createElement("span");
-                center.className = "mz-q-center";
-                center.setAttribute("aria-hidden", "true");
-                center.innerHTML = kit.icons.up;
-                const items = DIRECTION_NAMES.map(function (key, a) {
-                    const item = document.createElement("span");
-                    item.className = "mz-q mz-q-" + ["up", "right", "down", "left"][a];
-                    item.innerHTML = '<span class="mz-q-arrow" aria-hidden="true">' + kit.icons.up + '</span><span class="sr-only"></span><span class="mz-q-value"></span>';
-                    grid.appendChild(item);
-                    return { element: item, name: item.querySelector(".sr-only"), value: item.querySelector(".mz-q-value") };
-                });
-                grid.appendChild(center);
-                const noScores = document.createElement("p");
-                noScores.className = "mz-note";
-                const move = document.createElement("p");
-                move.className = "mz-update";
-                const formula = document.createElement("p");
-                formula.className = "mz-formula";
-                element.append(name, grid, noScores, move, formula);
-                return { element: element, name: name, grid: grid, center: center, items: items, noScores: noScores, move: move, formula: formula };
-            }
-
-            // ----- Training -----
-            function beginEpisode() {
-                s = world.start;
-                moves = 0;
-                episodeReward = 0;
-                episode += 1;
-                episodeOver = false;
-                trail.length = 0;
-            }
-
-            function endEpisode(end) {
-                episodeOver = true;
-                lastEnd = end;
-                lastMoves = moves;
-                history.moves.push(moves);
-                history.reward.push(episodeReward);
-                history.found.push(end === "small" || end === "big");
-                history.avgMoves.push(averageOfLast(history.moves, AVERAGE));
-                history.avgReward.push(averageOfLast(history.reward, AVERAGE));
-                // Old episodes leave the lists in big bites (cheaper than one at a time)
-                if (history.moves.length > 2 * HISTORY) {
-                    const extra = history.moves.length - HISTORY;
-                    ["moves", "reward", "found", "avgMoves", "avgReward"].forEach(function (name) { history[name].splice(0, extra); });
-                    history.first += extra;
-                }
-                history.changed = true;
-                sinceForget.episodes += 1;
-                if (end === "big") sinceForget.big += 1;
-                if (learner.epsilon > 0 || shrink || learner.gamma < LOCK_IN.gamma) sinceForget.greedy = false;
-                if (world.slippery) slipperyEpisodes += 1;
-                if (shrink && learner.epsilon > EPSILON_FLOOR) learner.epsilon = Math.max(EPSILON_FLOOR, learner.epsilon * SHRINK);
-                if (stopAtEpisodeEnd) {
-                    stopAtEpisodeEnd = false;
-                    loop.stop();
-                    setState("done");
-                    note = function () { return ["lab.maze.episodeDone", episodeValues()]; };
-                    ctx.announce(t("lab.maze.episodeDone", episodeValues()));
-                }
-            }
-
-            function episodeValues() {
-                return { n: episode, moves: A.plural("lab.maze.moves", lastMoves), end: t(END_KEYS[lastEnd]) };
-            }
-
-            // One move of training, with its update (the loop calls this at the chosen speed)
-            function trainMove() {
-                route = null;
-                if (episodeOver) beginEpisode();
-                const record = learnMove(world, Q, s, learner, random);
-                last = record;
-                from = s;
-                bump = record.next === s ? record.actual : -1;
-                s = record.next;
-                moves += 1;
-                episodeReward += record.reward;
-                if (speed !== "turbo" && A.motion.ok()) {
-                    trail.push(s);
-                    if (trail.length > TRAIL) trail.shift();
-                }
-                record.limit = !record.done && moves >= episodeLimit(world);
-                if (record.done) endEpisode(world.cells[s]);
-                else if (record.limit) endEpisode("limit");
-                dirty = true;
-            }
-
-            // The loop's step: a training move, or the next square of the best path. In Turbo the
-            // loop calls this 1000 times a second: the first call of a frame makes all the moves
-            // that fit in turboMs, the other calls of that frame do nothing.
-            function tick() {
-                if (showing) {
-                    route.shown += 1;
-                    if (route.shown >= route.cells.length) stopShow();
-                } else if (speed !== "turbo") {
-                    trainMove();
-                } else if (!turbo.start) {
-                    turbo.start = performance.now();
-                    const until = turbo.start + turbo.ms;
-                    do {
-                        for (let i = 0; i < BATCH && loop.running(); i++) trainMove();
-                    } while (loop.running() && performance.now() < until);
-                    turbo.moves = performance.now() - turbo.start;
-                }
-            }
-
-            // The loop's drawing, once per frame. In Turbo it also times the frame: when the rest
-            // of the frame is slow (a slow computer), the moves get less time, so that the whole
-            // frame stays near FRAME_MS.
-            function frame(info) {
-                render(info.progress);
-                if (turbo.start) {
-                    turbo.rest = 0.9 * turbo.rest + 0.1 * (performance.now() - turbo.start - turbo.moves);
-                    turbo.ms = A.util.clamp(FRAME_MS - turbo.rest, 1, TURBO_BUDGET);
-                    turbo.start = 0;
-                }
-            }
-
-            function stopShow() {
-                if (!showing) return;
-                showing = false;
-                loop.stop();
-                loop.setRate(SPEED[speed]);
-            }
-
-            // ----- What the buttons do -----
-            function setState(next) {
-                state = next;
-                status.set(next);
-                playButton.setLabel(next === "running" ? "lab.kit.pause" : "lab.kit.play");
-                playButton.setIcon(next === "running" ? "pause" : "play");
-                dirty = true;
-            }
-
-            // Any button press takes back a waiting "edit the maze?" warning
-            function disarm() {
-                armed = false;
-                askHint.hide();
-            }
-
-            // Before training starts again: leave edit mode, stop the best-path show
-            function prepare() {
-                disarm();
-                leaveEdit(false);
-                stopShow();
-                note = null;
-            }
-
-            function togglePlay() {
-                if (state === "running") {
-                    loop.stop();
-                    stopAtEpisodeEnd = false;
-                    setState("paused");
-                    render(1);
-                    return;
-                }
-                prepare();
-                stopAtEpisodeEnd = false;
-                setState("running");
-                loop.start();
-            }
-
-            function runEpisode() {
-                prepare();
-                stopAtEpisodeEnd = true;
-                setState("running");
-                loop.start();
-            }
-
-            function stepOnce() {
-                prepare();
-                loop.stop();
-                stopAtEpisodeEnd = false;
-                trainMove();
-                selected = last.s;
-                showCursor = true;
-                setState("paused");
-                ctx.announce(t("lab.maze.stepSay", {
-                    dir: t(DIRECTION_KEYS[last.actual]), r: signed(last.reward), old: score(last.old), new: score(last.value)
-                }));
-                render(1);
-            }
-
-            function showBestPath() {
-                disarm();
-                leaveEdit(false);
-                if (state === "running") {
-                    loop.stop();
-                    setState("paused");
-                }
-                stopShow();
-                const path = greedyPath(Q, world);
-                route = { cells: path.cells, moves: path.moves, end: path.end, shown: A.motion.ok() ? 1 : path.cells.length };
-                from = s;
-                bump = -1;
-                note = function () { return [PATH_KEYS[route ? route.end : "unknown"], { moves: A.plural("lab.maze.moves", route ? route.moves.length : 0) }]; };
-                ctx.announce(t(PATH_KEYS[path.end], { moves: A.plural("lab.maze.moves", path.moves.length) }));
-                if (route.shown < route.cells.length) {
-                    showing = true;
-                    loop.setRate(SHOW_RATE);
-                    loop.start();
-                }
-                changed();
-            }
-
-            function setSpeed(value) {
-                speed = value;
-                if (!showing) loop.setRate(SPEED[speed]);
-                trail.length = 0;
-                saveSettings();
-                changed();
-            }
-
-            // Forget everything: all scores back to 0, the numbers of the preset again
-            function forget(say) {
-                disarm();
-                stopShow();
-                loop.stop();
-                Q = newTable(world);
-                random = kit.rng(preset.seed);
-                learner.epsilon = epsilonStart;
-                s = world.start;
-                from = s;
-                bump = -1;
-                moves = 0;
-                episode = 0;
-                episodeReward = 0;
-                episodeOver = true;
-                lastEnd = null;
-                lastMoves = 0;
-                last = null;
-                history = { first: 1, moves: [], reward: [], found: [], avgMoves: [], avgReward: [], changed: true };
-                sinceForget = { episodes: 0, big: 0, greedy: true };
-                slipperyEpisodes = 0;
-                trail.length = 0;
-                route = null;
-                stopAtEpisodeEnd = false;
-                note = null;
-                setState("ready");
-                if (say) ctx.announce(t("lab.maze.forgotten"));
-                changed();
-            }
-
-            // A new maze (a preset, or the user's own): its world, its size, its legend
-            function loadPreset(id, applySettings) {
-                preset = presetById(id);
-                if (preset.id === MINE) world = makeWorld(myMaze.cols, myMaze.rows, myMaze.cells);
-                else world = worldFromRows(preset.maze, preset.rewards);
-                if (applySettings && preset.id !== MINE) {
-                    learner.alpha = preset.alpha;
-                    learner.gamma = preset.gamma;
-                    epsilonStart = preset.epsilon;
-                    shrink = preset.shrink;
-                    alphaSlider.set(preset.alpha);
-                    gammaSlider.set(preset.gamma);
-                    epsilonSlider.set(preset.epsilon);
-                    shrinkSwitch.set(preset.shrink);
-                    slipperySwitch.set(preset.slippery);
-                }
-                world.slippery = slipperySwitch.checked();
-                worldVersion += 1;
-                shortest = shortestPath(world);
-                selected = world.start;
-                showCursor = false;
-                scene.box.style.aspectRatio = String(world.cols / world.rows);
-                scene.box.style.maxWidth = world.cols * MAX_SQUARE + 2 * BOARD_PAD + "px";
-                legend.update(legendItems());
-                forget(false);
-            }
-
-            function choosePreset(id) {
-                disarm();
-                leaveEdit(false);
-                loadPreset(id, true);
-                saveSettings();
-            }
-
-            function presetOptions() {
-                const options = presets.map(function (p) { return { value: p.id, labelKey: p.labelKey }; });
-                if (myMaze) options.push({ value: MINE, labelKey: "lab.maze.presetMine" });
-                return options;
-            }
-
-            // The legend: each tile with its reward (rewards come from the Settings or the preset)
-            function legendItems() {
-                const r = world.rewards;
-                function withReward(key, value) {
-                    return function () { return t("lab.maze.withReward", { name: t(key), r: signed(value) }); };
-                }
-                return [
-                    { labelKey: "lab.maze.wall", color: "var(--accent)", shape: "square" },
-                    { labelKey: withReward("lab.maze.pit", r.pit), color: "var(--warning)", shape: "triangle" },
-                    { labelKey: withReward("lab.maze.small", r.small), color: "var(--success)", shape: "dot" },
-                    { labelKey: withReward("lab.maze.big", r.big), color: "var(--success)", shape: "diamond" },
-                    { labelKey: "lab.maze.start", color: "var(--accent-2)", shape: "ring" },
-                    { labelKey: function () { return t("lab.maze.moveCost", { r: signed(r.move) }); }, color: "var(--text-muted)", shape: "dash" }
-                ];
-            }
-
-            function saveSettings() {
-                ctx.store.set("settings", {
-                    v: SAVE_VERSION, preset: preset.id, alpha: learner.alpha, gamma: learner.gamma, epsilon: epsilonStart,
-                    shrink: shrink, slippery: world.slippery, layer: layer, speed: speed
-                });
-            }
-
-            // ----- Edit mode -----
-            function toggleEdit() {
-                if (editing) {
-                    leaveEdit(true);
-                    return;
-                }
-                editButton.setPressed(false);
-                if (episode > 0 && !armed) {
-                    armed = true;
-                    askHint.show();
-                    ctx.announce(t("lab.maze.editAsk"));
-                    return;
-                }
-                disarm();
-                stopShow();
-                forget(false);
-                editing = true;
-                editButton.setPressed(true);
-                editBox.hidden = false;
-                scene.box.classList.add("mz-editing");
-                kit.relabel(scene.box);
-                ctx.announce(t("lab.maze.editOn"));
-                changed();
-            }
-
-            function leaveEdit(say) {
-                if (!editing) return;
-                editing = false;
-                painting = false;
-                editButton.setPressed(false);
-                editBox.hidden = true;
-                scene.box.classList.remove("mz-editing");
-                kit.relabel(scene.box);
-                if (say) ctx.announce(t("lab.maze.editOff"));
-                changed();
-            }
-
-            // Paints the chosen tile on a square. The first change makes the maze the user's own.
-            function paint(square) {
-                if (square < 0 || !paintSquare(world, square, tool)) return;
-                myMaze = { v: SAVE_VERSION, cols: world.cols, rows: world.rows, cells: world.cells.slice() };
-                ctx.store.set("maze", myMaze);
-                if (preset.id !== MINE) {
-                    preset = presetById(MINE);
-                    presetSelect.setOptions(presetOptions(), MINE);
-                    saveSettings();
-                }
-                worldVersion += 1;
-                shortest = shortestPath(world);
-                selected = square;
-                forget(false);
-            }
-
-            // ----- The board: mouse, touch and keyboard -----
-            // The square under the pointer, or -1
-            function squareAt(event) {
-                const box = scene.canvas.getBoundingClientRect();
-                const geo = boardGeometry(scene, world);
-                const x = Math.floor((event.clientX - box.left - geo.left) / geo.size);
-                const y = Math.floor((event.clientY - box.top - geo.top) / geo.size);
-                return x < 0 || y < 0 || x >= world.cols || y >= world.rows ? -1 : y * world.cols + x;
-            }
-
-            function select(square, say) {
-                if (square < 0) return;
-                selected = square;
-                showCursor = true;
-                if (say) ctx.announce(squareText(square));
-                changed();
-            }
-
-            // "Row 2, column 3: wall." plus the best move there
-            function squareText(square) {
-                const tile = world.cells[square];
-                let text = t("lab.maze.cell", { row: rowOf(world, square) + 1, col: colOf(world, square) + 1, tile: tileText(tile) });
-                if (tile === "wall" || isEnd(tile) || editing) return text;
-                const values = Q[square];
-                if (undecided(values)) return text + " " + t("lab.maze.cellNew");
-                return text + " " + t("lab.maze.cellBest", { dir: t(DIRECTION_KEYS[values.indexOf(bestScore(values))]) });
-            }
-
-            // A mouse paints while its button is down; a finger paints with a tap (the click
-            // below), so a finger can still scroll the page over the board
-            scene.canvas.addEventListener("pointerdown", function (event) {
-                if (!editing || event.pointerType === "touch" || event.button !== 0) return;
-                painting = true;
-                scene.canvas.setPointerCapture(event.pointerId);
-                paint(squareAt(event));
-            });
-            scene.canvas.addEventListener("pointermove", function (event) {
-                if (painting) paint(squareAt(event));
-            });
-            ["pointerup", "pointercancel", "lostpointercapture"].forEach(function (type) {
-                scene.canvas.addEventListener(type, function () { painting = false; });
-            });
-            scene.canvas.addEventListener("click", function (event) {
-                const square = squareAt(event);
-                if (editing) paint(square);
-                else select(square, false);
-            });
-            scene.canvas.addEventListener("keydown", function (event) {
-                const move = ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"].indexOf(event.key);
-                if (move !== -1) {
-                    event.preventDefault();
-                    const x = A.util.clamp(colOf(world, selected) + MOVES[move].x, 0, world.cols - 1);
-                    const y = A.util.clamp(rowOf(world, selected) + MOVES[move].y, 0, world.rows - 1);
-                    select(y * world.cols + x, true);
-                } else if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    if (editing) {
-                        paint(selected);
-                        select(selected, true);
-                    } else {
-                        const values = Q[selected];
-                        showCursor = true;
-                        ctx.announce(squareText(selected) + (isEnd(world.cells[selected]) || world.cells[selected] === "wall" ? "" : " " +
-                            t("lab.maze.cellScores", { up: score(values[0]), right: score(values[1]), down: score(values[2]), left: score(values[3]) })));
-                        changed();
-                    }
-                }
-            });
-
-            // ----- Everything on screen follows the state -----
-            // Something changed outside the loop: write and draw it now
-            function changed() {
-                dirty = true;
-                render(1);
-            }
-
-            function robotMood() {
-                if (!episodeOver || !lastEnd) return "normal";
-                return lastEnd === "pit" ? "sad" : lastEnd === "limit" ? "normal" : "happy";
-            }
-
-            // progress: how far the next move is (0..1), for the robot's slide in Watch mode
-            function drawBoard(progress) {
-                if (!scene.width || !scene.height) return;
-                const g = scene.ctx;
-                const c = kit.colors();
-                const motion = A.motion.ok();
-                const geo = boardGeometry(scene, world);
-                const key = [scene.width, scene.height, scene.dpr, c.theme, motion, worldVersion].join("|");
-                if (!tileCache || tileCache.key !== key) {
-                    const image = document.createElement("canvas");
-                    image.width = Math.round(scene.width * scene.dpr);
-                    image.height = Math.round(scene.height * scene.dpr);
-                    const ig = image.getContext("2d");
-                    ig.setTransform(scene.dpr, 0, 0, scene.dpr, 0, 0);
-                    drawTiles(ig, geo, world, c, motion);
-                    tileCache = { key: key, image: image };
-                }
-                g.clearRect(0, 0, scene.width, scene.height);
-                g.drawImage(tileCache.image, 0, 0, scene.width, scene.height);
-                if (layer) drawValues(g, geo, world, Q, c);
-                drawStart(g, geo, world, c);
-                if (route) drawRoute(g, geo, world, route, c, motion);
-                if (motion && speed !== "turbo" && trail.length) drawTrail(g, geo, world, trail, c);
-                // The robot: it slides (Watch mode with motion), or stands on its square
-                let spot = centerOf(geo, world, s);
-                if (motion && speed === "watch" && state === "running" && !showing && progress < 1) {
-                    const share = Math.min(1, progress / SLIDE);
-                    const ease = share * share * (3 - 2 * share);
-                    if (bump !== -1) {
-                        const push = Math.sin(Math.PI * ease) * BUMP * geo.size;
-                        spot = { x: spot.x + MOVES[bump].x * push, y: spot.y + MOVES[bump].y * push };
-                    } else {
-                        const start = centerOf(geo, world, from);
-                        spot = { x: start.x + (spot.x - start.x) * ease, y: start.y + (spot.y - start.y) * ease };
-                    }
-                }
-                drawRobot(g, spot.x, spot.y, geo.size, c, robotMood(), motion);
-                if (showCursor) drawCursor(g, geo, world, selected, c);
-            }
-
-            function render(progress) {
-                drawBoard(progress === undefined ? 1 : progress);
-                if (!dirty) return;
-                // In Turbo the numbers change too fast to read: write them 10 times a second
-                const now = performance.now();
-                if (state === "running" && speed === "turbo" && now - lastPaint < TURBO_PAINT_MS) return;
-                lastPaint = now;
-                dirty = false;
-                const path = greedyPath(Q, world);
-                if (history.changed) paintCharts();
-                paintStats(path);
-                paintInspector();
-                paintExplain();
-                paintBoardText(path);
-                setText(about, t(preset.aboutKey));
-                noWayHint.element.hidden = shortest !== -1;
-                challenges.check({
-                    preset: preset.id, path: path, shortest: shortest, slippery: world.slippery, slipperyEpisodes: slipperyEpisodes,
-                    episodes: sinceForget.episodes, sinceForget: sinceForget
-                });
-            }
-
-            function paintCharts() {
-                history.changed = false;
-                const skip = Math.max(0, history.moves.length - HISTORY);     // the episodes too old to show
-                movesChart.set({ x0: history.first + skip, series: [
-                    { values: history.moves.slice(skip), colorIndex: 0, faint: true },
-                    { values: history.avgMoves.slice(skip), colorIndex: 0, labelKey: "lab.maze.chartMovesAvg" }
-                ] });
-                rewardChart.set({ x0: history.first + skip, series: [
-                    { values: history.reward.slice(skip), colorIndex: 1, faint: true },
-                    { values: history.avgReward.slice(skip), colorIndex: 1, labelKey: "lab.maze.chartRewardAvg" }
-                ] });
-                movesChart.draw();
-                rewardChart.draw();
-            }
-
-            function paintStats(path) {
-                stats.episode.set(episode);
-                stats.moves.set(moves);
-                const recent = history.found.slice(-RECENT);
-                stats.found.set(recent.length ? recent.filter(Boolean).length / recent.length : null);
-                stats.best.set(reachesBattery(path) ? path.moves.length : null);
-                if (Math.abs(epsilonSlider.value() - learner.epsilon) >= EPSILON.step / 2) epsilonSlider.set(learner.epsilon);
-            }
-
-            function paintInspector() {
-                const tile = world.cells[selected];
-                const values = Q[selected];
-                setText(inspector.name, t("lab.maze.cell", { row: rowOf(world, selected) + 1, col: colOf(world, selected) + 1, tile: tileText(tile) }));
-                const scored = tile !== "wall" && !isEnd(tile);
-                inspector.grid.hidden = !scored;
-                inspector.noScores.hidden = scored;
-                setText(inspector.noScores, scored ? "" : t(tile === "wall" ? "lab.maze.wallNote" : "lab.maze.noScores"));
-                const label = t("lab.maze.scores");
-                if (inspector.grid.getAttribute("aria-label") !== label) inspector.grid.setAttribute("aria-label", label);
-                const top = bestScore(values);
-                const learned = !undecided(values);
-                const fresh = last && state !== "running" && last.s === selected;
-                inspector.items.forEach(function (item, a) {
-                    setText(item.name, t(DIRECTION_NAMES[a]) + ": ");
-                    setText(item.value, score(values[a]));
-                    item.element.classList.toggle("is-best", learned && values[a] === top);
-                    item.element.classList.toggle("is-low", values[a] < 0);
-                    item.element.classList.toggle("is-updated", Boolean(fresh) && last.action === a);
-                });
-                // the small square in the middle: its colour on the board, and its best move
-                inspector.center.style.background = layer && explored(world, Q, selected) ? kit.alpha(kit.diverge(top / valueScale(world, Q)), TINT) : "";
-                inspector.center.setAttribute("data-best", learned ? String(values.indexOf(top)) : "");
-                // the last update, with its numbers (not while running: they change too fast)
-                const showUpdate = Boolean(last) && state !== "running" && !editing;
-                inspector.formula.hidden = !showUpdate;
-                if (!showUpdate) {
-                    setText(inspector.move, state === "running" || editing ? "" : t("lab.maze.stepHint"));
-                    return;
-                }
-                let text = t("lab.maze.lastMove", {
-                    row: rowOf(world, last.s) + 1, col: colOf(world, last.s) + 1, dir: t(DIRECTION_KEYS[last.action]),
-                    how: t(last.explore ? "lab.maze.howRandom" : "lab.maze.howBest"), r: signed(last.reward)
-                });
-                if (last.actual !== last.action) text += " " + t("lab.maze.slipped", { dir: t(DIRECTION_KEYS[last.actual]) });
-                setText(inspector.move, text);
-                setText(inspector.formula, formulaText(last));
-            }
-
-            // "Q = 1.20 + 0.5 × (−0.1 + 0.9 × 3.40 − 1.20) = 2.08". The scores are rounded, so
-            // when the rounded numbers don't give exactly the result, it says "≈".
-            function formulaText(m) {
-                const check = round2(m.old) + m.alpha * (m.reward + m.gamma * round2(m.bestNext) - round2(m.old));
-                return t("lab.maze.formula", {
-                    old: score(m.old), alpha: A.format.number(m.alpha), r: A.format.number(m.reward), gamma: A.format.number(m.gamma),
-                    next: term(m.bestNext), oldAgain: term(m.old), eq: round2(check) === round2(m.value) ? "=" : "≈", new: score(m.value)
-                });
-            }
-
-            function paintExplain() {
-                explain.setValues(1, {
-                    eps: learner.epsilon,
-                    how: last ? t(last.explore ? "lab.maze.howRandomLong" : "lab.maze.howBestLong") : ""
-                });
-                explain.setValues(2, { reward: last ? signed(last.reward) : "—", why: last ? whyText(last) : "" });
-                explain.setValues(3, { old: last ? score(last.old) : "—", new: last ? score(last.value) : "—" });
-                explain.setStep(state === "running" || state === "done" ? 4 : last ? 3 : 0);
-                if (note) {
-                    const sentence = note();
-                    explain.setText(sentence[0], sentence[1]);
-                } else {
-                    explain.setText(null);
-                }
-            }
-
-            // Why the last move got its reward
-            function whyText(m) {
-                const cost = signed(world.rewards.move);
-                if (m.done) {
-                    const tile = world.cells[m.next];
-                    return t("lab.maze.whyEnd", { tile: t(TILE_KEYS[tile]), bonus: signed(world.rewards[tile]), cost: cost });
-                }
-                if (m.limit) return t("lab.maze.whyLimit");
-                return t(m.next === m.s ? "lab.maze.whyWall" : "lab.maze.whyMove", { cost: cost });
-            }
-
-            // The board in words, for screen readers
-            function paintBoardText(path) {
-                const lastText = lastEnd ? t("lab.maze.describeLast", { moves: A.plural("lab.maze.moves", lastMoves), end: t(END_KEYS[lastEnd]) })
-                    : t("lab.maze.describeNone");
-                const bestText = reachesBattery(path) ? t("lab.maze.describeBest", { moves: A.plural("lab.maze.moves", path.moves.length) })
-                    : t("lab.maze.describeNoBest");
-                scene.describe(t("lab.maze.describe", {
-                    cols: world.cols, rows: world.rows, episode: episode,
-                    robot: t("lab.maze.describeRobot", { row: rowOf(world, s) + 1, col: colOf(world, s) + 1 }),
-                    last: lastText, best: bestText
-                }));
-            }
-
-            loadPreset(preset.id, false);
-
-            // ----- The controller: the hub calls these -----
-            return {
-                pause: function () {
-                    resumeOnShow = loop.running();
-                    loop.stop();
-                },
-                resume: function () {
-                    if (resumeOnShow) loop.start();
-                    resumeOnShow = false;
-                },
-                language: function () {
-                    kit.relabel(stage);
-                    history.changed = true;
-                    changed();
-                },
-                theme: function () {
-                    kit.colors.invalidate();
-                    tileCache = null;
-                    history.changed = true;
-                    changed();
-                },
-                destroy: function () {
-                    loop.stop();
-                    offMotion();
-                    scene.destroy();
-                    movesView.destroy();
-                    rewardView.destroy();
-                }
-            };
-        }
+        create: create
     });
 })();
