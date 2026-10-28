@@ -294,9 +294,10 @@
     function suggestions() {
         const rules = host.data.rules;
         const list = [];
-        const next = attempt(function () { return A.lessons.next(); }, 0);
+        const done = lessonsDone();
+        const next = Number(host.site.lessons().filter(function (id) { return done.indexOf(id) === -1; })[0]) || 0;
         if (next) {
-            const started = attempt(function () { return A.lessons.completed().length; }, 0) > 0;
+            const started = done.length > 0;
             list.push({
                 icon: "first-lesson",
                 title: t(started ? "journey.next.lessonGo" : "journey.next.lessonStart", { n: next }),
@@ -414,6 +415,15 @@
     }
 
     /* ---------- 7. Drawing: progress and the skill radar ---------- */
+    // The lessons finished ("1", "2"...): those the lessons know about, and those in the
+    // progress (progress loaded from another browser has lessons this one hasn't seen)
+    function lessonsDone() {
+        const completed = attempt(function () { return A.lessons.completed().map(String); }, []);
+        return host.site.lessons().filter(function (id) {
+            return completed.indexOf(id) !== -1 || Object.prototype.hasOwnProperty.call(host.state.awarded, "lesson:" + id);
+        });
+    }
+
     function labProgress() {
         const ids = host.site.lab();
         const total = host.site.labTotal();
@@ -445,13 +455,11 @@
 
     // Each part of the site: done, out of how many (from the features, never written here)
     function areas() {
-        const lessonsTotal = A.lessons ? A.lessons.count : 0;
-        const lessonsDone = Math.min(lessonsTotal, attempt(function () { return A.lessons.completed().length; }, 0));
         const lab = labProgress();
         const terms = host.site.terms();
         const eras = host.site.eras();
         return [
-            { id: "lessons", done: lessonsDone, total: lessonsTotal },
+            { id: "lessons", done: lessonsDone().length, total: host.site.lessons().length },
             { id: "lab", done: lab.done, total: lab.total },
             { id: "words", done: host.countAwards("term:", terms), total: terms.length },
             { id: "history", done: host.countAwards("era:", eras), total: eras.length }

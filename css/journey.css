@@ -232,13 +232,11 @@
     line-height: 1.2;
 }
 
-.jr-title:focus {
-    outline: none;
-}
-
+/* The title gets the focus from the script when the window opens: like the other
+   headings of the site that do (lessons, quiz), it needs no ring */
+.jr-title:focus,
 .jr-title:focus-visible {
-    outline: 2px solid var(--accent-2);
-    outline-offset: 4px;
+    outline: none;
 }
 
 .jr-close {
@@ -559,6 +557,7 @@
     font-size: 14px;
     font-weight: 700;
     line-height: 1.3;
+    text-wrap: balance;
 }
 
 .jr-step-sub {
@@ -1268,6 +1267,32 @@
 
     .jr-level-name {
         font-size: 19px;
+    }
+
+    .jr-activity-stats li {
+        padding: 8px 10px;
+    }
+
+    .jr-activity-stats strong {
+        font-size: 15px;
+    }
+}
+
+/* The narrowest phones (360 px): the menu bar has one button more than before, so this
+   button and the gaps between the buttons get a little smaller, and everything fits */
+@media (max-width: 374px) {
+    .jr-nav {
+        min-width: 30px;
+        padding: 0 2px;
+    }
+
+    .jr-nav-ring {
+        width: 24px;
+        height: 24px;
+    }
+
+    .nav-actions:has(> .jr-nav:not([hidden])) {
+        gap: 4px;
     }
 }
 
