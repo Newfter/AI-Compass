@@ -2429,13 +2429,16 @@
 
         const calm = !A.motion.ok();
 
+        // A hidden browser tab stops it at its next step, and a half-typed word is taken
+        // back (onLabVisible only hears about a hidden tab while the lab is on screen)
+        function stoppedByHiddenTab() {
+            if (!document.hidden) return false;
+            stopAuto(false);
+            return true;
+        }
+
         function nextWord() {
-            if (job.cancelled) return;
-            // A hidden browser tab stops it (onLabVisible only hears about that while the lab is on screen)
-            if (document.hidden) {
-                stopAuto(false);
-                return;
-            }
+            if (job.cancelled || stoppedByHiddenTab()) return;
             if (job.count >= AUTO_WORDS || input.value.length > AUTO_STOP) {
                 stopAuto(true);
                 return;
@@ -2454,7 +2457,7 @@
             if (shownIndex >= 0) lmEls.items[shownIndex].querySelector(".lab-cand").classList.add("is-picked");
 
             job.timer = setTimeout(() => {
-                if (job.cancelled) return;
+                if (job.cancelled || stoppedByHiddenTab()) return;
                 lmEls.items.forEach((item) => item.querySelector(".lab-cand").classList.remove("is-picked"));
                 if (choice === END) {
                     insertWord(END);
@@ -2484,7 +2487,7 @@
             job.typed = "";
             let i = 0;
             (function typeLetter() {
-                if (job.cancelled) return;
+                if (job.cancelled || stoppedByHiddenTab()) return;
                 input.value += text.charAt(i);
                 job.typed += text.charAt(i);
                 input.scrollTop = input.scrollHeight;
