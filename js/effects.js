@@ -1063,12 +1063,15 @@
         return true;
     }
 
-    // The glare is a light layer added inside the card the first time you hover it
+    // The glare is a light layer added inside the card the first time you hover it:
+    //   .fx-glare            fades in and out (on tilt cards: a soft light all over it)
+    //     .fx-glare-ring     the card's border, cut out with a mask
+    //       .fx-glare-spot   a light spot that follows the cursor along the border
+    const glares = new WeakMap();                                          // card → { glare, spot, inset }
+
     function glareOf(host) {
-        for (let i = host.children.length - 1; i >= 0; i--) {
-            if (host.children[i].classList.contains("fx-glare")) return host.children[i];
-        }
-        return null;
+        const record = glares.get(host);
+        return record && record.glare.parentNode === host ? record : null;  // the card may have rebuilt its content
     }
 
     function createGlare(host) {
@@ -1078,24 +1081,30 @@
         const glare = document.createElement("span");
         glare.className = "fx-glare";
         glare.setAttribute("aria-hidden", "true");
+        glare.innerHTML = '<span class="fx-glare-ring"><span class="fx-glare-spot"></span></span>';
 
-        // Sit exactly on top of the card's border (unless the card clips its content)
+        // Sit exactly on top of the card's border (unless the card clips its content:
+        // then the glare sits inside the border, "inset" pixels from the card's edge)
         const border = parseFloat(style.borderTopWidth) || 0;
+        let inset = border;
         if (border && style.overflow === "visible") {
+            inset = 0;
             ["top", "right", "bottom", "left"].forEach((side) => {
                 glare.style[side] = -border + "px";
             });
         }
         host.appendChild(glare);
-        return glare;
+
+        const record = { glare: glare, spot: glare.querySelector(".fx-glare-spot"), inset: inset };
+        glares.set(host, record);
+        return record;
     }
 
     function light(host) {
         litHost = host;
         litRect = null;
-        let glare = glareOf(host);
-        if (!glare) glare = createGlare(host);
-        glare.classList.toggle("fx-glare-full", host.hasAttribute("data-tilt"));
+        const record = glareOf(host) || createGlare(host);
+        record.glare.classList.toggle("fx-glare-full", host.hasAttribute("data-tilt"));
         host.classList.add("fx-lit");
         if (host.hasAttribute("data-tilt")) startTilt(host);
     }
@@ -1121,13 +1130,20 @@
         const x = A.util.clamp((pointer.x - litRect.left) / litRect.width, 0, 1);
         const y = A.util.clamp((pointer.y - litRect.top) / litRect.height, 0, 1);
 
-        const glare = glareOf(host);
-        if (glare) {
-            glare.style.setProperty("--fx-x", (x * 100).toFixed(1) + "%");
-            glare.style.setProperty("--fx-y", (y * 100).toFixed(1) + "%");
+        // The light on the border moves with a transform: nothing is painted again
+        const record = glareOf(host);
+        if (record) {
+            const left = x * (litRect.width - record.inset * 2);
+            const top = y * (litRect.height - record.inset * 2);
+            record.spot.style.transform = "translate(" + left.toFixed(1) + "px," + top.toFixed(1) + "px)";
         }
 
         if (host.hasAttribute("data-tilt")) {
+            // Tilt cards are small: the cursor position goes on the card itself, for the
+            // soft light of its glare and for the card's own styles (0% to 100%)
+            host.style.setProperty("--fx-x", (x * 100).toFixed(1) + "%");
+            host.style.setProperty("--fx-y", (y * 100).toFixed(1) + "%");
+
             // Small cards tilt more, big cards tilt less
             const maxTilt = A.util.clamp(2600 / litRect.width, 3, 9);
             const rotateX = (0.5 - y) * 2 * maxTilt * 0.8;
@@ -1234,12 +1250,35 @@
         return element.matches("button, a[href], [role='button'], label") ? element : null;
     }
 
+    // The ripple needs its button to be "position: relative". We set that while
+    // ripples play and put the button's own value back after the LAST one
+    // (quick presses overlap: the second must not remember our "relative")
+    const rippleHolds = new WeakMap();                                     // button → { position, count }
+
+    function holdPosition(element) {
+        let hold = rippleHolds.get(element);
+        if (!hold) {
+            hold = { position: element.style.position, count: 0 };
+            if (getComputedStyle(element).position === "static") element.style.position = "relative";
+            rippleHolds.set(element, hold);
+        }
+        hold.count++;
+    }
+
+    function releasePosition(element) {
+        const hold = rippleHolds.get(element);
+        if (!hold) return;
+        hold.count--;
+        if (hold.count > 0) return;
+        element.style.position = hold.position;
+        rippleHolds.delete(element);
+    }
+
     function ripple(element, x, y) {
         const rect = element.getBoundingClientRect();
         if (!rect.width || !rect.height) return;
 
-        const originalPosition = element.style.position;
-        if (getComputedStyle(element).position === "static") element.style.position = "relative";
+        holdPosition(element);
 
         const size = Math.hypot(Math.max(x - rect.left, rect.right - x), Math.max(y - rect.top, rect.bottom - y)) * 2;
         const box = document.createElement("span");
@@ -1255,7 +1294,7 @@
 
         setTimeout(() => {
             box.remove();
-            if (!element.querySelector(".fx-ripple")) element.style.position = originalPosition;
+            releasePosition(element);
         }, 700);
     }
 
@@ -1576,7 +1615,7 @@
                 shape: i % 3,                     // 0 square, 1 circle, 2 paper strip
                 turn: Math.random() * Math.PI * 2,
                 spin: (Math.random() - 0.5) * 14,
-                color: colors[i % colors.length] || "#9b6dff"
+                color: colors[i % colors.length]
             });
         }
 

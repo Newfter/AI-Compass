@@ -295,7 +295,9 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     opacity: 1;
 }
 
-/* A soft light spot that follows the cursor (tilt cards only) */
+/* A soft light spot that follows the cursor (tilt cards only).
+   js/effects.js puts the cursor position on the card itself: --fx-x and --fx-y
+   (0% to 100%), so the card's own styles can follow the cursor too. */
 .fx-glare-full {
     background: radial-gradient(circle at var(--fx-x, 50%) var(--fx-y, 50%), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%);
 }
@@ -304,20 +306,36 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     background: radial-gradient(circle at var(--fx-x, 50%) var(--fx-y, 50%), rgba(var(--accent-rgb), 0.07), rgba(var(--accent-rgb), 0) 55%);
 }
 
-/* The border lights up near the cursor (a ring cut out with a mask) */
-.fx-glare::before {
-    content: "";
+/* The border lights up near the cursor: a ring cut out with a mask... */
+.fx-glare-ring {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
+    overflow: hidden;
     padding: 1px;
     border-radius: inherit;
-    background: radial-gradient(240px circle at var(--fx-x, 50%) var(--fx-y, 50%), rgba(var(--accent-2-rgb), 0.9), rgba(var(--accent-rgb), 0.45) 40%, rgba(var(--accent-rgb), 0) 72%);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* ...with a light spot inside it. Its middle starts at the top left corner
+   and js/effects.js moves it under the cursor with a transform. Moving it
+   repaints nothing, even on a huge card (painting the light at a new place
+   on every mouse move cost seconds on the big lab card) */
+.fx-glare-spot {
+    position: absolute;
+    top: -240px;
+    left: -240px;
+    width: 480px;
+    height: 480px;
+    background: radial-gradient(240px circle at center, rgba(var(--accent-2-rgb), 0.9), rgba(var(--accent-rgb), 0.45) 40%, rgba(var(--accent-rgb), 0) 72%);
+}
+
+.fx-lit > .fx-glare .fx-glare-spot {
+    will-change: transform;
 }
 
 /* ===== 7. CURSOR SPOTLIGHT ===== */

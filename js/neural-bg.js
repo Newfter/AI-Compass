@@ -86,6 +86,17 @@
         return [0, 1, 2].map((i) => Math.round(A.util.lerp(a[i], b[i], amount)));
     }
 
+    // Calls callback when the screen's sharpness (devicePixelRatio) changes, for
+    // example when the window moves to another monitor. No "resize" comes then.
+    // TODO(core): A.onPixelRatioChange(callback) would serve the lab's canvases too
+    function onPixelRatioChange(callback) {
+        const stop = A.onMedia("(resolution: " + window.devicePixelRatio + "dppx)", () => {
+            stop();
+            callback();
+            onPixelRatioChange(callback);                                // watch the new value
+        }, { immediate: false });
+    }
+
     // ---------- Colours and glow images for the current theme ----------
     // A "sprite" is a tiny pre-drawn glowing dot. Copying it is much
     // faster than drawing a new glow for every node in every frame.
@@ -222,6 +233,7 @@
     }
 
     A.onResize(resize);
+    onPixelRatioChange(resize);                                          // sharp again on another monitor
 
     // ---------- Signals (neurons firing) ----------
     function spawnPulse(from, to, depth) {
