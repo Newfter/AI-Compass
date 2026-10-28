@@ -105,6 +105,8 @@
     ];
 
     const TOTAL = LESSONS.length;
+    // Texts and the hero number can show it: {lessonCount}, data-count-name="lessonCount"
+    A.setTextValue("lessonCount", TOTAL);
 
     // ---------- 3. Small helpers ----------
     // (Only what core.js has no helper for.)

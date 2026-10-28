@@ -522,6 +522,10 @@
     /* =========================================================
        7. COUNT-UP NUMBERS  [data-count="12"]
        Optional: data-count-prefix="+" data-count-suffix="%".
+       data-count-name="lessonCount": the number comes from the data,
+       through a text value of core.js (A.setTextValue), once the feature
+       that knows it has set it. data-count is the number until then
+       (and the one the page shows without JavaScript).
        Changing data-count later animates to the new number.
        The real number stays in the page (good for screen readers)
        and only drops to 0 just before it scrolls into view.
@@ -529,6 +533,13 @@
     function decimalsOf(text) {
         const part = String(text).split(".")[1];
         return part ? Math.min(part.length, 3) : 0;
+    }
+
+    // The number to count to (see the top of this part)
+    function counterTarget(element) {
+        const name = element.getAttribute("data-count-name");
+        const value = name ? Number(A.textValue(name)) : NaN;
+        return isFinite(value) ? value : parseFloat(element.getAttribute("data-count"));
     }
 
     // The text of a number: written the local way ("1,5" in Russian), with exactly the
@@ -560,7 +571,7 @@
     // Returns true when the number is new and waits to count up
     function registerCounter(element) {
         const raw = element.getAttribute("data-count");
-        const value = parseFloat(raw);
+        const value = counterTarget(element);
         if (!isFinite(value)) return false;
 
         let counter = counters.get(element);
@@ -682,7 +693,12 @@
         });
     }
 
-    document.addEventListener("DOMContentLoaded", () => requestAnimationFrame(checkCounters));
+    // This file runs before the features, so the numbers they set (data-count-name)
+    // are known only once every script has run: the counters take them then
+    document.addEventListener("DOMContentLoaded", () => {
+        registerCounters(findAll(document.body, "[data-count-name]"));
+        requestAnimationFrame(checkCounters);
+    });
     window.addEventListener("load", checkCounters);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(checkCounters);
 

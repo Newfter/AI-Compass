@@ -34,6 +34,8 @@
        1. SETTINGS
        ========================================================= */
     const TABS = ["classifier", "predictor"];   // the lab's two tabs (also saved as "lab.tab")
+    // One experiment per tab. The hero number shows it: data-count-name="labExperimentCount"
+    A.setTextValue("labExperimentCount", TABS.length);
 
     // ----- Teach the machine (the neural network) -----
     // Learning rates you can choose (10 is too big on purpose: try it and watch the loss jump)

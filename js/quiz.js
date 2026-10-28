@@ -92,6 +92,8 @@
     const QUESTIONS = data.questions;
     const RANKS = data.ranks;           // by the number of correct answers
     const PLAY_MINUTES = Math.max(1, Math.round(QUESTIONS.length * SECONDS_PER_QUESTION / 60));
+    // Texts and the hero number can show it: {quizQuestionCount}, data-count-name="quizQuestionCount"
+    A.setTextValue("quizQuestionCount", QUESTIONS.length);
 
     // ---------- 3. Small helpers ----------
     // (Plurals, number formats, shuffling, motion and screen-reader messages
@@ -100,8 +102,7 @@
     // "Twelve questions": the texts can spell out the exact number the quiz has
     // ("quiz.questionCount.12"); any other number uses the plural forms ("13 questions")
     function questionCount() {
-        const exactKey = "quiz.questionCount." + QUESTIONS.length;
-        return A.has(exactKey) ? t(exactKey) : A.plural("quiz.questionCount", QUESTIONS.length);
+        return A.plural("quiz.questionCount", QUESTIONS.length);
     }
 
     function optionKey(question, original) {

@@ -182,7 +182,7 @@
 
     // ----- Values inside texts -----
     // Some texts show a number or a word that comes from the data, like the number of
-    // lessons. The feature that knows it registers it once, by name:
+    // lessons. The feature that knows it registers it once, by name, while its file runs:
     //     A.setTextValue("lessonCount", LESSONS.length);
     //     A.setTextValue("questionCount", function () { return A.plural("quiz.questionCount", QUESTIONS.length); });
     // Then any text can say {lessonCount}: t(), A.plural() and the data-i18n elements of
@@ -193,6 +193,9 @@
     // that {name} in every text. A text that depends on a number names it on its element,
     // and gets the plural form that suits it (see plural() below):
     //     <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">lessons</span>
+    // Registered today: lessonCount (lessons.js), labExperimentCount (lab.js),
+    // quizQuestionCount (quiz.js) and languageCount (here). The hero numbers count up
+    // to them too (data-count-name in index.html, see js/effects.js).
     const textValues = {
         languageCount: LANGUAGES.length       // for texts like "2 languages"
     };
@@ -250,12 +253,18 @@
     //   with one key per form:  "quiz.points.one": "{n} point", "quiz.points.many": "{n} points"
     //                           (Russian also has ".few")
     //   or in one key:          "lab.dots": "dot|dots"   (Russian: "точка|точки|точек")
+    // A text for one exact number wins over the forms, so a count can be a word
+    // while the data has that many: "quiz.subtitle.12": "Twelve questions. ..."
+    // (a 13th question would show "13 questions. ..."). It must be in the current language.
     // {n} is filled in with the number, written the local way (values can replace it).
     function plural(key, n, values) {
+        const exact = Number.isInteger(Number(n)) ? translations[state.lang][key + "." + Number(n)] : undefined;
         const form = pluralForm(n);
         const forms = lookup(key);
         let text;
-        if (typeof forms === "string" && forms.indexOf("|") !== -1) {
+        if (exact !== undefined) {
+            text = exact;
+        } else if (typeof forms === "string" && forms.indexOf("|") !== -1) {
             const list = forms.split("|");
             text = list[Math.min(FORM_INDEX[form], list.length - 1)];
         } else {

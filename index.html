@@ -144,22 +144,25 @@
                 <a href="#lab" class="btn btn-ghost" data-i18n="hero.ctaLab">Try the AI Lab</a>
             </div>
 
+            <!-- The numbers count up to the real counts of the lessons, the lab, the quiz and the
+                 languages (data-count-name, js/effects.js). The numbers written here are what the
+                 page shows before that, and without JavaScript. -->
             <ul class="hero-stats revealed" data-reveal>
                 <li class="stat">
-                    <strong data-count="6">6</strong>
-                    <span data-i18n="hero.statLessons">interactive lessons</span>
+                    <strong data-count="6" data-count-name="lessonCount">6</strong>
+                    <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">interactive lessons</span>
                 </li>
                 <li class="stat">
-                    <strong data-count="2">2</strong>
-                    <span data-i18n="hero.statDemos">live AI experiments</span>
+                    <strong data-count="2" data-count-name="labExperimentCount">2</strong>
+                    <span data-i18n="hero.statDemos" data-i18n-plural="labExperimentCount">live AI experiments</span>
                 </li>
                 <li class="stat">
-                    <strong data-count="12">12</strong>
-                    <span data-i18n="hero.statQuiz">quiz questions</span>
+                    <strong data-count="12" data-count-name="quizQuestionCount">12</strong>
+                    <span data-i18n="hero.statQuiz" data-i18n-plural="quizQuestionCount">quiz questions</span>
                 </li>
                 <li class="stat">
-                    <strong data-count="2">2</strong>
-                    <span data-i18n="hero.statLanguages">languages</span>
+                    <strong data-count="2" data-count-name="languageCount">2</strong>
+                    <span data-i18n="hero.statLanguages" data-i18n-plural="languageCount">languages</span>
                 </li>
             </ul>
         </div>
@@ -175,7 +178,7 @@
             <div class="section-head" data-reveal>
                 <p class="section-label" data-i18n="lessons.label">LEARN SOMETHING NEW</p>
                 <h2 data-i18n="lessons.title">Explore the Basics</h2>
-                <p class="section-sub" data-i18n="lessons.subtitle">Six short lessons. Open one, read it, check yourself, and track your progress.</p>
+                <p class="section-sub" data-i18n="lessons.subtitle" data-i18n-plural="lessonCount">Six short lessons. Open one, read it, check yourself, and track your progress.</p>
             </div>
             <div data-feature="lessons"></div>
         </div>
@@ -199,7 +202,7 @@
             <div class="section-head" data-reveal>
                 <p class="section-label" data-i18n="quiz.label">TEST YOURSELF</p>
                 <h2 data-i18n="quiz.title">The AI Challenge</h2>
-                <p class="section-sub" data-i18n="quiz.subtitle">Twelve questions. How well do you really know AI?</p>
+                <p class="section-sub" data-i18n="quiz.subtitle" data-i18n-plural="quizQuestionCount">Twelve questions. How well do you really know AI?</p>
             </div>
             <div data-feature="quiz"></div>
         </div>
