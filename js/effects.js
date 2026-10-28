@@ -28,11 +28,6 @@
     // Every text (English and Russian) is in js/content/effects.js
 
     // ---------- Small helpers ----------
-    function isOnScreen(element) {
-        const rect = element.getBoundingClientRect();
-        return rect.width > 0 && rect.bottom > 0 && rect.top < window.innerHeight;
-    }
-
     // Sorts elements in the order they appear on the page
     function pageOrder(a, b) {
         if (a === b) return 0;
@@ -824,7 +819,7 @@
         element.append(text, caret, label);
         element.classList.add("fx-rotator");
 
-        const rotator = { element: element, key: key, text: text, label: label, words: [], wordsKey: "", word: 0, letters: 0, deleting: false, timer: 0, visible: true, stopWatching: null };
+        const rotator = { element: element, key: key, text: text, label: label, words: [], wordsKey: "", word: 0, letters: 0, deleting: false, timer: 0, visible: true, measureQueued: false, stopWatching: null };
         rotators.set(element, rotator);
         setRotatorWords(rotator);
         // Types only while it can be seen (on screen, and the browser tab is open)
@@ -869,9 +864,21 @@
         rotator.word = 0;
         rotator.letters = 0;
         rotator.deleting = false;
-        if (A.motion.ok()) measureRotator(rotator);
+        if (A.motion.ok()) measureSoon(rotator);
         renderRotator(rotator);
         updateRotator(rotator);
+    }
+
+    // Measuring needs an up-to-date layout of the page. In the next frame,
+    // every feature has finished changing the page (at start-up, or after a
+    // language switch), so the browser lays it out once instead of twice.
+    function measureSoon(rotator) {
+        if (rotator.measureQueued) return;
+        rotator.measureQueued = true;
+        requestAnimationFrame(() => {
+            rotator.measureQueued = false;
+            if (A.motion.ok() && rotator.element.isConnected) measureRotator(rotator);
+        });
     }
 
     // Reserve room for the longest word, so the line doesn't jump while typing.
@@ -917,7 +924,7 @@
             rotator.element.classList.remove("is-static");
             rotator.letters = 0;
             rotator.deleting = false;
-            measureRotator(rotator);
+            measureSoon(rotator);
             renderRotator(rotator);
         }
 
@@ -962,9 +969,7 @@
 
     // Fonts arrive a little later and change the word widths
     if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(() => rotators.forEach((rotator) => {
-            if (A.motion.ok()) measureRotator(rotator);
-        }));
+        document.fonts.ready.then(() => rotators.forEach(measureSoon));
     }
 
     /* =========================================================
@@ -1488,15 +1493,20 @@
     A.onLanguageChange(() => {
         prune();
 
+        // Texts on screen decode again. (The observer's last word is used:
+        // measuring here would lay out the whole page in the middle of the switch.)
+        const toDecode = [];
         scrambleTargets.forEach((element) => {
             stopScramble(element);
             if (!A.motion.ok()) return;
             scramblePending.add(element);
-            if (hostShown(element) && isOnScreen(element)) {
+            if (hostShown(element) && onScreenNow.has(element)) {
                 scramblePending.delete(element);
-                scramble(element, 60);
+                toDecode.push(element);
             }
         });
+        // They start once the new language has been drawn
+        if (toDecode.length) requestAnimationFrame(() => toDecode.forEach((element) => scramble(element, 60)));
 
         rotators.forEach(setRotatorWords);
 
