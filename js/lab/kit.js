@@ -64,6 +64,7 @@
      rng(seed) -> { seed, next(), range(a, b), int(n), normal(mean, sd), pick(list), shuffle(list) }     newSeed()
      store(id) -> { get(name, fallback, check), set(name, value), remove(name) }      key "lab.<id>.<name>"
      announcer({ minGap }) -> { say(text, { urgent }), cancel() }
+     number(value)     a number the kit's way: local, never "0" for a small one (0.0042, 4.2×10⁻⁵)
      relabel(root)     icons (the SVG of each icon name)
 
    SAVED CHALLENGES (the hub reads these for its "2 / 4" chips, before this file loads):
@@ -99,6 +100,8 @@
     // ----- Numbers on screen -----
     const COUNT_UP_MS = 600;             // a stat tile counts up to a new number in this time...
     const FAST_UPDATES_MS = 250;         // ...unless its last change was less than this long ago (then it is written at once)
+    const SMALL_NUMBER = 0.01;           // below this, kit.number() keeps 2 significant digits ("0.0042"), never "0"...
+    const TINY_NUMBER = 0.0001;          // ...and below this it writes a power of ten ("4.2×10⁻⁵"), which stays short
 
     // ----- Screen-reader messages -----
     const ANNOUNCE_GAP = 1200;           // ms: at most one message this often (a newer one replaces one that waits)
@@ -161,8 +164,8 @@
     }
 
     // "1e-7" -> 7, "0.25" -> 2, "3" -> 0: how many decimals a step needs
-    function decimalsOf(number) {
-        const text = String(number);
+    function decimalsOf(value) {
+        const text = String(value);
         const exponent = text.indexOf("e-");
         if (exponent !== -1) return Number(text.slice(exponent + 2));
         const dot = text.indexOf(".");
@@ -254,13 +257,35 @@
         else element.removeAttribute(attribute);
     }
 
-    // Values for {placeholders}: numbers are written the local way ("0,25" in Russian), and
+    // ----- Numbers -----
+    // kit.number(value): how the kit writes a number when the experiment gives no format of
+    // its own (stat tiles, bars, chart labels, {placeholders}). The local way ("0,25" in
+    // Russian), up to 3 decimals, and never "0" for a number that isn't 0: a loss of 0.00042
+    // must not read as "no loss at all". Below 0.01 it keeps 2 significant digits (0.0042,
+    // 0.00017); below 0.0001 it uses a power of ten (4.2×10⁻⁵, 10⁻⁶), so it stays short.
+    const SUPERSCRIPT = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+
+    function number(value) {
+        const size = Math.abs(value);
+        if (!(size > 0) || size >= SMALL_NUMBER || !isFinite(size)) return A.format.number(value);
+        let power = Math.floor(Math.log10(size));          // 0.0042 -> -3
+        if (size >= TINY_NUMBER) return A.format.number(value, { maxDigits: 1 - power });
+        let mantissa = Number((size / Math.pow(10, power)).toFixed(1));     // 4.2
+        if (mantissa >= 10) {               // 9.97 rounds up to 10.0: that is 1.0 of the next power
+            mantissa = 1;
+            power += 1;
+        }
+        const exponent = String(power).split("").map(function (digit) { return SUPERSCRIPT[digit]; }).join("");
+        return (value < 0 ? "−" : "") + (mantissa === 1 ? "" : A.format.number(mantissa, { maxDigits: 1 }) + "×") + "10" + exponent;
+    }
+
+    // Values for {placeholders}: numbers are written with kit.number() ("0,25" in Russian), and
     // words are escaped, because the texts around them may hold HTML
     function formatValues(values) {
         const out = {};
         Object.keys(values || {}).forEach(function (name) {
             const value = values[name];
-            out[name] = typeof value === "number" ? A.format.number(value) : A.escapeHTML(value);
+            out[name] = typeof value === "number" ? number(value) : A.escapeHTML(value);
         });
         return out;
     }
@@ -524,12 +549,12 @@
         if (settings.hintKey) addHelp(input, box.element, settings.hintKey);
 
         // A value and its place on the input (its power of ten on a log slider)
-        function toInput(number) {
-            return log ? Math.log10(number) : number;
+        function toInput(value) {
+            return log ? Math.log10(value) : value;
         }
 
-        function fromInput(number) {
-            return log ? Math.pow(10, number) : number;
+        function fromInput(place) {
+            return log ? Math.pow(10, place) : place;
         }
 
         // The nearest allowed value, without rounding noise (0.1 + 0.2 = 0.30000000000000004)
@@ -741,7 +766,7 @@
     // A single change counts up (when animations are on); quick changes are written at once.
     function stat(options) {
         const settings = options || {};
-        const format = settings.format || function (value) { return A.format.number(value); };
+        const format = settings.format || number;
         const better = settings.better === "down" ? "down" : "up";
         const element = el("div", "lk-stat");
         const label = el("span", "lk-stat-label");
@@ -875,7 +900,7 @@
     // grow left or right from the middle. max: the value of a full bar (default: the biggest).
     function bars(parent, options) {
         const settings = options || {};
-        const format = settings.format || function (value) { return A.format.number(value); };
+        const format = settings.format || number;
         const element = el("ul", "lk-bars", { role: "list" });
         if (parent) parent.appendChild(element);
         const rows = [];
@@ -951,10 +976,10 @@
 
         const steps = (settings.steps || []).map(function (step, index) {
             const item = el("li", "lk-explain-step");
-            const number = el("span", "lk-explain-num", { "aria-hidden": "true" });
-            number.textContent = (index < 9 ? "0" : "") + (index + 1);
+            const badge = el("span", "lk-explain-num", { "aria-hidden": "true" });
+            badge.textContent = (index < 9 ? "0" : "") + (index + 1);
             const text = el("p", "lk-explain-text");
-            item.append(number, text);
+            item.append(badge, text);
             list.appendChild(item);
             return { key: step.key, values: Object.assign({}, step.values), item: item, text: text };
         });
@@ -1590,7 +1615,7 @@
     //   yMin, yMax  a fixed range (default: it follows the data)
     //   log: true   a logarithmic y axis (powers of ten), for values that span many sizes
     //   highlightX  an x value to mark with a vertical line (e.g. the chosen k)
-    //   format(v)   the y numbers (default: the local way); xFormat(v) the x numbers
+    //   format(v)   the y numbers (default: kit.number, short from 10,000); xFormat(v) the x numbers
     //   xLabelKey, yLabelKey   the axis names (keys or functions)
     // It draws itself again after a resize, and keeps a text summary for screen readers.
     // The newest value of each series is labelled at the end of its line.
@@ -1621,7 +1646,7 @@
         const x0 = settings.x0 || 0;
         const xStep = settings.xStep || 1;
         const yFormat = settings.format || function (value) {
-            return A.format.number(value, { maxDigits: 3, compact: Math.abs(value) >= 10000 });
+            return Math.abs(value) >= 10000 ? A.format.number(value, { compact: true }) : number(value);
         };
         const xFormat = settings.xFormat || function (value) { return A.format.number(value, { compact: Math.abs(value) >= 10000 }); };
         // Positions use log10 of the values on a log axis (values of 0 or less are skipped there)
@@ -2158,7 +2183,8 @@
         newSeed: newSeed,
         store: store,
         announcer: announcer,
-        // texts and icons
+        // texts, numbers and icons
+        number: number,
         relabel: relabel,
         icons: icons
     });
