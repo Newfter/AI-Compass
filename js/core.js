@@ -40,7 +40,7 @@
     4  A.theme   A.setTheme(theme)   A.toggleTheme()   A.onThemeChange(callback)
     5  A.motion.ok() / reduced / calm / setCalm(on) / toggleCalm() / onChange(callback) / ease
        A.reducedMotion (the device setting only)
-       A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value }
+       A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value, running }
     6  A.util.clamp / lerp / easeOut / random / randomInt / pick / shuffle /
               sampleWeighted / debounce / frameThrottle
        A.dom.focusable / focusHeading / pauseScrollAnchoring / replay / fromHTML
@@ -503,10 +503,11 @@
     // With animations off (A.motion.ok() is false, or turns false meanwhile) the end
     // value is written at once. A new count-up on the same element replaces the running
     // one. When the element has left the page, the count-up ends by itself.
-    // Returns { finish(), stop(), value }:
+    // Returns { finish(), stop(), value, running }:
     //     finish()   jumps to the end value and runs done (if it hasn't run yet)
     //     stop()     stops where it is, without done
     //     value      the number it has reached so far (not rounded)
+    //     running    true while it is still counting (a redraw can leave the number alone then)
     const runningCounts = new Map();     // element -> its count-up
 
     function countUp(element, from, to, duration, options) {
@@ -519,6 +520,7 @@
 
         const counter = {
             value: from,
+            get running() { return !ended; },
             finish: function () {
                 if (ended) return;
                 stop();

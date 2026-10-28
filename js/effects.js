@@ -68,8 +68,10 @@
 
     // Numbers that count up
     const COUNT_DELAY = 150;                  // a number starts counting this long after its card appeared
-    const COUNT_MIN_TIME = 900;               // counting up takes this long at least...
-    const COUNT_MAX_TIME = 1800;              // ...and this long at most (bigger jumps take longer)
+    const COUNT_BASE_TIME = 700;              // counting up takes this long...
+    const COUNT_TIME_PER_UNIT = 12;           // ...plus this much for every unit it counts (bigger jumps take longer),
+    const COUNT_MIN_TIME = 900;               // ...but at least this long...
+    const COUNT_MAX_TIME = 1800;              // ...and at most this long
 
     // Decoding text
     const SCRAMBLE_SELECTOR = "[data-scramble], .section-label";       // the texts that "decode"
@@ -529,21 +531,31 @@
         return part ? Math.min(part.length, 3) : 0;
     }
 
-    // Written the local way ("1,5" in Russian), with exactly the decimals of data-count.
-    // Thousands are only grouped from 10,000 on ("9999", but "12,345" / "12 345").
-    // (Only a real change is written: the page then has nothing new to lay out.)
-    function writeCounter(element, counter, value) {
+    // The text of a number: written the local way ("1,5" in Russian), with exactly the
+    // decimals of data-count, and its prefix and suffix. Thousands are only grouped
+    // from 10,000 on ("9999", but "12,345" / "12 345").
+    function counterText(element, counter, value) {
         const prefix = element.getAttribute("data-count-prefix") || "";
         const suffix = element.getAttribute("data-count-suffix") || "";
-        const text = prefix + A.format.number(value, { digits: counter.decimals, grouping: "min2" }) + suffix;
+        return prefix + A.format.number(value, { digits: counter.decimals, grouping: "min2" }) + suffix;
+    }
+
+    // (Only a real change is written: the page then has nothing new to lay out.)
+    function writeCounter(element, counter, value) {
+        const text = counterText(element, counter, value);
         if (element.textContent !== text) element.textContent = text;
     }
 
+    // Stops a number that waits to count or is counting. counter.shown keeps
+    // where it got to, so a new count can go on from there.
     function stopCounter(counter) {
         clearTimeout(counter.timer);
-        cancelAnimationFrame(counter.raf);
         counter.timer = 0;
-        counter.raf = 0;
+        if (counter.count) {
+            counter.count.stop();
+            counter.shown = counter.count.value;
+            counter.count = null;
+        }
     }
 
     // Returns true when the number is new and waits to count up
@@ -567,7 +579,7 @@
             return false;
         }
 
-        counter = { target: value, shown: value, decimals: decimalsOf(raw), raf: 0, timer: 0, waiting: false, armed: false };
+        counter = { target: value, shown: value, decimals: decimalsOf(raw), count: null, timer: 0, waiting: false, armed: false };
         counters.set(element, counter);
         writeCounter(element, counter, value);
 
@@ -707,19 +719,16 @@
             return;
         }
 
-        const duration = A.util.clamp(700 + Math.abs(to - from) * 12, COUNT_MIN_TIME, COUNT_MAX_TIME);
+        // Bigger jumps count a little longer
+        const duration = A.util.clamp(COUNT_BASE_TIME + Math.abs(to - from) * COUNT_TIME_PER_UNIT, COUNT_MIN_TIME, COUNT_MAX_TIME);
         counter.timer = setTimeout(() => {
             counter.timer = 0;
-            const start = performance.now();
-            const tick = (now) => {
-                // (the frame time can be a hair earlier than "start", so keep it at 0 or more)
-                const progress = A.util.clamp((now - start) / duration, 0, 1);
-                const eased = 1 - Math.pow(2, -10 * progress);              // fast start, soft landing
-                counter.shown = progress >= 1 ? to : from + (to - from) * eased;
-                writeCounter(element, counter, counter.decimals ? counter.shown : Math.round(counter.shown));
-                counter.raf = progress < 1 ? requestAnimationFrame(tick) : 0;
-            };
-            counter.raf = requestAnimationFrame(tick);
+            // A.countUp (core.js) writes the number in every frame and the exact end value at the end
+            counter.count = A.countUp(element, from, to, duration, {
+                ease: (progress) => 1 - Math.pow(2, -10 * progress),       // fast start, soft landing
+                format: (value) => counterText(element, counter, counter.decimals ? value : Math.round(value)),
+                done: () => { counter.shown = to; }
+            });
         }, delay);
     }
 
@@ -745,7 +754,7 @@
         if (/\s/.test(original)) return original;
         const lower = original !== original.toUpperCase();
         const set = lower ? GLYPHS_LOWER : GLYPHS_UPPER;
-        return set.charAt(Math.floor(Math.random() * set.length));
+        return A.util.pick(set);
     }
 
     // How many lines does the element's text take up? A Range gives one box per
@@ -1099,7 +1108,7 @@
                 wait = TYPE_HOLD;                                           // the full word stays a while
                 typing = false;
             } else {
-                wait = TYPE_LETTER + Math.random() * TYPE_JITTER;
+                wait = TYPE_LETTER + A.util.random(0, TYPE_JITTER);
             }
         } else {
             rotator.letters = Math.max(0, rotator.letters - 1);
@@ -1598,25 +1607,25 @@
                 // One round burst, thrown a little upwards
                 x = origin.left + origin.width / 2;
                 y = origin.top + origin.height / 2;
-                angle = Math.random() * Math.PI * 2;
-                speed = 220 + Math.random() * 560;
+                angle = A.util.random(0, 2 * Math.PI);
+                speed = A.util.random(220, 780);
             } else {
                 // Two cannons in the bottom corners, aiming up and inwards
                 const fromLeft = i % 2 === 0;
                 x = fromLeft ? -10 : width + 10;
                 y = height * 0.85;
-                angle = ((fromLeft ? -62 : -118) + (Math.random() - 0.5) * 46) * Math.PI / 180;
-                speed = 660 + Math.random() * 600;
+                angle = ((fromLeft ? -62 : -118) + A.util.random(-23, 23)) * Math.PI / 180;
+                speed = A.util.random(660, 1260);
             }
             pieces.push({
                 x: x,
                 y: y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed - (origin ? 260 : 0),
-                size: 5 + Math.random() * 8,
+                size: A.util.random(5, 13),
                 shape: i % 3,                     // 0 square, 1 circle, 2 paper strip
-                turn: Math.random() * Math.PI * 2,
-                spin: (Math.random() - 0.5) * 14,
+                turn: A.util.random(0, 2 * Math.PI),
+                spin: A.util.random(-7, 7),
                 color: colors[i % colors.length]
             });
         }
@@ -1766,9 +1775,11 @@
 
         rotators.forEach(setRotatorWords);
 
-        // Decimal commas differ between languages
+        // Decimal commas differ between languages (a number that is counting
+        // writes itself in the new language in its next frame)
         counters.forEach((counter, element) => {
-            if (!counter.raf && !counter.timer && !counter.waiting) writeCounter(element, counter, counter.target);
+            const counting = counter.count && counter.count.running;
+            if (!counting && !counter.timer && !counter.waiting) writeCounter(element, counter, counter.target);
         });
     });
 

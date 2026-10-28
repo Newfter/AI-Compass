@@ -121,51 +121,21 @@
         return Boolean(element && element.closest && (element.isContentEditable || element.closest("input, textarea, select")));
     }
 
-    // Numbers that count up on screen (the score, the result in %)
-    const counters = {};        // the ones counting right now, by name
+    // Numbers that count up on screen (A.countUp in core.js): the score and the
+    // result in %. A.countUp writes the end value at once when animations are off,
+    // and finishes by itself when calm mode is switched on meanwhile.
+    let scoreCount = null;
+    let percentCount = null;
 
-    // Counts the number in "element" from "from" up to "to" in "duration" ms:
-    // fast at first, slower at the end. done() runs when it has arrived.
-    // TODO(core): effects.js and lessons.js count numbers up too; a shared
-    // A.countUp(element, from, to, duration) would replace the three copies.
-    function countUp(name, element, from, to, duration, done) {
-        stopCounter(name);
-        const start = performance.now();
-        const write = (value) => {
-            element.textContent = A.format.number(Math.round(value));
-        };
-        const arrive = () => {
-            delete counters[name];
-            if (done) done();
-        };
-        const counter = {
-            frame: 0,
-            // Jumps straight to the end (when animations are switched off meanwhile)
-            finish: () => {
-                cancelAnimationFrame(counter.frame);
-                write(to);
-                arrive();
-            }
-        };
-        const step = (now) => {
-            const progress = Math.min(1, (now - start) / duration);
-            write(A.util.lerp(from, to, 1 - Math.pow(1 - progress, 3)));
-            if (progress < 1 && element.isConnected) counter.frame = requestAnimationFrame(step);
-            else arrive();
-        };
-        counters[name] = counter;
-        counter.frame = requestAnimationFrame(step);
+    // Is this number counting right now? (Then a redraw leaves it alone.)
+    function counting(count) {
+        return Boolean(count && count.running);
     }
 
-    function stopCounter(name) {
-        if (!counters[name]) return;
-        cancelAnimationFrame(counters[name].frame);
-        delete counters[name];
-    }
-
-    // Stops the numbers that are counting up (score, percentage)
+    // Stops the numbers that are counting up, where they are (a new screen comes)
     function stopCounters() {
-        Object.keys(counters).forEach(stopCounter);
+        if (scoreCount) scoreCount.stop();
+        if (percentCount) percentCount.stop();
     }
 
     // ---------- 4. Best scores (saved in the browser) ----------
@@ -533,13 +503,7 @@
             button.addEventListener("click", () => answer(Number(button.getAttribute("data-position"))));
         });
         ui.next.addEventListener("click", goNext);
-        ui.quit.addEventListener("click", pressQuit);
-        // Holding Enter down repeats the key, and every repeat would click again:
-        // that is not a second press either
-        ui.quit.addEventListener("keydown", (event) => {
-            if (event.repeat && event.key === "Enter") event.preventDefault();
-        });
-        disarmQuit();
+        watchQuit(ui.quit);
 
         paintScreen = paintQuestion;
         return screen;
@@ -553,7 +517,7 @@
 
         ui.counter.textContent = t("quiz.q.counter", { n: state.index + 1, total: total });
         ui.counterSr.textContent = t("quiz.q.counter", { n: state.index + 1, total: total }) + ". ";
-        if (!counters.score) ui.score.textContent = A.format.number(state.points);
+        if (!counting(scoreCount)) ui.score.textContent = A.format.number(state.points);
 
         // Streak counter: only shown from 2 correct answers in a row
         ui.streak.hidden = state.streak < STREAK_MIN;
@@ -606,36 +570,28 @@
 
     // "Quit" needs two presses, so one accidental tap doesn't end the game.
     // After the first press the button asks "Sure?" for 4 seconds (QUIT_CONFIRM_MS).
-    let quitArmed = false;
-    let quitTimer = 0;
+    // A.confirmPress (core.js) ignores the second click of a double-click (or of a
+    // bouncy mouse) and a held-down Enter key. Every question screen has a new button.
+    let quitPress = null;
 
-    function pressQuit(event) {
-        if (state.screen !== "question" || busy) return;
-        if (quitArmed) {
-            // The second click of a double-click (or of a bouncy mouse) is not a second press.
-            // (Keyboard presses have detail 0.)
-            if (event && event.detail > 1) return;
-            disarmQuit();
-            backToStart();
-            return;
-        }
-        quitArmed = true;
-        paintQuit();
-        A.announce(t("quiz.q.quitHint"), { region: live });
-        clearTimeout(quitTimer);
-        quitTimer = setTimeout(disarmQuit, QUIT_CONFIRM_MS);
-    }
-
-    function disarmQuit() {
-        clearTimeout(quitTimer);
-        quitArmed = false;
-        paintQuit();
+    function watchQuit(button) {
+        quitPress = A.confirmPress(button, {
+            enabled: () => state.screen === "question" && !busy,
+            onArm: () => {
+                paintQuit();
+                A.announce(t("quiz.q.quitHint"), { region: live });
+            },
+            onDisarm: paintQuit,
+            onConfirm: backToStart,
+            timeout: QUIT_CONFIRM_MS
+        });
     }
 
     function paintQuit() {
         if (!ui.quit) return;
-        ui.quit.classList.toggle("is-armed", quitArmed);
-        ui.quitText.textContent = t(quitArmed ? "quiz.q.quitConfirm" : "quiz.q.quit");
+        const armed = Boolean(quitPress && quitPress.armed);
+        ui.quit.classList.toggle("is-armed", armed);
+        ui.quitText.textContent = t(armed ? "quiz.q.quitConfirm" : "quiz.q.quit");
     }
 
     // ---------- 9. The countdown (timed mode) ----------
@@ -838,10 +794,9 @@
 
     // The score counts up to its new value
     function animateScore(from, to) {
-        stopCounter("score");
+        if (scoreCount) scoreCount.stop();
         if (!ui.score) return;
-        if (A.motion.ok()) countUp("score", ui.score, from, to, SCORE_COUNT_MS);
-        else ui.score.textContent = A.format.number(to);
+        scoreCount = A.countUp(ui.score, from, to, SCORE_COUNT_MS);
     }
 
     function goNext() {
@@ -1097,7 +1052,7 @@
     function paintResults() {
         const result = state.result;
         ui.ringSr.textContent = t("quiz.res.ringSr", { percent: result.percent });
-        if (!counters.percent) ui.percent.textContent = A.format.number(ringShown ? result.percent : 0);
+        if (!counting(percentCount)) ui.percent.textContent = A.format.number(ringShown ? result.percent : 0);
 
         ui["tile-correct"].textContent = result.correct + " / " + result.total;
         ui["tile-points"].textContent = A.format.number(result.points);
@@ -1194,9 +1149,11 @@
         });
 
         const ring = ui.ring;
-        countUp("percent", ui.percent, 0, result.percent, PERCENT_COUNT_MS, () => {
-            ringShown = true;
-            if (ring.isConnected) A.dom.replay(ring, "is-done");
+        percentCount = A.countUp(ui.percent, 0, result.percent, PERCENT_COUNT_MS, {
+            done: () => {
+                ringShown = true;
+                if (ring.isConnected) A.dom.replay(ring, "is-done");
+            }
         });
 
         if (result.isNewBest) {
@@ -1323,11 +1280,6 @@
         if (!timer.active) return;
         if (timer.blocked) drawTimer(true);
         else resumeTimer();
-    });
-
-    // Animations switched off meanwhile (calm mode): numbers that are counting jump to the end
-    A.motion.onChange((detail) => {
-        if (!detail.ok) Object.keys(counters).forEach((name) => counters[name].finish());
     });
 
     // core.js has already translated every [data-i18n] element;

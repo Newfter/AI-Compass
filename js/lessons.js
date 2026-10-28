@@ -128,12 +128,6 @@
         return t(lessonKey(n, "title"));
     }
 
-    // An animation curve: fast at first, then gently slowing down (0 -> 0, 1 -> 1)
-    // TODO(core): A.util.easeOut(progress); quiz.js has the same curve twice
-    function easeOut(progress) {
-        return 1 - Math.pow(1 - progress, 3);
-    }
-
     // Redraws a part of the page from scratch, but keeps the keyboard focus on
     // the "same" button afterwards (buttons are matched by data-fid).
     function redraw(box, html) {
@@ -294,31 +288,16 @@
     const steps = Array.prototype.slice.call(hud.path.querySelectorAll(".lsn-step"));
 
     // ---------- 6. Updating the panel and the cards ----------
-    let ringValue = 0;
-    let ringFrame = 0;
+    let ringCount = null;       // the percentage counting up (A.countUp), once the ring has started
     let ringStarted = false;
-    let resetArmed = false;
-    let resetTimer = 0;
 
-    // Animates the percentage in the middle of the ring
+    // Fills the ring and counts the percentage in its middle up (or down) to "target".
+    // A new target counts on from the number shown now. (With animations off,
+    // A.countUp writes the number at once.)
     function setRing(target) {
-        cancelAnimationFrame(ringFrame);
         hud.ringFill.style.strokeDashoffset = String(100 - target);
-        if (!A.motion.ok()) {
-            ringValue = target;
-            hud.percent.textContent = String(target);
-            return;
-        }
-        const from = ringValue;
-        const start = performance.now();
-        function step(now) {
-            const progress = Math.min(1, (now - start) / RING_COUNT_UP_TIME);
-            const eased = easeOut(progress);
-            ringValue = Math.round(from + (target - from) * eased);
-            hud.percent.textContent = String(ringValue);
-            if (progress < 1) ringFrame = requestAnimationFrame(step);
-        }
-        ringFrame = requestAnimationFrame(step);
+        const from = ringCount ? Math.round(ringCount.value) : 0;
+        ringCount = A.countUp(hud.percent, from, target, RING_COUNT_UP_TIME);
     }
 
     function updateHUD() {
@@ -339,8 +318,9 @@
         hud.certToggle.hidden = done !== TOTAL;
         if (done !== TOTAL) toggleCertificate(false);
         hud.reset.hidden = done === 0;
-        hud.reset.classList.toggle("is-armed", resetArmed);
-        hud.reset.textContent = (resetArmed ? "⚠ " : "↺ ") + t(resetArmed ? "lessons.hud.resetConfirm" : "lessons.hud.reset");
+        const armed = resetPress.armed;
+        hud.reset.classList.toggle("is-armed", armed);
+        hud.reset.textContent = (armed ? "⚠ " : "↺ ") + t(armed ? "lessons.hud.resetConfirm" : "lessons.hud.reset");
 
         // The lesson map
         hud.path.setAttribute("aria-label", t("lessons.hud.pathLabel"));
@@ -434,23 +414,11 @@
         }
     }
 
-    // Reset needs two presses, so progress is not lost by accident
-    function onResetClick(event) {
-        if (!resetArmed) {
-            resetArmed = true;
-            updateHUD();
-            A.announce(t("lessons.hud.resetAsk"), { region: hud.live });
-            clearTimeout(resetTimer);
-            resetTimer = setTimeout(function () {
-                resetArmed = false;
-                updateHUD();
-            }, RESET_CONFIRM_TIME);
-            return;
-        }
-        // The second click of a double-click (or a double tap) is not a second press
-        if (event.detail > 1) return;
-        clearTimeout(resetTimer);
-        resetArmed = false;
+    // Reset needs two presses, so progress is not lost by accident. The first press
+    // asks "Sure?" (updateHUD paints the armed button); a second press within
+    // RESET_CONFIRM_TIME resets. A.confirmPress ignores the second click of a
+    // double-click (or a double tap) and a held-down Enter key.
+    function resetProgress() {
         completed.clear();
         saveCompleted();
         Object.keys(checkAnswers).forEach(function (key) { delete checkAnswers[key]; });
@@ -459,6 +427,16 @@
         A.toast(t("lessons.toast.reset"), "↺");
         hud.continueButton.focus();
     }
+
+    const resetPress = A.confirmPress(hud.reset, {
+        onArm: function () {
+            updateHUD();
+            A.announce(t("lessons.hud.resetAsk"), { region: hud.live });
+        },
+        onDisarm: updateHUD,
+        onConfirm: resetProgress,
+        timeout: RESET_CONFIRM_TIME
+    });
 
     // ---------- 8. The certificate ----------
     // A picture drawn on a <canvas> (only while it is shown) that can be saved as a PNG file
@@ -741,14 +719,8 @@
             openLesson(nextLesson() || 1, hud.continueButton);
         } else if (event.target.closest('[data-ref="certToggle"]')) {
             toggleCertificate();
-        } else if (event.target.closest('[data-ref="reset"]')) {
-            onResetClick(event);
         }
-    });
-
-    // Holding Enter down on a button repeats its click: on Reset only a new press counts
-    hud.reset.addEventListener("keydown", function (event) {
-        if (event.repeat && event.key === "Enter") event.preventDefault();
+        // (Reset listens by itself: see resetPress in section 7)
     });
 
     // A click anywhere on a card opens it (the button is the keyboard way in)

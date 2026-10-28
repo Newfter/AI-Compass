@@ -645,17 +645,17 @@
             }
         } else if (name === "circle") {
             for (let i = 0; i < 70; i++) {
-                let angle = Math.random() * Math.PI * 2;
-                let radius = Math.sqrt(Math.random()) * 0.4;
+                let angle = A.util.random(0, 2 * Math.PI);
+                let radius = Math.sqrt(Math.random()) * 0.4;          // (the square root spreads the dots evenly over the disc)
                 points.push({ x: radius * Math.cos(angle), y: radius * Math.sin(angle), label: 0 });
-                angle = Math.random() * Math.PI * 2;
-                radius = 0.62 + Math.random() * 0.3;
+                angle = A.util.random(0, 2 * Math.PI);
+                radius = A.util.random(0.62, 0.92);
                 points.push({ x: edge(radius * Math.cos(angle)), y: edge(radius * Math.sin(angle)), label: 1 });
             }
         } else if (name === "xor") {
             while (points.length < 140) {
-                const x = Math.random() * 1.86 - 0.93;
-                const y = Math.random() * 1.86 - 0.93;
+                const x = A.util.random(-0.93, 0.93);
+                const y = A.util.random(-0.93, 0.93);
                 if (Math.abs(x) < 0.1 || Math.abs(y) < 0.1) continue;
                 points.push({ x: x, y: y, label: x * y > 0 ? 0 : 1 });
             }
@@ -2492,7 +2492,7 @@
                 job.typed += text.charAt(i);
                 input.scrollTop = input.scrollHeight;
                 i++;
-                if (i < text.length) job.timer = setTimeout(typeLetter, LETTER_MS + Math.random() * LETTER_RANDOM);
+                if (i < text.length) job.timer = setTimeout(typeLetter, LETTER_MS + A.util.random(0, LETTER_RANDOM));
                 else done();
             })();
         }
@@ -2691,19 +2691,6 @@
         schedule();
     }
 
-    // The pixel ratio changes when the window moves to a screen with sharper pixels
-    // (or with the browser zoom). No box changes size, so the size watcher misses it:
-    // a media query for the current ratio tells us, and is then made again for the new one.
-    // TODO(core): neural-bg.js needs the same watcher; a shared A.onPixelRatioChange(callback)
-    // in core would serve both (audit LE-12).
-    function watchPixelRatio() {
-        const stop = A.onMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)", () => {
-            stop();
-            watchPixelRatio();
-            measureAll();
-        }, { immediate: false });
-    }
-
     // ----- Pause when the lab is off screen or the browser tab is hidden -----
     // A.whenVisible also pauses the lab's CSS animations while nobody can see them.
     function onLabVisible(visible) {
@@ -2885,7 +2872,9 @@
         } else {
             A.onResize(measureAll);
         }
-        watchPixelRatio();
+        // The pixel ratio changes when the window moves to a screen with sharper pixels.
+        // No box changes size then, so the size watcher misses it (audit LE-12).
+        A.onPixelRatioChange(measureAll);
         // On screen or not, near or far, theme and language
         A.whenVisible(labCard, onLabVisible, { threshold: ON_SCREEN, pauseAnimations: true });
         A.whenVisible(labCard, onLabNear, { rootMargin: NEAR_MARGIN });
