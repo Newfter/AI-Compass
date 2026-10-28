@@ -53,7 +53,7 @@
     // Drawing the board, the chart and the diagram
     const GRID = 50;                      // the board's colours are worked out on a 50 x 50 grid, then smoothly scaled up
     const MINI = 16;                      // each neuron's small map in the diagram is 16 x 16
-    const FRAME_BUDGET = 10;              // ms of learning + drawing per frame at most, so the page stays smooth
+    const FRAME_BUDGET = 10;              // ms per frame shared by learning and drawing, so the page stays smooth (learning gets at least half)
     const MAPS_EVERY = 33;                // ms: while training, the board's colours are worked out at most this often (30 times a second)
     const DIAGRAM_EVERY = 45;             // ms: while training, the diagram is drawn at most this often...
     const STATS_EVERY = 110;              // ms: ...and the numbers are written at most this often
