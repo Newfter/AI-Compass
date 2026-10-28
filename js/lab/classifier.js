@@ -1854,7 +1854,9 @@
 
     // The texts that JavaScript writes (core has translated every data-i18n text already)
     function refreshTexts() {
-        nnEls.live.textContent = "";     // an old message must not stay behind in the old language
+        // An old message must not stay behind in the old language, not even one on its way
+        // (core writes a message 80 ms after it is said): this cancels it and empties the line
+        A.announce("", { region: nnEls.live, delay: 0 });
         updateLrLabels();
         updateTrainButton();
         updateDiagramLabel();

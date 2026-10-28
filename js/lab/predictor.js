@@ -934,7 +934,9 @@
        ========================================================= */
     // ----- Language: update the text that JavaScript writes, keep everything else -----
     function refreshTexts() {
-        lmEls.live.textContent = "";     // an old message must not stay behind in the old language
+        // An old message must not stay behind in the old language, not even one on its way
+        // (core writes a message 80 ms after it is said): this cancels it and empties the line
+        A.announce("", { region: lmEls.live, delay: 0 });
         updateAutoButton();
         lmEls.autoHint.textContent = t("lab.lmAutoLabel", { n: AUTO_WORDS });
         renderLmStats();
