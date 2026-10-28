@@ -53,6 +53,7 @@
     const SESSION_KEY = "assistant.chat"; // the chat in sessionStorage ("aic:assistant.chat")
     const TYPING_MS = 500;                // the bot "types" this long before a short answer...
     const TYPING_EXTRA_MS = 400;          // ...and up to this much longer before a long one
+    const TYPING_LETTER_MS = 1.1;         // (that is, this much longer for each letter of the answer)
     const NEXT_REPLY_MS = 150;            // a short pause between two answers in the queue
     const ACTION_DELAY_MS = 650;          // time to read "Starting the quiz!" before the bot does it
     const CLOSE_MS = 320;                 // the window's closing animation (css/assistant.css)
@@ -61,7 +62,17 @@
     const TIP_VISITS = 3;                 // on the first 3 visits only
     const ORB_START_SECONDS = 12;         // the orb moves this long after the page loads...
     const ORB_WAKE_SECONDS = 5;           // ...and this long after the mouse or the focus was on it
-    const SHEET_CLOSE_PX = 90;            // phones: pull the sheet down this far to close it
+    const SHEET_CLOSE_PX = 90;            // phones: pull the sheet down this far to close it,
+    const FLICK_PX = 24;                  // ...or flick it down at least this far,
+    const FLICK_SPEED = 0.5;              // ...this fast (pixels per millisecond)
+    const SHEET_GAP_PX = 16;              // phones: the room left above the sheet
+    const TYPO_MIN_LETTERS = 7;           // keywords this long may have one typo in a message
+    const UNKNOWN_WORD_MAX = 40;          // a word the bot doesn't know is quoted back cut to this many letters
+    const ANSWER_TOP_GAP = 12;            // a new answer is scrolled to this far below the top of the chat
+    const WHEEL_LINE_PX = 16;             // a mouse wheel that scrolls by lines: pixels per line
+    const QUIET_REDRAW_MS = 300;          // after a language change, screen readers ignore the chat this long
+    const EYES_REACH_PX = 260;            // the orb's eyes follow the mouse: with the mouse this far away (or more)...
+    const EYES_MOVE_PX = 3.2;             // ...they move this far from the middle
 
     /* =========================================================
        2. SMALL HELPERS
@@ -395,7 +406,7 @@
         if (!token) return false;
         if (pattern.charAt(pattern.length - 1) === "*") return token.indexOf(pattern.slice(0, -1)) === 0;
         if (token === pattern) return true;
-        if (strict || pattern.length < 7 || Math.abs(token.length - pattern.length) > 1) return false;
+        if (strict || pattern.length < TYPO_MIN_LETTERS || Math.abs(token.length - pattern.length) > 1) return false;
         if (brain.notTypos.indexOf(token) !== -1) return false;
         return editDistance(token, pattern) <= 1;
     }
@@ -747,7 +758,7 @@
                     return { kind: "glossary", term: term };
                 }
                 if (!best && define.subject.split(" ").length <= 3) {
-                    return { kind: "notFound", word: define.subject.slice(0, 40) };
+                    return { kind: "notFound", word: define.subject.slice(0, UNKNOWN_WORD_MAX) };
                 }
             }
         }
@@ -981,7 +992,7 @@
         const anchor = before && before.classList.contains("cb-msg--user") ? before : row;
         const end = log.scrollHeight - log.clientHeight;
         // offsetTop is measured inside the log (it is position: relative in the CSS)
-        const top = Math.max(0, Math.min(end, anchor.offsetTop - 12));
+        const top = Math.max(0, Math.min(end, anchor.offsetTop - ANSWER_TOP_GAP));
         scrollLogTo(top, smooth);
     }
 
@@ -1031,7 +1042,7 @@
             const message = chat.messages.find(function (item) { return item.id === id; });
             if (message) fillBotRow(row, message);
         });
-        setTimeout(function () { ui.log.setAttribute("aria-live", "polite"); }, 300);
+        setTimeout(function () { ui.log.setAttribute("aria-live", "polite"); }, QUIET_REDRAW_MS);
     }
 
     /* =========================================================
@@ -1064,7 +1075,7 @@
     function typingDelay(job) {
         const view = renderReply({ reply: job.reply, data: job.data || {} });
         const length = plainText(view.html).length;
-        return Math.round(TYPING_MS + Math.min(TYPING_EXTRA_MS, length * 1.1));
+        return Math.round(TYPING_MS + Math.min(TYPING_EXTRA_MS, length * TYPING_LETTER_MS));
     }
 
     function enqueue(job) {
@@ -1243,7 +1254,7 @@
         const chips = ui.chips;
         if (chips.scrollWidth <= chips.clientWidth + 1) return;            // everything fits
         if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;      // already sideways
-        const step = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+        const step = event.deltaMode === 1 ? event.deltaY * WHEEL_LINE_PX : event.deltaY;
         const before = chips.scrollLeft;
         chips.scrollLeft = before + step;
         if (chips.scrollLeft !== before) event.preventDefault();
@@ -1340,7 +1351,7 @@
             return;
         }
         const below = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
-        ui.panel.style.setProperty("--cb-sheet-h", Math.round(viewport.height - 16) + "px");
+        ui.panel.style.setProperty("--cb-sheet-h", Math.round(viewport.height - SHEET_GAP_PX) + "px");
         ui.panel.style.setProperty("--cb-sheet-b", Math.round(below) + "px");
         ui.panel.style.setProperty("--cb-sheet-l", Math.round(viewport.offsetLeft) + "px");
         ui.panel.style.setProperty("--cb-sheet-w", Math.round(viewport.width) + "px");
@@ -1468,7 +1479,7 @@
         ui.panel.classList.remove("is-dragging");
         ui.panel.style.transform = "";
         // Far enough, or a quick flick down: close. Otherwise it slides back.
-        const flick = drag.distance > 24 && drag.speed > 0.5;
+        const flick = drag.distance > FLICK_PX && drag.speed > FLICK_SPEED;
         if (event.type === "pointerup" && (drag.distance > SHEET_CLOSE_PX || flick)) closePanel(true);
     }
 
@@ -1602,7 +1613,7 @@
         const dx = look.x - look.center.x;
         const dy = look.y - look.center.y;
         const distance = Math.hypot(dx, dy) || 1;
-        const reach = Math.min(1, distance / 260) * 3.2;
+        const reach = Math.min(1, distance / EYES_REACH_PX) * EYES_MOVE_PX;
         ui.launcher.style.setProperty("--look-x", (dx / distance * reach).toFixed(2) + "px");
         ui.launcher.style.setProperty("--look-y", (dy / distance * reach).toFixed(2) + "px");
     }

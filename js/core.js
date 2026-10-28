@@ -1706,6 +1706,8 @@
     // Everything is built at once when the address points inside the page (#lab,
     // #term-bias...), and the parts above a section are built before jumping to it,
     // so the browser scrolls to the right place.
+    const IDLE_WAIT_MAX = 2500;         // a "quiet moment" comes at the latest this long after the page loaded
+    const IDLE_FALLBACK = 300;          // (browsers without requestIdleCallback simply wait this long)
     let pageLoaded = document.readyState === "complete";
     const afterLoad = [];
     const waitingParts = new Set();     // { element, ensure } of the parts not built yet
@@ -1717,8 +1719,8 @@
 
     function whenIdle(callback) {
         const start = function () {
-            if (window.requestIdleCallback) window.requestIdleCallback(callback, { timeout: 2500 });
-            else setTimeout(callback, 300);
+            if (window.requestIdleCallback) window.requestIdleCallback(callback, { timeout: IDLE_WAIT_MAX });
+            else setTimeout(callback, IDLE_FALLBACK);
         };
         if (pageLoaded) start();
         else afterLoad.push(start);

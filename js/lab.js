@@ -2903,7 +2903,7 @@
     function openLab(tab) {
         ensure();
         selectTab(tab === "predictor" ? "predictor" : "classifier");
-        A.scrollToSection("lab");
+        A.navigate("lab");
     }
 
     // Two Ctrl+K palette commands
@@ -2913,7 +2913,7 @@
         icon: "🧠",
         title: function () { return t("lab.cmdNN"); },
         keywords: "lab neural network train teach classifier dots points machine learning лаборатория нейросеть нейронная сеть обучить обучение машина точки классификатор",
-        run: function () { A.openLab("classifier"); }
+        run: function () { openLab("classifier"); }
     });
 
     A.registerCommand({
@@ -2922,7 +2922,7 @@
         icon: "💬",
         title: function () { return t("lab.cmdLM"); },
         keywords: "lab next word predictor language model chatbot text autocomplete gpt лаборатория следующее слово предсказатель языковая модель чат-бот текст автодополнение",
-        run: function () { A.openLab("predictor"); }
+        run: function () { openLab("predictor"); }
     });
 
     // AICompass.lab.open("classifier" | "predictor"); AICompass.openLab is the older name

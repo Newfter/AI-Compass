@@ -49,7 +49,12 @@
 
     // ---------- 1. Settings ----------
     const PREVIEW_COUNT = 12;       // without a filter only this many cards show ("Show all" shows the rest)
-    const MAX_SUGGESTIONS = 3;      // "did you mean?" offers at most this many terms
+    const MAX_SUGGESTIONS = 3;      // "did you mean?" offers at most this many terms.
+    const SUGGEST_MIN_LETTERS = 3;  // It looks at typed words of at least 3 letters,
+    const TYPOS_SHORT = 1;          // allows 1 typo in a short word
+    const TYPOS_LONG = 2;           // and 2 in a word of
+    const LONG_WORD = 5;            // 5 letters or more
+    const NO_MATCH = 99;            // (the score of a term that is too far from the search)
     const ANNOUNCE_DELAY = 450;     // ms: screen readers hear the new count this long after typing stops
     const SPOTLIGHT_MS = 2600;      // ms: how long a shown term glows (the CSS animation takes 2.4 s)
     const FOCUS_DELAY = 80;         // ms: a shown term takes the focus this much later, so the palette or menu can close first
@@ -212,7 +217,7 @@
     // The Levenshtein distance counts how many letters you must add, remove
     // or change to turn one word into another ("nueral" -> "neural" = 2).
     function distance(a, b) {
-        if (Math.abs(a.length - b.length) > 3) return 99;
+        if (Math.abs(a.length - b.length) > TYPOS_LONG + 1) return NO_MATCH;
         let previous = [];
         for (let j = 0; j <= b.length; j++) previous.push(j);
         for (let i = 1; i <= a.length; i++) {
@@ -241,34 +246,34 @@
     }
 
     // Terms that look like a misspelled search, best first.
-    // Every typed word must be close to a word of the term:
-    // 1 typo allowed in short words, 2 in longer ones.
+    // Every typed word must be close to a word of the term
+    // (TYPOS_SHORT typos allowed in short words, TYPOS_LONG in longer ones).
     function suggestions(query) {
-        const typed = wordsOf(query).filter(function (word) { return word.length >= 3; });
+        const typed = wordsOf(query).filter(function (word) { return word.length >= SUGGEST_MIN_LETTERS; });
         if (!typed.length) return [];
         const scored = [];
 
         TERMS.forEach(function (term) {
-            let best = 99;
+            let best = NO_MATCH;
             spellings(term).forEach(function (words) {
                 let total = 0;
                 for (let i = 0; i < typed.length; i++) {
                     const q = typed[i];
-                    let closest = 99;
+                    let closest = NO_MATCH;
                     words.forEach(function (word) {
                         closest = Math.min(closest, distance(q, word));
                         // Compare with the start of longer words too: "trnasf" ~ "transf(ormer)"
                         if (word.length > q.length) closest = Math.min(closest, distance(q, word.slice(0, q.length)) + 0.5);
                     });
-                    if (closest > (q.length < 5 ? 1 : 2)) {
-                        total = 99;
+                    if (closest > (q.length < LONG_WORD ? TYPOS_SHORT : TYPOS_LONG)) {
+                        total = NO_MATCH;
                         break;
                     }
                     total += closest;
                 }
                 best = Math.min(best, total);
             });
-            if (best < 99) scored.push({ term: term, score: best });
+            if (best < NO_MATCH) scored.push({ term: term, score: best });
         });
 
         scored.sort(function (a, b) { return a.score - b.score; });

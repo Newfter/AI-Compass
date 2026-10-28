@@ -1,7 +1,7 @@
 /* =========================================================
    AI COMPASS — TEXTS: LESSONS
    Every word in English and in Russian (informal "ты").
-   The six lessons, their mini-labs and the lesson reader.
+   The lessons, their mini-labs and the lesson reader.
    Used by js/lessons.js (and the lessons section of index.html).
    To change a text, change it here (in both languages).
    ========================================================= */
@@ -529,7 +529,7 @@ window.AICompass.addTranslations({
     }
 });
 
-// The six mini-labs
+// The mini-labs
 window.AICompass.addTranslations({
     en: {
         // Mini-lab 1: AI or not AI?

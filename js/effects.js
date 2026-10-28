@@ -79,8 +79,12 @@
     const SCRAMBLE_MAX_LENGTH = 140;          // longer texts don't decode
     const SCRAMBLE_AFTER_CARD = 140;          // a text in an appearing card starts decoding this long after the card
     const SCRAMBLE_SHUFFLE = 55;              // the random letters change this often
-    const SCRAMBLE_MIN_TIME = 600;            // decoding takes this long at least...
-    const SCRAMBLE_MAX_TIME = 1300;           // ...and this long at most (longer texts take longer)
+    const SCRAMBLE_BASE_TIME = 380;           // decoding takes this long...
+    const SCRAMBLE_LETTER_TIME = 32;          // ...plus this much for every letter,
+    const SCRAMBLE_MIN_TIME = 600;            // ...but at least this long...
+    const SCRAMBLE_MAX_TIME = 1300;           // ...and at most this long
+    const SCRAMBLE_NOISE_ONLY = 0.15;         // for the first 15% of that time, every letter is random
+    const SCRAMBLE_LANGUAGE_DELAY = 60;       // after a language change, the new words start decoding after this
     // The random letters shown while a text decodes (Latin, Cyrillic, digits, symbols)
     const GLYPHS_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ0123456789#%&*+=<>/\\|{}[]?!$@";
     const GLYPHS_LOWER = "abcdefghijklmnopqrstuvwxyzабвгдежзиклмнопрстуфхцчшщэюя0123456789#%&*+=<>/\\|{}?!";
@@ -95,10 +99,16 @@
 
     // Pointer effects
     const SPOTLIGHT_SPEED = 9;                // how fast the spotlight catches up with the cursor (higher = faster)
-    const TILT_MIN = 3;                       // degrees: big cards tilt this much at most...
-    const TILT_MAX = 9;                       // ...small cards up to this much
+    const TILT_SIZE = 2600;                   // a card tilts at most (this / its width) degrees,
+    const TILT_MIN = 3;                       // ...but big cards at least this much...
+    const TILT_MAX = 9;                       // ...and small cards at most this much
+    const TILT_UP_DOWN = 0.8;                 // tilting up and down is a little weaker (80%) than sideways
+    const TILT_DEPTH = 700;                   // the 3D perspective: at least this deep,
+    const TILT_DEPTH_PER_WIDTH = 2.2;         // ...or this many times the card's width
     const TILT_RETURN = 700;                  // a card takes this long to lie flat again when the mouse leaves
-    const MAGNET_X = 8;                       // a main button leans at most this far towards the cursor sideways...
+    const MAGNET_PULL_X = 0.2;                // a main button follows the cursor by this share of the distance sideways...
+    const MAGNET_PULL_Y = 0.28;               // ...and up or down,
+    const MAGNET_X = 8;                       // ...but at most this far sideways...
     const MAGNET_Y = 6;                       // ...and up or down
 
     // Ripples, confetti and housekeeping
@@ -106,6 +116,10 @@
     const RIPPLE_TIME = 700;                  // a ripple is removed after this (css/effects.css: 0.65s)
     const CONFETTI_COLORS = ["--accent", "--accent-2", "--accent-3", "--success", "--warning"];   // theme colours of the pieces
     const CONFETTI_TIME = 3000;               // confetti falls this long (unless the caller asks for another time)
+    const CONFETTI_PIECES = 180;              // pieces from the two cannons at the bottom of the screen,
+    const CONFETTI_BURST_PIECES = 150;        // ...in a burst from a button,
+    const CONFETTI_BURST_PIECES_SMALL = 90;   // ...and in a burst on a screen narrower than
+    const CONFETTI_SMALL_SCREEN = 600;        // ...this
     const PRUNE_WAIT = 2000;                  // removed elements are forgotten this long after they left the page
 
     /* =========================================================
@@ -911,7 +925,7 @@
         element.classList.add("fx-scrambling");
         run.visual = visual;
 
-        const duration = A.util.clamp(380 + letters.length * 32, SCRAMBLE_MIN_TIME, SCRAMBLE_MAX_TIME);
+        const duration = A.util.clamp(SCRAMBLE_BASE_TIME + letters.length * SCRAMBLE_LETTER_TIME, SCRAMBLE_MIN_TIME, SCRAMBLE_MAX_TIME);
         const start = performance.now();
         let noiseLetters = [];
         let lastShuffle = 0;
@@ -925,7 +939,7 @@
             }
 
             const progress = A.util.clamp((now - start) / duration, 0, 1);
-            const done = Math.floor(A.util.clamp((progress - 0.15) / 0.85, 0, 1) * letters.length);
+            const done = Math.floor(A.util.clamp((progress - SCRAMBLE_NOISE_ONLY) / (1 - SCRAMBLE_NOISE_ONLY), 0, 1) * letters.length);
 
             if (now - lastShuffle > SCRAMBLE_SHUFFLE) {
                 lastShuffle = now;
@@ -1322,10 +1336,10 @@
             host.style.setProperty("--fx-y", (y * 100).toFixed(1) + "%");
 
             // Small cards tilt more, big cards tilt less
-            const maxTilt = A.util.clamp(2600 / litRect.width, TILT_MIN, TILT_MAX);
-            const rotateX = (0.5 - y) * 2 * maxTilt * 0.8;
+            const maxTilt = A.util.clamp(TILT_SIZE / litRect.width, TILT_MIN, TILT_MAX);
+            const rotateX = (0.5 - y) * 2 * maxTilt * TILT_UP_DOWN;
             const rotateY = (x - 0.5) * 2 * maxTilt;
-            const depth = Math.round(Math.max(700, litRect.width * 2.2));
+            const depth = Math.round(Math.max(TILT_DEPTH, litRect.width * TILT_DEPTH_PER_WIDTH));
             host.style.transform = "perspective(" + depth + "px) rotateX(" + rotateX.toFixed(2) + "deg) rotateY(" + rotateY.toFixed(2) + "deg) scale3d(1.02, 1.02, 1.02)";
         }
     }
@@ -1395,8 +1409,8 @@
         if (!magnetRect) magnetRect = button.getBoundingClientRect();
         const dx = pointer.x - (magnetRect.left + magnetRect.width / 2);
         const dy = pointer.y - (magnetRect.top + magnetRect.height / 2);
-        button.style.setProperty("--fx-mx", A.util.clamp(dx * 0.2, -MAGNET_X, MAGNET_X).toFixed(2) + "px");
-        button.style.setProperty("--fx-my", A.util.clamp(dy * 0.28, -MAGNET_Y, MAGNET_Y).toFixed(2) + "px");
+        button.style.setProperty("--fx-mx", A.util.clamp(dx * MAGNET_PULL_X, -MAGNET_X, MAGNET_X).toFixed(2) + "px");
+        button.style.setProperty("--fx-my", A.util.clamp(dy * MAGNET_PULL_Y, -MAGNET_Y, MAGNET_Y).toFixed(2) + "px");
     }
 
     function resetPointerEffects() {
@@ -1615,7 +1629,8 @@
 
         const colors = CONFETTI_COLORS.map((name) => A.cssVar(name)).filter(Boolean);
         const origin = settings.origin && settings.origin.getBoundingClientRect ? settings.origin.getBoundingClientRect() : null;
-        const count = settings.count || (origin ? (width < 600 ? 90 : 150) : 180);
+        const count = settings.count ||
+            (origin ? (width < CONFETTI_SMALL_SCREEN ? CONFETTI_BURST_PIECES_SMALL : CONFETTI_BURST_PIECES) : CONFETTI_PIECES);
         const pieces = [];
         for (let i = 0; i < count; i++) {
             let x, y, angle, speed;
@@ -1787,7 +1802,7 @@
             }
         });
         // They start once the new language has been drawn
-        if (toDecode.length) requestAnimationFrame(() => toDecode.forEach((element) => scramble(element, 60)));
+        if (toDecode.length) requestAnimationFrame(() => toDecode.forEach((element) => scramble(element, SCRAMBLE_LANGUAGE_DELAY)));
 
         rotators.forEach(setRotatorWords);
 

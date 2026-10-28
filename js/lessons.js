@@ -1,6 +1,6 @@
 /* =========================================================
    AI COMPASS — LESSONS
-   Six short interactive lessons about AI. This file builds a
+   Short interactive lessons about AI. This file builds a
    progress panel (ring, lesson map, continue / reset), a grid of
    lesson cards, a full-screen lesson reader (text, a mini-lab, key
    ideas, a "check yourself" question, previous / next) and a
@@ -58,6 +58,7 @@
     const SPEAK_MARGIN = 40;                      // the sentence read aloud stays at least this far inside the reader
     const NO_VOICE_WARNING_GAP = 5000;            // "no voice" is shown at most once in this time
     const CERT_ICON_STEP = 190;                   // the space between the lesson icons on the certificate (canvas pixels)
+    const CERT_ICON_ROW = 1330;                   // their row is never wider than this: with more than 8 lessons, the icons get smaller
     const DOWNLOAD_CLEANUP_TIME = 4000;           // the certificate's temporary download address is freed after this
 
     // ---------- 2. The lessons ----------
@@ -616,30 +617,33 @@
             W / 2, 566, 1240, "500", 34, fonts.body);
 
         // Every lesson with a check mark, in one row around the middle
+        // (scale is 1, full size, for up to 8 lessons; smaller for more)
+        const scale = Math.min(1, CERT_ICON_ROW / Math.max(1, (TOTAL - 1) * CERT_ICON_STEP));
+        const scaled = function (size) { return Math.round(size * scale); };
         LESSONS.forEach(function (lesson, index) {
-            const x = W / 2 + (index - (TOTAL - 1) / 2) * CERT_ICON_STEP;
+            const x = W / 2 + (index - (TOTAL - 1) / 2) * CERT_ICON_STEP * scale;
             const y = 700;
             ctx.beginPath();
-            ctx.arc(x, y, 54, 0, Math.PI * 2);
+            ctx.arc(x, y, 54 * scale, 0, Math.PI * 2);
             ctx.fillStyle = rgba("--accent", 0.14);
             ctx.fill();
             ctx.strokeStyle = gradient;
             ctx.lineWidth = 3;
             ctx.stroke();
-            ctx.font = "46px " + fonts.body;
+            ctx.font = scaled(46) + "px " + fonts.body;
             ctx.textBaseline = "middle";
             ctx.fillStyle = color.text;
-            ctx.fillText(lesson.icon, x, y + 3);
+            ctx.fillText(lesson.icon, x, y + 3 * scale);
             ctx.beginPath();
-            ctx.arc(x + 40, y - 40, 17, 0, Math.PI * 2);
+            ctx.arc(x + 40 * scale, y - 40 * scale, 17 * scale, 0, Math.PI * 2);
             ctx.fillStyle = color.success;
             ctx.fill();
             ctx.fillStyle = color.bg;
-            ctx.font = "700 20px " + fonts.body;
-            ctx.fillText("✓", x + 40, y - 39);
+            ctx.font = "700 " + scaled(20) + "px " + fonts.body;
+            ctx.fillText("✓", x + 40 * scale, y - 39 * scale);
             ctx.textBaseline = "alphabetic";
             ctx.fillStyle = color.muted;
-            wrapText(ctx, lessonTitle(lesson.number), x, y + 92, 176, "600", 19, fonts.body);
+            wrapText(ctx, lessonTitle(lesson.number), x, y + 92 * scale, 176 * scale, "600", scaled(19), fonts.body);
         });
 
         // Date and seal
