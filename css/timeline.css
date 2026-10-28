@@ -7,16 +7,12 @@
    5. Inside a card
    6. "Lit up" milestones (the line has reached them)
    7. Slide-in animations
-      (+ light theme: darker small labels)
-   8. Phones and tablets (one column)
-   9. Reduced motion / calm mode
-   All colours come from the variables in style.css,
-   so both the dark and the light theme look right.
+   8. Phones and tablets (one column, bigger touch targets)
+   9. Less motion (reduced motion or calm mode)
+   All colours come from the variables in style.css, so both the
+   dark and the light theme look right. Coloured text uses the
+   --text-* versions, which are darker in the light theme.
    ========================================================= */
-
-[data-feature="timeline"] [hidden] {
-    display: none !important;
-}
 
 /* Until js/timeline.js builds the timeline (when it comes near the screen), its
    place keeps about the height it will have (measured in English), so the page
@@ -27,6 +23,15 @@
 
 .tl {
     position: relative;
+    /* Cards cast a soft shadow, and a faint glow once the line reaches them.
+       Both are lighter in the light theme. */
+    --tl-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    --tl-card-glow: 0 0 32px rgba(var(--accent-2-rgb), 0.08);
+}
+
+[data-theme="light"] .tl {
+    --tl-card-shadow: 0 12px 30px rgba(30, 30, 80, 0.08);
+    --tl-card-glow: 0 0 28px rgba(var(--accent-2-rgb), 0.1);
 }
 
 /* ===== 1. THE FILTER BAR ===== */
@@ -34,7 +39,7 @@
 .tl-bar {
     position: sticky;
     top: calc(var(--nav-height) + 12px);
-    z-index: 20;
+    z-index: var(--z-sticky);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -99,7 +104,7 @@
 
 .tl-chip[aria-pressed="true"] .tl-chip-count {
     background: rgba(var(--accent-2-rgb), 0.18);
-    color: var(--accent-2);
+    color: var(--text-accent-2);
 }
 
 /* "1997 · 06/15" on the right of the bar */
@@ -162,7 +167,7 @@
     position: absolute;
     top: 0;
     left: 50%;
-    z-index: 0;
+    z-index: 0;     /* under the era headings and the dots (z-index 2) */
     width: 2px;
     height: 0;
     margin-left: -1px;
@@ -252,7 +257,7 @@
 }
 
 .tl-era-num {
-    color: var(--accent-2);
+    color: var(--text-accent-2);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 2.5px;
@@ -384,12 +389,8 @@
     background:
         linear-gradient(160deg, rgba(var(--accent-rgb), 0.08), transparent 50%),
         var(--surface);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--tl-card-shadow);
     transition: border-color 0.5s ease, box-shadow 0.5s ease, transform 0.35s var(--ease);
-}
-
-[data-theme="light"] .tl-card {
-    box-shadow: 0 12px 30px rgba(30, 30, 80, 0.08);
 }
 
 .tl-card:hover {
@@ -429,7 +430,7 @@
     border: 1px solid rgba(var(--accent-2-rgb), 0.35);
     border-radius: 999px;
     background: rgba(var(--accent-2-rgb), 0.08);
-    color: var(--accent-2);
+    color: var(--text-accent-2);
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 1px;
@@ -467,7 +468,7 @@
 }
 
 .tl-why-label {
-    color: var(--accent);
+    color: var(--text-accent);
     font-size: 10.5px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -543,11 +544,7 @@
 
 .tl-item.is-reached .tl-card {
     border-color: rgba(var(--accent-2-rgb), 0.32);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), 0 0 32px rgba(var(--accent-2-rgb), 0.08);
-}
-
-[data-theme="light"] .tl-item.is-reached .tl-card {
-    box-shadow: 0 12px 30px rgba(30, 30, 80, 0.08), 0 0 28px rgba(var(--accent-2-rgb), 0.1);
+    box-shadow: var(--tl-card-shadow), var(--tl-card-glow);
 }
 
 .tl-item.is-reached .tl-card::before {
@@ -594,16 +591,6 @@
 
 @keyframes tl-pop {
     from { opacity: 0; transform: scale(0.4); }
-}
-
-/* ===== LIGHT THEME: DARKER SMALL LABELS ===== */
-/* Bright cyan is too pale for tiny text on white; a bit of the text colour
-   keeps the hue but makes it easy to read (contrast of at least 4.5 : 1). */
-
-[data-theme="light"] .tl-year,
-[data-theme="light"] .tl-era-num,
-[data-theme="light"] .tl-chip[aria-pressed="true"] .tl-chip-count {
-    color: color-mix(in srgb, var(--accent-2) 70%, var(--text));
 }
 
 /* ===== 8. PHONES AND TABLETS: ONE COLUMN ===== */
@@ -692,7 +679,6 @@
 
     /* Compact chips, so they fit in two or three rows */
     .tl-chip {
-        min-height: 44px;
         padding: 6px 13px;
         font-size: 13px;
     }
@@ -738,10 +724,6 @@
         font-size: 14.5px;
     }
 
-    .tl-term {
-        min-height: 44px;
-    }
-
     .tl-era-head {
         padding: 16px 18px 18px;
     }
@@ -755,38 +737,18 @@
     }
 }
 
-@media (pointer: coarse) {
+/* Bigger touch targets on phones and on touch screens */
+@media (max-width: 640px), (pointer: coarse) {
     .tl-chip,
     .tl-term {
         min-height: 44px;
     }
 }
 
-/* ===== 9. REDUCED MOTION / CALM MODE ===== */
+/* ===== 9. LESS MOTION (reduced motion or calm mode) =====
+   style.css already stops every animation and transition under
+   html.fx-motion-off; this rule only does what it can't. */
 
-@media (prefers-reduced-motion: reduce) {
-    .tl-head::after,
-    .tl-hud-dot {
-        animation: none;
-    }
-
-    .tl-card:hover {
-        transform: none;
-    }
-
-    .tl-ghost,
-    .tl-node,
-    .tl-node-icon {
-        transition: none;
-    }
-}
-
-html.fx-calm .tl-head::after,
-html.fx-calm .tl-hud-dot,
-html.fx-calm .tl-item.is-reached .tl-node::after {
-    animation: none;
-}
-
-html.fx-calm .tl-card:hover {
+html.fx-motion-off .tl-card:hover {
     transform: none;
 }
