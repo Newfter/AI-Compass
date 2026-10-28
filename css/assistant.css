@@ -9,13 +9,15 @@
    7. Less motion
    Layers (style.css): the button, the hint and the phone backdrop sit at
    --z-launcher, the chat window just above them at --z-sheet.
+   While a window locks the page, the scrollbar disappears: every "right"
+   here adds --scrollbar-gap (set by core.js), so nothing jumps sideways.
    ========================================================= */
 
 /* ===== 1. THE ORB BUTTON ===== */
 
 .cb-launcher {
     position: fixed;
-    right: 24px;
+    right: calc(24px + var(--scrollbar-gap, 0px));
     bottom: 24px;
     z-index: var(--z-launcher);
     display: grid;
@@ -198,7 +200,7 @@
 
 .cb-tip {
     position: fixed;
-    right: var(--launcher-clearance);
+    right: calc(var(--launcher-clearance) + var(--scrollbar-gap, 0px));
     bottom: 34px;
     z-index: var(--z-launcher);
     display: flex;
@@ -291,7 +293,7 @@
 
 .cb-panel {
     position: fixed;
-    right: 24px;
+    right: calc(24px + var(--scrollbar-gap, 0px));
     bottom: var(--launcher-clearance);
     z-index: var(--z-sheet);
     display: flex;
@@ -894,14 +896,14 @@
 
 @media (max-width: 640px) {
     .cb-launcher {
-        right: 16px;
+        right: calc(16px + var(--scrollbar-gap, 0px));
         bottom: 16px;
         width: 58px;
         height: 58px;
     }
 
     .cb-tip {
-        right: 86px;
+        right: calc(86px + var(--scrollbar-gap, 0px));
         bottom: 24px;
         max-width: calc(100vw - 102px);
     }
@@ -1073,7 +1075,7 @@
     .cb-panel {
         top: 8px;
         bottom: 8px;
-        right: var(--launcher-clearance);
+        right: calc(var(--launcher-clearance) + var(--scrollbar-gap, 0px));
         height: auto;
         transform-origin: 100% 100%;
     }

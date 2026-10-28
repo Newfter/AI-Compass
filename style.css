@@ -7,7 +7,7 @@
                            sizes, layers (z-index)
     2. basics              reset, the page (and its theme switch), links, the focus
                            ring, the skip link, small helpers (.container, .sr-only)
-    3. background layers   the neural network canvas and the grid
+    3. background grid     (the neural network canvas over it: css/effects.css)
     4. buttons, chips, cards   shared by every feature
     5. navigation          the menu bar, its links and buttons
     6. hero                the first screen
@@ -18,6 +18,7 @@
    11. responsive          tablets and phones (and the menu on small screens)
    12. shared animations
    13. reduced motion and calm mode
+   14. without JavaScript
 
    Screen sizes (breakpoints). Every CSS file uses only these widths, as
    @media (max-width: N) = "N pixels wide or less". The three main ones are
@@ -377,16 +378,9 @@ textarea:focus-visible,
     color: var(--accent);
 }
 
-/* ===== 3. BACKGROUND LAYERS ===== */
-
-.neural-bg {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-bg);
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-}
+/* ===== 3. BACKGROUND GRID =====
+   The faint grid behind the whole page. The neural network canvas just in
+   front of it is drawn by js/neural-bg.js; its CSS is in css/effects.css. */
 
 .bg-grid {
     position: fixed;
@@ -1002,11 +996,12 @@ button.chip:hover,
 /* ===== 10. TOASTS (small pop-up messages) ===== */
 
 /* --toast-bottom: how far above the bottom edge toasts appear. A window that
-   has buttons at the bottom (like the lesson reader) can raise it while it is open. */
+   has buttons at the bottom (like the lesson reader) can raise it while it is open.
+   --scrollbar-gap: see .navbar (the toasts stay centred when a window opens). */
 .toast-stack {
     position: fixed;
     left: 16px;
-    right: 16px;
+    right: calc(16px + var(--scrollbar-gap, 0px));
     bottom: calc(var(--toast-bottom, 24px) + env(safe-area-inset-bottom, 0px));
     z-index: var(--z-toast);
     display: flex;
@@ -1028,6 +1023,8 @@ button.chip:hover,
     color: var(--text);
     font-size: 14px;
     font-weight: 600;
+    /* A very long word (a web address, say) breaks instead of running off the screen */
+    overflow-wrap: anywhere;
     box-shadow: var(--shadow), var(--glow);
     animation: toast-in 0.4s var(--ease) both;
 }
@@ -1299,5 +1296,38 @@ html.fx-motion-off *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0s !important;
+    }
+}
+
+/* ===== 14. WITHOUT JAVASCRIPT =====
+   The small script at the top of index.html puts the "js" class on <html>
+   before the page is drawn. When JavaScript is off, the class is missing:
+   the buttons that need a script (search, theme, language and the menu
+   button) are hidden, and on smaller screens the menu links stay in the bar,
+   in one row that scrolls sideways. Everything else can be read by scrolling. */
+
+html:not(.js) .nav-actions {
+    display: none;
+}
+
+@media (max-width: 960px) {
+    html:not(.js) .nav-links {
+        position: static;
+        flex-direction: row;
+        min-width: 0;
+        max-height: none;
+        padding: 0;
+        overflow-x: auto;
+        border-bottom: 0;
+        background: none;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+    }
+
+    html:not(.js) .nav-links a {
+        padding: 8px 9px;
+        font-size: 13px;
+        white-space: nowrap;
     }
 }

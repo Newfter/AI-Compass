@@ -19,21 +19,31 @@
 
 /* ===== 1. NEURAL BACKGROUND CANVAS ===== */
 
-/* The "large" viewport height stays the same when a phone's address bar
-   slides in and out, so the canvas doesn't have to be resized while scrolling */
+/* The <canvas> js/neural-bg.js draws on, behind everything (the grid of
+   style.css is just under it). It is as tall as the "large" viewport, which
+   stays the same when a phone's address bar slides in and out, so the canvas
+   doesn't have to be resized while scrolling. */
 .neural-bg {
-    bottom: auto;
-    height: 100vh;
-    height: 100lvh;
-}
-
-/* ===== 2. SCROLL PROGRESS BAR ===== */
-
-.scroll-progress {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
+    z-index: var(--z-bg);
+    width: 100%;
+    height: 100vh;
+    height: 100lvh;
+    pointer-events: none;
+}
+
+/* ===== 2. SCROLL PROGRESS BAR ===== */
+
+/* right: while a window locks the page, the scrollbar disappears and
+   --scrollbar-gap (core.js) keeps the bar as wide as before */
+.scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: var(--scrollbar-gap, 0px);
     z-index: var(--z-progress);
     height: 3px;
     pointer-events: none;
@@ -439,7 +449,7 @@ html.fx-fine .btn-primary.fx-magnet:not(:disabled):not([aria-disabled="true"]):h
     .fx-rail {
         position: fixed;
         top: 50%;
-        right: 18px;
+        right: calc(18px + var(--scrollbar-gap, 0px));   /* see .scroll-progress */
         z-index: var(--z-rail);
         display: block;
         transform: translateY(-50%);
