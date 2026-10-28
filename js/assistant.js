@@ -900,12 +900,13 @@
             }
         }
 
-        // Only a weak hint matched ("how can AI help doctors?" has "help"):
-        // a good text of the site is a better answer. A message of one word
-        // is still what it says ("help").
+        // Only a weak hint matched ("how can AI help doctors?" has "help" and "AI"):
+        // a good text of the site is a better answer. So are the places that may
+        // help ("not sure"): the hint's own answer ("what is AI?") would answer
+        // another question. A message of one word is still what it says ("help").
         if (best && best.score < 1 && tokens.length > 1) {
             const site = sitePlan(tokens);
-            if (site && site.kind === "site") return site;
+            if (site) return site;
         }
 
         if (best) return smallTalkPlan(best, tokens) || { kind: "intent", id: best.intent.id, tokens: tokens };
