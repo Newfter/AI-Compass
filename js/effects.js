@@ -44,16 +44,67 @@
 
     /* =========================================================
        1. SETTINGS
-       Values you may want to change.
+       Numbers you may want to change. Times are in milliseconds,
+       sizes in CSS pixels.
        ========================================================= */
+    // Watching the screen
     const NEAR_ZONE = 0.1;                    // "near the screen": up to 10% of the screen height above or below it
-    const BOTTOM_ZONE = 6;                    // px: this close to the end counts as "at the very bottom"
+    const VIEW_ZONE = 0.08;                   // cards animate in once they are 8% of the screen height above its bottom edge
+    const BOTTOM_ZONE = 6;                    // this close to the end of the page counts as "at the very bottom"
+
+    // Scroll progress bar
+    const PROGRESS_ACTIVE = 0.002;            // the bar's glow and bright head show from 0.2% scrolled on
+
+    // Reveal on scroll
+    const REVEAL_STEP = 90;                   // cards that appear together come in one after another, this far apart...
+    const REVEAL_MAX_STEPS = 6;               // ...but none waits more than 6 steps
+    const REVEAL_TOGETHER = 160;              // cards revealed less than this apart count as "together"
+    const REVEAL_TIME = 1000;                 // a card's entrance is over after this (css/effects.css: 0.95s)
+    const LIST_STEP = 85;                     // the items of a list rise in this far apart...
+    const LIST_TIME = 720;                    // ...and all of them within this time
+    const LIST_MAX_ITEMS = 30;                // longer lists appear in one piece
+    const PEEK_WAIT = 1400;                   // a hidden card peeking onto the screen appears by itself after this
+    const SAFETY_NET_WAIT = 2500;             // after loading, anything still hidden on screen appears after this
+
+    // Numbers that count up
+    const COUNT_DELAY = 150;                  // a number starts counting this long after its card appeared
+    const COUNT_MIN_TIME = 900;               // counting up takes this long at least...
+    const COUNT_MAX_TIME = 1800;              // ...and this long at most (bigger jumps take longer)
+
+    // Decoding text
     const SCRAMBLE_SELECTOR = "[data-scramble], .section-label";       // the texts that "decode"
+    const SCRAMBLE_VISIBLE = 0.2;             // a text decodes once a fifth of it can be seen
+    const SCRAMBLE_MAX_LENGTH = 140;          // longer texts don't decode
+    const SCRAMBLE_AFTER_CARD = 140;          // a text in an appearing card starts decoding this long after the card
+    const SCRAMBLE_SHUFFLE = 55;              // the random letters change this often
+    const SCRAMBLE_MIN_TIME = 600;            // decoding takes this long at least...
+    const SCRAMBLE_MAX_TIME = 1300;           // ...and this long at most (longer texts take longer)
     // The random letters shown while a text decodes (Latin, Cyrillic, digits, symbols)
     const GLYPHS_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ0123456789#%&*+=<>/\\|{}[]?!$@";
     const GLYPHS_LOWER = "abcdefghijklmnopqrstuvwxyzабвгдежзиклмнопрстуфхцчшщэюя0123456789#%&*+=<>/\\|{}?!";
+
+    // Typewriter words
+    const TYPE_START = 300;                   // the first letter comes after this
+    const TYPE_LETTER = 65;                   // each typed letter takes this long...
+    const TYPE_JITTER = 60;                   // ...plus a random bit up to this, like a person typing
+    const TYPE_HOLD = 2100;                   // a full word stays this long
+    const TYPE_DELETE = 34;                   // each deleted letter takes this long
+    const TYPE_NEXT_WORD = 420;               // the pause before the next word
+
+    // Pointer effects
+    const SPOTLIGHT_SPEED = 9;                // how fast the spotlight catches up with the cursor (higher = faster)
+    const TILT_MIN = 3;                       // degrees: big cards tilt this much at most...
+    const TILT_MAX = 9;                       // ...small cards up to this much
+    const TILT_RETURN = 700;                  // a card takes this long to lie flat again when the mouse leaves
+    const MAGNET_X = 8;                       // a main button leans at most this far towards the cursor sideways...
+    const MAGNET_Y = 6;                       // ...and up or down
+
+    // Ripples, confetti and housekeeping
     const RIPPLE_SELECTOR = ".btn, .icon-button, .chip";                // what ripples when it is pressed
+    const RIPPLE_TIME = 700;                  // a ripple is removed after this (css/effects.css: 0.65s)
     const CONFETTI_COLORS = ["--accent", "--accent-2", "--accent-3", "--success", "--warning"];   // theme colours of the pieces
+    const CONFETTI_TIME = 3000;               // confetti falls this long (unless the caller asks for another time)
+    const PRUNE_WAIT = 2000;                  // removed elements are forgotten this long after they left the page
 
     /* =========================================================
        2. SMALL HELPERS (core.js has the rest: A.util, A.format, A.canvas...)
@@ -148,9 +199,9 @@
     const onScreenNow = new WeakSet();                                     // waiting cards, numbers and texts on screen right now
     const screenObserver = hasObserver ? new IntersectionObserver(onScreenSeen, { threshold: 0 }) : null;
     const armObserver = hasObserver ? new IntersectionObserver(onNear, { rootMargin: NEAR_ZONE * 100 + "% 0px", threshold: 0 }) : null;
-    const viewObserver = hasObserver ? new IntersectionObserver(onEnterView, { rootMargin: "0px 0px -8% 0px", threshold: 0 }) : null;
+    const viewObserver = hasObserver ? new IntersectionObserver(onEnterView, { rootMargin: "0px 0px -" + VIEW_ZONE * 100 + "% 0px", threshold: 0 }) : null;
     const counterObserver = hasObserver ? new IntersectionObserver(onCounterView, { threshold: 0 }) : null;
-    const scrambleObserver = hasObserver ? new IntersectionObserver(onScrambleView, { threshold: [0, 0.2] }) : null;
+    const scrambleObserver = hasObserver ? new IntersectionObserver(onScrambleView, { threshold: [0, SCRAMBLE_VISIBLE] }) : null;
 
     /* =========================================================
        5. SCROLL PROGRESS BAR (+ everything that follows the scroll)
@@ -175,7 +226,7 @@
             lastProgress = value;
             progressWrap.style.setProperty("--fx-progress", value);
         }
-        progressWrap.classList.toggle("is-active", progress > 0.002);
+        progressWrap.classList.toggle("is-active", progress > PROGRESS_ACTIVE);
     }
 
     function onPageScroll(info) {
@@ -274,7 +325,7 @@
                 fallbackTimers.set(element, setTimeout(() => {
                     fallbackTimers.delete(element);
                     if (revealPending.has(element) && onScreenNow.has(element)) reveal(element, 0);
-                }, 1400));
+                }, PEEK_WAIT));
             }
         });
     }
@@ -343,15 +394,15 @@
     // Elements that appear at the same moment come in one after another
     function nextStagger() {
         const now = performance.now();
-        if (now - lastRevealAt > 160) staggerIndex = 0;
+        if (now - lastRevealAt > REVEAL_TOGETHER) staggerIndex = 0;
         lastRevealAt = now;
-        return Math.min(staggerIndex++, 6) * 90;
+        return Math.min(staggerIndex++, REVEAL_MAX_STEPS) * REVEAL_STEP;
     }
 
     function isStaggerList(element) {
         const mode = element.getAttribute("data-reveal");
         const isList = element.tagName === "UL" || element.tagName === "OL";
-        return (mode === "stagger" || (isList && !mode)) && element.children.length > 1 && element.children.length <= 30;
+        return (mode === "stagger" || (isList && !mode)) && element.children.length > 1 && element.children.length <= LIST_MAX_ITEMS;
     }
 
     function reveal(element, delay) {
@@ -375,7 +426,7 @@
         revealTimes.set(element, performance.now() + delay);
 
         if (items) {
-            const step = Math.min(85, 720 / items.length);
+            const step = Math.min(LIST_STEP, LIST_TIME / items.length);
             element.classList.add("fx-reveal-list");
             items.forEach((item, index) => {
                 const itemDelay = Math.round(index * step);
@@ -387,11 +438,11 @@
         element.classList.add("revealed", "fx-reveal-run");
 
         // Labels inside decode and numbers inside count as they appear
-        scrambleWithin(element, delay + 140);
+        scrambleWithin(element, delay + SCRAMBLE_AFTER_CARD);
         startCountersWithin(element, true);
 
         // Clean up when the animation is over, so the element's own styles take over again
-        const total = delay + 1000 + (items ? 720 : 0);
+        const total = delay + REVEAL_TIME + (items ? LIST_TIME : 0);
         setTimeout(() => {
             element.classList.remove("fx-reveal-run", "fx-reveal-list");
             element.style.removeProperty("--fx-delay");
@@ -463,7 +514,7 @@
             revealPending.forEach((element) => {
                 if (onScreenNow.has(element)) reveal(element, 0);
             });
-        }, 2500);
+        }, SAFETY_NET_WAIT);
     });
 
     /* =========================================================
@@ -633,7 +684,7 @@
             const appearsAt = (revealTimes.get(host) || 0) + (itemDelays.get(item) || 0);
             wait = Math.max(0, appearsAt - performance.now());
         }
-        return 150 + Math.max(wait, entranceWait(element));
+        return COUNT_DELAY + Math.max(wait, entranceWait(element));
     }
 
     function startCounter(element, counter, delay) {
@@ -654,7 +705,7 @@
             return;
         }
 
-        const duration = A.util.clamp(700 + Math.abs(to - from) * 12, 900, 1800);
+        const duration = A.util.clamp(700 + Math.abs(to - from) * 12, COUNT_MIN_TIME, COUNT_MAX_TIME);
         counter.timer = setTimeout(() => {
             counter.timer = 0;
             const start = performance.now();
@@ -714,7 +765,7 @@
             const element = entry.target;
             if (entry.isIntersecting) onScreenNow.add(element);
             else onScreenNow.delete(element);
-            if (entry.isIntersecting && entry.intersectionRatio >= 0.2 && scramblePending.has(element) && hostShown(element)) {
+            if (entry.isIntersecting && entry.intersectionRatio >= SCRAMBLE_VISIBLE && scramblePending.has(element) && hostShown(element)) {
                 scramblePending.delete(element);
                 scramble(element, 0);
             }
@@ -770,7 +821,7 @@
 
         const text = element.textContent;
         // Skip empty or long text, and anything with links or buttons inside
-        if (!text.trim() || text.length > 140 || element.querySelector("a, button, input, select, textarea, img, svg")) {
+        if (!text.trim() || text.length > SCRAMBLE_MAX_LENGTH || element.querySelector("a, button, input, select, textarea, img, svg")) {
             scrambleRuns.delete(element);
             return;
         }
@@ -811,7 +862,7 @@
         element.classList.add("fx-scrambling");
         run.visual = visual;
 
-        const duration = A.util.clamp(380 + letters.length * 32, 600, 1300);
+        const duration = A.util.clamp(380 + letters.length * 32, SCRAMBLE_MIN_TIME, SCRAMBLE_MAX_TIME);
         const start = performance.now();
         let noiseLetters = [];
         let lastShuffle = 0;
@@ -827,7 +878,7 @@
             const progress = A.util.clamp((now - start) / duration, 0, 1);
             const done = Math.floor(A.util.clamp((progress - 0.15) / 0.85, 0, 1) * letters.length);
 
-            if (now - lastShuffle > 55) {
+            if (now - lastShuffle > SCRAMBLE_SHUFFLE) {
                 lastShuffle = now;
                 noiseLetters = letters.map(randomGlyph);
             }
@@ -999,7 +1050,7 @@
         }
 
         if (rotatorShouldRun(rotator)) {
-            if (!rotator.timer) rotator.timer = setTimeout(() => rotatorStep(rotator), 300);
+            if (!rotator.timer) rotator.timer = setTimeout(() => rotatorStep(rotator), TYPE_START);
         } else {
             clearTimeout(rotator.timer);
             rotator.timer = 0;
@@ -1012,28 +1063,31 @@
 
         const length = Array.from(rotator.words[rotator.word]).length;
         let wait;
+        let typing = true;                                                  // letters come or go: the caret stays solid
 
         if (!rotator.deleting) {
             rotator.letters = Math.min(length, rotator.letters + 1);
             if (rotator.letters >= length) {
                 rotator.deleting = true;
-                wait = 2100;                                                // hold the full word
+                wait = TYPE_HOLD;                                           // the full word stays a while
+                typing = false;
             } else {
-                wait = 65 + Math.random() * 60;                             // human-like typing
+                wait = TYPE_LETTER + Math.random() * TYPE_JITTER;
             }
         } else {
             rotator.letters = Math.max(0, rotator.letters - 1);
             if (rotator.letters === 0) {
                 rotator.deleting = false;
                 rotator.word = (rotator.word + 1) % rotator.words.length;
-                wait = 420;
+                wait = TYPE_NEXT_WORD;
+                typing = false;
             } else {
-                wait = 34;
+                wait = TYPE_DELETE;
             }
         }
 
         renderRotator(rotator);
-        rotator.element.classList.toggle("is-typing", wait < 400);           // solid caret while typing
+        rotator.element.classList.toggle("is-typing", typing);              // (a waiting caret blinks)
         rotator.timer = setTimeout(() => rotatorStep(rotator), wait);
     }
 
@@ -1104,7 +1158,7 @@
         lastPointerTime = now;
 
         // The spotlight follows the cursor with a soft delay
-        const follow = 1 - Math.exp(-dt * 9);
+        const follow = 1 - Math.exp(-dt * SPOTLIGHT_SPEED);
         pointer.smoothX += (pointer.x - pointer.smoothX) * follow;
         pointer.smoothY += (pointer.y - pointer.smoothY) * follow;
         spotlight.style.transform = "translate3d(" + pointer.smoothX.toFixed(1) + "px," + pointer.smoothY.toFixed(1) + "px,0) translate(-50%,-50%)";
@@ -1215,7 +1269,7 @@
             host.style.setProperty("--fx-y", (y * 100).toFixed(1) + "%");
 
             // Small cards tilt more, big cards tilt less
-            const maxTilt = A.util.clamp(2600 / litRect.width, 3, 9);
+            const maxTilt = A.util.clamp(2600 / litRect.width, TILT_MIN, TILT_MAX);
             const rotateX = (0.5 - y) * 2 * maxTilt * 0.8;
             const rotateY = (x - 0.5) * 2 * maxTilt;
             const depth = Math.round(Math.max(700, litRect.width * 2.2));
@@ -1252,14 +1306,14 @@
         const memory = tiltMemory.get(host);
         if (!memory) return;
         host.classList.remove("fx-tilting");
-        host.style.transition = joinTransitions(memory.base, "transform 0.7s var(--ease)");     // the site's curve (style.css)
+        host.style.transition = joinTransitions(memory.base, "transform " + TILT_RETURN + "ms var(--ease)");     // the site's curve (style.css)
         host.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
         clearTimeout(memory.timer);
         memory.timer = setTimeout(() => {
             host.style.transform = memory.transform;
             host.style.transition = memory.transition;
             tiltMemory.delete(host);
-        }, 720);
+        }, TILT_RETURN + 20);                                               // just after the card lies flat
     }
 
     // Magnet: the button leans a few pixels towards the cursor
@@ -1288,8 +1342,8 @@
         if (!magnetRect) magnetRect = button.getBoundingClientRect();
         const dx = pointer.x - (magnetRect.left + magnetRect.width / 2);
         const dy = pointer.y - (magnetRect.top + magnetRect.height / 2);
-        button.style.setProperty("--fx-mx", A.util.clamp(dx * 0.2, -8, 8).toFixed(2) + "px");
-        button.style.setProperty("--fx-my", A.util.clamp(dy * 0.28, -6, 6).toFixed(2) + "px");
+        button.style.setProperty("--fx-mx", A.util.clamp(dx * 0.2, -MAGNET_X, MAGNET_X).toFixed(2) + "px");
+        button.style.setProperty("--fx-my", A.util.clamp(dy * 0.28, -MAGNET_Y, MAGNET_Y).toFixed(2) + "px");
     }
 
     function resetPointerEffects() {
@@ -1363,7 +1417,7 @@
         setTimeout(() => {
             box.remove();
             releasePosition(element);
-        }, 700);
+        }, RIPPLE_TIME);
     }
 
     document.addEventListener("pointerdown", (event) => {
@@ -1540,7 +1594,7 @@
             });
         }
 
-        const duration = settings.duration || 3000;
+        const duration = settings.duration || CONFETTI_TIME;
         const start = performance.now();
         party = { canvas: canvas, frame: 0 };
         let last = start;
@@ -1656,7 +1710,7 @@
             pruneTimer = setTimeout(() => {
                 pruneTimer = 0;
                 prune();
-            }, 2000);
+            }, PRUNE_WAIT);
         }
     });
 

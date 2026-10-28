@@ -53,8 +53,11 @@
     const MAX_SPEED = 15;
     const MOUSE_RADIUS = 200;        // how far the cursor "reaches"
     const MOUSE_PULL = 95;           // how strongly nodes are pulled to the cursor
+    const TOUCH_HOLD_MS = 900;       // a finger keeps pulling this long after it was lifted
     const PARALLAX = 0.12;           // how much near nodes move when you scroll
+    const READING_DIM = 0.35;        // further down the page the network gets up to 35% dimmer
     const MAX_PULSES = 28;           // signals travelling at the same time
+    const STORM_TIME = 3.5;          // seconds a neural storm lasts
     const MAX_PIXELS = 3500000;      // canvas size limit for huge screens (keeps it smooth)
     const ALPHA_LEVELS = 16;         // lines are grouped by brightness to draw faster
     const ALPHA_STEP = 0.035;
@@ -341,7 +344,7 @@
 
         // Full brightness on the hero, a bit calmer while you read the sections
         const reading = A.util.clamp(pageY / (height * 0.9), 0, 1);
-        const targetIntensity = 1 - reading * 0.35 + (stormTime > 0 ? 0.45 : 0);
+        const targetIntensity = 1 - reading * READING_DIM + (stormTime > 0 ? 0.45 : 0);
         intensity += (targetIntensity - intensity) * Math.min(1, dt * 3);
 
         // Scrolling moves near nodes more than far ones (depth / parallax)
@@ -653,7 +656,7 @@
         clearTimeout(mouse.releaseTimer);
         mouse.releaseTimer = setTimeout(() => {
             mouse.active = false;
-        }, 900);
+        }, TOUCH_HOLD_MS);
     }
 
     function trackPointer(event) {
@@ -717,7 +720,7 @@
     // ---------- 12. Neural storm and the secret code ----------
     function storm() {
         if (!A.motion.ok() || document.hidden || !nodes.length) return false;
-        stormTime = 3.5;
+        stormTime = STORM_TIME;
         for (let i = 0; i < 14; i++) {
             const node = A.util.pick(nodes);
             node.fire = 1;
