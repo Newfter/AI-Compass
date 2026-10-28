@@ -1152,8 +1152,8 @@
             }
         });
 
-        // Labels
-        ctx.font = "600 10px " + colors.mono;
+        // Labels (11px: the smallest text the lab draws on a canvas; it was 10px)
+        ctx.font = "600 11px " + colors.mono;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillStyle = A.colors.rgba(colors.dim, 1);
@@ -1854,6 +1854,7 @@
 
     // The texts that JavaScript writes (core has translated every data-i18n text already)
     function refreshTexts() {
+        nnEls.live.textContent = "";     // an old message must not stay behind in the old language
         updateLrLabels();
         updateTrainButton();
         updateDiagramLabel();
