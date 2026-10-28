@@ -58,7 +58,8 @@
                                          // lab's 8 ms budget; the moves get what the drawing leaves...
     const TURBO_BUDGET = 5;              // ...but at most 5 ms
     const BATCH = 32;                    // Turbo looks at the clock after every 32 moves
-    const TURBO_PAINT_MS = 200;          // in Turbo the numbers and charts are written 5 times a second
+    const PAINT_MS = { watch: 0, fast: 100, turbo: 200 };   // while running, the numbers and charts are written
+                                         // at most every 100 ms (Fast) or 200 ms (Turbo): too fast to read anyway
     const SHOW_RATE = 6;                 // squares per second when "Show the best path" walks it
     const SLIDE = 0.6;                   // in Watch mode the robot slides for this part of a move's time, then rests
     const BUMP = 0.18;                   // ...and a bump into a wall nudges it this far (in squares)
@@ -1459,9 +1460,9 @@
         function render(progress) {
             drawBoard(progress === undefined ? 1 : progress);
             if (!dirty) return;
-            // In Turbo the numbers change too fast to read: write them 5 times a second
+            // Fast and Turbo change the numbers too fast to read: write them 10 or 5 times a second
             const now = performance.now();
-            if (state === "running" && speed === "turbo" && now - lastPaint < TURBO_PAINT_MS) return;
+            if (state === "running" && now - lastPaint < PAINT_MS[speed]) return;
             lastPaint = now;
             dirty = false;
             const path = greedyPath(Q, world);
