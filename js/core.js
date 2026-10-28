@@ -1,11 +1,13 @@
 /* =========================================================
    AI COMPASS — CORE
    Loaded before every other script. It builds window.AICompass,
-   the toolkit that every feature file uses (called "A" there):
+   the toolkit that every feature file uses (called "A" there).
+   The words themselves live in js/content/ (one file per part of the site).
 
+   THE PARTS OF THIS FILE
     1. storage       saving settings in the browser
     2. events        A.on / A.emit (the "aic:..." events)
-    3. texts         translations, plurals, number formats, language
+    3. texts         translations, plurals, values inside texts, number formats, language
     4. theme         light / dark and the colour of the address bar
     5. motion        reduced motion (device) + calm mode (our own switch),
                      and numbers that count up
@@ -14,20 +16,57 @@
     7. screen        media queries, visibility, resizing, layout sizes
     8. announce      messages for screen readers
     9. overlays      pop-up windows: scroll lock, focus, the Esc key
-   10. navigation    the page sections, A.navigate, the menu bar
+   10. navigation    the page sections, A.navigate, one scroll pipeline, parts
+                     built when needed, the menu bar
    11. commands      the command list of the Ctrl+K palette
    12. features      how feature files share their API and content
    13. toasts        small pop-up messages
-   14. start-up
+       the toolkit   window.AICompass itself, and the built-in commands
+   14. start-up      translating the page, the theme and language buttons
 
-   The words themselves live in js/content/ (one file per part of the site).
+   THE TOOLKIT AT A GLANCE (each one is explained where it is written)
+    1  A.storage.get(key, fallback) / set(key, value) / remove(key) / migrate(old, new)
+       A.storage.session: the same, forgotten when the tab closes
+    2  A.on(name, callback) -> stop()      A.emit(name, detail)
+       names: language, theme, motion, overlay, section, feature (sent as "aic:" + name)
+    3  A.t(key, values)   A.has(key)   A.plural(key, n, values)   A.pluralForm(n)
+       A.addTranslations({ en, ru })   A.applyTranslations(element)   A.i18nHTML(key, className, tag)
+       A.setTextValue(name, value)   A.textValue(name): a {name} that any text can show
+       in the HTML: data-i18n="key", data-i18n-attr="aria-label:key", data-i18n-plural="name"
+       A.format.number(n, options)   A.format.percent(share, options)   A.format.date(date, options)
+       A.lang   A.locale   A.setLanguage(lang)   A.toggleLanguage()   A.onLanguageChange(callback)
+    4  A.theme   A.setTheme(theme)   A.toggleTheme()   A.onThemeChange(callback)
+    5  A.motion.ok() / reduced / calm / setCalm(on) / toggleCalm() / onChange(callback) / ease
+       A.reducedMotion (the device setting only)
+       A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value }
+    6  A.util.clamp / lerp / easeOut / randomInt / pick / shuffle / sampleWeighted /
+              debounce / frameThrottle
+       A.dom.focusable / focusHeading / pauseScrollAnchoring / replay / fromHTML
+       A.confirmPress(button, { onArm, onDisarm, onConfirm, enabled, timeout })
+           -> { armed, disarm() }: a button that needs a second press
+       A.colors.parse / rgb(cssName) / rgba(color, alpha)   A.canvas.pixelRatio / fit / roundRect
+       A.cssVar(name)   A.escapeHTML(text)
+    7  A.breakpoints   A.queries   A.media(query)   A.onMedia(query, callback)
+       A.whenVisible(element, callback, options)   A.onResize(callback)   A.layout.px / navHeight
+    8  A.announce(text, options)
+    9  A.overlays.register(id, options) -> { opened(), closed(), close(reason) }
+       A.overlays.closeAll / isOpen / top / hasModal / onChange / update
+       (while a window locks the page, <body> gets --scrollbar-gap for the fixed bars)
+   10  A.sections   A.navigate(id, options)   A.onScroll(callback)   A.onLayout(callback)
+       A.layoutChanged()   A.onSection(callback)   A.whenNeeded(element, build, options)
+       A.buildParts(target)   A.whenIdle(callback)
+   11  A.registerCommand(command)   A.runCommand(id or command)   A.commands
+   12  A.feature(name, api)   A.whenFeature(name) -> Promise   A.ready(callback)
+       A.content.set(name, data) / get(name)
+   13  A.toast(text, icon)
    ========================================================= */
 
 (function () {
     "use strict";
 
     const root = document.documentElement;
-    const PREFIX = "aic:";      // before every storage key; the theme script in index.html reads "aic:theme" itself
+    // Every storage key starts with this. The theme script in index.html reads "aic:theme" itself.
+    const PREFIX = "aic:";
 
     // Errors in one listener must not stop the others: report them and go on
     function report(error) {
@@ -104,7 +143,7 @@
     }
 
     /* =========================================================
-       3. TEXTS: TRANSLATIONS, PLURALS, NUMBERS
+       3. TEXTS: TRANSLATIONS, PLURALS, VALUES INSIDE TEXTS, NUMBERS
        ========================================================= */
     const LANGUAGES = ["en", "ru"];
 
@@ -991,6 +1030,8 @@
        for all of them in one place:
        - "modal" windows stop the page from scrolling and make everything else
          unreachable (inert), so the keyboard and screen readers stay inside;
+         <body> then gets --scrollbar-gap, the width of the scrollbar that went
+         away, so bars with position: fixed can keep their place (style.css .navbar);
        - Tab goes round inside the top modal window;
        - Esc closes the window on top (only that one);
        - A.navigate() and palette commands close the windows in the way first.
@@ -1264,7 +1305,8 @@
     });
 
     /* =========================================================
-       10. NAVIGATION: SECTIONS, A.navigate AND THE MENU BAR
+       10. NAVIGATION: SECTIONS, A.navigate, SCROLLING, PARTS BUILT WHEN NEEDED,
+           AND THE MENU BAR
        ========================================================= */
     // The sections of the page, in order: their id, the name (a translation key) and an icon
     const SECTIONS = [
