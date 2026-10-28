@@ -44,7 +44,6 @@ window.AICompass.addTranslations({
         "timeline.inGlossary": "In the glossary:",
         "timeline.openTerm": "Open “{term}” in the glossary",
         "timeline.showing.one": "Showing {n} milestone",
-        "timeline.showing.few": "Showing {n} milestones",
         "timeline.showing.many": "Showing {n} milestones",
 
         "timeline.e1.year": "1950",

@@ -53,32 +53,9 @@
 
     // ---------- 3. Small helpers ----------
 
-    // Picks the right plural form. English has two (1 milestone / 2 milestones),
-    // Russian has three (1 событие / 2 события / 5 событий).
-    function pluralForm(n) {
-        if (A.lang !== "ru") return n === 1 ? "one" : "many";
-        const lastDigit = n % 10;
-        const lastTwo = n % 100;
-        if (lastDigit === 1 && lastTwo !== 11) return "one";
-        if (lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14)) return "few";
-        return "many";
-    }
-
-    // Animations are skipped when the device asks for less motion
-    // or when "calm mode" (from effects.js) is on
-    function motionOK() {
-        return !A.reducedMotion && !document.documentElement.classList.contains("fx-calm");
-    }
-
-    function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
-    // A translated piece of text. data-i18n lets core.js re-translate it by itself.
-    function text(key, className, tag) {
-        tag = tag || "span";
-        return "<" + tag + (className ? ' class="' + className + '"' : "") + ' data-i18n="' + key + '">' + t(key) + "</" + tag + ">";
-    }
+    // A translated piece of text: <span class="..." data-i18n="key">text</span>.
+    // data-i18n lets core.js re-translate it by itself.
+    const text = A.i18nHTML;
 
     // Distance from the top of an ancestor, ignoring animations (transforms)
     function offsetWithin(element, ancestor) {
@@ -90,9 +67,11 @@
         return y;
     }
 
-    // The glossary (js/glossary.js) may be missing: then there are no term buttons
+    // A term of the glossary: { id, term (its name), definition, ... } or null.
+    // js/glossary.js loads before this file and publishes AICompass.glossary at once
+    // (before it builds its own part of the page). Without it there are no term buttons.
     function glossaryTerm(id) {
-        return A.glossary && A.glossary.term ? A.glossary.term(id) : null;
+        return A.glossary ? A.glossary.term(id) : null;
     }
 
     // ---------- 4. Building the page ----------
@@ -254,10 +233,10 @@
     function update(now) {
         frame = 0;
         const top = wrap.getBoundingClientRect().top;
-        const target = clamp(window.innerHeight * READ_LINE - top - lineTop, 0, lineLength);
+        const target = A.util.clamp(window.innerHeight * READ_LINE - top - lineTop, 0, lineLength);
 
         // The fill glides smoothly after the scroll position (unless motion is off)
-        if (jump || !inView || !motionOK()) {
+        if (jump || !inView || !A.motion.ok()) {
             shown = target;
         } else {
             const seconds = lastTime ? Math.min(0.05, (now - lastTime) / 1000) : 0.016;
@@ -316,17 +295,13 @@
         if (inView) requestUpdate();
     }, { passive: true });
 
-    window.addEventListener("resize", measure);
-    if ("ResizeObserver" in window) {
-        let lastHeight = 0;
-        new ResizeObserver(function () {
-            const height = wrap.offsetHeight;
-            if (height !== lastHeight) {
-                lastHeight = height;
-                measure();
-            }
-        }).observe(wrap);
-    }
+    // A new window size moves the dots (core calls this once per frame at most).
+    // Filters, a new language and web fonts measure again by themselves.
+    A.onResize(measure);
+
+    // The blinking HUD dot, the comet's ripple and the "today" ring pause while
+    // the timeline is off screen (core sets data-paused, style.css pauses them)
+    A.whenVisible(root, function () {}, { pauseAnimations: true });
 
     // Coming back to the tab: catch up at once
     document.addEventListener("visibilitychange", function () {
@@ -341,21 +316,10 @@
     let filterToken = 0;
     let running = [];
 
-    // Browsers try to keep what you are looking at in place when content above it
-    // changes ("scroll anchoring"). That would fight our own scrolling, so it is
-    // switched off for a moment while milestones appear and disappear.
-    function pauseScrollAnchoring() {
-        const html = document.documentElement;
-        html.style.overflowAnchor = "none";
-        requestAnimationFrame(function () {
-            requestAnimationFrame(function () { html.style.overflowAnchor = ""; });
-        });
-    }
-
     // Tells screen readers how many milestones are shown now
     function announce() {
         const count = EVENTS.filter(function (event) { return currentEra === "all" || event.era === currentEra; }).length;
-        live.textContent = t("timeline.showing." + pluralForm(count), { n: count });
+        A.announce(A.plural("timeline.showing", count), { region: live });
     }
 
     function showsEra(section, era) {
@@ -380,7 +344,7 @@
 
         function swap() {
             if (token !== filterToken) return;
-            pauseScrollAnchoring();
+            A.dom.pauseScrollAnchoring();
             leaving.forEach(function (section) { section.hidden = true; });
             entering.forEach(function (section) { section.hidden = false; });
 
@@ -389,25 +353,25 @@
             const barStyle = getComputedStyle(bar);
             const space = barStyle.position === "sticky"
                 ? parseFloat(barStyle.top) + bar.offsetHeight + 24
-                : (parseFloat(A.cssVar("--nav-height")) || 76) + 24;
+                : A.layout.navHeight() + 24;
             const wrapTop = wrap.getBoundingClientRect().top;
             if (wrapTop < space) {
                 window.scrollTo({
                     top: window.scrollY + wrapTop - space,
-                    behavior: motionOK() ? "smooth" : "auto"
+                    behavior: A.motion.ok() ? "smooth" : "auto"
                 });
             }
 
             measure();
 
             // The new milestones rise in one after another
-            if (motionOK()) {
+            if (A.motion.ok()) {
                 let index = 0;
                 entering.forEach(function (section) {
                     Array.prototype.forEach.call(section.querySelectorAll(".tl-era-head, .tl-item"), function (element) {
                         running.push(element.animate(
                             [{ opacity: 0, transform: "translateY(28px)" }, { opacity: 1, transform: "none" }],
-                            { duration: 520, delay: Math.min(index++, 8) * 70, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" }
+                            { duration: 520, delay: Math.min(index++, 8) * 70, easing: A.motion.ease, fill: "backwards" }
                         ));
                     });
                 });
@@ -416,7 +380,7 @@
             announce();
         }
 
-        if (motionOK() && leaving.length) {
+        if (A.motion.ok() && leaving.length) {
             // Old milestones fade away first, then the new ones come in
             const fades = leaving.map(function (section) {
                 return section.animate(
@@ -457,7 +421,7 @@
         const barBottom = bar.getBoundingClientRect().bottom;
         const top = element.getBoundingClientRect().top;
         if (top < barBottom + 8) {
-            window.scrollBy({ top: top - barBottom - 16, behavior: motionOK() ? "smooth" : "auto" });
+            window.scrollBy({ top: top - barBottom - 16, behavior: A.motion.ok() ? "smooth" : "auto" });
         }
     }
 
@@ -477,14 +441,10 @@
     }
 
     // ---------- 8. Cards slide in from their own side on wide screens ----------
-    const wideQuery = window.matchMedia("(min-width: 900px)");
-
-    function updateSides() {
-        root.classList.toggle("is-wide", wideQuery.matches);
-    }
-
-    if (wideQuery.addEventListener) wideQuery.addEventListener("change", updateSides);
-    else if (wideQuery.addListener) wideQuery.addListener(updateSides);
+    // (the same 900px as the one-column layout in css/timeline.css)
+    A.onMedia("(min-width: 900px)", function (wide) {
+        root.classList.toggle("is-wide", wide);
+    });
 
     // Measuring waits for the next frame: by then every feature has built its
     // part of the page, so the browser lays the page out only once
@@ -503,19 +463,18 @@
     A.onLanguageChange(function () {
         updateTermButtons();
         // Quietly forget the last announcement (it was in the old language)
-        live.textContent = "";
+        A.announce("", { region: live, delay: 0 });
         hudText = "";
         measureSoon();
     });
 
-    // Calm mode (effects.js) switched on or off
-    document.addEventListener("aic:effects", function () {
+    // Calm mode or the device's "reduce motion" setting changed
+    A.motion.onChange(function () {
         jump = true;
         requestUpdate();
     });
 
     // ---------- 10. Start ----------
-    updateSides();
     measureSoon();
 
     // Web fonts change the height of texts a little: measure again once they are ready
