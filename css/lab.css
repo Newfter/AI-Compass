@@ -916,13 +916,33 @@
         min-height: 2630px;
     }
 
-    /* "All experiments" takes the row, previous / next stay at its end */
+    /* "All experiments" takes the row, previous / next stay at its end.
+       Its words stay on one line ("Все эксперименты" is long): a little less padding,
+       and on the smallest phones the end of the words gives way (…) */
     .lab-head-nav {
         width: 100%;
     }
 
     .lab-head-all {
         flex: 1;
+        min-width: 0;
+        gap: 6px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .lab-head-all span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* The smallest phones: the words of "All experiments" need the icon's room */
+@media (max-width: 340px) {
+    .lab-head-all svg {
+        display: none;
     }
 }
 
