@@ -468,10 +468,17 @@
 }
 
 /* While the files load: grey blocks in the shape of an experiment, with a light
-   that slides over them */
+   that slides over them. They fill the height kept for the experiment (section 1). */
+.lab-stage[data-loading] {
+    display: flex;
+    flex-direction: column;
+}
+
 .lab-skeleton {
     display: grid;
+    flex: 1;
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
     gap: 26px 28px;
 }
 
@@ -512,12 +519,17 @@
     height: 220px;
 }
 
+.lab-skel-wide {
+    grid-column: 1 / -1;
+    min-height: 120px;
+}
+
 .lab-loading {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-top: 18px;
+    margin: 0 0 18px;
     color: var(--text-label);
     font-size: 12px;
     letter-spacing: 1.4px;
@@ -748,6 +760,7 @@
 
     .lab-skeleton {
         grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1fr);
     }
 
     .lab-skel-board {

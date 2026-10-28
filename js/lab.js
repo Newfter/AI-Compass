@@ -348,12 +348,16 @@
     function showSkeleton(id) {
         stage.setAttribute("data-loading", id);
         stage.setAttribute("aria-busy", "true");
+        // The line comes first, so that it shows on a phone too; the blocks fill the height
+        // the experiment will take (lab.css)
         stage.innerHTML =
+            '<p class="lab-loading mono"><span class="lab-loading-dot" aria-hidden="true"></span><span data-i18n="lab.hub.loading"></span></p>' +
             '<div class="lab-skeleton" aria-hidden="true">' +
                 '<div class="lab-skel-main"><span class="lab-skel lab-skel-bar"></span><span class="lab-skel lab-skel-board"></span></div>' +
                 '<div class="lab-skel-side"><span class="lab-skel lab-skel-bar"></span><span class="lab-skel lab-skel-box"></span><span class="lab-skel lab-skel-box"></span></div>' +
-            '</div>' +
-            '<p class="lab-loading mono"><span class="lab-loading-dot" aria-hidden="true"></span><span data-i18n="lab.hub.loading"></span></p>';
+                '<span class="lab-skel lab-skel-wide"></span>' +
+                '<span class="lab-skel lab-skel-wide"></span>' +
+            '</div>';
         A.applyTranslations(stage);
     }
 
