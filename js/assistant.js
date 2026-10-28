@@ -88,16 +88,6 @@
         }
     }
 
-    // Calls a function from another feature without crashing if it's missing or broken
-    // TODO(core): core.js has the same thing inside (safeCall) but does not share it
-    function safely(callback, fallback) {
-        try {
-            return callback();
-        } catch (error) {
-            return fallback;
-        }
-    }
-
     // Short "14:05" time for message bubbles
     function clockTime(timestamp) {
         return A.format.date(timestamp, { hour: "2-digit", minute: "2-digit" });
@@ -126,7 +116,7 @@
 
     // ----- Lessons (AICompass.lessons, if the lessons are on the page) -----
     function lessonName(number) {
-        const title = A.lessons ? safely(function () { return A.lessons.title(number); }, "") : "";
+        const title = A.lessons ? A.util.attempt(function () { return A.lessons.title(number); }, "") : "";
         return title
             ? t("assistant.lessonName", { n: number, title: esc(title) })
             : t("assistant.lessonNameShort", { n: number });
@@ -161,18 +151,18 @@
 
     function glossaryFind(text) {
         if (!A.glossary || !text) return null;
-        return cleanTerm(safely(function () { return A.glossary.find(text); }, null));
+        return cleanTerm(A.util.attempt(function () { return A.glossary.find(text); }, null));
     }
 
     function glossaryRandom() {
         if (!A.glossary) return null;
-        return cleanTerm(safely(function () { return A.glossary.random(); }, null));
+        return cleanTerm(A.util.attempt(function () { return A.glossary.random(); }, null));
     }
 
     // A stored term in the current language (the glossary may know it by id)
     function glossaryRefresh(saved) {
         if (A.glossary) {
-            const fresh = cleanTerm(safely(function () { return A.glossary.term(saved.id); }, null));
+            const fresh = cleanTerm(A.util.attempt(function () { return A.glossary.term(saved.id); }, null));
             if (fresh) return fresh;
         }
         const again = glossaryFind(saved.term);
@@ -350,7 +340,7 @@
     // Turns a saved bot message into { html, actions } in the current language
     function renderReply(message) {
         const make = REPLIES[message.reply] || REPLIES.fallback;
-        const view = safely(function () { return make(message.data || {}); }, null) ||
+        const view = A.util.attempt(function () { return make(message.data || {}); }, null) ||
             { html: t("assistant.r.fallback1") };
         view.actions = view.actions || [];
 
@@ -1103,7 +1093,7 @@
     }
 
     function deliver(job) {
-        if (typeof job.pre === "function") safely(job.pre);
+        if (typeof job.pre === "function") A.util.attempt(job.pre);
         addBotMessage(job.reply, job.data, true);
 
         // "Define a word": help the person by starting the sentence for them,
@@ -1115,7 +1105,7 @@
             if (state.open && ui.panel.contains(document.activeElement)) {
                 ui.input.focus({ preventScroll: true });
                 const end = ui.input.value.length;
-                safely(function () { ui.input.setSelectionRange(end, end); });
+                A.util.attempt(function () { ui.input.setSelectionRange(end, end); });
             }
         }
         // "Start the quiz": a moment to read the answer, then the bot does it
@@ -1181,21 +1171,21 @@
             case "lesson": {
                 const n = Number(action.arg) || 1;
                 // When the reader closes, the focus comes back to the round button
-                if (A.lessons) safely(function () { A.lessons.open(n, ui.launcher); });
+                if (A.lessons) A.util.attempt(function () { A.lessons.open(n, ui.launcher); });
                 else A.navigate("lessons");
                 break;
             }
             case "quiz":
-                if (A.quiz) safely(function () { A.quiz.start(); });
+                if (A.quiz) A.util.attempt(function () { A.quiz.start(); });
                 else A.navigate("quiz");
                 break;
             case "lab":
-                if (A.lab) safely(function () { A.lab.open(action.arg === "predictor" ? "predictor" : "classifier"); });
+                if (A.lab) A.util.attempt(function () { A.lab.open(action.arg === "predictor" ? "predictor" : "classifier"); });
                 else A.navigate("lab");
                 break;
             case "glossary":
                 // { focus: true }: the keyboard focus moves to the term card too
-                if (A.glossary) safely(function () { A.glossary.show(action.arg, { focus: true }); });
+                if (A.glossary) A.util.attempt(function () { A.glossary.show(action.arg, { focus: true }); });
                 else A.navigate("glossary");
                 break;
             case "section":
@@ -1397,7 +1387,9 @@
         ui.backdrop.classList.remove("is-visible");
         ui.root.classList.remove("is-open");
         ui.launcher.setAttribute("aria-expanded", "false");
-        overlay.closed();        // before the focus goes back (see core.js)
+        // The round button is part of this window (its root), never inert under it,
+        // so it can take the focus back at once (see core.js)
+        overlay.closed();
 
         const wasInside = ui.panel.contains(document.activeElement);
         state.hideTimer = setTimeout(function () {
@@ -1438,7 +1430,11 @@
         drag.speed = 0;
         drag.distance = 0;
         ui.panel.classList.add("is-dragging");
-        safely(function () { ui.panel.setPointerCapture(event.pointerId); });
+        try {
+            ui.panel.setPointerCapture(event.pointerId);
+        } catch (error) {
+            // The browser can refuse (the finger already left): the drag still works
+        }
     });
 
     ui.panel.addEventListener("pointermove", function (event) {

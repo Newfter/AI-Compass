@@ -696,7 +696,9 @@
             } else {
                 save(cert.canvas.toDataURL("image/png"), false);
             }
-        } catch (error) {}
+        } catch (error) {
+            // A browser can refuse to turn the picture into a file: then there is no download
+        }
     }
 
     // The saved name: only a text, and never longer than the box allows (maxlength)
@@ -2006,7 +2008,9 @@
     function setHash(hash) {
         try {
             history.replaceState(history.state, "", hash || window.location.pathname + window.location.search);
-        } catch (error) {}
+        } catch (error) {
+            // Some browsers refuse this for a page opened from a file: the reader works without it
+        }
     }
 
     function scrollCardIntoView(n) {
@@ -2015,6 +2019,15 @@
         const box = card.getBoundingClientRect();
         const top = window.scrollY + box.top - Math.max(0, (window.innerHeight - box.height) / 2);
         window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
+    }
+
+    // While a lesson is open, pop-up messages sit just above the reader's bottom bar:
+    // .lsn-reading (css/lessons.css) sets --toast-bottom. The class goes on the toast
+    // stack itself, not on <body>: every element would inherit a variable set on
+    // <body>, so the whole page would be restyled on every open and close.
+    function setReading(on) {
+        const toasts = document.getElementById("toast-stack");
+        if (toasts) toasts.classList.toggle("lsn-reading", on);
     }
 
     // Can the keyboard focus go back to this element when the reader closes?
@@ -2040,7 +2053,7 @@
         const hash = window.location.hash;
         reader.previousHash = /^#lesson-\d+$/.test(hash) ? "" : hash;
 
-        document.body.classList.add("lsn-reading");
+        setReading(true);
         readerEl.hidden = false;
         readerEl.classList.remove("is-closing");
         A.dom.replay(readerEl, "is-open");   // the opening animation starts from the beginning
@@ -2058,8 +2071,11 @@
         stopLab(true);
         releaseSpy();
         readerEl.classList.remove("is-open");
-        document.body.classList.remove("lsn-reading");
-        overlay.closed();            // before the focus goes back to the page
+        setReading(false);
+        // Core gives the focus back as soon as the page can take it (see core.js)
+        const opener = reader.opener;
+        const lesson = reader.lesson;
+        overlay.closed(settings.restoreFocus === false ? null : function () { giveFocusBack(opener, lesson); });
         if (!settings.keepHash) setHash(reader.previousHash);
 
         const finish = function () {
@@ -2072,19 +2088,19 @@
             readerEl.classList.add("is-closing");
             reader.closeTimer = setTimeout(finish, READER_CLOSE_TIME);
         }
+    }
 
-        if (settings.restoreFocus !== false) {
-            // Back to the button that opened the reader. If there is none, go to the
-            // card of the lesson you were reading (scrolled into view, so the focus ring is visible).
-            if (canTakeFocus(reader.opener)) {
-                reader.opener.focus({ preventScroll: true });
-            } else {
-                const card = mount.querySelector("#lesson-card-" + reader.lesson + " [data-open]");
-                if (card) {
-                    scrollCardIntoView(reader.lesson);
-                    card.focus({ preventScroll: true });
-                }
-            }
+    // Back to the button that opened the reader. If there is none, go to the
+    // card of the lesson you were reading (scrolled into view, so the focus ring is visible).
+    function giveFocusBack(opener, lesson) {
+        if (canTakeFocus(opener)) {
+            opener.focus({ preventScroll: true });
+            return;
+        }
+        const card = mount.querySelector("#lesson-card-" + lesson + " [data-open]");
+        if (card) {
+            scrollCardIntoView(lesson);
+            card.focus({ preventScroll: true });
         }
     }
 
@@ -2138,8 +2154,7 @@
         // and never while typing or moving a slider
         const target = event.target;
         if (!readerEl.contains(target) && target !== document.body && target !== document.documentElement) return;
-        const tag = target.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
+        if (A.dom.isTyping(target)) return;
         event.preventDefault();
         goRelative(event.key === "ArrowLeft" ? -1 : 1);
     });

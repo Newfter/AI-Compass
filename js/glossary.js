@@ -128,35 +128,6 @@
         return A.lang === "ru" ? "en" : "ru";
     }
 
-    // Typed with the wrong keyboard layout? "ntcn" -> "тест", "ьщвуд" -> "model"
-    // TODO(core): js/palette.js has the same table; A.text.switchLayout(text) could serve both.
-    const LAYOUT_EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`";
-    const LAYOUT_RU = "йцукенгшщзхъфывапролджэячсмитьбюё";
-
-    function switchLayout(text) {
-        return String(text).split("").map(function (char) {
-            let index = LAYOUT_EN.indexOf(char);
-            if (index !== -1) return LAYOUT_RU.charAt(index);
-            index = LAYOUT_RU.indexOf(char);
-            return index !== -1 ? LAYOUT_EN.charAt(index) : char;
-        }).join("");
-    }
-
-    // Writing the same text or attribute again still makes the browser redo work,
-    // so while typing (a new search on every key) only what changed is written
-    function setText(element, value) {
-        value = String(value);
-        if (element.textContent !== value) element.textContent = value;
-    }
-
-    function setAttr(element, name, value) {
-        if (element.getAttribute(name) !== value) element.setAttribute(name, value);
-    }
-
-    function setHidden(element, hidden) {
-        if (element.hidden !== hidden) element.hidden = hidden;
-    }
-
     // ---------- 4. Finding a term inside any text ----------
     // Used by find() (the assistant and the palette ask "which term does this
     // text mention?") and by the search box when plain searching finds nothing.
@@ -572,7 +543,7 @@
 
         const typed = normalize(query);
         const tries = [typed];
-        const other = switchLayout(typed);
+        const other = A.switchLayout(typed);
         if (other !== typed) tries.push(other);
 
         for (let i = 0; i < tries.length; i++) {
@@ -750,8 +721,8 @@
         });
         ui.chips.forEach(function (chip) {
             const cat = chip.getAttribute("data-cat");
-            setAttr(chip, "aria-pressed", String(state.cat === cat));
-            setText(chip.querySelector(".gl-chip-count"), catCounts[cat]);
+            A.dom.setAttr(chip, "aria-pressed", String(state.cat === cat));
+            A.dom.setText(chip.querySelector(".gl-chip-count"), catCounts[cat]);
             chip.classList.toggle("is-zero", catCounts[cat] === 0);
         });
 
@@ -764,7 +735,7 @@
         });
         letterButtons.forEach(function (button) {
             const letter = button.getAttribute("data-letter");
-            setAttr(button, "aria-pressed", String(state.letter === letter));
+            A.dom.setAttr(button, "aria-pressed", String(state.letter === letter));
             const off = Boolean(letter) && !letterCounts[letter] && state.letter !== letter;
             if (button.disabled !== off) button.disabled = off;
         });
@@ -793,28 +764,28 @@
         TERMS.forEach(function (term) {
             const card = cards[term.id];
             const shown = visibleIds.has(term.id);
-            setHidden(card.el, !shown);
+            A.dom.setHidden(card.el, !shown);
             if (shown || settings.everyCard) markCard(card, words);
         });
         placeCards(visible.concat(sorted.filter(function (term) { return !visibleIds.has(term.id); })));
 
         // Counter, reset button, empty state and "show all"
-        setText(ui.count, A.plural("glossary.count", visible.length, { total: TERMS.length }));
+        A.dom.setText(ui.count, A.plural("glossary.count", visible.length, { total: TERMS.length }));
         ui.countBar.style.transform = "scaleX(" + (visible.length / TERMS.length).toFixed(3) + ")";
-        setHidden(ui.reset, !active);
-        setHidden(ui.clear, !state.query);
+        A.dom.setHidden(ui.reset, !active);
+        A.dom.setHidden(ui.clear, !state.query);
         const chosen = (state.cat !== "all" ? 1 : 0) + (state.letter ? 1 : 0);
-        setHidden(ui.filterBadge, chosen === 0);
-        setText(ui.filterNum, chosen);
+        A.dom.setHidden(ui.filterBadge, chosen === 0);
+        A.dom.setText(ui.filterNum, chosen);
 
         const nothing = matches.length === 0;
-        setHidden(ui.empty, !nothing);
-        setHidden(ui.grid, nothing);
+        A.dom.setHidden(ui.empty, !nothing);
+        A.dom.setHidden(ui.grid, nothing);
         if (nothing) renderEmpty();
 
-        setHidden(ui.foot, active || TERMS.length <= PREVIEW_COUNT);
-        setAttr(ui.moreBtn, "aria-expanded", String(state.showAll));
-        setText(ui.moreText, state.showAll ? t("glossary.showLess") : A.plural("glossary.showAll", TERMS.length));
+        A.dom.setHidden(ui.foot, active || TERMS.length <= PREVIEW_COUNT);
+        A.dom.setAttr(ui.moreBtn, "aria-expanded", String(state.showAll));
+        A.dom.setText(ui.moreText, state.showAll ? t("glossary.showLess") : A.plural("glossary.showAll", TERMS.length));
 
         // Screen readers hear the new count a moment after typing stops
         if (settings.announce) {
@@ -886,10 +857,10 @@
     // "Nothing found" and the "did you mean?" buttons
     function renderEmpty() {
         const query = queryActive() ? state.query.trim() : "";
-        setText(ui.emptyTitle, query ? t("glossary.emptyQuery", { query: query }) : t("glossary.emptyFilters"));
+        A.dom.setText(ui.emptyTitle, query ? t("glossary.emptyQuery", { query: query }) : t("glossary.emptyFilters"));
 
         const ideas = query ? suggestions(query) : [];
-        setHidden(ui.suggest, ideas.length === 0);
+        A.dom.setHidden(ui.suggest, ideas.length === 0);
         // The same suggestions as before (after a language change, say) keep their
         // buttons, so a focused one keeps the focus: only the names change
         const ids = ideas.map(function (term) { return term.id; }).join(",");
@@ -902,7 +873,7 @@
             }).join("");
         }
         ui.suggestList.querySelectorAll(".gl-suggestion-name").forEach(function (name, i) {
-            setText(name, termName(ideas[i]));
+            A.dom.setText(name, termName(ideas[i]));
         });
     }
 

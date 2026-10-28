@@ -713,8 +713,7 @@
 
     // The famous "Konami code": ↑ ↑ ↓ ↓ ← → ← → B A
     document.addEventListener("keydown", (event) => {
-        const target = event.target;
-        if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+        if (A.dom.isTyping(event.target)) return;
 
         secretKeys.push(event.code);
         if (secretKeys.length > 10) secretKeys.shift();

@@ -540,10 +540,9 @@
         return prefix + A.format.number(value, { digits: counter.decimals, grouping: "min2" }) + suffix;
     }
 
-    // (Only a real change is written: the page then has nothing new to lay out.)
+    // (A.dom.setText writes only a real change: the page then has nothing new to lay out.)
     function writeCounter(element, counter, value) {
-        const text = counterText(element, counter, value);
-        if (element.textContent !== text) element.textContent = text;
+        A.dom.setText(element, counterText(element, counter, value));
     }
 
     // Stops a number that waits to count or is counting. counter.shown keeps
@@ -1555,8 +1554,7 @@
             rail.scale = scale;
             rail.fill.style.transform = scale;
         }
-        const percent = Math.round(info.progress * 100) + "%";
-        if (rail.percent.textContent !== percent) rail.percent.textContent = percent;
+        A.dom.setText(rail.percent, Math.round(info.progress * 100) + "%");
 
         const active = Math.max(0, rail.ids.indexOf(info.section));
         if (active === rail.active) return;

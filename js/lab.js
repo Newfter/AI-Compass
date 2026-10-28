@@ -1666,7 +1666,9 @@
         nn.stroke = { id: event.pointerId, last: spot, label: label, painted: 0 };
         try {
             board.el.setPointerCapture(event.pointerId);
-        } catch (error) {}
+        } catch (error) {
+            // The browser can refuse (the pointer is already gone): drawing still works
+        }
         nn.dirty.board = true;
         schedule();
     }
@@ -2324,8 +2326,8 @@
         }
         const word = chip.firstElementChild;
         const small = chip.lastElementChild;
-        if (word.textContent !== token.word) word.textContent = token.word;
-        if (small.textContent !== value) small.textContent = value;
+        A.dom.setText(word, token.word);      // only a real change is written
+        A.dom.setText(small, value);
         chip.classList.toggle("is-typing", token.typing);
         chip.classList.toggle("is-new", !token.typing && token.p === 0);
         if (chip.style.getPropertyValue("--p") !== glow) chip.style.setProperty("--p", glow);

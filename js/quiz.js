@@ -117,10 +117,6 @@
         return rank;
     }
 
-    function isTypingField(element) {
-        return Boolean(element && element.closest && (element.isContentEditable || element.closest("input, textarea, select")));
-    }
-
     // Numbers that count up on screen (A.countUp in core.js): the score and the
     // result in %. A.countUp writes the end value at once when animations are off,
     // and finishes by itself when calm mode is switched on meanwhile.
@@ -1244,7 +1240,7 @@
     document.addEventListener("keydown", (event) => {
         if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
         if (state.screen !== "question" || busy) return;
-        if (isTypingField(event.target) || A.overlays.hasModal()) return;
+        if (A.dom.isTyping(event.target) || A.overlays.hasModal()) return;
 
         // Only when the quiz is on screen (or has the focus)
         const focusInside = card.contains(document.activeElement);
