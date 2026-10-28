@@ -54,7 +54,7 @@
        A.onPixelRatioChange(callback)   A.layout.px / navHeight
     8  A.announce(text, options)
     9  A.overlays.register(id, options) -> { opened(), closed(focusBack), close(reason) }
-       A.overlays.closeAll / isOpen / top / hasModal / onChange / update
+       A.overlays.closeAll / isOpen / top / hasModal / contains / onChange / update
        (while a window locks the page, <body> gets --scrollbar-gap for the fixed bars)
    10  A.sections   A.navigate(id, options)   A.onScroll(callback)   A.onLayout(callback)
        A.layoutChanged()   A.onSection(callback)   A.whenNeeded(element, build, options)
@@ -1454,6 +1454,10 @@
         },
         // Is a modal window open (one that shuts out the page)?
         hasModal: function () { return overlayStack.some(isModal); },
+        // Is this element (like the target of a key press) inside an open window?
+        contains: function (element) {
+            return overlayStack.some(function (record) { return insideOverlay(record, element); });
+        },
         onChange: function (callback) { return on("overlay", callback); }
     };
 

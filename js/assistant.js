@@ -909,7 +909,8 @@
         hideTimer: 0,
         tipTimer: 0,
         typingRow: null,
-        prefill: ""       // the "Define " text the bot put in the message box
+        prefill: "",      // the "Define " text the bot put in the message box
+        focusBefore: null // where the focus was when the chat opened
     };
 
     function fillBotRow(row, message) {
@@ -1363,6 +1364,7 @@
             return;
         }
         state.open = true;
+        state.focusBefore = document.activeElement;
 
         dismissTip(true);
         if (!chat.messages.length) addBotMessage("welcome", {}, false);
@@ -1383,15 +1385,26 @@
     function closePanel(restoreFocus) {
         if (!state.open) return;
         state.open = false;
+        const wasInside = ui.panel.contains(document.activeElement);
+        const focusBefore = state.focusBefore;
+        state.focusBefore = null;
         ui.panel.classList.remove("is-visible");
         ui.backdrop.classList.remove("is-visible");
         ui.root.classList.remove("is-open");
         ui.launcher.setAttribute("aria-expanded", "false");
-        // The round button is part of this window (its root), never inert under it,
-        // so it can take the focus back at once (see core.js)
-        overlay.closed();
+        // The round button is part of this window (its root), so it takes the
+        // focus back at once (at the end). But when a window that shuts out the
+        // page stays open under the chat (the lesson reader, opened before the
+        // chat), the round button becomes unreachable with the rest of the page.
+        // Then the focus goes back to where it was in that window: core calls
+        // this function once the page is updated (see overlays in core.js).
+        overlay.closed(function () {
+            if (!ui.launcher.closest("[inert]")) return;
+            if (focusBefore && focusBefore.isConnected && !focusBefore.closest("[inert]")) {
+                focusBefore.focus({ preventScroll: true });
+            }
+        });
 
-        const wasInside = ui.panel.contains(document.activeElement);
         state.hideTimer = setTimeout(function () {
             if (state.open) return;
             ui.panel.hidden = true;
@@ -1399,8 +1412,10 @@
             fitToViewport();
         }, A.motion.ok() ? CLOSE_MS : 0);
 
-        // Focus goes back to the round button
-        if (restoreFocus !== false || wasInside) ui.launcher.focus({ preventScroll: true });
+        // Focus goes back to the round button (unless a window stays open under the chat)
+        if ((restoreFocus !== false || wasInside) && !A.overlays.hasModal()) {
+            ui.launcher.focus({ preventScroll: true });
+        }
     }
 
     function togglePanel() {

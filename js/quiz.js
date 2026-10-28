@@ -1242,6 +1242,8 @@
         if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
         if (state.screen !== "question" || busy) return;
         if (A.dom.isTyping(event.target) || A.overlays.hasModal()) return;
+        // A key pressed in a window next to the page (Compass Bot on a computer) is for that window
+        if (A.overlays.contains(event.target)) return;
 
         // Only when the quiz is on screen (or has the focus)
         const focusInside = card.contains(document.activeElement);
