@@ -1030,16 +1030,20 @@
             if (from >= count) return { text: "", from: count, to: count, count: count };
             to = options.to !== undefined ? A.util.clamp(Math.round(Number(options.to)) || 0, from + 1, count) : grow(from);
         } else {
-            // the window of sentences that holds the most (and rarest) query words;
-            // on a tie the earlier one, so a passage rather starts at the beginning.
-            // A term whose name shows the query words starts with its definition.
+            // A term whose name shows the query words starts with its definition
+            // (even when its example repeats more of them: "what is a chatbot?").
+            // Otherwise: the window of sentences that holds the most (and rarest)
+            // query words; on a tie the earlier one, so a passage rather starts
+            // at the beginning.
             const marks = options.query ? rank(index, String(options.query), { prefix: false }).marks || new Set() : new Set();
-            const lead = doc.named ? valueOf(index, doc.title, marks) : 0;
-            let bestValue = -1;
-            for (let start = 0; start < count; start++) {
-                const end = grow(start);
-                const value = valueOf(index, sentences.slice(start, end).join(" "), marks) + (start === 0 ? lead : 0);
-                if (value > bestValue) { bestValue = value; from = start; to = end; }
+            to = grow(0);
+            if (!doc.named || valueOf(index, doc.title, marks) === 0) {
+                let bestValue = -1;
+                for (let start = 0; start < count; start++) {
+                    const end = grow(start);
+                    const value = valueOf(index, sentences.slice(start, end).join(" "), marks);
+                    if (value > bestValue) { bestValue = value; from = start; to = end; }
+                }
             }
         }
         return { text: sentences.slice(from, to).join(" "), from: from, to: to, count: count };
