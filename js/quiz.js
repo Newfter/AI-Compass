@@ -1,13 +1,36 @@
 /* =========================================================
    AI COMPASS — THE AI CHALLENGE (QUIZ)
-   Twelve questions about AI inside one glass card with three screens:
-   1. START    rules, best score, "timed mode" switch
-   2. QUESTION progress, score, streak, timer ring, answers, feedback
-   3. RESULTS  score ring, rank, new best + confetti, answer review
-   Keyboard: 1-4 answer, Enter goes to the next question.
-   Other files can call window.AICompass.startQuiz().
+   A game of questions about AI, in one glass card with three screens:
+   START     the rules, the best score and the "timed mode" switch
+   QUESTION  progress, score, streak, timer ring, the answers, and an
+             explanation after each answer
+   RESULTS   score ring, rank, a new best score (with confetti) and a
+             review of every answer
+   Keyboard: the number keys answer, Enter goes to the next question.
    The language can change at any moment: the quiz keeps its place
    and simply re-writes its texts in the other language.
+   Sections of this file:
+    1. Settings
+    2. The questions and ranks
+    3. Small helpers
+    4. Best scores (saved in the browser)
+    5. The state of the quiz
+    6. The card and its screens
+    7. START screen
+    8. QUESTION screen
+    9. The countdown (timed mode)
+   10. Answering
+   11. Starting and finishing a game
+   12. RESULTS screen
+   13. Confetti (only for a new best score)
+   14. "Copy my result"
+   15. Keyboard: number keys and Enter
+   16. Pop-up windows, calm mode and the language
+   17. Building the quiz (only when it is needed)
+   18. Ctrl+K commands and the public API
+   Other features use AICompass.quiz (see the last section).
+   Every text (English and Russian) is in js/content/quiz.js,
+   and so are the questions and the ranks.
    ========================================================= */
 
 (function () {
@@ -15,113 +38,70 @@
 
     const A = window.AICompass;
     const mount = document.querySelector('[data-feature="quiz"]');
-    if (!A || !mount) return;
+    const data = A && A.content.get("quiz");      // the questions and ranks (js/content/quiz.js)
+    if (!A || !mount || !data) return;
 
     const t = A.t;
+    // A translated piece of text inside HTML. Its data-i18n attribute lets core.js
+    // re-translate it by itself when the language changes.
+    const text = A.i18nHTML;
 
     // ---------- 1. Settings ----------
-    const TIME_LIMIT = 20;          // seconds per question in timed mode
+    // Points
     const BASE_POINTS = 100;        // for every correct answer
-    const SPEED_BONUS_MAX = 50;     // timed mode: a fast answer earns up to +50
+    const STREAK_MIN = 2;           // right answers in a row that make a streak: it shows, and earns a bonus
     const STREAK_STEP = 10;         // 2 in a row: +10, 3 in a row: +20, ...
     const STREAK_BONUS_MAX = 50;    // ...but never more than +50
-    const PRAISE_COUNT = 4;         // how many different "Correct!" messages we have
-    const BOTTOM_SPACE = 104;       // px kept free at the bottom of the screen (assistant button)
-    const TOP_SPACE = 84;           // px kept free at the top of the screen (navigation bar)
-    const TIMER_LENGTH = 2 * Math.PI * 27;   // length of the timer ring (radius 27)
-    const RESULT_LENGTH = 2 * Math.PI * 66;  // length of the results ring (radius 66)
+    const STREAK_HOT = 4;           // from 4 in a row the flame burns brighter
 
-    // ---------- 2. The questions ----------
-    // The texts live in the translations below ("quiz.q1.text", "quiz.q1.o1", ...).
-    // In the translations the FIRST option is always the right one,
-    // so "correct" is 0 for every multiple-choice question. Don't worry:
-    // the options are shuffled every game.
-    // True/false questions: correct 0 means "True", 1 means "False".
-    // learn: the lesson (1-6) that explains the topic, or "timeline".
-    const QUESTIONS = [
-        { key: "q1", type: "choice", topic: "basics", correct: 0, learn: 1 },
-        { key: "q2", type: "choice", topic: "ml", correct: 0, learn: 2 },
-        { key: "q3", type: "truefalse", topic: "data", correct: 1, learn: 2 },
-        { key: "q4", type: "truefalse", topic: "nn", correct: 1, learn: 3 },
-        { key: "q5", type: "choice", topic: "genai", correct: 0, learn: 4 },
-        { key: "q6", type: "truefalse", topic: "hallucination", correct: 0, learn: 4 },
-        { key: "q7", type: "choice", topic: "bias", correct: 0, learn: 6 },
-        { key: "q8", type: "choice", topic: "privacy", correct: 0, learn: 6 },
-        { key: "q9", type: "choice", topic: "everyday", correct: 0, learn: 5 },
-        { key: "q10", type: "choice", topic: "history", correct: 0, learn: "timeline" },
-        { key: "q11", type: "truefalse", topic: "history", correct: 0, learn: "timeline" },
-        { key: "q12", type: "choice", topic: "responsible", correct: 0, learn: 6 }
-    ];
+    // Timed mode
+    const TIME_LIMIT = 20;          // seconds per question
+    const SPEED_BONUS_MAX = 50;     // a fast answer earns up to +50
+    const WARNING_SECONDS = 10;     // the timer turns yellow with 10 seconds left...
+    const DANGER_SECONDS = 5;       // ...and red with 5 (screen readers hear it then, once)
+    const MAX_FRAME_MS = 100;       // a long pause between two frames counts as 100 ms at most
 
-    // Ranks by the number of correct answers (out of 12)
-    const RANKS = [
-        { id: "rookie", min: 0, emoji: "🌱" },
-        { id: "explorer", min: 5, emoji: "🧭" },
-        { id: "expert", min: 8, emoji: "🚀" },
-        { id: "master", min: 11, emoji: "🧠" }
-    ];
+    // The questions
+    const CHOICE_OPTIONS = 4;       // answers of a multiple-choice question ("o1" … "o4" in the texts)
+    const PRAISE_COUNT = 4;         // how many different "Correct!" messages there are
+    const SECONDS_PER_QUESTION = 25;   // about how long one question takes (to read, answer and learn)
 
-    // Every text (English and Russian) is in js/content/quiz.js
+    // Timings, in milliseconds
+    const LEAVE_MS = 220;           // the old screen fades out (as long as "qz-leave" in quiz.css)...
+    const RESIZE_MS = 650;          // ...then the card changes its height while the new screen slides in
+    const SCORE_COUNT_MS = 700;     // the score counts up to its new value
+    const PERCENT_COUNT_MS = 1400;  // the result in % counts up while the ring fills
+    const QUIT_CONFIRM_MS = 4000;   // after a first press, "Quit" waits this long for the second one
+    const COPIED_MS = 2200;         // the copy button says "Copied" for this long
+    const CONFETTI_DELAY = 950;     // after the results appear (the ring is almost full then)
+    const CONFETTI_MS = 3000;       // how long the confetti of a new best score falls
+    const START_DELAY = 80;         // quiz.start() waits for the command palette to close first
 
-    // ---------- 4. Small helpers ----------
+    // Sizes and places
+    const SCROLL_GAP = 8;           // px kept free below the menu bar and above the assistant's button
+    const LAUNCHER_ROOM = 96;       // px for the assistant's button, if the CSS has no --launcher-room
+    const REVEAL_LINE = 0.8;        // a new screen scrolls the card's top into view if it is above the window or below 80% of it
+    const ON_SCREEN_MARGIN = "-25% 0px";   // "on screen" = the quiz reaches into the middle half of the window
+    const TIMER_RADIUS = 27;        // the countdown ring (an SVG circle in a 64 × 64 picture)
+    const RESULT_RADIUS = 66;       // the score ring of the results (in a 160 × 160 picture)
+    const TIMER_LENGTH = 2 * Math.PI * TIMER_RADIUS;     // the length of a ring is its circumference
+    const RESULT_LENGTH = 2 * Math.PI * RESULT_RADIUS;
 
-    // Picks the right plural form. English has two (1 point / 2 points),
-    // Russian has three (1 очко / 2 очка / 5 очков).
-    function pluralForm(n) {
-        if (A.lang !== "ru") return n === 1 ? "one" : "many";
-        const lastDigit = n % 10;
-        const lastTwo = n % 100;
-        if (lastDigit === 1 && lastTwo !== 11) return "one";
-        if (lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14)) return "few";
-        return "many";
-    }
+    // ---------- 2. The questions and ranks ----------
+    // They live in js/content/quiz.js, next to every text (English and Russian).
+    const QUESTIONS = data.questions;
+    const RANKS = data.ranks;           // by the number of correct answers
+    const PLAY_MINUTES = Math.max(1, Math.round(QUESTIONS.length * SECONDS_PER_QUESTION / 60));
 
-    function plural(key, n, values) {
-        return t(key + "." + pluralForm(n), Object.assign({ n: formatNumber(n) }, values || {}));
-    }
+    // ---------- 3. Small helpers ----------
+    // (Plurals, number formats, shuffling, motion and screen-reader messages
+    // come from the shared toolkit in core.js.)
 
-    // 1280 -> "1,280" in English and "1 280" in Russian
-    function formatNumber(n) {
-        return Number(n).toLocaleString(A.lang === "ru" ? "ru-RU" : "en-US");
-    }
-
-    // Returns a shuffled copy of a list (the Fisher–Yates shuffle)
-    function shuffle(list) {
-        const copy = list.slice();
-        for (let i = copy.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            const temp = copy[i];
-            copy[i] = copy[j];
-            copy[j] = temp;
-        }
-        return copy;
-    }
-
-    // Animations are skipped when the device asks for less motion
-    // or when "calm mode" (from effects.js) is on
-    function motionOK() {
-        return !A.reducedMotion && !document.documentElement.classList.contains("fx-calm");
-    }
-
-    // A translated piece of text. The data-i18n attribute lets core.js
-    // re-translate it by itself when the language changes.
-    function text(key, className) {
-        return '<span' + (className ? ' class="' + className + '"' : "") + ' data-i18n="' + key + '">' + t(key) + "</span>";
-    }
-
-    // Turns an HTML string into an element
-    function createElement(html) {
-        const box = document.createElement("div");
-        box.innerHTML = html.trim();
-        return box.firstElementChild;
-    }
-
-    // Plays a CSS animation again from the start
-    function replay(element, className) {
-        if (!element) return;
-        element.classList.remove(className);
-        void element.offsetWidth;
-        element.classList.add(className);
+    // "Twelve questions": the texts can spell out the exact number the quiz has
+    // ("quiz.questionCount.12"); any other number uses the plural forms ("13 questions")
+    function questionCount() {
+        const exactKey = "quiz.questionCount." + QUESTIONS.length;
+        return A.has(exactKey) ? t(exactKey) : A.plural("quiz.questionCount", QUESTIONS.length);
     }
 
     function optionKey(question, original) {
@@ -137,25 +117,58 @@
         return rank;
     }
 
-    function lessonTitle(number) {
-        return A.lessons ? A.lessons.title(number) : "";
-    }
-
-    // Is a pop-up window (lesson reader, command palette...) covering the page?
-    function dialogOpen() {
-        const dialogs = document.querySelectorAll('[aria-modal="true"], dialog[open]');
-        for (let i = 0; i < dialogs.length; i++) {
-            const dialog = dialogs[i];
-            if (mount.contains(dialog)) continue;
-            if (dialog.getClientRects().length > 0 && getComputedStyle(dialog).visibility !== "hidden") return true;
-        }
-        return false;
-    }
-
     function isTypingField(element) {
         return Boolean(element && element.closest && (element.isContentEditable || element.closest("input, textarea, select")));
     }
 
+    // Numbers that count up on screen (the score, the result in %)
+    const counters = {};        // the ones counting right now, by name
+
+    // Counts the number in "element" from "from" up to "to" in "duration" ms:
+    // fast at first, slower at the end. done() runs when it has arrived.
+    // TODO(core): effects.js and lessons.js count numbers up too; a shared
+    // A.countUp(element, from, to, duration) would replace the three copies.
+    function countUp(name, element, from, to, duration, done) {
+        stopCounter(name);
+        const start = performance.now();
+        const write = (value) => {
+            element.textContent = A.format.number(Math.round(value));
+        };
+        const arrive = () => {
+            delete counters[name];
+            if (done) done();
+        };
+        const counter = {
+            frame: 0,
+            // Jumps straight to the end (when animations are switched off meanwhile)
+            finish: () => {
+                cancelAnimationFrame(counter.frame);
+                write(to);
+                arrive();
+            }
+        };
+        const step = (now) => {
+            const progress = Math.min(1, (now - start) / duration);
+            write(A.util.lerp(from, to, 1 - Math.pow(1 - progress, 3)));
+            if (progress < 1 && element.isConnected) counter.frame = requestAnimationFrame(step);
+            else arrive();
+        };
+        counters[name] = counter;
+        counter.frame = requestAnimationFrame(step);
+    }
+
+    function stopCounter(name) {
+        if (!counters[name]) return;
+        cancelAnimationFrame(counters[name].frame);
+        delete counters[name];
+    }
+
+    // Stops the numbers that are counting up (score, percentage)
+    function stopCounters() {
+        Object.keys(counters).forEach(stopCounter);
+    }
+
+    // ---------- 4. Best scores (saved in the browser) ----------
     // Each mode has its own best score, because the timed mode can give more points
     // (speed bonus). The points are saved as a number, the details of that game next to it:
     //   no timer: "quiz.best" + "quiz.bestRun"     timed: "quiz.bestTimed" + "quiz.bestTimedRun"
@@ -183,15 +196,6 @@
         A.storage.set(keys.details, details);
     }
 
-    // Older versions kept one best score for both modes.
-    // If that one came from a timed game, move it to the timed place.
-    const oldRun = A.storage.get("quiz.bestRun", null);
-    if (oldRun && oldRun.timed === true && readBest(true) === null && readBest(false) !== null) {
-        saveBest(true, Object.assign({}, oldRun, { points: readBest(false).points }));
-        A.storage.remove("quiz.best");
-        A.storage.remove("quiz.bestRun");
-    }
-
     // ---------- 5. The state of the quiz ----------
     const state = {
         screen: "start",              // "start", "question" or "results"
@@ -208,45 +212,22 @@
         reviewFilter: "all"           // "all" or "mistakes"
     };
 
-    // ---------- 6. The card that holds every screen ----------
-    mount.innerHTML =
-        '<div class="qz-card card" data-reveal>' +
-            '<span class="qz-corners" aria-hidden="true"></span>' +
-            '<div class="qz-stage"></div>' +
-            '<p class="sr-only qz-live" aria-live="polite" aria-atomic="true"></p>' +
-        "</div>";
-
-    const card = mount.querySelector(".qz-card");
-    const stage = mount.querySelector(".qz-stage");
-    const live = mount.querySelector(".qz-live");
+    // ---------- 6. The card and its screens ----------
+    // The quiz is several screens down the page, so its card is built only when
+    // it is needed (see section 17). Until then these three are null.
+    let card = null;            // the glass card
+    let stage = null;           // the part of the card where the screens take turns
+    let live = null;            // the quiz's own line for screen-reader messages
 
     let ui = {};                // shortcuts to the elements of the current screen
     let paintScreen = null;     // re-writes the texts of the current screen
     let busy = false;           // true while one screen fades into the next
     let swapTimer = 0;
     let resizeTimer = 0;
-    let announceTimer = 0;
-    let onScreen = false;       // is the quiz card visible?
-
-    // Tell screen-reader users what just happened
-    function announce(message) {
-        clearTimeout(announceTimer);
-        live.textContent = "";
-        announceTimer = setTimeout(() => {
-            live.textContent = message;
-        }, 80);
-    }
+    let onScreen = false;       // can you see the quiz? (see section 17)
 
     function paint() {
         if (paintScreen) paintScreen();
-    }
-
-    // Stops the numbers that are counting up (score, percentage)
-    function stopCounters() {
-        if (scoreFrame) cancelAnimationFrame(scoreFrame);
-        if (percentFrame) cancelAnimationFrame(percentFrame);
-        scoreFrame = 0;
-        percentFrame = 0;
     }
 
     // Swaps the current screen for a new one: the old one fades out,
@@ -256,7 +237,7 @@
         const oldScreen = stage.firstElementChild;
         const active = document.activeElement;
         const moveFocus = settings.focus && (settings.forceFocus || card.contains(active) || active === document.body);
-        const animate = Boolean(oldScreen) && motionOK() && onScreen;
+        const animate = Boolean(oldScreen) && A.motion.ok() && onScreen;
 
         clearTimeout(swapTimer);
         clearTimeout(resizeTimer);
@@ -264,8 +245,9 @@
 
         const swap = () => {
             // Height on screen now (maybe in the middle of an earlier change),
-            // then free the height again so the new screen can be measured
-            const fromHeight = stage.getBoundingClientRect().height;
+            // then free the height again so the new screen can be measured.
+            // (Measuring makes the browser lay out the page, so only when it is needed.)
+            const fromHeight = animate ? stage.getBoundingClientRect().height : 0;
             stage.classList.remove("is-resizing");
             stage.style.height = "";
             stopCounters();
@@ -286,7 +268,7 @@
                     stage.classList.remove("is-resizing");
                     stage.style.height = "";
                     screen.classList.remove("qz-enter");
-                }, 650);
+                }, RESIZE_MS);
             }
 
             busy = false;
@@ -294,8 +276,8 @@
             // Bring the top of the card back into view (e.g. after "Next" on a phone)
             if (settings.reveal) {
                 const box = card.getBoundingClientRect();
-                if (box.top < 0 || box.top > window.innerHeight * 0.8) {
-                    card.scrollIntoView({ block: "start", behavior: motionOK() ? "smooth" : "auto" });
+                if (box.top < 0 || box.top > window.innerHeight * REVEAL_LINE) {
+                    card.scrollIntoView({ block: "start", behavior: A.motion.ok() ? "smooth" : "auto" });
                 }
             }
 
@@ -308,7 +290,10 @@
 
         if (animate) {
             oldScreen.classList.add("qz-leave");
-            swapTimer = setTimeout(swap, 220);
+            // The old screen only fades out now. It is not re-painted any more:
+            // its data may be gone already (like the results after "Try again").
+            paintScreen = null;
+            swapTimer = setTimeout(swap, LEAVE_MS);
         } else {
             swap();
         }
@@ -317,7 +302,8 @@
     // ---------- 7. START screen ----------
     function buildStart() {
         // Rule 3 has two versions: keyboard shortcuts, or "tap" for touch screens.
-        // CSS shows the one that fits the device.
+        // CSS shows the one that fits the device. paintStart() writes the texts
+        // of the rules, because some of them contain numbers.
         const rules = [
             ["🧩", "quiz.start.rule1"],
             ["🔥", "quiz.start.rule2"],
@@ -326,16 +312,16 @@
         ].map((rule, index) => {
             let content =
                 '<span class="qz-rule-icon' + (rule[2] ? " qz-for-keys" : "") + '" aria-hidden="true">' + rule[0] + "</span>" +
-                text(rule[1], "qz-rule-text" + (rule[2] ? " qz-for-keys" : ""));
+                '<span class="qz-rule-text' + (rule[2] ? " qz-for-keys" : "") + '" data-key="' + rule[1] + '"></span>';
             if (rule[2]) {
                 content +=
                     '<span class="qz-rule-icon qz-for-touch" aria-hidden="true">' + rule[2] + "</span>" +
-                    text(rule[3], "qz-rule-text qz-for-touch");
+                    '<span class="qz-rule-text qz-for-touch" data-key="' + rule[3] + '"></span>';
             }
             return '<li class="qz-rule" style="--i:' + index + '">' + content + "</li>";
         }).join("");
 
-        const screen = createElement(
+        const screen = A.dom.fromHTML(
             '<div class="qz-screen qz-start">' +
                 '<div class="qz-start-head">' +
                     '<div class="qz-orb" aria-hidden="true">' +
@@ -348,16 +334,16 @@
                     '<div class="qz-start-intro">' +
                         '<p class="qz-kicker mono">' + text("quiz.start.kicker") + "</p>" +
                         '<h3 class="qz-start-title" tabindex="-1">' + text("quiz.start.title") + "</h3>" +
-                        '<p class="qz-start-text">' + text("quiz.start.text") + "</p>" +
+                        '<p class="qz-start-text" data-ref="startText"></p>' +
                     "</div>" +
                 "</div>" +
 
                 '<ul class="qz-tiles qz-start-tiles">' +
-                    '<li class="qz-tile"><strong class="qz-tile-value">' + QUESTIONS.length + '</strong><span class="qz-tile-label" data-ref="questionsLabel"></span></li>' +
-                    '<li class="qz-tile"><strong class="qz-tile-value">~5</strong><span class="qz-tile-label" data-ref="minutesLabel"></span></li>' +
+                    '<li class="qz-tile"><strong class="qz-tile-value gradient-text">' + QUESTIONS.length + '</strong><span class="qz-tile-label" data-ref="questionsLabel"></span></li>' +
+                    '<li class="qz-tile"><strong class="qz-tile-value gradient-text">~' + PLAY_MINUTES + '</strong><span class="qz-tile-label" data-ref="minutesLabel"></span></li>' +
                     '<li class="qz-tile qz-tile-best">' +
                         '<span class="qz-tile-icon" aria-hidden="true" data-ref="bestIcon"></span>' +
-                        '<strong class="qz-tile-value" data-ref="bestValue"></strong>' +
+                        '<strong class="qz-tile-value gradient-text" data-ref="bestValue"></strong>' +
                         '<span class="qz-tile-label" data-ref="bestLabel"></span>' +
                     "</li>" +
                 "</ul>" +
@@ -390,6 +376,7 @@
             ui[element.getAttribute("data-ref")] = element;
         });
         ui.timedSwitch = screen.querySelector(".qz-switch");
+        ui.rules = Array.prototype.slice.call(screen.querySelectorAll(".qz-rule-text"));
 
         ui.timedSwitch.addEventListener("click", () => setTimed(!state.timed));
         screen.querySelector(".qz-start-button").addEventListener("click", () => startGame());
@@ -402,20 +389,29 @@
         // The "best score" tile shows the record of the mode that is switched on
         const best = readBest(state.timed);
         const bestLabel = t(state.timed ? "quiz.start.bestTimed" : "quiz.start.bestRelaxed");
-        ui.questionsLabel.textContent = t("quiz.start.questions." + pluralForm(QUESTIONS.length));
-        ui.minutesLabel.textContent = t("quiz.start.minutes." + pluralForm(5));
-        ui.bestValue.textContent = best ? formatNumber(best.points) : "—";
+        ui.startText.textContent = t("quiz.start.text", { questions: questionCount() });
+        ui.questionsLabel.textContent = A.plural("quiz.start.questions", QUESTIONS.length);
+        ui.minutesLabel.textContent = A.plural("quiz.start.minutes", PLAY_MINUTES);
+        ui.bestValue.textContent = best ? A.format.number(best.points) : "—";
         ui.bestValue.parentNode.classList.toggle("is-empty", !best);
         ui.bestIcon.textContent = state.timed ? "⏱️" : "🌿";
         ui.bestLabel.textContent = best && best.correct !== null
             ? t("quiz.start.bestWith", { label: bestLabel, correct: best.correct, total: best.total })
             : bestLabel;
         ui.timedDesc.textContent = t("quiz.timed.desc", {
-            time: plural("quiz.seconds", TIME_LIMIT),
+            time: A.plural("quiz.seconds", TIME_LIMIT),
             bonus: SPEED_BONUS_MAX
         });
         ui.timedState.textContent = t(state.timed ? "quiz.timed.on" : "quiz.timed.off");
         ui.timedSwitch.setAttribute("aria-checked", String(state.timed));
+
+        // The rules: our own texts with a little HTML (<strong>, <kbd>), so they go in as HTML.
+        // Unchanged ones are left alone (this runs again on every click of the switch).
+        const numbers = { points: A.plural("quiz.points", BASE_POINTS), last: CHOICE_OPTIONS };
+        ui.rules.forEach((element) => {
+            const html = t(element.getAttribute("data-key"), numbers);
+            if (element.innerHTML !== html) element.innerHTML = html;
+        });
     }
 
     function setTimed(value) {
@@ -451,15 +447,15 @@
         const timer = state.gameTimed
             ? '<div class="qz-timer" role="timer">' +
                   '<svg viewBox="0 0 64 64" aria-hidden="true">' +
-                      '<circle class="qz-timer-track" cx="32" cy="32" r="27"></circle>' +
-                      '<circle class="qz-timer-bar" cx="32" cy="32" r="27" stroke-dasharray="' + TIMER_LENGTH.toFixed(2) + '"></circle>' +
+                      '<circle class="qz-timer-track" cx="32" cy="32" r="' + TIMER_RADIUS + '"></circle>' +
+                      '<circle class="qz-timer-bar" cx="32" cy="32" r="' + TIMER_RADIUS + '" stroke-dasharray="' + TIMER_LENGTH.toFixed(2) + '"></circle>' +
                   "</svg>" +
                   '<span class="qz-timer-num" aria-hidden="true">' + TIME_LIMIT + "</span>" +
                   '<span class="sr-only qz-timer-sr"></span>' +
               "</div>"
             : "";
 
-        const screen = createElement(
+        const screen = A.dom.fromHTML(
             '<div class="qz-screen qz-question' + (question.type === "truefalse" ? " is-truefalse" : "") + '">' +
                 '<div class="qz-hud">' +
                     '<div class="qz-hud-left">' +
@@ -469,7 +465,7 @@
                     '<div class="qz-hud-right">' +
                         '<div class="qz-score">' +
                             '<span class="qz-score-label mono">' + text("quiz.q.score") + "</span>" +
-                            '<strong class="qz-score-value" data-ref="score"></strong>' +
+                            '<strong class="qz-score-value gradient-text" data-ref="score"></strong>' +
                             '<span class="qz-score-pop mono" aria-hidden="true" data-ref="scorePop"></span>' +
                         "</div>" +
                         '<div class="qz-streak" data-ref="streak" hidden>' +
@@ -538,11 +534,12 @@
         });
         ui.next.addEventListener("click", goNext);
         ui.quit.addEventListener("click", pressQuit);
+        // Holding Enter down repeats the key, and every repeat would click again:
+        // that is not a second press either
+        ui.quit.addEventListener("keydown", (event) => {
+            if (event.repeat && event.key === "Enter") event.preventDefault();
+        });
         disarmQuit();
-
-        // Coming back to a question that is already answered (e.g. startQuiz() again)
-        const record = state.answers[state.index];
-        if (record) markOptions(record);
 
         paintScreen = paintQuestion;
         return screen;
@@ -556,13 +553,13 @@
 
         ui.counter.textContent = t("quiz.q.counter", { n: state.index + 1, total: total });
         ui.counterSr.textContent = t("quiz.q.counter", { n: state.index + 1, total: total }) + ". ";
-        if (!scoreFrame) ui.score.textContent = formatNumber(state.points);
+        if (!counters.score) ui.score.textContent = A.format.number(state.points);
 
         // Streak counter: only shown from 2 correct answers in a row
-        ui.streak.hidden = state.streak < 2;
-        ui.streak.classList.toggle("is-hot", state.streak >= 4);
+        ui.streak.hidden = state.streak < STREAK_MIN;
+        ui.streak.classList.toggle("is-hot", state.streak >= STREAK_HOT);
         ui.streakText.textContent = t("quiz.q.streak", { n: state.streak });
-        ui.streakSr.textContent = plural("quiz.q.streakSr", state.streak);
+        ui.streakSr.textContent = A.plural("quiz.q.streakSr", state.streak);
 
         // Progress bar: one segment per question
         ui.progress.setAttribute("aria-valuenow", String(answered));
@@ -575,14 +572,14 @@
         });
 
         if (ui.timerSr) {
-            ui.timerSr.textContent = t("quiz.q.timeLeft", { time: plural("quiz.seconds", shownSeconds()) });
+            ui.timerSr.textContent = t("quiz.q.timeLeft", { time: A.plural("quiz.seconds", shownSeconds()) });
         }
         paintQuit();
 
         // Feedback after answering
         if (!record) return;
         ui.fbTitle.textContent = feedbackTitle(record);
-        ui.fbPoints.textContent = record.points > 0 ? "+" + plural("quiz.points", record.points) : t("quiz.fb.noPoints");
+        ui.fbPoints.textContent = record.points > 0 ? "+" + A.plural("quiz.points", record.points) : t("quiz.fb.noPoints");
         // True/false explanations already start with "True." or "False."
         const showRight = !record.correct && question.type !== "truefalse";
         ui.fbAnswer.hidden = !showRight;
@@ -592,7 +589,7 @@
         if (record.base) bonus.push(["base", t("quiz.fb.base", { n: record.base })]);
         if (record.speed) bonus.push(["speed", "⚡ " + t("quiz.fb.speed", { n: record.speed })]);
         if (record.streakBonus) bonus.push(["streak", "🔥 " + t("quiz.fb.streak", { n: record.streakBonus })]);
-        if (record.lostStreak >= 2) bonus.push(["lost", t("quiz.fb.streakLost")]);
+        if (record.lostStreak >= STREAK_MIN) bonus.push(["lost", t("quiz.fb.streakLost")]);
         ui.fbBonus.replaceChildren(...bonus.map((item) => {
             const chip = document.createElement("li");
             chip.className = "qz-bonus qz-bonus-" + item[0];
@@ -608,22 +605,25 @@
     }
 
     // "Quit" needs two presses, so one accidental tap doesn't end the game.
-    // After the first press the button asks "Sure?" for 4 seconds.
+    // After the first press the button asks "Sure?" for 4 seconds (QUIT_CONFIRM_MS).
     let quitArmed = false;
     let quitTimer = 0;
 
-    function pressQuit() {
+    function pressQuit(event) {
         if (state.screen !== "question" || busy) return;
         if (quitArmed) {
+            // The second click of a double-click (or of a bouncy mouse) is not a second press.
+            // (Keyboard presses have detail 0.)
+            if (event && event.detail > 1) return;
             disarmQuit();
             backToStart();
             return;
         }
         quitArmed = true;
         paintQuit();
-        announce(t("quiz.q.quitHint"));
+        A.announce(t("quiz.q.quitHint"), { region: live });
         clearTimeout(quitTimer);
-        quitTimer = setTimeout(disarmQuit, 4000);
+        quitTimer = setTimeout(disarmQuit, QUIT_CONFIRM_MS);
     }
 
     function disarmQuit() {
@@ -644,8 +644,7 @@
         remaining: 0,      // milliseconds left
         last: 0,
         frame: 0,
-        checkedAt: 0,
-        blocked: false,    // a pop-up window covers the page
+        blocked: A.overlays.hasModal(),   // a pop-up window covers the page
         seconds: -1,
         warned: false
     };
@@ -671,7 +670,7 @@
     }
 
     function resumeTimer() {
-        if (!timer.active || timer.frame || !onScreen || document.hidden) return;
+        if (!timer.active || timer.frame || !onScreen || timer.blocked) return;
         timer.last = performance.now();
         timer.frame = requestAnimationFrame(tickTimer);
     }
@@ -680,15 +679,10 @@
         timer.frame = 0;
         if (!timer.active) return;
 
-        // Checking for pop-ups is a bit slow, so only every 300 ms
-        if (now - timer.checkedAt > 300) {
-            timer.checkedAt = now;
-            timer.blocked = dialogOpen();
-        }
-
-        // The clock only runs while you can actually see the question
-        const running = onScreen && !document.hidden && !timer.blocked;
-        if (running) timer.remaining -= Math.min(100, Math.max(0, now - timer.last));
+        // The clock only runs while you can actually see the question.
+        // A long pause between two frames counts as 100 ms at most.
+        const running = onScreen && !timer.blocked;
+        if (running) timer.remaining -= A.util.clamp(now - timer.last, 0, MAX_FRAME_MS);
         timer.last = now;
         drawTimer(!running);
 
@@ -698,8 +692,9 @@
             return;
         }
 
-        // Off screen or in a hidden tab the loop stops; the observers start it again
-        if (onScreen && !document.hidden) timer.frame = requestAnimationFrame(tickTimer);
+        // Off screen, in a hidden tab or under a pop-up window the loop stops;
+        // resumeTimer() starts it again
+        if (running) timer.frame = requestAnimationFrame(tickTimer);
     }
 
     function drawTimer(paused) {
@@ -712,20 +707,19 @@
         if (seconds === timer.seconds) return;
         timer.seconds = seconds;
         ui.timerNum.textContent = String(seconds);
-        ui.timerSr.textContent = t("quiz.q.timeLeft", { time: plural("quiz.seconds", seconds) });
-        ui.timer.classList.toggle("is-warning", seconds <= 10 && seconds > 5);
-        ui.timer.classList.toggle("is-danger", seconds <= 5);
-        if (seconds <= 5 && seconds > 0 && timer.active) replay(ui.timerNum, "is-tick");
+        ui.timerSr.textContent = t("quiz.q.timeLeft", { time: A.plural("quiz.seconds", seconds) });
+        ui.timer.classList.toggle("is-warning", seconds <= WARNING_SECONDS && seconds > DANGER_SECONDS);
+        ui.timer.classList.toggle("is-danger", seconds <= DANGER_SECONDS);
+        // The last seconds tick, and screen readers hear once that time is running out
+        if (seconds <= DANGER_SECONDS && seconds > 0 && timer.active) A.dom.replay(ui.timerNum, "is-tick");
 
-        if (seconds === 5 && !timer.warned && timer.active) {
+        if (seconds === DANGER_SECONDS && !timer.warned && timer.active) {
             timer.warned = true;
-            announce(t("quiz.q.timeLeft", { time: plural("quiz.seconds", 5) }));
+            A.announce(t("quiz.q.timeLeft", { time: A.plural("quiz.seconds", DANGER_SECONDS) }), { region: live });
         }
     }
 
     // ---------- 10. Answering ----------
-    let scoreFrame = 0;
-
     // position: which button was chosen (0-3), or null when the time ran out
     function answer(position) {
         if (state.screen !== "question" || busy || state.answers[state.index]) return;
@@ -748,14 +742,14 @@
             streakBonus: 0,
             points: 0,
             lostStreak: 0,
-            praise: 1 + Math.floor(Math.random() * PRAISE_COUNT)
+            praise: A.util.randomInt(1, PRAISE_COUNT)     // which "Correct!" message
         };
 
         if (correct) {
             state.streak += 1;
             record.base = BASE_POINTS;
             if (state.gameTimed) record.speed = Math.round(SPEED_BONUS_MAX * Math.min(1, secondsLeft / TIME_LIMIT));
-            if (state.streak >= 2) record.streakBonus = Math.min(STREAK_BONUS_MAX, (state.streak - 1) * STREAK_STEP);
+            if (state.streak >= STREAK_MIN) record.streakBonus = Math.min(STREAK_BONUS_MAX, (state.streak - 1) * STREAK_STEP);
             record.points = record.base + record.speed + record.streakBonus;
         } else {
             record.lostStreak = state.streak;
@@ -771,49 +765,60 @@
         const active = document.activeElement;
         const keepFocus = card.contains(active) || active === document.body || !active;
 
-        markOptions(record, true);
+        markOptions(record);
         ui.feedback.hidden = false;
         ui.feedback.classList.remove("is-good", "is-bad", "is-timeout");
         ui.feedback.classList.add(record.timeout ? "is-timeout" : record.correct ? "is-good" : "is-bad");
-        replay(ui.feedback, "is-in");
-        replay(card, correct ? "is-flash-good" : "is-flash-bad");
+        A.dom.replay(ui.feedback, "is-in");
+        // Only one glow at a time: with both classes the red one would always win
+        card.classList.remove("is-flash-good", "is-flash-bad");
+        A.dom.replay(card, correct ? "is-flash-good" : "is-flash-bad");
         paint();
 
         if (record.points > 0) {
             animateScore(oldPoints, state.points);
-            ui.scorePop.textContent = "+" + formatNumber(record.points);
-            replay(ui.scorePop, "is-popping");
+            ui.scorePop.textContent = "+" + A.format.number(record.points);
+            A.dom.replay(ui.scorePop, "is-popping");
         }
-        if (state.streak >= 2) replay(ui.streak, "is-bump");
+        if (state.streak >= STREAK_MIN) A.dom.replay(ui.streak, "is-bump");
 
         // The message for screen readers: result, points, right answer, explanation
         const parts = [feedbackTitle(record)];
-        if (record.points > 0) parts.push("+" + plural("quiz.points", record.points) + ".");
+        if (record.points > 0) parts.push("+" + A.plural("quiz.points", record.points) + ".");
         if (!record.correct && question.type !== "truefalse") {
             parts.push(t("quiz.fb.rightAnswer", { answer: t(optionKey(question, question.correct)) }) + ".");
         }
         parts.push(t("quiz." + question.key + ".explain"));
-        announce(parts.join(" "));
+        A.announce(parts.join(" "), { region: live });
 
         if (keepFocus) ui.next.focus({ preventScroll: true });
 
         // Make sure the explanation and the "Next" button can be seen.
         // The button stops above the assistant's round button in the bottom corner,
-        // but we never scroll so far that the top of the explanation disappears.
+        // but we never scroll so far that the top of the explanation disappears
+        // under the menu bar. (Both sizes come from the CSS and are smaller on phones.)
         requestAnimationFrame(() => {
             if (!ui.next || !ui.next.isConnected) return;
-            const box = ui.next.getBoundingClientRect();
-            const feedbackTop = ui.feedback.getBoundingClientRect().top;
-            const lowest = window.innerHeight - BOTTOM_SPACE;
-            const distance = Math.min(box.bottom - lowest, feedbackTop - TOP_SPACE);
-            if (box.bottom > lowest && distance > 0) {
-                window.scrollBy({ top: distance, behavior: motionOK() ? "smooth" : "auto" });
+            const topSpace = A.layout.navHeight() + SCROLL_GAP;
+            const bottomSpace = A.layout.px("--launcher-room", LAUNCHER_ROOM) + SCROLL_GAP;
+            // The feedback is still sliding in from a little lower (its "is-in" animation):
+            // measure where it will stop, not where it is now. The browser gives the
+            // feedback's current move (its CSS transform) as a matrix of numbers; "m42" is
+            // how many px it is moved down right now (the translateY of qz-feedback-in in
+            // quiz.css, 0 once the slide is over). The "Next" button moves with it.
+            const slide = new DOMMatrixReadOnly(getComputedStyle(ui.feedback).transform).m42;
+            const nextBottom = ui.next.getBoundingClientRect().bottom - slide;
+            const feedbackTop = ui.feedback.getBoundingClientRect().top - slide;
+            const lowest = window.innerHeight - bottomSpace;
+            const distance = Math.min(nextBottom - lowest, feedbackTop - topSpace);
+            if (nextBottom > lowest && distance > 0) {
+                window.scrollBy({ top: distance, behavior: A.motion.ok() ? "smooth" : "auto" });
             }
         });
     }
 
     // Colours the options: green for the right one, red for a wrong pick
-    function markOptions(record, animate) {
+    function markOptions(record) {
         const question = currentQuestion();
         const order = state.optionOrders[state.index];
         ui.options.forEach((button, position) => {
@@ -828,29 +833,15 @@
             button.classList.toggle("is-dim", !isRight && !isPicked);
             button.querySelector(".qz-sr-correct").hidden = !isRight;
             button.querySelector(".qz-sr-picked").hidden = !isPicked;
-            if (!animate) button.classList.add("no-anim");
         });
     }
 
     // The score counts up to its new value
     function animateScore(from, to) {
-        if (scoreFrame) cancelAnimationFrame(scoreFrame);
-        scoreFrame = 0;
+        stopCounter("score");
         if (!ui.score) return;
-        if (!motionOK()) {
-            ui.score.textContent = formatNumber(to);
-            return;
-        }
-        const element = ui.score;
-        const start = performance.now();
-        const duration = 700;
-        const step = (now) => {
-            const progress = Math.min(1, (now - start) / duration);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            element.textContent = formatNumber(Math.round(from + (to - from) * eased));
-            scoreFrame = progress < 1 && element.isConnected ? requestAnimationFrame(step) : 0;
-        };
-        scoreFrame = requestAnimationFrame(step);
+        if (A.motion.ok()) countUp("score", ui.score, from, to, SCORE_COUNT_MS);
+        else ui.score.textContent = A.format.number(to);
     }
 
     function goNext() {
@@ -872,10 +863,13 @@
         const settings = options || {};
         stopTimer();
         stopConfetti();
+        card.classList.remove("is-flash-good", "is-flash-bad");
         state.gameTimed = state.timed;
-        state.order = shuffle(QUESTIONS.map((question, index) => index));
+        state.order = A.util.shuffle(QUESTIONS.map((question, index) => index));
         state.optionOrders = state.order.map((index) =>
-            QUESTIONS[index].type === "truefalse" ? [0, 1] : shuffle([0, 1, 2, 3])
+            QUESTIONS[index].type === "truefalse"
+                ? [0, 1]
+                : A.util.shuffle(Array.from({ length: CHOICE_OPTIONS }, (value, option) => option))
         );
         state.index = 0;
         state.answers = [];
@@ -893,7 +887,8 @@
         });
     }
 
-    function finishGame() {
+    function finishGame(options) {
+        const settings = options || {};
         stopTimer();
         const total = state.order.length;
         const correct = state.answers.filter((record) => record && record.correct).length;
@@ -924,7 +919,12 @@
         };
         state.screen = "results";
         ringShown = false;
-        showScreen(buildResults, { focus: ".qz-res-title", reveal: true, after: animateResults });
+        showScreen(buildResults, {
+            focus: ".qz-res-title",
+            forceFocus: settings.forceFocus,
+            reveal: settings.reveal !== false,
+            after: animateResults
+        });
     }
 
     function backToStart() {
@@ -935,6 +935,8 @@
     }
 
     // ---------- 12. RESULTS screen ----------
+    let ringShown = false;      // has the score ring filled up? (until then the % shows 0)
+
     function buildResults() {
         const result = state.result;
         const rank = result.rank;
@@ -952,7 +954,7 @@
                 : '<p class="qz-ri-line is-right">' + text("quiz.review.rightAnswer", "qz-ri-label") + " " + text(optionKey(question, question.correct), "qz-ri-value") + "</p>";
 
             let learn = "";
-            if (typeof question.learn === "number" && typeof A.openLesson === "function") {
+            if (typeof question.learn === "number" && A.lessons) {
                 learn = '<button class="btn btn-ghost btn-small qz-ri-learn" type="button" data-lesson="' + question.learn + '"><span aria-hidden="true">📚</span><span class="qz-ri-learn-text"></span></button>';
             } else if (question.learn === "timeline" && document.getElementById("timeline")) {
                 learn = '<button class="btn btn-ghost btn-small qz-ri-learn" type="button" data-section="timeline"><span aria-hidden="true">🕰️</span>' + text("quiz.review.timeline") + "</button>";
@@ -987,12 +989,12 @@
         ].map((tile, index) =>
             '<li class="qz-tile qz-tile-' + tile[0] + '" style="--i:' + index + '">' +
                 '<span class="qz-tile-icon" aria-hidden="true">' + tile[2] + "</span>" +
-                '<strong class="qz-tile-value" data-ref="tile-' + tile[0] + '"></strong>' +
+                '<strong class="qz-tile-value gradient-text" data-ref="tile-' + tile[0] + '"></strong>' +
                 text(tile[1], "qz-tile-label") +
             "</li>"
         ).join("");
 
-        const screen = createElement(
+        const screen = A.dom.fromHTML(
             '<div class="qz-screen qz-results rank-' + rank.id + '">' +
                 '<div class="qz-res-hero">' +
                     '<div class="qz-res-ring" data-ref="ring">' +
@@ -1004,11 +1006,11 @@
                                 "</linearGradient>" +
                             "</defs>" +
                             '<circle class="qz-res-ticks" cx="80" cy="80" r="77"></circle>' +
-                            '<circle class="qz-res-track" cx="80" cy="80" r="66"></circle>' +
-                            '<circle class="qz-res-bar" cx="80" cy="80" r="66" stroke="url(#qz-ring-gradient)" stroke-dasharray="' + RESULT_LENGTH.toFixed(2) + '" stroke-dashoffset="' + RESULT_LENGTH.toFixed(2) + '"></circle>' +
+                            '<circle class="qz-res-track" cx="80" cy="80" r="' + RESULT_RADIUS + '"></circle>' +
+                            '<circle class="qz-res-bar" cx="80" cy="80" r="' + RESULT_RADIUS + '" stroke="url(#qz-ring-gradient)" stroke-dasharray="' + RESULT_LENGTH.toFixed(2) + '" stroke-dashoffset="' + RESULT_LENGTH.toFixed(2) + '"></circle>' +
                         "</svg>" +
                         '<div class="qz-res-center" aria-hidden="true">' +
-                            '<strong class="qz-res-percent"><span data-ref="percent">0</span><span class="qz-res-pct">%</span></strong>' +
+                            '<strong class="qz-res-percent gradient-text"><span data-ref="percent">0</span><span class="qz-res-pct">%</span></strong>' +
                             '<span class="qz-res-caption mono">' + text("quiz.res.ringCaption") + "</span>" +
                         "</div>" +
                         '<span class="sr-only" data-ref="ringSr"></span>' +
@@ -1017,7 +1019,7 @@
                         '<p class="qz-kicker mono">' + text("quiz.res.kicker") + "</p>" +
                         '<h3 class="qz-res-title" tabindex="-1">' +
                             '<span class="qz-rank-emoji" aria-hidden="true">' + rank.emoji + "</span>" +
-                            text("quiz.rank." + rank.id, "qz-rank-name") +
+                            text("quiz.rank." + rank.id, "qz-rank-name gradient-text") +
                         "</h3>" +
                         '<p class="qz-res-text">' + text("quiz.rank." + rank.id + "Text") + "</p>" +
                         '<p class="qz-best' + (result.isNewBest ? " is-new" : "") + '" data-ref="best">' +
@@ -1077,14 +1079,14 @@
             const button = event.target.closest(".qz-ri-learn");
             if (!button) return;
             const lesson = Number(button.getAttribute("data-lesson"));
-            if (lesson && typeof A.openLesson === "function") {
+            if (lesson && A.lessons) {
                 // The lesson opens on top of the page. We hand over this button, so that
                 // closing the lesson brings you right back here, to your review.
                 // (Some browsers don't focus a clicked button, so we do it ourselves.)
                 button.focus({ preventScroll: true });
-                A.openLesson(lesson, button);
+                A.lessons.open(lesson, button);
             } else if (button.getAttribute("data-section")) {
-                A.scrollToSection(button.getAttribute("data-section"));
+                A.navigate(button.getAttribute("data-section"));
             }
         });
 
@@ -1095,10 +1097,10 @@
     function paintResults() {
         const result = state.result;
         ui.ringSr.textContent = t("quiz.res.ringSr", { percent: result.percent });
-        if (!percentFrame) ui.percent.textContent = String(ringShown ? result.percent : 0);
+        if (!counters.percent) ui.percent.textContent = A.format.number(ringShown ? result.percent : 0);
 
         ui["tile-correct"].textContent = result.correct + " / " + result.total;
-        ui["tile-points"].textContent = formatNumber(result.points);
+        ui["tile-points"].textContent = A.format.number(result.points);
         ui["tile-streak"].textContent = String(result.bestStreak);
         ui["tile-mode"].textContent = t(result.timed ? "quiz.res.modeTimed" : "quiz.res.modeRelaxed");
 
@@ -1110,14 +1112,14 @@
             ui.bestText.textContent = t("quiz.res.newBest");
         } else if (best) {
             ui.bestText.textContent = t(result.timed ? "quiz.res.bestWasTimed" : "quiz.res.bestWas", {
-                points: plural("quiz.points", best.points)
+                points: A.plural("quiz.points", best.points)
             });
         }
 
         // "Learn more" buttons use the lesson titles in the current language
         ui.reviewList.querySelectorAll(".qz-ri-learn[data-lesson]").forEach((button) => {
             const n = Number(button.getAttribute("data-lesson"));
-            const title = lessonTitle(n);
+            const title = A.lessons ? A.lessons.title(n) : "";
             button.querySelector(".qz-ri-learn-text").textContent = title
                 ? t("quiz.review.lesson", { n: n, title: title })
                 : t("quiz.review.lessonPlain", { n: n });
@@ -1160,10 +1162,6 @@
     }
 
     // The score ring fills up and the percentage counts up
-    let percentFrame = 0;
-    let ringShown = false;
-    let confettiTimer = 0;
-
     function animateResults() {
         const result = state.result;
         const bar = stage.querySelector(".qz-res-bar");
@@ -1175,13 +1173,13 @@
         let summary = t("quiz.res.announce", {
             correct: result.correct,
             total: result.total,
-            points: plural("quiz.points", result.points),
+            points: A.plural("quiz.points", result.points),
             rank: t("quiz.rank." + result.rank.id)
         });
         if (result.isNewBest) summary += " " + t("quiz.res.newBest");
-        announce(summary);
+        A.announce(summary, { region: live });
 
-        if (!motionOK()) {
+        if (!A.motion.ok()) {
             ringShown = true;
             bar.style.strokeDashoffset = target.toFixed(2);
             paint();
@@ -1195,150 +1193,35 @@
             bar.style.strokeDashoffset = target.toFixed(2);
         });
 
-        const element = ui.percent;
-        const start = performance.now();
-        const duration = 1400;
-        const step = (now) => {
-            const progress = Math.min(1, (now - start) / duration);
-            const eased = 1 - Math.pow(1 - progress, 3);
-            element.textContent = String(Math.round(result.percent * eased));
-            if (progress < 1 && element.isConnected) {
-                percentFrame = requestAnimationFrame(step);
-            } else {
-                percentFrame = 0;
-                ringShown = true;
-                if (element.isConnected) {
-                    element.textContent = String(result.percent);
-                    replay(ui.ring, "is-done");
-                }
-            }
-        };
-        percentFrame = requestAnimationFrame(step);
+        const ring = ui.ring;
+        countUp("percent", ui.percent, 0, result.percent, PERCENT_COUNT_MS, () => {
+            ringShown = true;
+            if (ring.isConnected) A.dom.replay(ring, "is-done");
+        });
 
         if (result.isNewBest) {
             clearTimeout(confettiTimer);
-            confettiTimer = setTimeout(() => {
-                if (state.screen === "results" && ui.ring && ui.ring.isConnected) burstConfetti(ui.ring);
-            }, 950);
+            confettiTimer = setTimeout(burstConfetti, CONFETTI_DELAY);
         }
     }
 
     // ---------- 13. Confetti (only for a new best score) ----------
-    let confetti = null;
+    // effects.js draws it: one burst from the middle of the score ring.
+    let confettiTimer = 0;
+    let confettiUntil = 0;      // until then, confetti that the quiz started may still be falling
 
-    function confettiColors() {
-        return ["--accent", "--accent-2", "--accent-3", "--success", "--warning"]
-            .map((name) => A.cssVar(name))
-            .filter(Boolean);
+    function burstConfetti() {
+        if (!A.effects || state.screen !== "results" || !ui.ring || !ui.ring.isConnected) return;
+        A.effects.confetti({ origin: ui.ring, duration: CONFETTI_MS });
+        confettiUntil = performance.now() + CONFETTI_MS;
     }
 
-    function burstConfetti(origin) {
-        if (!motionOK() || document.hidden) return;
-        stopConfetti();
-
-        const canvas = document.createElement("canvas");
-        canvas.className = "qz-confetti";
-        canvas.setAttribute("aria-hidden", "true");
-        const context = canvas.getContext("2d");
-        if (!context) return;
-        document.body.appendChild(canvas);
-
-        // Sharp on retina screens, but never more than 2x (faster)
-        const ratio = Math.min(2, window.devicePixelRatio || 1);
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        canvas.width = Math.round(width * ratio);
-        canvas.height = Math.round(height * ratio);
-        context.setTransform(ratio, 0, 0, ratio, 0, 0);
-
-        const box = origin.getBoundingClientRect();
-        const x = box.left + box.width / 2;
-        const y = box.top + box.height / 2;
-        const count = width < 600 ? 90 : 150;
-        const pieces = [];
-        for (let i = 0; i < count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 220 + Math.random() * 560;
-            pieces.push({
-                x: x,
-                y: y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 260,
-                size: 5 + Math.random() * 7,
-                shape: Math.random() < 0.3 ? "circle" : "strip",
-                turn: Math.random() * Math.PI * 2,
-                spin: (Math.random() - 0.5) * 14,
-                color: i
-            });
-        }
-
-        confetti = {
-            canvas: canvas,
-            context: context,
-            width: width,
-            height: height,
-            pieces: pieces,
-            colors: confettiColors(),
-            start: performance.now(),
-            last: performance.now(),
-            frame: 0
-        };
-        confetti.frame = requestAnimationFrame(drawConfetti);
-    }
-
-    function drawConfetti(now) {
-        const party = confetti;
-        if (!party) return;
-        const dt = Math.min(0.05, (now - party.last) / 1000);
-        party.last = now;
-        const age = (now - party.start) / 1000;
-        const fade = age > 2.2 ? Math.max(0, 1 - (age - 2.2) / 0.9) : 1;
-        const context = party.context;
-
-        context.clearRect(0, 0, party.width, party.height);
-        context.globalAlpha = fade;
-
-        let alive = 0;
-        party.pieces.forEach((piece) => {
-            // Gravity pulls down, air slows everything down
-            piece.vy += 980 * dt;
-            piece.vx *= 1 - 1.6 * dt;
-            piece.vy *= 1 - 1.1 * dt;
-            piece.x += piece.vx * dt;
-            piece.y += piece.vy * dt;
-            piece.turn += piece.spin * dt;
-            if (piece.y > party.height + 30) return;
-            alive++;
-
-            context.save();
-            context.translate(piece.x, piece.y);
-            context.rotate(piece.turn);
-            context.fillStyle = party.colors[piece.color % party.colors.length] || "#9b6dff";
-            if (piece.shape === "circle") {
-                context.beginPath();
-                context.arc(0, 0, piece.size * 0.38, 0, Math.PI * 2);
-                context.fill();
-            } else {
-                // Squashing the width looks like a strip of paper flipping over
-                const flip = Math.abs(Math.cos(piece.turn * 1.7));
-                context.fillRect(-piece.size / 2 * flip, -piece.size * 0.3, piece.size * flip, piece.size * 0.6);
-            }
-            context.restore();
-        });
-
-        if (alive > 0 && fade > 0 && !document.hidden) {
-            party.frame = requestAnimationFrame(drawConfetti);
-        } else {
-            stopConfetti();
-        }
-    }
-
+    // A new game or the start screen stops the quiz's confetti, but never the
+    // confetti of another feature (finishing every lesson celebrates with it too)
     function stopConfetti() {
         clearTimeout(confettiTimer);
-        if (!confetti) return;
-        cancelAnimationFrame(confetti.frame);
-        confetti.canvas.remove();
-        confetti = null;
+        if (A.effects && performance.now() < confettiUntil) A.effects.stopConfetti();
+        confettiUntil = 0;
     }
 
     // ---------- 14. "Copy my result" ----------
@@ -1351,7 +1234,7 @@
             correct: result.correct,
             total: result.total,
             percent: result.percent,
-            points: plural("quiz.points", result.points),
+            points: A.plural("quiz.points", result.points),
             rank: t("quiz.rank." + result.rank.id),
             emoji: result.rank.emoji
         });
@@ -1366,7 +1249,7 @@
             ui.copy.classList.add("is-copied");
             clearTimeout(copiedTimer);
             const button = ui.copy;
-            copiedTimer = setTimeout(() => button.classList.remove("is-copied"), 2200);
+            copiedTimer = setTimeout(() => button.classList.remove("is-copied"), COPIED_MS);
         };
 
         if (navigator.clipboard && window.isSecureContext) {
@@ -1399,11 +1282,12 @@
         return ok;
     }
 
-    // ---------- 15. Keyboard: 1-4 to answer, Enter for the next question ----------
+    // ---------- 15. Keyboard: number keys and Enter ----------
+    // The number keys answer (1 for the first answer, ...), Enter goes to the next question
     document.addEventListener("keydown", (event) => {
         if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
         if (state.screen !== "question" || busy) return;
-        if (isTypingField(event.target) || dialogOpen()) return;
+        if (isTypingField(event.target) || A.overlays.hasModal()) return;
 
         // Only when the quiz is on screen (or has the focus)
         const focusInside = card.contains(document.activeElement);
@@ -1411,11 +1295,12 @@
 
         const answered = Boolean(state.answers[state.index]);
 
-        if (!answered && /^[1-4]$/.test(event.key)) {
+        // Number keys: 1 for the first answer, 2 for the second, ...
+        if (!answered && /^[1-9]$/.test(event.key)) {
             const button = ui.options && ui.options[Number(event.key) - 1];
             if (!button) return;
             event.preventDefault();
-            replay(button, "is-pressed");
+            A.dom.replay(button, "is-pressed");
             answer(Number(event.key) - 1);
             return;
         }
@@ -1430,29 +1315,19 @@
         }
     });
 
-    // ---------- 16. Watching visibility, language and theme ----------
-    // The countdown and the decorations pause when the quiz is off screen
-    function setOnScreen(value) {
-        onScreen = value;
-        mount.classList.toggle("is-paused", !value);
-        if (value) resumeTimer();
-    }
+    // ---------- 16. Pop-up windows, calm mode and the language ----------
+    // A pop-up window that shuts out the page (the lesson reader, the command palette,
+    // the chat on phones) pauses the countdown; it goes on when the last one closes
+    A.overlays.onChange((detail) => {
+        timer.blocked = detail.modal;
+        if (!timer.active) return;
+        if (timer.blocked) drawTimer(true);
+        else resumeTimer();
+    });
 
-    if ("IntersectionObserver" in window) {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                const visible = entry.intersectionRect.height;
-                const needed = Math.min(200, entry.boundingClientRect.height * 0.3);
-                setOnScreen(entry.isIntersecting && visible >= needed);
-            });
-        }, { threshold: [0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1] });
-        observer.observe(card);
-    } else {
-        setOnScreen(true);
-    }
-
-    document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) resumeTimer();
+    // Animations switched off meanwhile (calm mode): numbers that are counting jump to the end
+    A.motion.onChange((detail) => {
+        if (!detail.ok) Object.keys(counters).forEach((name) => counters[name].finish());
     });
 
     // core.js has already translated every [data-i18n] element;
@@ -1465,36 +1340,61 @@
         }
     });
 
-    // Confetti colours follow the theme
-    A.onThemeChange(() => {
-        if (confetti) confetti.colors = confettiColors();
-    });
+    // ---------- 17. Building the quiz (only when it is needed) ----------
+    // The card and its start screen are built when the quiz comes near the screen,
+    // when the browser has a quiet moment after loading, or when ensure() is called
+    // first (by AICompass.quiz.start). With a link like #quiz, core builds it at once.
+    function build() {
+        mount.innerHTML =
+            '<div class="qz-card card" data-reveal>' +
+                '<span class="qz-corners" aria-hidden="true"></span>' +
+                '<div class="qz-stage"></div>' +
+                '<p class="sr-only qz-live" aria-live="polite" aria-atomic="true"></p>' +
+            "</div>";
+        card = mount.querySelector(".qz-card");
+        stage = mount.querySelector(".qz-stage");
+        live = mount.querySelector(".qz-live");
 
-    // ---------- 17. Public API + Ctrl+K commands ----------
-    // AICompass.startQuiz(): scrolls to the quiz and starts it.
+        // The countdown, the number keys and the decorations only work while you can see
+        // the quiz: core tells us when it comes on or goes off screen (or the browser
+        // tab is hidden), and pauses its CSS animations meanwhile (data-paused).
+        A.whenVisible(mount, (visible) => {
+            onScreen = visible;
+            if (visible) resumeTimer();
+        }, { pauseAnimations: true, rootMargin: ON_SCREEN_MARGIN });
+
+        showScreen(buildStart);
+    }
+
+    const ensure = A.whenNeeded(mount, build);
+
+    // ---------- 18. Ctrl+K commands and the public API ----------
+    // AICompass.quiz.start(): scrolls to the quiz and starts it.
     // A game that is already running just continues.
-    // Optional: startQuiz({ timed: true }) to choose the mode.
+    // Optional: start({ timed: true }) to choose the mode.
     function startQuiz(options) {
+        ensure();
         const settings = options || {};
         const wantsMode = typeof settings.timed === "boolean";
         if (wantsMode) setTimed(settings.timed);
-        A.scrollToSection("quiz");
+        // Core closes the pop-up windows in the way and scrolls; the focus is moved below
+        A.navigate("quiz", { focus: false });
 
-        const running = state.screen === "question" && state.answers.filter(Boolean).length < state.order.length;
-        if (running && (!wantsMode || settings.timed === state.gameTimed)) {
-            // Focus after the command palette (if any) has closed and given focus back
-            setTimeout(() => {
+        // Act after the command palette (if any) has closed and given the focus back
+        setTimeout(() => {
+            const playing = state.screen === "question";
+            if (playing && state.answers.filter(Boolean).length === state.order.length) {
+                // Every question is answered already: show the results first, so the
+                // score isn't lost. A new game (in either mode) can start from there.
+                finishGame({ forceFocus: true, reveal: false });
+            } else if (playing && (!wantsMode || settings.timed === state.gameTimed)) {
                 const heading = stage.querySelector(".qz-question-text");
                 if (heading) heading.focus({ preventScroll: true });
-            }, 80);
-            return;
-        }
-        setTimeout(() => startGame({ forceFocus: true, reveal: false }), 80);
+            } else {
+                startGame({ forceFocus: true, reveal: false });
+            }
+        }, START_DELAY);
     }
-
-    // Other features use AICompass.quiz.start() (AICompass.startQuiz is the older name)
-    A.feature("quiz", { start: startQuiz });
-    A.startQuiz = startQuiz;
 
     A.registerCommand({
         id: "quiz-start",
@@ -1514,6 +1414,7 @@
         run: () => startQuiz({ timed: true })
     });
 
-    // ---------- 18. Start ----------
-    showScreen(buildStart);
+    // Other features use AICompass.quiz.start() (AICompass.startQuiz is the older name)
+    A.feature("quiz", { start: startQuiz });
+    A.startQuiz = startQuiz;
 })();

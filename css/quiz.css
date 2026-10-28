@@ -1,47 +1,41 @@
 /* =========================================================
    AI COMPASS — THE AI CHALLENGE (QUIZ)
-   1. The card (glass panel, corner brackets, scanning light)
-   2. Screen changes (fade + smooth height)
-   3. Shared parts (labels, tiles, arrows)
-   4. Start screen (orb, rules, timed-mode switch)
-   5. Question screen: top bar (counter, score, streak, timer)
-   6. Question screen: progress, question, answer buttons
-   7. Question screen: feedback after an answer
-   8. Results screen (ring, rank, tiles, buttons)
-   9. Results screen: review list
-  10. Confetti + helpers
-  11. Responsive
-  12. Reduced motion / calm mode
+   The styles of the quiz card that js/quiz.js builds.
+   Sections of this file:
+    1. The card (glass panel, corner brackets, scanning light)
+    2. Screen changes (fade + smooth height)
+    3. Shared parts (labels, tiles, arrows)
+    4. Start screen (orb, rules, timed-mode switch)
+    5. Question screen: top bar (counter, score, streak, timer)
+    6. Question screen: progress, question, answer buttons
+    7. Question screen: feedback after an answer
+    8. Results screen (ring, rank, tiles, buttons)
+    9. Results screen: review list
+   10. Helpers
+   11. Responsive
+   12. Reduced motion / calm mode
    All colours come from the variables in style.css,
    so both the dark and the light theme look right.
    ========================================================= */
 
-[data-feature="quiz"] [hidden] {
-    display: none !important;
-}
-
-/* Colours for text and small badges. In the dark theme they are the normal accents.
-   In the light theme the bright accents are too pale on white for small text,
-   so we mix in some of the dark text colour (easy to read: WCAG AA, 4.5:1). */
+/* Coloured text, and the badges, borders and glows that go with it, use the
+   readable accent colours of style.css (--text-success, --text-danger,
+   --text-warning, --text-accent-2, --text-accent-3): the normal accents in the
+   dark theme, a little darker in the light theme, where the bright ones are too
+   pale on white for small text (WCAG AA, 4.5:1). */
 [data-feature="quiz"] {
-    --qz-success: var(--success);
-    --qz-danger: var(--danger);
-    --qz-warning: var(--warning);
-    --qz-cyan: var(--accent-2);
-    --qz-pink: var(--accent-3);
     /* small grey labels: a little stronger than --text-dim, so they stay readable */
     --qz-dim: color-mix(in srgb, var(--text-dim) 82%, var(--text));
 }
 
-[data-theme="light"] [data-feature="quiz"] {
-    --qz-success: color-mix(in srgb, var(--success) 68%, var(--text));
-    --qz-danger: color-mix(in srgb, var(--danger) 80%, var(--text));
-    --qz-warning: color-mix(in srgb, var(--warning) 72%, var(--text));
-    --qz-cyan: color-mix(in srgb, var(--accent-2) 64%, var(--text));
-    --qz-pink: color-mix(in srgb, var(--accent-3) 80%, var(--text));
-}
-
 /* ===== 1. THE CARD ===== */
+
+/* js/quiz.js builds the quiz only when it comes near the screen. Until then the
+   empty mount keeps about the height of the start screen, so the page doesn't jump
+   (the other sizes are in "Responsive"). */
+.js [data-feature="quiz"]:empty {
+    min-height: 760px;
+}
 
 .qz-card {
     max-width: 920px;
@@ -120,23 +114,16 @@
 
 @keyframes qz-flash-good {
     30% {
-        border-color: var(--qz-success);
-        box-shadow: var(--shadow), 0 0 50px color-mix(in srgb, var(--qz-success) 30%, transparent);
+        border-color: var(--text-success);
+        box-shadow: var(--shadow), 0 0 50px color-mix(in srgb, var(--text-success) 30%, transparent);
     }
 }
 
 @keyframes qz-flash-bad {
     30% {
-        border-color: var(--qz-danger);
-        box-shadow: var(--shadow), 0 0 50px color-mix(in srgb, var(--qz-danger) 26%, transparent);
+        border-color: var(--text-danger);
+        box-shadow: var(--shadow), 0 0 50px color-mix(in srgb, var(--text-danger) 26%, transparent);
     }
-}
-
-/* Decorations pause while the quiz is off screen */
-[data-feature="quiz"].is-paused *,
-[data-feature="quiz"].is-paused *::before,
-[data-feature="quiz"].is-paused *::after {
-    animation-play-state: paused !important;
 }
 
 /* ===== 2. SCREEN CHANGES ===== */
@@ -203,7 +190,7 @@
     align-items: center;
     gap: 8px;
     margin-bottom: 10px;
-    color: var(--qz-cyan);
+    color: var(--text-accent-2);
     font-size: 11.5px;
     font-weight: 600;
     letter-spacing: 2.2px;
@@ -238,28 +225,10 @@
     transform: translateX(4px);
 }
 
-/* style.css gives focused buttons small corners: keep ours round */
-.qz-option:focus-visible,
-.qz-switch:focus-visible {
-    border-radius: 16px;
-}
-
-.qz-filters .chip:focus-visible {
-    border-radius: 999px;
-}
-
-.qz-card .btn:focus-visible {
-    border-radius: 14px;
-}
-
-.qz-card .btn-small:focus-visible {
-    border-radius: 11px;
-}
-
+/* The ring of a review question goes inside its box (the list has no room around it) */
 .qz-ri summary:focus-visible {
     outline: 2px solid var(--accent-2);
     outline-offset: -2px;
-    border-radius: 16px;
 }
 
 /* Headings that receive focus from the script don't need a ring */
@@ -287,16 +256,13 @@
     background: var(--surface-2);
 }
 
+/* The numbers of the tiles, the score, the % in the ring and the rank name are
+   gradient text: js/quiz.js gives them the .gradient-text class of style.css */
 .qz-tile-value {
     font-family: var(--font-display);
     font-size: clamp(20px, 2.6vw, 26px);
     font-weight: 700;
     line-height: 1.15;
-    background: var(--gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: var(--accent);
     font-variant-numeric: tabular-nums;
     overflow-wrap: anywhere;
 }
@@ -356,7 +322,7 @@
     inset: 0;
     border: 1px dashed var(--border-strong);
     border-radius: 50%;
-    animation: qz-spin 22s linear infinite;
+    animation: aic-spin 22s linear infinite;
 }
 
 .qz-orb-ring-2 {
@@ -373,7 +339,7 @@
     inset: 12px;
     border-radius: 50%;
     background: conic-gradient(from 0deg, rgba(var(--accent-2-rgb), 0.38), rgba(var(--accent-2-rgb), 0) 28%, transparent);
-    animation: qz-spin 3.6s linear infinite;
+    animation: aic-spin 3.6s linear infinite;
 }
 
 .qz-orb-core {
@@ -395,7 +361,7 @@
 .qz-orb-orbit {
     position: absolute;
     inset: -2px;
-    animation: qz-spin 9s linear infinite;
+    animation: aic-spin 9s linear infinite;
 }
 
 .qz-orb-orbit span {
@@ -410,10 +376,6 @@
     box-shadow: 0 0 12px var(--accent-3);
 }
 
-@keyframes qz-spin {
-    to { transform: rotate(360deg); }
-}
-
 @keyframes qz-breathe {
     50% {
         transform: scale(1.06);
@@ -426,7 +388,7 @@
 }
 
 .qz-tile-best .qz-tile-value {
-    background: linear-gradient(110deg, var(--qz-warning), var(--accent-3));
+    background: linear-gradient(110deg, var(--text-warning), var(--accent-3));
     background-clip: text;
     -webkit-background-clip: text;
 }
@@ -498,7 +460,7 @@
     border-bottom-width: 2px;
     border-radius: 6px;
     background: var(--surface-2);
-    color: var(--qz-cyan);
+    color: var(--text-accent-2);
     font-size: 12px;
     line-height: 1.5;
     text-align: center;
@@ -563,7 +525,7 @@
 }
 
 .qz-switch[aria-checked="true"] .qz-switch-state {
-    color: var(--qz-cyan);
+    color: var(--text-accent-2);
 }
 
 .qz-switch-track {
@@ -632,7 +594,7 @@
 }
 
 .qz-counter {
-    color: var(--qz-cyan);
+    color: var(--text-accent-2);
     font-size: 12.5px;
     font-weight: 600;
     letter-spacing: 1.8px;
@@ -683,11 +645,6 @@
     font-size: 22px;
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    background: var(--gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: var(--accent);
 }
 
 /* "+150" flies up from the score */
@@ -695,7 +652,7 @@
     position: absolute;
     right: 0;
     bottom: 100%;
-    color: var(--qz-success);
+    color: var(--text-success);
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
@@ -732,10 +689,10 @@
     gap: 6px;
     min-height: 32px;
     padding: 4px 12px 4px 8px;
-    border: 1px solid color-mix(in srgb, var(--qz-warning) 55%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text-warning) 55%, transparent);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--qz-warning) 12%, transparent);
-    color: var(--qz-warning);
+    background: color-mix(in srgb, var(--text-warning) 12%, transparent);
+    color: var(--text-warning);
     font-size: 13px;
     font-weight: 700;
     white-space: nowrap;
@@ -744,7 +701,7 @@
 .qz-streak.is-hot {
     border-color: var(--accent-3);
     background: rgba(var(--accent-3-rgb), 0.14);
-    color: var(--qz-pink);
+    color: var(--text-accent-3);
     box-shadow: 0 0 22px rgba(var(--accent-3-rgb), 0.3);
 }
 
@@ -776,7 +733,7 @@
     place-items: center;
     width: 54px;
     height: 54px;
-    color: var(--qz-cyan);
+    color: var(--text-accent-2);
 }
 
 .qz-timer svg {
@@ -811,11 +768,11 @@
 }
 
 .qz-timer.is-warning {
-    color: var(--qz-warning);
+    color: var(--text-warning);
 }
 
 .qz-timer.is-danger {
-    color: var(--qz-danger);
+    color: var(--text-danger);
 }
 
 .qz-timer-num.is-tick {
@@ -860,13 +817,13 @@
 }
 
 .qz-seg.is-correct {
-    background: var(--qz-success);
-    box-shadow: 0 0 10px color-mix(in srgb, var(--qz-success) 60%, transparent);
+    background: var(--text-success);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--text-success) 60%, transparent);
 }
 
 .qz-seg.is-wrong {
-    background: var(--qz-danger);
-    box-shadow: 0 0 10px color-mix(in srgb, var(--qz-danger) 50%, transparent);
+    background: var(--text-danger);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--text-danger) 50%, transparent);
 }
 
 .qz-seg.is-current {
@@ -881,11 +838,7 @@
     inset: 0;
     background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
     transform: translateX(-100%);
-    animation: qz-seg-run 1.6s ease-in-out infinite;
-}
-
-@keyframes qz-seg-run {
-    to { transform: translateX(100%); }
+    animation: aic-slide 1.6s ease-in-out infinite;
 }
 
 /* "Choose one answer" on the left, the "Quit" button on the right */
@@ -928,10 +881,6 @@
     color: var(--text);
 }
 
-.qz-quit:focus-visible {
-    border-radius: 999px;
-}
-
 .qz-quit-icon {
     font-size: 12px;
     line-height: 1;
@@ -939,9 +888,9 @@
 
 /* After the first press: "Sure? Press again" */
 .qz-quit.is-armed {
-    border-color: color-mix(in srgb, var(--qz-danger) 55%, transparent);
-    background: color-mix(in srgb, var(--qz-danger) 12%, transparent);
-    color: var(--qz-danger);
+    border-color: color-mix(in srgb, var(--text-danger) 55%, transparent);
+    background: color-mix(in srgb, var(--text-danger) 12%, transparent);
+    color: var(--text-danger);
 }
 
 .qz-question-text {
@@ -1006,7 +955,7 @@
     border-bottom-width: 2px;
     border-radius: 9px;
     background: rgba(var(--accent-rgb), 0.1);
-    color: var(--qz-cyan);
+    color: var(--text-accent-2);
     font-size: 13px;
     font-weight: 600;
     transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
@@ -1040,16 +989,16 @@
 }
 
 .qz-option.is-correct {
-    border-color: var(--qz-success);
+    border-color: var(--text-success);
     background: var(--surface-2);
-    background: color-mix(in srgb, var(--qz-success) 13%, var(--surface-2));
-    box-shadow: 0 0 0 1px var(--qz-success), 0 0 34px color-mix(in srgb, var(--qz-success) 22%, transparent);
+    background: color-mix(in srgb, var(--text-success) 13%, var(--surface-2));
+    box-shadow: 0 0 0 1px var(--text-success), 0 0 34px color-mix(in srgb, var(--text-success) 22%, transparent);
     animation: qz-correct 0.7s var(--ease);
 }
 
 .qz-option.is-correct .qz-key {
-    border-color: var(--qz-success);
-    background: var(--qz-success);
+    border-color: var(--text-success);
+    background: var(--text-success);
     color: var(--bg);
 }
 
@@ -1060,7 +1009,7 @@
 }
 
 .qz-option.is-correct .qz-mark {
-    background: var(--qz-success);
+    background: var(--text-success);
     color: var(--bg);
 }
 
@@ -1069,21 +1018,21 @@
 }
 
 .qz-option.is-wrong {
-    border-color: var(--qz-danger);
+    border-color: var(--text-danger);
     background: var(--surface-2);
-    background: color-mix(in srgb, var(--qz-danger) 12%, var(--surface-2));
-    box-shadow: 0 0 0 1px var(--qz-danger);
+    background: color-mix(in srgb, var(--text-danger) 12%, var(--surface-2));
+    box-shadow: 0 0 0 1px var(--text-danger);
     animation: qz-shake 0.5s ease;
 }
 
 .qz-option.is-wrong .qz-key {
-    border-color: var(--qz-danger);
-    background: var(--qz-danger);
+    border-color: var(--text-danger);
+    background: var(--text-danger);
     color: var(--bg);
 }
 
 .qz-option.is-wrong .qz-mark {
-    background: var(--qz-danger);
+    background: var(--text-danger);
     color: var(--bg);
 }
 
@@ -1093,10 +1042,6 @@
 
 .qz-option.is-dim {
     opacity: 0.45;
-}
-
-.qz-option.no-anim {
-    animation: none;
 }
 
 @keyframes qz-shake {
@@ -1142,7 +1087,7 @@
 /* ===== 7. FEEDBACK AFTER AN ANSWER ===== */
 
 .qz-feedback {
-    --fb: var(--qz-cyan);
+    --fb: var(--text-accent-2);
     position: relative;
     margin-top: 22px;
     padding: 20px 22px;
@@ -1165,18 +1110,18 @@
 }
 
 .qz-feedback.is-good {
-    --fb: var(--qz-success);
-    border-color: color-mix(in srgb, var(--qz-success) 40%, transparent);
+    --fb: var(--text-success);
+    border-color: color-mix(in srgb, var(--text-success) 40%, transparent);
 }
 
 .qz-feedback.is-bad {
-    --fb: var(--qz-danger);
-    border-color: color-mix(in srgb, var(--qz-danger) 40%, transparent);
+    --fb: var(--text-danger);
+    border-color: color-mix(in srgb, var(--text-danger) 40%, transparent);
 }
 
 .qz-feedback.is-timeout {
-    --fb: var(--qz-warning);
-    border-color: color-mix(in srgb, var(--qz-warning) 40%, transparent);
+    --fb: var(--text-warning);
+    border-color: color-mix(in srgb, var(--text-warning) 40%, transparent);
 }
 
 .qz-feedback.is-in {
@@ -1236,7 +1181,7 @@
 }
 
 .is-good .qz-fb-points {
-    color: var(--qz-success);
+    color: var(--text-success);
 }
 
 .qz-fb-answer {
@@ -1270,18 +1215,18 @@
 }
 
 .qz-bonus-base {
-    border-color: color-mix(in srgb, var(--qz-success) 45%, transparent);
-    color: var(--qz-success);
+    border-color: color-mix(in srgb, var(--text-success) 45%, transparent);
+    color: var(--text-success);
 }
 
 .qz-bonus-speed {
     border-color: rgba(var(--accent-2-rgb), 0.45);
-    color: var(--qz-cyan);
+    color: var(--text-accent-2);
 }
 
 .qz-bonus-streak {
-    border-color: color-mix(in srgb, var(--qz-warning) 50%, transparent);
-    color: var(--qz-warning);
+    border-color: color-mix(in srgb, var(--text-warning) 50%, transparent);
+    color: var(--text-warning);
 }
 
 .qz-bonus-lost {
@@ -1338,7 +1283,7 @@
     stroke-width: 1.5;
     stroke-dasharray: 2 6;
     transform-origin: 80px 80px;
-    animation: qz-spin 40s linear infinite;
+    animation: aic-spin 40s linear infinite;
 }
 
 .qz-res-track {
@@ -1379,11 +1324,6 @@
     letter-spacing: -0.03em;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
-    background: var(--gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: var(--accent);
 }
 
 /* A smaller "%" so that even "100%" fits inside the ring */
@@ -1437,14 +1377,6 @@
     font-size: 28px;
 }
 
-.qz-rank-name {
-    background: var(--gradient);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: var(--accent);
-}
-
 .qz-res-text {
     max-width: 520px;
     margin-top: 12px;
@@ -1467,10 +1399,10 @@
 }
 
 .qz-best.is-new {
-    border-color: color-mix(in srgb, var(--qz-warning) 60%, transparent);
-    background: color-mix(in srgb, var(--qz-warning) 14%, transparent);
-    color: var(--qz-warning);
-    box-shadow: 0 0 26px color-mix(in srgb, var(--qz-warning) 25%, transparent);
+    border-color: color-mix(in srgb, var(--text-warning) 60%, transparent);
+    background: color-mix(in srgb, var(--text-warning) 14%, transparent);
+    color: var(--text-warning);
+    box-shadow: 0 0 26px color-mix(in srgb, var(--text-warning) 25%, transparent);
     animation: qz-best-in 0.8s var(--ease) 1.2s both, qz-best-glow 2.4s ease-in-out 2s infinite;
 }
 
@@ -1486,7 +1418,7 @@
 
 @keyframes qz-best-glow {
     50% {
-        box-shadow: 0 0 40px color-mix(in srgb, var(--qz-warning) 45%, transparent);
+        box-shadow: 0 0 40px color-mix(in srgb, var(--text-warning) 45%, transparent);
     }
 }
 
@@ -1525,8 +1457,8 @@
 }
 
 .qz-copy.is-copied {
-    border-color: var(--qz-success);
-    color: var(--qz-success);
+    border-color: var(--text-success);
+    color: var(--text-success);
 }
 
 .qz-copy.is-copied .qz-copy-label {
@@ -1600,7 +1532,7 @@
 }
 
 .qz-ri {
-    --ri: var(--qz-success);
+    --ri: var(--text-success);
     border: 1px solid var(--border);
     border-radius: 16px;
     background: var(--surface-2);
@@ -1608,11 +1540,11 @@
 }
 
 .qz-ri.is-wrong {
-    --ri: var(--qz-danger);
+    --ri: var(--text-danger);
 }
 
 .qz-ri.is-timeout {
-    --ri: var(--qz-warning);
+    --ri: var(--text-warning);
 }
 
 .qz-ri:hover,
@@ -1683,7 +1615,7 @@
 }
 
 .is-correct .qz-ri-points {
-    color: var(--qz-success);
+    color: var(--text-success);
 }
 
 .qz-ri-chevron {
@@ -1703,14 +1635,7 @@ details[open] .qz-ri-chevron {
 
 .qz-ri-body {
     padding: 2px 18px 18px 54px;
-    animation: qz-open 0.35s var(--ease);
-}
-
-@keyframes qz-open {
-    from {
-        opacity: 0;
-        transform: translateY(-6px);
-    }
+    animation: aic-drop 0.35s var(--ease);
 }
 
 .qz-ri-line {
@@ -1735,7 +1660,7 @@ details[open] .qz-ri-chevron {
 }
 
 .qz-ri-line.is-right .qz-ri-value {
-    color: var(--qz-success);
+    color: var(--text-success);
     font-weight: 700;
 }
 
@@ -1751,16 +1676,7 @@ details[open] .qz-ri-chevron {
     text-align: left;
 }
 
-/* ===== 10. CONFETTI + HELPERS ===== */
-
-.qz-confetti {
-    position: fixed;
-    inset: 0;
-    z-index: 450;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-}
+/* ===== 10. HELPERS ===== */
 
 .qz-copy-area {
     position: fixed;
@@ -1774,6 +1690,10 @@ details[open] .qz-ri-chevron {
 /* ===== 11. RESPONSIVE ===== */
 
 @media (max-width: 860px) {
+    .js [data-feature="quiz"]:empty {
+        min-height: 800px;
+    }
+
     .qz-card {
         padding: 30px 26px 32px;
     }
@@ -1784,6 +1704,10 @@ details[open] .qz-ri-chevron {
 }
 
 @media (max-width: 720px) {
+    .js [data-feature="quiz"]:empty {
+        min-height: 1040px;
+    }
+
     .qz-options {
         grid-template-columns: 1fr;
     }
@@ -1859,6 +1783,10 @@ details[open] .qz-ri-chevron {
 }
 
 @media (max-width: 560px) {
+    .js [data-feature="quiz"]:empty {
+        min-height: 1250px;
+    }
+
     .qz-card {
         padding: 24px 18px 26px;
         border-radius: 20px;
@@ -2043,29 +1971,16 @@ details[open] .qz-ri-chevron {
     }
 }
 
-/* ===== 12. REDUCED MOTION / CALM MODE ===== */
+/* ===== 12. REDUCED MOTION / CALM MODE =====
+   core.js puts "fx-motion-off" on <html> for both, and style.css then stops every
+   animation and transition. Only what needs more than that is here. */
 
-@media (prefers-reduced-motion: reduce) {
-    .qz-card::before,
-    .qz-orb-ring,
-    .qz-orb-sweep,
-    .qz-orb-orbit,
-    .qz-orb-core,
-    .qz-flame,
-    .qz-res-ticks,
-    .qz-seg.is-current::after {
-        animation: none;
-    }
-
-    .qz-card::before {
-        display: none;
-    }
-
-    .qz-best.is-new {
-        animation: none;
-    }
+/* No scanning light on the card at all */
+html.fx-motion-off .qz-card::before {
+    display: none;
 }
 
-html.fx-calm .qz-card::before {
-    display: none;
+/* "New best score!" waits 1.2 s for its entrance: without the animation it is there at once */
+html.fx-motion-off .qz-best.is-new {
+    animation: none;
 }
