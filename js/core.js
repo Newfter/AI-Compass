@@ -246,6 +246,13 @@
         let number = Number(value);
         if (!isFinite(number)) return String(value);
 
+        // Fast path: whole numbers below 1000 look the same in both languages ("−42"), and the
+        // page's first Intl formatter is slow to make (about 45 ms on a slow phone)
+        if (Number.isInteger(number) && Math.abs(number) < 1000 && !settings.compact && !settings.digits) {
+            const text = String(number);
+            return settings.minus === false ? text : text.replace("-", "−");
+        }
+
         const intl = {};
         if (settings.compact) {
             intl.notation = "compact";
@@ -1849,5 +1856,9 @@
         pageReady = true;
         readyCallbacks.splice(0).forEach(function (callback) { safeCall(callback); });
     });
+
+    // The page's first number formatter is slow to make: make it while the browser is idle
+    // after loading, so a click or a part built later doesn't wait for it
+    whenIdle(function () { formatter("number", { maximumFractionDigits: 3 }); });
 
 })();
