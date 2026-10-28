@@ -153,8 +153,18 @@ body {
     overflow-x: hidden;
     /* Room for the fixed menu bar at the top */
     padding-top: var(--nav-height);
-    /* No colour transition here: "color" is inherited, so fading it would
-       restyle the whole page in every frame after a theme switch */
+    /* The page background fades to a new theme. Not the text colour: "color" is
+       inherited, so fading it would restyle the whole page in every frame */
+    transition: background-color 0.4s ease;
+}
+
+/* While core.js switches the theme (setTheme), nothing but the page background
+   fades: otherwise about a thousand buttons, links and cards would each fade
+   and be restyled in every frame */
+html.theme-switching *:not(body),
+html.theme-switching *::before,
+html.theme-switching *::after {
+    transition: none !important;
 }
 
 /* Safety net: nothing inside the page may make it wider than the screen

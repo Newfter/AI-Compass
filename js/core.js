@@ -369,7 +369,17 @@
         const changed = theme !== state.theme;
         state.theme = theme;
         storage.set("theme", theme);
-        root.setAttribute("data-theme", theme);
+        if (changed && motionOK()) {
+            // Only the page background fades to the new theme. The class "theme-switching"
+            // (style.css) turns every other transition off while the browser works out the
+            // new colours, or about a thousand buttons, links and cards would each fade.
+            root.classList.add("theme-switching");
+            root.setAttribute("data-theme", theme);
+            void getComputedStyle(root).color;      // work out the new colours now
+            root.classList.remove("theme-switching");
+        } else {
+            root.setAttribute("data-theme", theme);
+        }
         updateThemeMeta();
         if (changed) emit("theme", { theme: theme });
     }
