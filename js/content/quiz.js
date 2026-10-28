@@ -7,17 +7,27 @@
    Numbers in {braces} are filled in by js/quiz.js from the data.
    ========================================================= */
 
-// The section's title and subtitle on the page (index.html)
+// The section's title and subtitle on the page (index.html).
+// The subtitle follows the number of questions: ".12" spells out the number the quiz
+// has today; any other number uses the plural forms ("13 questions..."). The plain
+// key is the subtitle while the number is not known.
 window.AICompass.addTranslations({
     en: {
         "quiz.label": "TEST YOURSELF",
         "quiz.title": "The AI Challenge",
-        "quiz.subtitle": "Twelve questions. How well do you really know AI?"
+        "quiz.subtitle": "How well do you really know AI?",
+        "quiz.subtitle.12": "Twelve questions. How well do you really know AI?",
+        "quiz.subtitle.one": "{n} question. How well do you really know AI?",
+        "quiz.subtitle.many": "{n} questions. How well do you really know AI?"
     },
     ru: {
         "quiz.label": "ПРОВЕРЬ СЕБЯ",
         "quiz.title": "ИИ-испытание",
-        "quiz.subtitle": "Двенадцать вопросов. Насколько хорошо ты знаешь ИИ?"
+        "quiz.subtitle": "Насколько хорошо ты знаешь ИИ?",
+        "quiz.subtitle.12": "Двенадцать вопросов. Насколько хорошо ты знаешь ИИ?",
+        "quiz.subtitle.one": "{n} вопрос. Насколько хорошо ты знаешь ИИ?",
+        "quiz.subtitle.few": "{n} вопроса. Насколько хорошо ты знаешь ИИ?",
+        "quiz.subtitle.many": "{n} вопросов. Насколько хорошо ты знаешь ИИ?"
     }
 });
 

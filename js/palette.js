@@ -286,20 +286,6 @@
         return best;
     }
 
-    // Typed with the wrong keyboard layout? "ntcn" -> "тест", "руддщ" -> "hello"
-    const LAYOUT_EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`";
-    const LAYOUT_RU = "йцукенгшщзхъфывапролджэячсмитьбюё";
-
-    function switchLayout(text) {
-        return text.split("").map(function (char) {
-            let index = LAYOUT_EN.indexOf(char);
-            if (index !== -1) return LAYOUT_RU.charAt(index);
-            index = LAYOUT_RU.indexOf(char);
-            if (index !== -1) return LAYOUT_EN.charAt(index);
-            return char;
-        }).join("");
-    }
-
     /* =========================================================
        4. COLLECTING AND GROUPING RESULTS
        ========================================================= */
@@ -310,13 +296,10 @@
         const list = [];
         (A.commands || []).forEach(function (command, order) {
             if (!command || typeof command.run !== "function") return;
-            let title = "";
-            try {
-                title = typeof command.title === "function" ? command.title() : String(command.title || "");
-            } catch (error) {
-                title = "";
-            }
-            if (!title) title = String(command.id || "");
+            // A broken title() is reported and the command keeps its id as its title
+            const title = A.util.attempt(function () {
+                return typeof command.title === "function" ? command.title() : String(command.title || "");
+            }, "") || String(command.id || "");
             const groupName = command.group ? t(command.group) : t("palette.other");
             const folded = fold(title);
             list.push({
@@ -444,9 +427,10 @@
         let found = rank(commands, query);
         let note = "";
 
-        // Nothing? Maybe the keyboard was in the other language
+        // Nothing? Maybe the keyboard was in the other language:
+        // "ntcn" -> "тест", "руддщ" -> "hello" (A.switchLayout in core.js)
         if (!found.length) {
-            const other = switchLayout(query);
+            const other = A.switchLayout(query);
             if (other !== query) {
                 const again = rank(commands, other);
                 if (again.length) {
@@ -458,12 +442,7 @@
 
         // A glossary term mentioned anywhere in the search ("what is a transformer?")
         if (A.glossary && query.length >= 2) {
-            let term = null;
-            try {
-                term = A.glossary.find(rawQuery);
-            } catch (error) {
-                term = null;
-            }
+            const term = A.util.attempt(function () { return A.glossary.find(rawQuery); }, null);
             const termCommand = term && term.id ? commands.find(function (item) { return item.id === "glossary-" + term.id; }) : null;
             if (termCommand) {
                 // The glossary has its own command for this term: make sure it is in the results
@@ -772,8 +751,10 @@
         }
         clearTimeout(state.hideTimer);
         state.open = true;
+        // Where the focus goes back to. Opened again while it was still closing:
+        // the focus is still in the window, so the place from before stays.
         const active = document.activeElement;
-        state.lastFocus = active && active !== document.body ? active : null;
+        if (!ui.overlay.contains(active)) state.lastFocus = active && active !== document.body ? active : null;
 
         // Fill the list while the window is still hidden, so the page is
         // laid out once with the window in it
@@ -798,7 +779,9 @@
         state.open = false;
         ui.overlay.classList.remove("is-open");
         ui.overlay.classList.add("is-closing");
-        overlay.closed();     // before the focus goes back (the page is reachable again)
+        // Core gives the focus back as soon as the page can take it (see core.js)
+        const target = state.lastFocus;
+        overlay.closed(function () { giveFocusBack(target); });
         setTriggersExpanded(false);
         A.announce("", { region: ui.status, delay: 0 });   // drops a count still waiting
 
@@ -810,11 +793,12 @@
             ui.list.innerHTML = "";
             state.items = [];
         }, A.motion.ok() ? CLOSE_MS : 0);
+    }
 
-        // Focus goes back to where it was before (if that is still possible).
-        // Something hidden in the meantime (a link in the mobile menu, say)
-        // cannot take it, so then the focus goes to the search button.
-        const target = state.lastFocus;
+    // Focus goes back to where it was before (if that is still possible).
+    // Something hidden in the meantime (a link in the mobile menu, say)
+    // cannot take it, so then the focus goes to the search button.
+    function giveFocusBack(target) {
         state.lastFocus = null;
         if (target && target.isConnected && typeof target.focus === "function" && !target.closest("[inert]")) {
             target.focus({ preventScroll: true });
@@ -855,25 +839,15 @@
         A.track("palette.run", { id: item.id });
         close();
         setTimeout(function () {
-            try {
-                // Core closes the windows that are in the way, then runs it
-                A.runCommand(item.command || { run: item.run });
-            } catch (error) {
-                if (window.console) console.warn("AI Compass palette: command failed", item.id, error);
-            }
+            // Core closes the windows that are in the way, then runs it.
+            // A command that fails is reported in the console; the page goes on.
+            A.util.attempt(function () { A.runCommand(item.command || { run: item.run }); });
         }, RUN_DELAY_MS);
     }
 
     /* =========================================================
        8. SHORTCUTS AND THE LANGUAGE
        ========================================================= */
-
-    // Is the person typing in a text box? (Then "/" is just a slash.)
-    // TODO(core): quiz.js, lessons.js and neural-bg.js have the same check (A.dom.isTyping?)
-    function isTyping(element) {
-        if (!element || !element.closest) return false;
-        return Boolean(element.isContentEditable || element.closest("input, textarea, select, [contenteditable='true']"));
-    }
 
     document.addEventListener("keydown", function (event) {
         // Ctrl+K / Cmd+K (event.code also works with a Russian keyboard layout)
@@ -887,7 +861,7 @@
         // key types "." — event.code ("Slash") still names the physical key.
         const isSlash = event.key === "/" || (event.code === "Slash" && !event.shiftKey);
         if (isSlash && !event.ctrlKey && !event.metaKey && !event.altKey &&
-            !state.open && !event.defaultPrevented && !isTyping(event.target)) {
+            !state.open && !event.defaultPrevented && !A.dom.isTyping(event.target)) {
             event.preventDefault();
             open();
         }

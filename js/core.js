@@ -36,16 +36,17 @@
        A.addTranslations({ en, ru })   A.applyTranslations(element)   A.i18nHTML(key, className, tag)
        A.setTextValue(name, value)   A.textValue(name): a {name} that any text can show
        in the HTML: data-i18n="key", data-i18n-attr="aria-label:key", data-i18n-plural="name"
-       A.format.number(n, options)   A.format.percent(share, options)   A.format.date(date, options)
+       A.format.number(n, options)   A.format.percent(share, options)   A.format.date(date, options) ("" if invalid)
        A.switchLayout(text): "ntcn" -> "тест", the same keys in the other keyboard layout
        A.lang   A.locale   A.setLanguage(lang)   A.toggleLanguage()   A.onLanguageChange(callback)
     4  A.theme   A.setTheme(theme)   A.toggleTheme()   A.onThemeChange(callback)
     5  A.motion.ok() / reduced / calm / setCalm(on) / toggleCalm() / onChange(callback) / ease
        A.reducedMotion (the device setting only)
-       A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value }
+       A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value, running }
     6  A.util.clamp / lerp / easeOut / random / randomInt / pick / shuffle /
-              sampleWeighted / debounce / frameThrottle
-       A.dom.focusable / focusHeading / pauseScrollAnchoring / replay / fromHTML
+              sampleWeighted / debounce / frameThrottle / attempt(fn, fallback)
+       A.dom.focusable / focusHeading / pauseScrollAnchoring / replay / fromHTML /
+             setText / setAttr / setHidden (write only what changed) / isTyping(element)
        A.confirmPress(button, { onArm, onDisarm, onConfirm, enabled, timeout })
            -> { armed, disarm() }: a button that needs a second press
        A.colors.parse / rgb(cssName) / rgba(color, alpha) / mix(a, b, amount)
@@ -54,8 +55,8 @@
        A.whenVisible(element, callback, options)   A.onResize(callback, options)
        A.onPixelRatioChange(callback)   A.layout.px / navHeight
     8  A.announce(text, options)
-    9  A.overlays.register(id, options) -> { opened(), closed(), close(reason) }
-       A.overlays.closeAll / isOpen / top / hasModal / onChange / update
+    9  A.overlays.register(id, options) -> { opened(), closed(focusBack), close(reason) }
+       A.overlays.closeAll / isOpen / top / hasModal / contains / onChange / update
        (while a window locks the page, <body> gets --scrollbar-gap for the fixed bars)
    10  A.sections   A.navigate(id, options)   A.onScroll(callback)   A.onLayout(callback)
        A.layoutChanged()   A.onSection(callback)   A.whenNeeded(element, build, options)
@@ -71,7 +72,8 @@
     "use strict";
 
     const root = document.documentElement;
-    // Every storage key starts with this. The theme script in index.html reads "aic:theme" itself.
+    // Every storage key starts with this. The small script in the <head> of index.html
+    // reads "aic:theme" and "aic:motion.calm" itself (before the page is drawn).
     const PREFIX = "aic:";
 
     // Errors in one listener must not stop the others: report them and go on
@@ -80,12 +82,19 @@
         else if (window.console) console.error(error);
     }
 
-    function safeCall(callback, value) {
+    // A.util.attempt: runs a function and gives back what it returns. If it throws,
+    // the error is reported (in the console) and "fallback" comes back instead.
+    function attempt(callback, fallback) {
         try {
-            callback(value);
+            return callback();
         } catch (error) {
             report(error);
+            return fallback;
         }
+    }
+
+    function safeCall(callback, value) {
+        attempt(function () { callback(value); });
     }
 
     /* =========================================================
@@ -186,7 +195,7 @@
 
     // ----- Values inside texts -----
     // Some texts show a number or a word that comes from the data, like the number of
-    // lessons. The feature that knows it registers it once, by name:
+    // lessons. The feature that knows it registers it once, by name, while its file runs:
     //     A.setTextValue("lessonCount", LESSONS.length);
     //     A.setTextValue("questionCount", function () { return A.plural("quiz.questionCount", QUESTIONS.length); });
     // Then any text can say {lessonCount}: t(), A.plural() and the data-i18n elements of
@@ -197,6 +206,9 @@
     // that {name} in every text. A text that depends on a number names it on its element,
     // and gets the plural form that suits it (see plural() below):
     //     <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">lessons</span>
+    // Registered today: lessonCount (lessons.js), labExperimentCount (lab.js),
+    // quizQuestionCount (quiz.js) and languageCount (here). The hero numbers count up
+    // to them too (data-count-name in index.html, see js/effects.js).
     const textValues = {
         languageCount: LANGUAGES.length       // for texts like "2 languages"
     };
@@ -254,12 +266,18 @@
     //   with one key per form:  "quiz.points.one": "{n} point", "quiz.points.many": "{n} points"
     //                           (Russian also has ".few")
     //   or in one key:          "lab.dots": "dot|dots"   (Russian: "точка|точки|точек")
+    // A text for one exact number wins over the forms, so a count can be a word
+    // while the data has that many: "quiz.subtitle.12": "Twelve questions. ..."
+    // (a 13th question would show "13 questions. ..."). It must be in the current language.
     // {n} is filled in with the number, written the local way (values can replace it).
     function plural(key, n, values) {
+        const exact = Number.isInteger(Number(n)) ? translations[state.lang][key + "." + Number(n)] : undefined;
         const form = pluralForm(n);
         const forms = lookup(key);
         let text;
-        if (typeof forms === "string" && forms.indexOf("|") !== -1) {
+        if (exact !== undefined) {
+            text = exact;
+        } else if (typeof forms === "string" && forms.indexOf("|") !== -1) {
             const list = forms.split("|");
             text = list[Math.min(FORM_INDEX[form], list.length - 1)];
         } else {
@@ -336,9 +354,12 @@
         return formatNumber(share * 100, { digits: settings.digits || 0, grouping: false }) + "%";
     }
 
-    // A date: "27 October 2026" / "27 октября 2026 г."
+    // A date: "27 October 2026" / "27 октября 2026 г." A date that isn't one
+    // (new Date("soon"), NaN) gives "" instead of an error. No date at all: now.
     function formatDate(date, options) {
-        return formatter("date", options || { day: "numeric", month: "long", year: "numeric" }).format(date);
+        const time = date === undefined ? Date.now() : Number(date);
+        if (!isFinite(time)) return "";
+        return formatter("date", options || { day: "numeric", month: "long", year: "numeric" }).format(time);
     }
 
     // ----- Typed with the other keyboard layout -----
@@ -357,11 +378,32 @@
         }).join("");
     }
 
-    // ----- Translating the page -----
-    // Puts a text into an element, but only touches the page when the text really
-    // changes. The texts are our own and may contain simple HTML (like <strong>);
-    // plain texts are compared and set as text, which is much faster than HTML.
+    // ----- Writing only what changed (A.dom.setText / setAttr / setHidden) -----
+    // Writing the same text, attribute or hidden state again still makes the browser
+    // redo work (styles, layout), for nothing. These touch the page only on a real change.
+    //     A.dom.setText(counter, A.format.number(n));    // plain text, never HTML
+    //     A.dom.setAttr(button, "aria-pressed", String(on));
+    //     A.dom.setHidden(emptyMessage, results.length > 0);
     function setText(element, text) {
+        text = String(text);
+        if (element.textContent !== text) element.textContent = text;
+    }
+
+    function setAttr(element, name, value) {
+        value = String(value);
+        if (element.getAttribute(name) !== value) element.setAttribute(name, value);
+    }
+
+    function setHidden(element, hidden) {
+        hidden = Boolean(hidden);
+        if (element.hidden !== hidden) element.hidden = hidden;
+    }
+
+    // ----- Translating the page -----
+    // Puts a translated text into an element, only when it really changes. The texts
+    // are our own and may contain simple HTML (like <strong>); plain texts are
+    // compared and set as text, which is much faster than HTML.
+    function writeTranslation(element, text) {
         if (text.indexOf("<") === -1 && text.indexOf("&") === -1) {
             if (element.firstElementChild || element.textContent !== text) element.textContent = text;
         } else if (element.innerHTML !== text) {
@@ -389,16 +431,14 @@
 
         scope.querySelectorAll("[data-i18n]").forEach(function (element) {
             const text = elementText(element, element.getAttribute("data-i18n"));
-            if (text !== undefined) setText(element, text);
+            if (text !== undefined) writeTranslation(element, text);
         });
 
         scope.querySelectorAll("[data-i18n-attr]").forEach(function (element) {
             element.getAttribute("data-i18n-attr").split(",").forEach(function (pair) {
                 const parts = pair.split(":");
                 if (parts.length !== 2) return;
-                const name = parts[0].trim();
-                const text = t(parts[1].trim());
-                if (element.getAttribute(name) !== text) element.setAttribute(name, text);
+                setAttr(element, parts[0].trim(), t(parts[1].trim()));
             });
         });
     }
@@ -467,7 +507,8 @@
        Animations run only when motion.ok(): the device does not ask
        for reduced motion AND calm mode (our own switch) is off.
        <html> gets the class "fx-calm" in calm mode and "fx-motion-off"
-       whenever animations should stop, so the CSS can follow.
+       whenever animations should stop, so the CSS can follow. (The script
+       in the <head> of index.html sets them first, before the page is drawn.)
        ========================================================= */
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -522,10 +563,11 @@
     // With animations off (A.motion.ok() is false, or turns false meanwhile) the end
     // value is written at once. A new count-up on the same element replaces the running
     // one. When the element has left the page, the count-up ends by itself.
-    // Returns { finish(), stop(), value }:
+    // Returns { finish(), stop(), value, running }:
     //     finish()   jumps to the end value and runs done (if it hasn't run yet)
     //     stop()     stops where it is, without done
     //     value      the number it has reached so far (not rounded)
+    //     running    true while it is still counting (a redraw can leave the number alone then)
     const runningCounts = new Map();     // element -> its count-up
 
     function countUp(element, from, to, duration, options) {
@@ -538,6 +580,7 @@
 
         const counter = {
             value: from,
+            get running() { return !ended; },
             finish: function () {
                 if (ended) return;
                 stop();
@@ -549,9 +592,8 @@
 
         function write(value) {
             counter.value = value;
-            const text = format(value);
             // Only a real change is written: the page then has nothing new to lay out
-            if (element.textContent !== text) element.textContent = text;
+            setText(element, format(value));
         }
 
         function stop() {
@@ -672,7 +714,13 @@
                     callback();
                 });
             };
-        }
+        },
+
+        // Runs a function and gives back what it returns. If it throws, the error is
+        // reported (in the console) and the page goes on with "fallback" instead.
+        // For calls into another feature, which must not break this one:
+        //     const title = A.util.attempt(function () { return A.lessons.title(3); }, "");
+        attempt: attempt
     };
 
     // The browser's computed styles are read through one live object, so
@@ -740,6 +788,20 @@
             const box = document.createElement("div");
             box.innerHTML = String(html).trim();
             return box.firstElementChild;
+        },
+
+        // Write only what changed (see "Writing only what changed" in part 3)
+        setText: setText,
+        setAttr: setAttr,
+        setHidden: setHidden,
+
+        // Is a key press meant for a text box? True when the element (event.target)
+        // is or sits in a text field, a textarea, a drop-down list or editable text.
+        // Keyboard shortcuts leave those keys alone:
+        //     if (A.dom.isTyping(event.target)) return;   // "/" is just a slash there
+        isTyping: function (element) {
+            if (!element || !element.closest) return false;
+            return Boolean(element.isContentEditable || element.closest("input, textarea, select, [contenteditable='true']"));
         }
     };
 
@@ -1126,11 +1188,29 @@
                element: dialogElement,           // the window (or a function returning it)
                close: function (reason) { ... }  // closes it; reason: "escape", "navigate", "command"...
            });
-           overlay.opened();   // right after it opened
-           overlay.closed();   // as soon as it starts closing (the animation may go on)
+           overlay.opened();             // right after it opened, BEFORE moving the focus in
+           overlay.closed(function () {  // as soon as it starts closing (the animation may go on)
+               openButton.focus();       // gives the focus back, once the page can take it
+           });
 
-       Call opened() BEFORE moving the focus into the window, and closed() BEFORE
-       giving the focus back: until then the other side is inert and can't take it.
+       The window comes first, the rest of the page one frame later. Making the
+       page inert (or taking that away) restyles all of its ~3000 elements: about
+       75 ms with the CPU slowed down 4x, like a cheap phone. So core does that
+       work only after the browser has drawn the window (and, on closing, the
+       first frame of its closing animation):
+       - at once: the order of the windows, the Esc and Tab keys, the scroll lock;
+       - one frame later: inert on the rest of the page, or taking it away. Then
+         core calls the function given to closed(), unless another window opened
+         in the meantime or the focus went somewhere else.
+       It all happens at once when a window under the closed one must take the
+       focus, and when the lock changes --scrollbar-gap (a classic scrollbar, as
+       on Windows): that variable restyles the whole page anyway.
+       In that one frame the window's aria-modal="true" keeps screen readers
+       inside and its backdrop takes the clicks. The Tab key, A.navigate() and
+       A.overlays.closeAll() finish the waiting work at once (A.navigate() moves
+       the focus itself, so a waiting closed() function is dropped).
+       So never move the focus back to the page right after closed(): the page
+       may still be inert. Give closed() a function (or the element) instead.
 
        Options (each may also be a function, read again on every change):
            modal            true (default): lock scrolling, make the rest inert, trap Tab
@@ -1149,7 +1229,12 @@
     const overlayRecords = {};
     const overlayStack = [];                 // open windows, the top one last
     const inertByOverlays = new Set();
+    const focusReturns = [];                 // closed() functions waiting for the page
     let lockedBodyStyle = null;
+    let scrollbarGap = 0;                    // the --scrollbar-gap on <body> now
+    let pageWaiting = false;                 // inert and --scrollbar-gap wait for the next frame
+    let finishPlanned = false;
+    let openedCount = 0;                     // windows opened so far (a newer one cancels older focus returns)
     let lastOverlayState = "";
 
     function overlayValue(record, name, fallback) {
@@ -1177,24 +1262,32 @@
     }
 
     // The page behind a modal window must not scroll. The scrollbar's room is kept,
-    // so the page doesn't jump sideways. Fixed bars (like the menu bar) are outside
-    // the body's padding: they keep their place with the CSS variable --scrollbar-gap.
+    // so the page doesn't jump sideways. This part is cheap, so it happens at once:
+    // the window then appears where it stays.
     function lockScroll(lock) {
         const body = document.body;
         if (lock && !lockedBodyStyle) {
             const gap = window.innerWidth - root.clientWidth;
-            lockedBodyStyle = { overflow: body.style.overflow, paddingRight: body.style.paddingRight };
+            lockedBodyStyle = { overflow: body.style.overflow, paddingRight: body.style.paddingRight, gap: gap };
             body.style.overflow = "hidden";
-            if (gap > 0) {
-                body.style.paddingRight = gap + "px";
-                body.style.setProperty("--scrollbar-gap", gap + "px");
-            }
+            if (gap > 0) body.style.paddingRight = gap + "px";
         } else if (!lock && lockedBodyStyle) {
             body.style.overflow = lockedBodyStyle.overflow;
             body.style.paddingRight = lockedBodyStyle.paddingRight;
-            body.style.removeProperty("--scrollbar-gap");
             lockedBodyStyle = null;
         }
+    }
+
+    // Fixed bars (like the menu bar) are outside the body's padding: they keep
+    // their place with the CSS variable --scrollbar-gap, set in the same frame as
+    // the lock. Every element inherits a variable, so changing it restyles the
+    // whole page (inert then comes along in the same restyle, see applyOverlays).
+    function updateScrollbarGap() {
+        const gap = lockedBodyStyle ? lockedBodyStyle.gap : 0;
+        if (gap === scrollbarGap) return;
+        scrollbarGap = gap;
+        if (gap > 0) document.body.style.setProperty("--scrollbar-gap", gap + "px");
+        else document.body.style.removeProperty("--scrollbar-gap");
     }
 
     // Some elements must stay reachable under any window: toasts and screen-reader
@@ -1227,21 +1320,35 @@
         });
     }
 
+    // The windows that stay usable: the top window that shuts out the page, and
+    // every window above it. None when no open window shuts out the page.
+    function windowsToKeep() {
+        const keep = [];
+        for (let i = overlayStack.length - 1; i >= 0; i--) {
+            const record = overlayStack[i];
+            const element = overlayRoot(record);
+            if (element) keep.push(element);
+            if (overlayValue(record, "inert", isModal(record))) return keep;
+        }
+        return [];
+    }
+
     function applyOverlays() {
         lockScroll(overlayStack.some(function (record) {
             return overlayValue(record, "lockScroll", isModal(record));
         }));
 
-        // The top window that shuts out the page, and every window above it, stay usable
-        const keep = [];
-        let isolate = false;
-        for (let i = overlayStack.length - 1; i >= 0 && !isolate; i--) {
-            const record = overlayStack[i];
-            const element = overlayRoot(record);
-            if (element) keep.push(element);
-            isolate = overlayValue(record, "inert", isModal(record));
-        }
-        updateInert(isolate ? keep : []);
+        // Inert waits for the next frame (see the top of this part), except when:
+        // - a window that stays open is inert now (it was under the window that
+        //   closed, or it opens over another one): it must take the focus at once;
+        // - the lock changes --scrollbar-gap: the whole page is restyled anyway,
+        //   and the fixed bars must get the gap in the same frame as the lock;
+        // - the tab is hidden: it draws no frames.
+        pageWaiting = true;
+        const gap = lockedBodyStyle ? lockedBodyStyle.gap : 0;
+        const blocked = windowsToKeep().some(function (element) { return Boolean(element.closest("[inert]")); });
+        if (blocked || gap !== scrollbarGap || document.hidden) finishOverlays();
+        else planFinish();
 
         const detail = {
             top: overlays.top(),
@@ -1255,31 +1362,61 @@
         }
     }
 
+    // After the next frame is drawn: requestAnimationFrame runs just before the
+    // browser draws, the timeout right after it
+    function planFinish() {
+        if (finishPlanned) return;
+        finishPlanned = true;
+        requestAnimationFrame(function () {
+            setTimeout(function () {
+                finishPlanned = false;
+                finishOverlays();
+            }, 0);
+        });
+    }
+
+    // The waiting work: inert, --scrollbar-gap, then the focus going back
+    function finishOverlays() {
+        if (pageWaiting) {
+            pageWaiting = false;
+            updateInert(windowsToKeep());
+            updateScrollbarGap();
+        }
+        focusReturns.splice(0).forEach(function (item) {
+            if (item.opened !== openedCount) return;          // a newer window has the focus
+            const active = document.activeElement;
+            const lost = !active || active === document.body || (item.root && item.root.contains(active));
+            if (!lost) return;                                 // the focus went somewhere on purpose
+            if (typeof item.focus === "function") safeCall(item.focus);
+            else if (item.focus && typeof item.focus.focus === "function") item.focus.focus({ preventScroll: true });
+        });
+    }
+
     function overlayOpened(id) {
         const record = overlayRecords[id];
         if (!record) return;
         const index = overlayStack.indexOf(record);
         if (index !== -1) overlayStack.splice(index, 1);
         overlayStack.push(record);
+        openedCount++;
         applyOverlays();
     }
 
-    function overlayClosed(id) {
+    // focusBack: a function that gives the focus back (or the element that gets it).
+    // Core calls it once the page behind can take the focus (see the top of this part).
+    function overlayClosed(id, focusBack) {
         const record = overlayRecords[id];
         const index = overlayStack.indexOf(record);
         if (index === -1) return;
         overlayStack.splice(index, 1);
+        if (focusBack) focusReturns.push({ focus: focusBack, root: overlayRoot(record), opened: openedCount });
         applyOverlays();
     }
 
     function closeOverlay(id, reason) {
         const record = overlayRecords[id];
         if (!record || overlayStack.indexOf(record) === -1) return false;
-        try {
-            record.options.close(reason || "close");
-        } catch (error) {
-            report(error);
-        }
+        safeCall(record.options.close, reason || "close");
         // A window that forgot to report back is still taken off the stack,
         // so the page never stays locked
         overlayClosed(id);
@@ -1290,6 +1427,8 @@
     //   except      an id or a list of ids to keep open
     //   navigating  true: only windows with closeOnNavigate
     //   reason      passed to each window's close()
+    // The caller usually moves on to a place on the page, so the page is
+    // reachable at once afterwards (no waiting for the next frame).
     function closeAll(options) {
         const settings = options || {};
         const keep = [].concat(settings.except || []);
@@ -1299,6 +1438,7 @@
             if (settings.navigating && !overlayValue(record, "closeOnNavigate", isModal(record))) return;
             if (closeOverlay(record.id, settings.reason || "close")) count++;
         });
+        finishOverlays();
         return count;
     }
 
@@ -1308,7 +1448,7 @@
         return {
             id: id,
             opened: function () { overlayOpened(id); },
-            closed: function () { overlayClosed(id); },
+            closed: function (focusBack) { overlayClosed(id, focusBack); },
             close: function (reason) { return closeOverlay(id, reason); },
             // Changes options, or just re-reads them (e.g. after "modal" changed)
             update: function (changes) {
@@ -1333,6 +1473,10 @@
         },
         // Is a modal window open (one that shuts out the page)?
         hasModal: function () { return overlayStack.some(isModal); },
+        // Is this element (like the target of a key press) inside an open window?
+        contains: function (element) {
+            return overlayStack.some(function (record) { return insideOverlay(record, element); });
+        },
         onChange: function (callback) { return on("overlay", callback); }
     };
 
@@ -1376,6 +1520,8 @@
     }
 
     document.addEventListener("keydown", function (event) {
+        // Tab must find the page as the windows say (it may be one frame behind)
+        if (event.key === "Tab") finishOverlays();
         if (!overlayStack.length || event.defaultPrevented || event.isComposing) return;
         if (event.key === "Escape" || event.key === "Esc") onOverlayEscape(event);
         else if (event.key === "Tab" && !event.altKey && !event.ctrlKey && !event.metaKey) onOverlayTab(event);
@@ -1415,9 +1561,13 @@
         const settings = options || {};
         const target = document.getElementById(id);
         if (!target) return false;
+        // The place we go to takes the focus, so a window closed just before
+        // doesn't give it back to its button first (see overlays, part 9)
+        if (settings.focus !== false) focusReturns.length = 0;
         if (settings.keepOverlays !== true) {
             closeAll({ reason: "navigate", navigating: true, except: settings.keepOverlays });
         }
+        finishOverlays();     // the page must be reachable now, not one frame later
         buildParts(target);
         target.scrollIntoView({ behavior: motionOK() ? "smooth" : "auto", block: settings.block || "start" });
         if (settings.focus !== false) dom.focusHeading(target);
@@ -1575,6 +1725,8 @@
     // Everything is built at once when the address points inside the page (#lab,
     // #term-bias...), and the parts above a section are built before jumping to it,
     // so the browser scrolls to the right place.
+    const IDLE_WAIT_MAX = 2500;         // a "quiet moment" comes at the latest this long after the page loaded
+    const IDLE_FALLBACK = 300;          // (browsers without requestIdleCallback simply wait this long)
     let pageLoaded = document.readyState === "complete";
     const afterLoad = [];
     const waitingParts = new Set();     // { element, ensure } of the parts not built yet
@@ -1586,8 +1738,8 @@
 
     function whenIdle(callback) {
         const start = function () {
-            if (window.requestIdleCallback) window.requestIdleCallback(callback, { timeout: 2500 });
-            else setTimeout(callback, 300);
+            if (window.requestIdleCallback) window.requestIdleCallback(callback, { timeout: IDLE_WAIT_MAX });
+            else setTimeout(callback, IDLE_FALLBACK);
         };
         if (pageLoaded) start();
         else afterLoad.push(start);
@@ -2008,6 +2160,8 @@
     /* =========================================================
        14. START-UP
        ========================================================= */
+    // The <head> script of index.html has set these already; core sets them again,
+    // so the page never depends on that script
     root.classList.add("js");
     updateMotionClasses();
 

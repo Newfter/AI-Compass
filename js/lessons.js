@@ -1,6 +1,6 @@
 /* =========================================================
    AI COMPASS — LESSONS
-   Six short interactive lessons about AI. This file builds a
+   Short interactive lessons about AI. This file builds a
    progress panel (ring, lesson map, continue / reset), a grid of
    lesson cards, a full-screen lesson reader (text, a mini-lab, key
    ideas, a "check yourself" question, previous / next) and a
@@ -58,6 +58,7 @@
     const SPEAK_MARGIN = 40;                      // the sentence read aloud stays at least this far inside the reader
     const NO_VOICE_WARNING_GAP = 5000;            // "no voice" is shown at most once in this time
     const CERT_ICON_STEP = 190;                   // the space between the lesson icons on the certificate (canvas pixels)
+    const CERT_ICON_ROW = 1330;                   // their row is never wider than this: with more than 8 lessons, the icons get smaller
     const DOWNLOAD_CLEANUP_TIME = 4000;           // the certificate's temporary download address is freed after this
 
     // ---------- 2. The lessons ----------
@@ -105,6 +106,8 @@
     ];
 
     const TOTAL = LESSONS.length;
+    // Texts and the hero number can show it: {lessonCount}, data-count-name="lessonCount"
+    A.setTextValue("lessonCount", TOTAL);
 
     // ---------- 3. Small helpers ----------
     // (Only what core.js has no helper for.)
@@ -126,12 +129,6 @@
 
     function lessonTitle(n) {
         return t(lessonKey(n, "title"));
-    }
-
-    // An animation curve: fast at first, then gently slowing down (0 -> 0, 1 -> 1)
-    // TODO(core): A.util.easeOut(progress); quiz.js has the same curve twice
-    function easeOut(progress) {
-        return 1 - Math.pow(1 - progress, 3);
     }
 
     // Redraws a part of the page from scratch, but keeps the keyboard focus on
@@ -294,31 +291,16 @@
     const steps = Array.prototype.slice.call(hud.path.querySelectorAll(".lsn-step"));
 
     // ---------- 6. Updating the panel and the cards ----------
-    let ringValue = 0;
-    let ringFrame = 0;
+    let ringCount = null;       // the percentage counting up (A.countUp), once the ring has started
     let ringStarted = false;
-    let resetArmed = false;
-    let resetTimer = 0;
 
-    // Animates the percentage in the middle of the ring
+    // Fills the ring and counts the percentage in its middle up (or down) to "target".
+    // A new target counts on from the number shown now. (With animations off,
+    // A.countUp writes the number at once.)
     function setRing(target) {
-        cancelAnimationFrame(ringFrame);
         hud.ringFill.style.strokeDashoffset = String(100 - target);
-        if (!A.motion.ok()) {
-            ringValue = target;
-            hud.percent.textContent = String(target);
-            return;
-        }
-        const from = ringValue;
-        const start = performance.now();
-        function step(now) {
-            const progress = Math.min(1, (now - start) / RING_COUNT_UP_TIME);
-            const eased = easeOut(progress);
-            ringValue = Math.round(from + (target - from) * eased);
-            hud.percent.textContent = String(ringValue);
-            if (progress < 1) ringFrame = requestAnimationFrame(step);
-        }
-        ringFrame = requestAnimationFrame(step);
+        const from = ringCount ? Math.round(ringCount.value) : 0;
+        ringCount = A.countUp(hud.percent, from, target, RING_COUNT_UP_TIME);
     }
 
     function updateHUD() {
@@ -339,8 +321,9 @@
         hud.certToggle.hidden = done !== TOTAL;
         if (done !== TOTAL) toggleCertificate(false);
         hud.reset.hidden = done === 0;
-        hud.reset.classList.toggle("is-armed", resetArmed);
-        hud.reset.textContent = (resetArmed ? "⚠ " : "↺ ") + t(resetArmed ? "lessons.hud.resetConfirm" : "lessons.hud.reset");
+        const armed = resetPress.armed;
+        hud.reset.classList.toggle("is-armed", armed);
+        hud.reset.textContent = (armed ? "⚠ " : "↺ ") + t(armed ? "lessons.hud.resetConfirm" : "lessons.hud.reset");
 
         // The lesson map
         hud.path.setAttribute("aria-label", t("lessons.hud.pathLabel"));
@@ -436,23 +419,11 @@
         }
     }
 
-    // Reset needs two presses, so progress is not lost by accident
-    function onResetClick(event) {
-        if (!resetArmed) {
-            resetArmed = true;
-            updateHUD();
-            A.announce(t("lessons.hud.resetAsk"), { region: hud.live });
-            clearTimeout(resetTimer);
-            resetTimer = setTimeout(function () {
-                resetArmed = false;
-                updateHUD();
-            }, RESET_CONFIRM_TIME);
-            return;
-        }
-        // The second click of a double-click (or a double tap) is not a second press
-        if (event.detail > 1) return;
-        clearTimeout(resetTimer);
-        resetArmed = false;
+    // Reset needs two presses, so progress is not lost by accident. The first press
+    // asks "Sure?" (updateHUD paints the armed button); a second press within
+    // RESET_CONFIRM_TIME resets. A.confirmPress ignores the second click of a
+    // double-click (or a double tap) and a held-down Enter key.
+    function resetProgress() {
         completed.clear();
         saveCompleted();
         Object.keys(checkAnswers).forEach(function (key) { delete checkAnswers[key]; });
@@ -461,6 +432,16 @@
         A.toast(t("lessons.toast.reset"), "↺");
         hud.continueButton.focus();
     }
+
+    const resetPress = A.confirmPress(hud.reset, {
+        onArm: function () {
+            updateHUD();
+            A.announce(t("lessons.hud.resetAsk"), { region: hud.live });
+        },
+        onDisarm: updateHUD,
+        onConfirm: resetProgress,
+        timeout: RESET_CONFIRM_TIME
+    });
 
     // ---------- 8. The certificate ----------
     // A picture drawn on a <canvas> (only while it is shown) that can be saved as a PNG file
@@ -638,30 +619,33 @@
             W / 2, 566, 1240, "500", 34, fonts.body);
 
         // Every lesson with a check mark, in one row around the middle
+        // (scale is 1, full size, for up to 8 lessons; smaller for more)
+        const scale = Math.min(1, CERT_ICON_ROW / Math.max(1, (TOTAL - 1) * CERT_ICON_STEP));
+        const scaled = function (size) { return Math.round(size * scale); };
         LESSONS.forEach(function (lesson, index) {
-            const x = W / 2 + (index - (TOTAL - 1) / 2) * CERT_ICON_STEP;
+            const x = W / 2 + (index - (TOTAL - 1) / 2) * CERT_ICON_STEP * scale;
             const y = 700;
             ctx.beginPath();
-            ctx.arc(x, y, 54, 0, Math.PI * 2);
+            ctx.arc(x, y, 54 * scale, 0, Math.PI * 2);
             ctx.fillStyle = rgba("--accent", 0.14);
             ctx.fill();
             ctx.strokeStyle = gradient;
             ctx.lineWidth = 3;
             ctx.stroke();
-            ctx.font = "46px " + fonts.body;
+            ctx.font = scaled(46) + "px " + fonts.body;
             ctx.textBaseline = "middle";
             ctx.fillStyle = color.text;
-            ctx.fillText(lesson.icon, x, y + 3);
+            ctx.fillText(lesson.icon, x, y + 3 * scale);
             ctx.beginPath();
-            ctx.arc(x + 40, y - 40, 17, 0, Math.PI * 2);
+            ctx.arc(x + 40 * scale, y - 40 * scale, 17 * scale, 0, Math.PI * 2);
             ctx.fillStyle = color.success;
             ctx.fill();
             ctx.fillStyle = color.bg;
-            ctx.font = "700 20px " + fonts.body;
-            ctx.fillText("✓", x + 40, y - 39);
+            ctx.font = "700 " + scaled(20) + "px " + fonts.body;
+            ctx.fillText("✓", x + 40 * scale, y - 39 * scale);
             ctx.textBaseline = "alphabetic";
             ctx.fillStyle = color.muted;
-            wrapText(ctx, lessonTitle(lesson.number), x, y + 92, 176, "600", 19, fonts.body);
+            wrapText(ctx, lessonTitle(lesson.number), x, y + 92 * scale, 176 * scale, "600", scaled(19), fonts.body);
         });
 
         // Date and seal
@@ -721,7 +705,9 @@
             } else {
                 save(cert.canvas.toDataURL("image/png"), false);
             }
-        } catch (error) {}
+        } catch (error) {
+            // A browser can refuse to turn the picture into a file: then there is no download
+        }
     }
 
     // The saved name: only a text, and never longer than the box allows (maxlength)
@@ -744,14 +730,8 @@
             openLesson(nextLesson() || 1, hud.continueButton);
         } else if (event.target.closest('[data-ref="certToggle"]')) {
             toggleCertificate();
-        } else if (event.target.closest('[data-ref="reset"]')) {
-            onResetClick(event);
         }
-    });
-
-    // Holding Enter down on a button repeats its click: on Reset only a new press counts
-    hud.reset.addEventListener("keydown", function (event) {
-        if (event.repeat && event.key === "Enter") event.preventDefault();
+        // (Reset listens by itself: see resetPress in section 7)
     });
 
     // A click anywhere on a card opens it (the button is the keyboard way in)
@@ -762,64 +742,6 @@
         if (selection && !event.target.closest("button")) return;   // the user is selecting text
         openLesson(Number(card.getAttribute("data-lesson")), card.querySelector("[data-open]"));
     });
-
-    // A soft coloured light follows the mouse over a card (the CSS draws it at --mx / --my).
-    // Like the glare of effects.js, it only follows a real mouse, and only while
-    // animations are on (with the motion off, css/lessons.css hides the light).
-    // The card's place on the page is read once, when the mouse comes onto it,
-    // and --mx / --my are written at most once per frame.
-    const finePointer = A.media(A.queries.finePointer);
-    const cardLight = { card: null, left: 0, top: 0, x: 0, y: 0, frame: 0 };
-
-    function cardLightOn() {
-        return A.motion.ok() && finePointer.matches;
-    }
-
-    function lightCard(card) {
-        const box = card.getBoundingClientRect();
-        cardLight.card = card;
-        cardLight.left = box.left + window.scrollX;   // page coordinates: still right after a scroll
-        cardLight.top = box.top + window.scrollY;
-    }
-
-    function drawCardLight() {
-        cardLight.frame = 0;
-        const card = cardLight.card;
-        if (!card) return;
-        card.style.setProperty("--mx", Math.round(cardLight.x + window.scrollX - cardLight.left) + "px");
-        card.style.setProperty("--my", Math.round(cardLight.y + window.scrollY - cardLight.top) + "px");
-    }
-
-    function followPointer(card, event) {
-        if (event.pointerType !== "mouse" || !cardLightOn()) return;
-        if (cardLight.card !== card) lightCard(card);
-        cardLight.x = event.clientX;
-        cardLight.y = event.clientY;
-        if (!cardLight.frame) cardLight.frame = requestAnimationFrame(drawCardLight);
-    }
-
-    // Motion off (or no mouse any more): the light goes back to its resting place
-    function resetCardLight() {
-        cancelAnimationFrame(cardLight.frame);
-        cardLight.frame = 0;
-        cardLight.card = null;
-        cards.forEach(function (card) {
-            card.style.removeProperty("--mx");
-            card.style.removeProperty("--my");
-        });
-    }
-
-    cards.forEach(function (card) {
-        const follow = function (event) { followPointer(card, event); };
-        card.addEventListener("pointerenter", follow);
-        card.addEventListener("pointermove", follow);
-        card.addEventListener("pointerleave", function () {
-            if (cardLight.card === card) cardLight.card = null;
-        });
-    });
-
-    A.motion.onChange(function () { if (!cardLightOn()) resetCardLight(); });
-    A.onMedia(A.queries.finePointer, function () { if (!cardLightOn()) resetCardLight(); }, { immediate: false });
 
     // ---------- 10. Mini-lab 1: AI or not AI? ----------
     const SORT_ANSWERS = ["not", "ai", "ai", "not", "ai"];
@@ -1589,7 +1511,7 @@
     readerEl.setAttribute("data-size", textSize);
     readerEl.innerHTML = `
         <div class="lsn-reader-backdrop" data-action="close"></div>
-        <div class="lsn-reader-panel" role="dialog" aria-modal="true" aria-labelledby="lsn-reader-title">
+        <div class="lsn-reader-panel" role="dialog" aria-modal="true">
             <div class="lsn-reader-progress" aria-hidden="true"><span data-ref="progress"></span></div>
             <header class="lsn-reader-top">
                 <div class="lsn-reader-where">
@@ -1839,6 +1761,9 @@
         stopLab(false);
         panel.style.setProperty("--lsn-rgb", "var(" + LESSONS[n - 1].rgb + ")");
         parts.article.innerHTML = articleHTML(n);
+        // The window is named by the lesson's title. That title only exists from the
+        // first lesson on, so the name is linked here and not in the HTML above.
+        A.dom.setAttr(panel, "aria-labelledby", "lsn-reader-title");
         parts.toc.innerHTML = tocHTML(n);
         reader.cleanupLab = mountLab(n, ref(parts.article, "lab"));
         renderCheck();
@@ -2039,7 +1964,9 @@
     function setHash(hash) {
         try {
             history.replaceState(history.state, "", hash || window.location.pathname + window.location.search);
-        } catch (error) {}
+        } catch (error) {
+            // Some browsers refuse this for a page opened from a file: the reader works without it
+        }
     }
 
     function scrollCardIntoView(n) {
@@ -2048,6 +1975,15 @@
         const box = card.getBoundingClientRect();
         const top = window.scrollY + box.top - Math.max(0, (window.innerHeight - box.height) / 2);
         window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
+    }
+
+    // While a lesson is open, pop-up messages sit just above the reader's bottom bar:
+    // .lsn-reading (css/lessons.css) sets --toast-bottom. The class goes on the toast
+    // stack itself, not on <body>: every element would inherit a variable set on
+    // <body>, so the whole page would be restyled on every open and close.
+    function setReading(on) {
+        const toasts = document.getElementById("toast-stack");
+        if (toasts) toasts.classList.toggle("lsn-reading", on);
     }
 
     // Can the keyboard focus go back to this element when the reader closes?
@@ -2073,7 +2009,7 @@
         const hash = window.location.hash;
         reader.previousHash = /^#lesson-\d+$/.test(hash) ? "" : hash;
 
-        document.body.classList.add("lsn-reading");
+        setReading(true);
         readerEl.hidden = false;
         readerEl.classList.remove("is-closing");
         A.dom.replay(readerEl, "is-open");   // the opening animation starts from the beginning
@@ -2091,8 +2027,11 @@
         stopLab(true);
         releaseSpy();
         readerEl.classList.remove("is-open");
-        document.body.classList.remove("lsn-reading");
-        overlay.closed();            // before the focus goes back to the page
+        setReading(false);
+        // Core gives the focus back as soon as the page can take it (see core.js)
+        const opener = reader.opener;
+        const lesson = reader.lesson;
+        overlay.closed(settings.restoreFocus === false ? null : function () { giveFocusBack(opener, lesson); });
         if (!settings.keepHash) setHash(reader.previousHash);
 
         const finish = function () {
@@ -2105,19 +2044,19 @@
             readerEl.classList.add("is-closing");
             reader.closeTimer = setTimeout(finish, READER_CLOSE_TIME);
         }
+    }
 
-        if (settings.restoreFocus !== false) {
-            // Back to the button that opened the reader. If there is none, go to the
-            // card of the lesson you were reading (scrolled into view, so the focus ring is visible).
-            if (canTakeFocus(reader.opener)) {
-                reader.opener.focus({ preventScroll: true });
-            } else {
-                const card = mount.querySelector("#lesson-card-" + reader.lesson + " [data-open]");
-                if (card) {
-                    scrollCardIntoView(reader.lesson);
-                    card.focus({ preventScroll: true });
-                }
-            }
+    // Back to the button that opened the reader. If there is none, go to the
+    // card of the lesson you were reading (scrolled into view, so the focus ring is visible).
+    function giveFocusBack(opener, lesson) {
+        if (canTakeFocus(opener)) {
+            opener.focus({ preventScroll: true });
+            return;
+        }
+        const card = mount.querySelector("#lesson-card-" + lesson + " [data-open]");
+        if (card) {
+            scrollCardIntoView(lesson);
+            card.focus({ preventScroll: true });
         }
     }
 
@@ -2171,8 +2110,7 @@
         // and never while typing or moving a slider
         const target = event.target;
         if (!readerEl.contains(target) && target !== document.body && target !== document.documentElement) return;
-        const tag = target.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) return;
+        if (A.dom.isTyping(target)) return;
         event.preventDefault();
         goRelative(event.key === "ArrowLeft" ? -1 : 1);
     });
@@ -2374,7 +2312,8 @@
         open: function (number, opener) {
             openLesson(number, opener || document.activeElement);
         },
-        close: function () { closeReader({ restoreFocus: false }); },
+        // Like Esc: the focus goes back to the opener (or to the lesson's card)
+        close: function () { closeReader(); },
         isOpen: function () { return reader.open; }
     });
 

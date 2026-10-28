@@ -17,8 +17,8 @@
     8. "Decoding" text                [data-scramble] and .section-label
     9. Typewriter words               [data-rotator]
    10. Pointer effects (a real mouse only): 3D tilt with a glare on
-       [data-tilt], a glowing border on .card, a spotlight under the
-       cursor and magnetic main buttons (.btn-primary)
+       [data-tilt], a glowing border on .card (not on [data-no-glare]),
+       a spotlight under the cursor and magnetic main buttons (.btn-primary)
    11. Ripple when you press a button
    12. Section mini-map on the right (big screens)
    13. Confetti (for big moments)
@@ -68,8 +68,10 @@
 
     // Numbers that count up
     const COUNT_DELAY = 150;                  // a number starts counting this long after its card appeared
-    const COUNT_MIN_TIME = 900;               // counting up takes this long at least...
-    const COUNT_MAX_TIME = 1800;              // ...and this long at most (bigger jumps take longer)
+    const COUNT_BASE_TIME = 700;              // counting up takes this long...
+    const COUNT_TIME_PER_UNIT = 12;           // ...plus this much for every unit it counts (bigger jumps take longer),
+    const COUNT_MIN_TIME = 900;               // ...but at least this long...
+    const COUNT_MAX_TIME = 1800;              // ...and at most this long
 
     // Decoding text
     const SCRAMBLE_SELECTOR = "[data-scramble], .section-label";       // the texts that "decode"
@@ -77,8 +79,12 @@
     const SCRAMBLE_MAX_LENGTH = 140;          // longer texts don't decode
     const SCRAMBLE_AFTER_CARD = 140;          // a text in an appearing card starts decoding this long after the card
     const SCRAMBLE_SHUFFLE = 55;              // the random letters change this often
-    const SCRAMBLE_MIN_TIME = 600;            // decoding takes this long at least...
-    const SCRAMBLE_MAX_TIME = 1300;           // ...and this long at most (longer texts take longer)
+    const SCRAMBLE_BASE_TIME = 380;           // decoding takes this long...
+    const SCRAMBLE_LETTER_TIME = 32;          // ...plus this much for every letter,
+    const SCRAMBLE_MIN_TIME = 600;            // ...but at least this long...
+    const SCRAMBLE_MAX_TIME = 1300;           // ...and at most this long
+    const SCRAMBLE_NOISE_ONLY = 0.15;         // for the first 15% of that time, every letter is random
+    const SCRAMBLE_LANGUAGE_DELAY = 60;       // after a language change, the new words start decoding after this
     // The random letters shown while a text decodes (Latin, Cyrillic, digits, symbols)
     const GLYPHS_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZАБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ0123456789#%&*+=<>/\\|{}[]?!$@";
     const GLYPHS_LOWER = "abcdefghijklmnopqrstuvwxyzабвгдежзиклмнопрстуфхцчшщэюя0123456789#%&*+=<>/\\|{}?!";
@@ -93,10 +99,16 @@
 
     // Pointer effects
     const SPOTLIGHT_SPEED = 9;                // how fast the spotlight catches up with the cursor (higher = faster)
-    const TILT_MIN = 3;                       // degrees: big cards tilt this much at most...
-    const TILT_MAX = 9;                       // ...small cards up to this much
+    const TILT_SIZE = 2600;                   // a card tilts at most (this / its width) degrees,
+    const TILT_MIN = 3;                       // ...but big cards at least this much...
+    const TILT_MAX = 9;                       // ...and small cards at most this much
+    const TILT_UP_DOWN = 0.8;                 // tilting up and down is a little weaker (80%) than sideways
+    const TILT_DEPTH = 700;                   // the 3D perspective: at least this deep,
+    const TILT_DEPTH_PER_WIDTH = 2.2;         // ...or this many times the card's width
     const TILT_RETURN = 700;                  // a card takes this long to lie flat again when the mouse leaves
-    const MAGNET_X = 8;                       // a main button leans at most this far towards the cursor sideways...
+    const MAGNET_PULL_X = 0.2;                // a main button follows the cursor by this share of the distance sideways...
+    const MAGNET_PULL_Y = 0.28;               // ...and up or down,
+    const MAGNET_X = 8;                       // ...but at most this far sideways...
     const MAGNET_Y = 6;                       // ...and up or down
 
     // Ripples, confetti and housekeeping
@@ -104,6 +116,10 @@
     const RIPPLE_TIME = 700;                  // a ripple is removed after this (css/effects.css: 0.65s)
     const CONFETTI_COLORS = ["--accent", "--accent-2", "--accent-3", "--success", "--warning"];   // theme colours of the pieces
     const CONFETTI_TIME = 3000;               // confetti falls this long (unless the caller asks for another time)
+    const CONFETTI_PIECES = 180;              // pieces from the two cannons at the bottom of the screen,
+    const CONFETTI_BURST_PIECES = 150;        // ...in a burst from a button,
+    const CONFETTI_BURST_PIECES_SMALL = 90;   // ...and in a burst on a screen narrower than
+    const CONFETTI_SMALL_SCREEN = 600;        // ...this
     const PRUNE_WAIT = 2000;                  // removed elements are forgotten this long after they left the page
 
     /* =========================================================
@@ -149,8 +165,6 @@
         }
         if (!fineOK()) resetPointerEffects();
         rotators.forEach(updateRotator);
-        // (older code listens for this event; new code uses A.motion.onChange)
-        document.dispatchEvent(new CustomEvent("aic:effects", { detail: { calm: A.motion.calm } }));
     }
 
     // The hero rises in with pure CSS when the page opens (css/effects.css).
@@ -520,6 +534,10 @@
     /* =========================================================
        7. COUNT-UP NUMBERS  [data-count="12"]
        Optional: data-count-prefix="+" data-count-suffix="%".
+       data-count-name="lessonCount": the number comes from the data,
+       through a text value of core.js (A.setTextValue), once the feature
+       that knows it has set it. data-count is the number until then
+       (and the one the page shows without JavaScript).
        Changing data-count later animates to the new number.
        The real number stays in the page (good for screen readers)
        and only drops to 0 just before it scrolls into view.
@@ -529,27 +547,43 @@
         return part ? Math.min(part.length, 3) : 0;
     }
 
-    // Written the local way ("1,5" in Russian), with exactly the decimals of data-count.
-    // Thousands are only grouped from 10,000 on ("9999", but "12,345" / "12 345").
-    // (Only a real change is written: the page then has nothing new to lay out.)
-    function writeCounter(element, counter, value) {
-        const prefix = element.getAttribute("data-count-prefix") || "";
-        const suffix = element.getAttribute("data-count-suffix") || "";
-        const text = prefix + A.format.number(value, { digits: counter.decimals, grouping: "min2" }) + suffix;
-        if (element.textContent !== text) element.textContent = text;
+    // The number to count to (see the top of this part)
+    function counterTarget(element) {
+        const name = element.getAttribute("data-count-name");
+        const value = name ? Number(A.textValue(name)) : NaN;
+        return isFinite(value) ? value : parseFloat(element.getAttribute("data-count"));
     }
 
+    // The text of a number: written the local way ("1,5" in Russian), with exactly the
+    // decimals of data-count, and its prefix and suffix. Thousands are only grouped
+    // from 10,000 on ("9999", but "12,345" / "12 345").
+    function counterText(element, counter, value) {
+        const prefix = element.getAttribute("data-count-prefix") || "";
+        const suffix = element.getAttribute("data-count-suffix") || "";
+        return prefix + A.format.number(value, { digits: counter.decimals, grouping: "min2" }) + suffix;
+    }
+
+    // (A.dom.setText writes only a real change: the page then has nothing new to lay out.)
+    function writeCounter(element, counter, value) {
+        A.dom.setText(element, counterText(element, counter, value));
+    }
+
+    // Stops a number that waits to count or is counting. counter.shown keeps
+    // where it got to, so a new count can go on from there.
     function stopCounter(counter) {
         clearTimeout(counter.timer);
-        cancelAnimationFrame(counter.raf);
         counter.timer = 0;
-        counter.raf = 0;
+        if (counter.count) {
+            counter.count.stop();
+            counter.shown = counter.count.value;
+            counter.count = null;
+        }
     }
 
     // Returns true when the number is new and waits to count up
     function registerCounter(element) {
         const raw = element.getAttribute("data-count");
-        const value = parseFloat(raw);
+        const value = counterTarget(element);
         if (!isFinite(value)) return false;
 
         let counter = counters.get(element);
@@ -567,7 +601,7 @@
             return false;
         }
 
-        counter = { target: value, shown: value, decimals: decimalsOf(raw), raf: 0, timer: 0, waiting: false, armed: false };
+        counter = { target: value, shown: value, decimals: decimalsOf(raw), count: null, timer: 0, waiting: false, armed: false };
         counters.set(element, counter);
         writeCounter(element, counter, value);
 
@@ -671,7 +705,12 @@
         });
     }
 
-    document.addEventListener("DOMContentLoaded", () => requestAnimationFrame(checkCounters));
+    // This file runs before the features, so the numbers they set (data-count-name)
+    // are known only once every script has run: the counters take them then
+    document.addEventListener("DOMContentLoaded", () => {
+        registerCounters(findAll(document.body, "[data-count-name]"));
+        requestAnimationFrame(checkCounters);
+    });
     window.addEventListener("load", checkCounters);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(checkCounters);
 
@@ -707,19 +746,16 @@
             return;
         }
 
-        const duration = A.util.clamp(700 + Math.abs(to - from) * 12, COUNT_MIN_TIME, COUNT_MAX_TIME);
+        // Bigger jumps count a little longer
+        const duration = A.util.clamp(COUNT_BASE_TIME + Math.abs(to - from) * COUNT_TIME_PER_UNIT, COUNT_MIN_TIME, COUNT_MAX_TIME);
         counter.timer = setTimeout(() => {
             counter.timer = 0;
-            const start = performance.now();
-            const tick = (now) => {
-                // (the frame time can be a hair earlier than "start", so keep it at 0 or more)
-                const progress = A.util.clamp((now - start) / duration, 0, 1);
-                const eased = 1 - Math.pow(2, -10 * progress);              // fast start, soft landing
-                counter.shown = progress >= 1 ? to : from + (to - from) * eased;
-                writeCounter(element, counter, counter.decimals ? counter.shown : Math.round(counter.shown));
-                counter.raf = progress < 1 ? requestAnimationFrame(tick) : 0;
-            };
-            counter.raf = requestAnimationFrame(tick);
+            // A.countUp (core.js) writes the number in every frame and the exact end value at the end
+            counter.count = A.countUp(element, from, to, duration, {
+                ease: (progress) => 1 - Math.pow(2, -10 * progress),       // fast start, soft landing
+                format: (value) => counterText(element, counter, counter.decimals ? value : Math.round(value)),
+                done: () => { counter.shown = to; }
+            });
         }, delay);
     }
 
@@ -745,7 +781,7 @@
         if (/\s/.test(original)) return original;
         const lower = original !== original.toUpperCase();
         const set = lower ? GLYPHS_LOWER : GLYPHS_UPPER;
-        return set.charAt(Math.floor(Math.random() * set.length));
+        return A.util.pick(set);
     }
 
     // How many lines does the element's text take up? A Range gives one box per
@@ -889,7 +925,7 @@
         element.classList.add("fx-scrambling");
         run.visual = visual;
 
-        const duration = A.util.clamp(380 + letters.length * 32, SCRAMBLE_MIN_TIME, SCRAMBLE_MAX_TIME);
+        const duration = A.util.clamp(SCRAMBLE_BASE_TIME + letters.length * SCRAMBLE_LETTER_TIME, SCRAMBLE_MIN_TIME, SCRAMBLE_MAX_TIME);
         const start = performance.now();
         let noiseLetters = [];
         let lastShuffle = 0;
@@ -903,7 +939,7 @@
             }
 
             const progress = A.util.clamp((now - start) / duration, 0, 1);
-            const done = Math.floor(A.util.clamp((progress - 0.15) / 0.85, 0, 1) * letters.length);
+            const done = Math.floor(A.util.clamp((progress - SCRAMBLE_NOISE_ONLY) / (1 - SCRAMBLE_NOISE_ONLY), 0, 1) * letters.length);
 
             if (now - lastShuffle > SCRAMBLE_SHUFFLE) {
                 lastShuffle = now;
@@ -1099,7 +1135,7 @@
                 wait = TYPE_HOLD;                                           // the full word stays a while
                 typing = false;
             } else {
-                wait = TYPE_LETTER + Math.random() * TYPE_JITTER;
+                wait = TYPE_LETTER + A.util.random(0, TYPE_JITTER);
             }
         } else {
             rotator.letters = Math.max(0, rotator.letters - 1);
@@ -1125,8 +1161,9 @@
 
     /* =========================================================
        10. POINTER EFFECTS (a real mouse only)
-       tilt + glare on [data-tilt], glowing border on .card,
-       spotlight under the cursor, magnetic .btn-primary
+       tilt + glare on [data-tilt], glowing border on .card (an element
+       with data-no-glare gets neither), spotlight under the cursor,
+       magnetic .btn-primary
        ========================================================= */
     const spotlight = document.createElement("div");
     spotlight.className = "fx-spotlight";
@@ -1199,11 +1236,14 @@
     }
 
     // Elements that can't hold a glare: images, form fields and scrolling boxes
-    // (in a scrolling box the glare would scroll away with the content)
+    // (in a scrolling box the glare would scroll away with the content).
+    // A card can also say no with data-no-glare. The lab card does: it is huge
+    // (about 1180 x 1874 px), and the browser had to draw it again and again while
+    // the light moved (1.3 s of drawing for 180 mouse moves, against 0.08 s without).
     const cannotLight = new WeakSet();
 
     function canLight(host) {
-        if (cannotLight.has(host)) return false;
+        if (cannotLight.has(host) || host.hasAttribute("data-no-glare")) return false;
         if (glareOf(host)) return true;
         const style = getComputedStyle(host);
         const scrolls = /(auto|scroll)/.test(style.overflowX + " " + style.overflowY);
@@ -1296,10 +1336,10 @@
             host.style.setProperty("--fx-y", (y * 100).toFixed(1) + "%");
 
             // Small cards tilt more, big cards tilt less
-            const maxTilt = A.util.clamp(2600 / litRect.width, TILT_MIN, TILT_MAX);
-            const rotateX = (0.5 - y) * 2 * maxTilt * 0.8;
+            const maxTilt = A.util.clamp(TILT_SIZE / litRect.width, TILT_MIN, TILT_MAX);
+            const rotateX = (0.5 - y) * 2 * maxTilt * TILT_UP_DOWN;
             const rotateY = (x - 0.5) * 2 * maxTilt;
-            const depth = Math.round(Math.max(700, litRect.width * 2.2));
+            const depth = Math.round(Math.max(TILT_DEPTH, litRect.width * TILT_DEPTH_PER_WIDTH));
             host.style.transform = "perspective(" + depth + "px) rotateX(" + rotateX.toFixed(2) + "deg) rotateY(" + rotateY.toFixed(2) + "deg) scale3d(1.02, 1.02, 1.02)";
         }
     }
@@ -1369,8 +1409,8 @@
         if (!magnetRect) magnetRect = button.getBoundingClientRect();
         const dx = pointer.x - (magnetRect.left + magnetRect.width / 2);
         const dy = pointer.y - (magnetRect.top + magnetRect.height / 2);
-        button.style.setProperty("--fx-mx", A.util.clamp(dx * 0.2, -MAGNET_X, MAGNET_X).toFixed(2) + "px");
-        button.style.setProperty("--fx-my", A.util.clamp(dy * 0.28, -MAGNET_Y, MAGNET_Y).toFixed(2) + "px");
+        button.style.setProperty("--fx-mx", A.util.clamp(dx * MAGNET_PULL_X, -MAGNET_X, MAGNET_X).toFixed(2) + "px");
+        button.style.setProperty("--fx-my", A.util.clamp(dy * MAGNET_PULL_Y, -MAGNET_Y, MAGNET_Y).toFixed(2) + "px");
     }
 
     function resetPointerEffects() {
@@ -1546,8 +1586,7 @@
             rail.scale = scale;
             rail.fill.style.transform = scale;
         }
-        const percent = Math.round(info.progress * 100) + "%";
-        if (rail.percent.textContent !== percent) rail.percent.textContent = percent;
+        A.dom.setText(rail.percent, Math.round(info.progress * 100) + "%");
 
         const active = Math.max(0, rail.ids.indexOf(info.section));
         if (active === rail.active) return;
@@ -1590,7 +1629,8 @@
 
         const colors = CONFETTI_COLORS.map((name) => A.cssVar(name)).filter(Boolean);
         const origin = settings.origin && settings.origin.getBoundingClientRect ? settings.origin.getBoundingClientRect() : null;
-        const count = settings.count || (origin ? (width < 600 ? 90 : 150) : 180);
+        const count = settings.count ||
+            (origin ? (width < CONFETTI_SMALL_SCREEN ? CONFETTI_BURST_PIECES_SMALL : CONFETTI_BURST_PIECES) : CONFETTI_PIECES);
         const pieces = [];
         for (let i = 0; i < count; i++) {
             let x, y, angle, speed;
@@ -1598,25 +1638,25 @@
                 // One round burst, thrown a little upwards
                 x = origin.left + origin.width / 2;
                 y = origin.top + origin.height / 2;
-                angle = Math.random() * Math.PI * 2;
-                speed = 220 + Math.random() * 560;
+                angle = A.util.random(0, 2 * Math.PI);
+                speed = A.util.random(220, 780);
             } else {
                 // Two cannons in the bottom corners, aiming up and inwards
                 const fromLeft = i % 2 === 0;
                 x = fromLeft ? -10 : width + 10;
                 y = height * 0.85;
-                angle = ((fromLeft ? -62 : -118) + (Math.random() - 0.5) * 46) * Math.PI / 180;
-                speed = 660 + Math.random() * 600;
+                angle = ((fromLeft ? -62 : -118) + A.util.random(-23, 23)) * Math.PI / 180;
+                speed = A.util.random(660, 1260);
             }
             pieces.push({
                 x: x,
                 y: y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed - (origin ? 260 : 0),
-                size: 5 + Math.random() * 8,
+                size: A.util.random(5, 13),
                 shape: i % 3,                     // 0 square, 1 circle, 2 paper strip
-                turn: Math.random() * Math.PI * 2,
-                spin: (Math.random() - 0.5) * 14,
+                turn: A.util.random(0, 2 * Math.PI),
+                spin: A.util.random(-7, 7),
                 color: colors[i % colors.length]
             });
         }
@@ -1762,13 +1802,15 @@
             }
         });
         // They start once the new language has been drawn
-        if (toDecode.length) requestAnimationFrame(() => toDecode.forEach((element) => scramble(element, 60)));
+        if (toDecode.length) requestAnimationFrame(() => toDecode.forEach((element) => scramble(element, SCRAMBLE_LANGUAGE_DELAY)));
 
         rotators.forEach(setRotatorWords);
 
-        // Decimal commas differ between languages
+        // Decimal commas differ between languages (a number that is counting
+        // writes itself in the new language in its next frame)
         counters.forEach((counter, element) => {
-            if (!counter.raf && !counter.timer && !counter.waiting) writeCounter(element, counter, counter.target);
+            const counting = counter.count && counter.count.running;
+            if (!counting && !counter.timer && !counter.waiting) writeCounter(element, counter, counter.target);
         });
     });
 
@@ -1806,7 +1848,8 @@
     // "Not used yet" means no other file calls it today. Those members stay on
     // purpose: they are small, and other features may need them later.
     A.feature("effects", {
-        // true while calm mode is on (core keeps the setting: A.motion.calm). The lab reads it
+        // true while calm mode is on. Not used yet: features read A.motion.calm (core),
+        // which is the same setting
         get calm() { return A.motion.calm; },
         // calm mode on (true) or off (false). Not used yet: A.motion.setCalm does the same
         setCalm: function (value) { A.motion.setCalm(value); },
