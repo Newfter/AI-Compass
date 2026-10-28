@@ -361,12 +361,15 @@
     }
 
     // Does one word of a keyword match one word of the message?
-    // Long words (7+ letters) may have one typo, unless "strict" is on.
+    // Long keywords (7+ letters) may have one typo in the message ("lerning" =
+    // "learning"), unless "strict" is on. The real words in brain.notTypos are
+    // never typos: "neural" is not "neutral", "feeling" is not "feelings".
     function wordMatches(pattern, token, strict) {
         if (!token) return false;
         if (pattern.charAt(pattern.length - 1) === "*") return token.indexOf(pattern.slice(0, -1)) === 0;
         if (token === pattern) return true;
         if (strict || pattern.length < 7 || Math.abs(token.length - pattern.length) > 1) return false;
+        if (brain.notTypos.indexOf(token) !== -1) return false;
         return editDistance(token, pattern) <= 1;
     }
 
@@ -418,6 +421,70 @@
         const verb = anyIn(brain.navVerbs, tokens, true);
         if (!verb && tokens.length > 3) return 0;
         return verb ? 2 : 1;
+    }
+
+    // The points of one intent for this message
+    function intentScore(intent, tokens) {
+        if (intent.id === "nav") return navScore(tokens);
+        // In a message about AI, "language" is not about the site ("How does AI
+        // understand human language?"), unless a word like "switch", "Russian"
+        // or "site" is next to it (brain.languageWords.context)
+        if (intent.id === "language" && anyIn(brain.aiTopicWords, tokens, true) &&
+            !anyIn(brain.languageWords.context, tokens, true)) {
+            return 0;
+        }
+        return scoreWords(intent, tokens);
+    }
+
+    // The intent with the most points (on a tie, the one higher in the list),
+    // as { intent, score }, or null when no keyword matched
+    function bestIntent(tokens) {
+        let best = null;
+        brain.intents.forEach(function (intent) {
+            const score = intentScore(intent, tokens);
+            if (score > 0 && (!best || score > best.score)) best = { intent: intent, score: score };
+        });
+        return best;
+    }
+
+    // ----- Small talk at the start: "Hi! How does AI work?" -----
+
+    function isSmallTalk(id) {
+        return brain.smallTalk.indexOf(id) !== -1;
+    }
+
+    // The small talk the message starts with: { id: "thanks", length: 2 } for
+    // "thank you, what is a token?" (the longest phrase wins), or null
+    function smallTalkStart(tokens) {
+        let found = null;
+        brain.intents.forEach(function (intent) {
+            if (!isSmallTalk(intent.id)) return;
+            intent.words.forEach(function (entry) {
+                const words = entry.replace(/^\?/, "").split(" ");
+                const fits = words.every(function (word, i) { return wordMatches(word, tokens[i], intent.strict); });
+                if (fits && (!found || words.length > found.length)) found = { id: intent.id, length: words.length };
+            });
+        });
+        return found;
+    }
+
+    // - "Thanks for the joke!", "спасибо большое за помощь": a thank-you FOR
+    //   something ("for" / "за" in the next 3 words) is a thank-you.
+    // - "Hi! How does AI work?": when small talk wins, the bot answers the
+    //   2+ words after it instead, if it understands them (and they are not
+    //   small talk too: "ok, got it").
+    // Returns a plan, or null to keep the best intent.
+    function smallTalkPlan(best, tokens) {
+        const start = smallTalkStart(tokens);
+        if (!start) return null;
+        const rest = tokens.slice(start.length);
+        if (start.id === "thanks" && anyIn(brain.thanksFor, rest.slice(0, 3), true)) {
+            return { kind: "intent", id: "thanks", tokens: tokens };
+        }
+        if (!isSmallTalk(best.intent.id) || rest.length < 2) return null;
+        const plan = understand(rest.join(" "));
+        if (plan.kind === "fallback" || (plan.kind === "intent" && isSmallTalk(plan.id))) return null;
+        return plan;
     }
 
     // ----- "What is X?" / "Define X" -----
@@ -602,32 +669,38 @@
         }
     }
 
-    // The main "thinking" step: message in, answer out
-    function think(text) {
+    // ----- Thinking, in two steps -----
+    // 1. understand(text): what does the message ask for? It returns a "plan":
+    //      { kind: "support" }              someone may be in danger
+    //      { kind: "lesson", n, tokens }    "lesson 3" (a lesson that exists)
+    //      { kind: "lessonMissing" }        "lesson 9"
+    //      { kind: "defineRandom" }         "define", with no word after it
+    //      { kind: "glossary", term }       a word from the glossary
+    //      { kind: "notFound", word }       "what is X?", and X is unknown
+    //      { kind: "intent", id, tokens }   one of brain.intents
+    //      { kind: "fallback" }             no idea
+    //    It never picks anything at random, so it can also be tried on a part
+    //    of the message (see smallTalkPlan).
+    // 2. answer(plan): the answer itself (a random greeting, the next fact...).
+
+    function understand(text) {
         const norm = normalise(text);
         const tokens = norm ? norm.split(" ") : [];
-        if (!tokens.length) return { reply: "fallback", data: { v: A.util.randomInt(0, 1) } };
+        if (!tokens.length) return { kind: "fallback" };
 
         // Someone who may be in danger always comes first
-        if (needsSupport(tokens)) return { reply: "support", calm: true };
+        if (needsSupport(tokens)) return { kind: "support" };
 
-        // "lesson 3" / "урок 3" / "3 урок" opens that lesson
-        const lessonMatch = norm.match(/(?:^|\s)(?:lesson|урок\S*)\s+(\d+)(?:\s|$)/) ||
-            norm.match(/(?:^|\s)(\d+)\s+(?:lesson|урок\S*)(?:\s|$)/);
+        // "lesson 3", "урок 3", "3 урок" and "к уроку 3" open that lesson.
+        // A count is not a lesson number: "5 уроков", "3 урока" (5 lessons, 3 lessons).
+        const lessonMatch = norm.match(/(?:^|\s)(?:lesson|урок|урока|уроку|уроке|уроком)\s+(\d+)(?:\s|$)/) ||
+            norm.match(/(?:^|\s)(\d+)\s+(?:lesson|урок|уроку|уроке|уроком)(?:\s|$)/);
         if (lessonMatch) {
             const n = Number(lessonMatch[1]);
-            if (lessonExists(n)) {
-                return commandOrOffer({ reply: "lessonOpen", data: { n: n }, auto: { act: "lesson", arg: n } }, tokens);
-            }
-            return { reply: "lessonMissing" };
+            return lessonExists(n) ? { kind: "lesson", n: n, tokens: tokens } : { kind: "lessonMissing" };
         }
 
-        // Score every intent and keep the best one
-        let best = null;
-        brain.intents.forEach(function (intent) {
-            const score = intent.id === "nav" ? navScore(tokens) : scoreWords(intent, tokens);
-            if (score > 0 && (!best || score > best.score)) best = { intent: intent, score: score };
-        });
+        const best = bestIntent(tokens);
 
         // "What is X?" — the glossary may know X.
         // A clear keyword match (2+ points, e.g. "what is machine learning")
@@ -636,26 +709,47 @@
         // question: "what are the risks of AI?" is about risks, not about "AI".
         const define = defineRequest(norm);
         if (define) {
-            if (!define.subject) return defineRandomAnswer();
+            if (!define.subject) return { kind: "defineRandom" };
             const strongMatch = best && best.score >= 2;
             if (define.explicit || !strongMatch) {
                 const term = glossaryFind(define.subject);
                 if (term && (define.explicit || !best || termCovers(term, define.subject))) {
-                    return { reply: "glossary", data: term };
+                    return { kind: "glossary", term: term };
                 }
                 if (!best && define.subject.split(" ").length <= 3) {
-                    return { reply: "notFound", data: { word: define.subject.slice(0, 40) } };
+                    return { kind: "notFound", word: define.subject.slice(0, 40) };
                 }
             }
         }
 
-        if (best) return commandOrOffer(answerFor(best.intent.id, tokens), tokens);
+        if (best) return smallTalkPlan(best, tokens) || { kind: "intent", id: best.intent.id, tokens: tokens };
 
         // No keyword at all: maybe it's just a word from the glossary ("overfitting")
         const term = glossaryFind(text);
-        if (term) return { reply: "glossary", data: term };
+        if (term) return { kind: "glossary", term: term };
 
-        return { reply: "fallback", data: { v: A.util.randomInt(0, 1) } };
+        return { kind: "fallback" };
+    }
+
+    function answer(plan) {
+        switch (plan.kind) {
+            case "support": return { reply: "support", calm: true };
+            case "lesson": {
+                const job = { reply: "lessonOpen", data: { n: plan.n }, auto: { act: "lesson", arg: plan.n } };
+                return commandOrOffer(job, plan.tokens);
+            }
+            case "lessonMissing": return { reply: "lessonMissing" };
+            case "defineRandom": return defineRandomAnswer();
+            case "glossary": return { reply: "glossary", data: plan.term };
+            case "notFound": return { reply: "notFound", data: { word: plan.word } };
+            case "intent": return commandOrOffer(answerFor(plan.id, plan.tokens), plan.tokens);
+            default: return { reply: "fallback", data: { v: A.util.randomInt(0, 1) } };
+        }
+    }
+
+    // The main "thinking" step: message in, answer out
+    function think(text) {
+        return answer(understand(text));
     }
 
     /* =========================================================

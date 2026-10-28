@@ -303,8 +303,9 @@ window.AICompass.content.set("assistant", {
        - phrases with several words score more ("machine learning" = 2)
        The intent with the most points wins. On a tie, the one
        higher in this list wins.
-       Long words (7+ letters) may have one typo ("lerning"),
-       shorter ones must be exact (so "neutral" is not "neural").
+       Long keywords (7+ letters) may have one typo in the message
+       ("lerning"), shorter ones must be exact. Real words that only look
+       like a typo go into notTypos (below the list).
        strict: true = no typos at all for this intent. */
     intents: [
         {
@@ -483,8 +484,9 @@ window.AICompass.content.set("assistant", {
         },
         {
             id: "help",
-            // a bare "help" is weak: "how can AI help doctors?" is about AI, not about the bot
-            words: ["?help", "help me", "i need help", "what can you do", "what do you do", "what can i ask", "commands",
+            // "help" is weak: "how can AI help doctors?" is about AI, not about the bot,
+            // and "I need help with my homework" is about homework
+            words: ["?help", "?help me", "?i need help", "what can you do", "what do you do", "what can i ask", "commands",
                 "options", "abilities", "помощь", "?помоги*", "что ты умеешь", "что умеешь", "что ты можешь", "что можешь",
                 "команды", "возможности", "умеешь"]
         },
@@ -510,6 +512,20 @@ window.AICompass.content.set("assistant", {
                 "доброе утро", "добрый вечер", "хай", "салют", "хелло"]
         }
     ],
+
+    // Real words that are one letter away from a keyword but mean something
+    // else: the bot never reads them as a typo. "neural" is not "neutral",
+    // "feeling" is not "feelings", "sentiment" is not "sentient",
+    // "писать" (to write) is not "списать" (to copy).
+    notTypos: ["neural", "feeling", "sentiment", "писать"],
+
+    // Small talk at the start of a message. "Hi! How does AI work?" is a
+    // question, not only a greeting: when one of these intents wins and the
+    // message STARTS with it, the bot answers the 2+ words after it instead
+    // (if it understands them). And a thank-you FOR something is a thank-you:
+    // "thanks for the joke", "спасибо большое за помощь" (thanksFor).
+    smallTalk: ["greeting", "thanks", "ack"],
+    thanksFor: ["for", "за"],
 
     /* ----- 2. Going to a section of the site -----
        "Go to the glossary" = 2 points; just "glossary" = 1 point
@@ -608,7 +624,12 @@ window.AICompass.content.set("assistant", {
     languageWords: {
         ru: ["russian", "русск*", "по русски", "рус"],
         en: ["english", "английск*", "по английски", "англ*", "eng"],
-        change: ["switch", "change", "переключи*", "смени*", "поменя*", "другой"]
+        change: ["switch", "change", "переключи*", "смени*", "поменя*", "другой"],
+        // In a message about AI (aiTopicWords), "language" / "язык" is about
+        // the site only next to one of these words. So "How does AI
+        // understand human language?" is a question about AI.
+        context: ["russian", "english", "русск*", "английск*", "switch", "change", "переключи*", "смени*",
+            "сменить", "поменя*", "site", "website", "page", "сайт*", "страниц*"]
     },
 
     // "Open the lab" with these words opens the next-word predictor
