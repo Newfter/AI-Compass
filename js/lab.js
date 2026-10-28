@@ -774,8 +774,10 @@
         setUpHeader();
 
         // pause / resume follow the stage on screen and the browser tab
-        // ({ pauseAnimations: true } also pauses the CSS animations in it)
+        // ({ pauseAnimations: true } also pauses the CSS animations in it). The card's own
+        // animations (the light along its top, the "live" dot) stop too while it is out of view.
         A.whenVisible(stage, onStageVisible, { pauseAnimations: true });
+        A.whenVisible(card, function () {}, { pauseAnimations: true });
         A.onLanguageChange(languageChanged);
         A.onThemeChange(function () { call("theme"); });
         A.motion.onChange(function () { call("motion"); });
