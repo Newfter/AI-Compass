@@ -1,14 +1,36 @@
 /* =========================================================
    AI COMPASS — GLOSSARY
-   A bilingual A–Z dictionary of the key words of AI.
-   This file builds:
-   1. a search box (live filter, highlighted matches, "did you mean?")
-   2. category chips with counts and an alphabet strip
-   3. a grid of term cards that open to show an everyday
-      example and related terms
-   4. window.AICompass.glossary = { find, random, show, term }
-      so other features (assistant, timeline...) can use it
-   5. one Ctrl+K palette command per term
+   A bilingual A–Z dictionary of the key words of AI:
+   - a search box that filters the cards as you type, marks the
+     matching words and offers "did you mean?" after a typo;
+   - category chips with counts, and an alphabet strip;
+   - term cards that open to show an everyday example and related
+     terms (a term you opened counts as "explored");
+   - one Ctrl+K palette command per term, and links like
+     index.html#term-bias that open a term.
+   The glossary sits far down the page, so it is only built when it
+   comes near the screen (or when the browser has a quiet moment).
+   Sections of this file:
+    1. Settings
+    2. The terms
+    3. Small helpers
+    4. Finding a term inside any text
+    5. "Did you mean...?"
+    6. State
+    7. Building the glossary
+    8. Searching
+    9. Filling the cards
+   10. Alphabet strip
+   11. Sorting
+   12. Showing the cards that match
+   13. Opening cards
+   14. Events
+   15. Language changes
+   16. Start
+   17. Palette commands and the public API
+   Other features use AICompass.glossary (see the last section).
+   Every term and every text (English and Russian) is in
+   js/content/glossary.js
    ========================================================= */
 
 (function () {
@@ -16,24 +38,33 @@
 
     const A = window.AICompass;
     const mount = document.querySelector('[data-feature="glossary"]');
-    if (!A || !mount) return;
+    const data = A && A.content.get("glossary");
+    if (!A || !mount || !data) return;
 
     const t = A.t;
     const esc = A.escapeHTML;
+    // A translated piece of text: <span class="..." data-i18n="key">text</span>.
+    // data-i18n lets core.js re-translate it by itself.
+    const text = A.i18nHTML;
 
-    // Without any filter, only the first few cards are shown,
-    // so the page doesn't get too long. "Show all" shows the rest.
-    const PREVIEW_COUNT = 12;
-    // Screen readers hear the new count this long after typing stops (ms)
-    const ANNOUNCE_DELAY = 450;
-    // How long a shown term glows (ms; the CSS animation takes 2.4 s)
-    const SPOTLIGHT_MS = 2600;
+    // ---------- 1. Settings ----------
+    const PREVIEW_COUNT = 12;       // without a filter only this many cards show ("Show all" shows the rest)
+    const MAX_SUGGESTIONS = 3;      // "did you mean?" offers at most this many terms
+    const ANNOUNCE_DELAY = 450;     // ms: screen readers hear the new count this long after typing stops
+    const SPOTLIGHT_MS = 2600;      // ms: how long a shown term glows (the CSS animation takes 2.4 s)
+    const FOCUS_DELAY = 80;         // ms: a shown term takes the focus this much later, so the palette or menu can close first
+    const HASH_DELAY = 100;         // ms: a link to a term waits this long after the page is ready (when this file runs earlier)
+    const CARD_SPACE = 16;          // px: a card we scroll to stays at least this far below the menu
+    const GLIDE_MS = 420;           // ms: after a search or filter, cards glide to their new places,
+    const GROW_IN_MS = 380;         // and new cards fade and grow in
+    const GROW_STAGGER_MS = 35;     // one after another (this much later each)
+    const GROW_STAGGER_MAX = 8;     // but never more than 8 steps later
+    const ANIMATE_MARGIN = 200;     // px: only cards this close to the screen are animated
+    const DICE_MS = 550;            // ms: the dice of the "Random" button spins this long
 
-    // ---------- 1. The terms (from js/content/glossary.js) ----------
+    // ---------- 2. The terms (from js/content/glossary.js) ----------
     // categories: the category ids, in the order of their chips.
     // terms: every term with its words in both languages (see the content file).
-    const data = A.content.get("glossary");
-    if (!data) return;
     const CATEGORIES = data.categories;
     const TERMS = data.terms;
 
@@ -42,7 +73,46 @@
     const BY_ID = Object.create(null);
     TERMS.forEach(function (term) { BY_ID[term.id] = term; });
 
-    // ---------- 4. Small helpers ----------
+    // A term's words in the current language
+    function termName(term) {
+        return term[A.lang].name;
+    }
+
+    function termDef(term) {
+        return term[A.lang].def;
+    }
+
+    // Aliases are written without their "*" wherever people can see or type them
+    // (the "*" is for finding words: see section 4)
+    function plainAlias(alias) {
+        return alias.replace(/\*$/, "");
+    }
+
+    // A short public description of a term, in the current language
+    function info(term) {
+        return {
+            id: term.id,
+            term: termName(term),
+            definition: termDef(term),
+            example: term[A.lang].ex,
+            category: t("glossary.cat." + term.cat),
+            icon: term.icon
+        };
+    }
+
+    let lastRandom = "";
+
+    // A random term, never the same one twice in a row
+    function randomTerm() {
+        let term;
+        do {
+            term = A.util.pick(TERMS);
+        } while (term.id === lastRandom && TERMS.length > 1);
+        lastRandom = term.id;
+        return term;
+    }
+
+    // ---------- 3. Small helpers ----------
 
     // Lower case, and "ё" counts as "е", so "черный" also finds "чёрный"
     function normalize(text) {
@@ -87,28 +157,10 @@
         if (element.hidden !== hidden) element.hidden = hidden;
     }
 
-    // A term's words in the current language
-    function termName(term) {
-        return term[A.lang].name;
-    }
+    // ---------- 4. Finding a term inside any text ----------
+    // Used by find() (the assistant and the palette ask "which term does this
+    // text mention?") and by the search box when plain searching finds nothing.
 
-    function termDef(term) {
-        return term[A.lang].def;
-    }
-
-    // A short public description of a term, in the current language
-    function info(term) {
-        return {
-            id: term.id,
-            term: termName(term),
-            definition: termDef(term),
-            example: term[A.lang].ex,
-            category: t("glossary.cat." + term.cat),
-            icon: term.icon
-        };
-    }
-
-    // ---------- 5. Finding a term inside any text (for the assistant) ----------
     // Russian words change their endings ("нейросеть", "нейросети", "нейросетей"),
     // so we cut common endings off and compare only the start of each word.
     const RU_ENDING = /(ами|ями|ого|его|ому|ему|ыми|ими|ых|их|ый|ий|ой|ей|ую|юю|ая|яя|ое|ее|ые|ие|ом|ем|ах|ях|ов|ев|ам|ям|а|я|о|е|ы|и|у|ю|ь|й)$/;
@@ -157,11 +209,6 @@
         });
     });
 
-    // Aliases are written without their "*" wherever people can see or type them
-    function plainAlias(alias) {
-        return alias.replace(/\*$/, "");
-    }
-
     // The way of writing a term that the text mentions (the longest match wins:
     // "generative AI" beats "AI"): { term, stems, score }, or null when there is none
     function mentioned(text) {
@@ -190,19 +237,7 @@
         return best ? info(best.term) : null;
     }
 
-    let lastRandom = "";
-
-    // A random term, never the same one twice in a row
-    function randomTerm() {
-        let term;
-        do {
-            term = A.util.pick(TERMS);
-        } while (term.id === lastRandom && TERMS.length > 1);
-        lastRandom = term.id;
-        return term;
-    }
-
-    // ---------- 6. "Did you mean...?" ----------
+    // ---------- 5. "Did you mean...?" ----------
     // The Levenshtein distance counts how many letters you must add, remove
     // or change to turn one word into another ("nueral" -> "neural" = 2).
     function distance(a, b) {
@@ -266,10 +301,10 @@
         });
 
         scored.sort(function (a, b) { return a.score - b.score; });
-        return scored.slice(0, 3).map(function (item) { return item.term; });
+        return scored.slice(0, MAX_SUGGESTIONS).map(function (item) { return item.term; });
     }
 
-    // ---------- 9. State ----------
+    // ---------- 6. State ----------
     // The terms opened on earlier visits. The saved value is checked first:
     // if it is broken (not a list of term ids), we simply start again.
     function loadExplored() {
@@ -289,16 +324,11 @@
         explored: new Set(loadExplored())
     };
 
-    // ---------- 10. Building the page ----------
+    // ---------- 7. Building the glossary ----------
     const ICON_SEARCH = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
     const ICON_CLOSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
     const ICON_CHEVRON = '<svg class="gl-chevron" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     const ICON_RESET = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-    // A translated piece of text. data-i18n lets core.js re-translate it by itself.
-    function text(key, className) {
-        return "<span" + (className ? ' class="' + className + '"' : "") + ' data-i18n="' + key + '">' + t(key) + "</span>";
-    }
 
     function categoryChip(id) {
         return '<button class="chip gl-chip" type="button" data-cat="' + id + '" aria-pressed="' + (id === "all") + '">' +
@@ -315,13 +345,13 @@
                 '<span class="gl-icon" aria-hidden="true">' + term.icon + "</span>" +
                 '<span class="gl-cat-tag mono">' + text("glossary.cat." + term.cat) + "</span>" +
                 '<span class="gl-seen" data-i18n-attr="title:glossary.exploredBadge" title="' + esc(t("glossary.exploredBadge")) + '">' +
-                    '<span aria-hidden="true">✓</span><span class="sr-only" data-i18n="glossary.exploredBadge">' + t("glossary.exploredBadge") + "</span>" +
+                    '<span aria-hidden="true">✓</span>' + text("glossary.exploredBadge", "sr-only") +
                 "</span>" +
             "</div>" +
             '<h3 class="gl-name" id="gl-name-' + id + '"></h3>' +
             '<p class="gl-alt">' +
                 '<span class="gl-alt-code mono" aria-hidden="true" data-i18n="glossary.altCode">' + t("glossary.altCode") + "</span>" +
-                '<span class="sr-only" data-i18n="glossary.altLabel">' + t("glossary.altLabel") + "</span> " +
+                text("glossary.altLabel", "sr-only") + " " +
                 '<span class="gl-alt-text"></span>' +
             "</p>" +
             '<p class="gl-def"></p>' +
@@ -356,7 +386,7 @@
     let ui = null;
     const cards = Object.create(null);
 
-    // Builds the whole glossary (once: see "Start" below)
+    // Builds the whole glossary (once: see section 16, "Start")
     function build() {
         mount.innerHTML =
             '<div class="gl">' +
@@ -388,7 +418,7 @@
                             ' data-i18n-attr="title:glossary.filters" title="' + esc(t("glossary.filters")) + '">' +
                             '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
                             text("glossary.filters", "sr-only") +
-                            '<span class="gl-filter-badge mono" hidden><span class="sr-only" data-i18n="glossary.filtersActive">' + t("glossary.filtersActive") + "</span> <span class=\"gl-filter-num\"></span></span>" +
+                            '<span class="gl-filter-badge mono" hidden>' + text("glossary.filtersActive", "sr-only") + ' <span class="gl-filter-num"></span></span>' +
                         "</button>" +
                         '<button class="btn btn-ghost gl-random" type="button" data-i18n-attr="title:glossary.randomLabel" title="' + esc(t("glossary.randomLabel")) + '">' +
                             '<span class="gl-dice" aria-hidden="true">🎲</span>' + text("glossary.random") +
@@ -490,7 +520,7 @@
         updateExplored();
     }
 
-    // ---------- 11. Searching: one matching function ----------
+    // ---------- 8. Searching: one matching function ----------
     // The text a term can be found by: its name, other names and definition
     // in the current language, plus its name in the other language.
     function haystack(term) {
@@ -600,7 +630,7 @@
         return html + esc(raw.slice(position));
     }
 
-    // ---------- 12. Filling the cards ----------
+    // ---------- 9. Filling the cards ----------
     // The parts of a card that only change with the language
     function translateCard(card) {
         const term = card.term;
@@ -629,7 +659,7 @@
         card[part].innerHTML = html;
     }
 
-    // ---------- 13. Alphabet strip ----------
+    // ---------- 10. Alphabet strip ----------
     let letterButtons = [];
 
     // One button per first letter in the current language, after an "all letters" button.
@@ -667,7 +697,7 @@
         if (focused >= letterButtons.length) letterButtons[letterButtons.length - 1].focus({ preventScroll: true });
     }
 
-    // ---------- 14. Sorting ----------
+    // ---------- 11. Sorting ----------
     let sorted = TERMS.slice();
 
     // A–Z in the current language (render() puts the cards in place)
@@ -677,7 +707,7 @@
         });
     }
 
-    // ---------- 15. Applying search + filters ----------
+    // ---------- 12. Showing the cards that match the search and filters ----------
     const running = new WeakMap();      // the glide animation of each card
     let pageOrder = "";                 // the order of the cards on the page
     let shownIdeas = "";                // the "did you mean" suggestions on the page
@@ -817,12 +847,12 @@
     // new cards fade and grow in. Only cards near the screen are animated.
     function animateCards(before) {
         // First read where every card is now (one layout for all of them)...
-        const screenBottom = window.innerHeight + 200;
+        const screenBottom = window.innerHeight + ANIMATE_MARGIN;
         const near = [];
         Array.prototype.forEach.call(ui.grid.children, function (el) {
             if (el.hidden) return;
             const now = el.getBoundingClientRect();
-            if (now.bottom < -200 || now.top > screenBottom) return;
+            if (now.bottom < -ANIMATE_MARGIN || now.top > screenBottom) return;
             near.push({ el: el, now: now, old: before.get(el) });
         });
 
@@ -840,13 +870,13 @@
                 if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
                     animation = item.el.animate(
                         [{ transform: "translate(" + dx + "px, " + dy + "px)" }, { transform: "none" }],
-                        { duration: 420, easing: ease }
+                        { duration: GLIDE_MS, easing: ease }
                     );
                 }
             } else {
                 animation = item.el.animate(
                     [{ opacity: 0, transform: "translateY(14px) scale(0.96)" }, { opacity: 1, transform: "none" }],
-                    { duration: 380, delay: Math.min(entering++, 8) * 35, easing: ease, fill: "backwards" }
+                    { duration: GROW_IN_MS, delay: Math.min(entering++, GROW_STAGGER_MAX) * GROW_STAGGER_MS, easing: ease, fill: "backwards" }
                 );
             }
             if (animation) running.set(item.el, animation);
@@ -891,7 +921,7 @@
         ui.input.value = "";
     }
 
-    // ---------- 16. Opening cards ----------
+    // ---------- 13. Opening cards ----------
     function setOpen(id, open) {
         const card = cards[id];
         if (!card) return;
@@ -928,7 +958,7 @@
         const height = card.el.offsetHeight + Math.max(0, inner.scrollHeight - inner.offsetHeight);
         const nav = A.layout.navHeight();
         const room = window.innerHeight - nav;
-        const y = height + 32 < room ? top - nav - (room - height) / 2 : top - nav - 16;
+        const y = height + 2 * CARD_SPACE < room ? top - nav - (room - height) / 2 : top - nav - CARD_SPACE;
         window.scrollTo({ top: Math.max(0, y), behavior: A.motion.ok() ? "smooth" : "auto" });
     }
 
@@ -963,12 +993,12 @@
 
         if (options.focus) {
             // A short delay, so the palette or menu can close first
-            setTimeout(function () { card.toggle.focus({ preventScroll: true }); }, 80);
+            setTimeout(function () { card.toggle.focus({ preventScroll: true }); }, FOCUS_DELAY);
         }
         return true;
     }
 
-    // ---------- 16. Events ----------
+    // ---------- 14. Events ----------
     // After something the user did: cards glide, and screen readers hear the count
     function update() {
         render({ animate: true, announce: true });
@@ -1067,7 +1097,7 @@
             if (A.motion.ok() && dice.animate) {
                 dice.animate(
                     [{ transform: "rotate(0) scale(1)" }, { transform: "rotate(200deg) scale(1.25)" }, { transform: "rotate(360deg) scale(1)" }],
-                    { duration: 550, easing: A.motion.ease }
+                    { duration: DICE_MS, easing: A.motion.ease }
                 );
             }
             // Focus stays on the button (so you can roll again); screen readers hear the term
@@ -1103,7 +1133,7 @@
         });
     }
 
-    // ---------- 17. Language changes: same search, same open cards ----------
+    // ---------- 15. Language changes: same search, same open cards ----------
     function onLanguageChange() {
         // Quietly forget the announcement still waiting (it is in the old language)
         A.announce("", { region: ui.live, delay: 0 });
@@ -1114,7 +1144,7 @@
         updateExplored();
     }
 
-    // ---------- 18. Start ----------
+    // ---------- 16. Start ----------
     // The glossary is far down the page, so it is built only when it comes near the
     // screen, when the browser has a quiet moment after loading, or as soon as
     // something needs it (ensure(): a palette command, a link to a term...).
@@ -1127,12 +1157,13 @@
     }
     window.addEventListener("hashchange", openFromHash);
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", function () { setTimeout(openFromHash, 100); });
+        document.addEventListener("DOMContentLoaded", function () { setTimeout(openFromHash, HASH_DELAY); });
     } else {
         openFromHash();
     }
 
-    // ---------- 19. Ctrl+K palette: one command per term ----------
+    // ---------- 17. Palette commands and the public API ----------
+    // Ctrl+K palette: one command per term ("Glossary: Neural network")
     TERMS.forEach(function (term) {
         const words = ["glossary", "словарь", "term", "термин", term.id];
         ["en", "ru"].forEach(function (lang) {
@@ -1150,9 +1181,10 @@
         });
     });
 
-    // ---------- 20. Public API: AICompass.glossary ----------
-    // The assistant, the palette and the timeline use it. find, random and term
-    // work from the data alone; show(id, { focus }) scrolls to a term and opens it.
+    // AICompass.glossary: the assistant, the palette, the timeline and the lessons
+    // use it. find, random, term and ids work from the data alone (before the
+    // glossary is built); show(id, { focus }) builds it if needed, scrolls to the
+    // term and opens it.
     A.feature("glossary", {
         // find("What is a neural network?") -> { id, term, definition, ... } or null
         find: find,
