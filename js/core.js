@@ -645,6 +645,14 @@
         return visibilityObservers[id];
     }
 
+    // The other watchers of the same element (with the same observer, if one is given)
+    function otherWatchers(watcher, observerId) {
+        return Array.from(visibilityWatchers).filter(function (other) {
+            return other !== watcher && other.element === watcher.element &&
+                (observerId === undefined || other.observerId === observerId);
+        });
+    }
+
     function whenVisible(element, callback, options) {
         const settings = options || {};
         const watcher = {
@@ -661,17 +669,24 @@
             const observer = visibilityObserver(settings.rootMargin || "0px", settings.threshold || 0);
             watcher.observerId = observer.id;
             watcher.observer = observer;
-            observer.observe(element);       // the observer reports the first state by itself
+            // The observer reports the first state by itself, but only for an element it
+            // doesn't watch yet. For one it already watches, starting again makes it report
+            // once more (the other watchers get the same state, so nothing changes for them).
+            if (otherWatchers(watcher, observer.id).length) observer.unobserve(element);
+            observer.observe(element);
         } else {
             updateWatcher(watcher);          // old browsers: always "on screen"
         }
 
         return function () {
             visibilityWatchers.delete(watcher);
-            if (watcher.pause) element.removeAttribute("data-paused");
-            const stillWatched = Array.from(visibilityWatchers).some(function (other) {
-                return other.element === element && other.observerId === watcher.observerId;
-            });
+            const others = otherWatchers(watcher);
+            if (watcher.pause) {
+                // Another watcher that pauses this element decides from now on
+                const pauser = others.find(function (other) { return other.pause && other.visible !== null; });
+                element.toggleAttribute("data-paused", Boolean(pauser && !pauser.visible));
+            }
+            const stillWatched = others.some(function (other) { return other.observerId === watcher.observerId; });
             if (watcher.observer && !stillWatched) watcher.observer.unobserve(element);
         };
     }
@@ -833,17 +848,22 @@
     }
 
     // The page behind a modal window must not scroll. The scrollbar's room is kept,
-    // so the page doesn't jump sideways.
+    // so the page doesn't jump sideways. Fixed bars (like the menu bar) are outside
+    // the body's padding: they keep their place with the CSS variable --scrollbar-gap.
     function lockScroll(lock) {
         const body = document.body;
         if (lock && !lockedBodyStyle) {
             const gap = window.innerWidth - root.clientWidth;
             lockedBodyStyle = { overflow: body.style.overflow, paddingRight: body.style.paddingRight };
             body.style.overflow = "hidden";
-            if (gap > 0) body.style.paddingRight = gap + "px";
+            if (gap > 0) {
+                body.style.paddingRight = gap + "px";
+                body.style.setProperty("--scrollbar-gap", gap + "px");
+            }
         } else if (!lock && lockedBodyStyle) {
             body.style.overflow = lockedBodyStyle.overflow;
             body.style.paddingRight = lockedBodyStyle.paddingRight;
+            body.style.removeProperty("--scrollbar-gap");
             lockedBodyStyle = null;
         }
     }
@@ -1456,6 +1476,18 @@
     /* =========================================================
        13. TOASTS (small pop-up messages)
        ========================================================= */
+    const TOAST_TIME = 3200;     // how long a toast stays on screen (ms)
+    const TOAST_FADE = 400;      // its fade-out animation ("toast-out" in style.css)
+    const MAX_TOASTS = 3;        // more at once would cover the page: the oldest leave early
+    const toastTimers = new WeakMap();
+
+    function hideToast(item) {
+        if (item.classList.contains("toast-hide")) return;
+        clearTimeout(toastTimers.get(item));
+        item.classList.add("toast-hide");
+        setTimeout(function () { item.remove(); }, TOAST_FADE);
+    }
+
     function toast(message, icon) {
         const stack = document.getElementById("toast-stack");
         if (!stack) return;
@@ -1466,11 +1498,13 @@
         item.querySelector(".toast-icon").textContent = icon || "✨";
         item.querySelector(".toast-text").textContent = message;
         stack.appendChild(item);
+        toastTimers.set(item, setTimeout(function () { hideToast(item); }, TOAST_TIME));
 
-        setTimeout(function () {
-            item.classList.add("toast-hide");
-            setTimeout(function () { item.remove(); }, 400);
-        }, 3200);
+        // Many toasts in a row (a button pressed again and again): only the newest stay
+        const showing = Array.prototype.filter.call(stack.children, function (other) {
+            return !other.classList.contains("toast-hide");
+        });
+        showing.slice(0, -MAX_TOASTS).forEach(hideToast);
     }
 
     /* =========================================================

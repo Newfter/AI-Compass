@@ -400,6 +400,9 @@ button.chip:hover,
     left: 0;
     right: 0;
     z-index: var(--z-nav);
+    /* While a pop-up window stops the page from scrolling, the scrollbar disappears
+       and the bar gets wider: this keeps its buttons where they were (core.js) */
+    padding-right: var(--scrollbar-gap, 0px);
     border-bottom: 1px solid transparent;
     transition: border-color 0.3s ease;
 }
