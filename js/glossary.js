@@ -49,7 +49,12 @@
 
     // ---------- 1. Settings ----------
     const PREVIEW_COUNT = 12;       // without a filter only this many cards show ("Show all" shows the rest)
-    const MAX_SUGGESTIONS = 3;      // "did you mean?" offers at most this many terms
+    const MAX_SUGGESTIONS = 3;      // "did you mean?" offers at most this many terms.
+    const SUGGEST_MIN_LETTERS = 3;  // It looks at typed words of at least 3 letters,
+    const TYPOS_SHORT = 1;          // allows 1 typo in a short word
+    const TYPOS_LONG = 2;           // and 2 in a word of
+    const LONG_WORD = 5;            // 5 letters or more
+    const NO_MATCH = 99;            // (the score of a term that is too far from the search)
     const ANNOUNCE_DELAY = 450;     // ms: screen readers hear the new count this long after typing stops
     const SPOTLIGHT_MS = 2600;      // ms: how long a shown term glows (the CSS animation takes 2.4 s)
     const FOCUS_DELAY = 80;         // ms: a shown term takes the focus this much later, so the palette or menu can close first
@@ -126,35 +131,6 @@
 
     function otherLang() {
         return A.lang === "ru" ? "en" : "ru";
-    }
-
-    // Typed with the wrong keyboard layout? "ntcn" -> "тест", "ьщвуд" -> "model"
-    // TODO(core): js/palette.js has the same table; A.text.switchLayout(text) could serve both.
-    const LAYOUT_EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`";
-    const LAYOUT_RU = "йцукенгшщзхъфывапролджэячсмитьбюё";
-
-    function switchLayout(text) {
-        return String(text).split("").map(function (char) {
-            let index = LAYOUT_EN.indexOf(char);
-            if (index !== -1) return LAYOUT_RU.charAt(index);
-            index = LAYOUT_RU.indexOf(char);
-            return index !== -1 ? LAYOUT_EN.charAt(index) : char;
-        }).join("");
-    }
-
-    // Writing the same text or attribute again still makes the browser redo work,
-    // so while typing (a new search on every key) only what changed is written
-    function setText(element, value) {
-        value = String(value);
-        if (element.textContent !== value) element.textContent = value;
-    }
-
-    function setAttr(element, name, value) {
-        if (element.getAttribute(name) !== value) element.setAttribute(name, value);
-    }
-
-    function setHidden(element, hidden) {
-        if (element.hidden !== hidden) element.hidden = hidden;
     }
 
     // ---------- 4. Finding a term inside any text ----------
@@ -241,7 +217,7 @@
     // The Levenshtein distance counts how many letters you must add, remove
     // or change to turn one word into another ("nueral" -> "neural" = 2).
     function distance(a, b) {
-        if (Math.abs(a.length - b.length) > 3) return 99;
+        if (Math.abs(a.length - b.length) > TYPOS_LONG + 1) return NO_MATCH;
         let previous = [];
         for (let j = 0; j <= b.length; j++) previous.push(j);
         for (let i = 1; i <= a.length; i++) {
@@ -270,34 +246,34 @@
     }
 
     // Terms that look like a misspelled search, best first.
-    // Every typed word must be close to a word of the term:
-    // 1 typo allowed in short words, 2 in longer ones.
+    // Every typed word must be close to a word of the term
+    // (TYPOS_SHORT typos allowed in short words, TYPOS_LONG in longer ones).
     function suggestions(query) {
-        const typed = wordsOf(query).filter(function (word) { return word.length >= 3; });
+        const typed = wordsOf(query).filter(function (word) { return word.length >= SUGGEST_MIN_LETTERS; });
         if (!typed.length) return [];
         const scored = [];
 
         TERMS.forEach(function (term) {
-            let best = 99;
+            let best = NO_MATCH;
             spellings(term).forEach(function (words) {
                 let total = 0;
                 for (let i = 0; i < typed.length; i++) {
                     const q = typed[i];
-                    let closest = 99;
+                    let closest = NO_MATCH;
                     words.forEach(function (word) {
                         closest = Math.min(closest, distance(q, word));
                         // Compare with the start of longer words too: "trnasf" ~ "transf(ormer)"
                         if (word.length > q.length) closest = Math.min(closest, distance(q, word.slice(0, q.length)) + 0.5);
                     });
-                    if (closest > (q.length < 5 ? 1 : 2)) {
-                        total = 99;
+                    if (closest > (q.length < LONG_WORD ? TYPOS_SHORT : TYPOS_LONG)) {
+                        total = NO_MATCH;
                         break;
                     }
                     total += closest;
                 }
                 best = Math.min(best, total);
             });
-            if (best < 99) scored.push({ term: term, score: best });
+            if (best < NO_MATCH) scored.push({ term: term, score: best });
         });
 
         scored.sort(function (a, b) { return a.score - b.score; });
@@ -572,7 +548,7 @@
 
         const typed = normalize(query);
         const tries = [typed];
-        const other = switchLayout(typed);
+        const other = A.switchLayout(typed);
         if (other !== typed) tries.push(other);
 
         for (let i = 0; i < tries.length; i++) {
@@ -750,8 +726,8 @@
         });
         ui.chips.forEach(function (chip) {
             const cat = chip.getAttribute("data-cat");
-            setAttr(chip, "aria-pressed", String(state.cat === cat));
-            setText(chip.querySelector(".gl-chip-count"), catCounts[cat]);
+            A.dom.setAttr(chip, "aria-pressed", String(state.cat === cat));
+            A.dom.setText(chip.querySelector(".gl-chip-count"), catCounts[cat]);
             chip.classList.toggle("is-zero", catCounts[cat] === 0);
         });
 
@@ -764,7 +740,7 @@
         });
         letterButtons.forEach(function (button) {
             const letter = button.getAttribute("data-letter");
-            setAttr(button, "aria-pressed", String(state.letter === letter));
+            A.dom.setAttr(button, "aria-pressed", String(state.letter === letter));
             const off = Boolean(letter) && !letterCounts[letter] && state.letter !== letter;
             if (button.disabled !== off) button.disabled = off;
         });
@@ -793,28 +769,28 @@
         TERMS.forEach(function (term) {
             const card = cards[term.id];
             const shown = visibleIds.has(term.id);
-            setHidden(card.el, !shown);
+            A.dom.setHidden(card.el, !shown);
             if (shown || settings.everyCard) markCard(card, words);
         });
         placeCards(visible.concat(sorted.filter(function (term) { return !visibleIds.has(term.id); })));
 
         // Counter, reset button, empty state and "show all"
-        setText(ui.count, A.plural("glossary.count", visible.length, { total: TERMS.length }));
+        A.dom.setText(ui.count, A.plural("glossary.count", visible.length, { total: TERMS.length }));
         ui.countBar.style.transform = "scaleX(" + (visible.length / TERMS.length).toFixed(3) + ")";
-        setHidden(ui.reset, !active);
-        setHidden(ui.clear, !state.query);
+        A.dom.setHidden(ui.reset, !active);
+        A.dom.setHidden(ui.clear, !state.query);
         const chosen = (state.cat !== "all" ? 1 : 0) + (state.letter ? 1 : 0);
-        setHidden(ui.filterBadge, chosen === 0);
-        setText(ui.filterNum, chosen);
+        A.dom.setHidden(ui.filterBadge, chosen === 0);
+        A.dom.setText(ui.filterNum, chosen);
 
         const nothing = matches.length === 0;
-        setHidden(ui.empty, !nothing);
-        setHidden(ui.grid, nothing);
+        A.dom.setHidden(ui.empty, !nothing);
+        A.dom.setHidden(ui.grid, nothing);
         if (nothing) renderEmpty();
 
-        setHidden(ui.foot, active || TERMS.length <= PREVIEW_COUNT);
-        setAttr(ui.moreBtn, "aria-expanded", String(state.showAll));
-        setText(ui.moreText, state.showAll ? t("glossary.showLess") : A.plural("glossary.showAll", TERMS.length));
+        A.dom.setHidden(ui.foot, active || TERMS.length <= PREVIEW_COUNT);
+        A.dom.setAttr(ui.moreBtn, "aria-expanded", String(state.showAll));
+        A.dom.setText(ui.moreText, state.showAll ? t("glossary.showLess") : A.plural("glossary.showAll", TERMS.length));
 
         // Screen readers hear the new count a moment after typing stops
         if (settings.announce) {
@@ -886,10 +862,10 @@
     // "Nothing found" and the "did you mean?" buttons
     function renderEmpty() {
         const query = queryActive() ? state.query.trim() : "";
-        setText(ui.emptyTitle, query ? t("glossary.emptyQuery", { query: query }) : t("glossary.emptyFilters"));
+        A.dom.setText(ui.emptyTitle, query ? t("glossary.emptyQuery", { query: query }) : t("glossary.emptyFilters"));
 
         const ideas = query ? suggestions(query) : [];
-        setHidden(ui.suggest, ideas.length === 0);
+        A.dom.setHidden(ui.suggest, ideas.length === 0);
         // The same suggestions as before (after a language change, say) keep their
         // buttons, so a focused one keeps the focus: only the names change
         const ids = ideas.map(function (term) { return term.id; }).join(",");
@@ -902,7 +878,7 @@
             }).join("");
         }
         ui.suggestList.querySelectorAll(".gl-suggestion-name").forEach(function (name, i) {
-            setText(name, termName(ideas[i]));
+            A.dom.setText(name, termName(ideas[i]));
         });
     }
 

@@ -1,22 +1,32 @@
 /* =========================================================
    AI COMPASS — TEXTS: LESSONS
    Every word in English and in Russian (informal "ты").
-   The six lessons, their mini-labs and the lesson reader.
+   The lessons, their mini-labs and the lesson reader.
    Used by js/lessons.js (and the lessons section of index.html).
    To change a text, change it here (in both languages).
    ========================================================= */
 
-// The section's title and subtitle on the page (index.html)
+// The section's title and subtitle on the page (index.html).
+// The subtitle follows the number of lessons: ".6" spells out the number the site
+// has today; any other number uses the plural forms ("7 short lessons..."). The plain
+// key is the subtitle while the number is not known.
 window.AICompass.addTranslations({
     en: {
         "lessons.label": "LEARN SOMETHING NEW",
         "lessons.title": "Explore the Basics",
-        "lessons.subtitle": "Six short lessons. Open one, read it, check yourself, and track your progress."
+        "lessons.subtitle": "Short lessons. Open one, read it, check yourself, and track your progress.",
+        "lessons.subtitle.6": "Six short lessons. Open one, read it, check yourself, and track your progress.",
+        "lessons.subtitle.one": "{n} short lesson. Open it, read it, check yourself, and track your progress.",
+        "lessons.subtitle.many": "{n} short lessons. Open one, read it, check yourself, and track your progress."
     },
     ru: {
         "lessons.label": "УЗНАЙ ЧТО-ТО НОВОЕ",
         "lessons.title": "Изучаем основы",
-        "lessons.subtitle": "Шесть коротких уроков. Открой урок, прочитай, проверь себя и следи за своим прогрессом."
+        "lessons.subtitle": "Короткие уроки. Открой урок, прочитай, проверь себя и следи за своим прогрессом.",
+        "lessons.subtitle.6": "Шесть коротких уроков. Открой урок, прочитай, проверь себя и следи за своим прогрессом.",
+        "lessons.subtitle.one": "{n} короткий урок. Открой его, прочитай, проверь себя и следи за своим прогрессом.",
+        "lessons.subtitle.few": "{n} коротких урока. Открой урок, прочитай, проверь себя и следи за своим прогрессом.",
+        "lessons.subtitle.many": "{n} коротких уроков. Открой урок, прочитай, проверь себя и следи за своим прогрессом."
     }
 });
 
@@ -519,7 +529,7 @@ window.AICompass.addTranslations({
     }
 });
 
-// The six mini-labs
+// The mini-labs
 window.AICompass.addTranslations({
     en: {
         // Mini-lab 1: AI or not AI?
