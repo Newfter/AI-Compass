@@ -128,6 +128,12 @@
         return t(lessonKey(n, "title"));
     }
 
+    // An animation curve: fast at first, then gently slowing down (0 -> 0, 1 -> 1)
+    // TODO(core): A.util.easeOut(progress); quiz.js has the same curve twice
+    function easeOut(progress) {
+        return 1 - Math.pow(1 - progress, 3);
+    }
+
     // Redraws a part of the page from scratch, but keeps the keyboard focus on
     // the "same" button afterwards (buttons are matched by data-fid).
     function redraw(box, html) {
@@ -307,7 +313,7 @@
         const start = performance.now();
         function step(now) {
             const progress = Math.min(1, (now - start) / RING_COUNT_UP_TIME);
-            const eased = 1 - Math.pow(1 - progress, 3);
+            const eased = easeOut(progress);
             ringValue = Math.round(from + (target - from) * eased);
             hud.percent.textContent = String(ringValue);
             if (progress < 1) ringFrame = requestAnimationFrame(step);

@@ -68,20 +68,22 @@
     animation: aic-sweep 6s linear infinite;
 }
 
-/* Sci-fi corner brackets */
+/* Sci-fi corner brackets: two thin lines in each corner */
 .lsn-hud-corners {
+    --lsn-corner-size: 14px;    /* the length of each line */
+    --lsn-corner-line: 1.5px;   /* its thickness */
     position: absolute;
     inset: 10px;
     pointer-events: none;
     background:
-        linear-gradient(var(--accent-2), var(--accent-2)) top left / 14px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) top left / 1.5px 14px,
-        linear-gradient(var(--accent-2), var(--accent-2)) top right / 14px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) top right / 1.5px 14px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / 14px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / 1.5px 14px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / 14px 1.5px,
-        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / 1.5px 14px;
+        linear-gradient(var(--accent-2), var(--accent-2)) top left / var(--lsn-corner-size) var(--lsn-corner-line),
+        linear-gradient(var(--accent-2), var(--accent-2)) top left / var(--lsn-corner-line) var(--lsn-corner-size),
+        linear-gradient(var(--accent-2), var(--accent-2)) top right / var(--lsn-corner-size) var(--lsn-corner-line),
+        linear-gradient(var(--accent-2), var(--accent-2)) top right / var(--lsn-corner-line) var(--lsn-corner-size),
+        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / var(--lsn-corner-size) var(--lsn-corner-line),
+        linear-gradient(var(--accent-2), var(--accent-2)) bottom left / var(--lsn-corner-line) var(--lsn-corner-size),
+        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / var(--lsn-corner-size) var(--lsn-corner-line),
+        linear-gradient(var(--accent-2), var(--accent-2)) bottom right / var(--lsn-corner-line) var(--lsn-corner-size);
     background-repeat: no-repeat;
     opacity: 0.55;
 }
