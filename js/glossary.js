@@ -24,6 +24,10 @@
     // Without any filter, only the first few cards are shown,
     // so the page doesn't get too long. "Show all" shows the rest.
     const PREVIEW_COUNT = 12;
+    // Screen readers hear the new count this long after typing stops (ms)
+    const ANNOUNCE_DELAY = 450;
+    // How long a shown term glows (ms; the CSS animation takes 2.4 s)
+    const SPOTLIGHT_MS = 2600;
 
     // ---------- 1. The terms (from js/content/glossary.js) ----------
     // categories: the category ids, in the order of their chips.
@@ -52,6 +56,35 @@
 
     function otherLang() {
         return A.lang === "ru" ? "en" : "ru";
+    }
+
+    // Typed with the wrong keyboard layout? "ntcn" -> "тест", "ьщвуд" -> "model"
+    // TODO(core): js/palette.js has the same table; A.text.switchLayout(text) could serve both.
+    const LAYOUT_EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`";
+    const LAYOUT_RU = "йцукенгшщзхъфывапролджэячсмитьбюё";
+
+    function switchLayout(text) {
+        return String(text).split("").map(function (char) {
+            let index = LAYOUT_EN.indexOf(char);
+            if (index !== -1) return LAYOUT_RU.charAt(index);
+            index = LAYOUT_RU.indexOf(char);
+            return index !== -1 ? LAYOUT_EN.charAt(index) : char;
+        }).join("");
+    }
+
+    // Writing the same text or attribute again still makes the browser redo work,
+    // so while typing (a new search on every key) only what changed is written
+    function setText(element, value) {
+        value = String(value);
+        if (element.textContent !== value) element.textContent = value;
+    }
+
+    function setAttr(element, name, value) {
+        if (element.getAttribute(name) !== value) element.setAttribute(name, value);
+    }
+
+    function setHidden(element, hidden) {
+        if (element.hidden !== hidden) element.hidden = hidden;
     }
 
     // A term's words in the current language
@@ -129,9 +162,9 @@
         return alias.replace(/\*$/, "");
     }
 
-    // Returns the term mentioned in the text (the longest match wins:
-    // "generative AI" beats "AI"), or null when there is none.
-    function find(text) {
+    // The way of writing a term that the text mentions (the longest match wins:
+    // "generative AI" beats "AI"): { term, stems, score }, or null when there is none
+    function mentioned(text) {
         const words = wordsOf(text || "");
         if (!words.length) return null;
 
@@ -148,15 +181,22 @@
                 }
             }
         });
+        return best;
+    }
+
+    // The term mentioned in a text, as the API gives it ({ id, term, ... }), or null
+    function find(text) {
+        const best = mentioned(text);
         return best ? info(best.term) : null;
     }
 
     let lastRandom = "";
 
+    // A random term, never the same one twice in a row
     function randomTerm() {
         let term;
         do {
-            term = TERMS[Math.floor(Math.random() * TERMS.length)];
+            term = A.util.pick(TERMS);
         } while (term.id === lastRandom && TERMS.length > 1);
         lastRandom = term.id;
         return term;
@@ -270,7 +310,7 @@
 
     function cardHTML(term) {
         const id = term.id;
-        return '<li class="gl-card card" id="term-' + id + '" data-id="' + id + '" data-cat="' + term.cat + '" data-reveal>' +
+        return '<li class="gl-card card' + (state.explored.has(id) ? " is-explored" : "") + '" id="term-' + id + '" data-id="' + id + '" data-cat="' + term.cat + '" data-reveal>' +
             '<div class="gl-card-top">' +
                 '<span class="gl-icon" aria-hidden="true">' + term.icon + "</span>" +
                 '<span class="gl-cat-tag mono">' + text("glossary.cat." + term.cat) + "</span>" +
@@ -404,6 +444,7 @@
             filterBadge: root.querySelector(".gl-filter-badge"),
             filterNum: root.querySelector(".gl-filter-num"),
             cats: root.querySelector(".gl-cats"),
+            chips: Array.prototype.slice.call(root.querySelectorAll(".gl-chip")),
             alpha: root.querySelector(".gl-alpha"),
             count: root.querySelector(".gl-count"),
             countBar: root.querySelector(".gl-count-bar span"),
@@ -434,29 +475,28 @@
                 def: card.querySelector(".gl-def"),
                 ex: card.querySelector(".gl-ex-text"),
                 toggle: card.querySelector(".gl-toggle"),
-                rels: Array.prototype.slice.call(card.querySelectorAll(".gl-rel"))
+                rels: Array.prototype.slice.call(card.querySelectorAll(".gl-rel")),
+                html: { name: "", def: "", alt: "" },   // what markCard() wrote last
+                spotTimer: 0
             };
+            translateCard(cards[term.id]);
         });
 
         listen();
         A.onLanguageChange(onLanguageChange);
         buildLetters();
         sortCards();
-        render(false);
+        render({ everyCard: true });
         updateExplored();
     }
 
-    // ---------- 11. Searching and highlighting ----------
+    // ---------- 11. Searching: one matching function ----------
     // The text a term can be found by: its name, other names and definition
     // in the current language, plus its name in the other language.
     function haystack(term) {
         const here = term[A.lang];
         const there = term[otherLang()];
         return normalize([termName(term)].concat(here.aliases, termDef(term), there.name, there.aliases).map(plainAlias).join(" \n "));
-    }
-
-    function queryWords() {
-        return wordsOf(state.query);
     }
 
     function matchesQuery(term, words) {
@@ -478,6 +518,50 @@
         const there = term[otherLang()];
         if (has(normalize([there.name].concat(term[A.lang].aliases, there.aliases).map(plainAlias).join(" \n ")))) return 2;
         return 3;
+    }
+
+    // The terms that contain every word, the best matches first (then A–Z)
+    function containing(words) {
+        const found = sorted.filter(function (term) { return matchesQuery(term, words); });
+        const score = {};
+        found.forEach(function (term) { score[term.id] = relevance(term, words); });
+        return found.sort(function (a, b) { return score[a.id] - score[b.id]; });
+    }
+
+    // What the search box shows: { terms, words }, the terms in order and the words
+    // to mark in them. The box, the assistant and the palette find terms the same way:
+    //  1. the terms whose names or definition contain every typed word
+    //     ("lea" finds "Machine learning");
+    //  2. if there are none: the term the text mentions, found by find() like the
+    //     assistant and the palette do ("what is a neural network?");
+    //  3. if still none: 1 and 2 again for the other keyboard layout ("ntcn" = "тест").
+    // A search without letters or digits ("(", "🤖") finds every term.
+    function search(query) {
+        const words = wordsOf(query);
+        if (!words.length) return { terms: sorted, words: [] };
+
+        const typed = normalize(query);
+        const tries = [typed];
+        const other = switchLayout(typed);
+        if (other !== typed) tries.push(other);
+
+        for (let i = 0; i < tries.length; i++) {
+            const tryWords = wordsOf(tries[i]);
+            const terms = containing(tryWords);
+            if (terms.length) return { terms: terms, words: tryWords };
+            const best = mentioned(tries[i]);
+            if (best) return { terms: [best.term], words: best.stems.map(plainAlias) };
+        }
+        return { terms: [], words: words };
+    }
+
+    // A search only counts as a filter when it has words
+    function queryActive() {
+        return wordsOf(state.query).length > 0;
+    }
+
+    function filtersActive() {
+        return queryActive() || state.cat !== "all" || Boolean(state.letter);
     }
 
     function firstLetter(term) {
@@ -516,12 +600,10 @@
         return html + esc(raw.slice(position));
     }
 
-    // Puts the term's words (in the current language) into its card
-    function fillCard(card, words) {
+    // ---------- 12. Filling the cards ----------
+    // The parts of a card that only change with the language
+    function translateCard(card) {
         const term = card.term;
-        card.name.innerHTML = highlight(termName(term), words);
-        card.def.innerHTML = highlight(termDef(term), words);
-        card.alt.innerHTML = highlight(term[otherLang()].name, words);
         card.alt.setAttribute("lang", otherLang());
         card.ex.textContent = term[A.lang].ex;
         // Screen readers hear which term the button belongs to: "Example & related: Data"
@@ -529,12 +611,29 @@
         card.rels.forEach(function (button) {
             button.querySelector(".gl-rel-name").textContent = termName(BY_ID[button.getAttribute("data-target")]);
         });
-        card.el.classList.toggle("is-explored", state.explored.has(term.id));
     }
 
-    // ---------- 12. Alphabet strip ----------
+    // The term's name, its name in the other language and its definition, with the
+    // search words marked. A part is only written when it changed: while you type,
+    // most of them stay the same.
+    function markCard(card, words) {
+        const term = card.term;
+        setHTML(card, "name", highlight(termName(term), words));
+        setHTML(card, "def", highlight(termDef(term), words));
+        setHTML(card, "alt", highlight(term[otherLang()].name, words));
+    }
+
+    function setHTML(card, part, html) {
+        if (card.html[part] === html) return;
+        card.html[part] = html;
+        card[part].innerHTML = html;
+    }
+
+    // ---------- 13. Alphabet strip ----------
     let letterButtons = [];
 
+    // One button per first letter in the current language, after an "all letters" button.
+    // The buttons are reused when the language changes, so a focused one keeps the focus.
     function buildLetters() {
         const letters = [];
         TERMS.forEach(function (term) {
@@ -546,17 +645,29 @@
         // A letter that doesn't exist in the new language is forgotten
         if (state.letter && letters.indexOf(state.letter) === -1) state.letter = "";
 
-        ui.alpha.innerHTML =
-            '<button class="gl-letter gl-letter-all" type="button" data-letter="" aria-pressed="' + (!state.letter) + '"' +
-                ' aria-label="' + esc(t("glossary.lettersAllLabel")) + '">' + esc(t("glossary.lettersAll")) + "</button>" +
-            letters.map(function (letter) {
-                return '<button class="gl-letter" type="button" data-letter="' + esc(letter) + '" aria-pressed="' + (state.letter === letter) + '"' +
-                    ' aria-label="' + esc(t("glossary.letterLabel", { letter: letter })) + '">' + esc(letter) + "</button>";
-            }).join("");
-        letterButtons = Array.prototype.slice.call(ui.alpha.querySelectorAll(".gl-letter"));
+        const wanted = [""].concat(letters);
+        const focused = letterButtons.indexOf(document.activeElement);
+        while (letterButtons.length > wanted.length) letterButtons.pop().remove();
+        while (letterButtons.length < wanted.length) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "gl-letter";
+            ui.alpha.appendChild(button);
+            letterButtons.push(button);
+        }
+        wanted.forEach(function (letter, i) {
+            const button = letterButtons[i];
+            button.classList.toggle("gl-letter-all", !letter);
+            button.setAttribute("data-letter", letter);
+            button.setAttribute("aria-pressed", String(state.letter === letter));
+            button.setAttribute("aria-label", letter ? t("glossary.letterLabel", { letter: letter }) : t("glossary.lettersAllLabel"));
+            button.textContent = letter || t("glossary.lettersAll");
+        });
+        // The focused button was one too many for the new language: the last one takes the focus
+        if (focused >= letterButtons.length) letterButtons[letterButtons.length - 1].focus({ preventScroll: true });
     }
 
-    // ---------- 13. Sorting ----------
+    // ---------- 14. Sorting ----------
     let sorted = TERMS.slice();
 
     // A–Z in the current language (render() puts the cards in place)
@@ -566,17 +677,12 @@
         });
     }
 
-    // ---------- 14. Applying search + filters ----------
-    let liveTimer = 0;
-    const running = new WeakMap();
-
-    function filtersActive() {
-        return Boolean(state.query.trim()) || state.cat !== "all" || Boolean(state.letter);
-    }
+    // ---------- 15. Applying search + filters ----------
+    const running = new WeakMap();      // the glide animation of each card
+    let pageOrder = "";                 // the order of the cards on the page
+    let shownIdeas = "";                // the "did you mean" suggestions on the page
 
     // Puts the cards in this order on the page (only if it changed)
-    let pageOrder = "";
-
     function placeCards(list) {
         const order = list.map(function (term) { return term.id; }).join(",");
         if (order === pageOrder) return;
@@ -592,18 +698,17 @@
         }
     }
 
-    // animate: cards glide to their new places.
-    // announce: screen readers hear the new count (only after something the user did).
-    function render(animate, announce) {
-        const words = queryWords();
-        let byQuery = sorted.filter(function (term) { return matchesQuery(term, words); });
-
-        // While searching, the best matches come first (then A–Z)
-        if (words.length) {
-            const score = {};
-            byQuery.forEach(function (term) { score[term.id] = relevance(term, words); });
-            byQuery = byQuery.slice().sort(function (a, b) { return score[a.id] - score[b.id]; });
-        }
+    // Shows the cards that pass the search and the filters, and updates everything
+    // around them. Only what changed is written, so typing stays fast. options:
+    //   animate     cards glide to their new places
+    //   announce    screen readers hear the new count (after something the user did)
+    //   everyCard   refill the hidden cards too (the language changed)
+    function render(options) {
+        const settings = options || {};
+        const found = search(state.query);
+        const words = found.words;
+        const byQuery = found.terms;
+        const active = filtersActive();
 
         // Counts on the category chips (search + letter, any category)
         const catCounts = { all: 0 };
@@ -613,10 +718,10 @@
             catCounts.all++;
             catCounts[term.cat]++;
         });
-        ui.cats.querySelectorAll(".gl-chip").forEach(function (chip) {
+        ui.chips.forEach(function (chip) {
             const cat = chip.getAttribute("data-cat");
-            chip.setAttribute("aria-pressed", String(state.cat === cat));
-            chip.querySelector(".gl-chip-count").textContent = catCounts[cat];
+            setAttr(chip, "aria-pressed", String(state.cat === cat));
+            setText(chip.querySelector(".gl-chip-count"), catCounts[cat]);
             chip.classList.toggle("is-zero", catCounts[cat] === 0);
         });
 
@@ -629,8 +734,9 @@
         });
         letterButtons.forEach(function (button) {
             const letter = button.getAttribute("data-letter");
-            button.setAttribute("aria-pressed", String(state.letter === letter));
-            button.disabled = Boolean(letter) && !letterCounts[letter] && state.letter !== letter;
+            setAttr(button, "aria-pressed", String(state.letter === letter));
+            const off = Boolean(letter) && !letterCounts[letter] && state.letter !== letter;
+            if (button.disabled !== off) button.disabled = off;
         });
 
         // Which terms pass every filter
@@ -639,13 +745,13 @@
             if (state.letter && firstLetter(term) !== state.letter) return false;
             return true;
         });
-        const preview = !filtersActive() && !state.showAll;
+        const preview = !active && !state.showAll;
         const visible = preview ? matches.slice(0, PREVIEW_COUNT) : matches;
         const visibleIds = new Set(visible.map(function (term) { return term.id; }));
 
         // Remember where cards are now, to animate them to their new place
         const before = new Map();
-        const canAnimate = animate && A.motion.ok();
+        const canAnimate = settings.animate && A.motion.ok();
         if (canAnimate) {
             TERMS.forEach(function (term) {
                 const el = cards[term.id].el;
@@ -653,37 +759,36 @@
             });
         }
 
+        // Hidden cards keep their old marks until they are shown again
         TERMS.forEach(function (term) {
             const card = cards[term.id];
-            card.el.hidden = !visibleIds.has(term.id);
-            fillCard(card, words);
+            const shown = visibleIds.has(term.id);
+            setHidden(card.el, !shown);
+            if (shown || settings.everyCard) markCard(card, words);
         });
         placeCards(visible.concat(sorted.filter(function (term) { return !visibleIds.has(term.id); })));
 
         // Counter, reset button, empty state and "show all"
-        ui.count.textContent = A.plural("glossary.count", visible.length, { total: TERMS.length });
+        setText(ui.count, A.plural("glossary.count", visible.length, { total: TERMS.length }));
         ui.countBar.style.transform = "scaleX(" + (visible.length / TERMS.length).toFixed(3) + ")";
-        ui.reset.hidden = !filtersActive();
-        ui.clear.hidden = !state.query;
+        setHidden(ui.reset, !active);
+        setHidden(ui.clear, !state.query);
         const chosen = (state.cat !== "all" ? 1 : 0) + (state.letter ? 1 : 0);
-        ui.filterBadge.hidden = chosen === 0;
-        ui.filterNum.textContent = chosen;
+        setHidden(ui.filterBadge, chosen === 0);
+        setText(ui.filterNum, chosen);
 
         const nothing = matches.length === 0;
-        ui.empty.hidden = !nothing;
-        ui.grid.hidden = nothing;
+        setHidden(ui.empty, !nothing);
+        setHidden(ui.grid, nothing);
         if (nothing) renderEmpty();
 
-        ui.foot.hidden = filtersActive() || TERMS.length <= PREVIEW_COUNT;
-        ui.moreBtn.setAttribute("aria-expanded", String(state.showAll));
-        ui.moreText.textContent = state.showAll ? t("glossary.showLess") : A.plural("glossary.showAll", TERMS.length);
+        setHidden(ui.foot, active || TERMS.length <= PREVIEW_COUNT);
+        setAttr(ui.moreBtn, "aria-expanded", String(state.showAll));
+        setText(ui.moreText, state.showAll ? t("glossary.showLess") : A.plural("glossary.showAll", TERMS.length));
 
-        // Tell screen readers the new count a moment after typing stops
-        if (announce) {
-            clearTimeout(liveTimer);
-            liveTimer = setTimeout(function () {
-                ui.live.textContent = nothing ? ui.emptyTitle.textContent : ui.count.textContent;
-            }, 450);
+        // Screen readers hear the new count a moment after typing stops
+        if (settings.announce) {
+            A.announce(nothing ? ui.emptyTitle.textContent : ui.count.textContent, { region: ui.live, delay: ANNOUNCE_DELAY });
         }
 
         markLooseRows();
@@ -694,64 +799,81 @@
     // Next to an open card that would leave big empty gaps, so cards that share
     // a row with an open card keep their own height instead ("loose").
     function markLooseRows() {
-        const openTops = new Set();
         const shown = Array.prototype.filter.call(ui.grid.children, function (el) { return !el.hidden; });
+        const openTops = new Set();
         shown.forEach(function (el) {
             if (el.classList.contains("is-open")) openTops.add(el.offsetTop);
         });
-        // (With no open card there is nothing to measure, which keeps the start-up fast)
-        shown.forEach(function (el) {
-            el.classList.toggle("is-loose", openTops.size > 0 && !el.classList.contains("is-open") && openTops.has(el.offsetTop));
+        // Read every position first, then change classes: reading after a change
+        // would make the browser lay the page out again for every card.
+        // (With no open card there is nothing to measure, which keeps typing fast.)
+        const tops = openTops.size ? shown.map(function (el) { return el.offsetTop; }) : [];
+        shown.forEach(function (el, i) {
+            el.classList.toggle("is-loose", openTops.size > 0 && !el.classList.contains("is-open") && openTops.has(tops[i]));
         });
     }
 
     // FLIP animation: cards glide from their old place to the new one,
     // new cards fade and grow in. Only cards near the screen are animated.
     function animateCards(before) {
-        let entering = 0;
+        // First read where every card is now (one layout for all of them)...
         const screenBottom = window.innerHeight + 200;
-        const ease = A.motion.ease;
-
+        const near = [];
         Array.prototype.forEach.call(ui.grid.children, function (el) {
             if (el.hidden) return;
             const now = el.getBoundingClientRect();
             if (now.bottom < -200 || now.top > screenBottom) return;
+            near.push({ el: el, now: now, old: before.get(el) });
+        });
 
-            const previous = running.get(el);
+        // ...then start the animations
+        const ease = A.motion.ease;
+        let entering = 0;
+        near.forEach(function (item) {
+            const previous = running.get(item.el);
             if (previous) previous.cancel();
 
-            const old = before.get(el);
             let animation = null;
-            if (old) {
-                const dx = old.left - now.left;
-                const dy = old.top - now.top;
+            if (item.old) {
+                const dx = item.old.left - item.now.left;
+                const dy = item.old.top - item.now.top;
                 if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-                    animation = el.animate(
+                    animation = item.el.animate(
                         [{ transform: "translate(" + dx + "px, " + dy + "px)" }, { transform: "none" }],
                         { duration: 420, easing: ease }
                     );
                 }
             } else {
-                animation = el.animate(
+                animation = item.el.animate(
                     [{ opacity: 0, transform: "translateY(14px) scale(0.96)" }, { opacity: 1, transform: "none" }],
                     { duration: 380, delay: Math.min(entering++, 8) * 35, easing: ease, fill: "backwards" }
                 );
             }
-            if (animation) running.set(el, animation);
+            if (animation) running.set(item.el, animation);
         });
     }
 
+    // "Nothing found" and the "did you mean?" buttons
     function renderEmpty() {
-        const query = state.query.trim();
-        ui.emptyTitle.textContent = query ? t("glossary.emptyQuery", { query: query }) : t("glossary.emptyFilters");
+        const query = queryActive() ? state.query.trim() : "";
+        setText(ui.emptyTitle, query ? t("glossary.emptyQuery", { query: query }) : t("glossary.emptyFilters"));
 
         const ideas = query ? suggestions(query) : [];
-        ui.suggest.hidden = ideas.length === 0;
-        ui.suggestList.innerHTML = ideas.map(function (term) {
-            return '<button class="chip gl-rel gl-suggestion" type="button" data-target="' + term.id + '">' +
-                '<span aria-hidden="true">' + term.icon + "</span><span>" + esc(termName(term)) + "</span>" +
-            "</button>";
-        }).join("");
+        setHidden(ui.suggest, ideas.length === 0);
+        // The same suggestions as before (after a language change, say) keep their
+        // buttons, so a focused one keeps the focus: only the names change
+        const ids = ideas.map(function (term) { return term.id; }).join(",");
+        if (ids !== shownIdeas) {
+            shownIdeas = ids;
+            ui.suggestList.innerHTML = ideas.map(function (term) {
+                return '<button class="chip gl-rel gl-suggestion" type="button" data-target="' + term.id + '">' +
+                    '<span aria-hidden="true">' + term.icon + '</span><span class="gl-suggestion-name"></span>' +
+                "</button>";
+            }).join("");
+        }
+        ui.suggestList.querySelectorAll(".gl-suggestion-name").forEach(function (name, i) {
+            setText(name, termName(ideas[i]));
+        });
     }
 
     function updateExplored() {
@@ -769,7 +891,7 @@
         ui.input.value = "";
     }
 
-    // ---------- 15. Opening cards ----------
+    // ---------- 16. Opening cards ----------
     function setOpen(id, open) {
         const card = cards[id];
         if (!card) return;
@@ -790,13 +912,11 @@
         markLooseRows();
     }
 
-    // A short glowing pulse around a card
-    function spotlight(el) {
-        el.classList.remove("is-spotlight");
-        void el.offsetWidth;                         // restart the animation
-        el.classList.add("is-spotlight");
-        clearTimeout(el._glSpotTimer);
-        el._glSpotTimer = setTimeout(function () { el.classList.remove("is-spotlight"); }, 2600);
+    // A short glowing pulse around a card (from the start if it is already glowing)
+    function spotlight(card) {
+        A.dom.replay(card.el, "is-spotlight");
+        clearTimeout(card.spotTimer);
+        card.spotTimer = setTimeout(function () { card.el.classList.remove("is-spotlight"); }, SPOTLIGHT_MS);
     }
 
     // Scrolls so the whole card, at its opened size, is on screen
@@ -832,14 +952,14 @@
             A.dom.pauseScrollAnchoring();
             if (filtersActive()) resetFilters();
             state.showAll = true;
-            render(false);
+            render();
         }
         if (!card.el.classList.contains("is-open")) setOpen(id, true);
 
         // Show it at once (no fade-in) so it can glow straight away
         if (A.effects && A.effects.reveal) A.effects.reveal(card.el);
         scrollToCard(card);
-        spotlight(card.el);
+        spotlight(card);
 
         if (options.focus) {
             // A short delay, so the palette or menu can close first
@@ -849,20 +969,28 @@
     }
 
     // ---------- 16. Events ----------
+    // After something the user did: cards glide, and screen readers hear the count
+    function update() {
+        render({ animate: true, announce: true });
+    }
+
     // Wired up once, when the glossary is built
     function listen() {
         ui.input.addEventListener("input", function () {
             state.query = ui.input.value;
-            render(true, true);
+            update();
         });
 
         ui.input.addEventListener("keydown", function (event) {
+            // Enter or Escape that only ends typing with an input method (Chinese,
+            // Japanese... keyboards) belongs to that, not to the search
+            if (event.isComposing || event.keyCode === 229) return;
             if (event.key === "Escape" && ui.input.value) {
                 event.preventDefault();
                 event.stopPropagation();
                 ui.input.value = "";
                 state.query = "";
-                render(true, true);
+                update();
             } else if (event.key === "Enter") {
                 event.preventDefault();
                 const first = ui.grid.querySelector(".gl-card:not([hidden])");
@@ -873,7 +1001,7 @@
         ui.clear.addEventListener("click", function () {
             ui.input.value = "";
             state.query = "";
-            render(true, true);
+            update();
             ui.input.focus();
         });
 
@@ -882,7 +1010,7 @@
             if (!chip) return;
             const cat = chip.getAttribute("data-cat");
             state.cat = state.cat === cat && cat !== "all" ? "all" : cat;
-            render(true, true);
+            update();
         });
 
         ui.alpha.addEventListener("click", function (event) {
@@ -890,12 +1018,12 @@
             if (!button || button.disabled) return;
             const letter = button.getAttribute("data-letter");
             state.letter = state.letter === letter ? "" : letter;
-            render(true, true);
+            update();
         });
 
         function onReset() {
             resetFilters();
-            render(true, true);
+            update();
             ui.input.focus({ preventScroll: true });
         }
         ui.reset.addEventListener("click", onReset);
@@ -945,14 +1073,13 @@
             // Focus stays on the button (so you can roll again); screen readers hear the term
             const term = randomTerm();
             show(term.id);
-            clearTimeout(liveTimer);
-            ui.live.textContent = t("glossary.randomAnnounce", { term: termName(term) });
+            A.announce(t("glossary.randomAnnounce", { term: termName(term) }), { region: ui.live });
         });
 
         ui.moreBtn.addEventListener("click", function () {
             const top = ui.moreBtn.getBoundingClientRect().top;
             state.showAll = !state.showAll;
-            render(state.showAll, true);
+            render({ animate: state.showAll, announce: true });
             // Showing fewer: keep the button in the same place on screen
             if (!state.showAll) {
                 window.scrollBy({ top: ui.moreBtn.getBoundingClientRect().top - top, behavior: "instant" });
@@ -978,12 +1105,12 @@
 
     // ---------- 17. Language changes: same search, same open cards ----------
     function onLanguageChange() {
-        // Quietly forget the last announcement (it was in the old language)
-        clearTimeout(liveTimer);
-        ui.live.textContent = "";
+        // Quietly forget the announcement still waiting (it is in the old language)
+        A.announce("", { region: ui.live, delay: 0 });
         buildLetters();
         sortCards();
-        render(false);
+        TERMS.forEach(function (term) { translateCard(cards[term.id]); });
+        render({ everyCard: true });
         updateExplored();
     }
 
