@@ -865,7 +865,7 @@
 }
 
 /* Touch screens: every button at least 44px tall */
-@media (pointer: coarse) {
+@media (hover: none), (pointer: coarse) {
     .cb-chip,
     .cb-action {
         min-height: 44px;

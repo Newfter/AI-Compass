@@ -270,7 +270,7 @@
 }
 
 /* Bigger touch targets on phones and on touch screens */
-@media (max-width: 640px), (pointer: coarse) {
+@media (max-width: 640px), (hover: none), (pointer: coarse) {
     .ui-chip {
         min-height: 44px;
     }

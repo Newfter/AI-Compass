@@ -437,7 +437,7 @@
 }
 
 /* Touch screens: no keyboard hints, an X instead of "Esc", bigger rows */
-@media (pointer: coarse) {
+@media (hover: none), (pointer: coarse) {
     .cp-hint {
         display: none;
     }

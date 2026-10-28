@@ -2539,7 +2539,7 @@
 
 /* Phones, and screens too short for a framed window (a phone held sideways):
    the reader covers the whole screen, with a compact top and bottom bar */
-@media (max-width: 640px), (max-height: 500px) {
+@media (max-width: 640px), (max-height: 520px) {
     :root {
         --lsn-reader-pad: 0px;
         --lsn-reader-max-h: 100vh;   /* as tall as the screen */
@@ -2599,7 +2599,7 @@
 }
 
 /* Keyboard hint only makes sense with a real keyboard and mouse */
-@media (hover: none) {
+@media (hover: none), (pointer: coarse) {
     .lsn-reader-keys {
         display: none;
     }

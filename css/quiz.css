@@ -1575,7 +1575,7 @@ details[open] .qz-ri-chevron {
 
 /* ===== 11. RESPONSIVE ===== */
 
-@media (max-width: 860px) {
+@media (max-width: 900px) {
     .js [data-feature="quiz"]:empty {
         min-height: 800px;
     }
@@ -1668,7 +1668,7 @@ details[open] .qz-ri-chevron {
     }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 480px) {
     .js [data-feature="quiz"]:empty {
         min-height: 1250px;
     }
@@ -1839,7 +1839,7 @@ details[open] .qz-ri-chevron {
 }
 
 /* Phones and tablets have no keyboard shortcuts to remind about */
-@media (hover: none) and (pointer: coarse) {
+@media (hover: none), (pointer: coarse) {
     .qz-hint {
         display: none;
     }

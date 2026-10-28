@@ -776,7 +776,14 @@
 
 /* ===== 10. RESPONSIVE ===== */
 
-@media (max-width: 760px) {
+/* Below about 980px the cards stand in two columns instead of three */
+@media (max-width: 960px) {
+    .js [data-feature="glossary"]:empty {
+        min-height: 2400px;
+    }
+}
+
+@media (max-width: 720px) {
     .js [data-feature="glossary"]:empty {
         min-height: 2600px;
     }
@@ -868,7 +875,7 @@
 }
 
 /* Bigger touch targets on phones and on touch screens */
-@media (max-width: 640px), (pointer: coarse) {
+@media (max-width: 640px), (hover: none), (pointer: coarse) {
     .gl-letter,
     .gl-rel,
     .gl-reset,

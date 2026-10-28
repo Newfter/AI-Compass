@@ -18,6 +18,30 @@
    11. responsive          tablets and phones (and the menu on small screens)
    12. shared animations
    13. reduced motion and calm mode
+
+   Screen sizes (breakpoints). Every CSS file uses only these widths, as
+   @media (max-width: N) = "N pixels wide or less". The three main ones are
+   also in js/core.js as A.breakpoints, for JavaScript: change both together.
+      640   phones (A.breakpoints.phone); (min-width: 641px) is "not a phone"
+      960   the menu links fold into the burger button (A.breakpoints.menu);
+            the glossary cards stand in two columns
+     1360   wide screens (A.breakpoints.wide): the section mini-map, written
+            (min-width: 1360px) in css/effects.css (it also needs 560px of height)
+   Smaller steps, for the parts that need them:
+      400   small phones (the "Listen" button: js/lessons.js has 400 too)
+      480   narrow phones (lab, quiz)
+      720   big phones and small tablets (lab, lessons, quiz, glossary)
+      900   tablets (lessons, quiz, timeline). The timeline writes
+            (max-width: 899px), because js/timeline.js asks for (min-width: 900px)
+     1024   small laptops, tablets held sideways (lab, lessons)
+     1100   the menu bar and the timeline read-out get tight (here, timeline)
+     1200   toasts move up above the assistant button (here)
+   Heights: 520 or less is a phone held sideways (the lesson reader and the
+   assistant cover the whole screen); 700 or less is a short computer screen.
+   Touch screens: @media (hover: none), (pointer: coarse) = no mouse to hover
+   with, or a finger as the main pointer (the opposite of A.queries.finePointer
+   in js/core.js). Every file uses this one query: for 44px buttons, and to
+   hide keyboard and mouse hints.
    ========================================================= */
 
 /* ===== 1. DESIGN TOKENS (colours and sizes used everywhere) =====
@@ -1038,7 +1062,7 @@ button.chip:hover,
     }
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1100px) {
     .palette-kbd {
         display: none;
     }

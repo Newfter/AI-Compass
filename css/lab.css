@@ -236,7 +236,7 @@
     display: none;
 }
 
-@media (hover: none) {
+@media (hover: none), (pointer: coarse) {
     .lab-hint-mouse {
         display: none;
     }
@@ -1567,7 +1567,7 @@
 
 /* ===== 6. RESPONSIVE ===== */
 
-@media (max-width: 1020px) {
+@media (max-width: 1024px) {
     .js [data-feature="lab"]:empty {
         min-height: 2900px;
     }
