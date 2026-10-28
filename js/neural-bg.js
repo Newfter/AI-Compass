@@ -15,19 +15,18 @@
    Sections of this file:
     1. Settings
     2. State
-    3. Small helpers
-    4. Colours and glow images for the current theme
-    5. Nodes
-    6. Canvas size
-    7. Signals (neurons firing)
-    8. Moving everything forward by one frame
-    9. Drawing
-   10. Animation loop (when it moves and when it rests)
-   11. Mouse, touch and clicks
-   12. Neural storm and the secret code
-   13. Reacting to the rest of the site
-   14. Start
-   15. Ctrl+K command and the public API
+    3. Colours and glow images for the current theme
+    4. Nodes
+    5. Canvas size
+    6. Signals (neurons firing)
+    7. Moving everything forward by one frame
+    8. Drawing
+    9. Animation loop (when it moves and when it rests)
+   10. Mouse, touch and clicks
+   11. Neural storm and the secret code
+   12. Reacting to the rest of the site
+   13. Start
+   14. Ctrl+K command and the public API
    Other features use AICompass.neural (see the last section).
    Every text (English and Russian) is in js/content/neural-bg.js
    The styles are in css/effects.css (the canvas layer itself in style.css)
@@ -95,31 +94,7 @@
 
     const mouse = { x: 0, y: 0, active: false, power: 0, releaseTimer: 0 };
 
-    // ---------- 3. Small helpers (core has the rest: A.util, A.colors, A.canvas) ----------
-    // A random number between min and max (not only whole numbers)
-    // TODO(core): A.util.random(min, max) would serve other canvases too
-    function random(min, max) {
-        return A.util.lerp(min, max, Math.random());
-    }
-
-    // Mixes two colours: amount 0 = a, 1 = b
-    // TODO(core): A.colors.mix(a, b, amount)
-    function mix(a, b, amount) {
-        return [0, 1, 2].map((i) => Math.round(A.util.lerp(a[i], b[i], amount)));
-    }
-
-    // Calls callback when the screen's sharpness (devicePixelRatio) changes, for
-    // example when the window moves to another monitor. No "resize" comes then.
-    // TODO(core): A.onPixelRatioChange(callback) would serve the lab's canvases too
-    function onPixelRatioChange(callback) {
-        const stop = A.onMedia("(resolution: " + window.devicePixelRatio + "dppx)", () => {
-            stop();
-            callback();
-            onPixelRatioChange(callback);                                // watch the new value
-        }, { immediate: false });
-    }
-
-    // ---------- 4. Colours and glow images for the current theme ----------
+    // ---------- 3. Colours and glow images for the current theme ----------
     // A "sprite" is a tiny pre-drawn glowing dot. Copying it is much
     // faster than drawing a new glow for every node in every frame.
     function makeSprite(colour, light, hot) {
@@ -129,7 +104,7 @@
         sprite.height = size;
         const g = sprite.getContext("2d");
         const glow = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-        const core = light ? colour : mix(colour, [255, 255, 255], hot ? 0.75 : 0.55);
+        const core = light ? colour : A.colors.mix(colour, [255, 255, 255], hot ? 0.75 : 0.55);
 
         glow.addColorStop(0, A.colors.rgba(core, 1));
         glow.addColorStop(0.08, A.colors.rgba(colour, 1));
@@ -145,7 +120,7 @@
         const light = A.theme === "light";
         const purple = A.colors.rgb("--accent-rgb");
         const cyan = A.colors.rgb("--accent-2-rgb");
-        const colours = [purple, mix(purple, cyan, 0.5), cyan];
+        const colours = [purple, A.colors.mix(purple, cyan, 0.5), cyan];
 
         look = {
             light: light,
@@ -154,7 +129,7 @@
             pulseSprite: makeSprite(cyan, light, true),
             lineStyles: [],
             cursorStyle: A.colors.rgba(cyan, 1),
-            pulseColour: light ? cyan : mix(cyan, [255, 255, 255], 0.35),
+            pulseColour: light ? cyan : A.colors.mix(cyan, [255, 255, 255], 0.35),
             ringStyle: A.colors.rgba(cyan, 1)
         };
 
@@ -165,11 +140,11 @@
         });
     }
 
-    // ---------- 5. Nodes ----------
+    // ---------- 4. Nodes ----------
     function makeNode(x, y) {
-        const angle = Math.random() * Math.PI * 2;
-        const depth = random(0.35, 1);                       // 1 = close to you, 0.35 = far away
-        const speed = random(MIN_SPEED, MAX_SPEED) * (0.5 + 0.5 * depth);
+        const angle = A.util.random(0, 2 * Math.PI);
+        const depth = A.util.random(0.35, 1);                       // 1 = close to you, 0.35 = far away
+        const speed = A.util.random(MIN_SPEED, MAX_SPEED) * (0.5 + 0.5 * depth);
 
         return {
             x: x,
@@ -179,10 +154,10 @@
             ex: 0,                                           // extra speed from the cursor or a click
             ey: 0,
             z: depth,
-            size: random(1, 1.9),
-            hue: A.util.clamp(x / Math.max(1, width) + random(-0.3, 0.3), 0, 1),   // purple on the left, cyan on the right
-            phase: random(0, Math.PI * 2),
-            twinkle: random(0.5, 1.3),
+            size: A.util.random(1, 1.9),
+            hue: A.util.clamp(x / Math.max(1, width) + A.util.random(-0.3, 0.3), 0, 1),   // purple on the left, cyan on the right
+            phase: A.util.random(0, 2 * Math.PI),
+            twinkle: A.util.random(0.5, 1.3),
             fire: 0,                                         // 1 right after the neuron fires
             near: 0,                                         // 1 right under the cursor
             fade: 1                                          // 0 when it is outside the screen
@@ -197,7 +172,7 @@
         const target = Math.max(24, Math.round(baseCount() * quality));
 
         while (nodes.length < target) {
-            nodes.push(makeNode(random(0, width), random(0, height)));
+            nodes.push(makeNode(A.util.random(0, width), A.util.random(0, height)));
         }
 
         if (nodes.length > target) {
@@ -220,7 +195,7 @@
         return list;
     }
 
-    // ---------- 6. Canvas size ----------
+    // ---------- 5. Canvas size ----------
     function resize() {
         const rect = canvas.getBoundingClientRect();
         const newWidth = Math.max(1, Math.round(rect.width || window.innerWidth));
@@ -257,9 +232,9 @@
     }
 
     A.onResize(resize);
-    onPixelRatioChange(resize);                                          // sharp again on another monitor
+    A.onPixelRatioChange(resize);                                        // sharp again on another monitor
 
-    // ---------- 7. Signals (neurons firing) ----------
+    // ---------- 6. Signals (neurons firing) ----------
     function spawnPulse(from, to, depth) {
         const limit = stormTime > 0 ? MAX_PULSES * 2.5 : MAX_PULSES;
         if (pulses.length >= limit) return;
@@ -270,7 +245,7 @@
             to: to,
             depth: depth,
             t: 0,
-            duration: A.util.clamp(distance / random(150, 240), 0.25, 1.2)
+            duration: A.util.clamp(distance / A.util.random(150, 240), 0.25, 1.2)
         });
     }
 
@@ -298,7 +273,7 @@
         const list = neighbours(pulse.to, pulse.from);
         const count = Math.random() < 0.3 ? 2 : 1;
         for (let i = 0; i < count && list.length; i++) {
-            const next = list.splice(Math.floor(Math.random() * list.length), 1)[0];
+            const next = list.splice(A.util.randomInt(0, list.length - 1), 1)[0];
             spawnPulse(pulse.to, next, pulse.depth + 1);
         }
     }
@@ -307,7 +282,7 @@
         spawnTimer -= dt;
         if (spawnTimer <= 0) {
             spawnRandomPulse();
-            spawnTimer = stormTime > 0 ? random(0.03, 0.09) : random(0.5, 1.3);
+            spawnTimer = stormTime > 0 ? A.util.random(0.03, 0.09) : A.util.random(0.5, 1.3);
         }
 
         const maxStretch = linkDistance * linkDistance * 1.8;
@@ -337,7 +312,7 @@
         }
     }
 
-    // ---------- 8. Moving everything forward by one frame ----------
+    // ---------- 7. Moving everything forward by one frame ----------
     function update(dt) {
         // The cursor's pull fades in and out smoothly
         mouse.power += ((mouse.active ? 1 : 0) - mouse.power) * Math.min(1, dt * 5);
@@ -395,7 +370,7 @@
         updatePulses(dt);
     }
 
-    // ---------- 9. Drawing ----------
+    // ---------- 8. Drawing ----------
     function drawLinks(strength) {
         const total = COLOR_LEVELS * ALPHA_LEVELS;
         for (let k = 0; k < total; k++) {
@@ -570,7 +545,7 @@
         draw(0);
     }
 
-    // ---------- 10. Animation loop (when it moves and when it rests) ----------
+    // ---------- 9. Animation loop (when it moves and when it rests) ----------
     // If the device can't keep up, use fewer nodes. What counts is how long
     // OUR work takes, not the time between frames: a 30 Hz screen (or the
     // half rate below the hero) is not a slow device.
@@ -651,7 +626,7 @@
         }
     }
 
-    // ---------- 11. Mouse, touch and clicks ----------
+    // ---------- 10. Mouse, touch and clicks ----------
     function holdTouch() {
         clearTimeout(mouse.releaseTimer);
         mouse.releaseTimer = setTimeout(() => {
@@ -717,7 +692,7 @@
         burst(event.clientX, event.clientY);
     }, { passive: true });
 
-    // ---------- 12. Neural storm and the secret code ----------
+    // ---------- 11. Neural storm and the secret code ----------
     function storm() {
         if (!A.motion.ok() || document.hidden || !nodes.length) return false;
         stormTime = STORM_TIME;
@@ -738,8 +713,7 @@
 
     // The famous "Konami code": ↑ ↑ ↓ ↓ ← → ← → B A
     document.addEventListener("keydown", (event) => {
-        const target = event.target;
-        if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+        if (A.dom.isTyping(event.target)) return;
 
         secretKeys.push(event.code);
         if (secretKeys.length > 10) secretKeys.shift();
@@ -749,7 +723,7 @@
         }
     });
 
-    // ---------- 13. Reacting to the rest of the site ----------
+    // ---------- 12. Reacting to the rest of the site ----------
     // The new colours are read in the next frame, when the browser restyles the
     // page anyway: reading them inside the click would force an extra restyle
     A.onThemeChange(() => {
@@ -779,7 +753,7 @@
         pageYKnown = true;
     });
 
-    // ---------- 14. Start ----------
+    // ---------- 13. Start ----------
     // In the first frame, when every feature has built its part of the page:
     // reading the colours or measuring the canvas earlier would make the
     // browser style and lay out the page twice
@@ -789,7 +763,7 @@
         refresh();
     });
 
-    // ---------- 15. Ctrl+K command and the public API ----------
+    // ---------- 14. Ctrl+K command and the public API ----------
     A.registerCommand({
         id: "neural-storm",
         group: "cmd.groupActions",

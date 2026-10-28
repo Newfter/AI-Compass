@@ -34,6 +34,8 @@
        1. SETTINGS
        ========================================================= */
     const TABS = ["classifier", "predictor"];   // the lab's two tabs (also saved as "lab.tab")
+    // One experiment per tab. The hero number shows it: data-count-name="labExperimentCount"
+    A.setTextValue("labExperimentCount", TABS.length);
 
     // ----- Teach the machine (the neural network) -----
     // Learning rates you can choose (10 is too big on purpose: try it and watch the loss jump)
@@ -95,7 +97,7 @@
     const $ = (selector) => mount.querySelector(selector);
     const $$ = (selector) => Array.prototype.slice.call(mount.querySelectorAll(selector));
 
-    // The filled part of a slider (.lab-range draws it from --fill)
+    // The filled part of a slider: .ui-range (css/components.css) colours the line from the start up to --fill
     function updateRangeFill(range) {
         const min = Number(range.min);
         const max = Number(range.max);
@@ -136,8 +138,10 @@
 
     // The whole card. It is made only when the lab is needed (build(), section 10),
     // and its empty data-i18n holders get their texts at that moment.
+    // data-no-glare: the card is too big for the light that follows the mouse
+    // along a card's border (js/effects.js, section 10)
     function labHTML() {
-        return '<div class="lab card ui-scan" data-reveal>' +
+        return '<div class="lab card ui-scan" data-reveal data-no-glare>' +
             '<span class="lab-corners ui-corners" aria-hidden="true"></span>' +
             '<div class="lab-top">' +
                 '<div class="lab-tabs" role="tablist" data-active="classifier" data-i18n-attr="aria-label:lab.tablistLabel">' +
@@ -645,17 +649,17 @@
             }
         } else if (name === "circle") {
             for (let i = 0; i < 70; i++) {
-                let angle = Math.random() * Math.PI * 2;
-                let radius = Math.sqrt(Math.random()) * 0.4;
+                let angle = A.util.random(0, 2 * Math.PI);
+                let radius = Math.sqrt(Math.random()) * 0.4;          // (the square root spreads the dots evenly over the disc)
                 points.push({ x: radius * Math.cos(angle), y: radius * Math.sin(angle), label: 0 });
-                angle = Math.random() * Math.PI * 2;
-                radius = 0.62 + Math.random() * 0.3;
+                angle = A.util.random(0, 2 * Math.PI);
+                radius = A.util.random(0.62, 0.92);
                 points.push({ x: edge(radius * Math.cos(angle)), y: edge(radius * Math.sin(angle)), label: 1 });
             }
         } else if (name === "xor") {
             while (points.length < 140) {
-                const x = Math.random() * 1.86 - 0.93;
-                const y = Math.random() * 1.86 - 0.93;
+                const x = A.util.random(-0.93, 0.93);
+                const y = A.util.random(-0.93, 0.93);
                 if (Math.abs(x) < 0.1 || Math.abs(y) < 0.1) continue;
                 points.push({ x: x, y: y, label: x * y > 0 ? 0 : 1 });
             }
@@ -1668,7 +1672,9 @@
         nn.stroke = { id: event.pointerId, last: spot, label: label, painted: 0 };
         try {
             board.el.setPointerCapture(event.pointerId);
-        } catch (error) {}
+        } catch (error) {
+            // The browser can refuse (the pointer is already gone): drawing still works
+        }
         nn.dirty.board = true;
         schedule();
     }
@@ -2326,8 +2332,8 @@
         }
         const word = chip.firstElementChild;
         const small = chip.lastElementChild;
-        if (word.textContent !== token.word) word.textContent = token.word;
-        if (small.textContent !== value) small.textContent = value;
+        A.dom.setText(word, token.word);      // only a real change is written
+        A.dom.setText(small, value);
         chip.classList.toggle("is-typing", token.typing);
         chip.classList.toggle("is-new", !token.typing && token.p === 0);
         if (chip.style.getPropertyValue("--p") !== glow) chip.style.setProperty("--p", glow);
@@ -2495,7 +2501,7 @@
                 job.typed += text.charAt(i);
                 input.scrollTop = input.scrollHeight;
                 i++;
-                if (i < text.length) job.timer = setTimeout(typeLetter, LETTER_MS + Math.random() * LETTER_RANDOM);
+                if (i < text.length) job.timer = setTimeout(typeLetter, LETTER_MS + A.util.random(0, LETTER_RANDOM));
                 else done();
             })();
         }
@@ -2696,19 +2702,6 @@
         schedule();
     }
 
-    // The pixel ratio changes when the window moves to a screen with sharper pixels
-    // (or with the browser zoom). No box changes size, so the size watcher misses it:
-    // a media query for the current ratio tells us, and is then made again for the new one.
-    // TODO(core): neural-bg.js needs the same watcher; a shared A.onPixelRatioChange(callback)
-    // in core would serve both (audit LE-12).
-    function watchPixelRatio() {
-        const stop = A.onMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)", () => {
-            stop();
-            watchPixelRatio();
-            measureAll();
-        }, { immediate: false });
-    }
-
     // ----- Pause when the lab is off screen or the browser tab is hidden -----
     // A.whenVisible also pauses the lab's CSS animations while nobody can see them.
     function onLabVisible(visible) {
@@ -2890,7 +2883,9 @@
         } else {
             A.onResize(measureAll);
         }
-        watchPixelRatio();
+        // The pixel ratio changes when the window moves to a screen with sharper pixels.
+        // No box changes size then, so the size watcher misses it (audit LE-12).
+        A.onPixelRatioChange(measureAll);
         // On screen or not, near or far, theme and language
         A.whenVisible(labCard, onLabVisible, { threshold: ON_SCREEN, pauseAnimations: true });
         A.whenVisible(labCard, onLabNear, { rootMargin: NEAR_MARGIN });
@@ -2913,7 +2908,7 @@
     function openLab(tab) {
         ensure();
         selectTab(tab === "predictor" ? "predictor" : "classifier");
-        A.scrollToSection("lab");
+        A.navigate("lab");
     }
 
     // Two Ctrl+K palette commands
@@ -2923,7 +2918,7 @@
         icon: "🧠",
         title: function () { return t("lab.cmdNN"); },
         keywords: "lab neural network train teach classifier dots points machine learning лаборатория нейросеть нейронная сеть обучить обучение машина точки классификатор",
-        run: function () { A.openLab("classifier"); }
+        run: function () { openLab("classifier"); }
     });
 
     A.registerCommand({
@@ -2932,7 +2927,7 @@
         icon: "💬",
         title: function () { return t("lab.cmdLM"); },
         keywords: "lab next word predictor language model chatbot text autocomplete gpt лаборатория следующее слово предсказатель языковая модель чат-бот текст автодополнение",
-        run: function () { A.openLab("predictor"); }
+        run: function () { openLab("predictor"); }
     });
 
     // AICompass.lab.open("classifier" | "predictor"); AICompass.openLab is the older name

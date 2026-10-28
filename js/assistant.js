@@ -53,6 +53,7 @@
     const SESSION_KEY = "assistant.chat"; // the chat in sessionStorage ("aic:assistant.chat")
     const TYPING_MS = 500;                // the bot "types" this long before a short answer...
     const TYPING_EXTRA_MS = 400;          // ...and up to this much longer before a long one
+    const TYPING_LETTER_MS = 1.1;         // (that is, this much longer for each letter of the answer)
     const NEXT_REPLY_MS = 150;            // a short pause between two answers in the queue
     const ACTION_DELAY_MS = 650;          // time to read "Starting the quiz!" before the bot does it
     const CLOSE_MS = 320;                 // the window's closing animation (css/assistant.css)
@@ -61,7 +62,17 @@
     const TIP_VISITS = 3;                 // on the first 3 visits only
     const ORB_START_SECONDS = 12;         // the orb moves this long after the page loads...
     const ORB_WAKE_SECONDS = 5;           // ...and this long after the mouse or the focus was on it
-    const SHEET_CLOSE_PX = 90;            // phones: pull the sheet down this far to close it
+    const SHEET_CLOSE_PX = 90;            // phones: pull the sheet down this far to close it,
+    const FLICK_PX = 24;                  // ...or flick it down at least this far,
+    const FLICK_SPEED = 0.5;              // ...this fast (pixels per millisecond)
+    const SHEET_GAP_PX = 16;              // phones: the room left above the sheet
+    const TYPO_MIN_LETTERS = 7;           // keywords this long may have one typo in a message
+    const UNKNOWN_WORD_MAX = 40;          // a word the bot doesn't know is quoted back cut to this many letters
+    const ANSWER_TOP_GAP = 12;            // a new answer is scrolled to this far below the top of the chat
+    const WHEEL_LINE_PX = 16;             // a mouse wheel that scrolls by lines: pixels per line
+    const QUIET_REDRAW_MS = 300;          // after a language change, screen readers ignore the chat this long
+    const EYES_REACH_PX = 260;            // the orb's eyes follow the mouse: with the mouse this far away (or more)...
+    const EYES_MOVE_PX = 3.2;             // ...they move this far from the middle
 
     /* =========================================================
        2. SMALL HELPERS
@@ -85,16 +96,6 @@
             return new DOMParser().parseFromString(text, "text/html").body.textContent || "";
         } catch (error) {
             return text.replace(/<[^>]*>/g, "");
-        }
-    }
-
-    // Calls a function from another feature without crashing if it's missing or broken
-    // TODO(core): core.js has the same thing inside (safeCall) but does not share it
-    function safely(callback, fallback) {
-        try {
-            return callback();
-        } catch (error) {
-            return fallback;
         }
     }
 
@@ -126,7 +127,7 @@
 
     // ----- Lessons (AICompass.lessons, if the lessons are on the page) -----
     function lessonName(number) {
-        const title = A.lessons ? safely(function () { return A.lessons.title(number); }, "") : "";
+        const title = A.lessons ? A.util.attempt(function () { return A.lessons.title(number); }, "") : "";
         return title
             ? t("assistant.lessonName", { n: number, title: esc(title) })
             : t("assistant.lessonNameShort", { n: number });
@@ -161,18 +162,18 @@
 
     function glossaryFind(text) {
         if (!A.glossary || !text) return null;
-        return cleanTerm(safely(function () { return A.glossary.find(text); }, null));
+        return cleanTerm(A.util.attempt(function () { return A.glossary.find(text); }, null));
     }
 
     function glossaryRandom() {
         if (!A.glossary) return null;
-        return cleanTerm(safely(function () { return A.glossary.random(); }, null));
+        return cleanTerm(A.util.attempt(function () { return A.glossary.random(); }, null));
     }
 
     // A stored term in the current language (the glossary may know it by id)
     function glossaryRefresh(saved) {
         if (A.glossary) {
-            const fresh = cleanTerm(safely(function () { return A.glossary.term(saved.id); }, null));
+            const fresh = cleanTerm(A.util.attempt(function () { return A.glossary.term(saved.id); }, null));
             if (fresh) return fresh;
         }
         const again = glossaryFind(saved.term);
@@ -350,7 +351,7 @@
     // Turns a saved bot message into { html, actions } in the current language
     function renderReply(message) {
         const make = REPLIES[message.reply] || REPLIES.fallback;
-        const view = safely(function () { return make(message.data || {}); }, null) ||
+        const view = A.util.attempt(function () { return make(message.data || {}); }, null) ||
             { html: t("assistant.r.fallback1") };
         view.actions = view.actions || [];
 
@@ -405,7 +406,7 @@
         if (!token) return false;
         if (pattern.charAt(pattern.length - 1) === "*") return token.indexOf(pattern.slice(0, -1)) === 0;
         if (token === pattern) return true;
-        if (strict || pattern.length < 7 || Math.abs(token.length - pattern.length) > 1) return false;
+        if (strict || pattern.length < TYPO_MIN_LETTERS || Math.abs(token.length - pattern.length) > 1) return false;
         if (brain.notTypos.indexOf(token) !== -1) return false;
         return editDistance(token, pattern) <= 1;
     }
@@ -757,7 +758,7 @@
                     return { kind: "glossary", term: term };
                 }
                 if (!best && define.subject.split(" ").length <= 3) {
-                    return { kind: "notFound", word: define.subject.slice(0, 40) };
+                    return { kind: "notFound", word: define.subject.slice(0, UNKNOWN_WORD_MAX) };
                 }
             }
         }
@@ -919,7 +920,8 @@
         hideTimer: 0,
         tipTimer: 0,
         typingRow: null,
-        prefill: ""       // the "Define " text the bot put in the message box
+        prefill: "",      // the "Define " text the bot put in the message box
+        focusBefore: null // where the focus was when the chat opened
     };
 
     function fillBotRow(row, message) {
@@ -990,7 +992,7 @@
         const anchor = before && before.classList.contains("cb-msg--user") ? before : row;
         const end = log.scrollHeight - log.clientHeight;
         // offsetTop is measured inside the log (it is position: relative in the CSS)
-        const top = Math.max(0, Math.min(end, anchor.offsetTop - 12));
+        const top = Math.max(0, Math.min(end, anchor.offsetTop - ANSWER_TOP_GAP));
         scrollLogTo(top, smooth);
     }
 
@@ -1040,7 +1042,7 @@
             const message = chat.messages.find(function (item) { return item.id === id; });
             if (message) fillBotRow(row, message);
         });
-        setTimeout(function () { ui.log.setAttribute("aria-live", "polite"); }, 300);
+        setTimeout(function () { ui.log.setAttribute("aria-live", "polite"); }, QUIET_REDRAW_MS);
     }
 
     /* =========================================================
@@ -1073,7 +1075,7 @@
     function typingDelay(job) {
         const view = renderReply({ reply: job.reply, data: job.data || {} });
         const length = plainText(view.html).length;
-        return Math.round(TYPING_MS + Math.min(TYPING_EXTRA_MS, length * 1.1));
+        return Math.round(TYPING_MS + Math.min(TYPING_EXTRA_MS, length * TYPING_LETTER_MS));
     }
 
     function enqueue(job) {
@@ -1103,7 +1105,7 @@
     }
 
     function deliver(job) {
-        if (typeof job.pre === "function") safely(job.pre);
+        if (typeof job.pre === "function") A.util.attempt(job.pre);
         addBotMessage(job.reply, job.data, true);
 
         // "Define a word": help the person by starting the sentence for them,
@@ -1115,7 +1117,7 @@
             if (state.open && ui.panel.contains(document.activeElement)) {
                 ui.input.focus({ preventScroll: true });
                 const end = ui.input.value.length;
-                safely(function () { ui.input.setSelectionRange(end, end); });
+                A.util.attempt(function () { ui.input.setSelectionRange(end, end); });
             }
         }
         // "Start the quiz": a moment to read the answer, then the bot does it
@@ -1183,21 +1185,21 @@
             case "lesson": {
                 const n = Number(action.arg) || 1;
                 // When the reader closes, the focus comes back to the round button
-                if (A.lessons) safely(function () { A.lessons.open(n, ui.launcher); });
+                if (A.lessons) A.util.attempt(function () { A.lessons.open(n, ui.launcher); });
                 else A.navigate("lessons");
                 break;
             }
             case "quiz":
-                if (A.quiz) safely(function () { A.quiz.start(); });
+                if (A.quiz) A.util.attempt(function () { A.quiz.start(); });
                 else A.navigate("quiz");
                 break;
             case "lab":
-                if (A.lab) safely(function () { A.lab.open(action.arg === "predictor" ? "predictor" : "classifier"); });
+                if (A.lab) A.util.attempt(function () { A.lab.open(action.arg === "predictor" ? "predictor" : "classifier"); });
                 else A.navigate("lab");
                 break;
             case "glossary":
                 // { focus: true }: the keyboard focus moves to the term card too
-                if (A.glossary) safely(function () { A.glossary.show(action.arg, { focus: true }); });
+                if (A.glossary) A.util.attempt(function () { A.glossary.show(action.arg, { focus: true }); });
                 else A.navigate("glossary");
                 break;
             case "section":
@@ -1254,7 +1256,7 @@
         const chips = ui.chips;
         if (chips.scrollWidth <= chips.clientWidth + 1) return;            // everything fits
         if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;      // already sideways
-        const step = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+        const step = event.deltaMode === 1 ? event.deltaY * WHEEL_LINE_PX : event.deltaY;
         const before = chips.scrollLeft;
         chips.scrollLeft = before + step;
         if (chips.scrollLeft !== before) event.preventDefault();
@@ -1351,7 +1353,7 @@
             return;
         }
         const below = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
-        ui.panel.style.setProperty("--cb-sheet-h", Math.round(viewport.height - 16) + "px");
+        ui.panel.style.setProperty("--cb-sheet-h", Math.round(viewport.height - SHEET_GAP_PX) + "px");
         ui.panel.style.setProperty("--cb-sheet-b", Math.round(below) + "px");
         ui.panel.style.setProperty("--cb-sheet-l", Math.round(viewport.offsetLeft) + "px");
         ui.panel.style.setProperty("--cb-sheet-w", Math.round(viewport.width) + "px");
@@ -1375,6 +1377,7 @@
             return;
         }
         state.open = true;
+        state.focusBefore = document.activeElement;
 
         dismissTip(true);
         if (!chat.messages.length) addBotMessage("welcome", {}, false);
@@ -1395,13 +1398,26 @@
     function closePanel(restoreFocus) {
         if (!state.open) return;
         state.open = false;
+        const wasInside = ui.panel.contains(document.activeElement);
+        const focusBefore = state.focusBefore;
+        state.focusBefore = null;
         ui.panel.classList.remove("is-visible");
         ui.backdrop.classList.remove("is-visible");
         ui.root.classList.remove("is-open");
         ui.launcher.setAttribute("aria-expanded", "false");
-        overlay.closed();        // before the focus goes back (see core.js)
+        // The round button is part of this window (its root), so it takes the
+        // focus back at once (at the end). But when a window that shuts out the
+        // page stays open under the chat (the lesson reader, opened before the
+        // chat), the round button becomes unreachable with the rest of the page.
+        // Then the focus goes back to where it was in that window: core calls
+        // this function once the page is updated (see overlays in core.js).
+        overlay.closed(function () {
+            if (!ui.launcher.closest("[inert]")) return;
+            if (focusBefore && focusBefore.isConnected && !focusBefore.closest("[inert]")) {
+                focusBefore.focus({ preventScroll: true });
+            }
+        });
 
-        const wasInside = ui.panel.contains(document.activeElement);
         state.hideTimer = setTimeout(function () {
             if (state.open) return;
             ui.panel.hidden = true;
@@ -1409,8 +1425,10 @@
             fitToViewport();
         }, A.motion.ok() ? CLOSE_MS : 0);
 
-        // Focus goes back to the round button
-        if (restoreFocus !== false || wasInside) ui.launcher.focus({ preventScroll: true });
+        // Focus goes back to the round button (unless a window stays open under the chat)
+        if ((restoreFocus !== false || wasInside) && !A.overlays.hasModal()) {
+            ui.launcher.focus({ preventScroll: true });
+        }
     }
 
     function togglePanel() {
@@ -1440,7 +1458,11 @@
         drag.speed = 0;
         drag.distance = 0;
         ui.panel.classList.add("is-dragging");
-        safely(function () { ui.panel.setPointerCapture(event.pointerId); });
+        try {
+            ui.panel.setPointerCapture(event.pointerId);
+        } catch (error) {
+            // The browser can refuse (the finger already left): the drag still works
+        }
     });
 
     ui.panel.addEventListener("pointermove", function (event) {
@@ -1459,7 +1481,7 @@
         ui.panel.classList.remove("is-dragging");
         ui.panel.style.transform = "";
         // Far enough, or a quick flick down: close. Otherwise it slides back.
-        const flick = drag.distance > 24 && drag.speed > 0.5;
+        const flick = drag.distance > FLICK_PX && drag.speed > FLICK_SPEED;
         if (event.type === "pointerup" && (drag.distance > SHEET_CLOSE_PX || flick)) closePanel(true);
     }
 
@@ -1593,7 +1615,7 @@
         const dx = look.x - look.center.x;
         const dy = look.y - look.center.y;
         const distance = Math.hypot(dx, dy) || 1;
-        const reach = Math.min(1, distance / 260) * 3.2;
+        const reach = Math.min(1, distance / EYES_REACH_PX) * EYES_MOVE_PX;
         ui.launcher.style.setProperty("--look-x", (dx / distance * reach).toFixed(2) + "px");
         ui.launcher.style.setProperty("--look-y", (dy / distance * reach).toFixed(2) + "px");
     }

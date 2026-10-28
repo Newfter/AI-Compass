@@ -1,6 +1,6 @@
 /* =========================================================
    AI COMPASS — TIMELINE ("A Short History of AI")
-   15 milestones of AI, from 1950 to today:
+   The milestones of AI, from 1950 to today:
    - era chips (All, Early ideas, Ups & downs, ...) in a bar that
      sticks under the menu while you read;
    - a glowing line that fills as you scroll; every milestone lights
@@ -51,6 +51,8 @@
     const DOT_REACH = 2;                // px: a dot lights up this close to the end of the fill
     const WIDE_SCREEN = "(min-width: 900px)";  // two columns, and the bar may stick (css/timeline.css)
     const BAR_GAP = 12;                 // px between the menu and the stuck bar (css/timeline.css)
+    const ONE_ROW_CHIPS = 1.5;          // the bar holds one row of chips while it is less than 1.5 chips
+    const ONE_ROW_PADDING = 20;         // ...plus this (px) tall
     const FILTER_SPACE = 24;            // px left above the timeline when a filter scrolls back up
     const FOCUS_GAP = 8;                // px: a focused button closer than this to the stuck bar...
     const FOCUS_SPACE = 16;             // ...is scrolled to this far below it
@@ -261,7 +263,7 @@
         const barHeight = bar.offsetHeight;
         const firstChip = filters.firstElementChild;
         // The bar sticks under the menu only while its chips fit in one row
-        const stacked = barHeight > firstChip.offsetHeight * 1.5 + 20;
+        const stacked = barHeight > firstChip.offsetHeight * ONE_ROW_CHIPS + ONE_ROW_PADDING;
         const nodes = [];
         items.forEach(function (item) {
             item.visible = item.el.offsetParent !== null;     // false: filtered out
