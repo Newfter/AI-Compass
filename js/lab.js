@@ -244,14 +244,14 @@
     }
 
     // One experiment's card: its name is its title; the hook, the big idea, the level and
-    // its state describe it. tabindex -1: one card at a time is in the Tab order (see setUpPicker).
+    // its state describe it. Every card is in the Tab order (the arrow keys move too, see setUpPicker).
     function pickHTML(entry) {
         const id = "lab-pick-" + entry.id;
         const level = levelOf(entry);
         let dots = "";
         for (let i = 1; i <= LEVELS; i++) dots += '<i class="' + (i <= level ? "is-on" : "") + '"></i>';
         return '<li class="lab-pick-item">' +
-            '<button type="button" class="lab-pick" id="' + id + '" data-exp="' + entry.id + '" tabindex="-1"' +
+            '<button type="button" class="lab-pick" id="' + id + '" data-exp="' + entry.id + '"' +
                 ' aria-labelledby="' + id + '-title" aria-describedby="' + id + '-hook ' + id + '-idea ' + id + '-level ' + id + '-state">' +
                 '<span class="lab-pick-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><use href="#' + (entry.icon || "") + '"></use></svg></span>' +
                 '<span class="lab-pick-body">' +
@@ -319,13 +319,6 @@
             if (view === "stage" && button.getAttribute("data-exp") === current) button.setAttribute("aria-current", "true");
             else button.removeAttribute("aria-current");
         });
-        setRoving(pickOf(current) || picks[0]);
-    }
-
-    // One card at a time is in the Tab order: the open one, or the one you moved to
-    // with the arrow keys
-    function setRoving(button) {
-        picks.forEach(function (other) { other.tabIndex = other === button ? 0 : -1; });
     }
 
     // The header above the stage: the experiment's title and big idea, and previous / next
@@ -611,7 +604,6 @@
         status = "grid";
         A.storage.remove("lab.last");
         setView("grid");
-        setRoving(pickOf(id));
         if (!options.quiet) setHash("#lab");
         if (hadFocus && options.focus !== false) pickOf(id).focus({ preventScroll: true });
         // The grid is taller than the rail: keep the card you came from in view
@@ -672,7 +664,8 @@
         return event.detail > 1;
     }
 
-    // ----- The picker: click, Enter or Space opens; the arrow keys move between cards -----
+    // ----- The picker: click, Enter or Space opens. Tab goes from card to card, and so do the
+    // arrow keys (Home and End: the first and the last card) -----
     function setUpPicker() {
         picker.addEventListener("click", function (event) {
             const button = event.target.closest(".lab-pick");
@@ -712,7 +705,6 @@
         else return;
         event.preventDefault();
         const target = picks[A.util.clamp(next, 0, picks.length - 1)];
-        setRoving(target);
         target.focus();
         if (!grid) revealInRail(target);
     }
