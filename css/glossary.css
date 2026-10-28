@@ -20,6 +20,13 @@
     display: none !important;
 }
 
+/* Until js/glossary.js builds the glossary (when it comes near the screen), its
+   place keeps about the height it will have (the first 12 cards, measured), so the
+   page below doesn't jump. Smaller screens: see 10. Responsive. */
+.js [data-feature="glossary"]:empty {
+    min-height: 1800px;
+}
+
 /* ===== 1. CATEGORY COLOURS ===== */
 
 .gl {
@@ -843,6 +850,10 @@
 /* ===== 10. RESPONSIVE ===== */
 
 @media (max-width: 760px) {
+    .js [data-feature="glossary"]:empty {
+        min-height: 2600px;
+    }
+
     .gl-console {
         padding: 22px 18px 16px;
     }
@@ -866,6 +877,10 @@
 }
 
 @media (max-width: 640px) {
+    .js [data-feature="glossary"]:empty {
+        min-height: 4000px;
+    }
+
     .gl-console {
         margin-bottom: 20px;
         border-radius: 20px;

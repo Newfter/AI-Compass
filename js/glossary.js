@@ -310,126 +310,141 @@
         "</li>";
     }
 
-    mount.innerHTML =
-        '<div class="gl">' +
-            '<div class="gl-console card" data-reveal>' +
-                '<span class="gl-corner gl-corner-tl" aria-hidden="true"></span>' +
-                '<span class="gl-corner gl-corner-br" aria-hidden="true"></span>' +
-
-                '<div class="gl-console-head">' +
-                    '<p class="gl-kicker mono"><span class="gl-kicker-dot" aria-hidden="true"></span>' + text("glossary.kicker") + "</p>" +
-                    '<div class="gl-explored" role="img">' +
-                        '<span class="gl-explored-label mono" aria-hidden="true">' + text("glossary.explored") + "</span>" +
-                        '<span class="gl-explored-bar" aria-hidden="true"><span></span></span>' +
-                        '<span class="gl-explored-num mono" aria-hidden="true"></span>' +
-                    "</div>" +
-                "</div>" +
-
-                '<div class="gl-search-row">' +
-                    '<div class="gl-search">' +
-                        '<span class="gl-search-icon">' + ICON_SEARCH + "</span>" +
-                        '<label class="sr-only" for="gl-search-input" data-i18n="glossary.searchLabel">' + t("glossary.searchLabel") + "</label>" +
-                        '<input class="gl-input" id="gl-search-input" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" maxlength="60"' +
-                            ' aria-describedby="gl-search-hint" aria-controls="gl-grid"' +
-                            ' data-i18n-attr="placeholder:glossary.searchPlaceholder" placeholder="' + esc(t("glossary.searchPlaceholder")) + '">' +
-                        '<button class="gl-clear" type="button" hidden data-i18n-attr="aria-label:glossary.clear,title:glossary.clear"' +
-                            ' aria-label="' + esc(t("glossary.clear")) + '" title="' + esc(t("glossary.clear")) + '">' + ICON_CLOSE + "</button>" +
-                    "</div>" +
-                    // On phones the filters fold away behind this button
-                    '<button class="btn btn-ghost gl-filter-toggle" type="button" aria-expanded="false" aria-controls="gl-filters"' +
-                        ' data-i18n-attr="title:glossary.filters" title="' + esc(t("glossary.filters")) + '">' +
-                        '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
-                        text("glossary.filters", "sr-only") +
-                        '<span class="gl-filter-badge mono" hidden><span class="sr-only" data-i18n="glossary.filtersActive">' + t("glossary.filtersActive") + "</span> <span class=\"gl-filter-num\"></span></span>" +
-                    "</button>" +
-                    '<button class="btn btn-ghost gl-random" type="button" data-i18n-attr="title:glossary.randomLabel" title="' + esc(t("glossary.randomLabel")) + '">' +
-                        '<span class="gl-dice" aria-hidden="true">🎲</span>' + text("glossary.random") +
-                    "</button>" +
-                "</div>" +
-                '<p class="sr-only" id="gl-search-hint" data-i18n="glossary.searchHint">' + t("glossary.searchHint") + "</p>" +
-
-                '<div class="gl-filters" id="gl-filters">' +
-                    '<div class="gl-cats" role="group" data-i18n-attr="aria-label:glossary.catsLabel" aria-label="' + esc(t("glossary.catsLabel")) + '">' +
-                        ["all"].concat(CATEGORIES).map(categoryChip).join("") +
-                    "</div>" +
-                    '<div class="gl-alpha" role="group" data-i18n-attr="aria-label:glossary.lettersLabel" aria-label="' + esc(t("glossary.lettersLabel")) + '"></div>' +
-                "</div>" +
-
-                '<div class="gl-status">' +
-                    '<p class="gl-count mono"></p>' +
-                    '<span class="gl-count-bar" aria-hidden="true"><span></span></span>' +
-                    '<button class="btn btn-ghost btn-small gl-reset" type="button" hidden>' + ICON_RESET + text("glossary.reset") + "</button>" +
-                "</div>" +
-                '<p class="sr-only gl-live" aria-live="polite" aria-atomic="true"></p>' +
-            "</div>" +
-
-            '<ul class="gl-grid" id="gl-grid" data-i18n-attr="aria-label:glossary.gridLabel" aria-label="' + esc(t("glossary.gridLabel")) + '">' +
-                TERMS.map(cardHTML).join("") +
-            "</ul>" +
-
-            '<div class="gl-empty card" hidden>' +
-                '<div class="gl-empty-orb" aria-hidden="true">🔭</div>' +
-                '<p class="gl-empty-title"></p>' +
-                '<p class="gl-empty-hint">' + text("glossary.emptyHint") + "</p>" +
-                '<div class="gl-suggest" hidden>' +
-                    '<p class="gl-label mono">' + text("glossary.suggest") + "</p>" +
-                    '<div class="gl-suggest-list"></div>' +
-                "</div>" +
-                '<button class="btn btn-primary btn-small gl-empty-reset" type="button">' + ICON_RESET + text("glossary.reset") + "</button>" +
-            "</div>" +
-
-            '<div class="gl-foot">' +
-                '<button class="btn btn-ghost gl-more-btn" type="button" aria-expanded="false" aria-controls="gl-grid">' +
-                    '<span class="gl-more-text"></span>' + ICON_CHEVRON +
-                "</button>" +
-            "</div>" +
-        "</div>";
-
-    // Handy references to the parts we update later
-    const root = mount.querySelector(".gl");
-    const ui = {
-        console: root.querySelector(".gl-console"),
-        input: root.querySelector(".gl-input"),
-        clear: root.querySelector(".gl-clear"),
-        random: root.querySelector(".gl-random"),
-        filterToggle: root.querySelector(".gl-filter-toggle"),
-        filterBadge: root.querySelector(".gl-filter-badge"),
-        filterNum: root.querySelector(".gl-filter-num"),
-        cats: root.querySelector(".gl-cats"),
-        alpha: root.querySelector(".gl-alpha"),
-        count: root.querySelector(".gl-count"),
-        countBar: root.querySelector(".gl-count-bar span"),
-        reset: root.querySelector(".gl-reset"),
-        live: root.querySelector(".gl-live"),
-        grid: root.querySelector(".gl-grid"),
-        empty: root.querySelector(".gl-empty"),
-        emptyTitle: root.querySelector(".gl-empty-title"),
-        suggest: root.querySelector(".gl-suggest"),
-        suggestList: root.querySelector(".gl-suggest-list"),
-        emptyReset: root.querySelector(".gl-empty-reset"),
-        foot: root.querySelector(".gl-foot"),
-        moreBtn: root.querySelector(".gl-more-btn"),
-        moreText: root.querySelector(".gl-more-text"),
-        explored: root.querySelector(".gl-explored"),
-        exploredBar: root.querySelector(".gl-explored-bar span"),
-        exploredNum: root.querySelector(".gl-explored-num")
-    };
-
-    // Every card and the parts inside it, by term id
+    // The glossary's outer element, handy references to its parts, and every
+    // card with the parts inside it (by term id). They are filled in by build().
+    let root = null;
+    let ui = null;
     const cards = Object.create(null);
-    TERMS.forEach(function (term) {
-        const card = ui.grid.querySelector('[data-id="' + term.id + '"]');
-        cards[term.id] = {
-            term: term,
-            el: card,
-            name: card.querySelector(".gl-name"),
-            alt: card.querySelector(".gl-alt-text"),
-            def: card.querySelector(".gl-def"),
-            ex: card.querySelector(".gl-ex-text"),
-            toggle: card.querySelector(".gl-toggle"),
-            rels: Array.prototype.slice.call(card.querySelectorAll(".gl-rel"))
+
+    // Builds the whole glossary (once: see "Start" below)
+    function build() {
+        mount.innerHTML =
+            '<div class="gl">' +
+                '<div class="gl-console card" data-reveal>' +
+                    '<span class="gl-corner gl-corner-tl" aria-hidden="true"></span>' +
+                    '<span class="gl-corner gl-corner-br" aria-hidden="true"></span>' +
+
+                    '<div class="gl-console-head">' +
+                        '<p class="gl-kicker mono"><span class="gl-kicker-dot" aria-hidden="true"></span>' + text("glossary.kicker") + "</p>" +
+                        '<div class="gl-explored" role="img">' +
+                            '<span class="gl-explored-label mono" aria-hidden="true">' + text("glossary.explored") + "</span>" +
+                            '<span class="gl-explored-bar" aria-hidden="true"><span></span></span>' +
+                            '<span class="gl-explored-num mono" aria-hidden="true"></span>' +
+                        "</div>" +
+                    "</div>" +
+
+                    '<div class="gl-search-row">' +
+                        '<div class="gl-search">' +
+                            '<span class="gl-search-icon">' + ICON_SEARCH + "</span>" +
+                            '<label class="sr-only" for="gl-search-input" data-i18n="glossary.searchLabel">' + t("glossary.searchLabel") + "</label>" +
+                            '<input class="gl-input" id="gl-search-input" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" maxlength="60"' +
+                                ' aria-describedby="gl-search-hint" aria-controls="gl-grid"' +
+                                ' data-i18n-attr="placeholder:glossary.searchPlaceholder" placeholder="' + esc(t("glossary.searchPlaceholder")) + '">' +
+                            '<button class="gl-clear" type="button" hidden data-i18n-attr="aria-label:glossary.clear,title:glossary.clear"' +
+                                ' aria-label="' + esc(t("glossary.clear")) + '" title="' + esc(t("glossary.clear")) + '">' + ICON_CLOSE + "</button>" +
+                        "</div>" +
+                        // On phones the filters fold away behind this button
+                        '<button class="btn btn-ghost gl-filter-toggle" type="button" aria-expanded="false" aria-controls="gl-filters"' +
+                            ' data-i18n-attr="title:glossary.filters" title="' + esc(t("glossary.filters")) + '">' +
+                            '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+                            text("glossary.filters", "sr-only") +
+                            '<span class="gl-filter-badge mono" hidden><span class="sr-only" data-i18n="glossary.filtersActive">' + t("glossary.filtersActive") + "</span> <span class=\"gl-filter-num\"></span></span>" +
+                        "</button>" +
+                        '<button class="btn btn-ghost gl-random" type="button" data-i18n-attr="title:glossary.randomLabel" title="' + esc(t("glossary.randomLabel")) + '">' +
+                            '<span class="gl-dice" aria-hidden="true">🎲</span>' + text("glossary.random") +
+                        "</button>" +
+                    "</div>" +
+                    '<p class="sr-only" id="gl-search-hint" data-i18n="glossary.searchHint">' + t("glossary.searchHint") + "</p>" +
+
+                    '<div class="gl-filters" id="gl-filters">' +
+                        '<div class="gl-cats" role="group" data-i18n-attr="aria-label:glossary.catsLabel" aria-label="' + esc(t("glossary.catsLabel")) + '">' +
+                            ["all"].concat(CATEGORIES).map(categoryChip).join("") +
+                        "</div>" +
+                        '<div class="gl-alpha" role="group" data-i18n-attr="aria-label:glossary.lettersLabel" aria-label="' + esc(t("glossary.lettersLabel")) + '"></div>' +
+                    "</div>" +
+
+                    '<div class="gl-status">' +
+                        '<p class="gl-count mono"></p>' +
+                        '<span class="gl-count-bar" aria-hidden="true"><span></span></span>' +
+                        '<button class="btn btn-ghost btn-small gl-reset" type="button" hidden>' + ICON_RESET + text("glossary.reset") + "</button>" +
+                    "</div>" +
+                    '<p class="sr-only gl-live" aria-live="polite" aria-atomic="true"></p>' +
+                "</div>" +
+
+                '<ul class="gl-grid" id="gl-grid" data-i18n-attr="aria-label:glossary.gridLabel" aria-label="' + esc(t("glossary.gridLabel")) + '">' +
+                    TERMS.map(cardHTML).join("") +
+                "</ul>" +
+
+                '<div class="gl-empty card" hidden>' +
+                    '<div class="gl-empty-orb" aria-hidden="true">🔭</div>' +
+                    '<p class="gl-empty-title"></p>' +
+                    '<p class="gl-empty-hint">' + text("glossary.emptyHint") + "</p>" +
+                    '<div class="gl-suggest" hidden>' +
+                        '<p class="gl-label mono">' + text("glossary.suggest") + "</p>" +
+                        '<div class="gl-suggest-list"></div>' +
+                    "</div>" +
+                    '<button class="btn btn-primary btn-small gl-empty-reset" type="button">' + ICON_RESET + text("glossary.reset") + "</button>" +
+                "</div>" +
+
+                '<div class="gl-foot">' +
+                    '<button class="btn btn-ghost gl-more-btn" type="button" aria-expanded="false" aria-controls="gl-grid">' +
+                        '<span class="gl-more-text"></span>' + ICON_CHEVRON +
+                    "</button>" +
+                "</div>" +
+            "</div>";
+
+        // Handy references to the parts we update later
+        root = mount.querySelector(".gl");
+        ui = {
+            console: root.querySelector(".gl-console"),
+            input: root.querySelector(".gl-input"),
+            clear: root.querySelector(".gl-clear"),
+            random: root.querySelector(".gl-random"),
+            filterToggle: root.querySelector(".gl-filter-toggle"),
+            filterBadge: root.querySelector(".gl-filter-badge"),
+            filterNum: root.querySelector(".gl-filter-num"),
+            cats: root.querySelector(".gl-cats"),
+            alpha: root.querySelector(".gl-alpha"),
+            count: root.querySelector(".gl-count"),
+            countBar: root.querySelector(".gl-count-bar span"),
+            reset: root.querySelector(".gl-reset"),
+            live: root.querySelector(".gl-live"),
+            grid: root.querySelector(".gl-grid"),
+            empty: root.querySelector(".gl-empty"),
+            emptyTitle: root.querySelector(".gl-empty-title"),
+            suggest: root.querySelector(".gl-suggest"),
+            suggestList: root.querySelector(".gl-suggest-list"),
+            emptyReset: root.querySelector(".gl-empty-reset"),
+            foot: root.querySelector(".gl-foot"),
+            moreBtn: root.querySelector(".gl-more-btn"),
+            moreText: root.querySelector(".gl-more-text"),
+            explored: root.querySelector(".gl-explored"),
+            exploredBar: root.querySelector(".gl-explored-bar span"),
+            exploredNum: root.querySelector(".gl-explored-num")
         };
-    });
+
+        // Every card and the parts inside it, by term id
+        TERMS.forEach(function (term) {
+            const card = ui.grid.querySelector('[data-id="' + term.id + '"]');
+            cards[term.id] = {
+                term: term,
+                el: card,
+                name: card.querySelector(".gl-name"),
+                alt: card.querySelector(".gl-alt-text"),
+                def: card.querySelector(".gl-def"),
+                ex: card.querySelector(".gl-ex-text"),
+                toggle: card.querySelector(".gl-toggle"),
+                rels: Array.prototype.slice.call(card.querySelectorAll(".gl-rel"))
+            };
+        });
+
+        listen();
+        A.onLanguageChange(onLanguageChange);
+        buildLetters();
+        sortCards();
+        render(false);
+        updateExplored();
+    }
 
     // ---------- 11. Searching and highlighting ----------
     // The text a term can be found by: its name, other names and definition
@@ -800,12 +815,16 @@
     // Scrolls to a term, opens it and makes it glow.
     // options.focus moves keyboard focus to it as well.
     function show(id, options) {
-        const card = cards[id];
-        if (!card) return false;
+        if (!BY_ID[id]) return false;
         options = options || {};
 
-        // Windows in the way (the lesson reader, the phone menu...) close first
+        // Build the glossary first, and the parts of the page above it, so the card's
+        // place is known. Windows in the way (the lesson reader, the phone menu...) close.
+        ensure();
+        A.buildParts(mount);
         A.overlays.closeAll({ navigating: true, reason: "navigate" });
+
+        const card = cards[id];
 
         if (card.el.hidden) {
             // Hidden by a filter: clear the filters so it can be seen.
@@ -830,132 +849,135 @@
     }
 
     // ---------- 16. Events ----------
-    ui.input.addEventListener("input", function () {
-        state.query = ui.input.value;
-        render(true, true);
-    });
+    // Wired up once, when the glossary is built
+    function listen() {
+        ui.input.addEventListener("input", function () {
+            state.query = ui.input.value;
+            render(true, true);
+        });
 
-    ui.input.addEventListener("keydown", function (event) {
-        if (event.key === "Escape" && ui.input.value) {
-            event.preventDefault();
-            event.stopPropagation();
+        ui.input.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && ui.input.value) {
+                event.preventDefault();
+                event.stopPropagation();
+                ui.input.value = "";
+                state.query = "";
+                render(true, true);
+            } else if (event.key === "Enter") {
+                event.preventDefault();
+                const first = ui.grid.querySelector(".gl-card:not([hidden])");
+                if (first && !ui.grid.hidden) show(first.getAttribute("data-id"), { focus: true });
+            }
+        });
+
+        ui.clear.addEventListener("click", function () {
             ui.input.value = "";
             state.query = "";
             render(true, true);
-        } else if (event.key === "Enter") {
-            event.preventDefault();
-            const first = ui.grid.querySelector(".gl-card:not([hidden])");
-            if (first && !ui.grid.hidden) show(first.getAttribute("data-id"), { focus: true });
+            ui.input.focus();
+        });
+
+        ui.cats.addEventListener("click", function (event) {
+            const chip = event.target.closest(".gl-chip");
+            if (!chip) return;
+            const cat = chip.getAttribute("data-cat");
+            state.cat = state.cat === cat && cat !== "all" ? "all" : cat;
+            render(true, true);
+        });
+
+        ui.alpha.addEventListener("click", function (event) {
+            const button = event.target.closest(".gl-letter");
+            if (!button || button.disabled) return;
+            const letter = button.getAttribute("data-letter");
+            state.letter = state.letter === letter ? "" : letter;
+            render(true, true);
+        });
+
+        function onReset() {
+            resetFilters();
+            render(true, true);
+            ui.input.focus({ preventScroll: true });
         }
-    });
+        ui.reset.addEventListener("click", onReset);
+        ui.emptyReset.addEventListener("click", onReset);
 
-    ui.clear.addEventListener("click", function () {
-        ui.input.value = "";
-        state.query = "";
-        render(true, true);
-        ui.input.focus();
-    });
+        // On phones the long example doesn't fit in the search box, so a shorter text
+        // is shown there. data-i18n-attr tells core.js which text to use after a language change.
+        // (A.onMedia calls this now, and again whenever the screen crosses the phone width.)
+        A.onMedia(A.queries.phone, function (phone) {
+            const key = phone ? "glossary.searchPlaceholderShort" : "glossary.searchPlaceholder";
+            ui.input.setAttribute("data-i18n-attr", "placeholder:" + key);
+            ui.input.placeholder = t(key);
+        });
 
-    ui.cats.addEventListener("click", function (event) {
-        const chip = event.target.closest(".gl-chip");
-        if (!chip) return;
-        const cat = chip.getAttribute("data-cat");
-        state.cat = state.cat === cat && cat !== "all" ? "all" : cat;
-        render(true, true);
-    });
+        // The light scanning the console's top edge and the floating orb of the empty
+        // state loop forever: they pause while off screen (A.whenVisible sets data-paused).
+        [ui.console, ui.empty].forEach(function (element) {
+            A.whenVisible(element, function () {}, { pauseAnimations: true });
+        });
 
-    ui.alpha.addEventListener("click", function (event) {
-        const button = event.target.closest(".gl-letter");
-        if (!button || button.disabled) return;
-        const letter = button.getAttribute("data-letter");
-        state.letter = state.letter === letter ? "" : letter;
-        render(true, true);
-    });
+        ui.filterToggle.addEventListener("click", function () {
+            const open = !root.classList.contains("filters-open");
+            root.classList.toggle("filters-open", open);
+            ui.filterToggle.setAttribute("aria-expanded", String(open));
+        });
 
-    function onReset() {
-        resetFilters();
-        render(true, true);
-        ui.input.focus({ preventScroll: true });
-    }
-    ui.reset.addEventListener("click", onReset);
-    ui.emptyReset.addEventListener("click", onReset);
+        // The number of columns can change with the window size
+        if ("ResizeObserver" in window) {
+            let lastWidth = 0;
+            new ResizeObserver(function (entries) {
+                const width = Math.round(entries[0].contentRect.width);
+                if (width !== lastWidth) {
+                    lastWidth = width;
+                    markLooseRows();
+                }
+            }).observe(ui.grid);
+        }
 
-    // On phones the long example doesn't fit in the search box, so a shorter text
-    // is shown there. data-i18n-attr tells core.js which text to use after a language change.
-    // (A.onMedia calls this now, and again whenever the screen crosses the phone width.)
-    A.onMedia(A.queries.phone, function (phone) {
-        const key = phone ? "glossary.searchPlaceholderShort" : "glossary.searchPlaceholder";
-        ui.input.setAttribute("data-i18n-attr", "placeholder:" + key);
-        ui.input.placeholder = t(key);
-    });
-
-    // The light scanning the console's top edge and the floating orb of the empty
-    // state loop forever: they pause while off screen (A.whenVisible sets data-paused).
-    [ui.console, ui.empty].forEach(function (element) {
-        A.whenVisible(element, function () {}, { pauseAnimations: true });
-    });
-
-    ui.filterToggle.addEventListener("click", function () {
-        const open = !root.classList.contains("filters-open");
-        root.classList.toggle("filters-open", open);
-        ui.filterToggle.setAttribute("aria-expanded", String(open));
-    });
-
-    // The number of columns can change with the window size
-    if ("ResizeObserver" in window) {
-        let lastWidth = 0;
-        new ResizeObserver(function (entries) {
-            const width = Math.round(entries[0].contentRect.width);
-            if (width !== lastWidth) {
-                lastWidth = width;
-                markLooseRows();
+        ui.random.addEventListener("click", function () {
+            const dice = ui.random.querySelector(".gl-dice");
+            if (A.motion.ok() && dice.animate) {
+                dice.animate(
+                    [{ transform: "rotate(0) scale(1)" }, { transform: "rotate(200deg) scale(1.25)" }, { transform: "rotate(360deg) scale(1)" }],
+                    { duration: 550, easing: A.motion.ease }
+                );
             }
-        }).observe(ui.grid);
+            // Focus stays on the button (so you can roll again); screen readers hear the term
+            const term = randomTerm();
+            show(term.id);
+            clearTimeout(liveTimer);
+            ui.live.textContent = t("glossary.randomAnnounce", { term: termName(term) });
+        });
+
+        ui.moreBtn.addEventListener("click", function () {
+            const top = ui.moreBtn.getBoundingClientRect().top;
+            state.showAll = !state.showAll;
+            render(state.showAll, true);
+            // Showing fewer: keep the button in the same place on screen
+            if (!state.showAll) {
+                window.scrollBy({ top: ui.moreBtn.getBoundingClientRect().top - top, behavior: "instant" });
+            }
+        });
+
+        ui.grid.addEventListener("click", function (event) {
+            const toggle = event.target.closest(".gl-toggle");
+            if (toggle) {
+                const id = toggle.closest(".gl-card").getAttribute("data-id");
+                setOpen(id, !state.open.has(id));
+                return;
+            }
+            const related = event.target.closest(".gl-rel");
+            if (related) show(related.getAttribute("data-target"), { focus: true });
+        });
+
+        ui.suggestList.addEventListener("click", function (event) {
+            const button = event.target.closest(".gl-suggestion");
+            if (button) show(button.getAttribute("data-target"), { focus: true });
+        });
     }
-
-    ui.random.addEventListener("click", function () {
-        const dice = ui.random.querySelector(".gl-dice");
-        if (A.motion.ok() && dice.animate) {
-            dice.animate(
-                [{ transform: "rotate(0) scale(1)" }, { transform: "rotate(200deg) scale(1.25)" }, { transform: "rotate(360deg) scale(1)" }],
-                { duration: 550, easing: A.motion.ease }
-            );
-        }
-        // Focus stays on the button (so you can roll again); screen readers hear the term
-        const term = randomTerm();
-        show(term.id);
-        clearTimeout(liveTimer);
-        ui.live.textContent = t("glossary.randomAnnounce", { term: termName(term) });
-    });
-
-    ui.moreBtn.addEventListener("click", function () {
-        const top = ui.moreBtn.getBoundingClientRect().top;
-        state.showAll = !state.showAll;
-        render(state.showAll, true);
-        // Showing fewer: keep the button in the same place on screen
-        if (!state.showAll) {
-            window.scrollBy({ top: ui.moreBtn.getBoundingClientRect().top - top, behavior: "instant" });
-        }
-    });
-
-    ui.grid.addEventListener("click", function (event) {
-        const toggle = event.target.closest(".gl-toggle");
-        if (toggle) {
-            const id = toggle.closest(".gl-card").getAttribute("data-id");
-            setOpen(id, !state.open.has(id));
-            return;
-        }
-        const related = event.target.closest(".gl-rel");
-        if (related) show(related.getAttribute("data-target"), { focus: true });
-    });
-
-    ui.suggestList.addEventListener("click", function (event) {
-        const button = event.target.closest(".gl-suggestion");
-        if (button) show(button.getAttribute("data-target"), { focus: true });
-    });
 
     // ---------- 17. Language changes: same search, same open cards ----------
-    A.onLanguageChange(function () {
+    function onLanguageChange() {
         // Quietly forget the last announcement (it was in the old language)
         clearTimeout(liveTimer);
         ui.live.textContent = "";
@@ -963,13 +985,13 @@
         sortCards();
         render(false);
         updateExplored();
-    });
+    }
 
     // ---------- 18. Start ----------
-    buildLetters();
-    sortCards();
-    render(false);
-    updateExplored();
+    // The glossary is far down the page, so it is built only when it comes near the
+    // screen, when the browser has a quiet moment after loading, or as soon as
+    // something needs it (ensure(): a palette command, a link to a term...).
+    const ensure = A.whenNeeded(mount, build);
 
     // A link like index.html#term-neural-network opens that term
     function openFromHash() {
