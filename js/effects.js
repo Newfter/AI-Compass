@@ -18,8 +18,8 @@
 (function () {
     "use strict";
 
-    const AIC = window.AICompass;
-    if (!AIC) return;
+    const A = window.AICompass;
+    if (!A) return;
 
     const root = document.documentElement;
     const finePointerQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -49,10 +49,10 @@
     }
 
     // ---------- Motion settings ----------
-    // AIC.motion (core) knows both: "calm mode" (our own switch, saved in the browser)
+    // A.motion (core) knows both: "calm mode" (our own switch, saved in the browser)
     // and "reduced motion" (the device settings).
     function motionOK() {
-        return AIC.motion.ok();
+        return A.motion.ok();
     }
 
     // Tilt, magnet and spotlight only make sense with a real mouse
@@ -433,13 +433,13 @@
     }
 
     function formatNumber(value, decimals) {
-        const locale = AIC.lang === "ru" ? "ru-RU" : "en-US";
+        const locale = A.lang === "ru" ? "ru-RU" : "en-US";
         const fixed = Number(value.toFixed(decimals));
         if (Math.abs(fixed) >= 10000) {
             return fixed.toLocaleString(locale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
         }
         const text = fixed.toFixed(decimals);
-        return AIC.lang === "ru" ? text.replace(".", ",") : text;
+        return A.lang === "ru" ? text.replace(".", ",") : text;
     }
 
     function writeCounter(element, counter, value) {
@@ -836,7 +836,7 @@
     }
 
     function setRotatorWords(rotator) {
-        const words = AIC.t(rotator.key).split("|").map((word) => word.trim()).filter(Boolean);
+        const words = A.t(rotator.key).split("|").map((word) => word.trim()).filter(Boolean);
         const wordsKey = words.join("|");
         if (wordsKey === rotator.wordsKey) return;                          // same language, keep typing
 
@@ -1288,7 +1288,7 @@
         railNav = document.createElement("nav");
         railNav.className = "fx-rail";
         railNav.setAttribute("data-i18n-attr", "aria-label:effects.railLabel");
-        railNav.setAttribute("aria-label", AIC.t("effects.railLabel"));
+        railNav.setAttribute("aria-label", A.t("effects.railLabel"));
 
         const track = document.createElement("span");
         track.className = "fx-rail-track";
@@ -1311,7 +1311,7 @@
                     '<span class="fx-rail-number" aria-hidden="true">' + String(index + 1).padStart(2, "0") + "</span>" +
                     '<span data-i18n="' + RAIL_KEYS[section.id] + '"></span>' +
                 "</span>";
-            link.querySelector("[data-i18n]").textContent = AIC.t(RAIL_KEYS[section.id]);
+            link.querySelector("[data-i18n]").textContent = A.t(RAIL_KEYS[section.id]);
             item.appendChild(link);
             list.appendChild(item);
             railLinks.push(link);
@@ -1379,27 +1379,27 @@
         }
         if (!fineOK()) resetPointerEffects();
         rotators.forEach(updateRotator);
-        document.dispatchEvent(new CustomEvent("aic:effects", { detail: { calm: AIC.motion.calm } }));
+        document.dispatchEvent(new CustomEvent("aic:effects", { detail: { calm: A.motion.calm } }));
     }
 
     function setCalm(value) {
-        AIC.motion.setCalm(value);
+        A.motion.setCalm(value);
     }
 
-    AIC.registerCommand({
+    A.registerCommand({
         id: "effects-calm",
         group: "cmd.groupActions",
         icon: "🧘",
-        title: function () { return AIC.t(AIC.motion.calm ? "effects.calmOff" : "effects.calmOn"); },
+        title: function () { return A.t(A.motion.calm ? "effects.calmOff" : "effects.calmOn"); },
         keywords: "calm motion animation animations effects pause reduce accessibility спокойный режим анимации анимация эффекты движение пауза",
         keepOverlays: true,
         run: function () {
-            const calm = AIC.motion.toggleCalm();
-            AIC.toast(AIC.t(calm ? "effects.toastCalmOn" : "effects.toastCalmOff"), calm ? "🧘" : "✨");
+            const calm = A.motion.toggleCalm();
+            A.toast(A.t(calm ? "effects.toastCalmOn" : "effects.toastCalmOff"), calm ? "🧘" : "✨");
         }
     });
 
-    AIC.motion.onChange(onMotionChange);
+    A.motion.onChange(onMotionChange);
     onMediaChange(finePointerQuery, onMotionChange);
 
     /* =========================================================
@@ -1488,7 +1488,7 @@
        Core has already put the new text in place; we decode it
        again and restart the typewriter with the new words.
        ========================================================= */
-    AIC.onLanguageChange(() => {
+    A.onLanguageChange(() => {
         prune();
 
         scrambleTargets.forEach((element) => {
@@ -1537,11 +1537,11 @@
         canvas.setAttribute("aria-hidden", "true");
         const width = window.innerWidth;
         const height = window.innerHeight;
-        const context = AIC.canvas.fit(canvas, width, height);
+        const context = A.canvas.fit(canvas, width, height);
         if (!context) return;
         document.body.appendChild(canvas);
 
-        const colors = CONFETTI_COLORS.map((name) => AIC.cssVar(name)).filter(Boolean);
+        const colors = CONFETTI_COLORS.map((name) => A.cssVar(name)).filter(Boolean);
         const origin = settings.origin && settings.origin.getBoundingClientRect ? settings.origin.getBoundingClientRect() : null;
         const count = settings.count || (origin ? (width < 600 ? 90 : 150) : 180);
         const pieces = [];
@@ -1584,7 +1584,7 @@
             last = now;
             const age = now - start;
             context.clearRect(0, 0, width, height);
-            context.globalAlpha = AIC.util.clamp((duration - age) / 700, 0, 1);
+            context.globalAlpha = A.util.clamp((duration - age) / 700, 0, 1);
 
             let alive = 0;
             pieces.forEach((piece) => {
@@ -1626,8 +1626,8 @@
        Tools for other features, e.g.
        if (AICompass.effects) AICompass.effects.scramble(element);
        ========================================================= */
-    AIC.effects = {
-        get calm() { return AIC.motion.calm; },
+    A.effects = {
+        get calm() { return A.motion.calm; },
         setCalm: setCalm,
         refresh: function (container) { scan(container || document.body); },
         reveal: function (element) { if (element) reveal(element, 0); },

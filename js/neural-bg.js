@@ -13,9 +13,9 @@
 (function () {
     "use strict";
 
-    const AIC = window.AICompass;
+    const A = window.AICompass;
     const canvas = document.getElementById("neural-bg");
-    if (!AIC || !canvas || !canvas.getContext) return;
+    if (!A || !canvas || !canvas.getContext) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -88,12 +88,12 @@
 
     // Reads "155, 109, 255" from a CSS variable and turns it into [155, 109, 255]
     function readColour(name, fallback) {
-        const parts = AIC.cssVar(name).split(",").map((part) => parseFloat(part));
+        const parts = A.cssVar(name).split(",").map((part) => parseFloat(part));
         return parts.length === 3 && parts.every((n) => isFinite(n)) ? parts : fallback;
     }
 
     function calmMode() {
-        return AIC.motion.calm;
+        return A.motion.calm;
     }
 
     function motionAllowed() {
@@ -123,7 +123,7 @@
     }
 
     function buildLook() {
-        const light = AIC.theme === "light";
+        const light = A.theme === "light";
         const purple = readColour("--accent-rgb", [155, 109, 255]);
         const cyan = readColour("--accent-2-rgb", [80, 227, 255]);
         const colours = [purple, mix(purple, cyan, 0.5), cyan];
@@ -689,15 +689,15 @@
     }
 
     function runStorm(successKey) {
-        if (storm()) AIC.toast(AIC.t(successKey), "⚡");
-        else AIC.toast(AIC.t("neural.stormOff"), "💤");
+        if (storm()) A.toast(A.t(successKey), "⚡");
+        else A.toast(A.t("neural.stormOff"), "💤");
     }
 
-    AIC.registerCommand({
+    A.registerCommand({
         id: "neural-storm",
         group: "cmd.groupActions",
         icon: "⚡",
-        title: function () { return AIC.t("neural.cmdStorm"); },
+        title: function () { return A.t("neural.cmdStorm"); },
         keywords: "neural network storm neurons fire brain background нейронная сеть шторм нейроны мозг фон",
         keepOverlays: true,
         run: function () { runStorm("neural.stormToast"); }
@@ -717,7 +717,7 @@
     });
 
     // ---------- Reacting to the rest of the site ----------
-    AIC.onThemeChange(() => {
+    A.onThemeChange(() => {
         buildLook();
         if (!running) drawStill();
     });
@@ -730,7 +730,7 @@
 
     // Other features can make the network react, e.g. after a correct answer:
     // if (AICompass.neural) AICompass.neural.burst(x, y);
-    AIC.neural = {
+    A.neural = {
         burst: function (x, y) { return burst(x, y); },
         storm: storm,
         get running() { return running; }
