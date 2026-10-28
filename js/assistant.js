@@ -2362,10 +2362,12 @@
     // Here we redraw the answers and the typing status.
     A.onLanguageChange(function () {
         // A closed chat is redrawn when it opens again: its answers from the site
-        // need the search index of the new language, which takes a moment to build
+        // need the search index of the new language, which takes a moment to build.
+        // If the chat was opened on this page, that index is built now, a little
+        // at a time while the page is idle, so opening it again stays quick.
         if (state.open) retranslateMessages();
         else state.stale = true;
-        if (state.open && A.search) A.search.ready();       // the other language's index
+        if ((state.open || state.drawn) && A.search) A.search.ready();
         ui.statusText.textContent = t(state.busy ? "assistant.statusTyping" : "assistant.status");
         // "Define " the bot typed for you (and you didn't change) -> "Что такое "
         if (state.prefill && ui.input.value === state.prefill) {
