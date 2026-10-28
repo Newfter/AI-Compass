@@ -131,7 +131,7 @@ window.AICompass.addTranslations({
         "lab.maze.whyEnd": "{tile}: {bonus}, plus {cost} for the move. The episode is over.",
         "lab.maze.whyLimit": "Out of moves: the episode is over.",
         "lab.maze.formula": "Q = {old} + {alpha} × ({r} + {gamma} × {next} − {oldAgain}) {eq} {new}",
-        "lab.maze.stepSay": "Moved {dir}, reward {r}. Its score: {old} → {new}.",
+        "lab.maze.stepSay": "Chose {dir}, reward {r}. The score of that move: {old} → {new}.",
 
         // ----- The big idea and the real world -----
         "lab.maze.ideaLine": "Learning from rewards by trial and error is called",
@@ -276,7 +276,7 @@ window.AICompass.addTranslations({
         "lab.maze.whyEnd": "{tile}: {bonus} и ещё {cost} за ход. Эпизод окончен.",
         "lab.maze.whyLimit": "Ходы закончились: эпизод окончен.",
         "lab.maze.formula": "Q = {old} + {alpha} × ({r} + {gamma} × {next} − {oldAgain}) {eq} {new}",
-        "lab.maze.stepSay": "Ход {dir}, награда {r}. Оценка: {old} → {new}.",
+        "lab.maze.stepSay": "Выбрал ход {dir}, награда {r}. Оценка этого хода: {old} → {new}.",
 
         // ----- Главная идея и настоящий мир -----
         "lab.maze.ideaLine": "Учиться на наградах методом проб и ошибок — это",

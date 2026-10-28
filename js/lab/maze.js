@@ -1154,9 +1154,12 @@
             selected = last.s;
             showCursor = true;
             setState("paused");
-            ctx.announce(t("lab.maze.stepSay", {
-                dir: t(DIRECTION_KEYS[last.actual]), r: signed(last.reward), old: score(last.old), new: score(last.value)
-            }));
+            // The score that changed is the one of the chosen move, even when the robot slipped
+            let said = t("lab.maze.stepSay", {
+                dir: t(DIRECTION_KEYS[last.action]), r: signed(last.reward), old: score(last.old), new: score(last.value)
+            });
+            if (last.actual !== last.action) said += " " + t("lab.maze.slipped", { dir: t(DIRECTION_KEYS[last.actual]) });
+            ctx.announce(said);
             render(1);
         }
 
