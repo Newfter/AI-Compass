@@ -1097,8 +1097,8 @@
         const isB = p >= 0.5;
         board.readout.hidden = false;
         board.readout.textContent = t("lab.readout", {
-            x: A.format.number(spot.x, 2),
-            y: A.format.number(spot.y, 2),
+            x: A.format.number(spot.x, { digits: 2, minus: false }),   // "-0.50" with a plain "-", as it always was
+            y: A.format.number(spot.y, { digits: 2, minus: false }),
             cls: isB ? "B" : "A",
             pct: A.format.number((isB ? p : 1 - p) * 100, 0)
         });
