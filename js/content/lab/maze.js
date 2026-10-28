@@ -217,7 +217,7 @@ window.AICompass.addTranslations({
         // ----- Показатели и графики -----
         "lab.maze.statEpisode": "Эпизод",
         "lab.maze.statMoves": "Ходов в эпизоде",
-        "lab.maze.statFound": "Нашёл батарейку (из 20)",
+        "lab.maze.statFound": "Нашёл батарейку (последние\u00a020)",
         "lab.maze.statBest": "Лучший путь, ходов",
         "lab.maze.chartMoves": "Ходов за эпизод",
         "lab.maze.chartReward": "Награда за эпизод",
