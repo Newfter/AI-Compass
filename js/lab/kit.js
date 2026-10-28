@@ -116,6 +116,7 @@
     const TICK_GAP_X = 64;               // px: about this much room for each number along the bottom...
     const TICK_GAP_Y = 34;               // ...and along the side
     const FAINT_ALPHA = 0.35;            // a "faint" series (raw values under a smoothed line) is this see-through
+    const CORNER = 12;                   // px kept free at the canvas box's rounded corners (css/lab/kit.css)
 
     // ----- Saved challenges ("lab.<id>.challenges" in the experiment's store) -----
     const CHALLENGE_KEY = "challenges";
@@ -966,7 +967,7 @@
 
         function paintNote() {
             note.hidden = !noteKey;
-            if (noteKey) writeText(note, t(noteKey, formatValues(noteValues)));
+            writeText(note, noteKey ? t(noteKey, formatValues(noteValues)) : "");
         }
 
         function setValues(index, values) {
@@ -1730,18 +1731,18 @@
             });
         }
 
-        // 5. Axis names
+        // 5. Axis names (kept out of the canvas box's rounded corners)
         context.font = font(CHART_FONT, 600, "body");
         context.fillStyle = c.muted;
         if (settings.yLabelKey) {
             context.textAlign = "left";
             context.textBaseline = "top";
-            context.fillText(labelText(settings.yLabelKey), Math.max(0, left - 8 - labelWidth), CHART_PAD - 2);
+            context.fillText(labelText(settings.yLabelKey), Math.max(CORNER, left - 8 - labelWidth), CHART_PAD - 2);
         }
         if (settings.xLabelKey) {
             context.textAlign = "right";
             context.textBaseline = "bottom";
-            context.fillText(labelText(settings.xLabelKey), width - 2, height - 1);
+            context.fillText(labelText(settings.xLabelKey), width - CORNER, height - 3);
         }
 
         // 6. The highlighted x (a thin vertical line)
@@ -1765,29 +1766,39 @@
         });
         context.restore();
 
-        // 8. The newest value of each line, labelled at its end (skipped where labels would touch)
+        // 8. The newest value of each line: a dot at its end, then its number above or below
+        //    the dot, wherever it covers no other number and no other dot (else it is skipped)
         context.font = font(CHART_FONT, 600, "mono");
         context.textBaseline = "middle";
-        const taken = [];
+        context.textAlign = "left";
+        const ends = [];
         series.forEach(function (s) {
-            if (s.faint) return;
             const index = lastFinite(s.values);
-            if (index === -1 || !isNumber(toY(s.values[index]))) return;
-            const x = xAt(index);
+            if (s.faint || index === -1 || !isNumber(toY(s.values[index]))) return;
             const y = A.util.clamp(yAt(toY(s.values[index])), top, top + plotHeight);
-            marker(context, "dot", x, y, 4, seriesColor(s, c));
-            const text = yFormat(s.values[index]);
-            const textWidth = context.measureText(text).width;
-            let labelY = y - 13 < top + 4 ? y + 13 : y - 13;
-            if (taken.some(function (other) { return Math.abs(other - labelY) < CHART_FONT + 3; })) return;
-            taken.push(labelY);
-            context.textAlign = "left";
-            const labelX = A.util.clamp(x - textWidth / 2, left + 2, width - textWidth - 2);
+            ends.push({ x: xAt(index), y: y, text: yFormat(s.values[index]) });
+            marker(context, "dot", xAt(index), y, 4, seriesColor(s, c));
+        });
+        const placed = [];         // the boxes of the numbers written so far
+        const half = CHART_FONT / 2 + 2;
+        ends.forEach(function (end) {
+            const textWidth = context.measureText(end.text).width;
+            const labelX = A.util.clamp(end.x - textWidth / 2, left + 2, width - textWidth - 2);
+            const free = [end.y - 13, end.y + 13].filter(function (labelY) {
+                if (labelY - half < top - 2 || labelY + half > top + plotHeight + 2) return false;
+                const covers = function (y, x, size) {
+                    return Math.abs(y - labelY) < half + size && x > labelX - 3 - size && x < labelX + textWidth + 3 + size;
+                };
+                return !placed.some(function (box) { return Math.abs(box.y - labelY) < 2 * half && box.x < labelX + textWidth + 6 && labelX < box.x + box.width + 6; }) &&
+                    !ends.some(function (other) { return other !== end && covers(other.y, other.x, 5); });
+            });
+            if (!free.length) return;
+            placed.push({ x: labelX, y: free[0], width: textWidth });
             // a soft plate under the number, so it stays readable over lines and the grid
             context.fillStyle = alpha(c.surface, 0.85);
-            context.fillRect(labelX - 3, labelY - CHART_FONT / 2 - 2, textWidth + 6, CHART_FONT + 4);
+            context.fillRect(labelX - 3, free[0] - half, textWidth + 6, 2 * half);
             context.fillStyle = c.text;
-            context.fillText(text, labelX, labelY);
+            context.fillText(end.text, labelX, free[0]);
         });
 
         // 9. Nothing to show yet
