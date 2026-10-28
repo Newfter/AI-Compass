@@ -81,8 +81,10 @@
     // Learning rates you can choose (10 is too big on purpose: try it and watch the loss jump)
     const LR_OPTIONS = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10];
 
-    mount.innerHTML =
-        '<div class="lab card" data-reveal>' +
+    // The whole card. It is made only when the lab is needed (build(), section 8),
+    // and its empty data-i18n holders get their texts at that moment.
+    function labHTML() {
+        return '<div class="lab card" data-reveal>' +
             '<span class="lab-corners" aria-hidden="true"></span>' +
             '<div class="lab-top">' +
                 '<div class="lab-tabs" role="tablist" data-active="classifier" data-i18n-attr="aria-label:lab.tablistLabel">' +
@@ -99,6 +101,7 @@
                 predictorHTML() +
             '</div>' +
         '</div>';
+    }
 
     function tabButton(name, icon, titleKey, subKey) {
         return '<button type="button" class="lab-tab" role="tab" id="lab-tab-' + name + '" aria-controls="lab-panel-' + name + '" data-tab="' + name + '">' +
@@ -370,9 +373,9 @@
         '</div>';
     }
 
-    // Shortcuts to elements inside the lab
-    const labCard = mount.querySelector(".lab");
-    const $ = (selector) => mount.querySelector(selector);
+    // The card (once it is built) and shortcuts to elements inside the lab
+    let labCard = null;
+    const $ =(selector) => mount.querySelector(selector);
     const $$ = (selector) => Array.prototype.slice.call(mount.querySelectorAll(selector));
 
     /* =========================================================
@@ -635,6 +638,9 @@
         dirty: { net: true, board: true, diagram: true, chart: true, stats: true }
     };
 
+    // The board starts with the circle example: you can watch the line bend into a ring in a few seconds
+    nn.points = makePreset("circle");
+
     // Keeps up to 200 loss values; when full it keeps every second one
     function recordLoss(loss) {
         const history = nn.lossHistory;
@@ -672,21 +678,22 @@
     const atlas = { canvas: document.createElement("canvas"), columns: 0 };
     atlas.ctx = atlas.canvas.getContext("2d");
 
-    // The three canvases on the page. "ratio" is the pixel ratio their backing
-    // store was made for, and ctx comes from A.canvas.fit (it draws in CSS pixels).
+    // The three canvases on the page (findElements() fills in their elements when the
+    // lab is built). "ratio" is the pixel ratio their backing store was made for, and
+    // ctx comes from A.canvas.fit (it draws in CSS pixels).
     const board = {
-        el: $(".lab-board"),
-        canvas: $(".lab-board-canvas"),
-        readout: $(".lab-readout"),
+        el: null,
+        canvas: null,
+        readout: null,
         ctx: null,
         size: 0,
         ratio: 0,
         sprites: null
     };
 
-    const chart = { wrap: $(".lab-chart-wrap"), canvas: $(".lab-chart-canvas"), ctx: null, w: 0, h: 0, ratio: 0 };
+    const chart = { wrap: null, canvas: null, ctx: null, w: 0, h: 0, ratio: 0 };
 
-    const diagram = { wrap: $(".lab-diagram-wrap"), canvas: $(".lab-diagram-canvas"), ctx: null, w: 0, h: 0, ratio: 0 };
+    const diagram = { wrap: null, canvas: null, ctx: null, w: 0, h: 0, ratio: 0 };
 
     // Colour for a value from -1 (class A, purple) to +1 (class B, cyan)
     function paint(data, index, value, strength) {
@@ -752,7 +759,13 @@
         }
         atlas.ctx.putImageData(atlas.image, 0, 0);
 
-        // 3. The network's guess for every dot, the loss and the accuracy
+        // 3. The network's guess for every dot
+        scoreDots();
+    }
+
+    // The network's guess for every dot, the loss and the accuracy
+    function scoreDots() {
+        const net = nn.net;
         const points = nn.points;
         if (nn.preds.length !== points.length) nn.preds = new Float32Array(points.length);
         let loss = 0;
@@ -1015,10 +1028,7 @@
         ctx.stroke();
 
         labCard.querySelector(".lab-chart-empty").hidden = values.length > 1;
-        if (values.length < 2) {
-            chart.canvas.setAttribute("aria-label", t("lab.chartLabelEmpty"));
-            return;
-        }
+        if (values.length < 2) return;
 
         let max = 0.1;
         for (let i = 0; i < values.length; i++) if (values[i] > max) max = values[i];
@@ -1202,18 +1212,8 @@
     /* =========================================================
        6. NEURAL NETWORK: CONTROLS, STATS AND THE ANIMATION LOOP
        ========================================================= */
-    const nnLive = $('[data-live="nn"]');
-    const trainButton = $(".lab-train");
-    const statEls = {
-        epoch: $('[data-stat="epoch"]'),
-        loss: $('[data-stat="loss"]'),
-        acc: $('[data-stat="acc"]'),
-        accBar: $('[data-stat="accbar"]'),
-        points: $('[data-stat="points"]'),
-        split: $('[data-stat="split"]'),
-        status: $(".lab-status"),
-        statusText: $(".lab-status-text")
-    };
+    // The classifier's buttons, settings and numbers (findElements() finds them)
+    let nnEls = null;
 
     let activeTab = "classifier";
     let labVisible = false;      // on screen in a visible browser tab (see onLabVisible)
@@ -1304,18 +1304,19 @@
         const points = nn.points;
         const countB = points.reduce((sum, point) => sum + point.label, 0);
         // Very big counts get short, so they fit their box: "1.2M" or "1,2 млн"
-        statEls.epoch.textContent = A.format.number(nn.epoch, nn.epoch < 1e6 ? 0 : { compact: true });
-        statEls.loss.textContent = nn.loss === null ? "—" : A.format.number(nn.loss, 3);
-        statEls.acc.textContent = nn.acc === null ? "—" : A.format.percent(nn.acc, { small: false });
-        statEls.accBar.style.transform = "scaleX(" + (nn.acc || 0) + ")";
-        statEls.accBar.parentElement.classList.toggle("is-full", nn.acc === 1);
-        statEls.points.textContent = A.format.number(points.length);
-        statEls.split.textContent = t("lab.pointsSplit", { a: points.length - countB, b: countB });
+        nnEls.epoch.textContent = A.format.number(nn.epoch, nn.epoch < 1e6 ? 0 : { compact: true });
+        nnEls.loss.textContent = nn.loss === null ? "—" : A.format.number(nn.loss, 3);
+        nnEls.acc.textContent = nn.acc === null ? "—" : A.format.percent(nn.acc, { small: false });
+        nnEls.accBar.style.transform = "scaleX(" + (nn.acc || 0) + ")";
+        nnEls.accBar.parentElement.classList.toggle("is-full", nn.acc === 1);
+        nnEls.points.textContent = A.format.number(points.length);
+        nnEls.split.textContent = t("lab.pointsSplit", { a: points.length - countB, b: countB });
 
+        // The chart's text for screen readers (it changes with the language too)
         const values = nn.lossHistory.values;
-        if (values.length > 1) {
-            chart.canvas.setAttribute("aria-label", t("lab.chartLabel", { loss: A.format.number(values[values.length - 1], 3) }));
-        }
+        chart.canvas.setAttribute("aria-label", values.length > 1 ?
+            t("lab.chartLabel", { loss: A.format.number(values[values.length - 1], 3) }) :
+            t("lab.chartLabelEmpty"));
         updateStatus();
     }
 
@@ -1325,8 +1326,8 @@
         else if (nn.learned) status = "done";
         else if (nn.epoch > 0) status = "paused";
         const keys = { ready: "lab.statusReady", training: "lab.statusTraining", paused: "lab.statusPaused", done: "lab.statusDone" };
-        statEls.status.setAttribute("data-status", status);
-        statEls.statusText.textContent = t(keys[status]);
+        nnEls.status.setAttribute("data-status", status);
+        nnEls.statusText.textContent = t(keys[status]);
         labCard.classList.toggle("is-training", nn.training);
     }
 
@@ -1336,13 +1337,13 @@
             epoch: A.format.number(nn.epoch),
             loss: A.format.number(nn.loss, 3),
             acc: A.format.number(nn.acc * 100, 0)
-        }), { region: nnLive });
+        }), { region: nnEls.live });
     }
 
     function updateTrainButton() {
-        trainButton.querySelector(".lab-train-icon").innerHTML = nn.training ? icons.pause : icons.play;
-        trainButton.querySelector(".lab-train-text").textContent = t(nn.training ? "lab.pause" : "lab.train");
-        trainButton.classList.toggle("is-training", nn.training);
+        nnEls.train.querySelector(".lab-train-icon").innerHTML = nn.training ? icons.pause : icons.play;
+        nnEls.train.querySelector(".lab-train-text").textContent = t(nn.training ? "lab.pause" : "lab.train");
+        nnEls.train.classList.toggle("is-training", nn.training);
         updateStatus();
     }
 
@@ -1380,7 +1381,7 @@
         nn.training = on;
         if (on) nn.learned = false;
         updateTrainButton();
-        A.announce(t(on ? "lab.srTraining" : "lab.srPaused"), { region: nnLive });
+        A.announce(t(on ? "lab.srTraining" : "lab.srPaused"), { region: nnEls.live });
         schedule();
     }
 
@@ -1452,7 +1453,7 @@
 
     function announceAdded(label) {
         const n = nn.points.length;
-        A.announce(t("lab.srAdded", { cls: className(label), n: n, points: A.plural("lab.pluralPoints", n) }), { region: nnLive });
+        A.announce(t("lab.srAdded", { cls: className(label), n: n, points: A.plural("lab.pluralPoints", n) }), { region: nnEls.live });
     }
 
     function selectClass(label) {
@@ -1472,18 +1473,19 @@
         nn.maxWarned = false;
         pointsChanged();
         resetNetwork();
-        $$(".lab-preset").forEach((chip) => chip.classList.toggle("active", chip.getAttribute("data-preset") === name));
+        markPreset(name);
         const n = nn.points.length;
         A.announce(t("lab.srPreset", {
             name: t("lab.preset" + name.charAt(0).toUpperCase() + name.slice(1)),
             n: n,
             points: A.plural("lab.pluralPoints", n)
-        }), { region: nnLive });
+        }), { region: nnEls.live });
         setTraining(true);
     }
 
-    function clearPresetMark() {
-        $$(".lab-preset").forEach((chip) => chip.classList.remove("active"));
+    // Highlights the chip of the example that is on the board (null: none of them)
+    function markPreset(name) {
+        $$(".lab-preset").forEach((chip) => chip.classList.toggle("active", chip.getAttribute("data-preset") === name));
     }
 
     // ----- Mouse, touch and pen on the board -----
@@ -1500,7 +1502,7 @@
         return event.shiftKey || event.button === 2 ? 1 - nn.selected : nn.selected;
     }
 
-    board.el.addEventListener("pointerdown", (event) => {
+    function onPointerDown(event) {
         if (event.button !== 0 && event.button !== 2) return;
         const spot = eventToBoard(event);
         const label = labelFor(event);
@@ -1517,16 +1519,16 @@
         board.el.focus({ preventScroll: true });
         nn.cursor = null;
         pushUndo();
-        clearPresetMark();
+        markPreset(null);
         if (addPoint(spot.x, spot.y, label)) announceAdded(label);
         nn.stroke = { id: event.pointerId, last: spot, label: label };
         try {
             board.el.setPointerCapture(event.pointerId);
         } catch (error) {}
         pointsChanged();
-    });
+    }
 
-    board.el.addEventListener("pointermove", (event) => {
+    function onPointerMove(event) {
         if (event.pointerType === "touch") {
             if (nn.tap && Math.hypot(event.clientX - nn.tap.x, event.clientY - nn.tap.y) > 10) nn.tap = null;
             return;
@@ -1546,7 +1548,7 @@
         }
         nn.dirty.board = true;
         schedule();
-    });
+    }
 
     // Phones have no mouse pointer to "point" with, so after a tap we show the
     // network's guess for that spot (readout + diagram markers) for 3 seconds
@@ -1569,7 +1571,7 @@
             const tap = nn.tap;
             nn.tap = null;
             pushUndo();
-            clearPresetMark();
+            markPreset(null);
             if (addPoint(tap.spot.x, tap.spot.y, tap.label)) announceAdded(tap.label);
             pointsChanged();
             showTouchSpot(tap.spot, tap.label);
@@ -1581,33 +1583,30 @@
         }
     }
 
-    board.el.addEventListener("pointerup", endPointer);
-    board.el.addEventListener("pointercancel", endPointer);
-    board.el.addEventListener("pointerleave", (event) => {
+    function onPointerLeave(event) {
         if (event.pointerType === "touch") return;
         nn.hover = null;
         nn.dirty.board = true;
         schedule();
-    });
-    board.el.addEventListener("contextmenu", (event) => event.preventDefault());
+    }
 
     // ----- Keyboard on the board -----
-    board.el.addEventListener("focus", () => {
+    function onBoardFocus() {
         // Only show the keyboard cursor when the board was reached with the keyboard
         if (board.el.matches(":focus-visible") && !nn.cursor) {
             nn.cursor = { x: 0, y: 0, label: nn.selected };
             nn.dirty.board = true;
             schedule();
         }
-    });
+    }
 
-    board.el.addEventListener("blur", () => {
+    function onBoardBlur() {
         nn.cursor = null;
         nn.dirty.board = true;
         schedule();
-    });
+    }
 
-    board.el.addEventListener("keydown", (event) => {
+    function onBoardKey(event) {
         const moves = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
         if (event.ctrlKey || event.metaKey) {
             if (event.code === "KeyZ") {
@@ -1628,7 +1627,7 @@
             event.preventDefault();
             if (!nn.cursor) nn.cursor = { x: 0, y: 0, label: nn.selected };
             pushUndo();
-            clearPresetMark();
+            markPreset(null);
             if (addPoint(nn.cursor.x, nn.cursor.y, nn.selected)) announceAdded(nn.selected);
             pointsChanged();
         } else if (event.code === "KeyA" || event.code === "KeyB") {
@@ -1638,40 +1637,42 @@
             event.preventDefault();
             undo();
         }
-    });
+    }
+
+    function setUpBoard() {
+        const el = board.el;
+        el.addEventListener("pointerdown", onPointerDown);
+        el.addEventListener("pointermove", onPointerMove);
+        el.addEventListener("pointerup", endPointer);
+        el.addEventListener("pointercancel", endPointer);
+        el.addEventListener("pointerleave", onPointerLeave);
+        el.addEventListener("contextmenu", (event) => event.preventDefault());
+        el.addEventListener("focus", onBoardFocus);
+        el.addEventListener("blur", onBoardBlur);
+        el.addEventListener("keydown", onBoardKey);
+    }
 
     function undo() {
         if (!nn.undo.length) return;
         nn.points = nn.undo.pop();
-        clearPresetMark();
+        markPreset(null);
         pointsChanged();
         const n = nn.points.length;
-        A.announce(t("lab.srUndo", { n: n, points: A.plural("lab.pluralPoints", n) }), { region: nnLive });
+        A.announce(t("lab.srUndo", { n: n, points: A.plural("lab.pluralPoints", n) }), { region: nnEls.live });
     }
 
     // ----- Buttons and settings -----
-    $$(".lab-class").forEach((button) => {
-        button.addEventListener("click", () => selectClass(Number(button.getAttribute("data-class"))));
-    });
-
-    $$(".lab-preset").forEach((chip) => {
-        chip.addEventListener("click", () => loadPreset(chip.getAttribute("data-preset")));
-    });
-
-    $('[data-action="undo"]').addEventListener("click", undo);
-
-    $('[data-action="clear"]').addEventListener("click", () => {
+    function clearBoard() {
         if (!nn.points.length) return;
         pushUndo();
         nn.points = [];
-        clearPresetMark();
+        markPreset(null);
         pointsChanged();
-        A.announce(t("lab.srCleared"), { region: nnLive });
-    });
+        A.announce(t("lab.srCleared"), { region: nnEls.live });
+    }
 
-    trainButton.addEventListener("click", () => setTraining(!nn.training));
-
-    $('[data-action="step"]').addEventListener("click", () => {
+    // One epoch at a time, to watch every small change
+    function stepOnce() {
         if (!nn.points.length) {
             A.toast(t("lab.toastEmpty"), "✦");
             return;
@@ -1682,33 +1683,7 @@
         schedule();
         // read out the new numbers once they are calculated
         requestAnimationFrame(() => requestAnimationFrame(announceStats));
-    });
-
-    $('[data-action="reset"]').addEventListener("click", resetNetwork);
-
-    const lrSelect = $("#lab-lr");
-    const optSelect = $("#lab-opt");
-    const neuronsRange = $("#lab-neurons");
-    const layerSwitch = $(".lab-switch");
-
-    lrSelect.value = String(settings.lr);
-    optSelect.value = settings.optimizer;
-    neuronsRange.value = String(settings.hidden);
-    layerSwitch.setAttribute("aria-checked", String(settings.twoLayers));
-    $$(".lab-seg button").forEach((button) => {
-        button.setAttribute("aria-pressed", String(button.getAttribute("data-speed") === settings.speed));
-    });
-
-    lrSelect.addEventListener("change", () => {
-        settings.lr = Number(lrSelect.value);
-        saveSettings();
-    });
-
-    optSelect.addEventListener("change", () => {
-        settings.optimizer = optSelect.value === "sgd" ? "sgd" : "adam";
-        resetOptimizer(nn.net);
-        saveSettings();
-    });
+    }
 
     function updateRangeFill(range) {
         const min = Number(range.min);
@@ -1716,31 +1691,65 @@
         range.style.setProperty("--fill", (((Number(range.value) - min) / (max - min)) * 100).toFixed(1) + "%");
     }
 
-    neuronsRange.addEventListener("input", () => {
-        settings.hidden = Number(neuronsRange.value);
+    function setUpControls() {
+        $$(".lab-class").forEach((button) => {
+            button.addEventListener("click", () => selectClass(Number(button.getAttribute("data-class"))));
+        });
+        $$(".lab-preset").forEach((chip) => {
+            chip.addEventListener("click", () => loadPreset(chip.getAttribute("data-preset")));
+        });
+        $('[data-action="undo"]').addEventListener("click", undo);
+        $('[data-action="clear"]').addEventListener("click", clearBoard);
+        nnEls.train.addEventListener("click", () => setTraining(!nn.training));
+        $('[data-action="step"]').addEventListener("click", stepOnce);
+        $('[data-action="reset"]').addEventListener("click", resetNetwork);
+
+        // The settings show what was saved last time
+        const speedButtons = $$(".lab-seg button");
+        nnEls.lr.value = String(settings.lr);
+        nnEls.opt.value = settings.optimizer;
+        nnEls.neurons.value = String(settings.hidden);
         $('[data-out="neurons"]').textContent = settings.hidden;
-        updateRangeFill(neuronsRange);
-        saveSettings();
-        resetNetwork();
-    });
+        updateRangeFill(nnEls.neurons);
+        nnEls.layer.setAttribute("aria-checked", String(settings.twoLayers));
+        speedButtons.forEach((button) => {
+            button.setAttribute("aria-pressed", String(button.getAttribute("data-speed") === settings.speed));
+        });
 
-    layerSwitch.addEventListener("click", () => {
-        settings.twoLayers = !settings.twoLayers;
-        layerSwitch.setAttribute("aria-checked", String(settings.twoLayers));
-        saveSettings();
-        resetNetwork();
-    });
-
-    $$(".lab-seg button").forEach((button) => {
-        button.addEventListener("click", () => {
-            settings.speed = button.getAttribute("data-speed");
-            $$(".lab-seg button").forEach((other) => other.setAttribute("aria-pressed", String(other === button)));
+        nnEls.lr.addEventListener("change", () => {
+            settings.lr = Number(nnEls.lr.value);
             saveSettings();
         });
-    });
 
-    $('[data-out="neurons"]').textContent = settings.hidden;
-    updateRangeFill(neuronsRange);
+        nnEls.opt.addEventListener("change", () => {
+            settings.optimizer = nnEls.opt.value === "sgd" ? "sgd" : "adam";
+            resetOptimizer(nn.net);
+            saveSettings();
+        });
+
+        nnEls.neurons.addEventListener("input", () => {
+            settings.hidden = Number(nnEls.neurons.value);
+            $('[data-out="neurons"]').textContent = settings.hidden;
+            updateRangeFill(nnEls.neurons);
+            saveSettings();
+            resetNetwork();
+        });
+
+        nnEls.layer.addEventListener("click", () => {
+            settings.twoLayers = !settings.twoLayers;
+            nnEls.layer.setAttribute("aria-checked", String(settings.twoLayers));
+            saveSettings();
+            resetNetwork();
+        });
+
+        speedButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                settings.speed = button.getAttribute("data-speed");
+                speedButtons.forEach((other) => other.setAttribute("aria-pressed", String(other === button)));
+                saveSettings();
+            });
+        });
+    }
 
     /* =========================================================
        7. NEXT-WORD PREDICTOR
@@ -2086,28 +2095,11 @@
         srTimer: 0
     };
 
-    const lmEls = {
-        input: $("#lab-lm-input"),
-        clear: $(".lab-lm-clear"),
-        mode: $('[data-lm="mode"]'),
-        context: $('[data-lm="context"]'),
-        tokens: $('[data-lm="tokens"]'),
-        notice: $(".lab-lm-notice"),
-        items: $$(".lab-cand-item"),
-        auto: $(".lab-auto"),
-        temp: $("#lab-temp"),
-        tempOut: $('[data-out="temp"]'),
-        teachForm: $(".lab-teach"),
-        teachInput: $("#lab-teach-input"),
-        teachStatus: $(".lab-teach-status"),
-        forget: $('[data-action="forget"]'),
-        live: $('[data-live="lm"]'),
-        field: $(".lab-lm-field")
-    };
+    // The predictor's elements (findElements() finds them)
+    let lmEls = null;
 
     const savedTemp = Number(A.storage.get("lab.temperature", 0.7));
     lm.temperature = isFinite(savedTemp) ? A.util.clamp(Math.round(savedTemp * 10) / 10, 0, 2) : 0.7;
-    lmEls.temp.value = String(lm.temperature);
 
     function loadModel() {
         lm.lang = A.lang;
@@ -2453,7 +2445,7 @@
     }
 
     // ----- Teaching the model your own sentences -----
-    lmEls.teachForm.addEventListener("submit", (event) => {
+    function teachSentence(event) {
         event.preventDefault();
         const sentence = lmEls.teachInput.value.trim().replace(/\s+/g, " ");
         if (wordsOf(sentence).length < 2) {
@@ -2474,9 +2466,9 @@
         renderLmStats();
         renderPredictor();
         A.toast(t("lab.lmTeachToast"), "🧠");
-    });
+    }
 
-    lmEls.forget.addEventListener("click", () => {
+    function forgetSentences() {
         lm.taught = [];
         A.storage.remove("lab.taught." + lm.lang);
         lm.model = buildModel(CORPUS[lm.lang]);
@@ -2484,45 +2476,25 @@
         renderPredictor();
         lmEls.teachInput.focus();
         A.toast(t("lab.lmTeachForgot"), "🧹");
-    });
+    }
 
     // ----- Typing, buttons and the slider -----
-    lmEls.input.addEventListener("input", () => {
-        stopAuto(false);
-        if (lm.starter && !lmEls.input.value.startsWith(lm.starter.text)) lm.starter = null;
-        renderPredictor();
-    });
-
-    lmEls.clear.addEventListener("click", () => {
+    function clearText() {
         stopAuto(false);
         lmEls.input.value = "";
         lm.starter = null;
         renderPredictor();
         lmEls.input.focus();
-    });
+    }
 
-    $$(".lab-starter").forEach((button) => {
-        button.addEventListener("click", () => {
-            stopAuto(false);
-            const n = Number(button.getAttribute("data-starter"));
-            lmEls.input.value = t("lab.lmStarter" + n) + " ";
-            lm.starter = { n: n, text: lmEls.input.value };
-            renderPredictor();
-        });
-    });
+    function useStarter(n) {
+        stopAuto(false);
+        lmEls.input.value = t("lab.lmStarter" + n) + " ";
+        lm.starter = { n: n, text: lmEls.input.value };
+        renderPredictor();
+    }
 
-    lmEls.items.forEach((item, i) => {
-        item.querySelector(".lab-cand").addEventListener("click", () => {
-            const data = lm.shown[i];
-            if (!data) return;
-            stopAuto(false);
-            insertWord(data.word);
-        });
-    });
-
-    lmEls.auto.addEventListener("click", startAuto);
-
-    lmEls.temp.addEventListener("input", () => {
+    function onTemperature() {
         lm.temperature = A.util.clamp(Number(lmEls.temp.value) || 0, 0, 2);
         A.storage.set("lab.temperature", lm.temperature);
         // only the "chance to be picked" lines change
@@ -2536,61 +2508,94 @@
             });
         }
         updateTempOutput();
-    });
+    }
+
+    function setUpPredictor() {
+        lmEls.temp.value = String(lm.temperature);
+        lmEls.input.addEventListener("input", () => {
+            stopAuto(false);
+            if (lm.starter && !lmEls.input.value.startsWith(lm.starter.text)) lm.starter = null;
+            renderPredictor();
+        });
+        lmEls.clear.addEventListener("click", clearText);
+        $$(".lab-starter").forEach((button) => {
+            button.addEventListener("click", () => useStarter(Number(button.getAttribute("data-starter"))));
+        });
+        lmEls.items.forEach((item, i) => {
+            item.querySelector(".lab-cand").addEventListener("click", () => {
+                const data = lm.shown[i];
+                if (!data) return;
+                stopAuto(false);
+                insertWord(data.word);
+            });
+        });
+        lmEls.auto.addEventListener("click", startAuto);
+        lmEls.temp.addEventListener("input", onTemperature);
+        lmEls.teachForm.addEventListener("submit", teachSentence);
+        lmEls.forget.addEventListener("click", forgetSentences);
+    }
 
     /* =========================================================
-       8. START-UP: TABS, SIZES, LANGUAGE, THEME, openLab, COMMANDS
+       8. TABS, SIZES, LANGUAGE, THEME, BUILDING THE LAB, openLab, COMMANDS
        ========================================================= */
-    const tabButtons = $$(".lab-tab");
-    const panels = $$(".lab-panel");
-    const tabList = $(".lab-tabs");
+    // The tab list, its two buttons and the two panels (findElements() finds them)
+    let tabEls = null;
 
-    function selectTab(name, moveFocus) {
+    // Shows one tab. options.focus: move the keyboard focus to its button.
+    // options.start: the call made while the lab is being built. The lab is not on
+    // screen yet, so there is no fade-in, and the size watcher measures the canvases.
+    function selectTab(name, options) {
+        const how = options || {};
         if (TABS.indexOf(name) < 0) name = "classifier";
         activeTab = name;
-        tabList.setAttribute("data-active", name);
-        tabButtons.forEach((button) => {
+        tabEls.list.setAttribute("data-active", name);
+        tabEls.buttons.forEach((button) => {
             const on = button.getAttribute("data-tab") === name;
             button.setAttribute("aria-selected", String(on));
             button.tabIndex = on ? 0 : -1;
-            if (on && moveFocus) button.focus();
+            if (on && how.focus) button.focus();
         });
-        panels.forEach((panel) => {
+        tabEls.panels.forEach((panel) => {
             const on = panel.getAttribute("data-panel") === name;
             panel.hidden = !on;
-            if (on && A.motion.ok()) {
-                panel.classList.remove("lab-panel-in");
-                void panel.offsetWidth;    // restart the fade-in animation
-                panel.classList.add("lab-panel-in");
-            }
+            if (on && !how.start && A.motion.ok()) A.dom.replay(panel, "lab-panel-in");   // the fade-in plays again
         });
         if (name !== "predictor") stopAuto(false);
         A.storage.set("lab.tab", name);
-        measureAll();
+        if (!how.start) measureAll();
         schedule();
     }
 
-    tabButtons.forEach((button, index) => {
-        button.addEventListener("click", () => selectTab(button.getAttribute("data-tab"), false));
-        button.addEventListener("keydown", (event) => {
-            let next = -1;
-            if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (index + 1) % tabButtons.length;
-            else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (index - 1 + tabButtons.length) % tabButtons.length;
-            else if (event.key === "Home") next = 0;
-            else if (event.key === "End") next = tabButtons.length - 1;
-            if (next < 0) return;
-            event.preventDefault();
-            selectTab(tabButtons[next].getAttribute("data-tab"), true);
+    function setUpTabs() {
+        const buttons = tabEls.buttons;
+        buttons.forEach((button, index) => {
+            button.addEventListener("click", () => selectTab(button.getAttribute("data-tab")));
+            button.addEventListener("keydown", (event) => {
+                let next = -1;
+                if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (index + 1) % buttons.length;
+                else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (index - 1 + buttons.length) % buttons.length;
+                else if (event.key === "Home") next = 0;
+                else if (event.key === "End") next = buttons.length - 1;
+                if (next < 0) return;
+                event.preventDefault();
+                selectTab(buttons[next].getAttribute("data-tab"), { focus: true });
+            });
         });
-    });
+    }
 
     // ----- Canvas sizes follow their boxes -----
     // A canvas gets a new backing store (A.canvas.fit) when its box changes size,
     // or when the screen's pixel ratio changes.
     function measureAll() {
         const ratio = A.canvas.pixelRatio();
-
+        // All sizes are read first: a canvas that gets a new size changes the layout,
+        // and reading a size after that would make the browser lay out the page again
         const boardSize = board.el.clientWidth;
+        const chartW = chart.wrap.clientWidth;
+        const chartH = chart.wrap.clientHeight;
+        const diagramW = diagram.wrap.clientWidth;
+        const diagramH = diagram.wrap.clientHeight;
+
         if (boardSize && (boardSize !== board.size || ratio !== board.ratio)) {
             board.size = boardSize;
             board.ratio = ratio;
@@ -2599,8 +2604,6 @@
             nn.dirty.board = true;
         }
 
-        const chartW = chart.wrap.clientWidth;
-        const chartH = chart.wrap.clientHeight;
         if (chartW && (chartW !== chart.w || chartH !== chart.h || ratio !== chart.ratio)) {
             chart.w = chartW;
             chart.h = chartH;
@@ -2609,8 +2612,6 @@
             nn.dirty.chart = true;
         }
 
-        const diagramW = diagram.wrap.clientWidth;
-        const diagramH = diagram.wrap.clientHeight;
         if (diagramW && (diagramW !== diagram.w || diagramH !== diagram.h || ratio !== diagram.ratio)) {
             diagram.w = diagramW;
             diagram.h = diagramH;
@@ -2619,13 +2620,6 @@
             nn.dirty.diagram = true;
         }
         schedule();
-    }
-
-    if ("ResizeObserver" in window) {
-        const resizer = new ResizeObserver(measureAll);
-        [board.el, chart.wrap, diagram.wrap].forEach((element) => resizer.observe(element));
-    } else {
-        A.onResize(measureAll);
     }
 
     // ----- Pause when the lab is off screen or the browser tab is hidden -----
@@ -2642,8 +2636,6 @@
         schedule();
     }
 
-    A.whenVisible(labCard, onLabVisible, { threshold: 0.05, pauseAnimations: true });
-
     // ----- Work only near the screen -----
     // The canvases are drawn, and the texts follow a new language, only while the lab
     // is within half a screen of the window. Far away, a theme or language switch
@@ -2655,31 +2647,31 @@
         schedule();
     }
 
-    A.whenVisible(labCard, onLabNear, { rootMargin: "50% 0px" });
-
     // A jump straight to the lab (a menu link with animations off) shows it before
-    // the watcher above hears about it. The page's scroll step tells us earlier,
-    // just before the browser paints, so the lab catches up right there.
-    A.onSection((section) => {
+    // the watchers above hear about it. The page's scroll step tells us earlier,
+    // just before the browser paints, so the lab measures and draws itself right there
+    // (it may have been built a moment ago, by the jump itself).
+    function sectionReached(section) {
         if (section.id !== "lab" || labNear) return;
         onLabNear(true);
+        measureAll();
         redraw(performance.now());
-    });
+    }
 
     // ----- Theme: the canvases get the new colours -----
     // The colours are read again at the next drawing, not in the middle of the switch.
-    A.onThemeChange(() => {
+    function themeChanged() {
         colors = null;
         board.sprites = null;
         nn.dirty.net = true;
         nn.dirty.chart = true;
         schedule();
-    });
+    }
 
     // ----- Language: update the text that JavaScript writes, keep everything else -----
     // Learning-rate numbers in the style of the language ("0.03" or "0,03")
     function updateLrLabels() {
-        Array.prototype.forEach.call(lrSelect.options, (option) => {
+        Array.prototype.forEach.call(nnEls.lr.options, (option) => {
             const value = Number(option.value);
             const digits = value < 1 ? option.value.split(".")[1].length : 0;
             option.textContent = A.format.number(value, digits);
@@ -2718,16 +2710,105 @@
 
     // Core has already translated every data-i18n text: the lab only redoes what its
     // JavaScript writes, and far from the screen that waits until the lab comes near.
-    A.onLanguageChange(() => {
+    function languageChanged() {
         stopAuto(false);     // the model must not go on writing in the old language
         if (labNear) refreshLanguage();
         else languageStale = true;
-    });
+    }
+
+    // ----- Building the lab -----
+    // The lab sits about three screens down the page, so its HTML is made only when it
+    // is needed: when it comes near the screen, when the browser has a quiet moment
+    // after the page loaded, or when something opens it (openLab, a command, a #lab link).
+    function findElements() {
+        labCard = $(".lab");
+        board.el = $(".lab-board");
+        board.canvas = $(".lab-board-canvas");
+        board.readout = $(".lab-readout");
+        chart.wrap = $(".lab-chart-wrap");
+        chart.canvas = $(".lab-chart-canvas");
+        diagram.wrap = $(".lab-diagram-wrap");
+        diagram.canvas = $(".lab-diagram-canvas");
+        nnEls = {
+            live: $('[data-live="nn"]'),
+            train: $(".lab-train"),
+            epoch: $('[data-stat="epoch"]'),
+            loss: $('[data-stat="loss"]'),
+            acc: $('[data-stat="acc"]'),
+            accBar: $('[data-stat="accbar"]'),
+            points: $('[data-stat="points"]'),
+            split: $('[data-stat="split"]'),
+            status: $(".lab-status"),
+            statusText: $(".lab-status-text"),
+            lr: $("#lab-lr"),
+            opt: $("#lab-opt"),
+            neurons: $("#lab-neurons"),
+            layer: $(".lab-switch")
+        };
+        lmEls = {
+            input: $("#lab-lm-input"),
+            clear: $(".lab-lm-clear"),
+            mode: $('[data-lm="mode"]'),
+            context: $('[data-lm="context"]'),
+            tokens: $('[data-lm="tokens"]'),
+            notice: $(".lab-lm-notice"),
+            items: $$(".lab-cand-item"),
+            auto: $(".lab-auto"),
+            temp: $("#lab-temp"),
+            tempOut: $('[data-out="temp"]'),
+            teachForm: $(".lab-teach"),
+            teachInput: $("#lab-teach-input"),
+            teachStatus: $(".lab-teach-status"),
+            forget: $('[data-action="forget"]'),
+            live: $('[data-live="lm"]'),
+            field: $(".lab-lm-field")
+        };
+        tabEls = { list: $(".lab-tabs"), buttons: $$(".lab-tab"), panels: $$(".lab-panel") };
+    }
+
+    function build() {
+        mount.innerHTML = labHTML();
+        findElements();
+        // The HTML has empty text holders: they are filled in this once
+        // (after that, core keeps them in the right language)
+        A.applyTranslations(labCard);
+        setUpBoard();
+        setUpControls();
+        setUpPredictor();
+        setUpTabs();
+
+        // What the lab shows first (the canvases are drawn when it comes near the screen)
+        loadModel();
+        markPreset("circle");
+        pointsChanged();
+        scoreDots();          // the loss and the accuracy are shown before the first drawing
+        updateDiagramLabel();
+        refreshTexts();
+        renderPredictor();
+        selectTab(A.storage.get("lab.tab", "classifier"), { start: true });
+
+        // Canvas sizes follow their boxes
+        if ("ResizeObserver" in window) {
+            const resizer = new ResizeObserver(measureAll);
+            [board.el, chart.wrap, diagram.wrap].forEach((element) => resizer.observe(element));
+        } else {
+            A.onResize(measureAll);
+        }
+        // On screen or not, near or far, theme and language
+        A.whenVisible(labCard, onLabVisible, { threshold: 0.05, pauseAnimations: true });
+        A.whenVisible(labCard, onLabNear, { rootMargin: "50% 0px" });
+        A.onSection(sectionReached);
+        A.onThemeChange(themeChanged);
+        A.onLanguageChange(languageChanged);
+    }
+
+    const ensure = A.whenNeeded(mount, build);
 
     // ----- Opening the lab from other parts of the site -----
     // AICompass.lab.open("classifier" | "predictor") (AICompass.openLab is the older name)
     function openLab(tab) {
-        selectTab(tab === "predictor" ? "predictor" : "classifier", false);
+        ensure();
+        selectTab(tab === "predictor" ? "predictor" : "classifier");
         A.scrollToSection("lab");
     }
     A.feature("lab", { open: openLab });
@@ -2750,18 +2831,5 @@
         keywords: "lab next word predictor language model chatbot text autocomplete gpt лаборатория следующее слово предсказатель языковая модель чат-бот текст автодополнение",
         run: function () { A.openLab("predictor"); }
     });
-
-    // ----- First draw -----
-    loadModel();
-    // The circle is a good first example: you can watch the line bend into a ring in a few seconds
-    nn.points = makePreset("circle");
-    $$(".lab-preset").forEach((chip) => chip.classList.toggle("active", chip.getAttribute("data-preset") === "circle"));
-    // Fills in the texts of the HTML above (later, core keeps them in the right language)
-    A.applyTranslations(mount);
-    pointsChanged();
-    updateDiagramLabel();
-    refreshTexts();
-    renderPredictor();
-    selectTab(A.storage.get("lab.tab", "classifier"), false);
 
 })();

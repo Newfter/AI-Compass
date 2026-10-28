@@ -34,6 +34,13 @@
     display: none !important;
 }
 
+/* js/lab.js builds the lab only when it comes near the screen. Until then its empty
+   box keeps about the height of the "Teach the machine" tab (the predictor tab is
+   shorter), so the page below doesn't jump. Smaller screens: see "6. Responsive". */
+.js [data-feature="lab"]:empty {
+    min-height: 1900px;
+}
+
 /* The lab card is big and its canvases change every frame, so instead of
    blurring the animated page behind it (slow), it uses an almost solid glass colour. */
 .lab {
@@ -1763,6 +1770,10 @@
 /* ===== 6. RESPONSIVE ===== */
 
 @media (max-width: 1020px) {
+    .js [data-feature="lab"]:empty {
+        min-height: 2900px;
+    }
+
     .lab-nn,
     .lab-lm {
         grid-template-columns: minmax(0, 1fr);
@@ -1784,6 +1795,10 @@
 }
 
 @media (max-width: 720px) {
+    .js [data-feature="lab"]:empty {
+        min-height: 3200px;
+    }
+
     .lab-top {
         flex-direction: column;
         align-items: stretch;
@@ -1808,6 +1823,10 @@
 }
 
 @media (max-width: 640px) {
+    .js [data-feature="lab"]:empty {
+        min-height: 3550px;
+    }
+
     .lab {
         padding: 16px;
         border-radius: 20px;
@@ -1902,6 +1921,10 @@
 }
 
 @media (max-width: 480px) {
+    .js [data-feature="lab"]:empty {
+        min-height: 3900px;
+    }
+
     .lab-tab-icon {
         display: none;
     }
