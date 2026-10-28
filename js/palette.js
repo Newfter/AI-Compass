@@ -115,7 +115,6 @@
         lastFocus: null,    // where the focus goes back to on close
         hideTimer: 0,
         statusTimer: 0,
-        scroll: null,       // saved page scroll style while open
         pointer: { x: -1, y: -1 },
         expanded: {}        // big groups opened with "Show N more" (until the palette closes)
     };
@@ -652,14 +651,6 @@
                 event.preventDefault();
                 if (state.items[state.active]) runItem(state.items[state.active]);
                 break;
-            case "Escape":
-                event.preventDefault();
-                event.stopPropagation();
-                close();
-                break;
-            case "Tab":
-                trapFocus(event);
-                break;
         }
     });
 
@@ -694,46 +685,31 @@
         if (event.target === ui.overlay) close();
     });
 
-    function trapFocus(event) {
-        const items = [ui.input, ui.close].filter(function (element) {
-            return element.getClientRects().length > 0;
-        });
-        const first = items[0];
-        const last = items[items.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-            event.preventDefault();
-            last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
-        }
-    }
-
-    // If the focus somehow leaves the window, bring it back
-    document.addEventListener("focusin", function (event) {
-        if (state.open && !ui.dialog.contains(event.target)) {
-            ui.input.focus({ preventScroll: true });
-        }
-    });
-
     /* =========================================================
        7. OPENING, CLOSING AND RUNNING A COMMAND
        ========================================================= */
 
-    function lockScroll() {
-        const body = document.body;
-        const gap = window.innerWidth - document.documentElement.clientWidth;
-        state.scroll = { overflow: body.style.overflow, paddingRight: body.style.paddingRight };
-        body.style.overflow = "hidden";
-        if (gap > 0) body.style.paddingRight = gap + "px";
-    }
-
-    function unlockScroll() {
-        if (!state.scroll) return;
-        document.body.style.overflow = state.scroll.overflow;
-        document.body.style.paddingRight = state.scroll.paddingRight;
-        state.scroll = null;
-    }
+    // The palette is a pop-up window of the page (see "overlays" in core.js).
+    // While it is open, core stops the page from scrolling, makes the rest of
+    // the page unreachable (inert), keeps Tab inside and closes it with Esc.
+    // A Ctrl+K command or a jump to another section closes it too.
+    const overlay = A.overlays.register("palette", {
+        root: ui.overlay,           // the window and the dark area around it
+        element: ui.dialog,
+        modal: true,
+        // Tab goes round the search box and the close button
+        // (the results are chosen with the arrow keys)
+        focusables: function () {
+            return [ui.input, ui.close].filter(function (element) {
+                return element.getClientRects().length > 0;
+            });
+        },
+        // If the focus somehow lands outside the window, it goes back to the search box
+        holdFocus: function () {
+            ui.input.focus({ preventScroll: true });
+        },
+        close: function () { close(); }
+    });
 
     // Phones: keep the window over the part of the screen you can see.
     // The page area can be bigger than the screen (on-screen keyboard,
@@ -776,11 +752,11 @@
         const active = document.activeElement;
         state.lastFocus = active && active !== document.body ? active : null;
 
-        lockScroll();
         state.expanded = {};
         ui.input.value = "";
         ui.overlay.hidden = false;
         ui.overlay.classList.remove("is-closing");
+        overlay.opened();     // before the focus moves in (core makes the rest inert)
         fitOverlay();
         render();
         ui.list.scrollTop = 0;
@@ -797,7 +773,7 @@
         state.open = false;
         ui.overlay.classList.remove("is-open");
         ui.overlay.classList.add("is-closing");
-        unlockScroll();
+        overlay.closed();     // before the focus goes back (the page is reachable again)
         setTriggersExpanded(false);
         clearTimeout(state.statusTimer);
         ui.status.textContent = "";
@@ -843,7 +819,9 @@
         setActive(Math.max(0, Math.min(index, state.items.length - 1)), true);
     }
 
-    // Close first (so focus and scrolling are back to normal), then run
+    // Close first (so the focus and scrolling are back to normal), then run.
+    // The palette is off the window stack by then, so A.runCommand() only
+    // closes the windows below it that are in the way (the phone chat, a lesson).
     function runItem(item) {
         if (item.more) {
             expandGroup(item);
