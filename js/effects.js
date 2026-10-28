@@ -102,7 +102,17 @@
         document.dispatchEvent(new CustomEvent("aic:effects", { detail: { calm: A.motion.calm } }));
     }
 
-    A.motion.onChange(onMotionChange);
+    // The hero rises in with pure CSS when the page opens (css/effects.css).
+    // Switching animations off and on again would start that entrance again,
+    // so the first switch marks it as over.
+    function endHeroEntrance() {
+        document.querySelectorAll(".hero").forEach((hero) => hero.classList.add("fx-entered"));
+    }
+
+    A.motion.onChange(() => {
+        endHeroEntrance();
+        onMotionChange();
+    });
     A.onMedia(finePointerQuery, onMotionChange, { immediate: false });
 
     /* =========================================================

@@ -63,12 +63,16 @@
     pointer-events: none;
 }
 
+/* The glow. At the very top of the page its layer waits just left of the
+   screen, and its light would still shine into the corner, so it only
+   shows once you have scrolled (js/effects.js adds "is-active") */
 .scroll-progress::before {
     top: 0;
     height: 100%;
     border-radius: 0 3px 3px 0;
     box-shadow: 0 0 10px rgba(var(--accent-2-rgb), 0.55), 0 0 2px rgba(var(--accent-rgb), 0.8);
     transform: translateX(calc((var(--fx-progress, 0) - 1) * 100%));
+    opacity: 0;
 }
 
 /* The head reaches 4px past the end of the bar */
@@ -81,6 +85,7 @@
     transition: opacity 0.3s ease;
 }
 
+.scroll-progress.is-active::before,
 .scroll-progress.is-active::after {
     opacity: 1;
 }
@@ -129,7 +134,7 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
    hiding it again after it was drawn, so index.html marks its blocks as
    "revealed" and they rise in with pure CSS from the first frame, one after
    another, just like cards that scroll into view.
-   (Calm mode switches it off in section 12.) */
+   (Calm mode switches it off, and it never plays twice: see section 12.) */
 @media (prefers-reduced-motion: no-preference) {
     .hero [data-reveal] {
         animation: fx-reveal-up 0.95s var(--ease) var(--fx-delay, 0ms) backwards;
@@ -590,9 +595,13 @@ html.fx-motion-off .fx-rail-label {
     transition: none;
 }
 
-/* The hero shows at once (its entrance has delays, which would still apply) */
+/* The hero shows at once (its entrance has delays, which would still apply).
+   Turning animations back on would start its entrance again, so after the
+   first switch js/effects.js marks the hero "fx-entered": it stays as it is. */
 html.fx-motion-off .hero [data-reveal],
-html.fx-motion-off .hero-stats > li {
+html.fx-motion-off .hero-stats > li,
+.hero.fx-entered [data-reveal],
+.hero.fx-entered .hero-stats > li {
     animation: none;
 }
 

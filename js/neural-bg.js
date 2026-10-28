@@ -224,9 +224,11 @@
         const newHeight = Math.max(1, Math.round(rect.height || window.innerHeight));
         let ratio = A.canvas.pixelRatio(2);
 
-        // Huge screens get fewer pixels per CSS pixel, so it stays smooth
+        // Huge screens get fewer pixels per CSS pixel, so it stays smooth (but at least
+        // one, and never more than the screen has: A.canvas.fit below won't give more,
+        // and draw() must scale by exactly the ratio the canvas really got)
         if (newWidth * newHeight * ratio * ratio > MAX_PIXELS) {
-            ratio = Math.max(1, Math.sqrt(MAX_PIXELS / (newWidth * newHeight)));
+            ratio = Math.min(ratio, Math.max(1, Math.sqrt(MAX_PIXELS / (newWidth * newHeight))));
         }
 
         if (newWidth === width && newHeight === height && ratio === dpr) return;
