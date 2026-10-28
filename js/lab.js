@@ -46,6 +46,7 @@
             // small labels on the diagram: the dim grey is too pale on white, so the light theme uses a darker one
             dim: A.colors.rgb(light ? "--text-muted" : "--text-dim"),
             danger: A.colors.rgb("--danger"),
+            shine: A.colors.rgb("--on-accent"),     // the white of text on the accent colour
             mono: A.cssVar("--font-mono") || "monospace",
             light: light
         };
@@ -303,7 +304,7 @@
             '</li>').join("");
 
         const stats = ["sentences", "words", "pairs", "triples"].map((name) =>
-            '<div class="lab-lm-stat"><strong class="mono" data-lmstat="' + name + '">0</strong><span data-lmstat-label="' + name + '"></span></div>').join("");
+            '<div class="lab-lm-stat"><strong class="mono gradient-text" data-lmstat="' + name + '">0</strong><span data-lmstat-label="' + name + '"></span></div>').join("");
 
         return '<div class="lab-lm">' +
             '<div class="lab-lm-main">' +
@@ -866,7 +867,7 @@
             // a tiny highlight makes the dots look like glass beads
             g.beginPath();
             g.arc(half - r * 0.3, half - r * 0.32, r * 0.32, 0, Math.PI * 2);
-            g.fillStyle = "rgba(255,255,255,0.35)";
+            g.fillStyle = A.colors.rgba(colors.shine, 0.35);
             g.fill();
             return { canvas: canvas, half: half };
         };
