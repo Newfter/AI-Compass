@@ -994,9 +994,10 @@
     }
 
     // ----- Sharper (or less sharp) pixels -----
-    // onPixelRatioChange(callback) calls callback(ratio) when the device pixel ratio changes
-    // while the window keeps its size: the window moved to a retina screen, or the browser
-    // zoom changed. A canvas then needs a new backing size, but no resize event comes.
+    // onPixelRatioChange(callback) calls callback(ratio) when the device pixel ratio changes,
+    // for example when the window is moved to a screen with sharper pixels. A canvas then
+    // needs a new backing size, and no resize event tells us, because the window keeps its
+    // size. (Browser zoom changes the ratio too, but it also sends a resize event.)
     // A media query for the current ratio tells us; it is made again for each new ratio.
     //     A.onPixelRatioChange(function (ratio) { fitCanvases(); });
     // Returns a function that stops listening.
