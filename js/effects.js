@@ -1776,19 +1776,21 @@
         }
     });
 
+    // "Not used yet" means no other file calls it today. Those members stay on
+    // purpose: they are small, and other features may need them later.
     A.feature("effects", {
-        // true while calm mode is on (core keeps the setting: A.motion.calm)
+        // true while calm mode is on (core keeps the setting: A.motion.calm). The lab reads it
         get calm() { return A.motion.calm; },
-        // calm mode on (true) or off (false)
+        // calm mode on (true) or off (false). Not used yet: A.motion.setCalm does the same
         setCalm: function (value) { A.motion.setCalm(value); },
-        // looks for effects inside container (the whole page without one). Rarely
-        // needed: new elements are found by themselves (section 14)
+        // looks for effects inside container (the whole page without one). Not used yet,
+        // and rarely needed: new elements are found by themselves (section 14)
         refresh: function (container) { scan(container || document.body); },
         // shows a [data-reveal] element now, with its animation (the glossary uses it)
         reveal: function (element) { if (element) reveal(element, 0); },
-        // decodes a text again
+        // decodes a text again (not used yet)
         scramble: function (element) { if (element) scramble(element, 0); },
-        // confetti for big moments (lessons, quiz): see section 13
+        // confetti for big moments, such as a finished lesson or quiz: see section 13
         confetti: confetti,
         stopConfetti: stopConfetti
     });
