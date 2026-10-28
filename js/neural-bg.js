@@ -8,6 +8,10 @@
    - nodes near your mouse or finger are pulled in and light up
    - a click or tap sends a ripple and makes nearby neurons fire
    It stays dim on purpose, so text on top is always easy to read.
+   It only works as hard as it needs to: full speed while you see the
+   hero, half as often further down, and it stands still behind a
+   full-screen window, in a hidden tab, in calm mode and with
+   "reduce motion".
    ========================================================= */
 
 (function () {
@@ -36,9 +40,10 @@
     const ALPHA_LEVELS = 16;         // lines are grouped by brightness to draw faster
     const ALPHA_STEP = 0.035;
     const COLOR_LEVELS = 3;          // purple, a mix, cyan
+    const HALF_RATE_MS = 25;         // below the hero: skip a frame until 25 ms have passed
+                                     // (on a 60 Hz screen: every other frame, 30 pictures a second)
+    const SLOW_FRAME_MS = 12;        // a frame that takes longer to compute counts as "slow"
     const SECRET_CODE = "ArrowUp ArrowUp ArrowDown ArrowDown ArrowLeft ArrowRight ArrowLeft ArrowRight KeyB KeyA";
-
-    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     // ---------- State ----------
     let width = 0;
@@ -58,46 +63,27 @@
     let spawnTimer = 0.8;
     let stormTime = 0;
     let intensity = 1;
-    let lastScrollY = window.scrollY;
+    let pageY = 0;                   // the scroll position, from core (A.onScroll)
+    let lastPageY = 0;
+    let heroOnScreen = true;         // false: move half as often
+    let showingStill = false;        // true: the calm still picture is on the canvas
     let slowFrames = 0;
     let frameCount = 0;
     let secretKeys = [];
 
     const mouse = { x: 0, y: 0, active: false, power: 0, releaseTimer: 0 };
 
-    // ---------- Small helpers ----------
+    // ---------- Small helpers (core has the rest: A.util, A.colors, A.canvas) ----------
+    // A random number between min and max (not only whole numbers)
+    // TODO(core): A.util.random(min, max) would serve other canvases too
     function random(min, max) {
-        return min + Math.random() * (max - min);
+        return A.util.lerp(min, max, Math.random());
     }
 
-    function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
+    // Mixes two colours: amount 0 = a, 1 = b
+    // TODO(core): A.colors.mix(a, b, amount)
     function mix(a, b, amount) {
-        return [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * amount));
-    }
-
-    function rgba(colour, alpha) {
-        return "rgba(" + colour[0] + "," + colour[1] + "," + colour[2] + "," + alpha + ")";
-    }
-
-    function pick(list) {
-        return list[Math.floor(Math.random() * list.length)];
-    }
-
-    // Reads "155, 109, 255" from a CSS variable and turns it into [155, 109, 255]
-    function readColour(name, fallback) {
-        const parts = A.cssVar(name).split(",").map((part) => parseFloat(part));
-        return parts.length === 3 && parts.every((n) => isFinite(n)) ? parts : fallback;
-    }
-
-    function calmMode() {
-        return A.motion.calm;
-    }
-
-    function motionAllowed() {
-        return !reducedMotionQuery.matches && !calmMode();
+        return [0, 1, 2].map((i) => Math.round(A.util.lerp(a[i], b[i], amount)));
     }
 
     // ---------- Colours and glow images for the current theme ----------
@@ -112,11 +98,11 @@
         const glow = g.createRadialGradient(32, 32, 0, 32, 32, 32);
         const core = light ? colour : mix(colour, [255, 255, 255], hot ? 0.75 : 0.55);
 
-        glow.addColorStop(0, rgba(core, 1));
-        glow.addColorStop(0.08, rgba(colour, 1));
-        glow.addColorStop(0.16, rgba(colour, light ? 0.5 : 0.55));
-        glow.addColorStop(0.34, rgba(colour, light ? 0.07 : 0.14));
-        glow.addColorStop(1, rgba(colour, 0));
+        glow.addColorStop(0, A.colors.rgba(core, 1));
+        glow.addColorStop(0.08, A.colors.rgba(colour, 1));
+        glow.addColorStop(0.16, A.colors.rgba(colour, light ? 0.5 : 0.55));
+        glow.addColorStop(0.34, A.colors.rgba(colour, light ? 0.07 : 0.14));
+        glow.addColorStop(1, A.colors.rgba(colour, 0));
         g.fillStyle = glow;
         g.fillRect(0, 0, size, size);
         return sprite;
@@ -124,8 +110,8 @@
 
     function buildLook() {
         const light = A.theme === "light";
-        const purple = readColour("--accent-rgb", [155, 109, 255]);
-        const cyan = readColour("--accent-2-rgb", [80, 227, 255]);
+        const purple = A.colors.rgb("--accent-rgb");
+        const cyan = A.colors.rgb("--accent-2-rgb");
         const colours = [purple, mix(purple, cyan, 0.5), cyan];
 
         look = {
@@ -134,14 +120,14 @@
             sprites: colours.map((colour) => makeSprite(colour, light, false)),
             pulseSprite: makeSprite(cyan, light, true),
             lineStyles: [],
-            cursorStyle: rgba(cyan, 1),
+            cursorStyle: A.colors.rgba(cyan, 1),
             pulseColour: light ? cyan : mix(cyan, [255, 255, 255], 0.35),
-            ringStyle: rgba(cyan, 1)
+            ringStyle: A.colors.rgba(cyan, 1)
         };
 
         colours.forEach((colour) => {
             for (let level = 0; level < ALPHA_LEVELS; level++) {
-                look.lineStyles.push(rgba(colour, ((level + 0.5) * ALPHA_STEP).toFixed(3)));
+                look.lineStyles.push(A.colors.rgba(colour, ((level + 0.5) * ALPHA_STEP).toFixed(3)));
             }
         });
     }
@@ -161,7 +147,7 @@
             ey: 0,
             z: depth,
             size: random(1, 1.9),
-            hue: clamp(x / Math.max(1, width) + random(-0.3, 0.3), 0, 1),   // purple on the left, cyan on the right
+            hue: A.util.clamp(x / Math.max(1, width) + random(-0.3, 0.3), 0, 1),   // purple on the left, cyan on the right
             phase: random(0, Math.PI * 2),
             twinkle: random(0.5, 1.3),
             fire: 0,                                         // 1 right after the neuron fires
@@ -171,7 +157,7 @@
     }
 
     function baseCount() {
-        return clamp(Math.round(width * height / AREA_PER_NODE), MIN_NODES, MAX_NODES);
+        return A.util.clamp(Math.round(width * height / AREA_PER_NODE), MIN_NODES, MAX_NODES);
     }
 
     function syncNodeCount() {
@@ -206,8 +192,9 @@
         const rect = canvas.getBoundingClientRect();
         const newWidth = Math.max(1, Math.round(rect.width || window.innerWidth));
         const newHeight = Math.max(1, Math.round(rect.height || window.innerHeight));
-        let ratio = Math.min(window.devicePixelRatio || 1, 2);
+        let ratio = A.canvas.pixelRatio(2);
 
+        // Huge screens get fewer pixels per CSS pixel, so it stays smooth
         if (newWidth * newHeight * ratio * ratio > MAX_PIXELS) {
             ratio = Math.max(1, Math.sqrt(MAX_PIXELS / (newWidth * newHeight)));
         }
@@ -225,25 +212,16 @@
         width = newWidth;
         height = newHeight;
         dpr = ratio;
-        canvas.width = Math.round(width * dpr);
-        canvas.height = Math.round(height * dpr);
+        A.canvas.fit(canvas, width, height, { maxRatio: dpr });
 
         // Lines get longer when nodes are further apart
-        linkDistance = clamp(Math.sqrt(width * height / baseCount()) * 1.45, 100, 170);
+        linkDistance = A.util.clamp(Math.sqrt(width * height / baseCount()) * 1.45, 100, 170);
         syncNodeCount();
 
         if (!running) drawStill();
     }
 
-    let resizeQueued = false;
-    window.addEventListener("resize", () => {
-        if (resizeQueued) return;
-        resizeQueued = true;
-        requestAnimationFrame(() => {
-            resizeQueued = false;
-            resize();
-        });
-    });
+    A.onResize(resize);
 
     // ---------- Signals (neurons firing) ----------
     function spawnPulse(from, to, depth) {
@@ -256,20 +234,20 @@
             to: to,
             depth: depth,
             t: 0,
-            duration: clamp(distance / random(150, 240), 0.25, 1.2)
+            duration: A.util.clamp(distance / random(150, 240), 0.25, 1.2)
         });
     }
 
     function spawnRandomPulse() {
         for (let tries = 0; tries < 8; tries++) {
-            const node = pick(nodes);
+            const node = A.util.pick(nodes);
             if (!node || node.fade < 0.95) continue;
             if (node.x < 0 || node.x > width || node.y < 0 || node.y > height) continue;
 
             const list = neighbours(node, null);
             if (list.length) {
                 node.fire = Math.max(node.fire, 0.6);
-                spawnPulse(node, pick(list), 0);
+                spawnPulse(node, A.util.pick(list), 0);
                 return;
             }
         }
@@ -329,14 +307,13 @@
         mouse.power += ((mouse.active ? 1 : 0) - mouse.power) * Math.min(1, dt * 5);
 
         // Full brightness on the hero, a bit calmer while you read the sections
-        const reading = clamp(window.scrollY / (height * 0.9), 0, 1);
+        const reading = A.util.clamp(pageY / (height * 0.9), 0, 1);
         const targetIntensity = 1 - reading * 0.35 + (stormTime > 0 ? 0.45 : 0);
         intensity += (targetIntensity - intensity) * Math.min(1, dt * 3);
 
         // Scrolling moves near nodes more than far ones (depth / parallax)
-        const scrollY = window.scrollY;
-        const shift = clamp(scrollY - lastScrollY, -90, 90);
-        lastScrollY = scrollY;
+        const shift = A.util.clamp(pageY - lastPageY, -90, 90);
+        lastPageY = pageY;
 
         const damping = Math.exp(-dt * 2.4);
         const margin = linkDistance;
@@ -478,8 +455,8 @@
             const tx = from.x + (to.x - from.x) * tail;
             const ty = from.y + (to.y - from.y) * tail;
             const trail = ctx.createLinearGradient(tx, ty, x, y);
-            trail.addColorStop(0, rgba(colour, 0));
-            trail.addColorStop(1, rgba(colour, 0.9));
+            trail.addColorStop(0, A.colors.rgba(colour, 0));
+            trail.addColorStop(1, A.colors.rgba(colour, 0.9));
             ctx.globalAlpha = Math.min(1, strength);
             ctx.strokeStyle = trail;
             ctx.lineWidth = 2;
@@ -544,6 +521,7 @@
 
     // One calm picture, used when animations are off
     function drawStill() {
+        showingStill = true;
         if (!look) buildLook();
         pulses = [];
         rings = [];
@@ -557,11 +535,13 @@
     }
 
     // ---------- Animation loop ----------
-    // If the device can't keep up, use fewer nodes
-    function watchSpeed(rawDt) {
+    // If the device can't keep up, use fewer nodes. What counts is how long
+    // OUR work takes, not the time between frames: a 30 Hz screen (or the
+    // half rate below the hero) is not a slow device.
+    function watchSpeed(workMs) {
         frameCount++;
         if (frameCount < 90) return;
-        if (rawDt > 1 / 35) slowFrames++;
+        if (workMs > SLOW_FRAME_MS) slowFrames++;
         else slowFrames = Math.max(0, slowFrames - 1);
 
         if (slowFrames > 90 && quality > 0.5) {
@@ -571,25 +551,47 @@
         }
     }
 
+    // A storm or a click ripple is going on: it always runs at full speed
+    function busy() {
+        return stormTime > 0 || rings.length > 0;
+    }
+
+    // Should the network move right now? Not with calm mode or "reduce motion",
+    // not in a hidden tab, and not behind a full-screen window (unless a storm
+    // or a ripple was asked for)
+    function shouldMove() {
+        if (!A.motion.ok() || document.hidden) return false;
+        return !A.overlays.hasModal() || busy();
+    }
+
     function frame(now) {
         rafId = 0;
         if (!running) return;
 
-        const rawDt = (now - lastTime) / 1000;
-        const dt = clamp(rawDt, 0.001, 0.05);
+        // Below the hero the network moves half as often: same speed, fewer pictures
+        if (!heroOnScreen && !busy() && now - lastTime < HALF_RATE_MS) {
+            rafId = requestAnimationFrame(frame);
+            return;
+        }
+
+        const dt = A.util.clamp((now - lastTime) / 1000, 0.001, 0.05);
         lastTime = now;
 
+        const workStart = performance.now();
         update(dt);
         draw(now / 1000);
-        watchSpeed(rawDt);
-        rafId = requestAnimationFrame(frame);
+        showingStill = false;
+        watchSpeed(performance.now() - workStart);
+
+        if (shouldMove()) rafId = requestAnimationFrame(frame);
+        else refresh();                       // e.g. the storm behind a window is over
     }
 
     function start() {
         if (running) return;
         running = true;
         lastTime = performance.now();
-        lastScrollY = window.scrollY;
+        lastPageY = pageY;
         frameCount = 0;
         slowFrames = 0;
         rafId = requestAnimationFrame(frame);
@@ -601,13 +603,15 @@
         rafId = 0;
     }
 
-    // Decide: animate, or show one still picture (tab hidden, reduced motion, calm mode)
+    // Decide: animate, or stand still. Calm mode and "reduce motion" get one calm
+    // picture; behind a window (or in a hidden tab) the last picture just stays.
     function refresh() {
-        if (motionAllowed() && !document.hidden) {
+        if (!width) return;                   // not measured yet: the first frame calls refresh()
+        if (shouldMove()) {
             start();
         } else {
             stop();
-            if (!document.hidden) drawStill();
+            if (!A.motion.ok() && !document.hidden && !showingStill) drawStill();
         }
     }
 
@@ -640,7 +644,7 @@
 
     // A click or tap sends a ripple and makes the nearest neurons fire
     function burst(x, y) {
-        if (!running || !nodes.length) return false;
+        if (!A.motion.ok() || document.hidden || !nodes.length) return false;
 
         rings.push({ x: x, y: y, t: 0, duration: 0.9, size: 150 });
         rings.push({ x: x, y: y, t: -0.2, duration: 1.1, size: 230 });
@@ -667,24 +671,27 @@
                 item.node.fire = 1;
                 neighbours(item.node, null).slice(0, 3).forEach((next) => spawnPulse(item.node, next, 0));
             });
+        refresh();                                                       // wakes the network up if it was resting
         return true;
     }
 
     document.addEventListener("click", (event) => {
         if (event.detail === 0) return;                                  // keyboard "clicks" have no position
+        if (A.overlays.hasModal()) return;                               // a click in a window is for the window
         burst(event.clientX, event.clientY);
     }, { passive: true });
 
     // ---------- Neural storm (command palette + a secret code) ----------
     function storm() {
-        if (!running || !nodes.length) return false;
+        if (!A.motion.ok() || document.hidden || !nodes.length) return false;
         stormTime = 3.5;
         for (let i = 0; i < 14; i++) {
-            const node = pick(nodes);
+            const node = A.util.pick(nodes);
             node.fire = 1;
             neighbours(node, null).slice(0, 2).forEach((next) => spawnPulse(node, next, 0));
         }
         rings.push({ x: width / 2, y: height / 2, t: 0, duration: 1.4, size: Math.max(width, height) * 0.6 });
+        refresh();                                                       // wakes the network up if it was resting
         return true;
     }
 
@@ -717,16 +724,34 @@
     });
 
     // ---------- Reacting to the rest of the site ----------
+    // The new colours are read in the next frame, when the browser restyles the
+    // page anyway: reading them inside the click would force an extra restyle
     A.onThemeChange(() => {
-        buildLook();
-        if (!running) drawStill();
+        requestAnimationFrame(() => {
+            buildLook();
+            if (!running) drawStill();
+        });
     });
 
-    document.addEventListener("visibilitychange", refresh);
-    document.addEventListener("aic:effects", refresh);                   // calm mode from js/effects.js
+    A.motion.onChange(refresh);                                          // calm mode, "reduce motion"
+    A.overlays.onChange(refresh);                                        // a full-screen window opened or closed
+    A.whenVisible(canvas, refresh);                                      // the browser tab was hidden or shown
 
-    if (reducedMotionQuery.addEventListener) reducedMotionQuery.addEventListener("change", refresh);
-    else if (reducedMotionQuery.addListener) reducedMotionQuery.addListener(refresh);
+    // Full speed only while the hero (the top of the page) can be seen
+    const hero = document.getElementById("home");
+    if (hero) {
+        A.whenVisible(hero, (visible) => {
+            heroOnScreen = visible;
+        });
+    }
+
+    // The scroll position comes from core, which reads it once per frame for everyone
+    let pageYKnown = false;
+    A.onScroll((info) => {
+        pageY = info.y;
+        if (!pageYKnown) lastPageY = pageY;                              // no jump on the first frame
+        pageYKnown = true;
+    });
 
     // Other features can make the network react, e.g. after a correct answer:
     // if (AICompass.neural) AICompass.neural.burst(x, y);
@@ -737,8 +762,13 @@
     };
 
     // ---------- Start ----------
-    buildLook();
-    resize();
-    refresh();
+    // In the first frame, when every feature has built its part of the page:
+    // reading the colours or measuring the canvas earlier would make the
+    // browser style and lay out the page twice
+    requestAnimationFrame(() => {
+        buildLook();
+        resize();
+        refresh();
+    });
 
 })();
