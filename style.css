@@ -1,32 +1,61 @@
 /* =========================================================
    AI COMPASS — MAIN STYLES
-   Colours, fonts, menu, hero, sections, about and footer.
-   Each feature (quiz, lab, ...) has its own file in /css.
+   What the whole page shares. Each feature (quiz, lab, ...) has its
+   own file in /css, loaded after this one.
+
+    1. design tokens       colours of the dark and the light theme, fonts,
+                           sizes, layers (z-index)
+    2. basics              reset, the page (and its theme switch), links, the focus
+                           ring, the skip link, small helpers (.container, .sr-only)
+    3. background layers   the neural network canvas and the grid
+    4. buttons, chips, cards   shared by every feature
+    5. navigation          the menu bar, its links and buttons
+    6. hero                the first screen
+    7. sections            the frame and the title of every section
+    8. about
+    9. footer
+   10. toasts              small pop-up messages
+   11. responsive          tablets and phones (and the menu on small screens)
+   12. shared animations
+   13. reduced motion and calm mode
    ========================================================= */
 
-/* ===== 1. DESIGN TOKENS (colours and sizes used everywhere) ===== */
+/* ===== 1. DESIGN TOKENS (colours and sizes used everywhere) =====
+   Use these variables instead of writing a colour or a size again.
+   The dark theme is the default; data-theme="light" on <html> (set by
+   core.js, A.setTheme) switches every colour at once. */
 
+/* --- Colours of the dark theme --- */
 :root,
 [data-theme="dark"] {
+    /* The page, and the cards and panels on it (see-through, for the glass look) */
     --bg: #060812;
     --bg-2: #0b1020;
     --surface: rgba(17, 23, 45, 0.72);
     --surface-solid: #10162a;
     --surface-2: rgba(29, 37, 68, 0.78);
     --surface-hover: rgba(36, 44, 82, 0.9);
+    /* Lines around cards, fields and buttons */
     --border: rgba(143, 130, 255, 0.18);
     --border-strong: rgba(143, 130, 255, 0.42);
 
+    /* Text: normal, quieter, quietest */
     --text: #eef1ff;
     --text-muted: #aab5d0;
     --text-dim: #8793b2;
+    /* Small grey labels (10-13px letters): --text-dim made a little stronger with
+       the text colour, at least 5.5:1 on the page and card colours of both themes */
+    --text-label: color-mix(in srgb, var(--text-dim) 82%, var(--text));
 
+    /* Accent colours (violet, cyan, pink). The -rgb versions are for see-through
+       colours: rgba(var(--accent-rgb), 0.3) */
     --accent: #9b6dff;
     --accent-2: #50e3ff;
     --accent-3: #ff6ad5;
     --accent-rgb: 155, 109, 255;
     --accent-2-rgb: 80, 227, 255;
     --accent-3-rgb: 255, 106, 213;
+    /* Right, wrong, careful */
     --success: #3ee6a0;
     --danger: #ff5c7a;
     --warning: #ffc861;
@@ -40,16 +69,20 @@
     --text-warning: var(--warning);
     --text-danger: var(--danger);
 
+    /* Gradients (headings, the main button), a soft glow and the shadow of big panels */
     --gradient: linear-gradient(110deg, #b69aff 10%, #70edff 90%);
     --gradient-button: linear-gradient(115deg, #8758ee, #536cf0);
     --glow: 0 0 40px rgba(155, 109, 255, 0.25);
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    /* The glass of the menu bar, and the grid pattern behind the page */
     --nav-bg: rgba(6, 8, 18, 0.78);
     --grid-line: rgba(135, 116, 255, 0.05);
 
+    /* Form fields and scrollbars drawn by the browser follow the theme */
     color-scheme: dark;
 }
 
+/* --- Colours of the light theme (the same names, in the same order) --- */
 [data-theme="light"] {
     --bg: #f4f6fd;
     --bg-2: #e8ecf9;
@@ -63,6 +96,7 @@
     --text: #12162b;
     --text-muted: #4a5470;
     --text-dim: #5d6785;
+    --text-label: color-mix(in srgb, var(--text-dim) 82%, var(--text));
 
     --accent: #6b3fe0;
     --accent-2: #07728f;
@@ -92,20 +126,28 @@
     color-scheme: light;
 }
 
+/* --- The same in both themes --- */
 :root {
+    /* Fonts: headings, text, and labels / code (all three have Cyrillic letters) */
     --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
     --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
 
+    /* Rounded corners, the width of the page content, the height of the menu bar
+       (66px on phones, see 11. RESPONSIVE) */
     --radius: 22px;
     --radius-sm: 12px;
     --container: 1180px;
     --nav-height: 76px;
+    /* The easing curve of the site's animations (JavaScript reads it as A.motion.ease) */
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
     /* Text and icons on top of an accent colour or the button gradient */
     --on-accent: #ffffff;
     --accent-strong: #6844c8;
+    /* The edge of the gradient button: a light rim, and a thin shine along its top */
+    --button-rim: rgba(190, 170, 255, 0.35);
+    --button-shine: rgba(255, 255, 255, 0.2);
 
     /* Layers, from the back to the front (z-index) */
     --z-bg-grid: -3;      /* the grid pattern */
@@ -153,8 +195,18 @@ body {
     overflow-x: hidden;
     /* Room for the fixed menu bar at the top */
     padding-top: var(--nav-height);
-    /* No colour transition here: "color" is inherited, so fading it would
-       restyle the whole page in every frame after a theme switch */
+    /* The page background fades to a new theme. Not the text colour: "color" is
+       inherited, so fading it would restyle the whole page in every frame */
+    transition: background-color 0.4s ease;
+}
+
+/* While core.js switches the theme (setTheme), nothing but the page background
+   fades: otherwise about a thousand buttons, links and cards would each fade
+   and be restyled in every frame */
+html.theme-switching *:not(body),
+html.theme-switching *::before,
+html.theme-switching *::after {
+    transition: none !important;
 }
 
 /* Safety net: nothing inside the page may make it wider than the screen
@@ -316,8 +368,8 @@ textarea:focus-visible,
 .btn-primary {
     background: var(--gradient-button);
     color: var(--on-accent);
-    border-color: rgba(190, 170, 255, 0.35);
-    box-shadow: 0 10px 35px rgba(var(--accent-rgb), 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: var(--button-rim);
+    box-shadow: 0 10px 35px rgba(var(--accent-rgb), 0.3), inset 0 1px 0 var(--button-shine);
 }
 
 .btn-primary:hover {
@@ -400,6 +452,9 @@ button.chip:hover,
     left: 0;
     right: 0;
     z-index: var(--z-nav);
+    /* While a pop-up window stops the page from scrolling, the scrollbar disappears
+       and the bar gets wider: this keeps its buttons where they were (core.js) */
+    padding-right: var(--scrollbar-gap, 0px);
     border-bottom: 1px solid transparent;
     transition: border-color 0.3s ease;
 }
@@ -988,6 +1043,13 @@ button.chip:hover,
         align-items: stretch;
         gap: 4px;
         padding: 12px 24px 20px;
+        /* Never taller than the screen under the bar: on a phone held sideways the
+           links scroll inside the panel instead of running off the bottom of the screen
+           (dvh follows the phone's address bar; vh is for older browsers) */
+        max-height: calc(100vh - var(--nav-height));
+        max-height: calc(100dvh - var(--nav-height));
+        overflow-y: auto;
+        overscroll-behavior: contain;
         border-bottom: 1px solid var(--border);
         background: var(--nav-bg);
         -webkit-backdrop-filter: blur(16px);

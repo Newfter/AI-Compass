@@ -1,30 +1,74 @@
 /* =========================================================
    AI COMPASS — CORE
    Loaded before every other script. It builds window.AICompass,
-   the toolkit that every feature file uses (called "A" there):
+   the toolkit that every feature file uses (called "A" there).
+   The words themselves live in js/content/ (one file per part of the site).
 
+   THE PARTS OF THIS FILE
     1. storage       saving settings in the browser
     2. events        A.on / A.emit (the "aic:..." events)
-    3. texts         translations, plurals, number formats, language
+    3. texts         translations, plurals, values inside texts, number formats, language,
+                     text typed with the other keyboard layout
     4. theme         light / dark and the colour of the address bar
-    5. motion        reduced motion (device) + calm mode (our own switch)
-    6. helpers       small tools: maths, page elements, colours, canvas
-    7. screen        media queries, visibility, resizing, layout sizes
+    5. motion        reduced motion (device) + calm mode (our own switch),
+                     and numbers that count up
+    6. helpers       small tools: maths and easing, page elements, buttons that
+                     need a second press, colours, canvas
+    7. screen        media queries, visibility, resizing, the pixel ratio, layout sizes
     8. announce      messages for screen readers
     9. overlays      pop-up windows: scroll lock, focus, the Esc key
-   10. navigation    the page sections, A.navigate, the menu bar
+   10. navigation    the page sections, A.navigate, one scroll pipeline, parts
+                     built when needed, the menu bar
    11. commands      the command list of the Ctrl+K palette
    12. features      how feature files share their API and content
    13. toasts        small pop-up messages
-   14. start-up
+       the toolkit   window.AICompass itself, and the built-in commands
+   14. start-up      translating the page, the theme and language buttons
 
-   The words themselves live in js/content/ (one file per part of the site).
+   THE TOOLKIT AT A GLANCE (each one is explained where it is written)
+    1  A.storage.get(key, fallback) / set(key, value) / remove(key) / migrate(old, new)
+       A.storage.session: the same, forgotten when the tab closes
+    2  A.on(name, callback) -> stop()      A.emit(name, detail)
+       names: language, theme, motion, overlay, section, feature (sent as "aic:" + name)
+    3  A.t(key, values)   A.has(key)   A.plural(key, n, values)   A.pluralForm(n)
+       A.addTranslations({ en, ru })   A.applyTranslations(element)   A.i18nHTML(key, className, tag)
+       A.setTextValue(name, value)   A.textValue(name): a {name} that any text can show
+       in the HTML: data-i18n="key", data-i18n-attr="aria-label:key", data-i18n-plural="name"
+       A.format.number(n, options)   A.format.percent(share, options)   A.format.date(date, options)
+       A.switchLayout(text): "ntcn" -> "тест", the same keys in the other keyboard layout
+       A.lang   A.locale   A.setLanguage(lang)   A.toggleLanguage()   A.onLanguageChange(callback)
+    4  A.theme   A.setTheme(theme)   A.toggleTheme()   A.onThemeChange(callback)
+    5  A.motion.ok() / reduced / calm / setCalm(on) / toggleCalm() / onChange(callback) / ease
+       A.reducedMotion (the device setting only)
+       A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value }
+    6  A.util.clamp / lerp / easeOut / random / randomInt / pick / shuffle /
+              sampleWeighted / debounce / frameThrottle
+       A.dom.focusable / focusHeading / pauseScrollAnchoring / replay / fromHTML
+       A.confirmPress(button, { onArm, onDisarm, onConfirm, enabled, timeout })
+           -> { armed, disarm() }: a button that needs a second press
+       A.colors.parse / rgb(cssName) / rgba(color, alpha) / mix(a, b, amount)
+       A.canvas.pixelRatio / fit / roundRect   A.cssVar(name)   A.escapeHTML(text)
+    7  A.breakpoints   A.queries   A.media(query)   A.onMedia(query, callback)
+       A.whenVisible(element, callback, options)   A.onResize(callback, options)
+       A.onPixelRatioChange(callback)   A.layout.px / navHeight
+    8  A.announce(text, options)
+    9  A.overlays.register(id, options) -> { opened(), closed(), close(reason) }
+       A.overlays.closeAll / isOpen / top / hasModal / onChange / update
+       (while a window locks the page, <body> gets --scrollbar-gap for the fixed bars)
+   10  A.sections   A.navigate(id, options)   A.onScroll(callback)   A.onLayout(callback)
+       A.layoutChanged()   A.onSection(callback)   A.whenNeeded(element, build, options)
+       A.buildParts(target)   A.whenIdle(callback)
+   11  A.registerCommand(command)   A.runCommand(id or command)   A.commands
+   12  A.feature(name, api)   A.whenFeature(name) -> Promise   A.ready(callback)
+       A.content.set(name, data) / get(name)
+   13  A.toast(text, icon)
    ========================================================= */
 
 (function () {
     "use strict";
 
     const root = document.documentElement;
+    // Every storage key starts with this. The theme script in index.html reads "aic:theme" itself.
     const PREFIX = "aic:";
 
     // Errors in one listener must not stop the others: report them and go on
@@ -102,7 +146,7 @@
     }
 
     /* =========================================================
-       3. TEXTS: TRANSLATIONS, PLURALS, NUMBERS
+       3. TEXTS: TRANSLATIONS, PLURALS, VALUES INSIDE TEXTS, NUMBERS, KEYBOARD LAYOUTS
        ========================================================= */
     const LANGUAGES = ["en", "ru"];
 
@@ -128,16 +172,52 @@
         return text === undefined ? translations.en[key] : text;
     }
 
-    // Fills in {placeholders}: fill("{n} lessons", { n: 3 }) -> "3 lessons"
+    // ----- Values inside texts -----
+    // Some texts show a number or a word that comes from the data, like the number of
+    // lessons. The feature that knows it registers it once, by name:
+    //     A.setTextValue("lessonCount", LESSONS.length);
+    //     A.setTextValue("questionCount", function () { return A.plural("quiz.questionCount", QUESTIONS.length); });
+    // Then any text can say {lessonCount}: t(), A.plural() and the data-i18n elements of
+    // the page fill it in, also after a language change. A function is asked again each
+    // time, so it can answer in the current language ("12 questions" / "12 вопросов").
+    // Numbers are written the local way (A.format.number). Values passed to t() itself
+    // win over these. Pick a name that says what it is ("lessonCount", not "n"): it fills
+    // that {name} in every text. A text that depends on a number names it on its element,
+    // and gets the plural form that suits it (see plural() below):
+    //     <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">lessons</span>
+    const textValues = {
+        languageCount: LANGUAGES.length       // for texts like "2 languages"
+    };
+
+    function textValue(name) {
+        if (!Object.prototype.hasOwnProperty.call(textValues, name)) return undefined;
+        const value = textValues[name];
+        return typeof value === "function" ? value() : value;
+    }
+
+    function setTextValue(name, value) {
+        // The same number or word again: nothing to redo (a function may answer differently now)
+        if (textValues[name] === value && typeof value !== "function") return;
+        textValues[name] = value;
+        // Texts already on the page are filled in again (at start-up core translates them anyway)
+        if (pageReady) applyTranslations(document);
+    }
+
+    // Fills in {placeholders}: fill("{n} lessons", { n: 3 }) -> "3 lessons".
+    // A placeholder that "values" doesn't have takes a registered text value, if there is one.
     function fill(text, values) {
-        if (!values) return text;
+        if (text.indexOf("{") === -1) return text;
         return text.replace(/\{(\w+)\}/g, function (match, name) {
-            return Object.prototype.hasOwnProperty.call(values, name) ? values[name] : match;
+            if (values && Object.prototype.hasOwnProperty.call(values, name)) return values[name];
+            const value = textValue(name);
+            if (value === undefined) return match;
+            return typeof value === "number" ? formatNumber(value) : value;
         });
     }
 
     // t("quiz.title") returns the text in the current language.
-    // Optional values fill in {placeholders}: t("quiz.score", { score: 5 })
+    // Optional values fill in {placeholders}: t("quiz.q.counter", { n: 3, total: 12 }) -> "Question 3 / 12"
+    // (a value set with setTextValue() fills its {name} without being passed)
     function t(key, values) {
         const text = lookup(key);
         return text === undefined ? key : fill(text, values);
@@ -180,7 +260,7 @@
     }
 
     // A translated piece of HTML that core re-translates by itself when the language changes:
-    // i18nHTML("quiz.start", "qz-label") -> <span class="qz-label" data-i18n="quiz.start">Start</span>
+    // i18nHTML("quiz.q.next", "qz-label") -> <span class="qz-label" data-i18n="quiz.q.next">Next question</span>
     function i18nHTML(key, className, tag) {
         tag = tag || "span";
         return "<" + tag + (className ? ' class="' + className + '"' : "") + ' data-i18n="' + key + '">' + t(key) + "</" + tag + ">";
@@ -209,6 +289,13 @@
         const settings = typeof options === "number" ? { digits: options } : (options || {});
         let number = Number(value);
         if (!isFinite(number)) return String(value);
+
+        // Fast path: whole numbers below 1000 look the same in both languages ("−42"), and the
+        // page's first Intl formatter is slow to make (about 45 ms on a slow phone)
+        if (Number.isInteger(number) && Math.abs(number) < 1000 && !settings.compact && !settings.digits) {
+            const text = String(number);
+            return settings.minus === false ? text : text.replace("-", "−");
+        }
 
         const intl = {};
         if (settings.compact) {
@@ -242,6 +329,22 @@
         return formatter("date", options || { day: "numeric", month: "long", year: "numeric" }).format(date);
     }
 
+    // ----- Typed with the other keyboard layout -----
+    // switchLayout(text) gives the letters of the same keys in the other layout, so a search
+    // that finds nothing can try again: "ntcn" -> "тест", "ьщвуд" -> "model".
+    // Pass lower-case text. Other characters (digits, spaces, "?") stay as they are.
+    const LAYOUT_EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`";
+    const LAYOUT_RU = "йцукенгшщзхъфывапролджэячсмитьбюё";
+
+    function switchLayout(text) {
+        return String(text).split("").map(function (char) {
+            let index = LAYOUT_EN.indexOf(char);
+            if (index !== -1) return LAYOUT_RU.charAt(index);
+            index = LAYOUT_RU.indexOf(char);
+            return index !== -1 ? LAYOUT_EN.charAt(index) : char;
+        }).join("");
+    }
+
     // ----- Translating the page -----
     // Puts a text into an element, but only touches the page when the text really
     // changes. The texts are our own and may contain simple HTML (like <strong>);
@@ -254,13 +357,26 @@
         }
     }
 
+    // The text of a data-i18n element, with its {placeholders} filled in. With
+    // data-i18n-plural="name" it is the plural form that suits the text value "name".
+    function elementText(element, key) {
+        const countName = element.getAttribute("data-i18n-plural");
+        const count = countName ? Number(textValue(countName)) : NaN;
+        if (isFinite(count)) {
+            const forms = plural(key, count);
+            if (forms !== key) return forms;
+        }
+        const text = lookup(key);
+        return text === undefined ? undefined : fill(text);
+    }
+
     // Updates every element with data-i18n="key" (its content)
     // and data-i18n-attr="aria-label:key,placeholder:key" (its attributes).
     function applyTranslations(scope) {
         scope = scope || document;
 
         scope.querySelectorAll("[data-i18n]").forEach(function (element) {
-            const text = lookup(element.getAttribute("data-i18n"));
+            const text = elementText(element, element.getAttribute("data-i18n"));
             if (text !== undefined) setText(element, text);
         });
 
@@ -313,7 +429,17 @@
         const changed = theme !== state.theme;
         state.theme = theme;
         storage.set("theme", theme);
-        root.setAttribute("data-theme", theme);
+        if (changed && motionOK()) {
+            // Only the page background fades to the new theme. The class "theme-switching"
+            // (style.css) turns every other transition off while the browser works out the
+            // new colours, or about a thousand buttons, links and cards would each fade.
+            root.classList.add("theme-switching");
+            root.setAttribute("data-theme", theme);
+            void getComputedStyle(root).color;      // work out the new colours now
+            root.classList.remove("theme-switching");
+        } else {
+            root.setAttribute("data-theme", theme);
+        }
         updateThemeMeta();
         if (changed) emit("theme", { theme: theme });
     }
@@ -366,6 +492,83 @@
         get ease() { return cssVar("--ease"); }
     };
 
+    // ----- Numbers that count up -----
+    // countUp(element, from, to, duration, options) counts the number shown in "element"
+    // from "from" to "to" in "duration" milliseconds: fast at first, then slowing down.
+    //     A.countUp(scoreElement, 0, 120, 900);
+    // On every animation frame it writes A.format.number(Math.round(value)). Options:
+    //     format(value)    returns the text to show instead (decimals, a "%" sign...)
+    //     ease(progress)   another curve from 0..1 to 0..1 (default A.util.easeOut)
+    //     done()           runs once, when the number has arrived
+    // With animations off (A.motion.ok() is false, or turns false meanwhile) the end
+    // value is written at once. A new count-up on the same element replaces the running
+    // one. When the element has left the page, the count-up ends by itself.
+    // Returns { finish(), stop(), value }:
+    //     finish()   jumps to the end value and runs done (if it hasn't run yet)
+    //     stop()     stops where it is, without done
+    //     value      the number it has reached so far (not rounded)
+    const runningCounts = new Map();     // element -> its count-up
+
+    function countUp(element, from, to, duration, options) {
+        const settings = options || {};
+        const format = settings.format || function (value) { return formatNumber(Math.round(value)); };
+        const ease = settings.ease || util.easeOut;
+        const start = performance.now();
+        let frame = 0;
+        let ended = false;
+
+        const counter = {
+            value: from,
+            finish: function () {
+                if (ended) return;
+                stop();
+                write(to);
+                if (settings.done) settings.done();
+            },
+            stop: stop
+        };
+
+        function write(value) {
+            counter.value = value;
+            const text = format(value);
+            // Only a real change is written: the page then has nothing new to lay out
+            if (element.textContent !== text) element.textContent = text;
+        }
+
+        function stop() {
+            ended = true;
+            cancelAnimationFrame(frame);
+            if (runningCounts.get(element) === counter) runningCounts.delete(element);
+        }
+
+        function step(now) {
+            // (the frame's time can be a hair earlier than "start": progress stays at 0 then)
+            const progress = util.clamp((now - start) / duration, 0, 1);
+            if (progress >= 1 || !element.isConnected) {
+                counter.finish();
+                return;
+            }
+            write(util.lerp(from, to, ease(progress)));
+            frame = requestAnimationFrame(step);
+        }
+
+        const previous = runningCounts.get(element);
+        if (previous) previous.stop();
+
+        if (!motionOK() || !(duration > 0) || from === to) {
+            counter.finish();
+        } else {
+            runningCounts.set(element, counter);
+            frame = requestAnimationFrame(step);
+        }
+        return counter;
+    }
+
+    // Animations switched off (calm mode): every number that is counting jumps to its end
+    on("motion", function (detail) {
+        if (!detail.ok) runningCounts.forEach(function (counter) { counter.finish(); });
+    });
+
     /* =========================================================
        6. HELPERS
        ========================================================= */
@@ -376,6 +579,20 @@
 
         lerp: function (from, to, amount) {
             return from + (to - from) * amount;
+        },
+
+        // An animation curve: fast at first, then gently slowing down (a cubic "ease-out").
+        // progress 0..1 -> 0..1: easeOut(0) = 0, easeOut(0.5) = 0.875, easeOut(1) = 1
+        // Example: lerp(from, to, easeOut(progress)) moves a value from "from" to "to".
+        easeOut: function (progress) {
+            const p = util.clamp(progress, 0, 1);
+            return 1 - Math.pow(1 - p, 3);
+        },
+
+        // A number from min up to max, with decimals (max itself never comes out).
+        // Example: random(0.62, 0.92) -> 0.7731...   For whole numbers use randomInt.
+        random: function (min, max) {
+            return min + Math.random() * (max - min);
         },
 
         // A whole number from min to max (both included)
@@ -507,6 +724,59 @@
         }
     };
 
+    // ----- Buttons that need a second press -----
+    // For a button that loses something ("Reset progress", "Quit"): the first press only
+    // arms it (the feature shows "Sure?"), a second press within a few seconds confirms.
+    // The second click of a double-click (or double tap) and a held-down Enter key are not
+    // a second press, so nothing is lost by accident.
+    //   const reset = A.confirmPress(button, {
+    //       onArm: function () { paint(); A.announce(t("lessons.hud.resetAsk")); },
+    //       onDisarm: paint,             // after the wait, after disarm(), and just before onConfirm
+    //       onConfirm: resetProgress,
+    //       enabled: function () { return !busy; },   // optional: presses are ignored while false
+    //       timeout: 4000                // optional: how long it stays armed (ms)
+    //   });
+    //   reset.armed      true between the two presses (paint the button from it)
+    //   reset.disarm()   back to the first state, e.g. when the screen changes
+    // A button that has left the page gets no more calls.
+    const CONFIRM_TIME = 4000;
+
+    function confirmPress(button, options) {
+        const settings = options || {};
+        let armed = false;
+        let timer = 0;
+
+        function disarm() {
+            clearTimeout(timer);
+            if (!armed) return;
+            armed = false;
+            if (settings.onDisarm && button.isConnected) settings.onDisarm();
+        }
+
+        button.addEventListener("click", function (event) {
+            if (settings.enabled && !settings.enabled()) return;
+            if (!armed) {
+                armed = true;
+                timer = setTimeout(disarm, settings.timeout || CONFIRM_TIME);
+                if (settings.onArm) settings.onArm(event);
+                return;
+            }
+            if (event.detail > 1) return;   // the second click of a double-click
+            disarm();
+            if (settings.onConfirm) settings.onConfirm(event);
+        });
+
+        // Holding Enter down repeats the click: only a new press counts
+        button.addEventListener("keydown", function (event) {
+            if (event.repeat && event.key === "Enter") event.preventDefault();
+        });
+
+        return {
+            get armed() { return armed; },
+            disarm: disarm
+        };
+    }
+
     // ----- Colours (for canvas drawings, which can't use CSS variables directly) -----
     // "#9b6dff", "155, 109, 255" or "rgb(155, 109, 255)" -> [155, 109, 255]
     function parseColor(value) {
@@ -535,6 +805,13 @@
 
         rgba: function (color, alpha) {
             return "rgba(" + Math.round(color[0]) + "," + Math.round(color[1]) + "," + Math.round(color[2]) + "," + alpha + ")";
+        },
+
+        // Mixes two [r, g, b] colours: amount 0 gives a, 1 gives b, 0.5 the colour halfway.
+        // Returns a new [r, g, b] of whole numbers.
+        // Example: mix([0, 0, 0], [255, 255, 255], 0.5) -> [128, 128, 128]
+        mix: function (a, b, amount) {
+            return [0, 1, 2].map(function (i) { return Math.round(util.lerp(a[i], b[i], amount)); });
         }
     };
 
@@ -570,7 +847,7 @@
     };
 
     /* =========================================================
-       7. SCREEN: MEDIA QUERIES, VISIBILITY, RESIZING, LAYOUT
+       7. SCREEN: MEDIA QUERIES, VISIBILITY, RESIZING, PIXEL RATIO, LAYOUT
        ========================================================= */
     // Screen widths where the layout changes (the same numbers as in the CSS files)
     const breakpoints = { phone: 640, menu: 960, wide: 1360 };
@@ -645,6 +922,14 @@
         return visibilityObservers[id];
     }
 
+    // The other watchers of the same element (with the same observer, if one is given)
+    function otherWatchers(watcher, observerId) {
+        return Array.from(visibilityWatchers).filter(function (other) {
+            return other !== watcher && other.element === watcher.element &&
+                (observerId === undefined || other.observerId === observerId);
+        });
+    }
+
     function whenVisible(element, callback, options) {
         const settings = options || {};
         const watcher = {
@@ -661,17 +946,24 @@
             const observer = visibilityObserver(settings.rootMargin || "0px", settings.threshold || 0);
             watcher.observerId = observer.id;
             watcher.observer = observer;
-            observer.observe(element);       // the observer reports the first state by itself
+            // The observer reports the first state by itself, but only for an element it
+            // doesn't watch yet. For one it already watches, starting again makes it report
+            // once more (the other watchers get the same state, so nothing changes for them).
+            if (otherWatchers(watcher, observer.id).length) observer.unobserve(element);
+            observer.observe(element);
         } else {
             updateWatcher(watcher);          // old browsers: always "on screen"
         }
 
         return function () {
             visibilityWatchers.delete(watcher);
-            if (watcher.pause) element.removeAttribute("data-paused");
-            const stillWatched = Array.from(visibilityWatchers).some(function (other) {
-                return other.element === element && other.observerId === watcher.observerId;
-            });
+            const others = otherWatchers(watcher);
+            if (watcher.pause) {
+                // Another watcher that pauses this element decides from now on
+                const pauser = others.find(function (other) { return other.pause && other.visible !== null; });
+                element.toggleAttribute("data-paused", Boolean(pauser && !pauser.visible));
+            }
+            const stillWatched = others.some(function (other) { return other.observerId === watcher.observerId; });
             if (watcher.observer && !stillWatched) watcher.observer.unobserve(element);
         };
     }
@@ -717,6 +1009,37 @@
         const set = options && options.viewport ? viewportCallbacks : resizeCallbacks;
         set.add(callback);
         return function () { set.delete(callback); };
+    }
+
+    // ----- Sharper (or less sharp) pixels -----
+    // onPixelRatioChange(callback) calls callback(ratio) when the device pixel ratio changes,
+    // for example when the window is moved to a screen with sharper pixels. A canvas then
+    // needs a new backing size, and no resize event tells us, because the window keeps its
+    // size. (Browser zoom changes the ratio too, but it also sends a resize event.)
+    // A media query for the current ratio tells us; it is made again for each new ratio.
+    //     A.onPixelRatioChange(function (ratio) { fitCanvases(); });
+    // Returns a function that stops listening.
+    const ratioCallbacks = new Set();
+    let stopRatioQuery = null;
+
+    function watchPixelRatio() {
+        stopRatioQuery = onMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)", function () {
+            stopRatioQuery();
+            watchPixelRatio();
+            const ratio = window.devicePixelRatio || 1;
+            ratioCallbacks.forEach(function (callback) { safeCall(callback, ratio); });
+        }, { immediate: false });
+    }
+
+    function onPixelRatioChange(callback) {
+        ratioCallbacks.add(callback);
+        if (!stopRatioQuery) watchPixelRatio();
+        return function () {
+            ratioCallbacks.delete(callback);
+            if (ratioCallbacks.size || !stopRatioQuery) return;
+            stopRatioQuery();
+            stopRatioQuery = null;
+        };
     }
 
     // ----- Sizes from the CSS -----
@@ -773,6 +1096,8 @@
        for all of them in one place:
        - "modal" windows stop the page from scrolling and make everything else
          unreachable (inert), so the keyboard and screen readers stay inside;
+         <body> then gets --scrollbar-gap, the width of the scrollbar that went
+         away, so bars with position: fixed can keep their place (style.css .navbar);
        - Tab goes round inside the top modal window;
        - Esc closes the window on top (only that one);
        - A.navigate() and palette commands close the windows in the way first.
@@ -833,17 +1158,22 @@
     }
 
     // The page behind a modal window must not scroll. The scrollbar's room is kept,
-    // so the page doesn't jump sideways.
+    // so the page doesn't jump sideways. Fixed bars (like the menu bar) are outside
+    // the body's padding: they keep their place with the CSS variable --scrollbar-gap.
     function lockScroll(lock) {
         const body = document.body;
         if (lock && !lockedBodyStyle) {
             const gap = window.innerWidth - root.clientWidth;
             lockedBodyStyle = { overflow: body.style.overflow, paddingRight: body.style.paddingRight };
             body.style.overflow = "hidden";
-            if (gap > 0) body.style.paddingRight = gap + "px";
+            if (gap > 0) {
+                body.style.paddingRight = gap + "px";
+                body.style.setProperty("--scrollbar-gap", gap + "px");
+            }
         } else if (!lock && lockedBodyStyle) {
             body.style.overflow = lockedBodyStyle.overflow;
             body.style.paddingRight = lockedBodyStyle.paddingRight;
+            body.style.removeProperty("--scrollbar-gap");
             lockedBodyStyle = null;
         }
     }
@@ -1041,7 +1371,8 @@
     });
 
     /* =========================================================
-       10. NAVIGATION: SECTIONS, A.navigate AND THE MENU BAR
+       10. NAVIGATION: SECTIONS, A.navigate, SCROLLING, PARTS BUILT WHEN NEEDED,
+           AND THE MENU BAR
        ========================================================= */
     // The sections of the page, in order: their id, the name (a translation key) and an icon
     const SECTIONS = [
@@ -1456,6 +1787,18 @@
     /* =========================================================
        13. TOASTS (small pop-up messages)
        ========================================================= */
+    const TOAST_TIME = 3200;     // how long a toast stays on screen (ms)
+    const TOAST_FADE = 400;      // its fade-out animation ("toast-out" in style.css)
+    const MAX_TOASTS = 3;        // more at once would cover the page: the oldest leave early
+    const toastTimers = new WeakMap();
+
+    function hideToast(item) {
+        if (item.classList.contains("toast-hide")) return;
+        clearTimeout(toastTimers.get(item));
+        item.classList.add("toast-hide");
+        setTimeout(function () { item.remove(); }, TOAST_FADE);
+    }
+
     function toast(message, icon) {
         const stack = document.getElementById("toast-stack");
         if (!stack) return;
@@ -1466,11 +1809,13 @@
         item.querySelector(".toast-icon").textContent = icon || "✨";
         item.querySelector(".toast-text").textContent = message;
         stack.appendChild(item);
+        toastTimers.set(item, setTimeout(function () { hideToast(item); }, TOAST_TIME));
 
-        setTimeout(function () {
-            item.classList.add("toast-hide");
-            setTimeout(function () { item.remove(); }, 400);
-        }, 3200);
+        // Many toasts in a row (a button pressed again and again): only the newest stay
+        const showing = Array.prototype.filter.call(stack.children, function (other) {
+            return !other.classList.contains("toast-hide");
+        });
+        showing.slice(0, -MAX_TOASTS).forEach(hideToast);
     }
 
     /* =========================================================
@@ -1490,7 +1835,10 @@
         plural: plural,
         pluralForm: pluralForm,
         i18nHTML: i18nHTML,
+        setTextValue: setTextValue,
+        textValue: textValue,
         format: { number: formatNumber, percent: formatPercent, date: formatDate },
+        switchLayout: switchLayout,
         get lang() { return state.lang; },
         get locale() { return LOCALES[state.lang]; },
         setLanguage: setLanguage,
@@ -1510,6 +1858,7 @@
         // 5. motion (reducedMotion = only the device setting; use motion.ok())
         motion: motion,
         get reducedMotion() { return reducedMotionQuery.matches; },
+        countUp: countUp,
 
         // 6. helpers
         util: util,
@@ -1518,6 +1867,7 @@
         canvas: canvas,
         cssVar: cssVar,
         escapeHTML: escapeHTML,
+        confirmPress: confirmPress,
 
         // 7. screen
         breakpoints: breakpoints,
@@ -1526,6 +1876,7 @@
         onMedia: onMedia,
         whenVisible: whenVisible,
         onResize: onResize,
+        onPixelRatioChange: onPixelRatioChange,
         layout: layout,
 
         // 8-9. screen readers and windows
@@ -1626,5 +1977,9 @@
         pageReady = true;
         readyCallbacks.splice(0).forEach(function (callback) { safeCall(callback); });
     });
+
+    // The page's first number formatter is slow to make: make it while the browser is idle
+    // after loading, so a click or a part built later doesn't wait for it
+    whenIdle(function () { formatter("number", { maximumFractionDigits: 3 }); });
 
 })();

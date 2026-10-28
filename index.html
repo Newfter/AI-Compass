@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AI Compass — a free bilingual platform for learning about Artificial Intelligence: lessons, live AI experiments, a quiz, a glossary and more.">
-    <!-- The colour of the phone's address bar, for the dark and the light theme -->
+    <!-- The colour of the phone's address bar, for the dark and the light theme
+         (the same as --bg in style.css). core.js and the script below read them from here. -->
     <meta name="theme-color" content="#060812" data-dark="#060812" data-light="#f4f6fd">
     <title>AI Compass | Explore Artificial Intelligence</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
 
-    <!-- Apply the saved theme before the page is drawn, so it doesn't flash -->
+    <!-- Apply the saved theme before the page is drawn, so it doesn't flash.
+         "aic:theme" is where A.storage keeps the theme: "aic:" is PREFIX in js/core.js,
+         and the value is saved as JSON ("dark" with its quotes). Keep the two the same. -->
     <script>
         try {
             var savedTheme = JSON.parse(localStorage.getItem("aic:theme"));
