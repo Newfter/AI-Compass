@@ -31,8 +31,10 @@
         return t("lab.q", { w: word });
     }
 
-    // All canvas colours come from the CSS variables, so both themes work
-    let colors = {};
+    // All canvas colours come from the CSS variables, so both themes work.
+    // They are read just before drawing (null = not read yet, or the theme changed):
+    // reading them right after a change would make the browser restyle the page at once.
+    let colors = null;
     function readColors() {
         const light = A.theme === "light";
         colors = {
@@ -860,6 +862,7 @@
     function drawBoard() {
         const size = board.size;
         if (!size) return;
+        if (!board.sprites) makeSprites();
         const ctx = board.ctx;
         ctx.clearRect(0, 0, size, size);
 
@@ -922,13 +925,11 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        if (board.sprites) {
-            for (let k = 0; k < points.length; k++) {
-                const point = points[k];
-                const sprite = board.sprites[point.label];
-                const half = sprite.half;
-                ctx.drawImage(sprite.canvas, toPx(point.x, size) - half, toPy(point.y, size) - half, half * 2, half * 2);
-            }
+        for (let k = 0; k < points.length; k++) {
+            const point = points[k];
+            const sprite = board.sprites[point.label];
+            const half = sprite.half;
+            ctx.drawImage(sprite.canvas, toPx(point.x, size) - half, toPy(point.y, size) - half, half * 2, half * 2);
         }
 
         // 5. Where the next dot would go (mouse or keyboard)
@@ -940,7 +941,7 @@
             board.lastSpot = spotKey;
             nn.dirty.diagram = true;
         }
-        if (spot && board.sprites) {
+        if (spot) {
             const x = toPx(spot.x, size);
             const y = toPy(spot.y, size);
             const sprite = board.sprites[spot.label];
@@ -1216,6 +1217,8 @@
 
     let activeTab = "classifier";
     let labVisible = false;      // on screen in a visible browser tab (see onLabVisible)
+    let labNear = false;         // near the screen: the canvases are kept up to date (see onLabNear)
+    let languageStale = false;   // the language changed while the lab was far away
     let frame = 0;
 
     function wantsTraining() {
@@ -1229,7 +1232,11 @@
     // The animation loop: train a little, then redraw whatever changed
     function tick(now) {
         frame = 0;
-        const dirty = nn.dirty;
+        // Far from the screen nothing is drawn: the loop sleeps until the lab comes near
+        if (!labNear) {
+            nn.lastTick = 0;
+            return;
+        }
 
         // How much time has passed since the last frame (at most 0.1 s)
         const elapsed = nn.lastTick ? Math.min(100, now - nn.lastTick) : 16.7;
@@ -1242,8 +1249,27 @@
             nn.stepBudget -= steps;
             const started = performance.now();
             while (steps-- > 0 && performance.now() - started < FRAME_BUDGET) trainStep();
-            dirty.net = true;
+            nn.dirty.net = true;
         }
+
+        redraw(now);
+
+        // Tell screen-reader users how it's going, but not too often
+        if (wantsTraining() && now - nn.lastAnnounce > 6000) {
+            nn.lastAnnounce = now;
+            announceStats();
+        }
+
+        if (wantsTraining()) checkStuck();
+
+        if (wantsTraining() || nn.dirty.diagram || nn.dirty.stats) schedule();
+        else nn.lastTick = 0;    // the loop sleeps; the next frame starts fresh
+    }
+
+    // Draws whatever changed since the last time
+    function redraw(now) {
+        const dirty = nn.dirty;
+        if (!colors) readColors();
 
         if (dirty.net) {
             refreshNetwork();
@@ -1272,17 +1298,6 @@
             dirty.stats = false;
             nn.lastStats = now;
         }
-
-        // Tell screen-reader users how it's going, but not too often
-        if (wantsTraining() && now - nn.lastAnnounce > 6000) {
-            nn.lastAnnounce = now;
-            announceStats();
-        }
-
-        if (wantsTraining()) checkStuck();
-
-        if (wantsTraining() || dirty.diagram || dirty.stats) schedule();
-        else nn.lastTick = 0;    // the loop sleeps; the next frame starts fresh
     }
 
     function updateStats() {
@@ -2580,7 +2595,7 @@
             board.size = boardSize;
             board.ratio = ratio;
             board.ctx = A.canvas.fit(board.canvas, boardSize, boardSize);
-            makeSprites();
+            board.sprites = null;       // the dots are made again for the new size
             nn.dirty.board = true;
         }
 
@@ -2629,10 +2644,33 @@
 
     A.whenVisible(labCard, onLabVisible, { threshold: 0.05, pauseAnimations: true });
 
-    // ----- Theme: read the new colours and redraw everything -----
+    // ----- Work only near the screen -----
+    // The canvases are drawn, and the texts follow a new language, only while the lab
+    // is within half a screen of the window. Far away, a theme or language switch
+    // costs nothing: the lab catches up as soon as it comes near.
+    function onLabNear(near) {
+        labNear = near;
+        if (!near) return;
+        if (languageStale) refreshLanguage();
+        schedule();
+    }
+
+    A.whenVisible(labCard, onLabNear, { rootMargin: "50% 0px" });
+
+    // A jump straight to the lab (a menu link with animations off) shows it before
+    // the watcher above hears about it. The page's scroll step tells us earlier,
+    // just before the browser paints, so the lab catches up right there.
+    A.onSection((section) => {
+        if (section.id !== "lab" || labNear) return;
+        onLabNear(true);
+        redraw(performance.now());
+    });
+
+    // ----- Theme: the canvases get the new colours -----
+    // The colours are read again at the next drawing, not in the middle of the switch.
     A.onThemeChange(() => {
-        readColors();
-        makeSprites();
+        colors = null;
+        board.sprites = null;
         nn.dirty.net = true;
         nn.dirty.chart = true;
         schedule();
@@ -2661,23 +2699,29 @@
         schedule();
     }
 
-    A.onLanguageChange((lang) => {
-        if (lang !== lm.lang) {
-            stopAuto(false);
-            // If the text is exactly a starter, it switches to the same starter in the new language.
-            // Anything you wrote or picked yourself stays as it is.
-            const keepStarter = lm.starter && lmEls.input.value.trim() === lm.starter.text.trim();
-            loadModel();
-            if (keepStarter) {
-                lmEls.input.value = t("lab.lmStarter" + lm.starter.n) + " ";
-                lm.starter.text = lmEls.input.value;
-            } else {
-                lm.starter = null;
-            }
-            A.applyTranslations(mount);
+    // The predictor switches to the sentences of the new language (and your own ones in it).
+    // If the text is exactly a starter, it becomes the same starter in the new language.
+    // Anything you wrote or picked yourself stays as it is.
+    function refreshLanguage() {
+        languageStale = false;
+        const keepStarter = lm.starter && lmEls.input.value.trim() === lm.starter.text.trim();
+        loadModel();
+        if (keepStarter) {
+            lmEls.input.value = t("lab.lmStarter" + lm.starter.n) + " ";
+            lm.starter.text = lmEls.input.value;
+        } else {
+            lm.starter = null;
         }
         refreshTexts();
         renderPredictor();
+    }
+
+    // Core has already translated every data-i18n text: the lab only redoes what its
+    // JavaScript writes, and far from the screen that waits until the lab comes near.
+    A.onLanguageChange(() => {
+        stopAuto(false);     // the model must not go on writing in the old language
+        if (labNear) refreshLanguage();
+        else languageStale = true;
     });
 
     // ----- Opening the lab from other parts of the site -----
@@ -2708,11 +2752,11 @@
     });
 
     // ----- First draw -----
-    readColors();
     loadModel();
     // The circle is a good first example: you can watch the line bend into a ring in a few seconds
     nn.points = makePreset("circle");
     $$(".lab-preset").forEach((chip) => chip.classList.toggle("active", chip.getAttribute("data-preset") === "circle"));
+    // Fills in the texts of the HTML above (later, core keeps them in the right language)
     A.applyTranslations(mount);
     pointsChanged();
     updateDiagramLabel();
