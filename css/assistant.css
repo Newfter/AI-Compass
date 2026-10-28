@@ -3,7 +3,8 @@
    1. The glowing orb button (bottom-right)
    2. The "Ask me" hint
    3. The chat window
-   4. Messages, action buttons and typing dots
+   4. Messages, action buttons, sources, quiz options, "Did this help?"
+      and typing dots
    5. Quick-reply chips and the message box
    6. Phones: an almost full-screen sheet
    7. Less motion
@@ -709,6 +710,203 @@
     background: rgba(var(--accent-rgb), 0.08);
 }
 
+/* ----- Answers from the site: where the text comes from ----- */
+.cb-sources {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.cb-sources-label {
+    width: 100%;
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.cb-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    max-width: 100%;
+    padding: 4px 11px 4px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: left;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.25s var(--ease);
+}
+
+.cb-source:hover {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.08);
+    color: var(--text-accent-2);
+    transform: translateY(-1px);
+}
+
+.cb-source-icon {
+    flex-shrink: 0;
+    font-size: 13px;
+}
+
+.cb-source-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* ----- "Quiz me": the options of a question ----- */
+.cb-options {
+    display: grid;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.cb-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 7px 12px 7px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: left;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.25s var(--ease);
+}
+
+.cb-option:not([aria-disabled="true"]):hover {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.08);
+    transform: translateY(-1px);
+}
+
+.cb-option[aria-disabled="true"] {
+    cursor: default;
+}
+
+.cb-option-number {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    background: rgba(var(--accent-rgb), 0.14);
+    color: var(--text-accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cb-option-label {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.cb-option-mark {
+    flex-shrink: 0;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+/* Answered: the right option in green, a wrong pick in red, the others quiet */
+.cb-option.is-right {
+    border-color: var(--success);
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.cb-option.is-wrong {
+    border-color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.cb-option.is-right .cb-option-number,
+.cb-option.is-right .cb-option-mark {
+    color: var(--text-success);
+}
+
+.cb-option.is-wrong .cb-option-number,
+.cb-option.is-wrong .cb-option-mark {
+    color: var(--text-danger);
+}
+
+.cb-option.is-right .cb-option-number {
+    background: color-mix(in srgb, var(--success) 18%, transparent);
+}
+
+.cb-option.is-wrong .cb-option-number {
+    background: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+.cb-option.is-other {
+    border-color: var(--border);
+    color: var(--text-muted);
+}
+
+/* ----- "Did this help? 👍 👎" (counted only in this browser) ----- */
+.cb-feedback {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border-strong);
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.cb-feedback-text {
+    margin-right: 4px;
+}
+
+.cb-vote {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    line-height: 1;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.25s var(--ease);
+}
+
+.cb-vote:hover {
+    border-color: var(--accent-2);
+    transform: translateY(-1px);
+}
+
+.cb-vote[aria-pressed="true"] {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.16);
+}
+
+.cb-feedback-note {
+    width: 100%;
+    font-size: 12px;
+}
+
+.cb-feedback-note:empty {
+    display: none;
+}
+
 /* ----- Typing dots ----- */
 .cb-typing .cb-avatar {
     margin-bottom: 0;
@@ -798,6 +996,9 @@
 
 .cb-chip:focus-visible,
 .cb-action:focus-visible,
+.cb-source:focus-visible,
+.cb-option:focus-visible,
+.cb-vote:focus-visible,
 .cb-icon-btn:focus-visible,
 .cb-send:focus-visible,
 .cb-tip-text:focus-visible,
@@ -869,8 +1070,15 @@
 /* Touch screens: every button at least 44px tall */
 @media (hover: none), (pointer: coarse) {
     .cb-chip,
-    .cb-action {
+    .cb-action,
+    .cb-source,
+    .cb-option {
         min-height: 44px;
+    }
+
+    .cb-vote {
+        width: 44px;
+        height: 44px;
     }
 
     .cb-icon-btn {
@@ -1101,8 +1309,18 @@ html.fx-motion-off .cb-dots span {
 
 html.fx-motion-off .cb-panel,
 html.fx-motion-off .cb-tip,
-html.fx-motion-off .cb-backdrop {
+html.fx-motion-off .cb-backdrop,
+html.fx-motion-off .cb-source,
+html.fx-motion-off .cb-option,
+html.fx-motion-off .cb-vote {
     transition: none;
+}
+
+/* Buttons inside answers do not jump up under the mouse */
+html.fx-motion-off .cb-source:hover,
+html.fx-motion-off .cb-option:hover,
+html.fx-motion-off .cb-vote:hover {
+    transform: none;
 }
 
 /* The eyes stop following the mouse */

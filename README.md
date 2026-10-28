@@ -9,7 +9,7 @@ This guide is for the people who look after the site. It explains how the code i
 - [Run it on your computer](#run-it-on-your-computer)
 - [The folder map](#the-folder-map)
 - [How the pieces talk](#how-the-pieces-talk)
-- [Recipes](#recipes): [change a text](#change-a-text-in-both-languages), [add a lesson](#add-a-lesson), [add a quiz question](#add-a-quiz-question), [add a glossary term](#add-a-glossary-term), [add a timeline milestone](#add-a-timeline-milestone), [add a fact or a joke to Compass Bot](#add-a-fun-fact-or-a-joke-to-compass-bot), [add a Ctrl+K command](#add-a-command-to-the-ctrlk-palette)
+- [Recipes](#recipes): [change a text](#change-a-text-in-both-languages), [add a lesson](#add-a-lesson), [add a quiz question](#add-a-quiz-question), [add a glossary term](#add-a-glossary-term), [add a timeline milestone](#add-a-timeline-milestone), [add a fact or a joke to Compass Bot](#add-a-fun-fact-or-a-joke-to-compass-bot), [help Compass Bot find an answer](#help-compass-bot-find-an-answer), [add a Ctrl+K command](#add-a-command-to-the-ctrlk-palette)
 - [House rules](#house-rules)
 - [Before you merge: a test checklist](#before-you-merge-a-test-checklist)
 - [Credits](#credits)
@@ -57,8 +57,9 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/quiz.js` | The AI Challenge: questions, the timer, points, streaks, ranks and the best score. |
 | `js/glossary.js` | The glossary: search with "did you mean?", categories, the A–Z strip, term cards and a random term. |
 | `js/timeline.js` | "A Short History of AI": the era chips and the line that fills as you scroll. |
-| `js/assistant.js` | Compass Bot, the chat helper in the corner. |
+| `js/assistant.js` | Compass Bot, the chat helper in the corner: its prepared answers, answers looked up in the site, follow-ups ("tell me more") and "quiz me". |
 | `js/palette.js` | The Ctrl+K search window. |
+| `js/search.js` | The site search (`A.search`): finds things in the lessons, glossary, timeline, quiz, AI Lab and page texts, in the current language, with typos, synonyms and the wrong keyboard layout. The Ctrl+K palette and Compass Bot use it. |
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
@@ -69,6 +70,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/timeline.js` | The timeline texts, the eras and every milestone. |
 | `js/content/assistant.js` | Compass Bot's texts, fun facts and jokes, and its "brain" (the words it listens for and its answers). |
 | `js/content/palette.js` | The texts of the Ctrl+K palette. |
+| `js/content/search.js` | The search's texts and word lists: little words it skips (also words that only judge, like "good" or "лучше"), words that mean the same thing ("нейросеть" = "neural network"), words that point back to the sentence before ("This is called..."), and the parts of the page it searches. |
 | `README.md` | This guide. |
 
 
@@ -170,7 +172,10 @@ Nothing leaves the browser: these events are only for features on the same page 
 | Glossary | `glossary.explore` | `{ id }` | a term is opened |
 | Timeline | `timeline.era` | `{ era }` | the timeline's line reaches an era for the first time |
 | Compass Bot | `bot.ask` | `{ typed: true }` or `{ intent }` | a typed question, or a chip |
+| | `bot.quiz` | `{ correct }` | a "quiz me" question in the chat is answered |
+| | `bot.feedback` | `{ helpful }` | 👍 (`true`) or 👎 (`false`) under an answer from the site |
 | Ctrl+K | `palette.run` | `{ id }` | a command is run |
+| Search | `search.open` | `{ type, id, from }` | a text found by the search is opened: a palette row (`from: "palette"`) or a source under a bot answer (`from: "bot"`) |
 | Core | `language.change` | `{ lang }` | the language changes |
 | | `theme.change` | `{ theme }` | the theme changes |
 | | `settings.change` | `{ name, value }` | a setting changes (today: `name: "calm"`) |
@@ -433,6 +438,24 @@ A joke works the same way, after `"assistant.joke5"`:
 Don't skip a number: the bot stops counting at the first missing one. Only add facts you have checked.
 
 **Check:** ask the bot "tell me a fun fact" (or press its "Fun fact" button) until the new one comes up. It shows every fact once, in a random order, before it repeats one. Do it again in Russian ("расскажи интересный факт").
+
+### Help Compass Bot find an answer
+
+Compass Bot answers in this order:
+
+1. **A prepared answer** when the message clearly matches an intent (the word lists in `brain.intents`, `js/content/assistant.js`): greetings, jokes, "what is AI?"... Under it, "On the site" chips show where the site tells more (`brain.replySources`).
+2. **An answer from the site**: otherwise it looks the question up with `A.search` in the lessons, the glossary and the timeline, and shows 1–3 sentences of the best text with its source. "When...?" questions look in the timeline first.
+3. **"Not sure"**: when it is not sure, it says so and shows up to 3 places to look.
+
+It is sure when the best text holds at least 70 % of the question's words (`SITE_CONFIDENT` in `js/assistant.js`), has a search score of at least 2.5 (`SITE_MIN_SCORE`) and is about the question: its title holds one of the words, or the question has 2 or more words. Without that last rule, "what is photosynthesis?" was answered with the glossary's "Prompt" (whose example asks about photosynthesis). The numbers were tuned on 129 questions with a known right source and 40 questions the site cannot answer (pizza, the weather...), looked up without the prepared answers: the search step gives 107 right answers and 6 wrong ones (13 without the title rule), and says "not sure" 11 times although its best text was right.
+
+When the bot misses a question:
+
+- **People use another word for the same thing:** add it to a line of `synonyms` in `js/content/search.js` (both languages), like `["deepfake", "deep fake", "дипфейк"]`.
+- **A word only shapes the question** ("who *invented*...", "how does it *work*"): add it to `askWords` in `js/content/assistant.js`.
+- **A prepared answer fits better:** add the words to its intent in `brain.intents`. A prepared answer wins over the site, so keep its words precise ("deep learning" is not in the neural network intent: the glossary explains it better).
+
+**Check:** ask the question in both languages, with a typo, and once with "tell me more" after it. The source chip under the answer must open the right text.
 
 ### Add a command to the Ctrl+K palette
 
