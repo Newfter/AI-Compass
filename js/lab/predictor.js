@@ -1022,7 +1022,6 @@
         };
     }
 
-    // Off screen or a hidden browser tab: no timers (auto-write waits where it is)
     // Off screen, auto-write waits where it is (resume() goes on with it). A hidden
     // browser tab stops it, as it always did: nobody would see it type.
     function pause() {
