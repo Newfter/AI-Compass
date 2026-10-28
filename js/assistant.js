@@ -1021,6 +1021,9 @@
     function sitePlan(tokens, types) {
         if (!A.search) return null;
         const question = siteQuery(tokens);
+        // Small numbers alone ("2" after a quiz question) ask nothing: "2" would find
+        // "AlphaFold 2" (a year like "1997" is still looked up)
+        if (!/\p{L}|\d{4}/u.test(question.text)) return null;
         const results = A.util.attempt(function () {
             return A.search.query(question.text, {
                 types: types || brain.answerTypes,
