@@ -23,15 +23,6 @@
 
 .tl {
     position: relative;
-    /* Cards cast a soft shadow, and a faint glow once the line reaches them.
-       Both are lighter in the light theme. */
-    --tl-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
-    --tl-card-glow: 0 0 32px rgba(var(--accent-2-rgb), 0.08);
-}
-
-[data-theme="light"] .tl {
-    --tl-card-shadow: 0 12px 30px rgba(30, 30, 80, 0.08);
-    --tl-card-glow: 0 0 28px rgba(var(--accent-2-rgb), 0.1);
 }
 
 /* ===== 1. THE FILTER BAR ===== */
@@ -389,7 +380,7 @@
     background:
         linear-gradient(160deg, rgba(var(--accent-rgb), 0.08), transparent 50%),
         var(--surface);
-    box-shadow: var(--tl-card-shadow);
+    box-shadow: var(--shadow-card);
     transition: border-color 0.5s ease, box-shadow 0.5s ease, transform 0.35s var(--ease);
 }
 
@@ -544,7 +535,7 @@
 
 .tl-item.is-reached .tl-card {
     border-color: rgba(var(--accent-2-rgb), 0.32);
-    box-shadow: var(--tl-card-shadow), var(--tl-card-glow);
+    box-shadow: var(--shadow-card), var(--shadow-card-glow);
 }
 
 .tl-item.is-reached .tl-card::before {

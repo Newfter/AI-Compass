@@ -16,17 +16,13 @@
    12. Reduced motion / calm mode
    All colours come from the variables in style.css,
    so both the dark and the light theme look right.
-   ========================================================= */
-
-/* Coloured text, and the badges, borders and glows that go with it, use the
+   Coloured text, and the badges, borders and glows that go with it, use the
    readable accent colours of style.css (--text-success, --text-danger,
    --text-warning, --text-accent-2, --text-accent-3): the normal accents in the
    dark theme, a little darker in the light theme, where the bright ones are too
-   pale on white for small text (WCAG AA, 4.5:1). */
-[data-feature="quiz"] {
-    /* small grey labels: a little stronger than --text-dim, so they stay readable */
-    --qz-dim: color-mix(in srgb, var(--text-dim) 82%, var(--text));
-}
+   pale on white for small text (WCAG AA, 4.5:1). Small grey labels use
+   --text-label.
+   ========================================================= */
 
 /* ===== 1. THE CARD ===== */
 
@@ -208,7 +204,7 @@
 
 .qz-mini-title {
     margin-bottom: 12px;
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 2px;
@@ -396,7 +392,7 @@
 .qz-tile-best.is-empty .qz-tile-value {
     background: none;
     -webkit-text-fill-color: currentColor;
-    color: var(--qz-dim);
+    color: var(--text-label);
 }
 
 .qz-rules-box {
@@ -518,7 +514,7 @@
 
 .qz-switch-state {
     flex: none;
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 11px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -633,7 +629,7 @@
 }
 
 .qz-score-label {
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 11px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -852,7 +848,7 @@
 }
 
 .qz-type {
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 11.5px;
     letter-spacing: 1.6px;
     text-transform: uppercase;
@@ -1230,7 +1226,7 @@
 }
 
 .qz-bonus-lost {
-    color: var(--qz-dim);
+    color: var(--text-label);
 }
 
 .qz-fb-actions {
@@ -1242,7 +1238,7 @@
 }
 
 .qz-hint {
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 12px;
 }
 
@@ -1334,7 +1330,7 @@
 }
 
 .qz-res-caption {
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 11px;
     letter-spacing: 1.8px;
     text-transform: uppercase;
@@ -1596,7 +1592,7 @@
 
 .qz-ri-num {
     flex: none;
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 12px;
 }
 
@@ -1610,7 +1606,7 @@
 
 .qz-ri-points {
     flex: none;
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-size: 12px;
 }
 
@@ -1648,7 +1644,7 @@ details[open] .qz-ri-chevron {
 }
 
 .qz-ri-label {
-    color: var(--qz-dim);
+    color: var(--text-label);
     font-family: var(--font-mono);
     font-size: 12px;
     letter-spacing: 0.5px;

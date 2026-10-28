@@ -425,7 +425,7 @@
 .lsn-input:focus {
     outline: none;
     border-color: var(--accent-2);
-    box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.2);
+    box-shadow: var(--field-focus-glow);
 }
 
 .lsn-cert-preview {

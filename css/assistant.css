@@ -832,7 +832,7 @@
 .cb-input:focus-visible {
     border-color: var(--accent-2);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.2);
+    box-shadow: var(--field-focus-glow);
 }
 
 .cb-send {

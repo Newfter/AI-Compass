@@ -13,19 +13,6 @@
 
 /* ===== 1. THE CARD, TABS AND SHARED PARTS ===== */
 
-/* Small grey labels. Coloured text uses the --text-* colours of style.css, but
-   there is no shared colour for small grey text yet (TODO(core): one token for it,
-   the quiz needs one too). In the light theme --text-dim is too pale for 10-12px
-   letters on the tinted boxes, so the lab uses the darker --text-muted there
-   (about 6.6:1 instead of 5:1 contrast). */
-.lab {
-    --lab-dim-text: var(--text-dim);
-}
-
-[data-theme="light"] .lab {
-    --lab-dim-text: var(--text-muted);
-}
-
 /* js/lab.js builds the lab only when it is needed (near the screen, or in a quiet
    moment after the page loaded). Until then its empty box keeps about the height of
    the tab it will open on, so the page below doesn't jump: the "Teach the machine"
@@ -193,7 +180,7 @@
 
 .lab-tab-sub {
     margin-top: 3px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 10px;
     letter-spacing: 1.6px;
     transition: color 0.25s ease;
@@ -207,7 +194,7 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.6px;
@@ -271,7 +258,7 @@
 
 .lab-box-note {
     margin-top: 10px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 12.5px;
     line-height: 1.5;
 }
@@ -602,7 +589,7 @@
 
 .lab-hint {
     margin-top: 10px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 13px;
     line-height: 1.55;
 }
@@ -720,7 +707,7 @@
 }
 
 .lab-stat dt {
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 1.4px;
@@ -744,7 +731,7 @@
 .lab-stat-sub {
     display: block;
     margin-top: 2px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 10.5px;
     white-space: nowrap;
 }
@@ -800,7 +787,7 @@
     display: grid;
     place-items: center;
     padding: 0 10px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 12.5px;
     text-align: center;
 }
@@ -851,7 +838,7 @@
 .lab-field small {
     display: block;
     margin-top: 6px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 12px;
     line-height: 1.4;
 }
@@ -1318,7 +1305,7 @@
 }
 
 .lab-lm-input::placeholder {
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-weight: 500;
 }
 
@@ -1522,7 +1509,7 @@
 
 .lab-cands-legend {
     margin-top: 10px;
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 12.5px;
     line-height: 1.5;
 }
@@ -1624,7 +1611,7 @@
 }
 
 .lab-tokens-empty {
-    color: var(--lab-dim-text);
+    color: var(--text-label);
     font-size: 13.5px;
 }
 
@@ -1677,7 +1664,7 @@
 }
 
 .lab-teach-input::placeholder {
-    color: var(--lab-dim-text);
+    color: var(--text-label);
 }
 
 .lab-teach-btn {

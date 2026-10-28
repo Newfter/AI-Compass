@@ -74,6 +74,11 @@
     --gradient-button: linear-gradient(115deg, #8758ee, #536cf0);
     --glow: 0 0 40px rgba(155, 109, 255, 0.25);
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    /* Cards in a list (glossary, timeline): a soft shadow, a deeper one on hover,
+       and a faint cyan glow for a card that is lit up */
+    --shadow-card: 0 14px 34px rgba(0, 0, 0, 0.18);
+    --shadow-card-hover: 0 18px 40px rgba(0, 0, 0, 0.22);
+    --shadow-card-glow: 0 0 32px rgba(var(--accent-2-rgb), 0.08);
     /* The glass of the menu bar, and the grid pattern behind the page */
     --nav-bg: rgba(6, 8, 18, 0.78);
     --grid-line: rgba(135, 116, 255, 0.05);
@@ -120,6 +125,9 @@
     --gradient-button: linear-gradient(115deg, #7446ea, #3d5ee8);
     --glow: 0 0 40px rgba(107, 63, 224, 0.15);
     --shadow: 0 24px 50px rgba(30, 30, 80, 0.12);
+    --shadow-card: 0 10px 28px rgba(30, 30, 80, 0.07);
+    --shadow-card-hover: 0 14px 34px rgba(30, 30, 80, 0.1);
+    --shadow-card-glow: 0 0 28px rgba(var(--accent-2-rgb), 0.1);
     --nav-bg: rgba(244, 246, 253, 0.84);
     --grid-line: rgba(90, 70, 200, 0.06);
 
@@ -141,6 +149,9 @@
     --nav-height: 76px;
     /* The easing curve of the site's animations (JavaScript reads it as A.motion.ease) */
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* A text field with the focus: its border turns cyan, with this soft ring */
+    --field-focus-glow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.2);
 
     /* Text and icons on top of an accent colour or the button gradient */
     --on-accent: #ffffff;
