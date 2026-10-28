@@ -133,7 +133,7 @@ window.AICompass.addTranslations({
         "lab.evolve.ch1Why": "Nobody told the car how to steer. Random changes plus “the cars that get furthest become parents” were enough.",
         "lab.evolve.ch2": "Set the mutation rate to 0 and press Start over. Can evolution still improve the best car?",
         "lab.evolve.ch2Why": "Evolution is stuck: without changes, children are exact copies of their parents, so nothing new can appear. New ideas come from mutations.",
-        "lab.evolve.ch3": "Set the mutation size to its maximum and watch the average fitness.",
+        "lab.evolve.ch3": "Let the cars learn for a few generations, then set the mutation size to its maximum. Watch the average fitness.",
         "lab.evolve.ch3Why": "Changes that big break good brains: the children of good drivers crash. Only the 2 best, copied unchanged, keep the record.",
         "lab.evolve.ch4": "Train the cars until one finishes a lap. Then turn on “Keep the brains” and switch to another track. Do they still drive?",
         "lab.evolve.ch4Why": "A brain that learned one track by heart can get lost on a new one. This is called overfitting."
@@ -254,7 +254,7 @@ window.AICompass.addTranslations({
         "lab.evolve.ch1Why": "Никто не объяснял машинке, как рулить. Хватило случайных изменений и правила «родителями становятся те, кто уехал дальше всех».",
         "lab.evolve.ch2": "Поставь частоту мутаций на 0 и нажми «Начать заново». Сможет ли эволюция улучшить лучшую машинку?",
         "lab.evolve.ch2Why": "Эволюция застряла: без изменений потомки — точные копии родителей, и новому взяться неоткуда. Новые идеи появляются именно из мутаций.",
-        "lab.evolve.ch3": "Поставь силу мутаций на максимум и следи за средней приспособленностью.",
+        "lab.evolve.ch3": "Дай машинкам поучиться несколько поколений, потом поставь силу мутаций на максимум. Следи за средней приспособленностью.",
         "lab.evolve.ch3Why": "Такие сильные изменения ломают хорошие мозги: потомки хороших водителей разбиваются. Рекорд держится только благодаря двум лучшим, которых копируют без изменений.",
         "lab.evolve.ch4": "Тренируй машинки, пока одна не проедет круг. Потом включи «Оставить мозги» и выбери другую трассу. Поедут ли они?",
         "lab.evolve.ch4Why": "Мозг, который выучил одну трассу наизусть, может растеряться на новой. Это называется переобучением."
