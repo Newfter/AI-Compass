@@ -179,8 +179,9 @@
     // the page fill it in, also after a language change. A function is asked again each
     // time, so it can answer in the current language ("12 questions" / "12 вопросов").
     // Numbers are written the local way (A.format.number). Values passed to t() itself
-    // win over these. A text that depends on a number names it on its element, and gets
-    // the plural form that suits it (see plural() below):
+    // win over these. Pick a name that says what it is ("lessonCount", not "n"): it fills
+    // that {name} in every text. A text that depends on a number names it on its element,
+    // and gets the plural form that suits it (see plural() below):
     //     <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">lessons</span>
     const textValues = {
         languageCount: LANGUAGES.length       // for texts like "2 languages"
@@ -511,7 +512,9 @@
 
         function write(value) {
             counter.value = value;
-            element.textContent = format(value);
+            const text = format(value);
+            // Only a real change is written: the page then has nothing new to lay out
+            if (element.textContent !== text) element.textContent = text;
         }
 
         function stop() {
