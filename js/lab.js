@@ -186,12 +186,12 @@
     }
 
     // The "Try this" challenges an experiment has saved (the kit's format, see js/lab/kit.js):
-    // { v: 1, total: 4, done: ["lab.<id>.ch1", ...] }. Anything else counts as none.
+    // { v: 1, total: 4, done: ["lab.<id>.ch1", ...] }. Anything else counts as none
+    // (the total is a whole number above 0: a broken value must not show "1 / Infinity").
     function savedChallenges(id) {
         const saved = A.storage.get("lab." + id + ".challenges", null);
-        if (!saved || saved.v !== 1 || !Array.isArray(saved.done) || typeof saved.total !== "number" || !(saved.total > 0)) return null;
-        const total = Math.floor(saved.total);
-        return { done: Math.min(saved.done.length, total), total: total };
+        if (!saved || saved.v !== 1 || !Array.isArray(saved.done) || !Number.isInteger(saved.total) || saved.total < 1) return null;
+        return { done: Math.min(saved.done.length, saved.total), total: saved.total };
     }
 
     // The chip on a card: "2 / 4 challenges" once one is done, else "Tried" or "New"
