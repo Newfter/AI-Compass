@@ -305,13 +305,15 @@
 
 /* ===== 4. THE RAIL: THE PICKER WHILE AN EXPERIMENT IS OPEN =====
    The same buttons, small, in one row that scrolls sideways when it is too
-   long. The padding leaves room for the focus ring. */
+   long. A box that scrolls cuts off whatever sticks out of it, so its padding
+   (12px, given back by the negative margin) leaves room for the focus ring and
+   for the open card's glow (at most 12px, below). */
 
 .lab[data-view="stage"] .lab-picker {
     display: flex;
     gap: 10px;
-    margin: -6px -6px 12px;
-    padding: 6px;
+    margin: -12px -12px 6px;
+    padding: 12px;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x proximity;
@@ -364,11 +366,12 @@
     display: none;
 }
 
-/* The open experiment: the glowing pill of the old tabs */
+/* The open experiment: the glowing pill of the old tabs. The glow stays inside the
+   rail's padding (a wider one would be cut into a box with hard edges) */
 .lab-pick[aria-current="true"] {
     border-color: var(--border-strong);
     background: linear-gradient(115deg, rgba(var(--accent-rgb), 0.3), rgba(var(--accent-2-rgb), 0.16));
-    box-shadow: 0 0 26px rgba(var(--accent-rgb), 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .lab[data-view="stage"] .lab-pick[aria-current="true"] .lab-pick-icon {
