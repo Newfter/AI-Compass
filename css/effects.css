@@ -114,6 +114,52 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     animation: fx-reveal-up 0.85s var(--ease) calc(var(--fx-delay, 0ms) + var(--fx-item-delay, 0ms)) backwards;
 }
 
+/* The hero is on screen from the very start. Waiting for JavaScript would mean
+   hiding it again after it was drawn, so index.html marks its blocks as
+   "revealed" and they rise in with pure CSS from the first frame, one after
+   another, just like cards that scroll into view.
+   (Calm mode switches it off in section 11.) */
+@media (prefers-reduced-motion: no-preference) {
+    .hero [data-reveal] {
+        animation: fx-reveal-up 0.95s var(--ease) var(--fx-delay, 0ms) backwards;
+    }
+
+    .hero-title {
+        --fx-delay: 90ms;
+    }
+
+    .hero-subtitle {
+        --fx-delay: 180ms;
+    }
+
+    .hero-buttons {
+        --fx-delay: 270ms;
+    }
+
+    /* The numbers: the list fades in quickly and its items rise one by one
+       (js/effects.js counts each number up as soon as its item appears) */
+    .hero .hero-stats {
+        --fx-delay: 360ms;
+        animation: fx-reveal-fade 0.3s ease var(--fx-delay) backwards;
+    }
+
+    .hero-stats > li {
+        animation: fx-reveal-up 0.85s var(--ease) calc(var(--fx-delay) + var(--fx-item-delay, 0ms)) backwards;
+    }
+
+    .hero-stats > li:nth-child(2) {
+        --fx-item-delay: 85ms;
+    }
+
+    .hero-stats > li:nth-child(3) {
+        --fx-item-delay: 170ms;
+    }
+
+    .hero-stats > li:nth-child(4) {
+        --fx-item-delay: 255ms;
+    }
+}
+
 @keyframes fx-reveal-up {
     from {
         opacity: 0;
@@ -518,6 +564,12 @@ html.fx-motion-off .fx-ripple {
 html.fx-motion-off .fx-rail-dot,
 html.fx-motion-off .fx-rail-label {
     transition: none;
+}
+
+/* The hero shows at once (its entrance has delays, which would still apply) */
+html.fx-motion-off .hero [data-reveal],
+html.fx-motion-off .hero-stats > li {
+    animation: none;
 }
 
 /* ===== 12. PRINTING ===== */

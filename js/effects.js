@@ -70,16 +70,18 @@
     // - viewObserver: the screen minus a bottom strip. Things entering it animate in.
     // - counterObserver: the whole screen. A number starts counting as soon as
     //   any part of it can be seen, so you never look at a "0" that waits.
-    // Content far away from the screen is never hidden, so the page always works.
-    // (They are created in this order, so they also run in this order.)
-    const NEAR_ZONE = 0.1;                                                 // 10% of the screen height
+    // The observers tell us where things are after each frame, so we never
+    // measure the page ourselves (that would make the browser lay it out again).
+    // Something already on the screen is never hidden: it simply stays visible.
+    // Content far away from the screen is never hidden either, so the page always works.
+    const NEAR_ZONE = 0.1;                                                 // 10% of the screen height, above and below it
     const seenOnScreen = new WeakSet();
-    const onScreenNow = new WeakSet();                                     // waiting cards and numbers on screen right now
+    const onScreenNow = new WeakSet();                                     // waiting cards, numbers and texts on screen right now
     const screenObserver = hasObserver ? new IntersectionObserver(onScreenSeen, { threshold: 0 }) : null;
-    const armObserver = hasObserver ? new IntersectionObserver(onNear, { rootMargin: "10% 0px 10% 0px", threshold: 0 }) : null;
+    const armObserver = hasObserver ? new IntersectionObserver(onNear, { rootMargin: NEAR_ZONE * 100 + "% 0px", threshold: 0 }) : null;
     const viewObserver = hasObserver ? new IntersectionObserver(onEnterView, { rootMargin: "0px 0px -8% 0px", threshold: 0 }) : null;
     const counterObserver = hasObserver ? new IntersectionObserver(onCounterView, { threshold: 0 }) : null;
-    const scrambleObserver = hasObserver ? new IntersectionObserver(onScrambleView, { threshold: 0.2 }) : null;
+    const scrambleObserver = hasObserver ? new IntersectionObserver(onScrambleView, { threshold: [0, 0.2] }) : null;
 
     /* =========================================================
        1. SCROLL PROGRESS BAR (+ everything that follows the scroll)
@@ -140,18 +142,18 @@
     let staggerIndex = 0;
     let lastRevealAt = 0;
 
-    // Returns true when the element is new and waits to be revealed
+    // A new element waits to be revealed. Nothing is hidden yet: the observers
+    // first tell us where it is (see onNear).
     function registerReveal(element) {
-        if (element.classList.contains("revealed") || revealPending.has(element)) return false;
+        if (element.classList.contains("revealed") || revealPending.has(element)) return;
         if (!viewObserver || !A.motion.ok()) {
             element.classList.add("revealed");
-            return false;
+            return;
         }
         revealPending.add(element);
         screenObserver.observe(element);
         armObserver.observe(element);
         viewObserver.observe(element);
-        return true;
     }
 
     // Is the element inside a fixed layer (a chat panel, a toast, a modal)?
@@ -202,47 +204,31 @@
             } else if (!fallbackTimers.has(element)) {
                 fallbackTimers.set(element, setTimeout(() => {
                     fallbackTimers.delete(element);
-                    if (revealPending.has(element) && isOnScreen(element)) reveal(element, 0);
+                    if (revealPending.has(element) && onScreenNow.has(element)) reveal(element, 0);
                 }, 1400));
             }
         });
     }
 
-    // Is the element on the screen or just next to it?
-    function isNear(element) {
-        const zone = window.innerHeight * NEAR_ZONE;
-        const rect = element.getBoundingClientRect();
-        return rect.top < window.innerHeight + zone && rect.bottom > -zone;
+    // The arm zone is the screen plus NEAR_ZONE above and below it.
+    // Was the element on the screen itself in that frame (not only next to it)?
+    // The entry knows where it was, so nothing has to be measured.
+    function onScreenIn(entry) {
+        const zone = entry.rootBounds;
+        if (!zone) return true;                           // unknown: say "visible", so it is never hidden
+        const screenHeight = zone.height / (1 + 2 * NEAR_ZONE);
+        const screenTop = zone.top + screenHeight * NEAR_ZONE;
+        const rect = entry.boundingClientRect;
+        return rect.width > 0 && rect.bottom > screenTop && rect.top < screenTop + screenHeight;
     }
 
-    // New elements that are already close to the screen are hidden at once
-    // (before the browser paints them), so they don't flash before animating in.
-    // All sizes are read first and classes added after, which is faster.
-    // While the page starts, every feature adds its content one after another:
-    // measuring after each one would make the browser lay out the whole page
-    // many times, so they wait in a list and are all measured once, just before
-    // the first frame is painted.
-    let armQueue = [];
-
-    function armIfNear(elements) {
-        if (armQueue) {
-            elements.forEach((element) => armQueue.push(element));
-            return;
-        }
-        const near = elements.filter(isNear);
-        near.forEach((element) => element.classList.add("fx-armed"));
-    }
-
-    requestAnimationFrame(() => {
-        const waiting = armQueue;
-        armQueue = null;
-        armIfNear(waiting.filter((element) => element.isConnected && revealPending.has(element) && !element.classList.contains("revealed")));
-    });
-
-    // Something came close to the screen (or went far away again)
+    // Something came close to the screen (or went far away again).
+    // New elements are only ever hidden here: when they are near the screen
+    // but not on it yet, so nobody sees them disappear.
     function onNear(entries) {
         entries.forEach((entry) => {
             const element = entry.target;
+            const visible = entry.isIntersecting && onScreenIn(entry);
             let stillNeeded = false;
 
             if (revealPending.has(element)) {
@@ -250,10 +236,9 @@
                 if (!entry.isIntersecting) {
                     element.classList.remove("fx-armed");
                 } else if (!element.classList.contains("fx-armed")) {
-                    // Measure now: during very fast scrolling the entry can be a frame old
-                    if (seenOnScreen.has(element) || isOnScreen(element)) {
-                        // Already visible (e.g. the page opened at #quiz): hiding it now
-                        // would make it blink, so just keep it as it is
+                    if (seenOnScreen.has(element) || visible) {
+                        // Already visible (the page opened at #quiz, or it was added
+                        // on screen): hiding it now would make it blink, so keep it as it is
                         stillNeeded = showNow(element);
                     } else {
                         element.classList.add("fx-armed");
@@ -270,7 +255,7 @@
                     counter.shown = counter.target;
                     writeCounter(element, counter, counter.shown);
                 } else if (!counter.armed) {
-                    if (isOnScreen(element) && !hiddenByCard(element)) {
+                    if (visible && !hiddenByCard(element)) {
                         // Already visible with its real number: don't jump back to 0
                         stopWaiting(element, counter);
                         stillNeeded = revealPending.has(element);
@@ -407,8 +392,7 @@
     window.addEventListener("load", () => {
         setTimeout(() => {
             revealPending.forEach((element) => {
-                const rect = element.getBoundingClientRect();
-                if (rect.width > 0 && rect.top < window.innerHeight && rect.bottom > 0) reveal(element, 0);
+                if (onScreenNow.has(element)) reveal(element, 0);
             });
         }, 2500);
     });
@@ -427,10 +411,12 @@
 
     // Written the local way ("1,5" in Russian), with exactly the decimals of data-count.
     // Thousands are only grouped from 10,000 on ("9999", but "12,345" / "12 345").
+    // (Only a real change is written: the page then has nothing new to lay out.)
     function writeCounter(element, counter, value) {
         const prefix = element.getAttribute("data-count-prefix") || "";
         const suffix = element.getAttribute("data-count-suffix") || "";
-        element.textContent = prefix + A.format.number(value, { digits: counter.decimals, grouping: "min2" }) + suffix;
+        const text = prefix + A.format.number(value, { digits: counter.decimals, grouping: "min2" }) + suffix;
+        if (element.textContent !== text) element.textContent = text;
     }
 
     function stopCounter(counter) {
@@ -440,41 +426,69 @@
         counter.raf = 0;
     }
 
+    // Returns true when the number is new and waits to count up
     function registerCounter(element) {
         const raw = element.getAttribute("data-count");
         const value = parseFloat(raw);
-        if (!isFinite(value)) return;
+        if (!isFinite(value)) return false;
 
         let counter = counters.get(element);
         if (counter) {
             // The number changed: count from the old one to the new one
             counter.decimals = decimalsOf(raw);
-            if (value === counter.target) return;
+            if (value === counter.target) return false;
             counter.target = value;
             if (counter.waiting) {
                 if (!counter.armed) writeCounter(element, counter, value);
-                return;
+                return false;
             }
             if (A.motion.ok()) startCounter(element, counter, 0);
             else writeCounter(element, counter, value);
-            return;
+            return false;
         }
 
         counter = { target: value, shown: value, decimals: decimalsOf(raw), raf: 0, timer: 0, waiting: false, armed: false };
         counters.set(element, counter);
         writeCounter(element, counter, value);
 
-        if (A.motion.ok() && counterObserver) {
-            counter.waiting = true;                 // counts up when it scrolls into view
-            armObserver.observe(element);
-            counterObserver.observe(element);
-            // Close to the screen already? Start from 0 (the page isn't painted yet)
-            if (isNear(element)) {
-                counter.armed = true;
-                counter.shown = 0;
-                writeCounter(element, counter, 0);
-            }
-        }
+        if (!A.motion.ok() || !counterObserver) return false;
+        counter.waiting = true;                     // counts up when it scrolls into view
+        armObserver.observe(element);
+        counterObserver.observe(element);
+        return true;
+    }
+
+    // New numbers inside the hero, which rises in with CSS: those that haven't
+    // appeared yet drop to 0 now (nobody sees it) and count up when their turn comes.
+    // All of them are checked first and changed after, so the browser only has
+    // to bring the page up to date once.
+    function registerCounters(elements) {
+        const fresh = elements.filter(registerCounter);
+        fresh.filter((element) => entranceWait(element) > 0).forEach((element) => {
+            const counter = counters.get(element);
+            counter.armed = true;
+            counter.shown = 0;
+            writeCounter(element, counter, 0);
+        });
+    }
+
+    // The hero is on screen from the start, so it never waits for JavaScript:
+    // index.html marks its blocks as "revealed" and css/effects.css lets them
+    // rise in one after another from the very first frame.
+    // How long until the part around this element starts to appear?
+    // (0 when it can be seen already, or when it isn't part of such an entrance)
+    function entranceWait(element) {
+        const host = element.closest("[data-reveal].revealed");
+        if (!host || revealTimes.has(host) || !host.getAnimations) return 0;
+        let wait = 0;
+        host.getAnimations({ subtree: true }).forEach((animation) => {
+            const effect = animation.effect;
+            const time = animation.currentTime;
+            if (!effect || !effect.target || !effect.target.contains(element) || time === null) return;
+            const delay = effect.getTiming().delay;
+            if (time < delay) wait = Math.max(wait, delay - time);
+        });
+        return wait;
     }
 
     // Is the number inside a card that is still hidden, waiting to animate in?
@@ -498,7 +512,7 @@
     // "fresh" means its card has just appeared, so the visitor hasn't seen the number yet.
     function startIfVisible(element, counter, fresh, knownVisible) {
         if (!counter.waiting || hiddenByCard(element)) return;
-        if (!knownVisible && !isOnScreen(element)) return;
+        if (!knownVisible && !onScreenNow.has(element)) return;
         if (counter.armed || fresh) startCounter(element, counter, counterDelay(element));
         else stopWaiting(element, counter);
     }
@@ -550,7 +564,7 @@
             const appearsAt = (revealTimes.get(host) || 0) + (itemDelays.get(item) || 0);
             wait = Math.max(0, appearsAt - performance.now());
         }
-        return 150 + wait;
+        return 150 + Math.max(wait, entranceWait(element));
     }
 
     function startCounter(element, counter, delay) {
@@ -629,10 +643,13 @@
         return !host || host.classList.contains("revealed") || !root.classList.contains("reveal-ready");
     }
 
+    // A text came onto the screen (or left it). It decodes once a fifth of it can be seen.
     function onScrambleView(entries) {
         entries.forEach((entry) => {
             const element = entry.target;
-            if (entry.isIntersecting && scramblePending.has(element) && hostShown(element)) {
+            if (entry.isIntersecting) onScreenNow.add(element);
+            else onScreenNow.delete(element);
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.2 && scramblePending.has(element) && hostShown(element)) {
                 scramblePending.delete(element);
                 scramble(element, 0);
             }
@@ -641,7 +658,7 @@
 
     function scrambleWithin(container, delay) {
         scramblePending.forEach((element) => {
-            if (container.contains(element) && isOnScreen(element)) {
+            if (container.contains(element) && onScreenNow.has(element)) {
                 scramblePending.delete(element);
                 scramble(element, delay);
             }
@@ -847,17 +864,19 @@
         updateRotator(rotator);
     }
 
-    // Reserve room for the longest word, so the line doesn't jump while typing
+    // Reserve room for the longest word, so the line doesn't jump while typing.
+    // Every word gets a hidden copy; all copies are added first and measured
+    // together, so the browser lays out the page once, not once per word.
     function measureRotator(rotator) {
-        const probe = document.createElement("span");
-        probe.className = "fx-rotator-probe";
-        rotator.element.appendChild(probe);
-        let widest = 0;
-        rotator.words.forEach((word) => {
+        const probes = rotator.words.map((word) => {
+            const probe = document.createElement("span");
+            probe.className = "fx-rotator-probe";
             probe.textContent = word;
-            widest = Math.max(widest, probe.getBoundingClientRect().width);
+            return probe;
         });
-        probe.remove();
+        rotator.element.append(...probes);
+        const widest = Math.max(0, ...probes.map((probe) => probe.getBoundingClientRect().width));
+        probes.forEach((probe) => probe.remove());
 
         const fontSize = parseFloat(getComputedStyle(rotator.element).fontSize) || 16;
         if (widest > 0) rotator.element.style.minWidth = (widest / fontSize + 0.35).toFixed(3) + "em";
@@ -1375,20 +1394,18 @@
     /* =========================================================
        FINDING ELEMENTS (now, and when other features add more later)
        ========================================================= */
-    function each(container, selector, callback) {
-        if (container.matches && container.matches(selector)) callback(container);
-        container.querySelectorAll(selector).forEach(callback);
+    // The container itself (when it matches) and everything inside it that matches
+    function findAll(container, selector) {
+        const found = Array.from(container.querySelectorAll(selector));
+        if (container.matches && container.matches(selector)) found.unshift(container);
+        return found;
     }
 
     function scan(container) {
-        const fresh = [];
-        each(container, "[data-reveal]", (element) => {
-            if (registerReveal(element)) fresh.push(element);
-        });
-        if (fresh.length) armIfNear(fresh);
-        each(container, "[data-count]", registerCounter);
-        each(container, SCRAMBLE_SELECTOR, registerScramble);
-        each(container, "[data-rotator]", registerRotator);
+        findAll(container, "[data-reveal]").forEach(registerReveal);
+        registerCounters(findAll(container, "[data-count]"));
+        findAll(container, SCRAMBLE_SELECTOR).forEach(registerScramble);
+        findAll(container, "[data-rotator]").forEach(registerRotator);
     }
 
     // Forget elements that were removed from the page
@@ -1434,8 +1451,8 @@
             if (record.type === "attributes") {
                 const element = record.target;
                 if (!element.hasAttribute(record.attributeName)) return;
-                if (record.attributeName === "data-count") registerCounter(element);
-                else if (record.attributeName === "data-reveal" && registerReveal(element)) armIfNear([element]);
+                if (record.attributeName === "data-count") registerCounters([element]);
+                else if (record.attributeName === "data-reveal") registerReveal(element);
                 else if (record.attributeName === "data-scramble") registerScramble(element);
                 return;
             }
