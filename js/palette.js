@@ -33,19 +33,7 @@
     const RECENT_KEY = "palette.recent";
     const RECENT_MAX = 5;
     const GROUP_PREVIEW = 6;     // with an empty search, show at most 6 items per group
-
-    // Correct word for a number: "1 result / 2 results", "1 результат / 2 результата / 5 результатов"
-    function plural(n, forms) {
-        const list = forms.split("|");
-        if (A.lang === "ru") {
-            const mod10 = n % 10;
-            const mod100 = n % 100;
-            if (mod10 === 1 && mod100 !== 11) return list[0];
-            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return list[1];
-            return list[2] || list[1];
-        }
-        return n === 1 ? list[0] : list[1];
-    }
+    const STATUS_DELAY = 450;    // ms: the number of results is read out once you stop typing
 
     /* =========================================================
        2. BUILDING THE WINDOW
@@ -114,7 +102,6 @@
         active: -1,         // which result is selected
         lastFocus: null,    // where the focus goes back to on close
         hideTimer: 0,
-        statusTimer: 0,
         pointer: { x: -1, y: -1 },
         expanded: {}        // big groups opened with "Show N more" (until the palette closes)
     };
@@ -146,10 +133,15 @@
     // Lower case, "ё" -> "е". Every character stays in its place,
     // so letter positions still match the original title.
     function fold(text) {
-        return String(text || "").split("").map(function (char) {
-            const lower = char.toLowerCase();
-            if (lower.length !== 1) return char;
-            return lower === "ё" ? "е" : lower;
+        const value = String(text || "");
+        const lower = value.toLowerCase();
+        if (lower.length === value.length) return lower.replace(/ё/g, "е");
+        // Very rare: a letter whose lower case is longer ("İ" -> "i̇").
+        // Then go letter by letter and keep such letters as they are.
+        return value.split("").map(function (char) {
+            const small = char.toLowerCase();
+            if (small.length !== 1) return char;
+            return small === "ё" ? "е" : small;
         }).join("");
     }
 
@@ -303,8 +295,8 @@
        4. COLLECTING AND GROUPING RESULTS
        ========================================================= */
 
-    // Reads AICompass.commands fresh every time the palette opens,
-    // so commands added later by other features are included.
+    // Reads AICompass.commands and prepares them for the search (titles in the
+    // current language, folded to lower case). See commandList() below.
     function collectCommands() {
         const list = [];
         (A.commands || []).forEach(function (command, order) {
@@ -336,14 +328,39 @@
         return list;
     }
 
+    // The prepared commands are kept while the palette is open, so typing only
+    // searches them. They are read again when the palette opens (titles can
+    // change, like the theme command), when the language changes, and when a
+    // feature adds a command in the meantime.
+    const cache = { commands: null, size: 0 };
+
+    function commandList() {
+        const size = (A.commands || []).length;
+        if (!cache.commands || cache.size !== size) {
+            cache.commands = collectCommands();
+            cache.size = size;
+        }
+        return cache.commands;
+    }
+
+    function forgetCommands() {
+        cache.commands = null;
+    }
+
     function getRecent() {
         const saved = A.storage.get(RECENT_KEY, []);
         return Array.isArray(saved) ? saved.filter(function (id) { return typeof id === "string"; }) : [];
     }
 
+    // The command you ran goes first. Saved commands that no longer exist
+    // (a newer version of the site renamed or removed them) are dropped,
+    // so they don't take the places of real ones.
     function remember(id) {
-        const list = getRecent().filter(function (item) { return item !== id; });
-        list.unshift(id);
+        const known = {};
+        commandList().forEach(function (item) { known[item.id] = true; });
+        const list = [id].concat(getRecent().filter(function (old) {
+            return old !== id && known[old];
+        }));
         A.storage.set(RECENT_KEY, list.slice(0, RECENT_MAX));
     }
 
@@ -411,7 +428,7 @@
 
     // Everything the palette shows for a search: { groups, note, nothing }
     function search(rawQuery) {
-        const commands = collectCommands();
+        const commands = commandList();
         const query = fold(rawQuery).replace(/\s+/g, " ").trim();
         if (!query) return { groups: browseGroups(commands), note: "", nothing: false };
 
@@ -563,14 +580,15 @@
         ui.note.textContent = result.note;
         ui.list.hidden = !items.length;
 
-        // How many results (shown in the footer, and read out a moment later)
-        const commandCount = items.filter(function (item) { return item.id !== "ask-bot" && !item.more; }).length;
-        const countText = plural(commandCount, t("palette.count")).replace("{n}", commandCount);
+        // How many results you can choose ("Ask Compass Bot" too, but not the
+        // "Show N more" rows). Shown in the footer, and read out by screen
+        // readers once you stop typing (with "No results" first if no command matched).
+        const count = items.filter(function (item) { return !item.more; }).length;
+        const countText = A.plural("palette.count", count);
         ui.count.textContent = countText;
-        clearTimeout(state.statusTimer);
-        state.statusTimer = setTimeout(function () {
-            ui.status.textContent = result.nothing ? ui.emptyTitle.textContent : countText;
-        }, 450);
+        let message = countText;
+        if (result.nothing) message = ui.emptyTitle.textContent + (count ? ". " + countText : "");
+        A.announce(message, { region: ui.status, delay: STATUS_DELAY });
 
         setActive(items.length ? 0 : -1, false);
     }
@@ -730,11 +748,7 @@
         style.height = Math.round(viewport.height) + "px";
     }
 
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", fitOverlay);
-        window.visualViewport.addEventListener("scroll", fitOverlay);
-    }
-    window.addEventListener("resize", fitOverlay, { passive: true });
+    A.onResize(fitOverlay, { viewport: true });
 
     function setTriggersExpanded(open) {
         document.querySelectorAll("[data-open-palette]").forEach(function (button) {
@@ -752,19 +766,21 @@
         const active = document.activeElement;
         state.lastFocus = active && active !== document.body ? active : null;
 
+        // Fill the list while the window is still hidden, so the page is
+        // laid out once with the window in it
         state.expanded = {};
         ui.input.value = "";
+        forgetCommands();
+        render();
         ui.overlay.hidden = false;
         ui.overlay.classList.remove("is-closing");
         overlay.opened();     // before the focus moves in (core makes the rest inert)
         fitOverlay();
-        render();
         ui.list.scrollTop = 0;
         setTriggersExpanded(true);
 
         // Draw once in the hidden state, then animate in
-        void ui.overlay.offsetWidth;
-        ui.overlay.classList.add("is-open");
+        A.dom.replay(ui.overlay, "is-open");
         ui.input.focus({ preventScroll: true });
     }
 
@@ -775,8 +791,7 @@
         ui.overlay.classList.add("is-closing");
         overlay.closed();     // before the focus goes back (the page is reachable again)
         setTriggersExpanded(false);
-        clearTimeout(state.statusTimer);
-        ui.status.textContent = "";
+        A.announce("", { region: ui.status, delay: 0 });   // drops a count still waiting
 
         state.hideTimer = setTimeout(function () {
             if (state.open) return;
@@ -785,7 +800,7 @@
             fitOverlay();
             ui.list.innerHTML = "";
             state.items = [];
-        }, A.reducedMotion ? 0 : 180);
+        }, A.motion.ok() ? 180 : 0);
 
         // Focus goes back to where it was before (if that is still possible).
         // Something hidden in the meantime (a link in the mobile menu, say)
@@ -886,15 +901,16 @@
     A.onLanguageChange(function () {
         if (!state.open) return;
         const active = state.active;
+        forgetCommands();
         render();
         if (active >= 0 && active < state.items.length) setActive(active, true);
     });
 
-    // Other features can open the palette too
-    A.palette = {
+    // Other features can open the palette too (AICompass.palette)
+    A.feature("palette", {
         open: open,
         close: close,
         toggle: toggle,
         get isOpen() { return state.open; }
-    };
+    });
 })();

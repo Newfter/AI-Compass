@@ -24,8 +24,7 @@ window.AICompass.addTranslations({
         "palette.hintMove": "to navigate",
         "palette.hintOpen": "to open",
         "palette.hintClose": "to close",
-        "palette.count": "{n} result|{n} results",
-        "palette.brand": "AI COMPASS · QUICK SEARCH"
+        "palette.count": "{n} result|{n} results"
     },
     ru: {
         "palette.title": "Палитра команд",
@@ -45,7 +44,6 @@ window.AICompass.addTranslations({
         "palette.hintMove": "выбрать",
         "palette.hintOpen": "открыть",
         "palette.hintClose": "закрыть",
-        "palette.count": "{n} результат|{n} результата|{n} результатов",
-        "palette.brand": "AI COMPASS · БЫСТРЫЙ ПОИСК"
+        "palette.count": "{n} результат|{n} результата|{n} результатов"
     }
 });
