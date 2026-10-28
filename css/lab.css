@@ -827,11 +827,14 @@
 
 /* Sliders: the row with the label and the value. The slider itself is a
    .ui-range (css/components.css); lab.js sets its --fill from the value. */
+/* With bigger text (the Text size setting) the value goes under the label
+   when the two don't fit side by side */
 .lab-range-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     justify-content: space-between;
-    gap: 10px;
+    gap: 6px 10px;
 }
 
 .lab-range-value {

@@ -298,9 +298,11 @@
     z-index: var(--z-sheet);
     display: flex;
     flex-direction: column;
-    width: 380px;
-    height: min(620px, calc(100vh - var(--launcher-clearance) - 24px));
-    height: min(620px, calc(100dvh - var(--launcher-clearance) - 24px));
+    /* 380 x 620px at the normal text size. In rem, so the window grows with the
+       Text size setting (js/settings.js), but never past the screen */
+    width: min(23.75rem, calc(100vw - 48px));
+    height: min(38.75rem, calc(100vh - var(--launcher-clearance) - 24px));
+    height: min(38.75rem, calc(100dvh - var(--launcher-clearance) - 24px));
     overflow: hidden;
     border: 1px solid var(--border-strong);
     border-radius: 24px;
