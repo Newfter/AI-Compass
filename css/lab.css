@@ -26,9 +26,10 @@
     --lab-dim-text: var(--text-muted);
 }
 
-/* js/lab.js builds the lab only when it comes near the screen. Until then its empty
-   box keeps about the height of the "Teach the machine" tab (the predictor tab is
-   shorter), so the page below doesn't jump. Smaller screens: see "6. Responsive". */
+/* js/lab.js builds the lab only when it is needed (near the screen, or in a quiet
+   moment after the page loaded). Until then its empty box keeps about the height of
+   the "Teach the machine" tab (the predictor tab is shorter), so the page below
+   doesn't jump. Smaller screens: see "6. Responsive". */
 .js [data-feature="lab"]:empty {
     min-height: 1900px;
 }

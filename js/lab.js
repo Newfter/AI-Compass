@@ -5,12 +5,19 @@
        live in your browser, to tell two kinds of dots apart.
     2. "Next-word predictor": a tiny language model that counts
        which words follow which, just like a (very) mini chatbot.
+   The lab sits far down the page, so its HTML is made only when
+   it is needed (section 10).
    Sections of this file:
-    1. Translations          5. Neural network: drawing
-    2. Small helpers         6. Neural network: controls
-    3. The lab card + tabs   7. Next-word predictor
-    4. Neural network: math  8. Start-up, openLab, commands
-   Other files can call AICompass.openLab("classifier" | "predictor").
+    1. Settings                        7. Next-word predictor: the maths
+    2. Small helpers                   8. Next-word predictor: the panel
+    3. The lab card and its two tabs   9. Tabs, canvas sizes, language, theme
+    4. Neural network: the maths      10. Building the lab
+    5. Neural network: drawing        11. Commands and AICompass.lab
+    6. Neural network: controls, stats and the animation loop
+   Other features use AICompass.lab.open("classifier" | "predictor")
+   (see the last section).
+   Every text (English and Russian) is in js/content/lab.js,
+   and so are the sentences the predictor learns from.
    ========================================================= */
 
 (function () {
@@ -23,33 +30,81 @@
 
     const t = A.t;
 
-    // Every text (English and Russian) is in js/content/lab.js, and so are the predictor's sentences
+    /* =========================================================
+       1. SETTINGS
+       ========================================================= */
+    const TABS = ["classifier", "predictor"];   // the lab's two tabs (also saved as "lab.tab")
+
+    // ----- Teach the machine (the neural network) -----
+    // Learning rates you can choose (10 is too big on purpose: try it and watch the loss jump)
+    const LR_OPTIONS = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10];
+    // The settings until you change them (yours are saved as "lab.nn")
+    const DEFAULT_SETTINGS = { lr: 0.03, optimizer: "adam", speed: "normal", hidden: 8, twoLayers: false };
+    const MIN_NEURONS = 2;                // neurons in a hidden layer: from 2...
+    const MAX_NEURONS = 16;               // ...to 16
+    const SPEEDS = { slow: 20, normal: 120, fast: 480 };   // training epochs per second
+    const MAX_POINTS = 400;               // dots on the board, at most
+    const UNDO_STEPS = 60;                // how many steps Undo remembers
+    const LEARNED_LOSS = 0.025;           // every dot right and the loss this small: "Learned it!", training pauses
+    const STUCK_EPOCHS = 2500;            // after this many epochs with less than...
+    const STUCK_ACCURACY = 0.95;          // ...95% of the dots right, a hint pops up
+    const LOSS_HISTORY = 200;             // loss values the chart keeps (when full, it keeps every second one)
+
+    // Drawing the board, the chart and the diagram
+    const GRID = 50;                      // the board's colours are worked out on a 50 x 50 grid, then smoothly scaled up
+    const MINI = 16;                      // each neuron's small map in the diagram is 16 x 16
+    const FRAME_BUDGET = 10;              // ms of learning + drawing per frame at most, so the page stays smooth
+    const MAPS_EVERY = 33;                // ms: while training, the board's colours are worked out at most this often (30 times a second)
+    const DIAGRAM_EVERY = 45;             // ms: while training, the diagram is drawn at most this often...
+    const STATS_EVERY = 110;              // ms: ...and the numbers are written at most this often
+    const ANNOUNCE_EVERY = 6000;          // ms: while training, screen readers hear the numbers this often
+
+    // Mouse, touch and keyboard on the board (the board goes from -1 to 1 both ways)
+    const PAINT_STEP = 0.07;              // hold and drag: a new dot every 0.07
+    const TAP_MOVE = 10;                  // px: a finger that moves further than this is scrolling, not tapping
+    const TOUCH_GUESS = 3000;             // ms: after a tap, the network's guess for that spot shows this long
+    const CURSOR_STEP = 0.05;             // an arrow key moves the keyboard cursor this far...
+    const CURSOR_JUMP = 0.2;              // ...and this far with Shift
+
+    // ----- Next-word predictor (the language model) -----
+    const DISCOUNT = 0.3;                 // how much of every count is set aside for words never seen there
+    const CANDIDATES = 5;                 // rows of candidate words
+    const CHOICES = 20;                   // the most likely words that take part in the draw (creativity, auto-write)
+    const MATCH_LIMIT = 400;              // "finishing the word": at most this many words that start with your letters
+    const MAX_TEXT = 400;                 // characters in the text box, at most
+    const MAX_TOKENS = 40;                // the token view shows the last 40 words
+    const MAX_TAUGHT = 50;                // sentences you can teach (in each language)
+    const MAX_TEACH = 140;                // characters in a sentence you teach, at most
+    const TEMPERATURE = { min: 0, max: 2, step: 0.1, start: 0.7 };   // the creativity slider (yours is saved as "lab.temperature")
+    const AUTO_WORDS = 12;                // auto-write adds up to 12 words...
+    const AUTO_STOP = MAX_TEXT - 40;      // ...and stops early when the text is this long
+    const AUTO_PAUSE = { pick: 260, next: 160 };        // ms: the chosen word lights up, then the next word is chosen
+    const AUTO_PAUSE_CALM = { pick: 200, next: 120 };   // the same with animations off (the words appear at once)
+    const LETTER_MS = 30;                 // auto-write types a letter every 30 ms...
+    const LETTER_RANDOM = 25;             // ...plus up to 25 ms at random, like a person
+    const SR_PAUSE = 900;                 // ms: screen readers hear the top guess after this pause in typing
+
+    // ----- When the lab works -----
+    const ON_SCREEN = 0.05;               // the lab is "on screen" (training runs) when 5% of it shows
+    const NEAR_MARGIN = "50% 0px";        // the canvases are kept up to date while the lab is within half a screen
 
     /* =========================================================
        2. SMALL HELPERS
        ========================================================= */
-    function quote(word) {
-        return t("lab.q", { w: word });
+    // Shortcuts to elements inside the lab
+    const $ = (selector) => mount.querySelector(selector);
+    const $$ = (selector) => Array.prototype.slice.call(mount.querySelectorAll(selector));
+
+    // The filled part of a slider (.lab-range draws it from --fill)
+    function updateRangeFill(range) {
+        const min = Number(range.min);
+        const max = Number(range.max);
+        range.style.setProperty("--fill", (((Number(range.value) - min) / (max - min)) * 100).toFixed(1) + "%");
     }
 
-    // All canvas colours come from the CSS variables, so both themes work.
-    // They are read just before drawing (null = not read yet, or the theme changed):
-    // reading them right after a change would make the browser restyle the page at once.
-    let colors = null;
-    function readColors() {
-        const light = A.theme === "light";
-        colors = {
-            a: A.colors.rgb("--accent-rgb"),
-            b: A.colors.rgb("--accent-2-rgb"),
-            base: A.colors.rgb("--surface-solid"),
-            text: A.colors.rgb("--text"),
-            // small labels on the diagram: the dim grey is too pale on white, so the light theme uses a darker one
-            dim: A.colors.rgb(light ? "--text-muted" : "--text-dim"),
-            danger: A.colors.rgb("--danger"),
-            shine: A.colors.rgb("--on-accent"),     // the white of text on the accent colour
-            mono: A.cssVar("--font-mono") || "monospace",
-            light: light
-        };
+    // A word in quotes, the way the language writes them: “word” or «слово»
+    function quote(word) {
+        return t("lab.q", { w: word });
     }
 
     // A random number with a bell-curve shape (for natural-looking clusters)
@@ -59,6 +114,10 @@
         return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random());
     }
 
+    /* =========================================================
+       3. THE LAB CARD AND ITS TWO TABS
+       ========================================================= */
+    // Small pictures for the buttons and the example chips
     const icons = {
         play: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>',
         pause: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/><rect x="13.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"/></svg>',
@@ -75,15 +134,7 @@
         spiral: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 12c0-1.5 2-1.5 2 0s-1.6 3-3.5 3S7 13 7 11s2-5 5-5 6 2 6 6-3 7.5-7 7.5" fill="none" class="lab-ic-a-stroke" stroke-width="2.2" stroke-linecap="round"/></svg>'
     };
 
-    /* =========================================================
-       3. THE LAB CARD AND ITS TWO TABS
-       ========================================================= */
-    const TABS = ["classifier", "predictor"];
-
-    // Learning rates you can choose (10 is too big on purpose: try it and watch the loss jump)
-    const LR_OPTIONS = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10];
-
-    // The whole card. It is made only when the lab is needed (build(), section 8),
+    // The whole card. It is made only when the lab is needed (build(), section 10),
     // and its empty data-i18n holders get their texts at that moment.
     function labHTML() {
         return '<div class="lab card" data-reveal>' +
@@ -221,9 +272,9 @@
                         '<div class="lab-field lab-field-wide">' +
                             '<div class="lab-range-head">' +
                                 '<label for="lab-neurons" data-i18n="lab.neurons"></label>' +
-                                '<output class="lab-range-value mono" for="lab-neurons" data-out="neurons">8</output>' +
+                                '<output class="lab-range-value mono" for="lab-neurons" data-out="neurons">' + DEFAULT_SETTINGS.hidden + '</output>' +
                             '</div>' +
-                            '<input type="range" id="lab-neurons" class="lab-range" min="2" max="16" step="1" value="8" aria-describedby="lab-neurons-hint">' +
+                            '<input type="range" id="lab-neurons" class="lab-range" min="' + MIN_NEURONS + '" max="' + MAX_NEURONS + '" step="1" value="' + DEFAULT_SETTINGS.hidden + '" aria-describedby="lab-neurons-hint">' +
                             '<small id="lab-neurons-hint" data-i18n="lab.neuronsHint"></small>' +
                         '</div>' +
                         '<div class="lab-field lab-field-speed">' +
@@ -285,7 +336,7 @@
         const starters = [1, 2, 3, 4, 5].map((n) =>
             '<button type="button" class="chip lab-starter" data-starter="' + n + '" data-i18n="lab.lmStarter' + n + '"></button>').join("");
 
-        const candidates = [0, 1, 2, 3, 4].map((i) =>
+        const candidates = Array.from({ length: CANDIDATES }, (item, i) =>
             '<li class="lab-cand-item" hidden>' +
                 '<button type="button" class="lab-cand" data-index="' + i + '">' +
                     '<span class="lab-cand-fill" aria-hidden="true"></span>' +
@@ -336,7 +387,7 @@
                             '<label for="lab-temp" data-i18n="lab.lmTemp"></label>' +
                             '<output class="lab-range-value mono" for="lab-temp" data-out="temp"></output>' +
                         '</div>' +
-                        '<input type="range" id="lab-temp" class="lab-range lab-range-temp" min="0" max="2" step="0.1" value="0.7">' +
+                        '<input type="range" id="lab-temp" class="lab-range lab-range-temp" min="' + TEMPERATURE.min + '" max="' + TEMPERATURE.max + '" step="' + TEMPERATURE.step + '" value="' + TEMPERATURE.start + '">' +
                     '</div>' +
                 '</div>' +
             '</div>' +
@@ -375,28 +426,35 @@
         '</div>';
     }
 
-    // The card (once it is built) and shortcuts to elements inside the lab
+    // The card, once it is built (findElements() finds it)
     let labCard = null;
-    const $ =(selector) => mount.querySelector(selector);
-    const $$ = (selector) => Array.prototype.slice.call(mount.querySelectorAll(selector));
 
     /* =========================================================
-       4. NEURAL NETWORK: THE MATH
-       2 inputs (x, y) -> hidden layer(s) with tanh -> 1 output with sigmoid.
-       The output is the probability that a spot belongs to class B.
+       4. NEURAL NETWORK: THE MATHS
+       The network gets a spot (x, y) of the board and answers with the
+       probability that the spot belongs to class B:
+       2 inputs (x, y) -> hidden layer(s) -> 1 output.
+       - A neuron multiplies each input by a weight, adds them up with
+         its bias, and squashes the sum: with tanh (-1 to 1) in the hidden
+         layers, with the sigmoid (0 to 1) at the output.
+       - Forward pass: the inputs go through the layers, one after another.
+       - The loss (binary cross-entropy) measures how wrong the answers are:
+         a confident wrong answer costs a lot, a confident right one almost
+         nothing.
+       - Backpropagation goes backwards through the layers and works out
+         how much each weight is to blame for the loss (its gradient).
+       - The optimizer (Adam, or SGD with momentum) moves every weight a
+         small step against its gradient. One pass over all the dots is
+         one "epoch".
        ========================================================= */
-    const MAX_POINTS = 400;
-    const SPEEDS = { slow: 20, normal: 120, fast: 480 };   // training epochs per second
-    const FRAME_BUDGET = 10;                                // at most 10 ms of learning + drawing per frame, so the page stays smooth
-    const MAPS_EVERY = 33;                                  // while training, the board's colours are worked out at most every 33 ms (30 times a second)
-    const STUCK_EPOCHS = 2500;                              // after this many epochs without success we give a hint
+    // ----- Your settings (saved as "lab.nn"; an old or broken value gets the defaults) -----
     const savedSettings = A.storage.get("lab.nn", {}) || {};
 
     const settings = {
-        lr: LR_OPTIONS.indexOf(savedSettings.lr) >= 0 ? savedSettings.lr : 0.03,
-        optimizer: savedSettings.optimizer === "sgd" ? "sgd" : "adam",
-        speed: SPEEDS[savedSettings.speed] ? savedSettings.speed : "normal",
-        hidden: A.util.clamp(Math.round(Number(savedSettings.hidden) || 8), 2, 16),
+        lr: LR_OPTIONS.indexOf(savedSettings.lr) >= 0 ? savedSettings.lr : DEFAULT_SETTINGS.lr,
+        optimizer: savedSettings.optimizer === "sgd" ? "sgd" : DEFAULT_SETTINGS.optimizer,
+        speed: SPEEDS[savedSettings.speed] ? savedSettings.speed : DEFAULT_SETTINGS.speed,
+        hidden: A.util.clamp(Math.round(Number(savedSettings.hidden) || DEFAULT_SETTINGS.hidden), MIN_NEURONS, MAX_NEURONS),
         twoLayers: savedSettings.twoLayers === true
     };
 
@@ -437,7 +495,8 @@
         return net.layers.reduce((sum, layer) => sum + layer.W.length + layer.b.length, 0);
     }
 
-    // Forward pass: send (x, y) through the network and get P(class B)
+    // Forward pass: send (x, y) through the network and get P(class B).
+    // Each neuron j: z = bias + sum of (weight * input), then a = tanh(z) or sigmoid(z).
     const inputs = new Float64Array(2);
 
     function forward(net, x, y) {
@@ -463,6 +522,9 @@
 
     // One epoch: look at every dot, measure the error (binary cross-entropy),
     // work out how each weight should change (backpropagation), then change it.
+    // For one dot with answer y (0 or 1) and guess p: loss = -log(p) if y = 1, -log(1 - p) if y = 0.
+    // The epoch's loss is the average over all dots; the gradients are summed here
+    // and divided by the number of dots in applyGradients.
     function trainStep() {
         const net = nn.net;
         const points = nn.points;
@@ -485,7 +547,10 @@
             // With sigmoid + cross-entropy the output error is simply (guess - answer)
             layers[last].d[0] = out - point.label;
 
-            // Go backwards through the layers
+            // Go backwards through the layers. A weight's gradient is
+            // (its neuron's share of the error) x (the input it multiplies);
+            // a neuron's share is passed down to the layer below, through the
+            // same weights, times the slope of tanh (1 - a²).
             for (let l = last; l >= 0; l--) {
                 const layer = layers[l];
                 const previous = l === 0 ? inputs : layers[l - 1].a;
@@ -649,13 +714,13 @@
     // The board starts with the circle example: you can watch the line bend into a ring in a few seconds
     nn.points = makePreset("circle");
 
-    // Keeps up to 200 loss values; when full it keeps every second one
+    // Keeps up to LOSS_HISTORY loss values; when full it keeps every second one
     function recordLoss(loss) {
         const history = nn.lossHistory;
         history.counter++;
         if (history.counter % history.stride !== 0) return;
         history.values.push(loss);
-        if (history.values.length > 200) {
+        if (history.values.length > LOSS_HISTORY) {
             history.values = history.values.filter((value, index) => index % 2 === 0);
             history.stride *= 2;
         }
@@ -669,10 +734,33 @@
 
     /* =========================================================
        5. NEURAL NETWORK: DRAWING
+       The board shows the network's answer for every spot (the colours),
+       the line where it is 50 / 50, and the dots (with a red ring when the
+       network gets one wrong). The diagram shows every neuron with a small
+       map of what it reacts to, and the weights as lines.
        ========================================================= */
-    const GRID = 50;          // the heatmap is calculated on a 50 x 50 grid, then smoothly scaled up
-    const MINI = 16;          // each neuron's mini-map is 16 x 16
+    // All canvas colours come from the CSS variables, so both themes work.
+    // They are read just before drawing (null = not read yet, or the theme changed):
+    // reading them right after a change would make the browser restyle the page at once.
+    let colors = null;
+    function readColors() {
+        const light = A.theme === "light";
+        colors = {
+            a: A.colors.rgb("--accent-rgb"),
+            b: A.colors.rgb("--accent-2-rgb"),
+            base: A.colors.rgb("--surface-solid"),
+            text: A.colors.rgb("--text"),
+            // small labels on the diagram: the dim grey is too pale on white, so the light theme uses a darker one
+            dim: A.colors.rgb(light ? "--text-muted" : "--text-dim"),
+            danger: A.colors.rgb("--danger"),
+            shine: A.colors.rgb("--on-accent"),     // the white of text on the accent colour
+            mono: A.cssVar("--font-mono") || "monospace",
+            light: light
+        };
+    }
 
+    // The board's colours: the network's answer on a GRID x GRID grid, in a small canvas
+    // that drawBoard() scales up smoothly. "segments" is the 50 / 50 line.
     const heat = {
         canvas: document.createElement("canvas"),
         probs: new Float32Array(GRID * GRID),
@@ -683,6 +771,7 @@
     heat.ctx = heat.canvas.getContext("2d");
     heat.image = heat.ctx.createImageData(GRID, GRID);
 
+    // All the neurons' small maps, side by side in one canvas (one column per neuron)
     const atlas = { canvas: document.createElement("canvas"), columns: 0 };
     atlas.ctx = atlas.canvas.getContext("2d");
 
@@ -1228,12 +1317,14 @@
     let labVisible = false;      // on screen in a visible browser tab (see onLabVisible)
     let labNear = false;         // near the screen: the canvases are kept up to date (see onLabNear)
     let languageStale = false;   // the language changed while the lab was far away
-    let frame = 0;
+    let frame = 0;               // the animation frame that is booked (0: none)
 
+    // Training runs only while you can see it
     function wantsTraining() {
         return nn.training && labVisible && activeTab === "classifier";
     }
 
+    // Books one animation frame (asking twice before it runs books it once)
     function schedule() {
         if (!frame) frame = requestAnimationFrame(tick);
     }
@@ -1259,7 +1350,7 @@
         nn.drawCost += (performance.now() - drawStart - nn.drawCost) * 0.2;
 
         // Tell screen-reader users how it's going, but not too often
-        if (wantsTraining() && now - nn.lastAnnounce > 6000) {
+        if (wantsTraining() && now - nn.lastAnnounce > ANNOUNCE_EVERY) {
             nn.lastAnnounce = now;
             announceStats();
         }
@@ -1312,7 +1403,7 @@
             dirty.board = false;
         }
         // The diagram and the numbers don't need 60 updates a second
-        if (dirty.diagram && (force || !nn.training || now - nn.lastDiagram > 45)) {
+        if (dirty.diagram && (force || !nn.training || now - nn.lastDiagram > DIAGRAM_EVERY)) {
             drawDiagram();
             dirty.diagram = false;
             nn.lastDiagram = now;
@@ -1321,7 +1412,7 @@
             drawChart();
             dirty.chart = false;
         }
-        if (dirty.stats && (force || !nn.training || now - nn.lastStats > 110)) {
+        if (dirty.stats && (force || !nn.training || now - nn.lastStats > STATS_EVERY)) {
             updateStats();
             dirty.stats = false;
             nn.lastStats = now;
@@ -1384,7 +1475,7 @@
     // This happens only once: if you press Train again, it keeps going until you pause.
     function checkLearned() {
         if (!nn.training || nn.learned || nn.keepGoing) return;
-        if (nn.acc !== 1 || nn.loss === null || nn.loss > 0.025) return;
+        if (nn.acc !== 1 || nn.loss === null || nn.loss > LEARNED_LOSS) return;
         if (!hasBothClasses()) return;
         nn.training = false;
         nn.learned = true;
@@ -1395,7 +1486,7 @@
 
     // A friendly hint when the network trains for a long time without success
     function checkStuck() {
-        if (nn.stuckHinted || nn.epoch < STUCK_EPOCHS || nn.acc === null || nn.acc >= 0.95) return;
+        if (nn.stuckHinted || nn.epoch < STUCK_EPOCHS || nn.acc === null || nn.acc >= STUCK_ACCURACY) return;
         nn.stuckHinted = true;
         A.toast(t("lab.toastStuck"), "🧩");
     }
@@ -1438,7 +1529,7 @@
     // Remembers the dots as they are now, for Undo
     function pushUndo() {
         nn.undo.push(nn.points.slice());
-        if (nn.undo.length > 60) nn.undo.shift();
+        if (nn.undo.length > UNDO_STEPS) nn.undo.shift();
     }
 
     function pointsChanged() {
@@ -1582,7 +1673,7 @@
 
     function onPointerMove(event) {
         if (event.pointerType === "touch") {
-            if (nn.tap && Math.hypot(event.clientX - nn.tap.x, event.clientY - nn.tap.y) > 10) nn.tap = null;
+            if (nn.tap && Math.hypot(event.clientX - nn.tap.x, event.clientY - nn.tap.y) > TAP_MOVE) nn.tap = null;
             return;
         }
         const spot = eventToBoard(event);
@@ -1591,7 +1682,7 @@
         // Hold and drag to paint: a new dot every little while
         if (nn.stroke && nn.stroke.id === event.pointerId) {
             const last = nn.stroke.last;
-            if (Math.hypot(spot.x - last.x, spot.y - last.y) > 0.07 && !boardFull()) {
+            if (Math.hypot(spot.x - last.x, spot.y - last.y) > PAINT_STEP && !boardFull()) {
                 addPoint(spot, nn.stroke.label);
                 nn.stroke.last = spot;
                 nn.stroke.painted++;
@@ -1603,7 +1694,7 @@
     }
 
     // Phones have no mouse pointer to "point" with, so after a tap we show the
-    // network's guess for that spot (readout + diagram markers) for 3 seconds
+    // network's guess for that spot (readout + diagram markers) for a few seconds
     function showTouchSpot(spot, label) {
         clearTimeout(nn.touchTimer);
         nn.hover = { x: spot.x, y: spot.y, label: label, touch: true };
@@ -1615,7 +1706,7 @@
                 nn.dirty.board = true;
                 schedule();
             }
-        }, 3000);
+        }, TOUCH_GUESS);
     }
 
     function endPointer(event) {
@@ -1668,7 +1759,7 @@
         if (moves[event.key]) {
             event.preventDefault();
             if (!nn.cursor) nn.cursor = { x: 0, y: 0, label: nn.selected };
-            const amount = event.shiftKey ? 0.2 : 0.05;
+            const amount = event.shiftKey ? CURSOR_JUMP : CURSOR_STEP;
             nn.cursor.x = A.util.clamp(nn.cursor.x + moves[event.key][0] * amount, -1, 1);
             nn.cursor.y = A.util.clamp(nn.cursor.y + moves[event.key][1] * amount, -1, 1);
             nn.dirty.board = true;
@@ -1734,12 +1825,6 @@
         requestAnimationFrame(() => requestAnimationFrame(announceStats));
     }
 
-    function updateRangeFill(range) {
-        const min = Number(range.min);
-        const max = Number(range.max);
-        range.style.setProperty("--fill", (((Number(range.value) - min) / (max - min)) * 100).toFixed(1) + "%");
-    }
-
     function setUpControls() {
         $$(".lab-class").forEach((button) => {
             button.addEventListener("click", () => selectClass(Number(button.getAttribute("data-class"))));
@@ -1801,24 +1886,28 @@
     }
 
     /* =========================================================
-       7. NEXT-WORD PREDICTOR
-       A word-level "n-gram" language model: it counts which word
-       follows each word (bigrams) and each pair of words (trigrams).
+       7. NEXT-WORD PREDICTOR: THE MATHS
+       A word-level "n-gram" language model. "Training" it is counting:
+       which word follows each word (pairs, "bigrams") and each two words
+       (triples, "trigrams") in the example sentences.
+       To guess the next word it looks at the last two words of the text:
+       - every word seen after them gets (its count - DISCOUNT) / (all counts);
+       - the share the discounts set aside goes to all the other words, in
+         proportion to their chance after only the last word ("backoff"),
+         which in turn backs off to how common each word is overall.
+       So every word the model knows has a chance above 0, and the chances
+       add up to 1. The temperature then decides how adventurous the pick is.
        ========================================================= */
     // The sentences it learns from (both languages) are in js/content/lab.js
     const CORPUS = data.corpus;
 
+    // Every sentence is read as START START word word ... END,
+    // so the model also learns how sentences begin and end
     const START = "<s>";
     const END = "</s>";
-    const WORD_RE = /[\p{L}\p{N}'’-]+/gu;
-    const WORD_END = /[\p{L}\p{N}'’-]+$/u;    // the same kind of word, at the very end of a text
-    const HAS_LETTER = /[\p{L}\p{N}]/u;
-    const DISCOUNT = 0.3;          // how much of every count is set aside for words never seen there
-    const MAX_TAUGHT = 50;         // sentences you can teach (in each language)
-    const MAX_TEACH = 140;         // the longest sentence you can teach
-    const MAX_TEXT = 400;          // the longest text in the box
-    const AUTO_WORDS = 12;         // auto-write adds up to 12 words...
-    const AUTO_STOP = MAX_TEXT - 40;   // ...and stops early when the text is this long
+    const WORD_RE = /[\p{L}\p{N}'’-]+/gu;        // a word: letters of any alphabet, digits, ' and -
+    const WORD_END = /[\p{L}\p{N}'’-]+$/u;       // the same kind of word, at the very end of a text
+    const HAS_LETTER = /[\p{L}\p{N}]/u;          // ("-" or "'" alone is not a word)
 
     // Splits text into words (keeps letters of every alphabet, digits, ' and -)
     function wordsOf(text) {
@@ -1832,6 +1921,7 @@
         return Boolean(tail) && HAS_LETTER.test(tail[0]);
     }
 
+    // Counts that "word" came after "key" (one word, or two words joined by a space)
     function addCount(map, key, word) {
         let context = map.get(key);
         if (!context) {
@@ -1842,7 +1932,9 @@
         context.counts.set(word, (context.counts.get(word) || 0) + 1);
     }
 
-    // "Training" this model = counting
+    // "Training" this model = counting. It also remembers how each word is usually
+    // written ("AI", "Friday"), and counts the different pairs and triples it saw
+    // (the "What it knows" box).
     function buildModel(sentences) {
         const unigrams = new Map();
         const bigrams = new Map();
@@ -1936,6 +2028,8 @@
         return result;
     }
 
+    // The chance of every word after "previous" (the words so far, in lower case).
+    // level: 3 = it knows the last two words together, 2 = only the last word, 1 = neither.
     function predictNext(model, previous) {
         const p1 = previous.length ? previous[previous.length - 1] : START;
         const p2 = previous.length > 1 ? previous[previous.length - 2] : START;
@@ -1995,6 +2089,7 @@
         return count ? ((count - DISCOUNT) / context.total) / context.keptSum : undefined;
     }
 
+    // The most likely words first (filter: only the words it accepts)
     function topWords(dist, limit, filter) {
         const list = [];
         dist.forEach((p, word) => {
@@ -2004,7 +2099,9 @@
         return list.slice(0, limit);
     }
 
-    // Temperature: low = sharpen towards the top word, high = flatten (more random)
+    // Temperature T: every chance p becomes p^(1/T), then they are scaled to add up to 1.
+    // T below 1 sharpens the list towards the top word, above 1 flattens it (more
+    // surprising picks), and near 0 it always picks the top word.
     function pickChances(list, temperature) {
         if (!list.length) return [];
         if (temperature < 0.05) return list.map((item, i) => (i === 0 ? 1 : 0));
@@ -2013,25 +2110,32 @@
         return weights.map((weight) => weight / sum);
     }
 
+    /* =========================================================
+       8. NEXT-WORD PREDICTOR: THE PANEL
+       ========================================================= */
     // ----- State of the predictor -----
     const lm = {
-        lang: A.lang,
-        model: null,
-        taught: [],
-        temperature: 0.7,
+        lang: A.lang,            // the language of the sentences it learned
+        model: null,             // the counts (buildModel)
+        taught: [],              // your own sentences (saved as "lab.taught.en" and "lab.taught.ru")
+        temperature: TEMPERATURE.start,
         starter: null,           // { n, text } when the text came from a starter button
         writer: null,            // the auto-write job while it runs
         shown: [],               // candidates on screen right now
-        mode: "next",
-        srTimer: 0
+        mode: "next",            // "next" word, or "complete" (finishing the word being typed)
+        lastResult: null,        // the last analysis (the creativity slider uses it again)
+        srTimer: 0               // the short wait before screen readers hear the top guess
     };
 
     // The predictor's elements (findElements() finds them)
     let lmEls = null;
 
-    const savedTemp = Number(A.storage.get("lab.temperature", 0.7));
-    lm.temperature = isFinite(savedTemp) ? A.util.clamp(Math.round(savedTemp * 10) / 10, 0, 2) : 0.7;
+    // Your creativity setting (rounded to the slider's 0.1 steps; a broken value gets the start value)
+    const savedTemp = Number(A.storage.get("lab.temperature", TEMPERATURE.start));
+    lm.temperature = isFinite(savedTemp) ? A.util.clamp(Math.round(savedTemp * 10) / 10, TEMPERATURE.min, TEMPERATURE.max) : TEMPERATURE.start;
 
+    // The model for the current language: the example sentences plus yours
+    // (a saved value that is not a list of sentences is ignored)
     function loadModel() {
         lm.lang = A.lang;
         const taught = A.storage.get("lab.taught." + lm.lang, []);
@@ -2066,20 +2170,20 @@
         if (state.partial) {
             const prediction = predictNext(model, state.previous);
             let sum = 0;
-            const matches = topWords(prediction.dist, 400, (word) => {
+            const matches = topWords(prediction.dist, MATCH_LIMIT, (word) => {
                 const ok = word !== END && word.startsWith(state.partial);
                 if (ok) sum += prediction.dist.get(word);
                 return ok;
             });
             if (matches.length) {
                 matches.forEach((item) => { item.p = item.p / (sum || 1); });
-                return { mode: "complete", state: state, list: matches.slice(0, 20), prediction: prediction };
+                return { mode: "complete", state: state, list: matches.slice(0, CHOICES), prediction: prediction };
             }
             state.previous.push(state.partial);
             state.partial = "";
         }
         const prediction = predictNext(model, state.previous);
-        return { mode: "next", state: state, list: topWords(prediction.dist, 20), prediction: prediction };
+        return { mode: "next", state: state, list: topWords(prediction.dist, CHOICES), prediction: prediction };
     }
 
     function contextText(result) {
@@ -2102,16 +2206,15 @@
         return t("lab.lmCtxUni", { word: quote(prediction.p1) });
     }
 
-    // Draws the 5 candidate rows, the context line and the token view
+    // Draws the candidate rows, the context line and the token view
     function renderPredictor() {
         if (!lm.model) return;
         const result = analyse();
         lm.mode = result.mode;
         const atStart = result.state.previous.length === 0;
         const chances = pickChances(result.list, lm.temperature);
-        lm.shown = result.list.slice(0, 5).map((item, i) => ({ word: item.word, p: item.p, chance: chances[i] }));
+        lm.shown = result.list.slice(0, CANDIDATES).map((item, i) => ({ word: item.word, p: item.p, chance: chances[i] }));
         lm.lastResult = result;
-        lm.lastChances = chances;
 
         lmEls.mode.textContent = t(result.mode === "complete" ? "lab.lmComplete" : "lab.lmNext");
         lmEls.context.textContent = contextText(result);
@@ -2143,7 +2246,7 @@
             if (!top || lm.writer) return;
             const word = top.word === END ? t("lab.lmEnd") : quote(displayWord(top.word, atStart));
             A.announce(t("lab.lmSrTop", { word: word, pct: A.format.percent(top.p) }), { region: lmEls.live });
-        }, 900);
+        }, SR_PAUSE);
     }
 
     // Shows each word coloured by how much the model expected it
@@ -2186,7 +2289,7 @@
 
         // The chips already in the box are kept and only get their new word and colour.
         // New chips are added at the end: only they fade in, so nothing flickers.
-        const shown = tokens.slice(-40);
+        const shown = tokens.slice(-MAX_TOKENS);
         const chips = box.children;
         const added = document.createDocumentFragment();
         shown.forEach((token, i) => {
@@ -2362,9 +2465,9 @@
                 typeOut(displayWord(choice, atStart) + " ", () => {
                     job.typing = false;
                     renderPredictor();
-                    job.timer = setTimeout(nextWord, calm ? 120 : 160);
+                    job.timer = setTimeout(nextWord, calm ? AUTO_PAUSE_CALM.next : AUTO_PAUSE.next);
                 });
-            }, calm ? 200 : 260);
+            }, calm ? AUTO_PAUSE_CALM.pick : AUTO_PAUSE.pick);
         }
 
         // Letters appear one by one, like someone typing
@@ -2386,7 +2489,7 @@
                 job.typed += text.charAt(i);
                 input.scrollTop = input.scrollHeight;
                 i++;
-                if (i < text.length) job.timer = setTimeout(typeLetter, 30 + Math.random() * 25);
+                if (i < text.length) job.timer = setTimeout(typeLetter, LETTER_MS + Math.random() * LETTER_RANDOM);
                 else done();
             })();
         }
@@ -2445,7 +2548,7 @@
     }
 
     function onTemperature() {
-        lm.temperature = A.util.clamp(Number(lmEls.temp.value) || 0, 0, 2);
+        lm.temperature = A.util.clamp(Number(lmEls.temp.value) || 0, TEMPERATURE.min, TEMPERATURE.max);
         A.storage.set("lab.temperature", lm.temperature);
         // only the "chance to be picked" lines change
         if (lm.lastResult) {
@@ -2486,7 +2589,7 @@
     }
 
     /* =========================================================
-       8. TABS, SIZES, LANGUAGE, THEME, BUILDING THE LAB, openLab, COMMANDS
+       9. TABS, CANVAS SIZES, LANGUAGE AND THEME
        ========================================================= */
     // The tab list, its two buttons and the two panels (findElements() finds them)
     let tabEls = null;
@@ -2695,10 +2798,14 @@
         else languageStale = true;
     }
 
-    // ----- Building the lab -----
-    // The lab sits about three screens down the page, so its HTML is made only when it
-    // is needed: when it comes near the screen, when the browser has a quiet moment
-    // after the page loaded, or when something opens it (openLab, a command, a #lab link).
+    /* =========================================================
+       10. BUILDING THE LAB
+       The lab sits about three screens down the page, so its HTML is made
+       only when it is needed: when it comes near the screen, when the browser
+       has a quiet moment after the page loaded, or when something opens it
+       (AICompass.lab.open, a command, a #lab link).
+       ========================================================= */
+    // Finds the elements the code works with, once the HTML is made
     function findElements() {
         labCard = $(".lab");
         board.el = $(".lab-board");
@@ -2776,25 +2883,27 @@
         }
         watchPixelRatio();
         // On screen or not, near or far, theme and language
-        A.whenVisible(labCard, onLabVisible, { threshold: 0.05, pauseAnimations: true });
-        A.whenVisible(labCard, onLabNear, { rootMargin: "50% 0px" });
+        A.whenVisible(labCard, onLabVisible, { threshold: ON_SCREEN, pauseAnimations: true });
+        A.whenVisible(labCard, onLabNear, { rootMargin: NEAR_MARGIN });
         A.onSection(sectionReached);
         A.onThemeChange(themeChanged);
         A.onLanguageChange(languageChanged);
     }
 
+    // The toolkit calls build() when the lab is needed; ensure() builds it at once if it is not built yet
     const ensure = A.whenNeeded(mount, build);
 
-    // ----- Opening the lab from other parts of the site -----
-    // AICompass.lab.open("classifier" | "predictor") (AICompass.openLab is the older name)
+    /* =========================================================
+       11. COMMANDS AND AICompass.lab (what other features use)
+       ========================================================= */
+    // Opens the lab on one of its tabs and scrolls to it (it is built first if needed)
     function openLab(tab) {
         ensure();
         selectTab(tab === "predictor" ? "predictor" : "classifier");
         A.scrollToSection("lab");
     }
-    A.feature("lab", { open: openLab });
-    A.openLab = openLab;
 
+    // Two Ctrl+K palette commands
     A.registerCommand({
         id: "lab-classifier",
         group: "lab.cmdGroup",
@@ -2812,5 +2921,9 @@
         keywords: "lab next word predictor language model chatbot text autocomplete gpt лаборатория следующее слово предсказатель языковая модель чат-бот текст автодополнение",
         run: function () { A.openLab("predictor"); }
     });
+
+    // AICompass.lab.open("classifier" | "predictor"); AICompass.openLab is the older name
+    A.feature("lab", { open: openLab });
+    A.openLab = openLab;
 
 })();
