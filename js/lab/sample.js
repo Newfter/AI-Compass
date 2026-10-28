@@ -38,6 +38,12 @@
     const BLOWN_UP = 1e6;                    // a loss above this: the line flew away
     const GOAL = 0.01;                       // challenge 1: a loss below this
     const SAVE_VERSION = 1;                  // ctx.store "settings" = { v: 1, lr }
+    // How a run can end, and what the explain panel says then
+    const ENDINGS = {
+        fit: "lab.sample.fit",               // the line stopped moving: the best fit
+        slow: "lab.sample.slow",             // MAX_STEPS ran out while it was still moving
+        blown: "lab.sample.blown"            // the loss exploded
+    };
 
     /* =========================================================
        2. THE MATHS
@@ -125,7 +131,7 @@
         create: function (stage, ctx) {
             // ----- State. state: "ready" | "running" | "paused" | "done" -----
             const saved = ctx.store.get("settings", null, function (value) {
-                return value.v === SAVE_VERSION && value.lr >= RATE.min && value.lr <= RATE.max;
+                return value.v === SAVE_VERSION && typeof value.lr === "number" && value.lr >= RATE.min && value.lr <= RATE.max;
             });
             let lr = saved ? saved.lr : RATE.value;
             let dots = makeDots(SEED);
@@ -166,6 +172,7 @@
                 onInput: function (value) { lr = value; render(); },
                 onChange: function (value) { ctx.store.set("settings", { v: SAVE_VERSION, lr: value }); }
             });
+            lr = rate.value();                // the slider's own value (a saved 0.123 shows and runs as 0.12)
             const stepsStat = kit.stat({ labelKey: "lab.kit.stepCount", value: 0 });
             const lossStat = kit.stat({ labelKey: "lab.kit.loss", trend: "auto", better: "down" });
             const explain = kit.explain({ steps: [{ key: "lab.sample.step1" }, { key: "lab.sample.step2" }, { key: "lab.sample.step3" }] });
@@ -191,14 +198,16 @@
             scene.onResize(function () { drawScene(scene, dots, a, b); });
 
             // ----- What the buttons do -----
-            // One step of gradient descent: a and b move a little way downhill
+            // One step of gradient descent: a and b move a little way downhill. The run ends when
+            // the loss explodes, when the line stops moving, or when MAX_STEPS run out.
             function takeStep() {
                 const slope = gradient(dots, a, b);
                 a -= lr * slope.a;
                 b -= lr * slope.b;
                 losses.push(loss(dots, a, b));
-                if (!(losses[losses.length - 1] < BLOWN_UP)) finish(true);
-                else if ((Math.abs(slope.a) < STILL && Math.abs(slope.b) < STILL) || losses.length > MAX_STEPS) finish(false);
+                if (!(losses[losses.length - 1] < BLOWN_UP)) finish("blown");
+                else if (Math.abs(slope.a) < STILL && Math.abs(slope.b) < STILL) finish("fit");
+                else if (losses.length > MAX_STEPS) finish("slow");
             }
 
             function setState(next) {
@@ -206,16 +215,19 @@
                 status.set(next);
                 playButton.setLabel(next === "running" ? "lab.kit.pause" : "lab.kit.play");
                 playButton.setIcon(next === "running" ? "pause" : "play");
+                // A disabled button drops the keyboard focus: hand it to Play (which starts again)
+                if (next === "done" && document.activeElement === stepButton.element) playButton.element.focus();
                 stepButton.setDisabled(next === "done");
             }
 
-            function finish(flewAway) {
+            // ending: "fit", "slow" or "blown" (see ENDINGS)
+            function finish(ending) {
                 loop.stop();
-                blown = flewAway;
+                blown = ending === "blown";
                 setState("done");
-                explain.setText(flewAway ? "lab.sample.blown" : "lab.sample.fit");
-                ctx.announce(flewAway ? t("lab.sample.doneBlown")
-                    : A.plural("lab.sample.doneFit", losses.length - 1, { loss: A.format.number(losses[losses.length - 1]) }));
+                explain.setText(ENDINGS[ending]);
+                ctx.announce(blown ? t("lab.sample.doneBlown")
+                    : A.plural("lab.sample.doneFit", losses.length - 1, { loss: kit.number(losses[losses.length - 1]) }));
             }
 
             function togglePlay() {
@@ -264,7 +276,7 @@
                 explain.setValues(1, { loss: latest });
                 explain.setValues(2, { ga: slope.a, gb: slope.b });
                 explain.setStep(state === "ready" ? 0 : state === "done" ? 1 : 2);
-                scene.describe(t("lab.sample.describe", { n: dots.length, line: formula(a, b), loss: A.format.number(latest) }));
+                scene.describe(t("lab.sample.describe", { n: dots.length, line: formula(a, b), loss: kit.number(latest) }));
                 challenges.check({ loss: latest, blown: blown });
             }
 
