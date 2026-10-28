@@ -7,7 +7,8 @@
    5. Quick-reply chips and the message box
    6. Phones: an almost full-screen sheet
    7. Less motion
-   Layer: everything here sits at z-index 300.
+   Layers (style.css): the button, the hint and the phone backdrop sit at
+   --z-launcher, the chat window just above them at --z-sheet.
    ========================================================= */
 
 /* ===== 1. THE ORB BUTTON ===== */
@@ -16,7 +17,7 @@
     position: fixed;
     right: 24px;
     bottom: 24px;
-    z-index: 300;
+    z-index: var(--z-launcher);
     display: grid;
     place-items: center;
     width: 64px;
@@ -37,7 +38,6 @@
 .cb-launcher:focus-visible {
     outline: 2px solid var(--accent-2);
     outline-offset: 5px;
-    border-radius: 50%;
 }
 
 /* The orb is drawn with layers: soft halo, spinning ring, glossy core, eyes */
@@ -70,7 +70,7 @@
     background: conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--accent-3), var(--accent));
     -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
     mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
-    animation: cb-spin 6s linear infinite;
+    animation: aic-spin 6s linear infinite;
 }
 
 .cb-orb-core {
@@ -108,7 +108,7 @@
     width: 7px;
     height: 12px;
     border-radius: 4px;
-    background: #ffffff;
+    background: var(--on-accent);
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
     animation: cb-blink 5.5s ease-in-out infinite;
 }
@@ -119,7 +119,7 @@
     inset: 0;
     display: grid;
     place-items: center;
-    color: #ffffff;
+    color: var(--on-accent);
     opacity: 0;
     transform: rotate(-90deg) scale(0.6);
     transition: opacity 0.25s ease, transform 0.35s var(--ease);
@@ -158,6 +158,26 @@
     transform: scale(1);
 }
 
+/* The orb rests when nobody needs it: its loops wait, still, where they are
+   (they keep the computer busy at every scroll position). assistant.js wakes
+   it (.is-awake) after the page loads, while the mouse is over it, and when
+   it gets the focus or shows the hint. Under a window such as the palette
+   (the page is inert then) it always rests. */
+.cb-root:not(.is-awake) .cb-orb--launcher,
+.cb-root:not(.is-awake) .cb-orb--launcher .cb-orb-halo,
+.cb-root:not(.is-awake) .cb-orb--launcher .cb-orb-ring,
+[inert] .cb-orb--launcher,
+[inert] .cb-orb--launcher .cb-orb-halo,
+[inert] .cb-orb--launcher .cb-orb-ring {
+    animation-play-state: paused;
+}
+
+/* Resting eyes stay open (a paused blink could leave them half shut) */
+.cb-root:not(.is-awake) .cb-orb--launcher .cb-eye,
+[inert] .cb-orb--launcher .cb-eye {
+    animation: none;
+}
+
 @keyframes cb-float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
@@ -166,10 +186,6 @@
 @keyframes cb-breathe {
     0%, 100% { opacity: 0.65; transform: scale(0.94); }
     50% { opacity: 1; transform: scale(1.06); }
-}
-
-@keyframes cb-spin {
-    to { transform: rotate(360deg); }
 }
 
 @keyframes cb-blink {
@@ -182,13 +198,13 @@
 
 .cb-tip {
     position: fixed;
-    right: 100px;
+    right: var(--launcher-clearance);
     bottom: 34px;
-    z-index: 300;
+    z-index: var(--z-launcher);
     display: flex;
     align-items: center;
     gap: 2px;
-    max-width: calc(100vw - 124px);
+    max-width: calc(100vw - var(--launcher-clearance) - 24px);
     padding: 4px 4px 4px 6px;
     border: 1px solid var(--border-strong);
     border-radius: 18px 18px 6px 18px;
@@ -198,10 +214,6 @@
     transform: translateX(12px) scale(0.9);
     transform-origin: right bottom;
     transition: opacity 0.35s ease, transform 0.45s var(--ease);
-}
-
-.cb-tip[hidden] {
-    display: none;
 }
 
 .cb-tip.is-visible {
@@ -280,13 +292,13 @@
 .cb-panel {
     position: fixed;
     right: 24px;
-    bottom: 100px;
-    z-index: 301;
+    bottom: var(--launcher-clearance);
+    z-index: var(--z-sheet);
     display: flex;
     flex-direction: column;
     width: 380px;
-    height: min(620px, calc(100vh - 124px));
-    height: min(620px, calc(100dvh - 124px));
+    height: min(620px, calc(100vh - var(--launcher-clearance) - 24px));
+    height: min(620px, calc(100dvh - var(--launcher-clearance) - 24px));
     overflow: hidden;
     border: 1px solid var(--border-strong);
     border-radius: 24px;
@@ -303,10 +315,6 @@
     transform: translateY(18px) scale(0.92);
     transform-origin: 100% 100%;
     transition: opacity 0.25s ease, transform 0.4s var(--ease);
-}
-
-.cb-panel[hidden] {
-    display: none;
 }
 
 .cb-panel.is-visible {
@@ -495,6 +503,7 @@
 
 .cb-log {
     position: relative;     /* messages measure their place (offsetTop) inside the log */
+    border-radius: 0;       /* square, also for its focus ring */
     flex: 1;
     min-height: 0;
     display: flex;
@@ -521,7 +530,6 @@
 .cb-log:focus-visible {
     outline: 2px solid var(--accent-2);
     outline-offset: -2px;
-    border-radius: 0;
 }
 
 .cb-msg {
@@ -573,7 +581,7 @@
     width: 3px;
     height: 6px;
     border-radius: 2px;
-    background: #ffffff;
+    background: var(--on-accent);
 }
 
 .cb-avatar::before {
@@ -603,7 +611,7 @@
     border: 1px solid rgba(var(--accent-rgb), 0.4);
     border-bottom-right-radius: 6px;
     background: var(--gradient-button);
-    color: #ffffff;
+    color: var(--on-accent);
     box-shadow: 0 8px 22px rgba(var(--accent-rgb), 0.28);
 }
 
@@ -643,10 +651,6 @@
     margin-top: 10px;
 }
 
-.cb-actions[hidden] {
-    display: none;
-}
-
 .cb-action {
     display: inline-flex;
     align-items: center;
@@ -682,7 +686,7 @@
 [data-theme="light"] .cb-action {
     border-color: rgba(var(--accent-rgb), 0.4);
     background: rgba(var(--accent-rgb), 0.07);
-    color: var(--accent);
+    color: var(--text-accent);
 }
 
 [data-theme="light"] .cb-action:hover {
@@ -695,7 +699,7 @@
 [data-theme="light"] .cb-chip:hover,
 [data-theme="light"] .cb-tip-text:hover,
 [data-theme="light"] .cb-root.is-typing .cb-status {
-    color: var(--accent);
+    color: var(--text-accent);
 }
 
 [data-theme="light"] .cb-chip:hover {
@@ -800,11 +804,6 @@
     outline-offset: 2px;
 }
 
-.cb-chip:focus-visible,
-.cb-action:focus-visible {
-    border-radius: 999px;
-}
-
 .cb-form {
     display: flex;
     align-items: center;
@@ -845,7 +844,7 @@
     border: 1px solid rgba(var(--accent-rgb), 0.4);
     border-radius: 14px;
     background: var(--gradient-button);
-    color: #ffffff;
+    color: var(--on-accent);
     box-shadow: 0 8px 24px rgba(var(--accent-rgb), 0.35);
     transition: transform 0.25s var(--ease), box-shadow 0.25s ease, opacity 0.2s ease;
 }
@@ -885,9 +884,9 @@
 /* Short desktop windows */
 @media (min-width: 641px) and (max-height: 700px) {
     .cb-panel {
-        height: calc(100vh - 112px);
-        height: calc(100dvh - 112px);
-        bottom: 96px;
+        height: calc(100vh - var(--launcher-room) - 16px);
+        height: calc(100dvh - var(--launcher-room) - 16px);
+        bottom: var(--launcher-room);
     }
 }
 
@@ -910,17 +909,13 @@
     .cb-backdrop {
         position: fixed;
         inset: 0;
-        z-index: 300;
+        z-index: var(--z-launcher);     /* under the window, over the page */
         display: block;
         background: rgba(var(--accent-rgb), 0.12);
         -webkit-backdrop-filter: blur(6px);
         backdrop-filter: blur(6px);
         opacity: 0;
         transition: opacity 0.3s ease;
-    }
-
-    .cb-backdrop[hidden] {
-        display: none;
     }
 
     .cb-backdrop.is-visible {
@@ -1080,41 +1075,38 @@
     .cb-panel {
         top: 8px;
         bottom: 8px;
-        right: 100px;
+        right: var(--launcher-clearance);
         height: auto;
         transform-origin: 100% 100%;
     }
 }
 
-/* ===== 7. LESS MOTION ===== */
+/* ===== 7. LESS MOTION =====
+   core.js puts "fx-motion-off" on <html> when the device asks for less
+   motion or calm mode is on (style.css then shortens every animation). */
 
-@media (prefers-reduced-motion: reduce) {
-    .cb-orb--launcher,
-    .cb-orb-halo,
-    .cb-orb-ring,
-    .cb-eye,
-    .cb-status-dot::after,
-    .cb-msg.is-new {
-        animation: none;
-    }
-
-    .cb-dots span {
-        animation: none;
-        opacity: 0.8;
-    }
-
-    .cb-panel,
-    .cb-tip,
-    .cb-backdrop {
-        transition: none;
-    }
-
-    .cb-orb-face {
-        transform: none;
-    }
+html.fx-motion-off .cb-orb--launcher,
+html.fx-motion-off .cb-orb-halo,
+html.fx-motion-off .cb-orb-ring,
+html.fx-motion-off .cb-eye,
+html.fx-motion-off .cb-status-dot::after,
+html.fx-motion-off .cb-msg.is-new {
+    animation: none;
 }
 
-html.fx-calm .cb-orb-face {
+html.fx-motion-off .cb-dots span {
+    animation: none;
+    opacity: 0.8;
+}
+
+html.fx-motion-off .cb-panel,
+html.fx-motion-off .cb-tip,
+html.fx-motion-off .cb-backdrop {
+    transition: none;
+}
+
+/* The eyes stop following the mouse */
+html.fx-motion-off .cb-orb-face {
     transform: none;
 }
 

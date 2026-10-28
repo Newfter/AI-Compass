@@ -3,6 +3,7 @@
    Every word in English and in Russian (informal "ты").
    Used by js/assistant.js.
    To change a text, change it here (in both languages).
+   Below the texts: the bot's "brain" (its word lists and answers).
    ========================================================= */
 
 window.AICompass.addTranslations({
@@ -77,8 +78,8 @@ window.AICompass.addTranslations({
         "assistant.r.homework": "AI can be a great study buddy 📚 — if you use it honestly.<br><br>✅ <strong>Good:</strong> ask it to explain a topic more simply, quiz you before a test, or give feedback on <em>your own</em> draft.<br>❌ <strong>Not okay:</strong> copying its answer and handing it in as your work — that's cheating, and you don't learn anything.<br><br>Remember that AI can be wrong, so check its facts — and always follow your school's rules about AI.",
         "assistant.r.eliza": "<strong>ELIZA</strong> was one of the first chatbots, created by Joseph Weizenbaum at MIT in 1966. Its most famous script pretended to be a therapist and turned your words into questions: “I feel sad” → “Why do you feel sad?”. Many people felt it understood them — but it only matched patterns. Just like me! 😄<br><br>The <strong>Turing test</strong> is even older: in 1950 Alan Turing suggested checking whether a machine could chat so well that a person couldn't tell it from a human.",
         "assistant.r.recStart": "Start from the very beginning: <strong>{lesson}</strong> — it takes just a few minutes 🚀",
-        "assistant.r.recNext": "You've already finished {count} {lessons} out of 6 — nice work! 💪 Next up: <strong>{lesson}</strong>",
-        "assistant.r.recAll": "Wow, all 6 lessons are done! 🏆 Time to test yourself in the quiz — or replay any lesson you like.",
+        "assistant.r.recNext": "You've already finished {count} {lessons} out of {total} — nice work! 💪 Next up: <strong>{lesson}</strong>",
+        "assistant.r.recAll": "Wow, all {total} {lessons} are done! 🏆 Time to test yourself in the quiz — or replay any lesson you like.",
         "assistant.r.games": "Yes — at some games AI beats the best humans! ♟️ In 1997 IBM's <strong>Deep Blue</strong> beat world chess champion Garry Kasparov, and in 2016 DeepMind's <strong>AlphaGo</strong> beat Lee Sedol at Go, 4 games to 1. Today the strongest chess programs play far better than any human.<br><br>But a chess program is only good at chess: being great at one game doesn't make an AI smart in general.",
         "assistant.r.conscious": "Does AI think or feel? <strong>No</strong> — as far as scientists can tell, today's AI has no feelings, consciousness or wishes. A chatbot can write “I'm happy”, but only because those words fit the patterns it learned. It's very good at <em>imitating</em> human language — that's not the same as being human 🙂",
         "assistant.r.sad": "I'm sorry you're feeling this way 💜 I'm only a simple script, so I can't really help with feelings — but talking to someone you trust, like a friend, a family member or a teacher, really can. You don't have to deal with it alone.",
@@ -86,7 +87,7 @@ window.AICompass.addTranslations({
         "assistant.r.about": "<strong>AI Compass</strong> was made by students as a <strong>CAS project</strong> 🎓 — a free, bilingual guide that helps anyone understand how AI works, use it wisely and think about it critically. No sign-up, no ads.",
         "assistant.r.ack": "😊 Glad I could help! What next — a <strong>fun fact</strong>, a <strong>lesson</strong> or the <strong>quiz</strong>?",
         "assistant.r.lessonOpen": "Opening <strong>{lesson}</strong> 📖",
-        "assistant.r.lessonMissing": "There are only 6 lessons on this site — try a number from 1 to 6 🙂",
+        "assistant.r.lessonMissing": "There are only {total} {lessons} on this site — try a number from 1 to {total} 🙂",
         "assistant.r.lessonOffer": "Here's <strong>{lesson}</strong> 📖 Open it whenever you like:",
         "assistant.r.quiz": "Let's go! 🏆 Taking you to the AI Challenge — good luck!",
         "assistant.r.quizOffer": "Want to test yourself? 🏆 The <strong>AI Challenge</strong> is a short quiz about everything on this site. Start it whenever you're ready:",
@@ -116,6 +117,8 @@ window.AICompass.addTranslations({
         "assistant.r.hint.en": "By the way, the whole site is also available in English.",
 
         // ----- Fun facts (all checked) -----
+        // To add one, write "assistant.fact14" here AND in the Russian part:
+        // the bot counts the facts by itself
         "assistant.fact1": "The term <strong>“artificial intelligence”</strong> was coined by John McCarthy in 1955, in a proposal for a summer workshop at Dartmouth College in 1956. That workshop is often called the birth of AI.",
         "assistant.fact2": "<strong>ELIZA</strong>, one of the first chatbots, was made by Joseph Weizenbaum at MIT in 1966. Some people believed it really understood them — even though it only matched keywords, a bit like me!",
         "assistant.fact3": "In 1997, IBM's computer <strong>Deep Blue</strong> beat world chess champion Garry Kasparov in a six-game match.",
@@ -131,6 +134,7 @@ window.AICompass.addTranslations({
         "assistant.fact13": "Arthur Samuel made the term <strong>“machine learning”</strong> popular in 1959. His checkers program got better by playing game after game against itself.",
 
         // ----- Jokes (harmless!) -----
+        // To add one, write "assistant.joke6" here AND in the Russian part
         "assistant.joke1": "What kind of music do robots like? <strong>Heavy metal!</strong> 🤘",
         "assistant.joke2": "Why did the AI cross the road? Because its training data said that's what chickens do 🐔",
         "assistant.joke3": "I asked a machine-learning model to tell me a joke. It said: “Sorry, I'm still in training.” 🏋️",
@@ -208,8 +212,8 @@ window.AICompass.addTranslations({
         "assistant.r.homework": "ИИ может быть отличным помощником в учёбе 📚 — если пользоваться им честно.<br><br>✅ <strong>Можно:</strong> попросить объяснить тему проще, устроить тебе мини-тест перед контрольной или дать отзыв на <em>твой собственный</em> черновик.<br>❌ <strong>Нельзя:</strong> копировать его ответ и сдавать как свою работу — это списывание, и ты ничему не научишься.<br><br>Помни, что ИИ может ошибаться, поэтому проверяй факты — и всегда соблюдай правила своей школы насчёт ИИ.",
         "assistant.r.eliza": "<strong>ELIZA</strong> — один из первых чат-ботов. Его создал Джозеф Вейценбаум в MIT в 1966 году. Самый известный сценарий ELIZA изображал психотерапевта и превращал твои слова в вопросы: «Мне грустно» → «Почему тебе грустно?». Многим казалось, что программа их понимает, — но она лишь искала шаблоны. Совсем как я! 😄<br><br><strong>Тест Тьюринга</strong> появился ещё раньше: в 1950 году Алан Тьюринг предложил проверять, сможет ли машина переписываться так, чтобы человек не отличил её от другого человека.",
         "assistant.r.recStart": "Начни с самого начала — <strong>{lesson}</strong>. Это займёт всего несколько минут 🚀",
-        "assistant.r.recNext": "Позади уже {count} {lessons} из 6 — отличная работа! 💪 Следующий шаг — <strong>{lesson}</strong>.",
-        "assistant.r.recAll": "Ого, все 6 уроков пройдены! 🏆 Пора проверить себя в тесте — или повтори любой урок.",
+        "assistant.r.recNext": "Позади уже {count} {lessons} из {total} — отличная работа! 💪 Следующий шаг — <strong>{lesson}</strong>.",
+        "assistant.r.recAll": "Ого, все {total} {lessons} пройдены! 🏆 Пора проверить себя в тесте — или повтори любой урок.",
         "assistant.r.games": "Да — в некоторых играх ИИ обыгрывает лучших людей! ♟️ В 1997 году компьютер IBM <strong>Deep Blue</strong> победил чемпиона мира по шахматам Гарри Каспарова, а в 2016 году программа <strong>AlphaGo</strong> от DeepMind обыграла Ли Седоля в го со счётом 4:1. Сегодня сильнейшие шахматные программы играют намного лучше любого человека.<br><br>Но шахматная программа умеет только играть в шахматы: если ИИ силён в одной игре, это ещё не значит, что он умён во всём.",
         "assistant.r.conscious": "Может ли ИИ думать или чувствовать? <strong>Нет</strong> — насколько известно учёным, у современного ИИ нет чувств, сознания и желаний. Чат-бот может написать «я рад», но только потому, что эти слова подходят под выученные закономерности. Он отлично <em>подражает</em> человеческому языку — но это не то же самое, что быть человеком 🙂",
         "assistant.r.sad": "Мне жаль, что тебе сейчас так 💜 Я всего лишь простой скрипт и не умею помогать с чувствами — но разговор с тем, кому ты доверяешь, — с другом, родными или учителем — правда помогает. С этим не нужно справляться в одиночку.",
@@ -217,7 +221,7 @@ window.AICompass.addTranslations({
         "assistant.r.about": "<strong>AI Compass</strong> создали школьники в рамках <strong>проекта CAS</strong> 🎓 — это бесплатный двуязычный путеводитель, который помогает понять, как работает ИИ, пользоваться им с умом и оценивать его критически. Без регистрации и рекламы.",
         "assistant.r.ack": "😊 Рад помочь! Что дальше — <strong>интересный факт</strong>, <strong>урок</strong> или <strong>тест</strong>?",
         "assistant.r.lessonOpen": "Открываю <strong>{lesson}</strong> 📖",
-        "assistant.r.lessonMissing": "На сайте всего 6 уроков — попробуй номер от 1 до 6 🙂",
+        "assistant.r.lessonMissing": "На сайте всего {total} {lessons} — попробуй номер от 1 до {total} 🙂",
         "assistant.r.lessonOffer": "Вот <strong>{lesson}</strong> 📖 Открывай, когда захочешь:",
         "assistant.r.quiz": "Поехали! 🏆 Переношу тебя к ИИ-испытанию — удачи!",
         "assistant.r.quizOffer": "Хочешь проверить себя? 🏆 <strong>ИИ-испытание</strong> — короткий тест обо всём, что есть на этом сайте. Начинай, как только захочешь:",
@@ -271,4 +275,432 @@ window.AICompass.addTranslations({
         "assistant.cmdFact": "Compass Bot: расскажи интересный факт",
         "assistant.cmdJoke": "Compass Bot: расскажи шутку"
     }
+});
+
+/* =========================================================
+   COMPASS BOT'S "BRAIN"
+   The bot is not a real AI: it looks for these words in a message
+   and picks a prepared answer (see section 4 of js/assistant.js).
+   The words are written in lower case, "ё" as "е", and without
+   punctuation ("what's up" is written "what s up").
+
+   1. Intents: what the person wants, and the words that show it
+   2. Going to a section of the site
+   3. Doing something ("start the quiz") or only offering a button
+   4. Messages that need a real person, not a script
+   5. "What is X?" questions
+   6. Words for the theme, the language and the lab
+   7. Simple answers and their buttons
+   8. The quick-question chips under the chat
+
+   To add a fun fact or a joke, add "assistant.fact14" (or
+   "assistant.joke6") above, in BOTH languages: the bot counts them.
+   ========================================================= */
+
+window.AICompass.content.set("assistant", {
+    /* ----- 1. Intents -----
+       An "intent" is what the person wants (a greeting, a quiz...).
+       Each intent has keywords in BOTH languages.
+       - "word*"  matches the start of a word: "нейросет*" finds "нейросети"
+       - "?word"  is a weak hint and counts only half a point
+       - phrases with several words score more ("machine learning" = 2)
+       The intent with the most points wins. On a tie, the one
+       higher in this list wins.
+       Long keywords (7+ letters) may have one typo in the message
+       ("lerning"), shorter ones must be exact. Real words that only look
+       like a typo go into notTypos (below the list).
+       strict: true = no typos at all for this intent. */
+    intents: [
+        {
+            // "тема" alone also means "topic" in Russian ("давай сменим тему"),
+            // so it only counts together with "dark / light / site"
+            id: "theme", strict: true,
+            words: ["dark mode", "light mode", "dark theme", "light theme", "night mode", "day mode", "theme",
+                "switch theme", "change theme", "colour theme", "color theme", "too bright", "too dark",
+                "make it dark", "make it light", "go dark", "lights off", "lights on", "darker", "lighter",
+                "сделай темнее", "сделай светлее", "темнее", "светлее",
+                "темн* тем*", "светл* тем*", "тем* сайта", "ночн* режим", "дневн* режим",
+                "темн* режим", "светл* режим", "смени тему", "сменить тему", "слишком ярко", "слишком темно"]
+        },
+        {
+            id: "language", strict: true,
+            words: ["russian", "english", "in russian", "in english", "switch language", "change language", "language",
+                "по русски", "по английски", "на русском", "на английском", "на русский", "на английский",
+                "русский", "английский", "русском", "английском", "язык", "языка", "языке", "языки",
+                "смени язык", "переключи язык", "сменить язык"]
+        },
+        {
+            id: "quiz",
+            words: ["quiz*", "start quiz", "start the quiz", "begin the quiz", "take the quiz", "take a quiz", "quiz me",
+                "test me", "test myself", "take the test", "take a test", "start the test", "ai challenge",
+                "тест", "тестик", "викторин*", "начать тест", "начни тест", "запусти тест", "пройти тест",
+                "проверь меня", "проверить себя", "проверь себя", "испытани*"]
+        },
+        {
+            id: "lab",
+            words: ["lab", "ai lab", "laboratory", "experiment*", "classifier", "predictor", "next word",
+                "teach the machine", "open the lab", "open lab", "open the ai lab", "playground",
+                "try ai", "лаборатори*", "лабу", "эксперимент*", "классификатор*", "предсказател*",
+                "следующ* слов*", "обучи машину", "открой лаборатори*", "открыть лаборатори*", "попробовать ии"]
+        },
+        {
+            id: "recommend",
+            words: ["recommend*", "suggest*", "which lesson", "what lesson", "next lesson", "where to start",
+                "where do i start", "where should i start", "what should i learn", "what to learn", "?lesson",
+                "how do i start", "how to start", "how should i start", "where do i begin", "start learning",
+                "beginner*", "getting started", "новичок*", "как начать", "с чего начинать", "хочу научиться",
+                "посоветуй*", "порекомендуй*", "рекоменд*", "какой урок", "с чего начать", "что изучить",
+                "что изучать", "следующ* урок*", "?урок"]
+        },
+        {
+            id: "eliza",
+            words: ["eliza", "turing", "turing test", "first chatbot*", "first chat bot*", "weizenbaum",
+                "элиза", "элайза", "тьюринг*", "тест тьюринга", "перв* чат бот*", "перв* чатбот*", "вейценбаум*"]
+        },
+        {
+            id: "history",
+            words: ["who invented ai", "who invented artificial intelligence", "who created ai", "inventor*",
+                "father of ai", "birth of ai", "when was ai invented", "when did ai start", "history of ai",
+                "history of artificial intelligence", "ai history", "кто придумал ии", "истори* ии",
+                "истори* искусственн*",
+                "кто изобрел*", "кто создал ии", "изобретател*", "отец ии", "когда появился ии", "когда придумали ии"]
+        },
+        {
+            id: "games",
+            words: ["chess", "alphago", "alpha go", "alphazero", "deep blue", "kasparov", "checkers", "go game",
+                "game of go", "lee sedol", "шахмат*", "альфаго", "каспаров*", "шашк*", "игра го", "игру го", "в го",
+                "ли седол*"]
+        },
+        {
+            // Someone feeling down gets a kind answer first
+            id: "sad",
+            words: ["i feel sad", "i am sad", "i m sad", "im sad", "sad", "lonely", "depressed", "upset", "unhappy",
+                "bad day", "мне грустно", "грустно", "одиноко", "печально", "тоскливо", "депресс*", "расстроен*",
+                "грущу", "плохое настроение"]
+        },
+        {
+            id: "conscious",
+            words: ["alive", "conscious*", "sentient", "self aware", "feelings", "emotion*", "can ai feel",
+                "can you feel", "do you feel", "does ai think", "can ai think", "think like a human", "have feelings",
+                "живой", "живая", "сознани*", "чувствует", "чувствуешь", "чувства", "эмоци*",
+                "может ли ии думать", "думает ли", "разумн*"]
+        },
+        {
+            id: "about",
+            words: ["who made this site", "who made this website", "who created this site", "who built this site",
+                "who made ai compass", "about this site", "about the site", "about ai compass", "ai compass",
+                "what is ai compass", "what is this site", "what is this website", "что такое ai compass", "что это за сайт",
+                "cas project", "кто сделал этот сайт", "кто создал этот сайт", "кто сделал сайт", "кто создал сайт",
+                "о сайте", "о проекте", "об ai compass", "проект cas"]
+        },
+        {
+            id: "hallucination",
+            words: ["hallucinat*", "make things up", "makes things up", "making things up", "made up", "invents facts",
+                "wrong answer*", "lie", "lies", "lying", "false information", "fake facts", "mistake*",
+                "always right", "always correct", "can ai be wrong", "trust ai", "trust chatbots",
+                "галлюцинац*", "галлюцинир*", "выдумыва*", "выдумал*", "врать", "врет*", "врут", "соврал*",
+                "наврал*", "вранье", "обманыва*",
+                "ошиба*", "ошибк*", "неправд*", "всегда прав*", "можно ли доверять", "доверять"]
+        },
+        {
+            id: "privacy",
+            words: ["privacy", "private", "personal data", "personal info*", "my data", "data protection",
+                "password*", "tracking", "track me", "safe to share", "приватн*", "конфиденциальн*",
+                "личн* данн*", "персональн* данн*", "пароль*", "слежк*", "следят"]
+        },
+        {
+            id: "danger",
+            words: ["danger*", "scary", "scared", "afraid", "fear", "take over", "takeover", "rise of the machines",
+                "terminator", "skynet", "destroy", "evil", "replace jobs", "replace humans", "replace people",
+                "take my job", "take our jobs", "jobs", "safe", "safety", "risk*", "threat*", "deepfake*",
+                "deep fake*", "опас*", "захват*", "восстание машин", "восстан*", "терминатор*", "скайнет",
+                "уничтож*", "злой", "замен*", "заберет*", "отберет*", "отнимет*", "мою работу", "нашу работу",
+                "без работы", "професси*", "угроз*", "риск*", "страшн*", "боюсь",
+                "бояться", "безопас*", "дипфейк*"]
+        },
+        {
+            id: "bias",
+            words: ["bias*", "fair", "fairness", "unfair", "ethic*", "discriminat*", "racist", "sexist",
+                "stereotype*", "moral*", "responsib*", "neutral", "objective", "предвзят*", "справедлив*", "несправедлив*", "этик*",
+                "этичн*", "нейтральн*", "нейтрален", "объективн*", "объективен", "дискриминац*", "стереотип*", "мораль*", "предубежден*", "ответственност*"]
+        },
+        {
+            id: "homework",
+            words: ["homework", "home work", "essay*", "assignment*", "cheat*", "school work", "schoolwork",
+                "study", "studying", "exam*", "plagiar*", "do my homework", "write my essay", "for school",
+                "домашк*", "домашн* задани*", "домашнее", "дз", "сочинени*", "реферат*", "списыва*",
+                "списать", "эссе", "учеб*", "контрольн*", "экзамен*", "плагиат*", "для школы"]
+        },
+        {
+            id: "llm",
+            words: ["chatbot*", "chat bot*", "chatgpt", "chat gpt", "gpt*", "llm*", "large language model*",
+                "language model*", "claude", "gemini", "copilot", "generative ai", "generative",
+                "how does chatgpt work", "чат бот*", "чатбот*", "чатгпт", "чат гпт", "гпт", "языков* модел*",
+                "генеративн*", "больш* языков* модел*"]
+        },
+        {
+            id: "nn",
+            words: ["neural network*", "neural net*", "neural", "neuron*", "deep learning", "layers", "weights",
+                "нейросет*", "нейронн* сет*", "нейрон*", "нейронк*", "глубок* обучени*", "слои", "веса"]
+        },
+        {
+            id: "ml",
+            words: ["machine learning", "machine learn*", "ml", "learn from data", "learns from data",
+                "learning from data", "training data", "train a model", "training a model", "how does ai learn",
+                "how ai learns", "how do computers learn", "supervised", "машинн* обучени*", "обучени* модел*",
+                "как ии учится", "как учится ии", "как обучают", "обучающ* данн*", "обучающ* выборк*",
+                "как компьютер учится"]
+        },
+        {
+            id: "ai",
+            words: ["what is ai", "what s ai", "whats ai", "what is artificial intelligence", "artificial intelligence",
+                "define ai", "explain ai", "?ai", "искусствен* интеллект*", "что такое ии", "что такое искусственный интеллект",
+                "объясни ии", "?ии"]
+        },
+        {
+            // Scored by navScore() in js/assistant.js, with the
+            // section words and the "go to" words below
+            id: "nav", strict: true
+        },
+        {
+            id: "who",
+            words: ["who are you", "what are you", "your name", "who made you", "who created you", "are you real",
+                "are you an ai", "are you ai", "are you a robot", "are you human", "are you a bot", "are you chatgpt",
+                "are you a demo", "is this a demo", "how do you work", "кто ты", "ты демо*", "ты кто", "как тебя зовут", "твое имя", "тебя зовут", "ты робот",
+                "ты бот", "ты настоящ*", "ты человек", "ты ии", "кто тебя создал", "кто тебя сделал",
+                "как ты работаешь"]
+        },
+        {
+            id: "howAreYou",
+            words: ["how are you", "how r u", "how are u", "how is it going", "how s it going", "how do you do",
+                "what s up", "whats up", "как дела", "как ты", "как поживаешь", "как жизнь", "как настроение"]
+        },
+        {
+            id: "joke",
+            words: ["joke*", "funny", "make me laugh", "laugh", "humor", "humour", "pun", "шутк*", "шуточ*",
+                "пошути*", "анекдот*", "смешн*", "рассмеши*", "посмеш*"]
+        },
+        {
+            id: "fact",
+            words: ["fun fact", "fact*", "did you know", "something interesting", "interesting", "tell me something",
+                "surprise me", "trivia", "факт*", "интересн*", "удиви*", "расскажи что нибудь", "знаешь ли ты"]
+        },
+        {
+            id: "help",
+            // "help" is weak: "how can AI help doctors?" is about AI, not about the bot,
+            // and "I need help with my homework" is about homework
+            words: ["?help", "?help me", "?i need help", "what can you do", "what do you do", "what can i ask", "commands",
+                "options", "abilities", "помощь", "?помоги*", "что ты умеешь", "что умеешь", "что ты можешь", "что можешь",
+                "команды", "возможности", "умеешь"]
+        },
+        {
+            id: "thanks",
+            words: ["thanks", "thank you", "thank u", "thx", "ty", "cheers", "appreciate it", "great answer",
+                "спасибо", "спс", "благодарю", "сенкс", "пасиб*"]
+        },
+        {
+            id: "bye",
+            words: ["bye", "goodbye", "good bye", "bye bye", "see you", "see ya", "cya", "farewell", "good night",
+                "пока", "до свидания", "до встречи", "увидимся", "бывай", "спокойной ночи"]
+        },
+        {
+            id: "ack",
+            words: ["ok", "okay", "cool", "nice", "great", "awesome", "wow", "got it", "i see", "yes", "yeah", "sure",
+                "ок", "окей", "хорошо", "понятно", "ясно", "круто", "класс", "супер", "ага", "да", "отлично"]
+        },
+        {
+            id: "greeting",
+            words: ["hi", "hello", "hey", "hiya", "howdy", "yo", "greetings", "good morning", "good afternoon",
+                "good evening", "sup", "hola", "привет*", "здравствуй*", "здрасте", "здрасьте", "добрый день",
+                "доброе утро", "добрый вечер", "хай", "салют", "хелло"]
+        }
+    ],
+
+    // Real words that are one letter away from a keyword but mean something
+    // else: the bot never reads them as a typo. "neural" is not "neutral",
+    // "feeling" is not "feelings", "sentiment" is not "sentient",
+    // "писать" (to write) is not "списать" (to copy).
+    notTypos: ["neural", "feeling", "sentiment", "писать"],
+
+    // Small talk at the start of a message. "Hi! How does AI work?" is a
+    // question, not only a greeting: when one of these intents wins and the
+    // message STARTS with it, the bot answers the 2+ words after it instead
+    // (if it understands them). And a thank-you FOR something is a thank-you:
+    // "thanks for the joke", "спасибо большое за помощь" (thanksFor).
+    smallTalk: ["greeting", "thanks", "ack"],
+    thanksFor: ["for", "за"],
+
+    /* ----- 2. Going to a section of the site -----
+       "Go to the glossary" = 2 points; just "glossary" = 1 point
+       (only in short messages). */
+    sectionWords: {
+        home: ["home", "home page", "homepage", "top", "main page", "start page", "главн*", "наверх", "начало", "домой"],
+        lessons: ["lessons", "all lessons", "lesson list", "уроки", "уроков", "урокам"],
+        lab: ["lab", "ai lab", "laboratory", "лаборатори*", "лабу"],
+        quiz: ["quiz", "quizzes", "тест", "тесту", "викторин*"],
+        glossary: ["glossary", "dictionary", "vocabulary", "terms", "словар*", "глоссари*", "термин*"],
+        timeline: ["history", "timeline", "истори*", "хронолог*"],
+        about: ["about", "about us", "about page", "about this site", "mission", "о проекте", "о сайте", "о нас", "миссия", "cas"]
+    },
+
+    navVerbs: ["go", "go to", "goto", "take me", "bring me", "open", "show", "show me", "navigate", "scroll",
+        "jump", "where is", "where s", "перейди*", "перейти", "открой*", "открыть", "покажи*", "показать",
+        "отведи*", "веди", "где", "прокрути*", "пролистай*", "хочу в", "хочу к"],
+
+    /* ----- 3. Doing something or offering a button -----
+       Words that show the person really wants the bot to DO something
+       ("start the quiz", "switch to Russian"). Without them, a longer message
+       like "how many questions does the quiz have?" only gets a button. */
+    commandWords: ["start", "begin", "open", "launch", "play", "go", "take me", "bring me", "show me",
+        "switch", "change", "turn", "make", "set", "enable", "put", "run", "let s", "lets", "i want", "i wanna",
+        "i d like", "id like", "want to", "give me", "take the", "take a", "quiz me", "test me",
+        "начни*", "начать", "начнем", "начинай", "запусти*", "запуск*", "открой*", "открыть", "включи*",
+        "выключи*", "переключи*", "смени*", "сменить", "поменяй*", "поменять", "сделай*", "перейди*",
+        "перейти", "покажи*", "давай", "хочу", "хочется", "пройти", "пройду", "поехали", "перенеси*",
+        "отведи*", "проверь*", "проверить"],
+
+    /* ----- 4. Messages that need a real person, not a script -----
+       Someone in danger or in deep distress gets a calm answer that points
+       to trusted adults and helplines. This is checked before anything else. */
+
+    // Always serious, whatever else the message says
+    crisisWords: ["want to die", "wanna die", "wish i was dead", "wish i were dead", "kill myself",
+        "killing myself", "suicid*", "self harm*", "selfharm*", "hurt myself", "hurting myself", "harm myself",
+        "cut myself", "cutting myself", "end my life", "take my life", "don t want to live", "dont want to live",
+        "do not want to live", "no reason to live",
+        "хочу умереть", "хочется умереть", "лучше бы я умер*", "покончить с собой", "покончу с собой",
+        "суицид*", "самоубийств*", "не хочу жить", "не хочется жить", "жить не хочется", "жить не хочу",
+        "незачем жить", "убить себя", "убью себя", "навредить себе", "причинить себе вред", "режу себя",
+        "резать себя", "порезать себя", "селфхарм*"],
+
+    // About the person, unless the message is about AI
+    // ("I'm being bullied" -> help; "can AI stop bullying?" -> a normal answer)
+    distressWords: ["hurting me", "hurts me", "hits me", "hit me again", "beat me up", "beats me up",
+        "beating me up", "abuse*", "abusing", "abusive", "bullied", "bullying", "bully me", "bullies me",
+        "harass*", "touching me", "threaten* me", "unsafe at home", "not safe at home", "nobody likes me",
+        "no one likes me", "nobody loves me", "no one loves me", "nobody cares", "no one cares", "hate myself",
+        "hate my life", "feel alone", "feel so alone", "feel really alone", "i m alone", "im alone", "i am alone",
+        "all alone", "so alone", "scared and alone", "alone and scared", "i m scared", "im scared",
+        "i am scared", "i feel scared", "i m afraid", "im afraid", "i am afraid", "i feel afraid",
+        "травят", "травля", "травлю", "травли", "травле", "буллинг*", "буллят", "меня бьют", "бьют меня",
+        "меня бьет", "избива*", "меня обижают", "обижают меня", "издеваются", "издевается", "домогает*",
+        "домогают*", "насили*", "мне угрожают", "угрожают мне", "никто меня не любит", "меня никто не любит",
+        "никому не нужен", "никому не нужна", "ненавижу себя", "ненавижу свою жизнь", "совсем один",
+        "совсем одна", "мне плохо", "мне очень плохо", "мне так плохо", "мне сейчас плохо", "мне страшно",
+        "мне очень страшно", "мне так страшно", "я боюсь"],
+
+    aiTopicWords: ["ai", "ии", "robot*", "робот*", "machine*", "машин*", "computer*", "компьютер*",
+        "chatbot*", "chat", "чат*", "neural", "нейрон*", "нейросет*", "technolog*", "технолог*", "algorithm*",
+        "алгоритм*", "artificial", "искусствен*", "skynet", "terminator*", "терминатор*", "deepfake*",
+        "дипфейк*", "gpt*", "гпт", "chess", "шахмат*"],
+
+    /* ----- 5. "What is X?" / "Define X" -----
+       defineExplicit: the person clearly asks for a definition ("define", "meaning of").
+       fillers: polite words skipped at the start ("please define ...").
+       endings: skipped at the end ("what does overfitting mean").
+       coverSkip: small words that don't change what a question is about. */
+    defineExplicit: ["define", "definition of", "definition", "meaning of", "what does",
+        "определение слова", "определение", "значение слова", "значение", "что значит", "что означает",
+        "дай определение", "объясни слово", "объясни термин"],
+
+    defineQuestion: ["what is a", "what is an", "what is the", "what is", "what s a", "what s an", "what s",
+        "whats a", "whats", "what are", "who is", "explain", "tell me what", "что такое", "что это такое",
+        "что это", "кто такой", "кто такая", "что за", "объясни", "расскажи что такое"],
+
+    fillers: ["please", "pls", "so", "and", "hey", "ok", "okay", "um", "ну", "а", "скажи", "подскажи",
+        "пожалуйста", "слушай"],
+
+    endings: ["mean", "means", "stand for", "означает", "значит", "is", "это"],
+
+    coverSkip: ["a", "an", "the", "of", "in", "on", "for", "about", "to", "is", "are", "do", "does", "and",
+        "with", "by", "it", "its", "this", "that", "ai", "ии", "в", "во", "на", "о", "об", "про", "у", "и", "с",
+        "для", "это", "этот", "эта", "такое", "ли"],
+
+    /* ----- 6. Words for the theme, the language and the lab ----- */
+    themeWords: {
+        dark: ["dark", "night", "black", "темн*", "ночн*", "черн*"],
+        light: ["light", "day", "white", "bright", "светл*", "дневн*", "бел*", "ярк*"],
+        tooBright: ["too bright", "слишком ярко"],     // means: make it dark
+        tooDark: ["too dark", "слишком темно"]         // means: make it light
+    },
+
+    languageWords: {
+        ru: ["russian", "русск*", "по русски", "рус"],
+        en: ["english", "английск*", "по английски", "англ*", "eng"],
+        change: ["switch", "change", "переключи*", "смени*", "поменя*", "другой"],
+        // In a message about AI (aiTopicWords), "language" / "язык" is about
+        // the site only next to one of these words. So "How does AI
+        // understand human language?" is a question about AI.
+        context: ["russian", "english", "русск*", "английск*", "switch", "change", "переключи*", "смени*",
+            "сменить", "поменя*", "site", "website", "page", "сайт*", "страниц*"]
+    },
+
+    // "Open the lab" with these words opens the next-word predictor
+    predictorWords: ["predict*", "next word", "language model", "предсказ*", "следующ* слов*"],
+
+    // Names that are written in Latin letters in Russian texts too
+    // (so they don't count as English words)
+    latinNames: ["eliza", "chatgpt", "gpt", "alphago", "alexa", "siri", "gemini", "claude", "copilot", "google",
+        "openai", "deepmind", "midjourney", "turing", "python"],
+
+    /* ----- 7. Simple answers and their buttons -----
+       text: the answer (a text key from above).
+       buttons, one of:
+         { lesson: 4 }                open lesson 4
+         { lab: "classifier" }        open the lab ("classifier" or "predictor")
+         { section: "timeline" }      go to a section of the page
+         { quiz: true }               start the quiz
+         { ask: "fact", label: "assistant.chip.fact", icon: "💡" }
+                                      ask the bot again (fact, joke, recommend, define)
+       Answers that need numbers or other data (greetings, facts, lessons,
+       the glossary...) are built in section 3 of js/assistant.js. */
+    replies: {
+        welcome: { text: "assistant.r.welcome" },
+        thanks: { text: "assistant.r.thanks" },
+        bye: { text: "assistant.r.bye" },
+        howAreYou: { text: "assistant.r.howAreYou" },
+        who: { text: "assistant.r.who", buttons: [{ lesson: 4 }] },
+        help: { text: "assistant.r.help" },
+        ai: { text: "assistant.r.ai", buttons: [{ lesson: 1 }] },
+        ml: { text: "assistant.r.ml", buttons: [{ lesson: 2 }, { lab: "classifier" }] },
+        nn: { text: "assistant.r.nn", buttons: [{ lesson: 3 }, { lab: "classifier" }] },
+        llm: { text: "assistant.r.llm", buttons: [{ lesson: 4 }, { lab: "predictor" }] },
+        hallucination: { text: "assistant.r.hallucination", buttons: [{ lesson: 4 }] },
+        bias: { text: "assistant.r.bias", buttons: [{ lesson: 6 }] },
+        privacy: { text: "assistant.r.privacy", buttons: [{ lesson: 6 }] },
+        danger: { text: "assistant.r.danger", buttons: [{ lesson: 6 }] },
+        homework: { text: "assistant.r.homework", buttons: [{ lesson: 4 }] },
+        eliza: { text: "assistant.r.eliza", buttons: [{ section: "timeline" }] },
+        conscious: { text: "assistant.r.conscious", buttons: [{ lesson: 1 }] },
+        games: { text: "assistant.r.games", buttons: [{ section: "timeline" }] },
+        sad: { text: "assistant.r.sad" },
+        support: { text: "assistant.r.support" },
+        about: { text: "assistant.r.about", buttons: [{ section: "about" }] },
+        ack: {
+            text: "assistant.r.ack",
+            buttons: [
+                { ask: "fact", label: "assistant.chip.fact", icon: "💡" },
+                { ask: "recommend", label: "assistant.chip.lesson", icon: "📚" },
+                { quiz: true }
+            ]
+        },
+        quiz: { text: "assistant.r.quiz", buttons: [{ quiz: true }] },
+        quizOffer: { text: "assistant.r.quizOffer", buttons: [{ quiz: true }] },
+        lab: { text: "assistant.r.lab", buttons: [{ lab: "classifier" }, { lab: "predictor" }] },
+        labOffer: { text: "assistant.r.labOffer", buttons: [{ lab: "classifier" }, { lab: "predictor" }] },
+        themeDark: { text: "assistant.r.themeDark" },
+        themeLight: { text: "assistant.r.themeLight" },
+        noGlossary: { text: "assistant.r.noGlossary" }
+    },
+
+    /* ----- 8. The quick-question chips under the chat -----
+       intent: what the bot answers; key: the chip's text */
+    chips: [
+        { intent: "ai", key: "assistant.chip.ai", icon: "🤖" },
+        { intent: "recommend", key: "assistant.chip.lesson", icon: "📚" },
+        { intent: "quiz", key: "assistant.chip.quiz", icon: "🏆" },
+        { intent: "lab", key: "assistant.chip.lab", icon: "🧪" },
+        { intent: "fact", key: "assistant.chip.fact", icon: "💡" },
+        { intent: "define", key: "assistant.chip.define", icon: "📖" }
+    ]
 });

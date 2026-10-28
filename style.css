@@ -163,6 +163,16 @@
     --z-palette: 600;     /* the command palette */
     --z-toast: 700;       /* small pop-up messages */
     --z-skip: 1000;       /* the "Skip to content" link */
+
+    /* Compass Bot's round button (css/assistant.css) sits in the bottom-right
+       corner: 64px wide, 24px from the edges. Other things keep out of its way.
+       --launcher-room: the corner kept free for it, margin included
+         (24 + 64 + 8px). The quiz reads it with AICompass.layout.px(),
+         so keep it a plain px value.
+       --launcher-clearance: where things placed next to the button start
+         (the hint, the chat window, toasts on smaller screens): 24 + 64 + 12px. */
+    --launcher-room: 96px;
+    --launcher-clearance: 100px;
 }
 
 /* ===== 2. BASICS ===== */
@@ -1007,14 +1017,14 @@ button.chip:hover,
    keep "Back to top" out from under it */
 @media (min-width: 641px) {
     .footer-bottom {
-        padding-right: 96px;
+        padding-right: var(--launcher-room);
     }
 }
 
 /* On smaller screens toasts sit above the assistant button and its hint bubble */
 @media (max-width: 1200px) {
     :root {
-        --toast-bottom: 100px;
+        --toast-bottom: var(--launcher-clearance);
     }
 }
 
