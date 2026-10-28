@@ -32,6 +32,10 @@
     const t = A.t;
     const esc = A.escapeHTML;
 
+    // The bot's word lists and simple answers: js/content/assistant.js
+    const brain = A.content.get("assistant");
+    if (!brain) return;
+
     // Every text (English and Russian) is in js/content/assistant.js
 
     const MAX_MESSAGES = 80;
@@ -185,44 +189,34 @@
             : { act: "theme", arg: "dark", icon: "🌙", label: t("assistant.act.theme.dark") };
     }
 
-    function simple(key, actions) {
+    // A button described in the content file: { lesson: 4 }, { lab: "classifier" },
+    // { section: "timeline" }, { quiz: true } or { ask: "fact", label, icon }
+    function buttonFrom(spec) {
+        if (spec.lesson) return lessonAction(spec.lesson);
+        if (spec.lab) return labAction(spec.lab);
+        if (spec.section) return sectionAction(spec.section);
+        if (spec.quiz) return quizAction();
+        if (spec.ask) return askAction(spec.ask, spec.label, spec.icon);
+        return null;
+    }
+
+    // A simple answer from the content file: a text and its buttons
+    function simpleReply(spec) {
         return function () {
-            return { html: t(key), actions: actions ? actions() : [] };
+            return { html: t(spec.text), actions: (spec.buttons || []).map(buttonFrom).filter(Boolean) };
         };
     }
 
-    const REPLIES = {
-        welcome: simple("assistant.r.welcome"),
+    const REPLIES = {};
+    Object.keys(brain.replies).forEach(function (id) {
+        REPLIES[id] = simpleReply(brain.replies[id]);
+    });
+
+    // Answers that are built from the message's data
+    Object.assign(REPLIES, {
         greeting: function (data) {
             return { html: t("assistant.r.greeting" + (((data.v || 0) % 3) + 1)) };
         },
-        thanks: simple("assistant.r.thanks"),
-        bye: simple("assistant.r.bye"),
-        howAreYou: simple("assistant.r.howAreYou"),
-        who: simple("assistant.r.who", function () { return [lessonAction(4)]; }),
-        help: simple("assistant.r.help"),
-        ai: simple("assistant.r.ai", function () { return [lessonAction(1)]; }),
-        ml: simple("assistant.r.ml", function () { return [lessonAction(2), labAction("classifier")]; }),
-        nn: simple("assistant.r.nn", function () { return [lessonAction(3), labAction("classifier")]; }),
-        llm: simple("assistant.r.llm", function () { return [lessonAction(4), labAction("predictor")]; }),
-        hallucination: simple("assistant.r.hallucination", function () { return [lessonAction(4)]; }),
-        bias: simple("assistant.r.bias", function () { return [lessonAction(6)]; }),
-        privacy: simple("assistant.r.privacy", function () { return [lessonAction(6)]; }),
-        danger: simple("assistant.r.danger", function () { return [lessonAction(6)]; }),
-        homework: simple("assistant.r.homework", function () { return [lessonAction(4)]; }),
-        eliza: simple("assistant.r.eliza", function () { return [sectionAction("timeline")]; }),
-        conscious: simple("assistant.r.conscious", function () { return [lessonAction(1)]; }),
-        games: simple("assistant.r.games", function () { return [sectionAction("timeline")]; }),
-        sad: simple("assistant.r.sad"),
-        support: simple("assistant.r.support"),
-        about: simple("assistant.r.about", function () { return [sectionAction("about")]; }),
-        ack: simple("assistant.r.ack", function () {
-            return [
-                askAction("fact", "assistant.chip.fact", "💡"),
-                askAction("recommend", "assistant.chip.lesson", "📚"),
-                quizAction()
-            ];
-        }),
         history: function () {
             return {
                 html: t("assistant.r.fact", { fact: t("assistant.fact1") }),
@@ -262,10 +256,6 @@
                 actions: [sectionAction("lessons")]
             };
         },
-        quiz: simple("assistant.r.quiz", function () { return [quizAction()]; }),
-        quizOffer: simple("assistant.r.quizOffer", function () { return [quizAction()]; }),
-        lab: simple("assistant.r.lab", function () { return [labAction("classifier"), labAction("predictor")]; }),
-        labOffer: simple("assistant.r.labOffer", function () { return [labAction("classifier"), labAction("predictor")]; }),
         themeOffer: function (data) {
             return { html: t("assistant.r.themeOffer"), actions: [themeAction(data.to)] };
         },
@@ -276,8 +266,6 @@
                 actions: [sectionAction(data.id)]
             };
         },
-        themeDark: simple("assistant.r.themeDark"),
-        themeLight: simple("assistant.r.themeLight"),
         langNow: function (data) {
             return { html: t("assistant.r.langNow." + (data.l === "ru" ? "ru" : "en")) };
         },
@@ -317,11 +305,10 @@
         notFound: function (data) {
             return { html: t("assistant.r.notFound", { word: esc(data.word) }), actions: [sectionAction("glossary")] };
         },
-        noGlossary: simple("assistant.r.noGlossary"),
         fallback: function (data) {
             return { html: t("assistant.r.fallback" + (data.v ? 2 : 1)) + "<br><br>" + t("assistant.r.tryList") };
         }
-    };
+    });
 
     // Turns a saved bot message into { html, actions } in the current language
     function renderReply(message) {
@@ -341,290 +328,21 @@
     }
 
     /* =========================================================
-       4. THE BOT'S "BRAIN": KEYWORDS AND INTENTS
-       An "intent" is what the person wants (greeting, a quiz...).
-       Each intent has keywords in BOTH languages.
-       - "word*"  matches the start of a word: "нейросет*" finds "нейросети"
-       - "?word"  is a weak hint and counts only half a point
-       - phrases with several words score more ("machine learning" = 2)
-       The intent with the most points wins. On a tie, the one
-       higher in this list wins.
-       Words with 7+ letters may have one typo ("lerning"),
-       shorter ones must be exact (so "neutral" is not "neural").
+       4. THE BOT'S "BRAIN": FINDING WHAT THE PERSON WANTS
+       The word lists are in js/content/assistant.js (brain.intents and
+       the others); here is how a message is matched against them.
        ========================================================= */
 
-    const INTENTS = [
-        {
-            // "тема" alone also means "topic" in Russian ("давай сменим тему"),
-            // so it only counts together with "dark / light / site"
-            id: "theme", strict: true,
-            words: ["dark mode", "light mode", "dark theme", "light theme", "night mode", "day mode", "theme",
-                "switch theme", "change theme", "colour theme", "color theme", "too bright", "too dark",
-                "make it dark", "make it light", "go dark", "lights off", "lights on", "darker", "lighter",
-                "сделай темнее", "сделай светлее", "темнее", "светлее",
-                "темн* тем*", "светл* тем*", "тем* сайта", "ночн* режим", "дневн* режим",
-                "темн* режим", "светл* режим", "смени тему", "сменить тему", "слишком ярко", "слишком темно"]
-        },
-        {
-            id: "language", strict: true,
-            words: ["russian", "english", "in russian", "in english", "switch language", "change language", "language",
-                "по русски", "по английски", "на русском", "на английском", "на русский", "на английский",
-                "русский", "английский", "русском", "английском", "язык", "языка", "языке", "языки",
-                "смени язык", "переключи язык", "сменить язык"]
-        },
-        {
-            id: "quiz",
-            words: ["quiz*", "start quiz", "start the quiz", "begin the quiz", "take the quiz", "take a quiz", "quiz me",
-                "test me", "test myself", "take the test", "take a test", "start the test", "ai challenge",
-                "тест", "тестик", "викторин*", "начать тест", "начни тест", "запусти тест", "пройти тест",
-                "проверь меня", "проверить себя", "проверь себя", "испытани*"]
-        },
-        {
-            id: "lab",
-            words: ["lab", "ai lab", "laboratory", "experiment*", "classifier", "predictor", "next word",
-                "teach the machine", "open the lab", "open lab", "open the ai lab", "playground",
-                "try ai", "лаборатори*", "лабу", "эксперимент*", "классификатор*", "предсказател*",
-                "следующ* слов*", "обучи машину", "открой лаборатори*", "открыть лаборатори*", "попробовать ии"]
-        },
-        {
-            id: "recommend",
-            words: ["recommend*", "suggest*", "which lesson", "what lesson", "next lesson", "where to start",
-                "where do i start", "where should i start", "what should i learn", "what to learn", "?lesson",
-                "how do i start", "how to start", "how should i start", "where do i begin", "start learning",
-                "beginner*", "getting started", "новичок*", "как начать", "с чего начинать", "хочу научиться",
-                "посоветуй*", "порекомендуй*", "рекоменд*", "какой урок", "с чего начать", "что изучить",
-                "что изучать", "следующ* урок*", "?урок"]
-        },
-        {
-            id: "eliza",
-            words: ["eliza", "turing", "turing test", "first chatbot*", "first chat bot*", "weizenbaum",
-                "элиза", "элайза", "тьюринг*", "тест тьюринга", "перв* чат бот*", "перв* чатбот*", "вейценбаум*"]
-        },
-        {
-            id: "history",
-            words: ["who invented ai", "who invented artificial intelligence", "who created ai", "inventor*",
-                "father of ai", "birth of ai", "when was ai invented", "when did ai start", "history of ai",
-                "history of artificial intelligence", "ai history", "кто придумал ии", "истори* ии",
-                "истори* искусственн*",
-                "кто изобрел*", "кто создал ии", "изобретател*", "отец ии", "когда появился ии", "когда придумали ии"]
-        },
-        {
-            id: "games",
-            words: ["chess", "alphago", "alpha go", "alphazero", "deep blue", "kasparov", "checkers", "go game",
-                "game of go", "lee sedol", "шахмат*", "альфаго", "каспаров*", "шашк*", "игра го", "игру го", "в го",
-                "ли седол*"]
-        },
-        {
-            // Someone feeling down gets a kind answer first
-            id: "sad",
-            words: ["i feel sad", "i am sad", "i m sad", "im sad", "sad", "lonely", "depressed", "upset", "unhappy",
-                "bad day", "мне грустно", "грустно", "одиноко", "печально", "тоскливо", "депресс*", "расстроен*",
-                "грущу", "плохое настроение"]
-        },
-        {
-            id: "conscious",
-            words: ["alive", "conscious*", "sentient", "self aware", "feelings", "emotion*", "can ai feel",
-                "can you feel", "do you feel", "does ai think", "can ai think", "think like a human", "have feelings",
-                "живой", "живая", "сознани*", "чувствует", "чувствуешь", "чувства", "эмоци*",
-                "может ли ии думать", "думает ли", "разумн*"]
-        },
-        {
-            id: "about",
-            words: ["who made this site", "who made this website", "who created this site", "who built this site",
-                "who made ai compass", "about this site", "about the site", "about ai compass", "ai compass",
-                "what is ai compass", "what is this site", "what is this website", "что такое ai compass", "что это за сайт",
-                "cas project", "кто сделал этот сайт", "кто создал этот сайт", "кто сделал сайт", "кто создал сайт",
-                "о сайте", "о проекте", "об ai compass", "проект cas"]
-        },
-        {
-            id: "hallucination",
-            words: ["hallucinat*", "make things up", "makes things up", "making things up", "made up", "invents facts",
-                "wrong answer*", "lie", "lies", "lying", "false information", "fake facts", "mistake*",
-                "always right", "always correct", "can ai be wrong", "trust ai", "trust chatbots",
-                "галлюцинац*", "галлюцинир*", "выдумыва*", "выдумал*", "врать", "врет*", "врут", "соврал*",
-                "наврал*", "вранье", "обманыва*",
-                "ошиба*", "ошибк*", "неправд*", "всегда прав*", "можно ли доверять", "доверять"]
-        },
-        {
-            id: "privacy",
-            words: ["privacy", "private", "personal data", "personal info*", "my data", "data protection",
-                "password*", "tracking", "track me", "safe to share", "приватн*", "конфиденциальн*",
-                "личн* данн*", "персональн* данн*", "пароль*", "слежк*", "следят"]
-        },
-        {
-            id: "danger",
-            words: ["danger*", "scary", "scared", "afraid", "fear", "take over", "takeover", "rise of the machines",
-                "terminator", "skynet", "destroy", "evil", "replace jobs", "replace humans", "replace people",
-                "take my job", "take our jobs", "jobs", "safe", "safety", "risk*", "threat*", "deepfake*",
-                "deep fake*", "опас*", "захват*", "восстание машин", "восстан*", "терминатор*", "скайнет",
-                "уничтож*", "злой", "замен*", "заберет*", "отберет*", "отнимет*", "мою работу", "нашу работу",
-                "без работы", "професси*", "угроз*", "риск*", "страшн*", "боюсь",
-                "бояться", "безопас*", "дипфейк*"]
-        },
-        {
-            id: "bias",
-            words: ["bias*", "fair", "fairness", "unfair", "ethic*", "discriminat*", "racist", "sexist",
-                "stereotype*", "moral*", "responsib*", "neutral", "objective", "предвзят*", "справедлив*", "несправедлив*", "этик*",
-                "этичн*", "нейтральн*", "нейтрален", "объективн*", "объективен", "дискриминац*", "стереотип*", "мораль*", "предубежден*", "ответственност*"]
-        },
-        {
-            id: "homework",
-            words: ["homework", "home work", "essay*", "assignment*", "cheat*", "school work", "schoolwork",
-                "study", "studying", "exam*", "plagiar*", "do my homework", "write my essay", "for school",
-                "домашк*", "домашн* задани*", "домашнее", "дз", "сочинени*", "реферат*", "списыва*",
-                "списать", "эссе", "учеб*", "контрольн*", "экзамен*", "плагиат*", "для школы"]
-        },
-        {
-            id: "llm",
-            words: ["chatbot*", "chat bot*", "chatgpt", "chat gpt", "gpt*", "llm*", "large language model*",
-                "language model*", "claude", "gemini", "copilot", "generative ai", "generative",
-                "how does chatgpt work", "чат бот*", "чатбот*", "чатгпт", "чат гпт", "гпт", "языков* модел*",
-                "генеративн*", "больш* языков* модел*"]
-        },
-        {
-            id: "nn",
-            words: ["neural network*", "neural net*", "neural", "neuron*", "deep learning", "layers", "weights",
-                "нейросет*", "нейронн* сет*", "нейрон*", "нейронк*", "глубок* обучени*", "слои", "веса"]
-        },
-        {
-            id: "ml",
-            words: ["machine learning", "machine learn*", "ml", "learn from data", "learns from data",
-                "learning from data", "training data", "train a model", "training a model", "how does ai learn",
-                "how ai learns", "how do computers learn", "supervised", "машинн* обучени*", "обучени* модел*",
-                "как ии учится", "как учится ии", "как обучают", "обучающ* данн*", "обучающ* выборк*",
-                "как компьютер учится"]
-        },
-        {
-            id: "ai",
-            words: ["what is ai", "what s ai", "whats ai", "what is artificial intelligence", "artificial intelligence",
-                "define ai", "explain ai", "?ai", "искусствен* интеллект*", "что такое ии", "что такое искусственный интеллект",
-                "объясни ии", "?ии"]
-        },
-        {
-            id: "nav", strict: true
-            // scored by navScore() below
-        },
-        {
-            id: "who",
-            words: ["who are you", "what are you", "your name", "who made you", "who created you", "are you real",
-                "are you an ai", "are you ai", "are you a robot", "are you human", "are you a bot", "are you chatgpt",
-                "are you a demo", "is this a demo", "how do you work", "кто ты", "ты демо*", "ты кто", "как тебя зовут", "твое имя", "тебя зовут", "ты робот",
-                "ты бот", "ты настоящ*", "ты человек", "ты ии", "кто тебя создал", "кто тебя сделал",
-                "как ты работаешь"]
-        },
-        {
-            id: "howAreYou",
-            words: ["how are you", "how r u", "how are u", "how is it going", "how s it going", "how do you do",
-                "what s up", "whats up", "как дела", "как ты", "как поживаешь", "как жизнь", "как настроение"]
-        },
-        {
-            id: "joke",
-            words: ["joke*", "funny", "make me laugh", "laugh", "humor", "humour", "pun", "шутк*", "шуточ*",
-                "пошути*", "анекдот*", "смешн*", "рассмеши*", "посмеш*"]
-        },
-        {
-            id: "fact",
-            words: ["fun fact", "fact*", "did you know", "something interesting", "interesting", "tell me something",
-                "surprise me", "trivia", "факт*", "интересн*", "удиви*", "расскажи что нибудь", "знаешь ли ты"]
-        },
-        {
-            id: "help",
-            // a bare "help" is weak: "how can AI help doctors?" is about AI, not about the bot
-            words: ["?help", "help me", "i need help", "what can you do", "what do you do", "what can i ask", "commands",
-                "options", "abilities", "помощь", "?помоги*", "что ты умеешь", "что умеешь", "что ты можешь", "что можешь",
-                "команды", "возможности", "умеешь"]
-        },
-        {
-            id: "thanks",
-            words: ["thanks", "thank you", "thank u", "thx", "ty", "cheers", "appreciate it", "great answer",
-                "спасибо", "спс", "благодарю", "сенкс", "пасиб*"]
-        },
-        {
-            id: "bye",
-            words: ["bye", "goodbye", "good bye", "bye bye", "see you", "see ya", "cya", "farewell", "good night",
-                "пока", "до свидания", "до встречи", "увидимся", "бывай", "спокойной ночи"]
-        },
-        {
-            id: "ack",
-            words: ["ok", "okay", "cool", "nice", "great", "awesome", "wow", "got it", "i see", "yes", "yeah", "sure",
-                "ок", "окей", "хорошо", "понятно", "ясно", "круто", "класс", "супер", "ага", "да", "отлично"]
-        },
-        {
-            id: "greeting",
-            words: ["hi", "hello", "hey", "hiya", "howdy", "yo", "greetings", "good morning", "good afternoon",
-                "good evening", "sup", "hola", "привет*", "здравствуй*", "здрасте", "здрасьте", "добрый день",
-                "доброе утро", "добрый вечер", "хай", "салют", "хелло"]
-        }
-    ];
-
-    // Words that point to a section of the site (for "go to ...")
-    const SECTION_WORDS = {
-        home: ["home", "home page", "homepage", "top", "main page", "start page", "главн*", "наверх", "начало", "домой"],
-        lessons: ["lessons", "all lessons", "lesson list", "уроки", "уроков", "урокам"],
-        lab: ["lab", "ai lab", "laboratory", "лаборатори*", "лабу"],
-        quiz: ["quiz", "quizzes", "тест", "тесту", "викторин*"],
-        glossary: ["glossary", "dictionary", "vocabulary", "terms", "словар*", "глоссари*", "термин*"],
-        timeline: ["history", "timeline", "истори*", "хронолог*"],
-        about: ["about", "about us", "about page", "about this site", "mission", "о проекте", "о сайте", "о нас", "миссия", "cas"]
-    };
-
-    const NAV_VERBS = ["go", "go to", "goto", "take me", "bring me", "open", "show", "show me", "navigate", "scroll",
-        "jump", "where is", "where s", "перейди*", "перейти", "открой*", "открыть", "покажи*", "показать",
-        "отведи*", "веди", "где", "прокрути*", "пролистай*", "хочу в", "хочу к"];
-
-    // Words that show the person really wants the bot to DO something
-    // ("start the quiz", "switch to Russian"). Without them, a longer message
-    // like "how many questions does the quiz have?" only gets a button.
-    const COMMAND_WORDS = ["start", "begin", "open", "launch", "play", "go", "take me", "bring me", "show me",
-        "switch", "change", "turn", "make", "set", "enable", "put", "run", "let s", "lets", "i want", "i wanna",
-        "i d like", "id like", "want to", "give me", "take the", "take a", "quiz me", "test me",
-        "начни*", "начать", "начнем", "начинай", "запусти*", "запуск*", "открой*", "открыть", "включи*",
-        "выключи*", "переключи*", "смени*", "сменить", "поменяй*", "поменять", "сделай*", "перейди*",
-        "перейти", "покажи*", "давай", "хочу", "хочется", "пройти", "пройду", "поехали", "перенеси*",
-        "отведи*", "проверь*", "проверить"];
-
-    // ----- Messages that need a real person, not a script -----
     // Someone in danger or in deep distress gets a calm answer that points
     // to trusted adults and helplines. This is checked before anything else.
 
-    // Always serious, whatever else the message says
-    const CRISIS_WORDS = ["want to die", "wanna die", "wish i was dead", "wish i were dead", "kill myself",
-        "killing myself", "suicid*", "self harm*", "selfharm*", "hurt myself", "hurting myself", "harm myself",
-        "cut myself", "cutting myself", "end my life", "take my life", "don t want to live", "dont want to live",
-        "do not want to live", "no reason to live",
-        "хочу умереть", "хочется умереть", "лучше бы я умер*", "покончить с собой", "покончу с собой",
-        "суицид*", "самоубийств*", "не хочу жить", "не хочется жить", "жить не хочется", "жить не хочу",
-        "незачем жить", "убить себя", "убью себя", "навредить себе", "причинить себе вред", "режу себя",
-        "резать себя", "порезать себя", "селфхарм*"];
-
-    // About the person, unless the message is about AI
-    // ("I'm being bullied" -> help; "can AI stop bullying?" -> a normal answer)
-    const DISTRESS_WORDS = ["hurting me", "hurts me", "hits me", "hit me again", "beat me up", "beats me up",
-        "beating me up", "abuse*", "abusing", "abusive", "bullied", "bullying", "bully me", "bullies me",
-        "harass*", "touching me", "threaten* me", "unsafe at home", "not safe at home", "nobody likes me",
-        "no one likes me", "nobody loves me", "no one loves me", "nobody cares", "no one cares", "hate myself",
-        "hate my life", "feel alone", "feel so alone", "feel really alone", "i m alone", "im alone", "i am alone",
-        "all alone", "so alone", "scared and alone", "alone and scared", "i m scared", "im scared",
-        "i am scared", "i feel scared", "i m afraid", "im afraid", "i am afraid", "i feel afraid",
-        "травят", "травля", "травлю", "травли", "травле", "буллинг*", "буллят", "меня бьют", "бьют меня",
-        "меня бьет", "избива*", "меня обижают", "обижают меня", "издеваются", "издевается", "домогает*",
-        "домогают*", "насили*", "мне угрожают", "угрожают мне", "никто меня не любит", "меня никто не любит",
-        "никому не нужен", "никому не нужна", "ненавижу себя", "ненавижу свою жизнь", "совсем один",
-        "совсем одна", "мне плохо", "мне очень плохо", "мне так плохо", "мне сейчас плохо", "мне страшно",
-        "мне очень страшно", "мне так страшно", "я боюсь"];
-
-    const AI_TOPIC_WORDS = ["ai", "ии", "robot*", "робот*", "machine*", "машин*", "computer*", "компьютер*",
-        "chatbot*", "chat", "чат*", "neural", "нейрон*", "нейросет*", "technolog*", "технолог*", "algorithm*",
-        "алгоритм*", "artificial", "искусствен*", "skynet", "terminator*", "терминатор*", "deepfake*",
-        "дипфейк*", "gpt*", "гпт", "chess", "шахмат*"];
-
     function needsSupport(tokens) {
-        if (anyIn(CRISIS_WORDS, tokens, true)) return true;
-        return anyIn(DISTRESS_WORDS, tokens, true) && !anyIn(AI_TOPIC_WORDS, tokens, true);
+        if (anyIn(brain.crisisWords, tokens, true)) return true;
+        return anyIn(brain.distressWords, tokens, true) && !anyIn(brain.aiTopicWords, tokens, true);
     }
 
     function isCommand(tokens) {
-        return tokens.length <= 3 || anyIn(COMMAND_WORDS, tokens, true);
+        return tokens.length <= 3 || anyIn(brain.commandWords, tokens, true);
     }
 
     // How many letters differ between two short words ("lerning" vs "learning" = 1)
@@ -686,9 +404,9 @@
 
     // Which section is mentioned? (or "")
     function findSection(tokens) {
-        const ids = Object.keys(SECTION_WORDS);
+        const ids = Object.keys(brain.sectionWords);
         for (let i = 0; i < ids.length; i++) {
-            if (anyIn(SECTION_WORDS[ids[i]], tokens, true)) return ids[i];
+            if (anyIn(brain.sectionWords[ids[i]], tokens, true)) return ids[i];
         }
         return "";
     }
@@ -697,22 +415,12 @@
     function navScore(tokens) {
         const section = findSection(tokens);
         if (!section) return 0;
-        const verb = anyIn(NAV_VERBS, tokens, true);
+        const verb = anyIn(brain.navVerbs, tokens, true);
         if (!verb && tokens.length > 3) return 0;
         return verb ? 2 : 1;
     }
 
     // ----- "What is X?" / "Define X" -----
-    // explicit: the person clearly asks for a definition ("define", "meaning of")
-    const DEFINE_EXPLICIT = ["define", "definition of", "definition", "meaning of", "what does",
-        "определение слова", "определение", "значение слова", "значение", "что значит", "что означает",
-        "дай определение", "объясни слово", "объясни термин"];
-    const DEFINE_QUESTION = ["what is a", "what is an", "what is the", "what is", "what s a", "what s an", "what s",
-        "whats a", "whats", "what are", "who is", "explain", "tell me what", "что такое", "что это такое",
-        "что это", "кто такой", "кто такая", "что за", "объясни", "расскажи что такое"];
-    const FILLERS = ["please", "pls", "so", "and", "hey", "ok", "okay", "um", "ну", "а", "скажи", "подскажи",
-        "пожалуйста", "слушай"];
-    const ENDINGS = ["mean", "means", "stand for", "означает", "значит", "is", "это"];
 
     function startsWithPhrase(text, phrase) {
         return text === phrase || text.indexOf(phrase + " ") === 0;
@@ -724,7 +432,7 @@
         let changed = true;
         while (changed) {
             changed = false;
-            FILLERS.forEach(function (word) {
+            brain.fillers.forEach(function (word) {
                 if (text.indexOf(word + " ") === 0) {
                     text = text.slice(word.length + 1);
                     changed = true;
@@ -734,7 +442,7 @@
 
         let explicit = false;
         let rest = null;
-        DEFINE_EXPLICIT.some(function (phrase) {
+        brain.defineExplicit.some(function (phrase) {
             if (startsWithPhrase(text, phrase)) {
                 explicit = true;
                 rest = text.slice(phrase.length);
@@ -743,7 +451,7 @@
             return false;
         });
         if (rest === null) {
-            DEFINE_QUESTION.some(function (phrase) {
+            brain.defineQuestion.some(function (phrase) {
                 if (startsWithPhrase(text, phrase)) {
                     rest = text.slice(phrase.length);
                     return true;
@@ -755,18 +463,13 @@
 
         // Tidy the subject: "the word overfitting mean" -> "overfitting"
         let subject = rest.trim().replace(/^(the word|the term|word|term|слово|термин)\s+/, "");
-        ENDINGS.forEach(function (ending) {
+        brain.endings.forEach(function (ending) {
             if (subject.length > ending.length && subject.slice(-(ending.length + 1)) === " " + ending) {
                 subject = subject.slice(0, -(ending.length + 1));
             }
         });
         return { explicit: explicit, subject: subject.trim() };
     }
-
-    // Small words that don't change what a question is about
-    const COVER_SKIP = ["a", "an", "the", "of", "in", "on", "for", "about", "to", "is", "are", "do", "does", "and",
-        "with", "by", "it", "its", "this", "that", "ai", "ии", "в", "во", "на", "о", "об", "про", "у", "и", "с",
-        "для", "это", "этот", "эта", "такое", "ли"];
 
     // "tokens" and "token", "нейросети" and "нейросеть" count as the same word
     function sameWord(a, b) {
@@ -782,7 +485,7 @@
     function termCovers(term, subject) {
         const termWords = normalise(term.term).split(" ");
         return normalise(subject).split(" ").every(function (word) {
-            return !word || COVER_SKIP.indexOf(word) !== -1 ||
+            return !word || brain.coverSkip.indexOf(word) !== -1 ||
                 termWords.some(function (termWord) { return sameWord(word, termWord); });
         });
     }
@@ -820,14 +523,14 @@
     }
 
     function themeAnswer(tokens) {
-        const dark = anyIn(["dark", "night", "black", "темн*", "ночн*", "черн*"], tokens, true);
-        const light = anyIn(["light", "day", "white", "bright", "светл*", "дневн*", "бел*", "ярк*"], tokens, true);
+        const dark = anyIn(brain.themeWords.dark, tokens, true);
+        const light = anyIn(brain.themeWords.light, tokens, true);
         let target = A.theme === "dark" ? "light" : "dark";
         if (dark && !light) target = "dark";
         if (light && !dark) target = "light";
         // "too bright" means: make it dark
-        if (anyIn(["too bright", "слишком ярко"], tokens, true)) target = "dark";
-        if (anyIn(["too dark", "слишком темно"], tokens, true)) target = "light";
+        if (anyIn(brain.themeWords.tooBright, tokens, true)) target = "dark";
+        if (anyIn(brain.themeWords.tooDark, tokens, true)) target = "light";
         return {
             reply: target === "dark" ? "themeDark" : "themeLight",
             pre: function () { A.setTheme(target); }
@@ -836,9 +539,9 @@
 
     function languageAnswer(tokens) {
         let target = "";
-        if (anyIn(["russian", "русск*", "по русски", "рус"], tokens, true)) target = "ru";
-        else if (anyIn(["english", "английск*", "по английски", "англ*", "eng"], tokens, true)) target = "en";
-        else if (anyIn(["switch", "change", "переключи*", "смени*", "поменя*", "другой"], tokens, true)) {
+        if (anyIn(brain.languageWords.ru, tokens, true)) target = "ru";
+        else if (anyIn(brain.languageWords.en, tokens, true)) target = "en";
+        else if (anyIn(brain.languageWords.change, tokens, true)) {
             target = A.lang === "en" ? "ru" : "en";
         }
         if (!target) return { reply: "langInfo" };
@@ -860,7 +563,7 @@
             case "language": return languageAnswer(tokens);
             case "quiz": return { reply: "quiz", auto: { act: "quiz", arg: "" } };
             case "lab": {
-                const predictor = anyIn(["predict*", "next word", "language model", "предсказ*", "следующ* слов*"], tokens);
+                const predictor = anyIn(brain.predictorWords, tokens);
                 const tab = predictor ? "predictor" : "classifier";
                 return { reply: "lab", data: { tab: tab }, auto: { act: "lab", arg: tab } };
             }
@@ -921,7 +624,7 @@
 
         // Score every intent and keep the best one
         let best = null;
-        INTENTS.forEach(function (intent) {
+        brain.intents.forEach(function (intent) {
             const score = intent.id === "nav" ? navScore(tokens) : scoreWords(intent, tokens);
             if (score > 0 && (!best || score > best.score)) best = { intent: intent, score: score };
         });
@@ -967,15 +670,6 @@
         info: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 10.8v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.2" fill="currentColor"/></svg>',
         chevron: '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M6 9.5l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     };
-
-    const CHIPS = [
-        { intent: "ai", key: "assistant.chip.ai", icon: "🤖" },
-        { intent: "recommend", key: "assistant.chip.lesson", icon: "📚" },
-        { intent: "quiz", key: "assistant.chip.quiz", icon: "🏆" },
-        { intent: "lab", key: "assistant.chip.lab", icon: "🧪" },
-        { intent: "fact", key: "assistant.chip.fact", icon: "💡" },
-        { intent: "define", key: "assistant.chip.define", icon: "📖" }
-    ];
 
     // The orb (used by the launcher and, smaller, by the header)
     function orbHTML(extraClass) {
@@ -1035,7 +729,7 @@
                     'data-i18n-attr="aria-label:assistant.logLabel" aria-label="' + esc(t("assistant.logLabel")) + '"></div>' +
 
                 '<div class="cb-chips" role="group" data-i18n-attr="aria-label:assistant.chipsLabel" aria-label="' + esc(t("assistant.chipsLabel")) + '">' +
-                    CHIPS.map(function (chip) {
+                    brain.chips.map(function (chip) {
                         return '<button type="button" class="cb-chip" data-intent="' + chip.intent + '">' +
                             '<span aria-hidden="true">' + chip.icon + "</span>" +
                             '<span data-i18n="' + chip.key + '">' + t(chip.key) + "</span></button>";
@@ -1300,9 +994,6 @@
         }
     }
 
-    // Names that are written in Latin letters in Russian texts too
-    const LATIN_NAMES = /^(eliza|chatgpt|gpt|alphago|alexa|siri|gemini|claude|copilot|google|openai|deepmind|midjourney|turing|python)$/i;
-
     // A message typed by the person
     function sendText(text) {
         const clean = String(text || "").trim().slice(0, 300);
@@ -1319,7 +1010,7 @@
             // Names like "ELIZA", "ChatGPT" or "LLM" are written in Latin letters
             // in Russian too, so they don't count as English words
             const englishWords = (clean.match(/[a-z]{3,}/gi) || []).filter(function (word) {
-                return word !== word.toUpperCase() && !LATIN_NAMES.test(word);
+                return word !== word.toUpperCase() && brain.latinNames.indexOf(word.toLowerCase()) === -1;
             });
             const latin = englishWords.length > 0 && !cyrillic;
             const hint = cyrillic && A.lang === "en" ? "ru" : (latin && A.lang === "ru" ? "en" : "");
@@ -1417,7 +1108,7 @@
     ui.chips.addEventListener("click", function (event) {
         const chip = event.target.closest(".cb-chip");
         if (!chip) return;
-        const info = CHIPS.find(function (item) { return item.intent === chip.getAttribute("data-intent"); });
+        const info = brain.chips.find(function (item) { return item.intent === chip.getAttribute("data-intent"); });
         if (info) sendIntent(info.intent, t(info.key));
     });
 
