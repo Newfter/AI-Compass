@@ -486,7 +486,7 @@
 
         if (score === total) addFact("perfect");
         const timed = mode === "timed" || detail.timed === true;
-        if (timed && isCount(detail.seconds) && detail.seconds <= total * SPEED_SECONDS && score >= total * SPEED_SHARE) {
+        if (timed && isCount(detail.seconds) && detail.seconds < total * SPEED_SECONDS && score >= total * SPEED_SHARE) {
             addFact("speed");
         }
     }
@@ -615,7 +615,8 @@
         const gap = last ? dayNumber(day) - dayNumber(last) : 0;
         if (gap < 0) return;
         const breakDays = BADGE_BY_ID["welcome-back"] ? BADGE_BY_ID["welcome-back"].goal : 0;
-        if (last && breakDays && gap >= breakDays) addFact("back");
+        const daysAway = gap - 1;            // the days between the two, without XP
+        if (last && breakDays && daysAway >= breakDays) addFact("back");
         state.active = Math.min(MAX_COUNT, state.active + 1);
         state.streak = { days: Math.min(MAX_COUNT, gap === 1 ? state.streak.days + 1 : 1), last: day };
         state.best.streak = Math.max(state.best.streak || 0, state.streak.days);
