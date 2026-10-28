@@ -135,6 +135,7 @@
     color: var(--text);
     font-size: 14px;
     line-height: 1.5;
+    overflow-wrap: anywhere;       /* the name comes from the link: a long one wraps */
 }
 
 /* ===== 3. THE PICKER: A GRID OF EXPERIMENT CARDS =====
