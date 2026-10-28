@@ -28,32 +28,49 @@
     pointer-events: none;
 }
 
+/* The coloured bar is a full-width stripe, squeezed to the part you have
+   scrolled with scaleX(). js/effects.js sets --fx-progress (0 to 1).
+   Changing a transform is cheap: the page needs no new layout while you scroll. */
 .scroll-progress span {
-    position: relative;
     display: block;
-    width: 0;
     height: 100%;
     border-radius: 0 3px 3px 0;
     background: var(--gradient);
-    box-shadow: 0 0 10px rgba(var(--accent-2-rgb), 0.55), 0 0 2px rgba(var(--accent-rgb), 0.8);
+    transform: scaleX(var(--fx-progress, 0));
+    transform-origin: left;
 }
 
-/* A bright "comet head" at the end of the bar */
-.scroll-progress span::after {
+/* The glow and the bright "comet head" would get thinner if they were squeezed
+   too, so they sit on full-width layers of their own that slide along with
+   the end of the bar (translateX instead of scaleX) */
+.scroll-progress::before,
+.scroll-progress::after {
     content: "";
     position: absolute;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+}
+
+.scroll-progress::before {
+    top: 0;
+    height: 100%;
+    border-radius: 0 3px 3px 0;
+    box-shadow: 0 0 10px rgba(var(--accent-2-rgb), 0.55), 0 0 2px rgba(var(--accent-rgb), 0.8);
+    transform: translateX(calc((var(--fx-progress, 0) - 1) * 100%));
+}
+
+/* The head reaches 4px past the end of the bar */
+.scroll-progress::after {
     top: 50%;
-    right: -4px;
-    width: 28px;
     height: 9px;
-    border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(var(--accent-2-rgb), 0.95), rgba(var(--accent-2-rgb), 0));
-    transform: translateY(-50%);
+    background: radial-gradient(closest-side, rgba(var(--accent-2-rgb), 0.95), rgba(var(--accent-2-rgb), 0)) right center / 28px 100% no-repeat;
+    transform: translate(calc((var(--fx-progress, 0) - 1) * 100% + 4px), -50%);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
 
-.scroll-progress.is-active span::after {
+.scroll-progress.is-active::after {
     opacity: 1;
 }
 

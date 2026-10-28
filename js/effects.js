@@ -74,6 +74,7 @@
     // (They are created in this order, so they also run in this order.)
     const NEAR_ZONE = 0.1;                                                 // 10% of the screen height
     const seenOnScreen = new WeakSet();
+    const onScreenNow = new WeakSet();                                     // waiting cards and numbers on screen right now
     const screenObserver = hasObserver ? new IntersectionObserver(onScreenSeen, { threshold: 0 }) : null;
     const armObserver = hasObserver ? new IntersectionObserver(onNear, { rootMargin: "10% 0px 10% 0px", threshold: 0 }) : null;
     const viewObserver = hasObserver ? new IntersectionObserver(onEnterView, { rootMargin: "0px 0px -8% 0px", threshold: 0 }) : null;
@@ -81,51 +82,54 @@
     const scrambleObserver = hasObserver ? new IntersectionObserver(onScrambleView, { threshold: 0.2 }) : null;
 
     /* =========================================================
-       1. SCROLL PROGRESS BAR (+ section mini-map)
+       1. SCROLL PROGRESS BAR (+ everything that follows the scroll)
+       Core measures the page and calls onPageScroll(info) once per
+       frame while it scrolls (A.onScroll). We only WRITE here and use
+       core's numbers: measuring the page in every frame would make the
+       browser lay it out again and again.
        ========================================================= */
+    const BOTTOM_ZONE = 6;                    // px: this close to the end counts as "at the very bottom"
     const progressWrap = document.querySelector(".scroll-progress");
-    const progressBar = progressWrap ? progressWrap.querySelector("span") : null;
-    let progressQueued = false;
-    let lastWidth = "";
+    let lastProgress = "";
+    let lastScroll = null;                    // core's latest numbers
 
-    function updateProgress() {
-        progressQueued = false;
-        const max = document.documentElement.scrollHeight - window.innerHeight;
-        const progress = max > 0 ? A.util.clamp(window.scrollY / max, 0, 1) : 0;
+    function atPageBottom() {
+        return Boolean(lastScroll) && lastScroll.max - lastScroll.y < BOTTOM_ZONE;
+    }
 
-        if (progressBar) {
-            const width = (progress * 100).toFixed(2) + "%";
-            if (width !== lastWidth) {
-                lastWidth = width;
-                progressBar.style.width = width;
-            }
-            progressWrap.classList.toggle("is-active", progress > 0.002);
+    function updateProgress(progress) {
+        if (!progressWrap) return;
+        // css/effects.css squeezes the bar with scaleX(--fx-progress): no new layout needed
+        const value = progress.toFixed(4);
+        if (value !== lastProgress) {
+            lastProgress = value;
+            progressWrap.style.setProperty("--fx-progress", value);
         }
+        progressWrap.classList.toggle("is-active", progress > 0.002);
+    }
 
-        updateRail(progress, max - window.scrollY < 4);
+    function onPageScroll(info) {
+        lastScroll = info;
+        updateProgress(info.progress);
+        updateRail(info);
+
+        // The lit card and the magnetic button moved: measure them again on the next mouse move
+        litRect = null;
+        magnetRect = null;
 
         // At the very bottom, show anything that is on screen but too small to trigger
-        if (max - window.scrollY < 6) {
+        // (the observers below keep onScreenNow up to date, so nothing is measured here)
+        if (atPageBottom()) {
             revealPending.forEach((element) => {
-                if (isOnScreen(element)) reveal(element, nextStagger());
+                if (onScreenNow.has(element)) reveal(element, nextStagger());
             });
             counters.forEach((counter, element) => {
-                if (counter.waiting) startIfVisible(element, counter, false);
+                if (counter.waiting && onScreenNow.has(element)) startIfVisible(element, counter, false, true);
             });
         }
     }
 
-    function queueProgress() {
-        if (progressQueued) return;
-        progressQueued = true;
-        requestAnimationFrame(updateProgress);
-    }
-
-    window.addEventListener("scroll", queueProgress, { passive: true });
-    A.onResize(queueProgress);
-    if ("ResizeObserver" in window) {
-        new ResizeObserver(queueProgress).observe(document.body);            // the page got taller or shorter
-    }
+    A.onScroll(onPageScroll);
 
     /* =========================================================
        2. REVEAL ON SCROLL  [data-reveal]
@@ -176,10 +180,12 @@
                 return;
             }
             if (!entry.isIntersecting) {
+                onScreenNow.delete(element);
                 clearFallback(element);
                 return;
             }
             seenOnScreen.add(element);
+            onScreenNow.add(element);
 
             // Visible but not hidden (e.g. the page moved under it): leave it as it is
             if (!element.classList.contains("fx-armed")) {
@@ -188,9 +194,10 @@
             }
 
             // Hidden, but already peeking onto the screen:
-            // - in a fixed panel it will never scroll further in, so it appears now
+            // - at the very bottom of the page, or in a fixed panel, it will never
+            //   scroll further in, so it appears now
             // - anywhere else it appears by itself if you stop scrolling for a moment
-            if (inFixedLayer(element)) {
+            if (atPageBottom() || inFixedLayer(element)) {
                 reveal(element, nextStagger());
             } else if (!fallbackTimers.has(element)) {
                 fallbackTimers.set(element, setTimeout(() => {
@@ -511,7 +518,12 @@
                 counterObserver.unobserve(element);
                 return;
             }
-            if (entry.isIntersecting) startIfVisible(element, counter, false, true);
+            if (entry.isIntersecting) {
+                onScreenNow.add(element);
+                startIfVisible(element, counter, false, true);
+            } else {
+                onScreenNow.delete(element);
+            }
         });
     }
 
@@ -1174,10 +1186,6 @@
         if (!event.relatedTarget) resetPointerEffects();               // the mouse left the window
     });
     window.addEventListener("blur", resetPointerEffects);
-    window.addEventListener("scroll", () => {
-        litRect = null;
-        magnetRect = null;
-    }, { passive: true });
 
     /* =========================================================
        9. RIPPLE when a button is pressed
@@ -1234,46 +1242,43 @@
 
     /* =========================================================
        10. SECTION MINI-MAP (right edge, big screens only)
+       One dot per page section (A.sections in core.js has their names).
+       Core decides which section you are in, so the map always agrees
+       with the menu bar: onPageScroll() passes its numbers on to us.
        ========================================================= */
-    const RAIL_KEYS = {
-        home: "cmd.home",
-        lessons: "nav.lessons",
-        lab: "nav.lab",
-        quiz: "nav.quiz",
-        glossary: "nav.glossary",
-        timeline: "nav.timeline",
-        about: "nav.about"
+    const rail = {
+        nav: null,
+        fill: null,
+        percent: null,
+        links: [],
+        ids: [],                  // the section ids, in the order of the dots
+        shown: true,              // false while the CSS hides the map (small screens, touch) or the tab is hidden
+                                  // (true until the first check, so the map is right in the very first frame)
+        info: null,               // core's last scroll numbers
+        active: -1,
+        scale: ""
     };
-    let railNav = null;
-    let railFill = null;
-    let railPercent = null;
-    let lastRailScale = "";
-    const railLinks = [];
-    let railSections = [];
-    // Same rule as in css/effects.css: wide screens with a mouse
-    const railQuery = A.media("(min-width: 1360px) and (min-height: 560px) and (hover: hover) and (pointer: fine)");
-    A.onMedia(railQuery, queueProgress, { immediate: false });
 
     function buildRail() {
-        railSections = Array.prototype.slice.call(document.querySelectorAll("main section[id]")).filter((section) => RAIL_KEYS[section.id]);
-        if (railSections.length < 2) return;
+        const sections = A.sections.filter((section) => document.getElementById(section.id));
+        if (sections.length < 2) return;
 
-        railNav = document.createElement("nav");
-        railNav.className = "fx-rail";
-        railNav.setAttribute("data-i18n-attr", "aria-label:effects.railLabel");
-        railNav.setAttribute("aria-label", A.t("effects.railLabel"));
+        const nav = document.createElement("nav");
+        nav.className = "fx-rail";
+        nav.setAttribute("data-i18n-attr", "aria-label:effects.railLabel");
+        nav.setAttribute("aria-label", A.t("effects.railLabel"));
 
         const track = document.createElement("span");
         track.className = "fx-rail-track";
         track.setAttribute("aria-hidden", "true");
-        railFill = document.createElement("span");
-        railFill.className = "fx-rail-fill";
-        track.appendChild(railFill);
+        rail.fill = document.createElement("span");
+        rail.fill.className = "fx-rail-fill";
+        track.appendChild(rail.fill);
 
         const list = document.createElement("ol");
         list.className = "fx-rail-list";
 
-        railSections.forEach((section, index) => {
+        sections.forEach((section, index) => {
             const item = document.createElement("li");
             const link = document.createElement("a");
             link.className = "fx-rail-link";
@@ -1282,61 +1287,53 @@
                 '<span class="fx-rail-dot" aria-hidden="true"></span>' +
                 '<span class="fx-rail-label">' +
                     '<span class="fx-rail-number" aria-hidden="true">' + String(index + 1).padStart(2, "0") + "</span>" +
-                    '<span data-i18n="' + RAIL_KEYS[section.id] + '"></span>' +
+                    '<span data-i18n="' + section.key + '"></span>' +
                 "</span>";
-            link.querySelector("[data-i18n]").textContent = A.t(RAIL_KEYS[section.id]);
+            link.querySelector("[data-i18n]").textContent = A.t(section.key);
             item.appendChild(link);
             list.appendChild(item);
-            railLinks.push(link);
+            rail.links.push(link);
+            rail.ids.push(section.id);
         });
 
         // A tiny read-out of how much of the page you have scrolled
-        railPercent = document.createElement("span");
-        railPercent.className = "fx-rail-percent";
-        railPercent.setAttribute("aria-hidden", "true");
-        railPercent.textContent = "0%";
+        rail.percent = document.createElement("span");
+        rail.percent.className = "fx-rail-percent";
+        rail.percent.setAttribute("aria-hidden", "true");
+        rail.percent.textContent = "0%";
 
-        railNav.append(track, list, railPercent);
-        document.body.appendChild(railNav);
+        nav.append(track, list, rail.percent);
+        document.body.appendChild(nav);
+        rail.nav = nav;
+
+        // css/effects.css decides where the map is shown. While it is hidden, it isn't updated;
+        // when it appears, it catches up with the last numbers.
+        A.whenVisible(nav, (visible) => {
+            rail.shown = visible;
+            if (visible && rail.info) updateRail(rail.info);
+        });
     }
 
-    function updateRail(progress, atBottom) {
-        if (!railNav || !railSections.length || !railQuery.matches) return;   // hidden: nothing to update
-
-        // Which section is under the "reading line" (40% down the screen)?
-        const line = window.innerHeight * 0.4;
-        const tops = railSections.map((section) => section.getBoundingClientRect().top);
-        let active = 0;
-        tops.forEach((top, index) => {
-            if (top <= line) active = index;
-        });
-
-        let fill;
-        if (atBottom) {
-            active = railSections.length - 1;
-            fill = 1;
-        } else {
-            const next = tops[active + 1];
-            const part = next === undefined ? 0 : A.util.clamp((line - tops[active]) / Math.max(1, next - tops[active]), 0, 1);
-            fill = (active + part) / (railSections.length - 1);
-        }
+    function updateRail(info) {
+        rail.info = info;
+        if (!rail.nav || !rail.shown) return;
 
         // Only touch the page when something really changed
-        const scale = "scaleY(" + A.util.clamp(fill, 0, 1).toFixed(4) + ")";
-        if (scale !== lastRailScale) {
-            lastRailScale = scale;
-            railFill.style.transform = scale;
+        const scale = "scaleY(" + info.fill.toFixed(4) + ")";
+        if (scale !== rail.scale) {
+            rail.scale = scale;
+            rail.fill.style.transform = scale;
         }
-        const percent = Math.round(progress * 100) + "%";
-        if (railPercent.textContent !== percent) railPercent.textContent = percent;
+        const percent = Math.round(info.progress * 100) + "%";
+        if (rail.percent.textContent !== percent) rail.percent.textContent = percent;
 
-        railLinks.forEach((link, index) => {
+        const active = Math.max(0, rail.ids.indexOf(info.section));
+        if (active === rail.active) return;
+        rail.active = active;
+        rail.links.forEach((link, index) => {
             link.classList.toggle("is-passed", index < active);
-            const current = index === active;
-            if (current !== link.hasAttribute("aria-current")) {
-                if (current) link.setAttribute("aria-current", "location");
-                else link.removeAttribute("aria-current");
-            }
+            if (index === active) link.setAttribute("aria-current", "location");
+            else link.removeAttribute("aria-current");
         });
     }
 
@@ -1618,6 +1615,5 @@
         attributes: true,
         attributeFilter: ["data-count", "data-reveal", "data-scramble"]
     });
-    updateProgress();
 
 })();
