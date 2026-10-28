@@ -1495,6 +1495,9 @@
     }
 
     // ---------- 24. The lesson reader (a full-screen dialog) ----------
+    // Its empty frame (about 50 elements) is built once, here at start-up: that costs
+    // less than a millisecond. The lesson text, its mini-lab and the contents list
+    // are built each time a lesson is shown.
     const reader = {
         open: false,
         lesson: 0,
