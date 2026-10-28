@@ -22,16 +22,12 @@
     if (!A) return;
 
     const root = document.documentElement;
-    const finePointerQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const finePointerQuery = A.media(A.queries.finePointer);
     const hasObserver = "IntersectionObserver" in window;
 
     // Every text (English and Russian) is in js/content/effects.js
 
     // ---------- Small helpers ----------
-    function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
     function isOnScreen(element) {
         const rect = element.getBoundingClientRect();
         return rect.width > 0 && rect.bottom > 0 && rect.top < window.innerHeight;
@@ -43,26 +39,17 @@
         return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
     }
 
-    function onMediaChange(query, callback) {
-        if (query.addEventListener) query.addEventListener("change", callback);
-        else if (query.addListener) query.addListener(callback);
-    }
-
     // ---------- Motion settings ----------
     // A.motion (core) knows both: "calm mode" (our own switch, saved in the browser)
-    // and "reduced motion" (the device settings).
-    function motionOK() {
-        return A.motion.ok();
-    }
-
+    // and "reduced motion" (the device settings). A.motion.ok() is false for either.
     // Tilt, magnet and spotlight only make sense with a real mouse
     function fineOK() {
-        return motionOK() && finePointerQuery.matches;
+        return A.motion.ok() && finePointerQuery.matches;
     }
 
     function updateModeClasses() {
         root.classList.toggle("fx-fine", fineOK());
-        root.classList.toggle("reveal-ready", motionOK() && hasObserver);
+        root.classList.toggle("reveal-ready", A.motion.ok() && hasObserver);
     }
 
     // Lists of everything the effects are working on
@@ -92,7 +79,6 @@
     const viewObserver = hasObserver ? new IntersectionObserver(onEnterView, { rootMargin: "0px 0px -8% 0px", threshold: 0 }) : null;
     const counterObserver = hasObserver ? new IntersectionObserver(onCounterView, { threshold: 0 }) : null;
     const scrambleObserver = hasObserver ? new IntersectionObserver(onScrambleView, { threshold: 0.2 }) : null;
-    const rotatorObserver = hasObserver ? new IntersectionObserver(onRotatorView) : null;
 
     /* =========================================================
        1. SCROLL PROGRESS BAR (+ section mini-map)
@@ -105,7 +91,7 @@
     function updateProgress() {
         progressQueued = false;
         const max = document.documentElement.scrollHeight - window.innerHeight;
-        const progress = max > 0 ? clamp(window.scrollY / max, 0, 1) : 0;
+        const progress = max > 0 ? A.util.clamp(window.scrollY / max, 0, 1) : 0;
 
         if (progressBar) {
             const width = (progress * 100).toFixed(2) + "%";
@@ -136,7 +122,7 @@
     }
 
     window.addEventListener("scroll", queueProgress, { passive: true });
-    window.addEventListener("resize", queueProgress);
+    A.onResize(queueProgress);
     if ("ResizeObserver" in window) {
         new ResizeObserver(queueProgress).observe(document.body);            // the page got taller or shorter
     }
@@ -153,7 +139,7 @@
     // Returns true when the element is new and waits to be revealed
     function registerReveal(element) {
         if (element.classList.contains("revealed") || revealPending.has(element)) return false;
-        if (!viewObserver || !motionOK()) {
+        if (!viewObserver || !A.motion.ok()) {
             element.classList.add("revealed");
             return false;
         }
@@ -310,7 +296,7 @@
     function reveal(element, delay) {
         // Only hidden ("armed") elements animate in. Anything the visitor can
         // already see just stays as it is, so nothing ever blinks.
-        if (element.classList.contains("revealed") || !element.classList.contains("fx-armed") || !motionOK()) {
+        if (element.classList.contains("revealed") || !element.classList.contains("fx-armed") || !A.motion.ok()) {
             showNow(element);
             return;
         }
@@ -432,20 +418,12 @@
         return part ? Math.min(part.length, 3) : 0;
     }
 
-    function formatNumber(value, decimals) {
-        const locale = A.lang === "ru" ? "ru-RU" : "en-US";
-        const fixed = Number(value.toFixed(decimals));
-        if (Math.abs(fixed) >= 10000) {
-            return fixed.toLocaleString(locale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-        }
-        const text = fixed.toFixed(decimals);
-        return A.lang === "ru" ? text.replace(".", ",") : text;
-    }
-
+    // Written the local way ("1,5" in Russian), with exactly the decimals of data-count.
+    // Thousands are only grouped from 10,000 on ("9999", but "12,345" / "12 345").
     function writeCounter(element, counter, value) {
         const prefix = element.getAttribute("data-count-prefix") || "";
         const suffix = element.getAttribute("data-count-suffix") || "";
-        element.textContent = prefix + formatNumber(value, counter.decimals) + suffix;
+        element.textContent = prefix + A.format.number(value, { digits: counter.decimals, grouping: "min2" }) + suffix;
     }
 
     function stopCounter(counter) {
@@ -470,7 +448,7 @@
                 if (!counter.armed) writeCounter(element, counter, value);
                 return;
             }
-            if (motionOK()) startCounter(element, counter, 0);
+            if (A.motion.ok()) startCounter(element, counter, 0);
             else writeCounter(element, counter, value);
             return;
         }
@@ -479,7 +457,7 @@
         counters.set(element, counter);
         writeCounter(element, counter, value);
 
-        if (motionOK() && counterObserver) {
+        if (A.motion.ok() && counterObserver) {
             counter.waiting = true;                 // counts up when it scrolls into view
             armObserver.observe(element);
             counterObserver.observe(element);
@@ -575,19 +553,19 @@
 
         const from = counter.shown;
         const to = counter.target;
-        if (from === to || !motionOK()) {
+        if (from === to || !A.motion.ok()) {
             counter.shown = to;
             writeCounter(element, counter, to);
             return;
         }
 
-        const duration = clamp(700 + Math.abs(to - from) * 12, 900, 1800);
+        const duration = A.util.clamp(700 + Math.abs(to - from) * 12, 900, 1800);
         counter.timer = setTimeout(() => {
             counter.timer = 0;
             const start = performance.now();
             const tick = (now) => {
                 // (the frame time can be a hair earlier than "start", so keep it at 0 or more)
-                const progress = clamp((now - start) / duration, 0, 1);
+                const progress = A.util.clamp((now - start) / duration, 0, 1);
                 const eased = 1 - Math.pow(2, -10 * progress);              // fast start, soft landing
                 counter.shown = progress >= 1 ? to : from + (to - from) * eased;
                 writeCounter(element, counter, counter.decimals ? counter.shown : Math.round(counter.shown));
@@ -683,7 +661,7 @@
 
     function scramble(element, delay) {
         stopScramble(element);
-        if (!motionOK() || !element.isConnected) return;
+        if (!A.motion.ok() || !element.isConnected) return;
 
         const run = { element: element, timer: 0, raf: 0, visual: null, finalHTML: "", lockedWidth: null };
         scrambleRuns.set(element, run);
@@ -730,7 +708,7 @@
         element.classList.add("fx-scrambling");
         run.visual = visual;
 
-        const duration = clamp(380 + letters.length * 32, 600, 1300);
+        const duration = A.util.clamp(380 + letters.length * 32, 600, 1300);
         const start = performance.now();
         let noiseLetters = [];
         let lastShuffle = 0;
@@ -743,8 +721,8 @@
                 return;
             }
 
-            const progress = clamp((now - start) / duration, 0, 1);
-            const done = Math.floor(clamp((progress - 0.15) / 0.85, 0, 1) * letters.length);
+            const progress = A.util.clamp((now - start) / duration, 0, 1);
+            const done = Math.floor(A.util.clamp((progress - 0.15) / 0.85, 0, 1) * letters.length);
 
             if (now - lastShuffle > 55) {
                 lastShuffle = now;
@@ -807,10 +785,14 @@
         element.append(text, caret, label);
         element.classList.add("fx-rotator");
 
-        const rotator = { element: element, key: key, text: text, label: label, words: [], wordsKey: "", word: 0, letters: 0, deleting: false, timer: 0, onScreen: true };
+        const rotator = { element: element, key: key, text: text, label: label, words: [], wordsKey: "", word: 0, letters: 0, deleting: false, timer: 0, visible: true, stopWatching: null };
         rotators.set(element, rotator);
         setRotatorWords(rotator);
-        if (rotatorObserver) rotatorObserver.observe(element);
+        // Types only while it can be seen (on screen, and the browser tab is open)
+        rotator.stopWatching = A.whenVisible(element, (visible) => {
+            rotator.visible = visible;
+            updateRotator(rotator);
+        });
         if (rotatorResize && element.parentElement) rotatorResize.observe(element.parentElement);
     }
 
@@ -848,7 +830,7 @@
         rotator.word = 0;
         rotator.letters = 0;
         rotator.deleting = false;
-        if (motionOK()) measureRotator(rotator);
+        if (A.motion.ok()) measureRotator(rotator);
         renderRotator(rotator);
         updateRotator(rotator);
     }
@@ -876,11 +858,11 @@
     }
 
     function rotatorShouldRun(rotator) {
-        return motionOK() && rotator.onScreen && !document.hidden && rotator.words[0] !== "";
+        return A.motion.ok() && rotator.visible && rotator.words[0] !== "";
     }
 
     function updateRotator(rotator) {
-        if (!motionOK()) {
+        if (!A.motion.ok()) {
             // No typing: just show the last word ("everyone"), no reserved space needed
             clearTimeout(rotator.timer);
             rotator.timer = 0;
@@ -937,19 +919,10 @@
         rotator.timer = setTimeout(() => rotatorStep(rotator), wait);
     }
 
-    function onRotatorView(entries) {
-        entries.forEach((entry) => {
-            const rotator = rotators.get(entry.target);
-            if (!rotator) return;
-            rotator.onScreen = entry.isIntersecting;
-            updateRotator(rotator);
-        });
-    }
-
     // Fonts arrive a little later and change the word widths
     if (document.fonts && document.fonts.ready) {
         document.fonts.ready.then(() => rotators.forEach((rotator) => {
-            if (motionOK()) measureRotator(rotator);
+            if (A.motion.ok()) measureRotator(rotator);
         }));
     }
 
@@ -1099,8 +1072,8 @@
         if (!litRect) litRect = host.getBoundingClientRect();
         if (!litRect.width || !litRect.height) return;
 
-        const x = clamp((pointer.x - litRect.left) / litRect.width, 0, 1);
-        const y = clamp((pointer.y - litRect.top) / litRect.height, 0, 1);
+        const x = A.util.clamp((pointer.x - litRect.left) / litRect.width, 0, 1);
+        const y = A.util.clamp((pointer.y - litRect.top) / litRect.height, 0, 1);
 
         const glare = glareOf(host);
         if (glare) {
@@ -1110,7 +1083,7 @@
 
         if (host.hasAttribute("data-tilt")) {
             // Small cards tilt more, big cards tilt less
-            const maxTilt = clamp(2600 / litRect.width, 3, 9);
+            const maxTilt = A.util.clamp(2600 / litRect.width, 3, 9);
             const rotateX = (0.5 - y) * 2 * maxTilt * 0.8;
             const rotateY = (x - 0.5) * 2 * maxTilt;
             const depth = Math.round(Math.max(700, litRect.width * 2.2));
@@ -1183,8 +1156,8 @@
         if (!magnetRect) magnetRect = button.getBoundingClientRect();
         const dx = pointer.x - (magnetRect.left + magnetRect.width / 2);
         const dy = pointer.y - (magnetRect.top + magnetRect.height / 2);
-        button.style.setProperty("--fx-mx", clamp(dx * 0.2, -8, 8).toFixed(2) + "px");
-        button.style.setProperty("--fx-my", clamp(dy * 0.28, -6, 6).toFixed(2) + "px");
+        button.style.setProperty("--fx-mx", A.util.clamp(dx * 0.2, -8, 8).toFixed(2) + "px");
+        button.style.setProperty("--fx-my", A.util.clamp(dy * 0.28, -6, 6).toFixed(2) + "px");
     }
 
     function resetPointerEffects() {
@@ -1245,14 +1218,14 @@
     }
 
     document.addEventListener("pointerdown", (event) => {
-        if (!motionOK() || event.button > 0) return;
+        if (!A.motion.ok() || event.button > 0) return;
         const element = rippleTarget(event);
         if (element) ripple(element, event.clientX, event.clientY);
     }, { passive: true });
 
     // Keyboard presses (Enter / Space) ripple from the middle
     document.addEventListener("click", (event) => {
-        if (event.detail !== 0 || !motionOK()) return;
+        if (event.detail !== 0 || !A.motion.ok()) return;
         const element = rippleTarget(event);
         if (!element) return;
         const rect = element.getBoundingClientRect();
@@ -1278,8 +1251,8 @@
     const railLinks = [];
     let railSections = [];
     // Same rule as in css/effects.css: wide screens with a mouse
-    const railQuery = window.matchMedia("(min-width: 1360px) and (min-height: 560px) and (hover: hover) and (pointer: fine)");
-    onMediaChange(railQuery, queueProgress);
+    const railQuery = A.media("(min-width: 1360px) and (min-height: 560px) and (hover: hover) and (pointer: fine)");
+    A.onMedia(railQuery, queueProgress, { immediate: false });
 
     function buildRail() {
         railSections = Array.prototype.slice.call(document.querySelectorAll("main section[id]")).filter((section) => RAIL_KEYS[section.id]);
@@ -1344,12 +1317,12 @@
             fill = 1;
         } else {
             const next = tops[active + 1];
-            const part = next === undefined ? 0 : clamp((line - tops[active]) / Math.max(1, next - tops[active]), 0, 1);
+            const part = next === undefined ? 0 : A.util.clamp((line - tops[active]) / Math.max(1, next - tops[active]), 0, 1);
             fill = (active + part) / (railSections.length - 1);
         }
 
         // Only touch the page when something really changed
-        const scale = "scaleY(" + clamp(fill, 0, 1).toFixed(4) + ")";
+        const scale = "scaleY(" + A.util.clamp(fill, 0, 1).toFixed(4) + ")";
         if (scale !== lastRailScale) {
             lastRailScale = scale;
             railFill.style.transform = scale;
@@ -1372,7 +1345,7 @@
        ========================================================= */
     function onMotionChange() {
         updateModeClasses();
-        if (!motionOK()) {
+        if (!A.motion.ok()) {
             revealAll();
             finishAllCounters();
             stopAllScrambles();
@@ -1400,7 +1373,7 @@
     });
 
     A.motion.onChange(onMotionChange);
-    onMediaChange(finePointerQuery, onMotionChange);
+    A.onMedia(finePointerQuery, onMotionChange, { immediate: false });
 
     /* =========================================================
        FINDING ELEMENTS (now, and when other features add more later)
@@ -1452,7 +1425,7 @@
             if (!element.isConnected) {
                 clearTimeout(rotator.timer);
                 rotators.delete(element);
-                if (rotatorObserver) rotatorObserver.unobserve(element);
+                rotator.stopWatching();
             }
         });
     }
@@ -1493,7 +1466,7 @@
 
         scrambleTargets.forEach((element) => {
             stopScramble(element);
-            if (!motionOK()) return;
+            if (!A.motion.ok()) return;
             scramblePending.add(element);
             if (hostShown(element) && isOnScreen(element)) {
                 scramblePending.delete(element);
@@ -1509,7 +1482,6 @@
         });
     });
 
-    document.addEventListener("visibilitychange", () => rotators.forEach(updateRotator));
 
     /* =========================================================
        12. CONFETTI (for big moments: every lesson done, a new best quiz score)
@@ -1529,7 +1501,7 @@
 
     function confetti(options) {
         const settings = options || {};
-        if (!motionOK() || document.hidden) return;
+        if (!A.motion.ok() || document.hidden) return;
         stopConfetti();
 
         const canvas = document.createElement("canvas");
