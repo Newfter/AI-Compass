@@ -13,7 +13,7 @@
                      and numbers that count up
     6. helpers       small tools: maths and easing, page elements, buttons that
                      need a second press, colours, canvas
-    7. screen        media queries, visibility, resizing, layout sizes
+    7. screen        media queries, visibility, resizing, the pixel ratio, layout sizes
     8. announce      messages for screen readers
     9. overlays      pop-up windows: scroll lock, focus, the Esc key
    10. navigation    the page sections, A.navigate, one scroll pipeline, parts
@@ -47,7 +47,8 @@
        A.colors.parse / rgb(cssName) / rgba(color, alpha)   A.canvas.pixelRatio / fit / roundRect
        A.cssVar(name)   A.escapeHTML(text)
     7  A.breakpoints   A.queries   A.media(query)   A.onMedia(query, callback)
-       A.whenVisible(element, callback, options)   A.onResize(callback)   A.layout.px / navHeight
+       A.whenVisible(element, callback, options)   A.onResize(callback, options)
+       A.onPixelRatioChange(callback)   A.layout.px / navHeight
     8  A.announce(text, options)
     9  A.overlays.register(id, options) -> { opened(), closed(), close(reason) }
        A.overlays.closeAll / isOpen / top / hasModal / onChange / update
@@ -812,7 +813,7 @@
     };
 
     /* =========================================================
-       7. SCREEN: MEDIA QUERIES, VISIBILITY, RESIZING, LAYOUT
+       7. SCREEN: MEDIA QUERIES, VISIBILITY, RESIZING, PIXEL RATIO, LAYOUT
        ========================================================= */
     // Screen widths where the layout changes (the same numbers as in the CSS files)
     const breakpoints = { phone: 640, menu: 960, wide: 1360 };
@@ -974,6 +975,36 @@
         const set = options && options.viewport ? viewportCallbacks : resizeCallbacks;
         set.add(callback);
         return function () { set.delete(callback); };
+    }
+
+    // ----- Sharper (or less sharp) pixels -----
+    // onPixelRatioChange(callback) calls callback(ratio) when the device pixel ratio changes
+    // while the window keeps its size: the window moved to a retina screen, or the browser
+    // zoom changed. A canvas then needs a new backing size, but no resize event comes.
+    // A media query for the current ratio tells us; it is made again for each new ratio.
+    //     A.onPixelRatioChange(function (ratio) { fitCanvases(); });
+    // Returns a function that stops listening.
+    const ratioCallbacks = new Set();
+    let stopRatioQuery = null;
+
+    function watchPixelRatio() {
+        stopRatioQuery = onMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)", function () {
+            stopRatioQuery();
+            watchPixelRatio();
+            const ratio = window.devicePixelRatio || 1;
+            ratioCallbacks.forEach(function (callback) { safeCall(callback, ratio); });
+        }, { immediate: false });
+    }
+
+    function onPixelRatioChange(callback) {
+        ratioCallbacks.add(callback);
+        if (!stopRatioQuery) watchPixelRatio();
+        return function () {
+            ratioCallbacks.delete(callback);
+            if (ratioCallbacks.size || !stopRatioQuery) return;
+            stopRatioQuery();
+            stopRatioQuery = null;
+        };
     }
 
     // ----- Sizes from the CSS -----
@@ -1809,6 +1840,7 @@
         onMedia: onMedia,
         whenVisible: whenVisible,
         onResize: onResize,
+        onPixelRatioChange: onPixelRatioChange,
         layout: layout,
 
         // 8-9. screen readers and windows
