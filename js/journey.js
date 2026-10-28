@@ -71,6 +71,7 @@
     const VERSION = 1;                           // the version of the saved progress
     const EXPORT_MARK = "ai-compass-journey";    // a progress file says { app: EXPORT_MARK, ... }
     const SAVE_DELAY = 400;                      // ms: rewards that come together are saved once
+    const SAME_MOMENT = 1000;                    // ms: two tabs that save this close may write over each other
     const CELEBRATE_DELAY = 350;                 // ms: rewards that come together share one toast
     const DAY_STARTS_AT = 4;                     // a new day starts at 4 a.m. (a late night is the day before)
     const DAYS_KEPT = 42;                        // the XP of each day is kept for 6 weeks (the activity calendar)
@@ -203,8 +204,11 @@
     let state = null;
     let canSave = true;          // false when the browser refuses to save (the window then says so)
     let saveTimer = 0;
+    let saveTried = false;       // true once this visit has tried to save (then canSave is known)
     let savedText = "";          // what this tab saved or read last (to notice other tabs)
     let unsaved = [];            // the progress events since the last save (another tab may save over them)
+    let lastSave = { events: [], time: 0 };   // the events of the last save, and when it was
+    let replaying = false;       // true while the events of the last save are done again (see takeSaved)
     let tidiedFor = "";          // the day the old days were last cleared away
 
     function freshState() {
@@ -302,12 +306,46 @@
         saveTimer = setTimeout(saveNow, SAVE_DELAY);
     }
 
-    function saveNow() {
+    // Saves now. If another tab saved since this tab last looked, its progress is taken
+    // first, so that nothing it did is lost. replacing: an import or "Start over", which
+    // take the place of everything.
+    function saveNow(replacing) {
+        if (!replacing && canSave) takeSaved();
         clearTimeout(saveTimer);
         saveTimer = 0;
+        const could = canSave;
         canSave = A.storage.set(STORE_KEY, state);
+        saveTried = true;
         savedText = JSON.stringify(state);
+        lastSave = { events: unsaved, time: Date.now() };
         unsaved = [];
+        if (canSave !== could) refreshPanel();
+    }
+
+    // Another tab saved its progress since this tab last saved or read it: take it, then
+    // do again what happened here since this tab's last save. If that save was a moment
+    // ago, the other tab may have saved at the same moment and written over it, so its
+    // events are done again too. The keys make sure nothing pays twice; the counts
+    // (a small reward that pays a few times a day, the palette uses) only count again
+    // if the other tab has none. True if there was something to take.
+    function takeSaved() {
+        const saved = A.storage.get(STORE_KEY, null);
+        if (saved === null || JSON.stringify(saved) === savedText) return false;
+        const checked = checkState(saved);
+        if (!checked.state) return false;
+        state = checked.state;
+        savedText = JSON.stringify(saved);
+        tidiedFor = "";
+        if (Date.now() - lastSave.time < SAME_MOMENT) {
+            replaying = true;
+            try {
+                lastSave.events.forEach(function (activity) { handle(activity, true); });
+            } finally {
+                replaying = false;
+            }
+        }
+        unsaved.forEach(function (activity) { handle(activity, true); });
+        return true;
     }
 
     // Clears away what is no longer needed: the XP of days more than 6 weeks ago,
@@ -463,7 +501,7 @@
     function payDaily(name, rule, day) {
         const key = name + "@" + day;
         const paid = has(state.awarded, key) ? state.awarded[key] : 0;
-        if (paid >= rule.perDay) return;
+        if (paid >= rule.perDay || (replaying && paid)) return;
         state.awarded[key] = paid + 1;
         pay(rule.xp, day);
     }
@@ -471,7 +509,7 @@
     // Something done that earns badges but no XP. counting: keep a count (the palette badge)
     function addFact(name, counting) {
         const count = has(state.facts, name) ? state.facts[name] : 0;
-        if (count && (!counting || count >= MAX_COUNT)) return;
+        if (count && (!counting || replaying || count >= MAX_COUNT)) return;
         state.facts[name] = count + 1;
         changed = true;
     }
@@ -726,6 +764,9 @@
         paintButton(false);
         button.hidden = false;
         button.addEventListener("click", function () { open(button); });
+        button.addEventListener("animationend", function (event) {
+            if (event.animationName === "jr-gain") button.classList.remove("jr-gain");
+        });
     }
 
     // gained: XP just came in, so the ring glows once
@@ -751,6 +792,8 @@
     let panelLoading = null;     // the Promise of loading it
 
     function open(opener) {
+        // The window says when the browser doesn't save: if this visit hasn't saved yet, it tries now
+        if (saveTimer || !saveTried) saveNow();
         if (panel) {
             panel.open(opener);
             return Promise.resolve(true);
@@ -869,7 +912,7 @@
         state = newState;
         tidiedFor = "";
         tidy(today());
-        saveNow();
+        saveNow(true);
         paintButton(false);
         refreshPanel();
     }
@@ -898,17 +941,9 @@
         if (document.hidden) flush();
     });
 
-    // Another tab saved its progress: take it, then add again what happened here
-    // since this tab last saved (the keys make sure nothing pays twice)
+    // Another tab saved its progress: take it (see takeSaved)
     window.addEventListener("storage", function () {
-        const saved = A.storage.get(STORE_KEY, null);
-        if (saved === null || JSON.stringify(saved) === savedText) return;
-        const checked = checkState(saved);
-        if (!checked.state) return;
-        state = checked.state;
-        savedText = JSON.stringify(saved);
-        tidiedFor = "";
-        unsaved.forEach(function (activity) { handle(activity, true); });
+        if (!takeSaved()) return;
         paintButton(false);
         refreshPanel();
     });
