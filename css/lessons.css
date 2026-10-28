@@ -463,13 +463,16 @@
     transition: border-color 0.3s ease, box-shadow 0.35s ease, background 0.3s ease;
 }
 
-/* The light that follows the mouse */
+/* The light that follows the mouse. The cards tilt (data-tilt), so js/effects.js
+   puts the mouse position on them: --fx-x and --fx-y, from 0% to 100%. It does
+   that only for a real mouse with the animations on; until then the light rests
+   at the top. */
 .lsn-card::before {
     content: "";
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 0%), rgba(var(--lsn-rgb), 0.18), transparent 50%);
+    background: radial-gradient(380px circle at var(--fx-x, 50%) var(--fx-y, 0%), rgba(var(--lsn-rgb), 0.18), transparent 50%);
     opacity: 0;
     transition: opacity 0.35s ease;
 }

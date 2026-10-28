@@ -69,7 +69,8 @@
     "use strict";
 
     const root = document.documentElement;
-    // Every storage key starts with this. The theme script in index.html reads "aic:theme" itself.
+    // Every storage key starts with this. The small script in the <head> of index.html
+    // reads "aic:theme" and "aic:motion.calm" itself (before the page is drawn).
     const PREFIX = "aic:";
 
     // Errors in one listener must not stop the others: report them and go on
@@ -488,7 +489,8 @@
        Animations run only when motion.ok(): the device does not ask
        for reduced motion AND calm mode (our own switch) is off.
        <html> gets the class "fx-calm" in calm mode and "fx-motion-off"
-       whenever animations should stop, so the CSS can follow.
+       whenever animations should stop, so the CSS can follow. (The script
+       in the <head> of index.html sets them first, before the page is drawn.)
        ========================================================= */
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -1186,7 +1188,8 @@
        on Windows): that variable restyles the whole page anyway.
        In that one frame the window's aria-modal="true" keeps screen readers
        inside and its backdrop takes the clicks. The Tab key, A.navigate() and
-       A.overlays.closeAll() finish the waiting work at once.
+       A.overlays.closeAll() finish the waiting work at once (A.navigate() moves
+       the focus itself, so a waiting closed() function is dropped).
        So never move the focus back to the page right after closed(): the page
        may still be inert. Give closed() a function (or the element) instead.
 
@@ -1535,6 +1538,9 @@
         const settings = options || {};
         const target = document.getElementById(id);
         if (!target) return false;
+        // The place we go to takes the focus, so a window closed just before
+        // doesn't give it back to its button first (see overlays, part 9)
+        if (settings.focus !== false) focusReturns.length = 0;
         if (settings.keepOverlays !== true) {
             closeAll({ reason: "navigate", navigating: true, except: settings.keepOverlays });
         }
@@ -2085,6 +2091,8 @@
     /* =========================================================
        14. START-UP
        ========================================================= */
+    // The <head> script of index.html has set these already; core sets them again,
+    // so the page never depends on that script
     root.classList.add("js");
     updateMotionClasses();
 

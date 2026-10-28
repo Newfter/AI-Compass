@@ -736,64 +736,6 @@
         openLesson(Number(card.getAttribute("data-lesson")), card.querySelector("[data-open]"));
     });
 
-    // A soft coloured light follows the mouse over a card (the CSS draws it at --mx / --my).
-    // Like the glare of effects.js, it only follows a real mouse, and only while
-    // animations are on (with the motion off, css/lessons.css hides the light).
-    // The card's place on the page is read once, when the mouse comes onto it,
-    // and --mx / --my are written at most once per frame.
-    const finePointer = A.media(A.queries.finePointer);
-    const cardLight = { card: null, left: 0, top: 0, x: 0, y: 0, frame: 0 };
-
-    function cardLightOn() {
-        return A.motion.ok() && finePointer.matches;
-    }
-
-    function lightCard(card) {
-        const box = card.getBoundingClientRect();
-        cardLight.card = card;
-        cardLight.left = box.left + window.scrollX;   // page coordinates: still right after a scroll
-        cardLight.top = box.top + window.scrollY;
-    }
-
-    function drawCardLight() {
-        cardLight.frame = 0;
-        const card = cardLight.card;
-        if (!card) return;
-        card.style.setProperty("--mx", Math.round(cardLight.x + window.scrollX - cardLight.left) + "px");
-        card.style.setProperty("--my", Math.round(cardLight.y + window.scrollY - cardLight.top) + "px");
-    }
-
-    function followPointer(card, event) {
-        if (event.pointerType !== "mouse" || !cardLightOn()) return;
-        if (cardLight.card !== card) lightCard(card);
-        cardLight.x = event.clientX;
-        cardLight.y = event.clientY;
-        if (!cardLight.frame) cardLight.frame = requestAnimationFrame(drawCardLight);
-    }
-
-    // Motion off (or no mouse any more): the light goes back to its resting place
-    function resetCardLight() {
-        cancelAnimationFrame(cardLight.frame);
-        cardLight.frame = 0;
-        cardLight.card = null;
-        cards.forEach(function (card) {
-            card.style.removeProperty("--mx");
-            card.style.removeProperty("--my");
-        });
-    }
-
-    cards.forEach(function (card) {
-        const follow = function (event) { followPointer(card, event); };
-        card.addEventListener("pointerenter", follow);
-        card.addEventListener("pointermove", follow);
-        card.addEventListener("pointerleave", function () {
-            if (cardLight.card === card) cardLight.card = null;
-        });
-    });
-
-    A.motion.onChange(function () { if (!cardLightOn()) resetCardLight(); });
-    A.onMedia(A.queries.finePointer, function () { if (!cardLightOn()) resetCardLight(); }, { immediate: false });
-
     // ---------- 10. Mini-lab 1: AI or not AI? ----------
     const SORT_ANSWERS = ["not", "ai", "ai", "not", "ai"];
 
@@ -1562,7 +1504,7 @@
     readerEl.setAttribute("data-size", textSize);
     readerEl.innerHTML = `
         <div class="lsn-reader-backdrop" data-action="close"></div>
-        <div class="lsn-reader-panel" role="dialog" aria-modal="true" aria-labelledby="lsn-reader-title">
+        <div class="lsn-reader-panel" role="dialog" aria-modal="true">
             <div class="lsn-reader-progress" aria-hidden="true"><span data-ref="progress"></span></div>
             <header class="lsn-reader-top">
                 <div class="lsn-reader-where">
@@ -1811,6 +1753,9 @@
         stopLab(false);
         panel.style.setProperty("--lsn-rgb", "var(" + LESSONS[n - 1].rgb + ")");
         parts.article.innerHTML = articleHTML(n);
+        // The window is named by the lesson's title. That title only exists from the
+        // first lesson on, so the name is linked here and not in the HTML above.
+        A.dom.setAttr(panel, "aria-labelledby", "lsn-reader-title");
         parts.toc.innerHTML = tocHTML(n);
         reader.cleanupLab = mountLab(n, ref(parts.article, "lab"));
         renderCheck();
@@ -2358,7 +2303,8 @@
         open: function (number, opener) {
             openLesson(number, opener || document.activeElement);
         },
-        close: function () { closeReader({ restoreFocus: false }); },
+        // Like Esc: the focus goes back to the opener (or to the lesson's card)
+        close: function () { closeReader(); },
         isOpen: function () { return reader.open; }
     });
 

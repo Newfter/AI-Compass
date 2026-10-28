@@ -138,8 +138,10 @@
 
     // The whole card. It is made only when the lab is needed (build(), section 10),
     // and its empty data-i18n holders get their texts at that moment.
+    // data-no-glare: the card is too big for the light that follows the mouse
+    // along a card's border (js/effects.js, section 10)
     function labHTML() {
-        return '<div class="lab card" data-reveal>' +
+        return '<div class="lab card" data-reveal data-no-glare>' +
             '<span class="lab-corners" aria-hidden="true"></span>' +
             '<div class="lab-top">' +
                 '<div class="lab-tabs" role="tablist" data-active="classifier" data-i18n-attr="aria-label:lab.tablistLabel">' +

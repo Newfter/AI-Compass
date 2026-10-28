@@ -10,19 +10,40 @@
     <title>AI Compass | Explore Artificial Intelligence</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
 
-    <!-- Apply the saved theme before the page is drawn, so it doesn't flash.
-         "aic:theme" is where A.storage keeps the theme: "aic:" is PREFIX in js/core.js,
-         and the value is saved as JSON ("dark" with its quotes). Keep the two the same. -->
+    <!-- Before the page is drawn, this script applies the saved settings, so nothing flashes:
+         - the theme (data-theme), and the colour of the phone's address bar to match;
+         - calm mode: the classes fx-calm and fx-motion-off (fx-motion-off also when the device
+           asks for reduced motion), so the hero doesn't start its entrance animation;
+         - the class "js": the page runs JavaScript (the CSS can style the page without it).
+         core.js sets the same things again, so nothing depends on this script running first.
+         The settings are where A.storage keeps them: "aic:" is PREFIX in js/core.js, and each
+         value is saved as JSON ("dark" with its quotes). Keep the names the same as there. -->
     <script>
-        try {
-            var savedTheme = JSON.parse(localStorage.getItem("aic:theme"));
-            if (savedTheme === "light" || savedTheme === "dark") {
-                document.documentElement.setAttribute("data-theme", savedTheme);
-                // The phone's address bar matches the theme too
-                var themeColor = document.querySelector('meta[name="theme-color"]');
-                themeColor.setAttribute("content", themeColor.getAttribute("data-" + savedTheme));
+        (function () {
+            var root = document.documentElement;
+            function saved(key) {
+                try {
+                    return JSON.parse(localStorage.getItem("aic:" + key));
+                } catch (error) {
+                    return null;     // no storage, or a broken value
+                }
             }
-        } catch (error) {}
+
+            root.classList.add("js");
+
+            var theme = saved("theme");
+            if (theme === "light" || theme === "dark") {
+                root.setAttribute("data-theme", theme);
+                var themeColor = document.querySelector('meta[name="theme-color"]');
+                themeColor.setAttribute("content", themeColor.getAttribute("data-" + theme));
+            }
+
+            var calm = saved("motion.calm");
+            if (calm === null) calm = saved("effects.calm");     // the setting's old name
+            calm = calm === true;
+            root.classList.toggle("fx-calm", calm);
+            root.classList.toggle("fx-motion-off", calm || window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+        })();
     </script>
 
     <!-- Fonts: Unbounded (headings), Manrope (text), JetBrains Mono (labels). All support Cyrillic. -->

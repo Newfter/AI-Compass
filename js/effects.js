@@ -17,8 +17,8 @@
     8. "Decoding" text                [data-scramble] and .section-label
     9. Typewriter words               [data-rotator]
    10. Pointer effects (a real mouse only): 3D tilt with a glare on
-       [data-tilt], a glowing border on .card, a spotlight under the
-       cursor and magnetic main buttons (.btn-primary)
+       [data-tilt], a glowing border on .card (not on [data-no-glare]),
+       a spotlight under the cursor and magnetic main buttons (.btn-primary)
    11. Ripple when you press a button
    12. Section mini-map on the right (big screens)
    13. Confetti (for big moments)
@@ -151,8 +151,6 @@
         }
         if (!fineOK()) resetPointerEffects();
         rotators.forEach(updateRotator);
-        // (older code listens for this event; new code uses A.motion.onChange)
-        document.dispatchEvent(new CustomEvent("aic:effects", { detail: { calm: A.motion.calm } }));
     }
 
     // The hero rises in with pure CSS when the page opens (css/effects.css).
@@ -1149,8 +1147,9 @@
 
     /* =========================================================
        10. POINTER EFFECTS (a real mouse only)
-       tilt + glare on [data-tilt], glowing border on .card,
-       spotlight under the cursor, magnetic .btn-primary
+       tilt + glare on [data-tilt], glowing border on .card (an element
+       with data-no-glare gets neither), spotlight under the cursor,
+       magnetic .btn-primary
        ========================================================= */
     const spotlight = document.createElement("div");
     spotlight.className = "fx-spotlight";
@@ -1223,11 +1222,14 @@
     }
 
     // Elements that can't hold a glare: images, form fields and scrolling boxes
-    // (in a scrolling box the glare would scroll away with the content)
+    // (in a scrolling box the glare would scroll away with the content).
+    // A card can also say no with data-no-glare. The lab card does: it is huge
+    // (about 1180 x 1874 px), and the browser had to draw it again and again while
+    // the light moved (1.3 s of drawing for 180 mouse moves, against 0.08 s without).
     const cannotLight = new WeakSet();
 
     function canLight(host) {
-        if (cannotLight.has(host)) return false;
+        if (cannotLight.has(host) || host.hasAttribute("data-no-glare")) return false;
         if (glareOf(host)) return true;
         const style = getComputedStyle(host);
         const scrolls = /(auto|scroll)/.test(style.overflowX + " " + style.overflowY);
@@ -1831,7 +1833,8 @@
     // "Not used yet" means no other file calls it today. Those members stay on
     // purpose: they are small, and other features may need them later.
     A.feature("effects", {
-        // true while calm mode is on (core keeps the setting: A.motion.calm). The lab reads it
+        // true while calm mode is on. Not used yet: features read A.motion.calm (core),
+        // which is the same setting
         get calm() { return A.motion.calm; },
         // calm mode on (true) or off (false). Not used yet: A.motion.setCalm does the same
         setCalm: function (value) { A.motion.setCalm(value); },
