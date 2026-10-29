@@ -57,6 +57,7 @@
     // Saved as "aic:settings" = { v: 1, ... }. The script in the <head> of index.html
     // reads the same object before the page is drawn: keep the names the same there.
     const STORAGE_KEY = "settings";
+    const TEST_KEY = "settings.test";     // only to find out whether the browser can save
     const VERSION = 1;
 
     // The text size steps: --text-scale on <html> (style.css). 1 is the normal size.
@@ -185,10 +186,20 @@
     }
 
     const prefs = loadSaved();
-    let canSave = true;     // false when the browser refuses to save (storage blocked)
+    let canSave = null;     // false when the browser refuses to save (storage blocked); null: not known yet
 
     function save() {
         canSave = A.storage.set(STORAGE_KEY, Object.assign({ v: VERSION }, prefs));
+    }
+
+    // Can this browser save? Known after the first save; before that, the window
+    // asks once with a small test value (written and removed at once)
+    function storageWorks() {
+        if (canSave === null) {
+            canSave = A.storage.set(TEST_KEY, true);
+            A.storage.remove(TEST_KEY);
+        }
+        return canSave;
     }
 
     // The value of a setting, by its public name (see the API in section 13)
@@ -548,6 +559,7 @@
             layer: layer,
             panel: layer.querySelector(".st-panel"),
             title: layer.querySelector(".st-title"),
+            body: layer.querySelector(".st-body"),
             switches: Array.from(layer.querySelectorAll(".st-toggle")),
             themeNote: layer.querySelector(".st-theme-note"),
             fontNote: layer.querySelector("#st-easyFont-note"),
@@ -655,7 +667,7 @@
         A.dom.setHidden(ui.calmNote, !A.motion.reduced);
         A.dom.setText(ui.calmNote, A.motion.reduced ? t("settings.calmDevice") : "");
 
-        A.dom.setHidden(ui.noSave, canSave);
+        A.dom.setHidden(ui.noSave, storageWorks());
         paintReset();
         paintNumbers();
         paintVoices();
@@ -743,6 +755,7 @@
          id           the window's id for A.overlays
          parts()      builds the window the first time, returns { layer, panel }
          firstFocus() the element that gets the focus when it opens
+         scrollBox()  the part that scrolls: it starts at the top every time
          onOpen, onClose   what else to do
          fallback     the button that gets the focus back if the opener can't
        ========================================================= */
@@ -771,6 +784,8 @@
             if (options.onOpen) options.onOpen();
             parts.layer.hidden = false;
             parts.layer.classList.remove("is-closing");
+            // Only now: a hidden box keeps the place it was scrolled to last time
+            options.scrollBox().scrollTop = 0;
             overlay.opened();       // before the focus moves in (core makes the rest inert)
             A.dom.replay(parts.layer, "is-open");
             options.firstFocus().focus({ preventScroll: true });
@@ -827,10 +842,10 @@
         // The title takes the focus: screen readers read the window's name,
         // and the next Tab goes to the first control
         firstFocus: function () { return ui.title; },
+        scrollBox: function () { return ui.body; },
         fallback: function () { return toggleButton; },
         onOpen: function () {
             paint();
-            ui.panel.querySelector(".st-body").scrollTop = 0;
             if (toggleButton) toggleButton.setAttribute("aria-expanded", "true");
             if (canSpeak) window.speechSynthesis.addEventListener("voiceschanged", paintVoices);
         },
@@ -877,7 +892,7 @@
         return data.shortcuts.map(function (part, index) {
             const id = "st-keys-group-" + index;
             return '<section class="st-keys-group" aria-labelledby="' + id + '">' +
-                '<h3 class="st-keys-group-title" id="' + id + '">' + esc(t(part.title)) + "</h3>" +
+                '<h3 class="st-keys-group-title" id="' + id + '">' + esc(t(part.title, { shortcut: isMac ? "⌘K" : "Ctrl+K" })) + "</h3>" +
                 '<dl class="st-keys-list">' +
                     part.items.map(function (item) {
                         const ways = item.keys.map(function (keys) { return comboHTML(keys, item.sequence); });
@@ -940,11 +955,9 @@
         id: "shortcuts",
         parts: buildShortcuts,
         firstFocus: function () { return keysUi.body; },
+        scrollBox: function () { return keysUi.body; },
         fallback: function () { return null; },
-        onOpen: function () {
-            paintShortcuts();
-            keysUi.body.scrollTop = 0;
-        }
+        onOpen: paintShortcuts
     });
 
     /* =========================================================

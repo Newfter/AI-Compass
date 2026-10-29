@@ -114,7 +114,7 @@ window.AICompass.addTranslations({
         "settings.keysLab": "AI Lab: Teach the machine",
         "settings.keysGlossary": "Glossary search",
         "settings.keysTimeline": "History",
-        "settings.keysPalette": "Site search (Ctrl+K)",
+        "settings.keysPalette": "Site search ({shortcut})",       // {shortcut}: Ctrl+K, or ⌘K on a Mac
         "settings.keysBot": "Compass Bot",
 
         // What each shortcut does
@@ -255,7 +255,7 @@ window.AICompass.addTranslations({
         "settings.keysLab": "ИИ-лаборатория: «Обучи машину»",
         "settings.keysGlossary": "Поиск в словаре",
         "settings.keysTimeline": "История",
-        "settings.keysPalette": "Поиск по сайту (Ctrl+K)",
+        "settings.keysPalette": "Поиск по сайту ({shortcut})",
         "settings.keysBot": "Compass Bot",
 
         "settings.do.palette": "Открыть поиск по сайту",
