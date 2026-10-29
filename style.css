@@ -624,6 +624,11 @@ button.chip:hover,
     gap: 8px;
 }
 
+/* A squeezed button would be too small to tap: the bar's widths below are set so they fit */
+.nav-actions > * {
+    flex-shrink: 0;
+}
+
 .icon-button {
     display: inline-flex;
     align-items: center;
@@ -691,6 +696,38 @@ button.chip:hover,
 
 .burger[aria-expanded="true"] > span:nth-child(3) {
     transform: translateY(-6px) rotate(-45deg);
+}
+
+/* The theme and language buttons at the bottom of the phone menu
+   (shown on narrow phones only, see 11. RESPONSIVE) */
+.nav-quick {
+    display: none;
+}
+
+.nav-quick-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-quick-button:hover {
+    border-color: var(--accent-2);
+    color: var(--accent-2);
+}
+
+.nav-quick-button svg {
+    flex-shrink: 0;
 }
 
 /* ===== 6. HERO ===== */
@@ -1172,10 +1209,11 @@ button.chip:hover,
         gap: 6px;
     }
 
+    /* 40 px: the smallest button that is easy to tap */
     .icon-button {
-        min-width: 38px;
-        height: 38px;
-        padding: 0 9px;
+        min-width: 40px;
+        height: 40px;
+        padding: 0 10px;
     }
 
     .nav-links {
@@ -1243,8 +1281,38 @@ button.chip:hover,
     }
 }
 
+/* Narrow phones: the menu bar keeps search, My Compass, Settings and the menu
+   button. Theme and language move into the menu (the Settings window has them too). */
+@media (max-width: 520px) {
+    .nav-actions .theme-button,
+    .nav-actions .lang-button {
+        display: none;
+    }
+
+    .nav-quick {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(8.75rem, 1fr));
+        gap: 8px;
+        margin-top: 8px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+    }
+}
+
 @media (max-width: 400px) {
     .navbar .logo-mark {
+        display: none;
+    }
+}
+
+/* The smallest phones (320 px): the compass alone stands for the name
+   (the link keeps its name, "AI Compass", for screen readers) */
+@media (max-width: 340px) {
+    .navbar .logo-mark {
+        display: grid;
+    }
+
+    .navbar .logo-text {
         display: none;
     }
 }
@@ -1324,7 +1392,8 @@ html.fx-motion-off *::after {
    button) are hidden, and on smaller screens the menu links stay in the bar,
    in one row that scrolls sideways. Everything else can be read by scrolling. */
 
-html:not(.js) .nav-actions {
+html:not(.js) .nav-actions,
+html:not(.js) .nav-quick {
     display: none;
 }
 

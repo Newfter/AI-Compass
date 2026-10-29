@@ -160,6 +160,20 @@
             <a href="#glossary" data-i18n="nav.glossary">Glossary</a>
             <a href="#timeline" data-i18n="nav.timeline">History</a>
             <a href="#about" data-i18n="nav.about">About</a>
+
+            <!-- On narrow phones the theme and language buttons are here, under the links:
+                 the menu bar has no room for them (style.css, 11. RESPONSIVE) -->
+            <div class="nav-quick">
+                <button class="nav-quick-button" type="button" data-theme-toggle>
+                    <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg>
+                    <span data-i18n="core.themeQuick">Light / dark theme</span>
+                </button>
+                <button class="nav-quick-button" type="button" data-language-toggle>
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.4 2.6 3.6 5.6 3.6 9s-1.2 6.4-3.6 9c-2.4-2.6-3.6-5.6-3.6-9S9.6 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                    <span lang="ru" data-i18n="core.langQuick" data-i18n-attr="lang:core.langQuickCode">Русский</span>
+                </button>
+            </div>
         </nav>
 
         <div class="nav-actions">
@@ -180,7 +194,7 @@
                 <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9.56 4.49L9.84 1.83A10.4 10.4 0 0 1 14.16 1.83L14.44 4.49A7.9 7.9 0 0 1 17.29 6.13L19.73 5.04A10.4 10.4 0 0 1 21.89 8.79L19.73 10.36A7.9 7.9 0 0 1 19.73 13.64L21.89 15.21A10.4 10.4 0 0 1 19.73 18.96L17.29 17.87A7.9 7.9 0 0 1 14.44 19.51L14.16 22.17A10.4 10.4 0 0 1 9.84 22.17L9.56 19.51A7.9 7.9 0 0 1 6.71 17.87L4.27 18.96A10.4 10.4 0 0 1 2.11 15.21L4.27 13.64A7.9 7.9 0 0 1 4.27 10.36L2.11 8.79A10.4 10.4 0 0 1 4.27 5.04L6.71 6.13A7.9 7.9 0 0 1 9.56 4.49Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
             </button>
 
-            <button class="icon-button" id="theme-toggle" type="button"
+            <button class="icon-button theme-button" id="theme-toggle" type="button"
                     data-i18n-attr="aria-label:core.themeLabel,title:core.themeLabel">
                 <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>
                 <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg>

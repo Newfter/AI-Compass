@@ -1278,24 +1278,6 @@
     }
 }
 
-/* The narrowest phones (360 px): the menu bar has one button more than before, so this
-   button and the gaps between the buttons get a little smaller, and everything fits */
-@media (max-width: 374px) {
-    .jr-nav {
-        min-width: 30px;
-        padding: 0 2px;
-    }
-
-    .jr-nav-ring {
-        width: 24px;
-        height: 24px;
-    }
-
-    .nav-actions:has(> .jr-nav:not([hidden])) {
-        gap: 4px;
-    }
-}
-
 /* A phone held sideways: little height, so the window covers the screen */
 @media (max-height: 520px) {
     .jr-overlay {
