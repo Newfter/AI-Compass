@@ -1865,7 +1865,7 @@
         let rolls = [];                       // { word (its number), u (where the dice landed), boring }
         let endings = null;                   // "Write 20 endings": { counts, chances }
         let boringDone = false;               // challenge 4, first half
-        let needle = null;                    // the needle's run
+        let needle = null;                    // the needle's run, only while it runs
         let needleAt = 0;
         let probs = null;                     // chances() of the words now
         let step = 0;                         // the step of "What's happening?" last touched
@@ -1989,13 +1989,16 @@
             const lastRolls = rolls.slice(-BORING_ROLLS);
             if (lastRolls.length === BORING_ROLLS && lastRolls.every(function (r) { return r.boring && r.word === chosen; })) boringDone = true;
             step = 3;
-            // The needle runs to u; the word shows when it gets there
-            needle = tween(ROLL_MS, function (share) { needleMark.style.left = ((from + (u - from) * share) * 100).toFixed(2) + "%"; }, function () {
+            // The needle runs to u; the word shows when it gets there. With animations off the
+            // run ends inside tween() itself, before tween() returns: then there is no run to
+            // keep (a finished run kept in `needle` would make render() wait for it forever).
+            const run = tween(ROLL_MS, function (share) { needleMark.style.left = ((from + (u - from) * share) * 100).toFixed(2) + "%"; }, function () {
                 needle = null;
                 render();
                 app.ctx.announce(t("lab.chatbot.next.said", { word: word(chosen) }));
             });
-            if (needle.running()) render();
+            needle = run.running() ? run : null;
+            if (needle) render();
         }
 
         function undo() {
