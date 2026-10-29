@@ -8,23 +8,32 @@
 
    Important: Compass Bot is NOT a real AI. It is a small
    "rule-based" chatbot, like ELIZA from 1966: it looks for
-   keywords in your message and picks a prepared answer.
-   The chat window says this honestly, too.
+   keywords in your message and picks a prepared answer. When it
+   has none, it looks things up in this site's lessons, glossary
+   and timeline (AICompass.search, js/search.js) and shows the
+   best few sentences with their source. The chat window says
+   this honestly, too.
 
    Sections of this file:
     1. Settings
     2. Small helpers
     3. Answers the bot can give (drawn in the current language)
     4. The bot's "brain": finding what the person wants
-    5. Building the chat window
-    6. Showing messages
-    7. Typing dots and the reply queue
-    8. Buttons inside messages (actions)
-    9. Opening and closing the chat
-   10. Saving the chat for this tab (sessionStorage)
-   11. Little extras: the "Ask me" hint, the resting orb, eyes that follow you
-   12. Language and start-up
-   13. Ctrl+K commands and the public API
+    5. Answers from the site, and "tell me more", "example?", "in simple words"
+    6. "Quiz me": quiz questions inside the chat
+    7. Building the chat window
+    8. Showing messages
+    9. Typing dots and the reply queue
+   10. Buttons inside messages (actions, sources, quiz options, "Did this help?")
+   11. Opening and closing the chat
+   12. Saving the chat for this tab (sessionStorage)
+   13. Little extras: the "Ask me" hint, the resting orb, eyes that follow you
+   14. Language and start-up
+   15. Ctrl+K commands and the public API
+   Events: A.track("bot.ask", { typed } or { intent }) for each question,
+   A.track("bot.quiz", { correct }) for each answer to "quiz me",
+   A.track("bot.feedback", { helpful }) for 👍 / 👎, and a source chip
+   reports A.track("search.open", { type, id, from: "bot" }).
    Other features use AICompass.assistant (see the last section).
    Every text (English and Russian) is in js/content/assistant.js,
    and so are the bot's word lists and simple answers (its "brain").
@@ -73,6 +82,16 @@
     const QUIET_REDRAW_MS = 300;          // after a language change, screen readers ignore the chat this long
     const EYES_REACH_PX = 260;            // the orb's eyes follow the mouse: with the mouse this far away (or more)...
     const EYES_MOVE_PX = 3.2;             // ...they move this far from the middle
+    const SITE_CONFIDENT = 0.7;           // an answer from the site: its text holds 70 % of the question's words...
+    const SITE_MIN_SCORE = 2.5;           // ...scores at least this much (js/search.js)...
+    const SITE_WORDS = 2;                 // ...and its title holds one of them, or the question has 2+ words.
+                                          // Else the bot is "not sure". (Tuned on 129 questions with a known
+                                          // source and 40 off-topic ones; the README says how.)
+    const SITE_SOURCES = 3;               // source chips under an answer: its own source and up to 2 related places
+    const SITE_RELATED = 0.5;             // a related place holds at least half of the question's words
+    const UNSURE_SOURCES = 3;             // "not sure": the 3 best places to look
+    const SHORT_MIN_WORDS = 3;            // "in simple words": a definition stops at its colon, with 3+ words before it
+    const FEEDBACK_KEY = "assistant.feedback"; // the 👍 / 👎 counts, in this browser only ("aic:assistant.feedback")
 
     /* =========================================================
        2. SMALL HELPERS
@@ -168,6 +187,17 @@
     function glossaryRandom() {
         if (!A.glossary) return null;
         return cleanTerm(A.util.attempt(function () { return A.glossary.random(); }, null));
+    }
+
+    // A term by its id, with its example: { id, term, definition, example, short } as plain text, or null
+    function glossaryTerm(id) {
+        if (!A.glossary || typeof id !== "string" || !id) return null;
+        const found = A.util.attempt(function () { return A.glossary.term(id); }, null);
+        const term = cleanTerm(found);
+        if (!term) return null;
+        term.example = plainText(found.example);
+        term.short = plainText(found.short);       // a short definition: TODO(glossary), the terms have none yet
+        return term;
     }
 
     // A stored term in the current language (the glossary may know it by id)
@@ -343,17 +373,96 @@
         notFound: function (data) {
             return { html: t("assistant.r.notFound", { word: esc(data.word) }), actions: [sectionAction("glossary")] };
         },
+
+        // ----- Answers from the site (section 5) -----
+        // 1-3 sentences of a lesson, a glossary term or a milestone, its source,
+        // "Read more" while the text goes on, and "Did this help?"
+        site: function (data, message) {
+            const found = siteText(data);
+            if (!found) return { html: t("assistant.r.siteGone") };
+            const goesOn = found.passage.to < found.passage.count && message && message.id;
+            return {
+                html: t("assistant.r.site", {
+                    icon: esc(found.doc.icon || "📖"),
+                    title: esc(found.doc.title),
+                    text: esc(found.passage.text)
+                }),
+                actions: goesOn ? [{ act: "more", arg: message.id, icon: "➕", label: t("assistant.act.more") }] : [],
+                sources: sourcesFrom(data.sources),
+                sourcesLabel: t("assistant.sources"),
+                feedback: { vote: data.vote === "up" || data.vote === "down" ? data.vote : "" }
+            };
+        },
+        siteEnd: function (data) {
+            const doc = siteDoc(data.type, data.id);
+            if (!doc) return { html: t("assistant.r.siteGone") };
+            return { html: t("assistant.r.siteEnd", { title: esc(doc.title) }), sources: sourcesFrom([data]) };
+        },
+        unsure: function (data) {
+            return { html: t("assistant.r.unsure"), sources: sourcesFrom(data.sources) };
+        },
+        example: function (data) {
+            const term = glossaryTerm(data.term);
+            if (!term || !term.example) return { html: t("assistant.r.noExample") };
+            return {
+                html: t("assistant.r.example", { term: esc(term.term), example: esc(term.example) }),
+                sources: sourcesFrom([{ type: "glossary", id: term.id }]),
+                sourcesLabel: t("assistant.sources")
+            };
+        },
+        simple: function (data) {
+            const term = glossaryTerm(data.term);
+            if (!term) return { html: t("assistant.r.noSimple") };
+            return {
+                html: t("assistant.r.simple", { term: esc(term.term), text: esc(shortDefinition(term)) }),
+                sources: sourcesFrom([{ type: "glossary", id: term.id }]),
+                sourcesLabel: t("assistant.sources")
+            };
+        },
+
+        // ----- "Quiz me" (section 6) -----
+        quizAsk: function (data) {
+            const question = quizQuestion(data.q);
+            if (!question) return { html: t("assistant.r.noQuiz") };
+            const text = question.trueFalse
+                ? t("assistant.r.quizTrueFalse", { statement: esc(question.text) })
+                : esc(question.text);
+            return {
+                html: (data.miss ? t("assistant.r.quizMiss", { topic: esc(data.miss) }) + "<br><br>" : "") +
+                    t("assistant.r.quizAsk", { topic: esc(question.topic), question: text }),
+                options: quizOptions(question, data)
+            };
+        },
+        quizResult: function (data) {
+            const question = quizQuestion(data.q);
+            if (!question) return { html: t("assistant.r.noQuiz") };
+            const explain = esc(explanation(question));
+            return {
+                html: data.answer === question.correct
+                    ? t("assistant.r.quizRight", { explain: explain })
+                    : t("assistant.r.quizWrong", { answer: esc(question.options[question.correct]), explain: explain }),
+                actions: [askAction("quizMe", "assistant.act.another", "🎯"), quizAction()]
+            };
+        },
         fallback: function (data) {
             return { html: t("assistant.r.fallback" + (data.v ? 2 : 1)) + "<br><br>" + t("assistant.r.tryList") };
         }
     });
 
-    // Turns a saved bot message into { html, actions } in the current language
+    // Turns a saved bot message into what its bubble shows, in the current language:
+    // { html, actions, sources, sourcesLabel, options, feedback }
     function renderReply(message) {
         const make = REPLIES[message.reply] || REPLIES.fallback;
-        const view = A.util.attempt(function () { return make(message.data || {}); }, null) ||
+        const view = A.util.attempt(function () { return make(message.data || {}, message); }, null) ||
             { html: t("assistant.r.fallback1") };
         view.actions = view.actions || [];
+        view.options = view.options || [];
+        // A prepared answer shows where the site tells more (brain.replySources)
+        if (!view.sources) {
+            const listed = (brain.replySources || {})[message.reply];
+            view.sources = listed ? sourcesFrom(listed.map(parseSource)) : [];
+            view.sourcesLabel = t("assistant.seeAlso");
+        }
 
         // "By the way, the site is also in Russian" (only once per chat,
         // and hidden again once the site is in that language)
@@ -510,7 +619,7 @@
     //   something ("for" / "за" in the next 3 words) is a thank-you.
     // - "Hi! How does AI work?": when small talk wins, the bot answers the
     //   2+ words after it instead, if it understands them (and they are not
-    //   small talk too: "ok, got it").
+    //   small talk too: "ok, got it", nor only maybe found on the site).
     // Returns a plan, or null to keep the best intent.
     function smallTalkPlan(best, tokens) {
         const start = smallTalkStart(tokens);
@@ -521,7 +630,8 @@
         }
         if (!isSmallTalk(best.intent.id) || rest.length < 2) return null;
         const plan = understand(rest.join(" "));
-        if (plan.kind === "fallback" || (plan.kind === "intent" && isSmallTalk(plan.id))) return null;
+        // (a "maybe" from the site does not beat a clear "hi" either)
+        if (plan.kind === "fallback" || plan.kind === "unsure" || (plan.kind === "intent" && isSmallTalk(plan.id))) return null;
         return plan;
     }
 
@@ -627,7 +737,7 @@
     function defineRandomAnswer() {
         const term = glossaryRandom();
         if (!term) return { reply: "noGlossary" };
-        return { reply: "defineRandom", data: term, fillInput: true };
+        return { reply: "defineRandom", data: term, fillInput: true, topic: termTopic(term.id) };
     }
 
     function themeAnswer(tokens) {
@@ -683,6 +793,7 @@
             case "fact": return { reply: "fact", data: { n: nextFromBag("fact", textCount("assistant.fact")) } };
             case "joke": return { reply: "joke", data: { n: nextFromBag("joke", textCount("assistant.joke")) } };
             case "define": return defineRandomAnswer();
+            case "quizMe": return quizMeAnswer("");
             case "greeting": return { reply: "greeting", data: { v: A.util.randomInt(0, 2) } };
             default: return REPLIES[id] ? { reply: id } : { reply: "fallback", data: { v: A.util.randomInt(0, 1) } };
         }
@@ -715,7 +826,12 @@
     //      { kind: "support" }              someone may be in danger
     //      { kind: "lesson", n, tokens }    "lesson 3" (a lesson that exists)
     //      { kind: "lessonMissing" }        "lesson 9"
+    //      { kind: "quizMe", topic }        "quiz me (on X)" (section 6)
+    //      { kind: "quizAnswer", ... }      "2" or "true" for the open quiz question
+    //      { kind: "followUp", what }       "tell me more", "example?", "in simple words"
     //      { kind: "defineRandom" }         "define", with no word after it
+    //      { kind: "site", ... }            a text of the site answers it (section 5)
+    //      { kind: "unsure", sources }      the site has something, but maybe not the answer
     //      { kind: "glossary", term }       a word from the glossary
     //      { kind: "notFound", word }       "what is X?", and X is unknown
     //      { kind: "intent", id, tokens }   one of brain.intents
@@ -741,9 +857,27 @@
             return lessonExists(n) ? { kind: "lesson", n: n, tokens: tokens } : { kind: "lessonMissing" };
         }
 
+        // "Quiz me", "quiz me on neural networks": a question inside the chat
+        const quiz = quizMeRequest(tokens);
+        if (quiz) return { kind: "quizMe", topic: quiz.topic };
+
+        // "2" or "true": the answer to the quiz question the bot just asked
+        const choice = typedChoice(tokens);
+        if (choice) return { kind: "quizAnswer", message: choice.message, index: choice.index };
+
+        // "Tell me more", "example?", "in simple words": about the last answer
+        const follow = followUpRequest(tokens);
+        if (follow) return { kind: "followUp", what: follow };
+
+        // "When was ChatGPT released?" asks for a date: a milestone answers it first
+        if (brain.whenWords.some(function (phrase) { return startsWithPhrase(norm, phrase); })) {
+            const milestone = sitePlan(tokens, ["timeline"]);
+            if (milestone && milestone.kind === "site") return milestone;
+        }
+
         const best = bestIntent(tokens);
 
-        // "What is X?" — the glossary may know X.
+        // "What is X?" — the site (or the glossary) may know X.
         // A clear keyword match (2+ points, e.g. "what is machine learning")
         // keeps the bot's own longer answer, unless the person said "define".
         // A weak match keeps it too when the glossary word is only part of the
@@ -753,23 +887,39 @@
             if (!define.subject) return { kind: "defineRandom" };
             const strongMatch = best && best.score >= 2;
             if (define.explicit || !strongMatch) {
+                // "define X" asks the glossary only
+                const site = sitePlan(tokens, define.explicit ? ["glossary"] : null);
+                if (site && site.kind === "site") return site;
                 const term = glossaryFind(define.subject);
                 if (term && (define.explicit || !best || termCovers(term, define.subject))) {
                     return { kind: "glossary", term: term };
                 }
                 if (!best && define.subject.split(" ").length <= 3) {
-                    return { kind: "notFound", word: define.subject.slice(0, UNKNOWN_WORD_MAX) };
+                    return site || { kind: "notFound", word: define.subject.slice(0, UNKNOWN_WORD_MAX) };
                 }
             }
         }
 
+        // Only a weak hint matched ("how can AI help doctors?" has "help" and "AI"):
+        // a good text of the site is a better answer. So are the places that may
+        // help ("not sure"): the hint's own answer ("what is AI?") would answer
+        // another question. A message of one word is still what it says ("help").
+        if (best && best.score < 1 && tokens.length > 1) {
+            const site = sitePlan(tokens);
+            if (site) return site;
+        }
+
         if (best) return smallTalkPlan(best, tokens) || { kind: "intent", id: best.intent.id, tokens: tokens };
 
-        // No keyword at all: maybe it's just a word from the glossary ("overfitting")
+        // No keyword at all: the site's lessons, glossary and timeline...
+        const site = sitePlan(tokens);
+        if (site && site.kind === "site") return site;
+
+        // ...or just a word from the glossary ("overfitting")
         const term = glossaryFind(text);
         if (term) return { kind: "glossary", term: term };
 
-        return { kind: "fallback" };
+        return site || { kind: "fallback" };
     }
 
     function answer(plan) {
@@ -780,10 +930,15 @@
                 return commandOrOffer(job, plan.tokens);
             }
             case "lessonMissing": return { reply: "lessonMissing" };
+            case "quizMe": return quizMeAnswer(plan.topic);
+            case "quizAnswer": return chooseOption(plan.message, plan.index) || { reply: "fallback", data: { v: 0 } };
+            case "followUp": return followUpAnswer(plan.what);
             case "defineRandom": return defineRandomAnswer();
-            case "glossary": return { reply: "glossary", data: plan.term };
+            case "site": return siteAnswer(plan);
+            case "unsure": return { reply: "unsure", data: { sources: plan.sources } };
+            case "glossary": return termAnswer(plan.term);
             case "notFound": return { reply: "notFound", data: { word: plan.word } };
-            case "intent": return commandOrOffer(answerFor(plan.id, plan.tokens), plan.tokens);
+            case "intent": return withTopic(commandOrOffer(answerFor(plan.id, plan.tokens), plan.tokens));
             default: return { reply: "fallback", data: { v: A.util.randomInt(0, 1) } };
         }
     }
@@ -794,7 +949,379 @@
     }
 
     /* =========================================================
-       5. BUILDING THE CHAT WINDOW
+       5. ANSWERS FROM THE SITE (AICompass.search, js/search.js)
+       A question the bot has no prepared answer for is looked up in
+       the site's lessons, glossary and timeline. The best text gives
+       the answer: 1-3 whole sentences, with its source as a chip that
+       opens it. The bot is sure only when that text holds 70 % of the
+       question's words (SITE_CONFIDENT) and is about the question (its
+       title holds one of them, or the question has a few words). Else
+       it says it is not sure and shows up to 3 places to look instead.
+       "When...?" questions are answered from the timeline first.
+       The last answer's source is the "topic" (chat.topic): "tell me
+       more" goes on with its text, "example?" and "in simple words"
+       use its glossary word.
+       ========================================================= */
+
+    // "glossary:ai" -> { type: "glossary", id: "ai" }
+    function parseSource(text) {
+        const at = String(text).indexOf(":");
+        return at > 0 ? { type: text.slice(0, at), id: text.slice(at + 1) } : null;
+    }
+
+    // A text of the site: { type, id, title, section, label, icon, text } or null
+    function siteDoc(type, id) {
+        if (!A.search || typeof type !== "string" || typeof id !== "string") return null;
+        return A.util.attempt(function () { return A.search.document(type, id); }, null);
+    }
+
+    // Saved sources ([{ type, id }]) -> chips: [{ type, id, icon, label, title }],
+    // only for texts the site still has, each one once
+    function sourcesFrom(list) {
+        if (!Array.isArray(list)) return [];
+        const seen = {};
+        return list.map(function (source) {
+            const doc = source ? siteDoc(source.type, source.id) : null;
+            if (!doc || seen[doc.type + ":" + doc.id]) return null;
+            seen[doc.type + ":" + doc.id] = true;
+            return { type: doc.type, id: doc.id, icon: doc.icon || "📖", label: doc.label || doc.title, title: doc.title };
+        }).filter(Boolean);
+    }
+
+    // The sentences a saved answer showed: { doc, passage } or null
+    function siteText(data) {
+        const doc = siteDoc(data.type, data.id);
+        if (!doc) return null;
+        const from = whole(data.from);
+        const passage = A.util.attempt(function () {
+            return A.search.passage(data.type, data.id, { from: from, to: Math.max(whole(data.to), from + 1) });
+        }, null);
+        return passage && passage.text ? { doc: doc, passage: passage } : null;
+    }
+
+    // The question for the search: without the words that only shape it
+    // ("who INVENTED the perceptron") and with the kinds of text its
+    // question words point to ("who" -> the timeline): { text, boost }
+    function siteQuery(tokens) {
+        const kept = tokens.filter(function (token) {
+            if (token.length === 1 && !/\d/.test(token)) return false;     // the "s" of "what's"
+            return !brain.askWords.some(function (word) { return wordMatches(word, token, true); });
+        });
+        const boost = {};
+        brain.searchBoosts.forEach(function (rule) {
+            if (!anyIn(rule.words, tokens, true)) return;
+            Object.keys(rule.boost).forEach(function (type) { boost[type] = rule.boost[type]; });
+        });
+        return { text: (kept.length ? kept : tokens).join(" "), boost: boost };
+    }
+
+    // What the site has for a question: a "site" plan (a text that answers it),
+    // an "unsure" plan (places that may help), or null (nothing at all).
+    // types: the kinds of text to look in (brain.answerTypes if not given).
+    function sitePlan(tokens, types) {
+        if (!A.search) return null;
+        const question = siteQuery(tokens);
+        // Small numbers alone ("2" after a quiz question) ask nothing: "2" would find
+        // "AlphaFold 2" (a year like "1997" is still looked up)
+        if (!/\p{L}|\d{4}/u.test(question.text)) return null;
+        const results = A.util.attempt(function () {
+            return A.search.query(question.text, {
+                types: types || brain.answerTypes,
+                boost: question.boost,
+                prefix: false,
+                limit: SITE_SOURCES + UNSURE_SOURCES
+            });
+        }, null) || [];
+        // A text is about the question if its title holds one of the question's words,
+        // or if the question has a few words: one word found somewhere in a long text
+        // is not enough ("what is photosynthesis?" is only an example in "Prompt").
+        // A year is enough for the milestone of that year ("what happened in 1997?").
+        const years = question.text.match(/\d{4}/g) || [];
+        const about = function (result) {
+            return result.titleHTML.indexOf("<mark>") !== -1 || results.words >= SITE_WORDS ||
+                years.some(function (year) { return String(result.section || "").indexOf(year) !== -1; });
+        };
+        const places = results.filter(function (result) { return result.match >= SITE_RELATED && about(result); });
+        const top = results[0];
+        if (!top || top.match < SITE_CONFIDENT || top.score < SITE_MIN_SCORE || !about(top)) {
+            return places.length ? { kind: "unsure", sources: places.slice(0, UNSURE_SOURCES).map(placeOf) } : null;
+        }
+        const sources = [top].concat(places.filter(function (result) { return result !== top; })).slice(0, SITE_SOURCES);
+        const term = sources.find(function (result) { return result.type === "glossary"; });
+        return {
+            kind: "site",
+            type: top.type,
+            id: top.id,
+            query: question.text,
+            sources: sources.map(placeOf),
+            term: term ? term.id : ""
+        };
+    }
+
+    function placeOf(result) {
+        return { type: result.type, id: result.id };
+    }
+
+    // The answer: the sentences of the text that hold most of the question's words
+    function siteAnswer(plan) {
+        const passage = A.util.attempt(function () { return A.search.passage(plan.type, plan.id, { query: plan.query }); }, null);
+        if (!passage || !passage.text) return { reply: "fallback", data: { v: 0 } };
+        return {
+            reply: "site",
+            data: { type: plan.type, id: plan.id, from: passage.from, to: passage.to, sources: plan.sources, term: plan.term },
+            topic: { type: plan.type, id: plan.id, to: passage.to, term: plan.term }
+        };
+    }
+
+    // A word of the glossary, answered like any text of the site
+    // (or with the glossary's own answer if the search is missing)
+    function termAnswer(term) {
+        const source = { type: "glossary", id: term.id };
+        const job = siteAnswer({ type: "glossary", id: term.id, query: "", sources: [source], term: term.id });
+        return job.reply === "site" ? job : { reply: "glossary", data: term, topic: termTopic(term.id) };
+    }
+
+    // ----- The topic of the conversation -----
+    // { type, id, to, term }: a text of the site, how far the chat has shown it,
+    // and its glossary word ("" if none)
+    function termTopic(id) {
+        return { type: "glossary", id: id, to: 0, term: id };
+    }
+
+    // A prepared answer's topic: its first source (brain.replySources) and its first glossary word
+    function withTopic(job) {
+        const listed = ((brain.replySources || {})[job.reply] || []).map(parseSource).filter(Boolean);
+        if (listed.length) {
+            const term = listed.find(function (source) { return source.type === "glossary"; });
+            job.topic = { type: listed[0].type, id: listed[0].id, to: 0, term: term ? term.id : "" };
+        }
+        return job;
+    }
+
+    // ----- Follow-ups: "tell me more", "example?", "in simple words" -----
+    function isSmallWord(word) {
+        return brain.followUpSkip.indexOf(word) !== -1;
+    }
+
+    // "more", "example", "simpler", or "" when the message is not only a follow-up
+    // ("tell me more about neurons" is a new question)
+    function followUpRequest(tokens) {
+        let found = "";
+        Object.keys(brain.followUps).some(function (what) {
+            return brain.followUps[what].some(function (phrase) {
+                const words = phrase.split(" ");
+                for (let i = 0; i + words.length <= tokens.length; i++) {
+                    if (!words.every(function (word, k) { return tokens[i + k] === word; })) continue;
+                    const rest = tokens.slice(0, i).concat(tokens.slice(i + words.length));
+                    if (rest.every(isSmallWord)) found = what;
+                    return Boolean(found);
+                }
+                return false;
+            });
+        });
+        return found;
+    }
+
+    function followUpAnswer(what) {
+        const topic = chat.topic;
+        if (!topic || !A.search) return { reply: "noTopic" };
+        if (what === "more") return moreAnswer(topic);
+        const term = glossaryTerm(topic.term);
+        if (what === "example") return term && term.example ? { reply: "example", data: { term: term.id } } : { reply: "noExample" };
+        return term ? { reply: "simple", data: { term: term.id } } : { reply: "noSimple" };
+    }
+
+    // The next sentences of the topic's text (or "that's everything")
+    function moreAnswer(topic) {
+        const passage = A.util.attempt(function () { return A.search.passage(topic.type, topic.id, { from: topic.to }); }, null);
+        if (!passage) return { reply: "noTopic" };
+        const next = { type: topic.type, id: topic.id, to: passage.to, term: topic.term };
+        if (!passage.text) return { reply: "siteEnd", data: { type: topic.type, id: topic.id }, topic: next };
+        return {
+            reply: "site",
+            data: { type: topic.type, id: topic.id, from: passage.from, to: passage.to, sources: [{ type: topic.type, id: topic.id }], term: topic.term },
+            topic: next
+        };
+    }
+
+    // "In simple words": the glossary's short definition, or the start of its definition
+    // ("A type of AI model loosely inspired by the brain: many..." -> "... by the brain.")
+    function shortDefinition(term) {
+        if (term.short) return term.short;
+        const text = term.definition;
+        const end = text.search(/[.!?](\s|$)/);
+        const first = end === -1 ? text : text.slice(0, end + 1);
+        const colon = first.indexOf(":");
+        const head = colon > 0 && first.slice(0, colon).split(" ").length >= SHORT_MIN_WORDS ? first.slice(0, colon) : first;
+        return head.replace(/[\s.!?:;,—–-]+$/, "") + ".";
+    }
+
+    /* =========================================================
+       6. "QUIZ ME": QUIZ QUESTIONS INSIDE THE CHAT
+       "Quiz me" / "проверь меня" (optionally "on X" / "по X") asks one
+       question of the quiz (js/content/quiz.js). Its options are buttons
+       (or type "2", "true"); then the bot says right or wrong, with the
+       quiz's explanation. A saved question remembers the order of its
+       options and the answer, so it is drawn again the same way.
+       ========================================================= */
+
+    function quizQuestions() {
+        const data = A.content.get("quiz");
+        const list = data && Array.isArray(data.questions) ? data.questions : [];
+        return list.filter(function (question) {
+            return question && typeof question.key === "string" && A.has("quiz." + question.key + ".text");
+        });
+    }
+
+    // A question of the quiz in the current language:
+    // { key, trueFalse, topic, text, options, correct, explain }, or null
+    function quizQuestion(key) {
+        const question = quizQuestions().find(function (item) { return item.key === key; });
+        if (!question) return null;
+        const k = "quiz." + key + ".";
+        const options = [];
+        if (question.type === "truefalse") {
+            options.push(t("quiz.true"), t("quiz.false"));
+        } else {
+            for (let i = 1; A.has(k + "o" + i); i++) options.push(t(k + "o" + i));
+        }
+        const correct = whole(question.correct);
+        if (correct >= options.length) return null;
+        return {
+            key: key,
+            trueFalse: question.type === "truefalse",
+            topic: A.has("quiz.topic." + question.topic) ? t("quiz.topic." + question.topic) : t("assistant.chip.quizMe"),
+            text: t(k + "text"),
+            options: options,
+            correct: correct,
+            explain: A.has(k + "explain") ? t(k + "explain") : ""
+        };
+    }
+
+    // The explanation without the "False." it starts with for a true-or-false
+    // question (the bot names the right answer itself)
+    function explanation(question) {
+        let text = question.explain;
+        if (question.trueFalse) {
+            question.options.forEach(function (word) {
+                if (text.indexOf(word + ". ") === 0) text = text.slice(word.length + 2);
+            });
+        }
+        return text;
+    }
+
+    function isChoice(value, count) {
+        return Number.isInteger(value) && value >= 0 && value < count;
+    }
+
+    // The saved order of the options, if it is a real order of 0..count-1
+    function optionOrder(order, count) {
+        const fine = Array.isArray(order) && order.length === count &&
+            order.every(function (value, i) { return isChoice(value, count) && order.indexOf(value) === i; });
+        if (fine) return order;
+        const plain = [];
+        for (let i = 0; i < count; i++) plain.push(i);
+        return plain;
+    }
+
+    // The option buttons, in the order shown: [{ index, number, label, state, chosen }]
+    // state: "" (not answered), "right", "wrong" (the person's wrong pick) or "other"
+    function quizOptions(question, data) {
+        const answered = isChoice(data.answer, question.options.length) ? data.answer : -1;
+        return optionOrder(data.order, question.options.length).map(function (index, position) {
+            let state = "";
+            if (answered !== -1) state = index === question.correct ? "right" : index === answered ? "wrong" : "other";
+            return { index: index, number: position + 1, label: question.options[index], state: state, chosen: index === answered };
+        });
+    }
+
+    // "quiz me", "can you quiz me on neural networks": { topic } (topic may be ""), or null
+    function quizMeRequest(tokens) {
+        let found = null;
+        brain.quizMe.some(function (phrase) {
+            const words = phrase.split(" ");
+            for (let i = 0; i + words.length <= tokens.length; i++) {
+                if (!words.every(function (word, k) { return tokens[i + k] === word; })) continue;
+                if (!tokens.slice(0, i).every(isSmallWord)) return false;
+                const topic = tokens.slice(i + words.length).filter(function (word) {
+                    return brain.quizTopicWords.indexOf(word) === -1 && !isSmallWord(word);
+                });
+                found = { topic: topic.join(" ") };
+                return true;
+            }
+            return false;
+        });
+        return found;
+    }
+
+    // A question about the topic (if the quiz has one), else the next one from the "bag"
+    function quizMeAnswer(topic) {
+        const all = quizQuestions();
+        if (!all.length) return { reply: "noQuiz" };
+        let key = "";
+        let miss = "";
+        if (topic && A.search) {
+            const fitting = (A.util.attempt(function () {
+                return A.search.query(topic, { types: ["quiz"], prefix: false, limit: all.length });
+            }, null) || []).filter(function (result) { return result.match >= SITE_RELATED; }).map(function (result) { return result.id; });
+            // not the same question twice in a row
+            key = fitting.find(function (id) { return id !== chat.last.quizKey; }) || fitting[0] || "";
+            if (!key) miss = topic.slice(0, UNKNOWN_WORD_MAX);
+        }
+        if (!key) key = all[nextFromBag("quiz", all.length) - 1].key;
+        chat.last.quizKey = key;
+        const question = quizQuestion(key);
+        if (!question) return { reply: "noQuiz" };
+        // the options in a new order each time (but always "True", then "False")
+        const order = question.options.map(function (option, i) { return i; });
+        return { reply: "quizAsk", data: { q: key, order: question.trueFalse ? order : A.util.shuffle(order), answer: -1, miss: miss } };
+    }
+
+    // The quiz question the bot asked last, if it is still open (or null).
+    // Other answers may have come after it ("quiz me", "hello", then "2").
+    function openQuestion() {
+        for (let i = chat.messages.length - 1; i >= 0; i--) {
+            const message = chat.messages[i];
+            if (message.from !== "bot" || message.reply !== "quizAsk") continue;
+            const data = message.data || {};
+            return Number.isInteger(data.answer) && data.answer >= 0 ? null : message;
+        }
+        return null;
+    }
+
+    // "2" (the 2nd option shown) or "true" / "верно" for the open question: { message, index }
+    function typedChoice(tokens) {
+        if (tokens.length !== 1) return null;
+        const message = openQuestion();
+        const question = message ? quizQuestion(message.data.q) : null;
+        if (!question) return null;
+        const word = tokens[0];
+        const order = optionOrder(message.data.order, question.options.length);
+        if (/^[0-9]$/.test(word)) {
+            const position = Number(word) - 1;
+            return isChoice(position, order.length) ? { message: message, index: order[position] } : null;
+        }
+        if (question.trueFalse && brain.quizAnswerWords.yes.indexOf(word) !== -1) return { message: message, index: 0 };
+        if (question.trueFalse && brain.quizAnswerWords.no.indexOf(word) !== -1) return { message: message, index: 1 };
+        return null;
+    }
+
+    // An option was chosen (a button, or typed): the question is answered now,
+    // and the bot says right or wrong next. Returns that answer, or null.
+    function chooseOption(message, index) {
+        const data = message.data || {};
+        const question = quizQuestion(data.q);
+        if (!question || !isChoice(index, question.options.length) || isChoice(data.answer, question.options.length)) return null;
+        data.answer = index;
+        save();
+        const row = rowOf(message);
+        if (row) fillOptions(row.querySelector(".cb-options"), quizOptions(question, data));
+        A.track("bot.quiz", { correct: index === question.correct });
+        return { reply: "quizResult", data: { q: question.key, answer: index } };
+    }
+
+    /* =========================================================
+       7. BUILDING THE CHAT WINDOW
        ========================================================= */
 
     // Little SVG icons
@@ -900,15 +1427,17 @@
     };
 
     /* =========================================================
-       6. SHOWING MESSAGES
+       8. SHOWING MESSAGES
        ========================================================= */
 
-    // The conversation for this tab: messages + "bags" for facts and jokes
+    // The conversation for this tab: messages, "bags" for facts, jokes and quiz
+    // questions, and the topic of the last answer from the site (section 5)
     const chat = {
         messages: [],
         bags: {},
         last: {},
         hinted: false,
+        topic: null,
         nextId: 1
     };
 
@@ -921,12 +1450,18 @@
         tipTimer: 0,
         typingRow: null,
         prefill: "",      // the "Define " text the bot put in the message box
-        focusBefore: null // where the focus was when the chat opened
+        focusBefore: null, // where the focus was when the chat opened
+        drawn: false,     // the saved messages are drawn when the chat first opens
+        stale: false      // the language changed while the chat was closed: redraw it on opening
     };
 
     function fillBotRow(row, message) {
         const view = renderReply(message);
+        row.setAttribute("data-reply", message.reply);
         row.querySelector(".cb-text").innerHTML = view.html;
+        fillOptions(row.querySelector(".cb-options"), view.options);
+        fillSources(row.querySelector(".cb-sources"), view.sources, view.sourcesLabel);
+        fillFeedback(row.querySelector(".cb-feedback"), view.feedback || null);
         const box = row.querySelector(".cb-actions");
         box.innerHTML = "";
         box.hidden = !view.actions.length;
@@ -941,6 +1476,105 @@
             button.querySelector(".cb-action-label").textContent = action.label;
             box.appendChild(button);
         });
+    }
+
+    // Quiz options: buttons (kept when the question is answered, so the focus stays)
+    function fillOptions(box, options) {
+        box.hidden = !options.length;
+        box.setAttribute("aria-label", t("assistant.optionsLabel"));
+        if (box.children.length !== options.length) {
+            box.innerHTML = "";
+            options.forEach(function () {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "cb-option";
+                button.innerHTML = '<span class="cb-option-number" aria-hidden="true"></span>' +
+                    '<span class="cb-option-label"></span><span class="sr-only cb-option-state"></span>' +
+                    '<span class="cb-option-mark" aria-hidden="true"></span>';
+                box.appendChild(button);
+            });
+        }
+        options.forEach(function (option, i) {
+            const button = box.children[i];
+            button.className = "cb-option" + (option.state ? " is-" + option.state : "");
+            button.setAttribute("data-option", String(option.index));
+            if (option.state) button.setAttribute("aria-disabled", "true");
+            else button.removeAttribute("aria-disabled");
+            button.querySelector(".cb-option-number").textContent = String(option.number);
+            button.querySelector(".cb-option-label").textContent = option.label;
+            button.querySelector(".cb-option-state").textContent = option.state === "right"
+                ? " " + t("assistant.optionRight")
+                : option.chosen ? " " + t("assistant.optionChosen") : "";
+            button.querySelector(".cb-option-mark").textContent = option.state === "right" ? "✓" : option.state === "wrong" ? "✗" : "";
+        });
+    }
+
+    // Source chips: where the answer comes from, each one opens its place on the site
+    function fillSources(box, sources, label) {
+        box.innerHTML = "";
+        box.hidden = !sources.length;
+        if (!sources.length) return;
+        if (label) {
+            const title = document.createElement("span");
+            title.className = "cb-sources-label";
+            title.textContent = label;
+            box.appendChild(title);
+        }
+        sources.forEach(function (source) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "cb-source";
+            button.setAttribute("data-source", source.type + ":" + source.id);
+            button.innerHTML = '<span class="cb-source-icon" aria-hidden="true"></span><span class="cb-source-label"></span>';
+            button.querySelector(".cb-source-icon").textContent = source.icon;
+            button.querySelector(".cb-source-label").textContent = source.label;
+            // "History · 1958" says where; the title (a tooltip, and read out) says what
+            if (source.title && source.label.indexOf(source.title) === -1) {
+                button.title = source.title;
+                const what = document.createElement("span");
+                what.className = "sr-only";
+                what.textContent = ": " + source.title;
+                button.appendChild(what);
+            }
+            box.appendChild(button);
+        });
+    }
+
+    // "Did this help? 👍 👎" under an answer from the site, and a note once voted.
+    // (Kept when a vote changes, so the focus stays on the button.)
+    function fillFeedback(box, feedback) {
+        box.hidden = !feedback;
+        if (!feedback) {
+            box.innerHTML = "";
+            return;
+        }
+        if (!box.firstChild) {
+            box.innerHTML = '<span class="cb-feedback-text"></span>' +
+                '<button type="button" class="cb-vote" data-vote="up" aria-pressed="false"><span aria-hidden="true">👍</span></button>' +
+                '<button type="button" class="cb-vote" data-vote="down" aria-pressed="false"><span aria-hidden="true">👎</span></button>' +
+                '<span class="cb-feedback-note"></span>';
+        }
+        box.querySelector(".cb-feedback-text").textContent = t("assistant.helpful");
+        box.querySelectorAll(".cb-vote").forEach(function (button) {
+            const value = button.getAttribute("data-vote");
+            const label = t(value === "up" ? "assistant.helpfulYes" : "assistant.helpfulNo");
+            button.setAttribute("aria-label", label);
+            button.setAttribute("title", label);
+            button.setAttribute("aria-pressed", String(feedback.vote === value));
+        });
+        // The note is added to the chat (a live "log"), so screen readers hear it once
+        box.querySelector(".cb-feedback-note").textContent = feedback.vote ? t("assistant.helpfulNote") : "";
+    }
+
+    // The row of a message, and the message of a row (or an element inside it)
+    function rowOf(message) {
+        return ui.log.querySelector('.cb-msg[data-id="' + message.id + '"]');
+    }
+
+    function messageOf(element) {
+        const row = element.closest(".cb-msg");
+        const id = row ? Number(row.getAttribute("data-id")) : NaN;
+        return chat.messages.find(function (message) { return message.id === id; }) || null;
     }
 
     function buildRow(message, animate) {
@@ -964,7 +1598,11 @@
                 '<span class="cb-avatar" aria-hidden="true"></span>' +
                 '<div class="cb-msg-body">' +
                     '<div class="cb-bubble"><span class="sr-only" data-i18n="assistant.botSaid">' + t("assistant.botSaid") + "</span> " +
-                    '<div class="cb-text"></div><div class="cb-actions"></div></div>' + time +
+                    '<div class="cb-text"></div>' +
+                    '<div class="cb-options" role="group" hidden></div>' +
+                    '<div class="cb-sources" hidden></div>' +
+                    '<div class="cb-actions"></div>' +
+                    '<div class="cb-feedback" hidden></div></div>' + time +
                 "</div>";
             fillBotRow(row, message);
         }
@@ -997,6 +1635,7 @@
     }
 
     function addMessage(message, animate) {
+        drawSaved();
         chat.messages.push(message);
         // Keep the chat short enough for the browser's storage
         while (chat.messages.length > MAX_MESSAGES) {
@@ -1025,6 +1664,7 @@
     }
 
     function renderAll() {
+        state.stale = false;
         ui.log.innerHTML = "";
         chat.messages.forEach(function (message) {
             ui.log.appendChild(buildRow(message, false));
@@ -1033,9 +1673,18 @@
         scrollToEnd(false);
     }
 
+    // The chat saved in this tab is drawn the first time it is needed (not at
+    // start-up: its answers from the site would need the search index then)
+    function drawSaved() {
+        if (state.drawn) return;
+        state.drawn = true;
+        renderAll();
+    }
+
     // On language change: redraw the bot's answers in the new language,
     // quietly (so screen readers don't read the whole chat again)
     function retranslateMessages() {
+        state.stale = false;
         ui.log.setAttribute("aria-live", "off");
         ui.log.querySelectorAll(".cb-msg--bot").forEach(function (row) {
             const id = Number(row.getAttribute("data-id"));
@@ -1046,7 +1695,7 @@
     }
 
     /* =========================================================
-       7. TYPING DOTS AND THE REPLY QUEUE
+       9. TYPING DOTS AND THE REPLY QUEUE
        The bot "types" for a moment (longer answers take longer),
        then the answer appears. Several questions wait in a queue.
        ========================================================= */
@@ -1080,6 +1729,8 @@
 
     function enqueue(job) {
         job.generation = state.generation;
+        // What "tell me more", "example?" and "in simple words" will be about
+        if (job.topic) chat.topic = job.topic;
         state.queue.push(job);
         if (!state.busy) nextJob();
     }
@@ -1163,17 +1814,17 @@
     function sendIntent(intent, label) {
         addUserMessage(label);
         A.track("bot.ask", { intent: intent });
-        enqueue(answerFor(intent, []));
+        enqueue(withTopic(answerFor(intent, [])));
     }
 
     /* =========================================================
-       8. BUTTONS INSIDE MESSAGES (ACTIONS)
+       10. BUTTONS INSIDE MESSAGES (ACTIONS, SOURCES, QUIZ OPTIONS, "DID THIS HELP?")
        They use the other features' public APIs (AICompass.lessons, .quiz,
        .lab, .glossary). If a feature is missing from the page, the bot
        simply goes to its section.
        ========================================================= */
 
-    const LEAVING = ["lesson", "quiz", "lab", "glossary", "section"];
+    const LEAVING = ["lesson", "quiz", "lab", "glossary", "section", "source"];
 
     function runAction(action) {
         // The chat would cover the place we go to (on phones all of it, on computers
@@ -1207,6 +1858,20 @@
                 // so Tab continues from there
                 A.navigate(sectionInfo(action.arg) ? action.arg : "home");
                 break;
+            case "source": {
+                // A source chip: the lesson part, glossary term or milestone (focused there)
+                const place = parseSource(action.arg);
+                if (place && A.search) A.util.attempt(function () { A.search.open(place.type, place.id, "bot"); });
+                break;
+            }
+            case "more": {
+                // "Read more": the next sentences of that answer's text
+                const message = chat.messages.find(function (item) { return item.id === Number(action.arg); });
+                const data = message && message.reply === "site" ? message.data : null;
+                addUserMessage(action.label || t("assistant.act.more"));
+                enqueue(data ? moreAnswer({ type: data.type, id: data.id, to: whole(data.to), term: data.term || "" }) : { reply: "noTopic" });
+                break;
+            }
             case "lang": {
                 const target = action.arg === "ru" ? "ru" : "en";
                 chat.hinted = true;
@@ -1234,7 +1899,55 @@
         }
     }
 
+    // A quiz option: the person "says" it, then the bot says right or wrong
+    function pickOption(button) {
+        if (button.getAttribute("aria-disabled") === "true") return;
+        const message = messageOf(button);
+        const job = message ? chooseOption(message, Number(button.getAttribute("data-option"))) : null;
+        if (!job) return;
+        addUserMessage(button.querySelector(".cb-option-label").textContent);
+        enqueue(job);
+    }
+
+    // The 👍 / 👎 counts of this browser: { v: 1, up, down } (a broken value starts again at 0)
+    function feedbackCounts() {
+        const saved = A.storage.get(FEEDBACK_KEY, null);
+        const fine = Boolean(saved) && saved.v === 1;
+        return { v: 1, up: fine ? whole(saved.up) : 0, down: fine ? whole(saved.down) : 0 };
+    }
+
+    // 👍 or 👎 under an answer (a second click on the other one changes the vote)
+    function vote(button) {
+        const message = messageOf(button);
+        const value = button.getAttribute("data-vote") === "up" ? "up" : "down";
+        if (!message || message.data.vote === value) return;     // (load() gives every answer its data)
+        const counts = feedbackCounts();
+        const before = message.data.vote;
+        if (before === "up" || before === "down") counts[before] = Math.max(0, counts[before] - 1);
+        counts[value] += 1;
+        A.storage.set(FEEDBACK_KEY, counts);
+        message.data.vote = value;
+        save();
+        fillFeedback(button.closest(".cb-feedback"), { vote: value });
+        A.track("bot.feedback", { helpful: value === "up" });
+    }
+
     ui.log.addEventListener("click", function (event) {
+        const source = event.target.closest(".cb-source");
+        if (source && ui.log.contains(source)) {
+            runAction({ act: "source", arg: source.getAttribute("data-source") });
+            return;
+        }
+        const option = event.target.closest(".cb-option");
+        if (option && ui.log.contains(option)) {
+            pickOption(option);
+            return;
+        }
+        const thumb = event.target.closest(".cb-vote");
+        if (thumb && ui.log.contains(thumb)) {
+            vote(thumb);
+            return;
+        }
         const button = event.target.closest(".cb-action");
         if (!button || !ui.log.contains(button)) return;
         const act = button.getAttribute("data-act");
@@ -1299,13 +2012,14 @@
         setTyping(false);
         chat.messages = [];
         chat.hinted = false;
+        chat.topic = null;
         ui.log.innerHTML = "";
         addBotMessage("welcome", {}, true);
         ui.input.focus({ preventScroll: true });
     });
 
     /* =========================================================
-       9. OPENING AND CLOSING THE CHAT
+       11. OPENING AND CLOSING THE CHAT
        Desktop: a window above the button (the page stays usable).
        Phones: an almost full-screen sheet that acts like a modal.
        ========================================================= */
@@ -1380,7 +2094,12 @@
         state.focusBefore = document.activeElement;
 
         dismissTip(true);
+        drawSaved();
+        if (state.stale) retranslateMessages();     // the language changed while it was closed
         if (!chat.messages.length) addBotMessage("welcome", {}, false);
+        // The search index is built in small idle steps now, so the first
+        // question is answered at once (js/search.js)
+        if (A.search) A.search.ready();
 
         ui.panel.hidden = false;
         ui.root.classList.add("is-open");
@@ -1489,7 +2208,7 @@
     ui.panel.addEventListener("pointercancel", endDrag);
 
     /* =========================================================
-       10. SAVING THE CHAT FOR THIS TAB (sessionStorage)
+       12. SAVING THE CHAT FOR THIS TAB (sessionStorage)
        It survives a page reload, but is forgotten when the tab closes.
        ========================================================= */
 
@@ -1499,8 +2218,15 @@
             messages: chat.messages,
             bags: chat.bags,
             last: chat.last,
-            hinted: chat.hinted
+            hinted: chat.hinted,
+            topic: chat.topic
         });
+    }
+
+    // A saved topic, if it looks like one (section 5)
+    function savedTopic(topic) {
+        if (!topic || typeof topic.type !== "string" || typeof topic.id !== "string") return null;
+        return { type: topic.type, id: topic.id, to: whole(topic.to), term: typeof topic.term === "string" ? topic.term : "" };
     }
 
     // Does a saved message look like one this file wrote? (Its time must be a
@@ -1516,14 +2242,18 @@
         if (!saved || saved.v !== 1 || !Array.isArray(saved.messages)) return;
 
         chat.messages = saved.messages.filter(isSavedMessage).slice(-MAX_MESSAGES);
+        chat.messages.forEach(function (message) {
+            if (message.from === "bot" && (!message.data || typeof message.data !== "object")) message.data = {};
+        });
         chat.bags = saved.bags && typeof saved.bags === "object" ? saved.bags : {};
         chat.last = saved.last && typeof saved.last === "object" ? saved.last : {};
         chat.hinted = Boolean(saved.hinted);
+        chat.topic = savedTopic(saved.topic);
         chat.nextId = chat.messages.reduce(function (max, message) { return Math.max(max, message.id); }, 0) + 1;
     }
 
     /* =========================================================
-       11. LITTLE EXTRAS: THE "ASK ME" HINT, THE RESTING ORB, EYES THAT FOLLOW YOU
+       13. LITTLE EXTRAS: THE "ASK ME" HINT, THE RESTING ORB, EYES THAT FOLLOW YOU
        ========================================================= */
 
     // ----- The "Ask me" hint -----
@@ -1628,13 +2358,19 @@
     }, { passive: true });
 
     /* =========================================================
-       12. LANGUAGE AND START-UP
+       14. LANGUAGE AND START-UP
        ========================================================= */
 
     // The window's labels are translated by core (data-i18n).
     // Here we redraw the answers and the typing status.
     A.onLanguageChange(function () {
-        retranslateMessages();
+        // A closed chat is redrawn when it opens again: its answers from the site
+        // need the search index of the new language, which takes a moment to build.
+        // If the chat was opened on this page, that index is built now, a little
+        // at a time while the page is idle, so opening it again stays quick.
+        if (state.open) retranslateMessages();
+        else state.stale = true;
+        if ((state.open || state.drawn) && A.search) A.search.ready();
         ui.statusText.textContent = t(state.busy ? "assistant.statusTyping" : "assistant.status");
         // "Define " the bot typed for you (and you didn't change) -> "Что такое "
         if (state.prefill && ui.input.value === state.prefill) {
@@ -1643,15 +2379,15 @@
         }
     });
 
-    // Start: bring back this tab's chat, then wake the orb and plan the hint
+    // Start: bring back this tab's chat (drawn when the chat opens), then wake
+    // the orb and plan the hint
     load();
-    if (chat.messages.length) renderAll();
     updateSendButton();
     wakeOrb(ORB_START_SECONDS);
     showTipLater();
 
     /* =========================================================
-       13. CTRL+K COMMANDS AND THE PUBLIC API
+       15. CTRL+K COMMANDS AND THE PUBLIC API
        ========================================================= */
 
     A.registerCommand({

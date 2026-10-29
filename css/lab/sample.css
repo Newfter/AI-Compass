@@ -7,6 +7,6 @@
 /* The sentence that names the idea, with its glossary link */
 .smp-idea {
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.6;
 }

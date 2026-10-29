@@ -15,7 +15,7 @@ window.AICompass.addTranslations({
         "assistant.tipClose": "Hide this hint",
         "assistant.status": "Online · scripted demo",
         "assistant.statusTyping": "Typing…",
-        "assistant.disclaimer": "<strong>Honest note:</strong> I'm a scripted demo bot. I match keywords — I'm not a real AI, just like the very first chatbots such as ELIZA (1966).",
+        "assistant.disclaimer": "<strong>Honest note:</strong> I'm a scripted demo bot, not a real AI. Like ELIZA (1966), I match keywords — and I look things up in this site's lessons, glossary and timeline.",
         "assistant.reset": "Start a new chat",
         "assistant.close": "Close the chat",
         "assistant.logLabel": "Messages",
@@ -29,7 +29,7 @@ window.AICompass.addTranslations({
         // ----- Quick-reply chips -----
         "assistant.chip.ai": "What is AI?",
         "assistant.chip.lesson": "Recommend a lesson",
-        "assistant.chip.quiz": "Start the quiz",
+        "assistant.chip.quizMe": "Quiz me",
         "assistant.chip.lab": "Open the AI Lab",
         "assistant.chip.fact": "Fun fact",
         "assistant.chip.define": "Define a word",
@@ -66,7 +66,7 @@ window.AICompass.addTranslations({
         "assistant.r.thanks": "You're welcome! 😊 Anything else you'd like to know?",
         "assistant.r.bye": "Bye! 👋 Come back any time — I'll be right here in the corner.",
         "assistant.r.howAreYou": "I'm great, thanks! Well… I'm a script, so I always feel exactly the same 😄 Want to learn something about AI?",
-        "assistant.r.who": "I'm <strong>Compass Bot</strong>, the helper of this website. Honest confession: <strong>I'm not a real AI.</strong> I look for keywords in your message and pick a prepared answer — just like <strong>ELIZA</strong>, one of the very first chatbots (1966).<br><br>Modern AI chatbots like ChatGPT work very differently: they learned the patterns of language from huge amounts of text.",
+        "assistant.r.who": "I'm <strong>Compass Bot</strong>, the helper of this website. Honest confession: <strong>I'm not a real AI.</strong> I look for keywords in your message and pick a prepared answer — just like <strong>ELIZA</strong>, one of the very first chatbots (1966). When I have no prepared answer, I look things up in this site's lessons, glossary and timeline.<br><br>Modern AI chatbots like ChatGPT work very differently: they learned the patterns of language from huge amounts of text.",
         "assistant.r.ai": "<strong>Artificial Intelligence (AI)</strong> is when computers do tasks that usually need human intelligence: recognising faces, understanding speech, translating languages or recommending videos.<br><br>Most modern AI doesn't follow rules written by hand — it <strong>learns patterns from lots of examples</strong> (data). It can be really impressive, but it doesn't think or feel like a person.",
         "assistant.r.ml": "<strong>Machine learning</strong> means teaching a computer with examples instead of writing every rule by hand. You show a model lots of examples — say, photos labelled “cat” or “dog” — it finds patterns, and then it can make guesses about new examples it has never seen.<br><br>More good, varied examples usually mean better results. Want to try it? Teach a real neural network in the AI Lab!",
         "assistant.r.nn": "A <strong>neural network</strong> is a machine-learning model loosely inspired by the brain. It's built from layers of simple “neurons”: each one multiplies its inputs by numbers called <strong>weights</strong>, adds them up and passes the result on.<br><br>During training, the weights are adjusted little by little so the answers get better. <strong>Deep learning</strong> simply means neural networks with many layers.",
@@ -109,7 +109,7 @@ window.AICompass.addTranslations({
         "assistant.r.glossary": "📖 <strong>{term}</strong><br>{definition}",
         "assistant.r.notFound": "Hmm, I don't know <strong>“{word}”</strong> yet 🤔 Take a look at the glossary — it has the most important AI terms.",
         "assistant.r.noGlossary": "The glossary isn't available right now 😕 But I can explain AI, machine learning, neural networks and chatbots — just ask!",
-        "assistant.r.help": "Here's what I can do 🧭<br>• explain <strong>AI</strong>, <strong>machine learning</strong>, <strong>neural networks</strong> and <strong>chatbots</strong><br>• talk about <strong>hallucinations</strong>, <strong>bias</strong>, <strong>privacy</strong> and <strong>AI safety</strong><br>• give tips on using AI for <strong>homework</strong> honestly<br>• <strong>recommend a lesson</strong>, start the <strong>quiz</strong> or open the <strong>AI Lab</strong><br>• explain words: <em>“define algorithm”</em><br>• tell a <strong>fun fact</strong> or a <strong>joke</strong><br>• switch the <strong>theme</strong> or <strong>language</strong>, or take you to any section",
+        "assistant.r.help": "Here's what I can do 🧭<br>• explain <strong>AI</strong>, <strong>machine learning</strong>, <strong>neural networks</strong> and <strong>chatbots</strong><br>• talk about <strong>hallucinations</strong>, <strong>bias</strong>, <strong>privacy</strong> and <strong>AI safety</strong><br>• give tips on using AI for <strong>homework</strong> honestly<br>• <strong>recommend a lesson</strong>, start the <strong>quiz</strong> or open the <strong>AI Lab</strong><br>• explain words: <em>“define algorithm”</em><br>• look things up in this site's <strong>lessons</strong>, <strong>glossary</strong> and <strong>timeline</strong> — then say <em>“tell me more”</em>, <em>“example?”</em> or <em>“in simple words”</em><br>• <strong>quiz you</strong>: <em>“quiz me on neural networks”</em><br>• tell a <strong>fun fact</strong> or a <strong>joke</strong><br>• switch the <strong>theme</strong> or <strong>language</strong>, or take you to any section",
         "assistant.r.fallback1": "Hmm, I didn't get that 🤔 Remember, I'm a simple script: I only understand certain keywords.",
         "assistant.r.fallback2": "Sorry, that's not in my script 😅 I'm not a real AI — I just look for keywords.",
         "assistant.r.tryList": "Try: <em>“what is machine learning?”</em>, <em>“are chatbots always right?”</em>, <em>“recommend a lesson”</em>, <em>“tell me a joke”</em> — or <em>“help”</em> to see everything I can do.",
@@ -141,6 +141,38 @@ window.AICompass.addTranslations({
         "assistant.joke4": "Why do robots never panic? They have <strong>nerves of steel</strong> 🦾",
         "assistant.joke5": "A neural network walks into a café. The barista asks: “What would you like?” It answers: “Whatever most people in my training data ordered.” ☕",
 
+        // ----- Answers from the site (lessons, glossary, timeline) -----
+        "assistant.sources": "Sources",
+        "assistant.seeAlso": "On the site",
+        "assistant.act.more": "Read more",
+        "assistant.r.site": "{icon} <strong>{title}</strong><br>{text}",
+        "assistant.r.siteEnd": "That's everything “{title}” says 🙂 Open it to read it in its place:",
+        "assistant.r.siteGone": "Hmm, I can't find that text on the site any more 🤔",
+        "assistant.r.unsure": "I'm not sure I found the right answer 🤔 Try asking in other words — or look at one of these parts of the site:",
+        "assistant.r.example": "💡 <strong>An example</strong> · {term}<br>{example}",
+        "assistant.r.simple": "🧩 <strong>{term}</strong>, in simple words: {text}",
+        "assistant.r.noTopic": "More about what? 🙂 Ask me something first — for example <em>“what is a neural network?”</em>",
+        "assistant.r.noExample": "I don't have an example for that 😅 Ask me about a word, like <em>“what is a token?”</em>, then say <em>“example?”</em>",
+        "assistant.r.noSimple": "I can't put that more simply, sorry 😅 Ask me about a word, like <em>“what is a token?”</em>, then say <em>“in simple words”</em>",
+
+        // ----- "Did this help?" under answers from the site -----
+        "assistant.helpful": "Did this help?",
+        "assistant.helpfulYes": "Yes, it helped",
+        "assistant.helpfulNo": "No, it didn't help",
+        "assistant.helpfulNote": "Thanks! Counted only in this browser — nothing is sent anywhere.",
+
+        // ----- "Quiz me": a question from the quiz, inside the chat -----
+        "assistant.optionsLabel": "Answer options",
+        "assistant.optionRight": "(the right answer)",
+        "assistant.optionChosen": "(your answer)",
+        "assistant.act.another": "Another question",
+        "assistant.r.quizAsk": "🎯 <strong>Quiz question</strong> · {topic}<br>{question}",
+        "assistant.r.quizTrueFalse": "True or false: {statement}",
+        "assistant.r.quizMiss": "I have no question about <strong>“{topic}”</strong>, so here's another one.",
+        "assistant.r.quizRight": "✅ <strong>Right!</strong> {explain}",
+        "assistant.r.quizWrong": "❌ <strong>Not quite.</strong> The right answer: <strong>{answer}</strong>. {explain}",
+        "assistant.r.noQuiz": "The quiz questions aren't available right now 😕",
+
         // ----- Ctrl+K commands -----
         "assistant.cmdGroup": "Compass Bot",
         "assistant.cmdOpen": "Chat with Compass Bot",
@@ -154,7 +186,7 @@ window.AICompass.addTranslations({
         "assistant.tipClose": "Скрыть подсказку",
         "assistant.status": "В сети · демо-бот",
         "assistant.statusTyping": "Печатает…",
-        "assistant.disclaimer": "<strong>Честно:</strong> я демо-бот, который работает по сценарию. Я ищу ключевые слова и не являюсь настоящим ИИ — совсем как самые первые чат-боты, например ELIZA (1966).",
+        "assistant.disclaimer": "<strong>Честно:</strong> я демо-бот по сценарию, а не настоящий ИИ. Как и ELIZA (1966), я ищу ключевые слова — а ещё смотрю ответы в уроках, словаре и хронологии этого сайта.",
         "assistant.reset": "Начать чат заново",
         "assistant.close": "Закрыть чат",
         "assistant.logLabel": "Сообщения",
@@ -167,7 +199,7 @@ window.AICompass.addTranslations({
 
         "assistant.chip.ai": "Что такое ИИ?",
         "assistant.chip.lesson": "Посоветуй урок",
-        "assistant.chip.quiz": "Начать тест",
+        "assistant.chip.quizMe": "Проверь меня",
         "assistant.chip.lab": "Открыть ИИ-лабораторию",
         "assistant.chip.fact": "Интересный факт",
         "assistant.chip.define": "Объясни слово",
@@ -200,7 +232,7 @@ window.AICompass.addTranslations({
         "assistant.r.thanks": "Пожалуйста! 😊 Хочешь узнать что-нибудь ещё?",
         "assistant.r.bye": "Пока! 👋 Возвращайся в любое время — я буду здесь, в углу экрана.",
         "assistant.r.howAreYou": "Отлично, спасибо! Ну… я скрипт, так что у меня всегда всё одинаково 😄 Хочешь узнать что-нибудь об ИИ?",
-        "assistant.r.who": "Я <strong>Compass Bot</strong>, помощник этого сайта. Честное признание: <strong>я не настоящий ИИ.</strong> Я ищу ключевые слова в твоём сообщении и выбираю заготовленный ответ — как <strong>ELIZA</strong>, один из самых первых чат-ботов (1966).<br><br>Современные чат-боты вроде ChatGPT устроены совсем иначе: они выучили закономерности языка на огромном количестве текстов.",
+        "assistant.r.who": "Я <strong>Compass Bot</strong>, помощник этого сайта. Честное признание: <strong>я не настоящий ИИ.</strong> Я ищу ключевые слова в твоём сообщении и выбираю заготовленный ответ — как <strong>ELIZA</strong>, один из самых первых чат-ботов (1966). А если заготовленного ответа нет, я ищу его в уроках, словаре и хронологии этого сайта.<br><br>Современные чат-боты вроде ChatGPT устроены совсем иначе: они выучили закономерности языка на огромном количестве текстов.",
         "assistant.r.ai": "<strong>Искусственный интеллект (ИИ)</strong> — это когда компьютеры решают задачи, для которых обычно нужен человеческий разум: узнают лица, понимают речь, переводят тексты или советуют видео.<br><br>Большинство современных систем ИИ не следуют правилам, написанным вручную, — они <strong>находят закономерности в огромном количестве примеров</strong> (данных). Это бывает очень впечатляюще, но ИИ не думает и не чувствует, как человек.",
         "assistant.r.ml": "<strong>Машинное обучение</strong> — это когда компьютер учат на примерах, а не прописывают ему каждое правило вручную. Модели показывают много примеров — скажем, фото с подписями «кошка» или «собака», — она находит закономерности и потом может делать догадки о новых примерах, которых никогда не видела.<br><br>Чем больше хороших и разнообразных примеров, тем лучше обычно результат. Хочешь попробовать? Обучи настоящую нейросеть в ИИ-лаборатории!",
         "assistant.r.nn": "<strong>Нейронная сеть</strong> — это модель машинного обучения, отдалённо похожая на мозг. Она состоит из слоёв простых «нейронов»: каждый умножает входные числа на <strong>веса</strong>, складывает их и передаёт результат дальше.<br><br>Во время обучения веса понемногу подстраиваются, чтобы ответы становились точнее. <strong>Глубокое обучение</strong> — это просто нейросети с большим количеством слоёв.",
@@ -243,7 +275,7 @@ window.AICompass.addTranslations({
         "assistant.r.glossary": "📖 <strong>{term}</strong><br>{definition}",
         "assistant.r.notFound": "Хм, я пока не знаю, что такое <strong>«{word}»</strong> 🤔 Загляни в словарь — там собраны главные термины ИИ.",
         "assistant.r.noGlossary": "Словарь сейчас недоступен 😕 Но я могу рассказать об ИИ, машинном обучении, нейросетях и чат-ботах — просто спроси!",
-        "assistant.r.help": "Вот что я умею 🧭<br>• объяснить, что такое <strong>ИИ</strong>, <strong>машинное обучение</strong>, <strong>нейросети</strong> и <strong>чат-боты</strong><br>• рассказать о <strong>галлюцинациях</strong>, <strong>предвзятости</strong>, <strong>приватности</strong> и <strong>безопасности ИИ</strong><br>• подсказать, как честно использовать ИИ для <strong>домашки</strong><br>• <strong>посоветовать урок</strong>, начать <strong>тест</strong> или открыть <strong>ИИ-лабораторию</strong><br>• объяснить слово: <em>«что такое алгоритм»</em><br>• рассказать <strong>интересный факт</strong> или <strong>шутку</strong><br>• сменить <strong>тему</strong> или <strong>язык</strong> и перенести тебя в любой раздел сайта",
+        "assistant.r.help": "Вот что я умею 🧭<br>• объяснить, что такое <strong>ИИ</strong>, <strong>машинное обучение</strong>, <strong>нейросети</strong> и <strong>чат-боты</strong><br>• рассказать о <strong>галлюцинациях</strong>, <strong>предвзятости</strong>, <strong>приватности</strong> и <strong>безопасности ИИ</strong><br>• подсказать, как честно использовать ИИ для <strong>домашки</strong><br>• <strong>посоветовать урок</strong>, начать <strong>тест</strong> или открыть <strong>ИИ-лабораторию</strong><br>• объяснить слово: <em>«что такое алгоритм»</em><br>• найти ответ в <strong>уроках</strong>, <strong>словаре</strong> и <strong>хронологии</strong> сайта — а потом напиши <em>«расскажи подробнее»</em>, <em>«пример?»</em> или <em>«проще»</em><br>• <strong>проверить тебя</strong>: <em>«проверь меня по нейросетям»</em><br>• рассказать <strong>интересный факт</strong> или <strong>шутку</strong><br>• сменить <strong>тему</strong> или <strong>язык</strong> и перенести тебя в любой раздел сайта",
         "assistant.r.fallback1": "Хм, я не понял 🤔 Помни: я простой скрипт и понимаю только определённые ключевые слова.",
         "assistant.r.fallback2": "Извини, такого нет в моём сценарии 😅 Я не настоящий ИИ — я просто ищу ключевые слова.",
         "assistant.r.tryList": "Попробуй: <em>«что такое машинное обучение?»</em>, <em>«чат-боты всегда правы?»</em>, <em>«посоветуй урок»</em>, <em>«расскажи шутку»</em> — или <em>«помощь»</em>, и я покажу всё, что умею.",
@@ -270,6 +302,35 @@ window.AICompass.addTranslations({
         "assistant.joke4": "Почему роботы никогда не паникуют? У них <strong>стальные нервы</strong> 🦾",
         "assistant.joke5": "Нейросеть заходит в кафе. Бариста спрашивает: «Что будете заказывать?» Она отвечает: «То же, что чаще всего заказывали в моих обучающих данных». ☕",
 
+        "assistant.sources": "Источники",
+        "assistant.seeAlso": "На сайте",
+        "assistant.act.more": "Читать дальше",
+        "assistant.r.site": "{icon} <strong>{title}</strong><br>{text}",
+        "assistant.r.siteEnd": "Это всё, что написано в «{title}» 🙂 Открой, чтобы прочитать на месте:",
+        "assistant.r.siteGone": "Хм, я больше не нахожу этот текст на сайте 🤔",
+        "assistant.r.unsure": "Не уверен, что нашёл правильный ответ 🤔 Попробуй спросить другими словами — или загляни в одну из этих частей сайта:",
+        "assistant.r.example": "💡 <strong>Пример</strong> · {term}<br>{example}",
+        "assistant.r.simple": "🧩 <strong>{term}</strong>, если проще: {text}",
+        "assistant.r.noTopic": "Подробнее о чём? 🙂 Сначала спроси меня о чём-нибудь — например, <em>«что такое нейросеть?»</em>",
+        "assistant.r.noExample": "У меня нет примера для этого 😅 Спроси о слове, например <em>«что такое токен?»</em>, а потом напиши <em>«пример?»</em>",
+        "assistant.r.noSimple": "Проще объяснить не получится, извини 😅 Спроси о слове, например <em>«что такое токен?»</em>, а потом напиши <em>«проще»</em>",
+
+        "assistant.helpful": "Это помогло?",
+        "assistant.helpfulYes": "Да, помогло",
+        "assistant.helpfulNo": "Нет, не помогло",
+        "assistant.helpfulNote": "Спасибо! Я считаю это только в твоём браузере — никуда ничего не отправляется.",
+
+        "assistant.optionsLabel": "Варианты ответа",
+        "assistant.optionRight": "(правильный ответ)",
+        "assistant.optionChosen": "(твой ответ)",
+        "assistant.act.another": "Ещё вопрос",
+        "assistant.r.quizAsk": "🎯 <strong>Вопрос из теста</strong> · {topic}<br>{question}",
+        "assistant.r.quizTrueFalse": "Верно или нет: {statement}",
+        "assistant.r.quizMiss": "У меня нет вопроса про <strong>«{topic}»</strong>, так что вот другой.",
+        "assistant.r.quizRight": "✅ <strong>Правильно!</strong> {explain}",
+        "assistant.r.quizWrong": "❌ <strong>Не совсем.</strong> Правильный ответ: <strong>{answer}</strong>. {explain}",
+        "assistant.r.noQuiz": "Вопросы теста сейчас недоступны 😕",
+
         "assistant.cmdGroup": "Compass Bot",
         "assistant.cmdOpen": "Поговорить с Compass Bot",
         "assistant.cmdFact": "Compass Bot: расскажи интересный факт",
@@ -292,6 +353,7 @@ window.AICompass.addTranslations({
    6. Words for the theme, the language and the lab
    7. Simple answers and their buttons
    8. The quick-question chips under the chat
+   9. Answers from the site: sources, search hints, follow-ups, "quiz me"
 
    To add a fun fact or a joke, add "assistant.fact14" (or
    "assistant.joke6") above, in BOTH languages: the bot counts them.
@@ -331,10 +393,11 @@ window.AICompass.content.set("assistant", {
         },
         {
             id: "quiz",
-            words: ["quiz*", "start quiz", "start the quiz", "begin the quiz", "take the quiz", "take a quiz", "quiz me",
-                "test me", "test myself", "take the test", "take a test", "start the test", "ai challenge",
+            // ("quiz me" / "проверь меня" ask one question in the chat: see quizMe in section 9)
+            words: ["quiz*", "start quiz", "start the quiz", "begin the quiz", "take the quiz", "take a quiz",
+                "test myself", "take the test", "take a test", "start the test", "ai challenge",
                 "тест", "тестик", "викторин*", "начать тест", "начни тест", "запусти тест", "пройти тест",
-                "проверь меня", "проверить себя", "проверь себя", "испытани*"]
+                "проверить себя", "проверь себя", "испытани*"]
         },
         {
             id: "lab",
@@ -345,17 +408,19 @@ window.AICompass.content.set("assistant", {
         },
         {
             id: "recommend",
-            words: ["recommend*", "suggest*", "which lesson", "what lesson", "next lesson", "where to start",
+            // ("recommend", not "recommend*": "recommendation systems" are a topic of lesson 5)
+            words: ["recommend", "suggest*", "which lesson", "what lesson", "next lesson", "where to start",
                 "where do i start", "where should i start", "what should i learn", "what to learn", "?lesson",
                 "how do i start", "how to start", "how should i start", "where do i begin", "start learning",
                 "beginner*", "getting started", "новичок*", "как начать", "с чего начинать", "хочу научиться",
-                "посоветуй*", "порекомендуй*", "рекоменд*", "какой урок", "с чего начать", "что изучить",
+                "посоветуй*", "порекомендуй*", "рекомендуй*", "рекомендуешь", "какой урок", "с чего начать", "что изучить",
                 "что изучать", "следующ* урок*", "?урок"]
         },
         {
+            // (the Turing test has its own glossary term and milestone: answered from the site)
             id: "eliza",
-            words: ["eliza", "turing", "turing test", "first chatbot*", "first chat bot*", "weizenbaum",
-                "элиза", "элайза", "тьюринг*", "тест тьюринга", "перв* чат бот*", "перв* чатбот*", "вейценбаум*"]
+            words: ["eliza", "first chatbot*", "first chat bot*", "weizenbaum",
+                "элиза", "элайза", "перв* чат бот*", "перв* чатбот*", "вейценбаум*"]
         },
         {
             id: "history",
@@ -363,7 +428,8 @@ window.AICompass.content.set("assistant", {
                 "father of ai", "birth of ai", "when was ai invented", "when did ai start", "history of ai",
                 "history of artificial intelligence", "ai history", "кто придумал ии", "истори* ии",
                 "истори* искусственн*",
-                "кто изобрел*", "кто создал ии", "изобретател*", "отец ии", "когда появился ии", "когда придумали ии"]
+                "кто изобрел* ии", "кто изобрел* искусственн*", "кто создал ии", "изобретател*", "отец ии",
+                "когда появился ии", "когда придумали ии"]
         },
         {
             id: "games",
@@ -382,8 +448,8 @@ window.AICompass.content.set("assistant", {
             id: "conscious",
             words: ["alive", "conscious*", "sentient", "self aware", "feelings", "emotion*", "can ai feel",
                 "can you feel", "do you feel", "does ai think", "can ai think", "think like a human", "have feelings",
-                "живой", "живая", "сознани*", "чувствует", "чувствуешь", "чувства", "эмоци*",
-                "может ли ии думать", "думает ли", "разумн*"]
+                "живой", "живая", "сознани*", "чувствует", "чувствуешь", "чувствовать", "чувства", "эмоци*",
+                "может ли ии думать", "может ли ии чувствовать", "думает ли", "разумн*"]
         },
         {
             id: "about",
@@ -399,6 +465,7 @@ window.AICompass.content.set("assistant", {
                 "wrong answer*", "lie", "lies", "lying", "false information", "fake facts", "mistake*",
                 "always right", "always correct", "can ai be wrong", "trust ai", "trust chatbots",
                 "галлюцинац*", "галлюцинир*", "выдумыва*", "выдумал*", "врать", "врет*", "врут", "соврал*",
+                "чат бот* выдумыва*", "чат бот* врут", "чат бот* ошиба*",
                 "наврал*", "вранье", "обманыва*",
                 "ошиба*", "ошибк*", "неправд*", "всегда прав*", "можно ли доверять", "доверять"]
         },
@@ -413,7 +480,8 @@ window.AICompass.content.set("assistant", {
             words: ["danger*", "scary", "scared", "afraid", "fear", "take over", "takeover", "rise of the machines",
                 "terminator", "skynet", "destroy", "evil", "replace jobs", "replace humans", "replace people",
                 "take my job", "take our jobs", "jobs", "safe", "safety", "risk*", "threat*", "deepfake*",
-                "deep fake*", "опас*", "захват*", "восстание машин", "восстан*", "терминатор*", "скайнет",
+                "deep fake*", "good or bad", "bad or good", "хорошо или плохо", "плохо или хорошо",
+                "опас*", "захват*", "восстание машин", "восстан*", "терминатор*", "скайнет",
                 "уничтож*", "злой", "замен*", "заберет*", "отберет*", "отнимет*", "мою работу", "нашу работу",
                 "без работы", "професси*", "угроз*", "риск*", "страшн*", "боюсь",
                 "бояться", "безопас*", "дипфейк*"]
@@ -433,15 +501,16 @@ window.AICompass.content.set("assistant", {
         },
         {
             id: "llm",
+            // (generative AI in general is answered from the site: its glossary term and lesson 4)
             words: ["chatbot*", "chat bot*", "chatgpt", "chat gpt", "gpt*", "llm*", "large language model*",
-                "language model*", "claude", "gemini", "copilot", "generative ai", "generative",
-                "how does chatgpt work", "чат бот*", "чатбот*", "чатгпт", "чат гпт", "гпт", "языков* модел*",
-                "генеративн*", "больш* языков* модел*"]
+                "language model*", "claude", "gemini", "copilot", "how does chatgpt work", "чат бот*", "чатбот*",
+                "чатгпт", "чат гпт", "гпт", "языков* модел*", "больш* языков* модел*"]
         },
         {
             id: "nn",
-            words: ["neural network*", "neural net*", "neural", "neuron*", "deep learning", "layers", "weights",
-                "нейросет*", "нейронн* сет*", "нейрон*", "нейронк*", "глубок* обучени*", "слои", "веса"]
+            // (deep learning has its own glossary term: answered from the site)
+            words: ["neural network*", "neural net*", "neural", "neuron*", "layers", "weights",
+                "нейросет*", "нейронн* сет*", "нейрон*", "нейронк*", "слои", "веса"]
         },
         {
             id: "ml",
@@ -605,7 +674,7 @@ window.AICompass.content.set("assistant", {
 
     defineQuestion: ["what is a", "what is an", "what is the", "what is", "what s a", "what s an", "what s",
         "whats a", "whats", "what are", "who is", "explain", "tell me what", "что такое", "что это такое",
-        "что это", "кто такой", "кто такая", "что за", "объясни", "расскажи что такое"],
+        "что это", "кто такой", "кто такая", "что за", "что делает", "что делают", "объясни", "расскажи что такое"],
 
     fillers: ["please", "pls", "so", "and", "hey", "ok", "okay", "um", "ну", "а", "скажи", "подскажи",
         "пожалуйста", "слушай"],
@@ -690,7 +759,12 @@ window.AICompass.content.set("assistant", {
         labOffer: { text: "assistant.r.labOffer", buttons: [{ lab: "classifier" }, { lab: "predictor" }] },
         themeDark: { text: "assistant.r.themeDark" },
         themeLight: { text: "assistant.r.themeLight" },
-        noGlossary: { text: "assistant.r.noGlossary" }
+        noGlossary: { text: "assistant.r.noGlossary" },
+        // after "tell me more", "example?" or "in simple words" with nothing to go on
+        noTopic: { text: "assistant.r.noTopic" },
+        noExample: { text: "assistant.r.noExample", buttons: [{ section: "glossary" }] },
+        noSimple: { text: "assistant.r.noSimple", buttons: [{ section: "glossary" }] },
+        noQuiz: { text: "assistant.r.noQuiz", buttons: [{ section: "quiz" }] }
     },
 
     /* ----- 8. The quick-question chips under the chat -----
@@ -698,9 +772,91 @@ window.AICompass.content.set("assistant", {
     chips: [
         { intent: "ai", key: "assistant.chip.ai", icon: "🤖" },
         { intent: "recommend", key: "assistant.chip.lesson", icon: "📚" },
-        { intent: "quiz", key: "assistant.chip.quiz", icon: "🏆" },
+        { intent: "quizMe", key: "assistant.chip.quizMe", icon: "🎯" },
         { intent: "lab", key: "assistant.chip.lab", icon: "🧪" },
         { intent: "fact", key: "assistant.chip.fact", icon: "💡" },
         { intent: "define", key: "assistant.chip.define", icon: "📖" }
-    ]
+    ],
+
+    /* ----- 9. Answers from the site (js/search.js) -----
+       A question without a prepared answer is looked up in the site's
+       lessons, glossary and timeline (see section 5 of js/assistant.js). */
+
+    // Where the site tells more about a prepared answer: chips under it.
+    // "glossary:ai" = the glossary's term "ai", "lessons:l1-s1" = lesson 1,
+    // part 1 ("l1-keys": its key ideas), "timeline:e2" = milestone e2.
+    replySources: {
+        ai: ["glossary:ai", "lessons:l1-s1"],
+        ml: ["glossary:ml", "lessons:l2-s1"],
+        nn: ["glossary:neural-network", "lessons:l3-s1"],
+        llm: ["glossary:llm", "lessons:l4-s2"],
+        hallucination: ["glossary:hallucination", "lessons:l4-s3"],
+        bias: ["glossary:bias", "lessons:l6-s1"],
+        privacy: ["glossary:privacy", "lessons:l6-s3"],
+        danger: ["lessons:l6-s2", "glossary:deepfake"],
+        homework: ["lessons:l4-s4"],
+        eliza: ["timeline:e4", "glossary:turing-test"],
+        conscious: ["lessons:l1-s3", "glossary:agi"],
+        games: ["timeline:e6", "timeline:e10"],
+        history: ["timeline:e2", "timeline:e1"]
+    },
+
+    // The kinds of text an answer may come from (quiz questions are for "quiz me")
+    answerTypes: ["glossary", "lessons", "timeline", "lab"],
+
+    // Words that only shape a question ("who INVENTED the perceptron?", "how does
+    // ChatGPT WORK?"): the bot leaves them out when it looks things up. (The
+    // search leaves out "who", "what", "how"... by itself, and "AI" in a longer
+    // question: js/content/search.js)
+    askWords: ["invented", "invent", "invents", "inventor", "inventors", "created", "create", "creates",
+        "made", "make", "makes", "built", "build", "happened", "happen", "happens", "work", "works",
+        "working", "won", "win", "wins", "изобрел*", "придумал*", "создал*", "сделал*", "появил*", "случил*",
+        "произошл*", "выиграл*", "получил*", "работает", "работают", "работать", "устроен*", "делает", "делают",
+        "может", "могут", "можно"],
+
+    // A question that starts with these asks for a date, so a milestone of the
+    // timeline answers it before a prepared answer: "when was ChatGPT released?"
+    whenWords: ["when", "what year", "which year", "in what year", "когда", "в каком году", "какого года"],
+
+    // Question words that point to a kind of text. Its results count this much more:
+    // "who / when" -> the timeline, "what is" -> the glossary, "how / why" -> the lessons
+    searchBoosts: [
+        { words: ["who", "when", "year", "invented", "inventor*", "created", "кто", "когда", "году", "год",
+            "изобрел*", "придумал*", "создал*"], boost: { timeline: 1.5 } },
+        { words: ["what is", "what are", "what s", "whats", "define", "meaning", "что такое", "что значит",
+            "что означает", "значение", "определение"], boost: { glossary: 1.3 } },
+        { words: ["how", "why", "как", "почему", "зачем"], boost: { lessons: 1.3 } }
+    ],
+
+    // Follow-ups about the last answer from the site (only small words around them:
+    // "can you give me an example please"):
+    // more = the next part of the same text, example = the glossary's example,
+    // simpler = the glossary's short definition
+    followUps: {
+        more: ["tell me more", "more", "go on", "continue", "keep going", "what else", "and then", "read more",
+            "more details", "расскажи подробнее", "подробнее", "расскажи еще", "еще", "дальше", "продолжай",
+            "а дальше", "что еще", "читать дальше"],
+        example: ["example", "examples", "for example", "an example", "give me an example", "give an example",
+            "пример", "примеры", "например", "приведи пример", "дай пример", "для примера"],
+        simpler: ["in simple words", "in simple terms", "simpler", "more simply", "simply", "explain simply",
+            "in plain words", "eli5", "i don t understand", "too hard", "too complicated", "проще", "попроще",
+            "простыми словами", "объясни проще", "скажи проще", "не понял", "не поняла", "непонятно",
+            "не понятно", "сложно"]
+    },
+    followUpSkip: ["please", "pls", "can", "could", "you", "me", "give", "show", "say", "explain", "it", "that",
+        "this", "of", "for", "about", "the", "a", "an", "some", "and", "so", "ok", "now", "bit", "little",
+        "пожалуйста", "можно", "мне", "дай", "покажи", "скажи", "объясни", "это", "этого", "этом", "про",
+        "об", "о", "а", "ну", "и", "так", "теперь", "давай", "чуть", "немного"],
+
+    // "Quiz me" (optionally "on X" / "по X"): one question from the quiz, in the chat
+    quizMe: ["quiz me", "test me", "ask me a question", "ask me something", "check my knowledge",
+        "test my knowledge", "проверь меня", "спроси меня", "задай вопрос", "задай мне вопрос",
+        "проверь мои знания", "погоняй меня"],
+    // Small words between "quiz me" and its topic: "quiz me ON neural networks"
+    quizTopicWords: ["on", "about", "in", "по", "про", "на", "тему", "о", "об"],
+    // A true-or-false question can also be answered by typing a word
+    quizAnswerWords: {
+        yes: ["true", "right", "correct", "верно", "правда", "правильно"],
+        no: ["false", "wrong", "incorrect", "неверно", "ложь", "неправда", "неправильно"]
+    }
 });

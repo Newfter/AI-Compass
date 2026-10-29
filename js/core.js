@@ -2170,23 +2170,21 @@
         setLanguage(state.lang);
         updateThemeMeta();
 
-        // Language and theme buttons
-        const languageButton = document.getElementById("language-toggle");
-        if (languageButton) {
-            languageButton.addEventListener("click", function () {
+        // Language and theme buttons: in the menu bar, and on narrow phones in the menu
+        document.querySelectorAll("#language-toggle, [data-language-toggle]").forEach(function (button) {
+            button.addEventListener("click", function () {
                 window.AICompass.toggleLanguage();
                 toast(t("core.toastLang"), "🌐");
             });
-        }
+        });
 
-        const themeButton = document.getElementById("theme-toggle");
-        if (themeButton) {
-            themeButton.addEventListener("click", function () {
+        document.querySelectorAll("#theme-toggle, [data-theme-toggle]").forEach(function (button) {
+            button.addEventListener("click", function () {
                 window.AICompass.toggleTheme();
                 const light = state.theme === "light";
                 toast(t(light ? "core.toastLight" : "core.toastDark"), light ? "☀️" : "🌙");
             });
-        }
+        });
 
         setUpMenu();
         startScrolling();
