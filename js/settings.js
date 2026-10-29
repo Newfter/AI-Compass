@@ -902,14 +902,17 @@
                     '<span class="st-head-icon" aria-hidden="true">' + ICONS.keyboard + "</span>" +
                     '<div class="st-head-text">' +
                         '<h2 class="st-title" id="st-keys-title" data-i18n="settings.keysTitle">' + t("settings.keysTitle") + "</h2>" +
-                        '<p class="st-intro" id="st-keys-intro" data-i18n="settings.keysIntro">' + t("settings.keysIntro") + "</p>" +
                     "</div>" +
                     '<button type="button" class="st-close" data-action="close" ' +
                         'data-i18n-attr="aria-label:settings.keysClose,title:settings.keysClose" aria-label="' + esc(t("settings.keysClose")) + '" title="' + esc(t("settings.keysClose")) + '">' +
                         '<kbd class="st-close-key" aria-hidden="true">Esc</kbd>' + ICONS.close + "</button>" +
                 "</header>" +
-                // The list scrolls on small screens: it takes the focus, so the arrow keys scroll it
-                '<div class="st-keys-body" tabindex="0" role="region" aria-labelledby="st-keys-title"></div>' +
+                // The list scrolls on small screens: it takes the focus, so the arrow keys scroll it.
+                // The first line scrolls with it, so the header stays small on a phone.
+                '<div class="st-keys-body" tabindex="0" role="region" aria-labelledby="st-keys-title">' +
+                    '<p class="st-intro" id="st-keys-intro" data-i18n="settings.keysIntro">' + t("settings.keysIntro") + "</p>" +
+                    '<div class="st-keys-groups"></div>' +
+                "</div>" +
             "</section>";
         mount.appendChild(box);
 
@@ -917,6 +920,7 @@
             layer: box,
             panel: box.querySelector(".st-panel"),
             body: box.querySelector(".st-keys-body"),
+            groups: box.querySelector(".st-keys-groups"),
             lang: ""        // the language the list was drawn in
         };
         keysUi.panel.addEventListener("click", function (event) {
@@ -929,7 +933,7 @@
     function paintShortcuts() {
         if (!keysUi || keysUi.lang === A.lang) return;
         keysUi.lang = A.lang;
-        keysUi.body.innerHTML = shortcutsHTML();
+        keysUi.groups.innerHTML = shortcutsHTML();
     }
 
     const shortcutsWindow = makeWindow({

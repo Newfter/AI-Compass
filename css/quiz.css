@@ -321,7 +321,7 @@
         radial-gradient(circle at 35% 30%, rgba(var(--accent-2-rgb), 0.35), rgba(var(--accent-rgb), 0.25) 60%, transparent 75%),
         var(--surface-solid);
     box-shadow: 0 0 34px rgba(var(--accent-rgb), 0.4), inset 0 0 22px rgba(var(--accent-2-rgb), 0.22);
-    font-size: 1.875rem;
+    font-size: 30px;     /* px: a glyph in a tile of fixed size */
     animation: qz-breathe 3.2s ease-in-out infinite;
 }
 
@@ -398,7 +398,7 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     background: var(--surface-2);
-    font-size: 1rem;
+    font-size: 16px;     /* px: a glyph in a tile of fixed size */
 }
 
 .qz-rule-text {
@@ -874,7 +874,7 @@
     border-radius: 9px;
     background: rgba(var(--accent-rgb), 0.1);
     color: var(--text-accent-2);
-    font-size: 0.8125rem;
+    font-size: 13px;     /* px: a glyph in a tile of fixed size */
     font-weight: 600;
     transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
@@ -899,7 +899,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    font-size: 0.9375rem;
+    font-size: 15px;     /* px: a glyph in a tile of fixed size */
     font-weight: 800;
     opacity: 0;
     transform: scale(0.4);
@@ -1058,7 +1058,7 @@
     border-radius: 50%;
     background: var(--fb);
     color: var(--bg);
-    font-size: 0.9375rem;
+    font-size: 15px;     /* px: a glyph in a tile of fixed size */
     font-weight: 800;
 }
 
@@ -1260,7 +1260,7 @@
     border-radius: 16px;
     background: rgba(var(--accent-rgb), 0.12);
     box-shadow: var(--glow);
-    font-size: 1.75rem;
+    font-size: 28px;     /* px: a glyph in a tile of fixed size */
 }
 
 .qz-res-text {
@@ -1462,7 +1462,7 @@
     border-radius: 50%;
     background: var(--ri);
     color: var(--bg);
-    font-size: 0.8125rem;
+    font-size: 13px;     /* px: a glyph in a tile of fixed size */
     font-weight: 800;
     box-shadow: 0 0 12px color-mix(in srgb, var(--ri) 45%, transparent);
 }
@@ -1617,7 +1617,7 @@ details[open] .qz-ri-chevron {
         width: 24px;
         height: 24px;
         margin-top: 0;
-        font-size: 0.8125rem;
+        font-size: 13px;     /* px: a glyph in a tile of fixed size */
     }
 
     /* "Choose one answer" may wrap onto two lines, so the "Quit" button never has to jump down */
@@ -1644,7 +1644,7 @@ details[open] .qz-ri-chevron {
     .qz-orb-core {
         width: 52px;
         height: 52px;
-        font-size: 1.5rem;
+        font-size: 24px;     /* px: a glyph in a tile of fixed size */
     }
 
     .qz-res-hero {
@@ -1816,7 +1816,7 @@ details[open] .qz-ri-chevron {
     .qz-rank-emoji {
         width: 48px;
         height: 48px;
-        font-size: 1.5rem;
+        font-size: 24px;     /* px: a glyph in a tile of fixed size */
     }
 
     .qz-review-tools {

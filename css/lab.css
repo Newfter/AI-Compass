@@ -106,7 +106,7 @@
     border: 1px solid var(--border);
     border-radius: 11px;
     background: rgba(var(--accent-rgb), 0.12);
-    font-size: 1.125rem;
+    font-size: 18px;     /* px: a glyph in a tile of fixed size */
     transition: transform 0.4s var(--ease), box-shadow 0.3s ease;
 }
 
@@ -997,7 +997,7 @@
     background: var(--gradient-button);
     color: var(--on-accent);
     font-family: var(--font-mono);
-    font-size: 1rem;
+    font-size: 16px;     /* px: a glyph in a tile of fixed size */
     box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.4);
 }
 
@@ -1231,7 +1231,7 @@
     background: var(--warning);
     color: var(--surface-solid);
     font-weight: 800;
-    font-size: 0.8125rem;
+    font-size: 13px;     /* px: a glyph in a tile of fixed size */
 }
 
 .lab-predict .lab-box-head {
@@ -1319,7 +1319,7 @@
     border-radius: 8px;
     background: var(--surface-2);
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: 12px;     /* px: a glyph in a tile of fixed size */
     font-weight: 600;
 }
 
@@ -1658,7 +1658,7 @@
     .lab-tab-icon {
         width: 32px;
         height: 32px;
-        font-size: 1rem;
+        font-size: 16px;     /* px: a glyph in a tile of fixed size */
     }
 
     .lab-tab-title {

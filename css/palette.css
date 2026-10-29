@@ -242,7 +242,7 @@
     border-style: dashed;
     background: transparent;
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 14px;     /* px: a glyph in a tile of fixed size */
 }
 
 .cp-item.cp-more .cp-title {
@@ -296,7 +296,7 @@
     border: 1px solid var(--border);
     border-radius: 11px;
     background: var(--surface-2);
-    font-size: 1.0625rem;
+    font-size: 17px;     /* px: a glyph in a tile of fixed size */
     line-height: 1;
     transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.25s var(--ease);
 }
@@ -389,7 +389,7 @@
     border: 1px solid var(--border-strong);
     border-radius: 18px;
     background: rgba(var(--accent-rgb), 0.1);
-    font-size: 1.75rem;
+    font-size: 28px;     /* px: a glyph in a tile of fixed size */
     box-shadow: var(--glow);
 }
 

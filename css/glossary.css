@@ -489,7 +489,7 @@
     border-radius: 12px;
     background: rgba(var(--accent-rgb), 0.1);
     background: color-mix(in srgb, var(--gl-c) 13%, transparent);
-    font-size: 1.25rem;
+    font-size: 20px;     /* px: a glyph in a tile of fixed size */
     line-height: 1;
 }
 
@@ -513,7 +513,7 @@
     border: 1px solid rgba(var(--accent-2-rgb), 0.4);
     border-radius: 50%;
     color: var(--text-success);
-    font-size: 0.6875rem;
+    font-size: 11px;     /* px: a glyph in a tile of fixed size */
     font-weight: 800;
 }
 
@@ -718,7 +718,7 @@
     border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, rgba(var(--accent-2-rgb), 0.25), rgba(var(--accent-rgb), 0.12) 60%, transparent);
     box-shadow: var(--glow);
-    font-size: 2rem;
+    font-size: 32px;     /* px: a glyph in a tile of fixed size */
     animation: gl-float 4s ease-in-out infinite;
 }
 

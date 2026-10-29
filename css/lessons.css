@@ -230,7 +230,7 @@
     background: var(--surface-solid);
     color: var(--text-muted);
     font-family: var(--font-mono);
-    font-size: 0.875rem;
+    font-size: 14px;     /* px: a glyph in a tile of fixed size */
     font-weight: 600;
     transition: transform 0.25s var(--ease), border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
 }
@@ -541,7 +541,7 @@
         radial-gradient(circle at 30% 25%, rgba(var(--lsn-rgb), 0.38), transparent 70%),
         var(--surface-2);
     box-shadow: 0 0 26px rgba(var(--lsn-rgb), 0.22), inset 0 1px 0 rgba(var(--lsn-rgb), 0.25);
-    font-size: 1.75rem;
+    font-size: 28px;     /* px: a glyph in a tile of fixed size */
     transition: transform 0.4s var(--ease);
 }
 
@@ -561,7 +561,7 @@
     border-radius: 50%;
     background: var(--success);
     color: var(--surface-solid);
-    font-size: 0.75rem;
+    font-size: 12px;     /* px: a glyph in a tile of fixed size */
     font-weight: 800;
 }
 
@@ -1080,7 +1080,7 @@
         radial-gradient(circle at 30% 25%, rgba(var(--lsn-rgb), 0.4), transparent 70%),
         var(--surface-2);
     box-shadow: 0 0 40px rgba(var(--lsn-rgb), 0.3);
-    font-size: 2.25rem;
+    font-size: 36px;     /* px: a glyph in a tile of fixed size */
     animation: lsn-float 5s ease-in-out infinite;
 }
 
@@ -1238,7 +1238,7 @@
     border-radius: 9px;
     background: var(--gradient-button);
     color: var(--on-accent);
-    font-size: 0.75rem;
+    font-size: 12px;     /* px: a glyph in a tile of fixed size */
     font-weight: 600;
     box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.35);
 }
@@ -1266,7 +1266,7 @@
     height: 50px;
     border-radius: 14px;
     background: rgba(var(--accent-2-rgb), 0.12);
-    font-size: 1.625rem;
+    font-size: 26px;     /* px: a glyph in a tile of fixed size */
 }
 
 .lsn-try-body {
@@ -1341,7 +1341,7 @@
     border: 1px solid var(--border-strong);
     border-radius: 10px;
     color: var(--text-accent-2);
-    font-size: 0.8125rem;
+    font-size: 13px;     /* px: a glyph in a tile of fixed size */
     font-weight: 600;
 }
 
@@ -2501,7 +2501,7 @@
         width: 60px;
         height: 60px;
         border-radius: 18px;
-        font-size: 1.875rem;
+        font-size: 30px;     /* px: a glyph in a tile of fixed size */
     }
 
     .lsn-part {
