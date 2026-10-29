@@ -114,7 +114,11 @@ window.AICompass.addTranslations({
 
         "lab.predictor.title": "Next-word predictor",
         "lab.predictor.hook": "Type a few words and see how a tiny language model guesses what comes next.",
-        "lab.predictor.idea": "Language models"
+        "lab.predictor.idea": "Language models",
+
+        "lab.maze.title": "Robot in a maze",
+        "lab.maze.hook": "Nobody shows the robot the way. Watch it learn from rewards and penalties.",
+        "lab.maze.idea": "Reinforcement learning"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -123,7 +127,11 @@ window.AICompass.addTranslations({
 
         "lab.predictor.title": "Предсказатель слов",
         "lab.predictor.hook": "Напиши пару слов и посмотри, как крошечная языковая модель угадывает следующее.",
-        "lab.predictor.idea": "Языковые модели"
+        "lab.predictor.idea": "Языковые модели",
+
+        "lab.maze.title": "Робот в лабиринте",
+        "lab.maze.hook": "Никто не показывает роботу дорогу. Смотри, как он учится на наградах и штрафах.",
+        "lab.maze.idea": "Обучение с подкреплением"
     }
 });
 
@@ -150,6 +158,15 @@ window.AICompass.content.set("lab.icons", {
                 '<path d="M7.5 8.75h5.5M7.5 12.25h3"/>' +
                 '<path d="M14 11v2.75"/>' +
             '</g>' +
+        '</symbol>' +
+        // A 3 x 3 maze: the robot (a dot) bottom left, the battery (a ring) top right
+        '<symbol id="lab-icon-maze" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<rect x="3" y="3" width="18" height="18" rx="3"/>' +
+                '<path d="M9 3v6h6M3 15h6M15 15v6"/>' +
+                '<circle cx="18" cy="6" r="1.5"/>' +
+            '</g>' +
+            '<circle cx="6" cy="18" r="1.6" fill="currentColor"/>' +
         '</symbol>'
 });
 
@@ -188,5 +205,15 @@ window.AICompass.content.set("lab.catalogue", [
         level: 1,
         emoji: "💬",
         keywords: "lab next word predictor language model chatbot text autocomplete gpt лаборатория следующее слово предсказатель языковая модель чат-бот текст автодополнение"
+    },
+    {
+        id: "maze",
+        icon: "lab-icon-maze",
+        titleKey: "lab.maze.title",
+        hookKey: "lab.maze.hook",
+        ideaKey: "lab.maze.idea",
+        level: 2,
+        emoji: "🤖",
+        keywords: "lab maze robot reinforcement learning q-learning reward penalty trial and error agent лаборатория лабиринт робот обучение с подкреплением q-обучение награда штраф пробы ошибки агент"
     }
 ]);

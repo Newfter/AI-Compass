@@ -118,6 +118,7 @@
     const CHART_PAD = 8;                 // px of room around the plot
     const TICK_GAP_X = 64;               // px: about this much room for each number along the bottom...
     const TICK_GAP_Y = 34;               // ...and along the side
+    const X_LABEL_GAP = 8;               // px: the least room between two numbers along the bottom; a number that would come closer is left out
     const FAINT_ALPHA = 0.35;            // a "faint" series (raw values under a smoothed line) is this see-through
     const CORNER = 12;                   // px kept free at the canvas box's rounded corners (css/lab/kit.css)
 
@@ -1758,14 +1759,18 @@
             const ticks = Number.isInteger(xStep) && Number.isInteger(x0)
                 ? xTicks.ticks.filter(function (value) { return Number.isInteger(value); })
                 : xTicks.ticks;
+            let lastRight = -Infinity;   // where the last number drawn ends (long numbers, like "610,1 тыс.", could touch)
             ticks.forEach(function (value) {
                 const i = count > 1 ? (value - x0) / xStep : 0;
                 const x = xAt(i);
                 const text = xFormat(value);
                 const textWidth = context.measureText(text).width;
+                const textX = A.util.clamp(x - textWidth / 2, 0, width - textWidth);
+                if (textX < lastRight + X_LABEL_GAP) return;
                 context.textAlign = "left";
                 context.fillStyle = c.muted;
-                context.fillText(text, A.util.clamp(x - textWidth / 2, 0, width - textWidth), top + plotHeight + 6);
+                context.fillText(text, textX, top + plotHeight + 6);
+                lastRight = textX + textWidth;
             });
         }
 

@@ -3,15 +3,12 @@
    Keys: lab.maze.*  The shared words (Play, Step, Speed...) are lab.kit.*
    in js/content/lab/kit.js. Plurals: "one|other" (English), "one|few|many" (Russian).
    The presets (the example mazes) are at the end of this file.
+   Its title, hook and big idea are in js/content/lab.js (section 3): the lab's picker shows
+   them before this file is loaded.
    ========================================================= */
 
 window.AICompass.addTranslations({
     en: {
-        // ----- The experiment -----
-        "lab.maze.title": "Robot in a maze",
-        "lab.maze.hook": "Nobody shows the robot the way. It tries, gets rewards and penalties, and slowly learns which move is worth most in each square.",
-        "lab.maze.idea": "Reinforcement learning",
-
         // ----- The board -----
         "lab.maze.canvas": "The maze board. The arrow keys move the cursor; Enter picks a square.",
         "lab.maze.canvasEdit": "The maze board, edit mode. The arrow keys move the cursor; Enter or Space paints with the chosen tile.",
@@ -152,11 +149,6 @@ window.AICompass.addTranslations({
         "lab.maze.ch4Why": "With ε = 0 the robot stops trying new things as soon as something works: it grabs the first battery it finds and stops looking. Curiosity helps: set ε to 1 and switch on “ε shrinks” (explore a lot at first, then less and less), press Forget and train again."
     },
     ru: {
-        // ----- Эксперимент -----
-        "lab.maze.title": "Робот в лабиринте",
-        "lab.maze.hook": "Никто не показывает роботу дорогу. Он пробует, получает награды и штрафы и постепенно узнаёт, какой ход в какой клетке выгоднее всего.",
-        "lab.maze.idea": "Обучение с подкреплением",
-
         // ----- Поле -----
         "lab.maze.canvas": "Поле лабиринта. Стрелки двигают курсор, Enter выбирает клетку.",
         "lab.maze.canvasEdit": "Поле лабиринта, режим редактирования. Стрелки двигают курсор, Enter или пробел рисуют выбранной плиткой.",
