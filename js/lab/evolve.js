@@ -1517,6 +1517,9 @@
             mode = "champion";
             championButton.setLabel("lab.evolve.back");
             championButton.setIcon("close");
+            // The replay always runs at Watch speed: the speed control says so, and waits
+            speedControl.set("watch");
+            speedControl.setDisabled(true);
             startReplay();
             loop.setRate(SPEEDS.watch);
             setState("running");
@@ -1546,6 +1549,8 @@
             replay = null;
             championButton.setLabel("lab.evolve.champion");
             championButton.setIcon("sparkle");
+            speedControl.setDisabled(false);
+            speedControl.set(speed);         // the user's own speed again
             loop.setRate(SPEEDS[speed]);
             setNote(null);
             setState(generation === 1 && race.ticks === 0 && !next ? "ready" : "paused");
