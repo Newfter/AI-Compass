@@ -322,12 +322,13 @@
     //   model.sizes[m]   how many tokens the vocabulary has after m merges
     //   model.learn(ms)  learns merges for about ms milliseconds (0: just one, Infinity: all)
     //   model.done       true when it may not (or cannot) learn any more
+    //   model.nextPair   once done: the pair it would glue next if it could go on ({ a, b, count }, or null)
     function tokenizer(text, maxMerges) {
         const counts = new Map();
         splitWords(text).forEach(function (word) { counts.set(word, (counts.get(word) || 0) + 1); });
         const words = [];
         counts.forEach(function (count, word) { words.push({ parts: Array.from(word), count: count }); });
-        const model = { base: [], vocab: new Map(), merges: [], ranks: new Map(), sizes: [], done: maxMerges < 1 };
+        const model = { base: [], vocab: new Map(), merges: [], ranks: new Map(), sizes: [], done: maxMerges < 1, nextPair: null };
         words.forEach(function (word) {
             word.parts.forEach(function (ch) {
                 if (model.vocab.has(ch)) return;
@@ -337,7 +338,9 @@
         });
         model.sizes.push(model.vocab.size);
 
-        function learnOne() {
+        // The most common pair of neighbouring tokens now: { a, b, count } (null when every
+        // word is one token). A tie goes to the pair seen first.
+        function commonest() {
             const pairs = new Map();            // "a\u0000b" -> { a, b, count }, in the order first seen
             words.forEach(function (word) {
                 for (let i = 0; i < word.parts.length - 1; i++) {
@@ -351,6 +354,11 @@
             pairs.forEach(function (pair) {
                 if (!best || pair.count > best.count) best = pair;
             });
+            return best;
+        }
+
+        function learnOne() {
+            const best = commonest();
             if (!best) return false;            // every word is one token already
             best.token = best.a + best.b;
             if (!model.vocab.has(best.token)) model.vocab.set(best.token, model.vocab.size);
@@ -369,6 +377,7 @@
             const started = performance.now();
             while (!model.done) {
                 model.done = !learnOne() || model.merges.length >= maxMerges;
+                if (model.done) model.nextPair = commonest();     // what "What's happening?" shows at the end
                 if (performance.now() - started >= ms) break;
             }
             return model.done;
@@ -1272,8 +1281,9 @@
             paintProgress();
             const ruFewer = paintFair(m);
 
-            // What's happening? Step 2 shows the pair that would be glued next
-            const next = model.merges[m];
+            // What's happening? Step 2 shows the pair that would be glued next (after the last
+            // merge, the one it would glue if it could go on)
+            const next = model.merges[m] || (m === model.merges.length ? model.nextPair : null);
             const pair = next || model.merges[m - 1];
             explain.setValues(0, { base: model.base.length });
             if (pair) explain.setValues(1, { a: shown(pair.a), b: shown(pair.b), times: A.plural("lab.chatbot.tok.times", pair.count) });
