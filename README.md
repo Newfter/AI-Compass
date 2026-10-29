@@ -1,6 +1,6 @@
 # AI Compass
 
-AI Compass is a free website that teaches teenagers about artificial intelligence, in English and in Russian. It has short lessons with mini-labs, two live AI experiments, a quiz, a glossary, a history timeline, a chat helper (Compass Bot), a search window for the whole site (Ctrl+K), and My Compass, where learners see their XP, level, badges and streak.
+AI Compass is a free website that teaches teenagers about artificial intelligence, in English and in Russian. It has short lessons with mini-labs, two live AI experiments, a quiz, a glossary, a history timeline, a chat helper (Compass Bot), a search window for the whole site (Ctrl+K), My Compass, where learners see their XP, level, badges and streak, and Settings (bigger text, high contrast, an easy-to-read font and more).
 
 It is plain HTML, CSS and JavaScript: no libraries, no frameworks, no build step. The files in this folder are exactly what visitors get.
 
