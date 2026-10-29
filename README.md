@@ -38,7 +38,7 @@ A local server shows you the site the way GitHub Pages serves it.
 
 | File | What it is for |
 | --- | --- |
-| `index.html` | The page: the menu, the first screen (the "hero"), one `<section>` for each part of the site, and the list of styles and scripts. Each part has an empty `<div data-feature="...">` that its script fills. A small script in the `<head>` applies the saved theme and calm mode before the page is drawn. |
+| `index.html` | The page: the menu, the first screen (the "hero"), one `<section>` for each part of the site, and the list of styles and scripts. Each part has an empty `<div data-feature="...">` that its script fills. A small script in the `<head>` applies the saved theme, calm mode and settings (text size, line spacing, font, contrast...) before the page is drawn, so nothing flashes. |
 | `style.css` | What the whole page shares: the design tokens (colours, fonts and sizes of both themes), buttons, cards, the menu, the hero, the section frames, toasts, the phone layout and calm mode. |
 | `css/components.css` | Small visual parts that several features share, each written once as a `ui-...` class: corner brackets, the light that scans along a card, sliders, on/off switches, filter chips, answer options and progress rings. |
 | `css/effects.css` | The visual effects and the neural network background. |
@@ -50,6 +50,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `css/assistant.css` | Compass Bot. |
 | `css/palette.css` | The Ctrl+K command palette. |
 | `css/journey.css` | My Compass: the button in the menu, the badge picture in a toast, and the dashboard window. |
+| `css/settings.css` | The Settings window and the keyboard shortcuts window, and what the settings change on the whole page: bigger text, relaxed lines, the easy-to-read font, underlined links, high contrast and solid surfaces. It comes after the other styles. |
 | `js/core.js` | The toolkit that every other script uses (`window.AICompass`, called `A`): saved settings, texts and languages, the theme, calm mode, pop-up windows, scrolling to sections, Ctrl+K commands and toasts. It is loaded first. |
 | `js/effects.js` | Small touches: the scroll progress bar, cards that rise in, numbers that count up, typewriter words, tilting cards, the mouse spotlight, magnetic buttons, ripples, the section mini-map and confetti. |
 | `js/neural-bg.js` | The animated "brain" drawn behind the page. |
@@ -63,6 +64,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/search.js` | The site search (`A.search`): finds things in the lessons, glossary, timeline, quiz, AI Lab and page texts, in the current language, with typos, synonyms and the wrong keyboard layout. The Ctrl+K palette and Compass Bot use it. |
 | `js/journey.js` | My Compass: counts XP from the progress events, and keeps the level, the badges and the streak in this browser. It also draws the button in the menu. |
 | `js/journey-panel.js` | The My Compass window (the dashboard). It is loaded the first time the window opens. |
+| `js/settings.js` | The Settings window (the gear in the menu, Ctrl+K or `#settings`): language, theme, text size, line spacing, font, underlined links, contrast, transparency, calm motion and the read-aloud voice and speed, saved in this browser (`A.settings`). Also the keyboard shortcuts window (press `?`). |
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
@@ -75,6 +77,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/palette.js` | The texts of the Ctrl+K palette. |
 | `js/content/search.js` | The search's texts and word lists: little words it skips (also words that only judge, like "good" or "лучше"), words that mean the same thing ("нейросеть" = "neural network"), words that point back to the sentence before ("This is called..."), and the parts of the page it searches. |
 | `js/content/journey.js` | My Compass: its texts, the XP table, the levels and the badges. |
+| `js/content/settings.js` | The texts of the Settings and keyboard shortcuts windows, and the list of every keyboard shortcut of the site. |
 | `README.md` | This guide. |
 
 
@@ -180,9 +183,10 @@ Nothing leaves the browser: these events are only for features on the same page 
 | | `bot.feedback` | `{ helpful }` | 👍 (`true`) or 👎 (`false`) under an answer from the site |
 | Ctrl+K | `palette.run` | `{ id }` | a command is run |
 | Search | `search.open` | `{ type, id, from }` | a text found by the search is opened: a palette row (`from: "palette"`) or a source under a bot answer (`from: "bot"`) |
+| Settings | `settings.change` | `{ name, value }` | a setting really changes, wherever it was changed (the settings window, Ctrl+K, the buttons in the menu bar). `name` is `language` (`"en"`, `"ru"`), `theme` (`"dark"`, `"light"` or `"system"`), `textSize` (1, 1.125, 1.25 or 1.5), `lineSpacing` (`"normal"`, `"relaxed"`), `easyFont`, `underlineLinks`, `contrast` or `reduceTransparency` (true, false), `voiceEn` or `voiceRu` (a voice, `""` for automatic) or `speechRate` (0.75, 1, 1.25 or 1.5) |
 | Core | `language.change` | `{ lang }` | the language changes |
 | | `theme.change` | `{ theme }` | the theme changes |
-| | `settings.change` | `{ name, value }` | a setting changes (today: `name: "calm"`) |
+| | `settings.change` | `{ name: "calm", value }` | calm mode is switched on (`true`) or off (`false`) |
 | My Compass | `journey.open` | `{}` | the window opens |
 | | `journey.export` | `{ how }` | the progress is saved to a file (`how: "file"`) or copied as text (`how: "text"`) |
 
@@ -513,6 +517,8 @@ These keep the code easy to read, as if one person wrote it all.
 - **Use the toolkit.** If `js/core.js` already does it (saving, plurals, pop-up windows, scrolling, random numbers...), use it instead of writing it again.
 - **Saved data.** Use `A.storage` (it adds the `aic:` prefix). Don't rename a saved key: people would lose their progress. If you really must, move the value with `A.storage.migrate(oldKey, newKey)`.
 - **Respect calm mode.** Before an animation, check `A.motion.ok()`.
+- **Font sizes in rem** (px ÷ 16: `0.875rem` is 14 px), so the text size setting reaches them. Only a letter or an emoji in a box of fixed size keeps px, with the comment `/* px: a glyph in a tile of fixed size */`.
+- **A new keyboard shortcut** goes into the list at the end of `js/content/settings.js`, so the `?` window shows it.
 - **No libraries, no build step, no `import` / `export`.** Every script is a plain `<script defer>` in `index.html`.
 
 
@@ -524,6 +530,7 @@ Open the site on a local server and go through this list for the parts you chang
 - [ ] **Both themes.** Switch light / dark. Everything is readable; nothing disappears.
 - [ ] **A phone.** In the browser's developer tools (F12), turn on the device toolbar (Ctrl+Shift+M) and pick a width of 360 px. Nothing sticks out to the side, and the menu works.
 - [ ] **Keyboard only.** Put the mouse away. Tab reaches every button and you can see where the focus is; Enter and Space work; Esc closes the lesson reader, Compass Bot and the palette; Ctrl+K opens the palette.
+- [ ] **Bigger text.** Open Settings (the gear in the menu) and choose the biggest text size. At 360 px, nothing sticks out to the side and no word is cut.
 - [ ] **Calm mode.** Press Ctrl+K and run "Calm mode: pause animations". Nothing big moves any more, and everything still works. Run it again to turn the animations back on.
 - [ ] **The console.** Press F12, open Console and reload: no red errors.
 - [ ] **Links into the page.** `#lesson-4`, `#term-bias` and `#quiz` at the end of the address open the right place.

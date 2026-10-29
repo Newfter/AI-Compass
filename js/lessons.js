@@ -2155,10 +2155,13 @@
             });
         });
 
+        // The voice and the speed chosen in the Settings window (js/settings.js); without
+        // that feature, the device's first voice for the language at its normal speed
         const langCode = A.lang === "ru" ? "ru" : "en";
-        const voice = window.speechSynthesis.getVoices().filter(function (item) {
+        const voice = (A.settings && A.settings.voice(langCode)) || window.speechSynthesis.getVoices().filter(function (item) {
             return item.lang && item.lang.toLowerCase().indexOf(langCode) === 0;
         })[0] || null;
+        const rate = A.settings ? A.settings.get("speechRate") : 1;
 
         speech.active = true;
         speech.session += 1;
@@ -2178,6 +2181,7 @@
             const utterance = new window.SpeechSynthesisUtterance(chunk.text);
             utterance.lang = langCode === "ru" ? "ru-RU" : "en-US";
             if (voice) utterance.voice = voice;
+            utterance.rate = rate;
             utterance.onstart = function () { started = true; };
             utterance.onend = next;
             utterance.onerror = function (event) {
