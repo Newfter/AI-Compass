@@ -1,0 +1,314 @@
+/* =========================================================
+   AI COMPASS — LAB: INSIDE A CHATBOT (js/lab/chatbot.js)
+   Prefix: ch-. Controls, bars and panels come from the kit
+   (css/lab/kit.css); this file styles the experiment's own parts.
+
+   Sections:
+    1. The pipeline strip
+    2. Shared parts
+    3. View 1: tokens
+   ========================================================= */
+
+/* ===== 1. THE PIPELINE STRIP =====
+   "Text" and the four views (a kit.segmented), with arrows between them.
+   On a narrow stage the views make a 2 x 2 grid and the arrows go. */
+
+.ch-pipe {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.ch-pipe > .lk-field {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ch-pipe-start {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 4px 12px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.ch-pipe-start .lk-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.ch-pipe .lk-seg {
+    gap: 22px;
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+.ch-pipe .lk-seg-option {
+    position: relative;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-solid);
+}
+
+/* The arrows: small chevrons in the gaps (they never catch a click) */
+.ch-pipe-start::after,
+.ch-pipe .lk-seg-option + .lk-seg-option::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-top: 2px solid var(--text-dim);
+    border-right: 2px solid var(--text-dim);
+    transform: translateY(-50%) rotate(45deg);
+    pointer-events: none;
+}
+
+.ch-pipe-start::after {
+    right: -16px;
+}
+
+.ch-pipe .lk-seg-option + .lk-seg-option::before {
+    left: -15px;
+}
+
+@container (max-width: 600px) {
+    .ch-pipe-start {
+        display: none;
+    }
+
+    .ch-pipe .lk-seg {
+        gap: 6px;
+    }
+
+    .ch-pipe .lk-seg-option {
+        flex: 1 1 calc(50% - 6px);
+    }
+
+    .ch-pipe .lk-seg-option + .lk-seg-option::before {
+        display: none;
+    }
+}
+
+/* What the chosen step does in a real chatbot */
+.ch-stage-line {
+    margin: 0;
+    padding-left: 12px;
+    border-left: 3px solid var(--accent-2);
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+/* ===== 2. SHARED PARTS ===== */
+
+.ch-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+.ch-title {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.ch-small {
+    margin: 0;
+    color: var(--text-label);
+    font-size: var(--lk-small);
+    line-height: 1.45;
+}
+
+/* "Real chatbots …. This is called a [term]." */
+.ch-idea {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* A token inside a sentence: ▁th */
+.ch-q {
+    padding: 0 5px;
+    border-radius: 5px;
+    background: rgba(var(--accent-2-rgb), 0.14);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.95em;
+    white-space: pre;
+}
+
+/* A text box (TODO(kit): kit.textInput) */
+.ch-input {
+    display: block;
+    width: 100%;
+    min-height: 64px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-solid);
+    color: var(--text);
+    font: 500 15px/1.5 var(--font-body);
+    resize: vertical;
+}
+
+/* A progress bar (TODO(kit): kit.progress) */
+.ch-progress {
+    display: grid;
+    gap: 6px;
+    color: var(--text-label);
+    font-size: var(--lk-small);
+}
+
+.ch-progress-track {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--border);
+}
+
+.ch-progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+/* ===== 3. VIEW 1: TOKENS =====
+   Each token is a chip; neighbours take turns with six series colours. */
+
+.ch-tokens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 52px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+}
+
+.ch-tok {
+    --ch-color: var(--lk-series-1);
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--ch-color) 20%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ch-color) 55%, transparent);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.3;
+    white-space: pre;
+    cursor: default;
+}
+
+.ch-c1 { --ch-color: var(--lk-series-2); }
+.ch-c2 { --ch-color: var(--lk-series-3); }
+.ch-c3 { --ch-color: var(--lk-series-4); }
+.ch-c4 { --ch-color: var(--lk-series-5); }
+.ch-c5 { --ch-color: var(--lk-series-6); }
+
+/* The ▁ of a word start (and ↵): there, but quiet */
+.ch-mark {
+    color: var(--text-dim);
+}
+
+/* A character the tokenizer never saw: no number, a dashed chip */
+.ch-tok-unknown {
+    background: none;
+    box-shadow: inset 0 0 0 1px var(--danger);
+    border-radius: 6px;
+    outline: 1px dashed var(--danger);
+    outline-offset: -1px;
+}
+
+.ch-tok[aria-selected="true"] {
+    box-shadow: inset 0 0 0 2px var(--text);
+}
+
+/* The token a merge has just made lights up */
+.ch-tok-new {
+    animation: ch-flash 0.9s var(--ease);
+}
+
+@keyframes ch-flash {
+    from {
+        background: color-mix(in srgb, var(--ch-color) 75%, transparent);
+        transform: scale(1.08);
+    }
+}
+
+.ch-tok-mini {
+    min-height: 22px;
+    padding: 1px 4px;
+    font-size: 12px;
+}
+
+.ch-tok-info {
+    min-height: 2.9em;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.ch-merge-line {
+    min-height: 2.9em;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    line-height: 1.55;
+}
+
+.ch-fair-tokens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.ch-verdict {
+    margin: 0;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.ch-corpus {
+    max-height: 280px;
+    overflow: auto;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+.ch-corpus-text {
+    margin-top: 10px;
+}
+
+.ch-corpus-text p {
+    margin: 0 0 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
