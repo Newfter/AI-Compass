@@ -1,6 +1,6 @@
 # AI Compass
 
-AI Compass is a free website that teaches teenagers about artificial intelligence, in English and in Russian. It has short lessons with mini-labs, two live AI experiments, a quiz, a glossary, a history timeline, a chat helper (Compass Bot) and a search window for the whole site (Ctrl+K).
+AI Compass is a free website that teaches teenagers about artificial intelligence, in English and in Russian. It has short lessons with mini-labs, an AI Lab of live experiments (small, real models that learn in your browser), a quiz, a glossary, a history timeline, a chat helper (Compass Bot) and a search window for the whole site (Ctrl+K).
 
 It is plain HTML, CSS and JavaScript: no libraries, no frameworks, no build step. The files in this folder are exactly what visitors get.
 
@@ -9,7 +9,7 @@ This guide is for the people who look after the site. It explains how the code i
 - [Run it on your computer](#run-it-on-your-computer)
 - [The folder map](#the-folder-map)
 - [How the pieces talk](#how-the-pieces-talk)
-- [Recipes](#recipes): [change a text](#change-a-text-in-both-languages), [add a lesson](#add-a-lesson), [add a quiz question](#add-a-quiz-question), [add a glossary term](#add-a-glossary-term), [add a timeline milestone](#add-a-timeline-milestone), [add a fact or a joke to Compass Bot](#add-a-fun-fact-or-a-joke-to-compass-bot), [add a Ctrl+K command](#add-a-command-to-the-ctrlk-palette)
+- [Recipes](#recipes): [change a text](#change-a-text-in-both-languages), [add a lesson](#add-a-lesson), [add a quiz question](#add-a-quiz-question), [add a glossary term](#add-a-glossary-term), [add a timeline milestone](#add-a-timeline-milestone), [add a fact or a joke to Compass Bot](#add-a-fun-fact-or-a-joke-to-compass-bot), [add a Ctrl+K command](#add-a-command-to-the-ctrlk-palette), [add an AI Lab experiment](#add-an-ai-lab-experiment)
 - [House rules](#house-rules)
 - [Before you merge: a test checklist](#before-you-merge-a-test-checklist)
 - [Credits](#credits)
@@ -43,7 +43,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `css/components.css` | Small visual parts that several features share, each written once as a `ui-...` class: corner brackets, the light that scans along a card, sliders, on/off switches, filter chips, answer options and progress rings. |
 | `css/effects.css` | The visual effects and the neural network background. |
 | `css/lessons.css` | The lessons: progress panel, cards, the lesson reader, the mini-labs and the certificate. |
-| `css/lab.css` | The AI Lab. |
+| `css/lab.css` | The AI Lab: the lab's card, the picker of experiments (a grid of cards, or a rail while one is open), the header above the open experiment, loading and errors. Section 1 keeps the height of each experiment while it loads, so the page below doesn't jump. |
+| `css/lab/` | The styles of each AI Lab experiment (`<id>.css`) and of the lab kit (`kit.css`). The lab loads them when an experiment opens. |
 | `css/quiz.css` | The quiz. |
 | `css/glossary.css` | The glossary. |
 | `css/timeline.css` | The history timeline. |
@@ -53,7 +54,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/effects.js` | Small touches: the scroll progress bar, cards that rise in, numbers that count up, typewriter words, tilting cards, the mouse spotlight, magnetic buttons, ripples, the section mini-map and confetti. |
 | `js/neural-bg.js` | The animated "brain" drawn behind the page. |
 | `js/lessons.js` | The lessons: progress panel, lesson cards, the lesson reader, the mini-labs, reading aloud and the certificate. |
-| `js/lab.js` | The AI Lab: "Teach the machine" (a tiny neural network) and the "Next-word predictor" (a tiny language model). |
+| `js/lab.js` | The AI Lab's hub: the picker, loading an experiment's files when it opens (or a moment before), links like `#lab/maze`, the Ctrl+K commands, remembering the last experiment, and the progress events. |
+| `js/lab/` | The experiments, one file each, loaded when they open: `classifier.js` ("Teach the machine", a tiny neural network), `predictor.js` (the next-word predictor, a tiny language model), `maze.js` (a robot that learns from rewards)... `kit.js` is the lab kit (`A.labKit`) they are all built from: buttons, sliders, charts, canvases, a frame loop, seeded random numbers, saved settings and "Try this" challenges. `sample.js` ("Guess the line") is a small, complete experiment to copy; it is not in the lab. |
 | `js/quiz.js` | The AI Challenge: questions, the timer, points, streaks, ranks and the best score. |
 | `js/glossary.js` | The glossary: search with "did you mean?", categories, the A–Z strip, term cards and a random term. |
 | `js/timeline.js` | "A Short History of AI": the era chips and the line that fills as you scroll. |
@@ -63,7 +65,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
 | `js/content/lessons.js` | The lesson texts, the mini-lab texts and the reader's buttons. |
-| `js/content/lab.js` | The AI Lab texts, and the sentences the next-word predictor learns from. |
+| `js/content/lab.js` | The AI Lab's texts, each experiment's title, hook and big idea (the picker shows them before the experiment loads), the icons, and the catalogue: which experiments the lab shows, in which order. |
+| `js/content/lab/` | Each experiment's own texts (`<id>.js`, loaded with it) and the lab kit's texts (`kit.js`). `predictor.js` also has the sentences the next-word predictor learns from. |
 | `js/content/quiz.js` | The quiz texts, the list of questions and the ranks. |
 | `js/content/glossary.js` | The glossary texts, the categories and every term. |
 | `js/content/timeline.js` | The timeline texts, the eras and every milestone. |
@@ -165,8 +168,9 @@ Nothing leaves the browser: these events are only for features on the same page 
 | | `certificate.make` | `{}` | the certificate is downloaded |
 | Quiz | `quiz.answer` | `{ id, correct }` | a question is answered |
 | | `quiz.finish` | `{ mode, score, total, points, timed, seconds }` | a round ends (`mode` is `"classic"` or `"timed"`, `score` is the number of right answers) |
-| AI Lab | `lab.use` | `{ exp }` | a tab is chosen, training starts, or auto-write starts |
+| AI Lab | `lab.use` | `{ exp }` | an experiment is opened; also when training starts (Teach the machine) or auto-write starts (the predictor) |
 | | `lab.milestone` | `{ exp, kind, ... }` | the classifier has learned (`kind: "learned"`, `epochs`) or the predictor was taught (`kind: "taught"`, `sentences`) |
+| | `lab.challenge` | `{ exp, n, done, total }` | a "Try this" challenge is reached (`n` counts from 1; `done` of the `total` are reached now). It can come again for the same `n` after the experiment resets its challenges. |
 | Glossary | `glossary.explore` | `{ id }` | a term is opened |
 | Timeline | `timeline.era` | `{ era }` | the timeline's line reaches an era for the first time |
 | Compass Bot | `bot.ask` | `{ typed: true }` or `{ intent }` | a typed question, or a chip |
@@ -467,6 +471,79 @@ and its text in `js/content/glossary.js`, next to `"glossary.cmdTitle"`, in both
 Running a command first closes the windows in the way (the palette itself, the lesson reader...). A quick action that should leave them open, like switching calm mode, says `keepOverlays: true`.
 
 **Check:** press Ctrl+K, type "random" (in Russian: "случайный"), press Enter: a random term opens and gets the focus.
+
+### Add an AI Lab experiment
+
+An experiment is three files of its own and a few lines in `js/content/lab.js`. The lab loads an experiment's files the first time it opens, so `index.html` doesn't list them. Before you start, read the header of `js/lab.js` (what the lab gives an experiment and what it expects back) and "The kit at a glance" at the top of `js/lab/kit.js`.
+
+**1. Copy the sample.** "Guess the line" is a small, complete experiment made of kit parts. Copy its three files, named with your experiment's id (small letters, digits and "-"), for example `spam`:
+
+| Copy | to |
+| --- | --- |
+| `js/lab/sample.js` | `js/lab/spam.js` |
+| `css/lab/sample.css` | `css/lab/spam.css` |
+| `js/content/lab/sample.js` | `js/content/lab/spam.js` |
+
+In the copies, replace `sample` with `spam` (in `A.lab.define("spam", ...)` and in every `lab.sample.` text key), and the class prefix `smp-` with a short prefix of your own. Then turn the copy into your experiment, step by step. Keep what the lab relies on: `create(stage, ctx)` builds everything inside `stage` and returns `{ pause, resume, language, theme, destroy }`, and `destroy()` stops every loop and listener.
+
+**2. Its name in the picker.** The picker shows an experiment's title, a one-line hook and its big idea before its files load, so these three texts go in `js/content/lab.js`, section 3, instead of the experiment's own text file. Move them there, in both parts:
+
+```js
+        "lab.spam.title": "Spam filter",
+        "lab.spam.hook": "Mark a few messages as spam, and watch a filter learn which words give them away.",
+        "lab.spam.idea": "Probability",
+```
+
+```js
+        "lab.spam.title": "Спам-фильтр",
+        "lab.spam.hook": "Отметь несколько сообщений как спам и посмотри, как фильтр учится узнавать их по словам.",
+        "lab.spam.idea": "Вероятность",
+```
+
+(Mind the commas: every line of a part ends with one, except the last.)
+
+**3. Its icon.** In section 4, add a `<symbol>` to the sprite. Draw it like the others (24 × 24, lines of 1.75 px in `currentColor`), with a comment that says what it shows:
+
+```js
+        // An envelope
+        '<symbol id="lab-icon-spam" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<rect x="3" y="5" width="18" height="14" rx="2"/>' +
+                '<path d="M3.5 6.5l8.5 6.5 8.5-6.5"/>' +
+            '</g>' +
+        '</symbol>' +
+```
+
+(The pieces are joined with `+`: the last `'</symbol>'` of the sprite has none.)
+
+**4. Its place in the lab.** In section 5, add one entry to the catalogue, at its place on the learning path (first steps, networks, language, vision, learning by reward, evolution, ethics). Mind the commas between the entries:
+
+```js
+    {
+        id: "spam",
+        icon: "lab-icon-spam",
+        titleKey: "lab.spam.title",
+        hookKey: "lab.spam.hook",
+        ideaKey: "lab.spam.idea",
+        level: 1,
+        emoji: "📨",
+        keywords: "lab spam filter email messages probability лаборатория спам фильтр почта сообщения вероятность"
+    },
+```
+
+The picker, the numbers of experiments on the page, the Ctrl+K command and the link `#lab/spam` all come from this entry.
+
+**5. The first paint.** The page counts the experiments by itself, but before the scripts run it shows what `index.html` says. There, add one to the hero's number of experiments (`data-count` and the number after it) and to the number in the lab's subtitle.
+
+**6. Its height while it loads (optional).** Until an experiment's files arrive, the lab keeps a box of about its height, so the page below doesn't jump; without your numbers, it keeps a default height. Open your experiment and run this in the console (F12):
+
+```js
+[document.querySelector('[data-feature="lab"]').offsetHeight, document.querySelector(".lab-stage").offsetHeight]
+```
+
+In `css/lab.css`, section 1, copy the two rules of another experiment (`[data-lab-last="maze"]` and `[data-loading="maze"]`), with your id and these two numbers (the card, then the stage), rounded up. Section 8 has the same rules for smaller screens: measure again at those widths (the device toolbar, Ctrl+Shift+M) and add yours there too.
+
+**Check:** go to `http://localhost:8000/#lab/spam`: your experiment opens, with its icon and title above it. Close it: its card is in the grid, with the hook and the idea, and the subtitle counts one more experiment. Ctrl+K finds it by its title. While it is open, switch the language, the theme and calm mode: it follows. Open another experiment and come back: nothing appears twice, and the console has no red errors.
 
 
 ## House rules
