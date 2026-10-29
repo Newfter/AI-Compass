@@ -70,6 +70,13 @@ html.st-large-text :is(.section-head h2, .about-card h2) {
     font-size: min(clamp(1.75rem, 4.4vw, 3rem), 10vw);
 }
 
+/* The big title at the top of the page (style.css, 6) likewise: "Исследуй"
+   must stay inside the page's side margins, so it is at most 14vw (50px on a
+   360px phone). Computers keep its usual size. */
+html.st-large-text .hero-title {
+    font-size: min(clamp(2.375rem, 7.2vw, 5.5rem), 14vw);
+}
+
 /* ===== 2. LINE SPACING =====
    Relaxed: 1.9 for every block of text you read (WCAG asks that a site
    still works at 1.5). Headings, buttons and labels keep their own spacing.
