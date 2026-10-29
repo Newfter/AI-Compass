@@ -14,14 +14,12 @@
    With the default settings (40 cars, mutation rate 10 %, size 0.3, no crossover)
    these seeds give the first full lap in generation 6 (Oval), 25 (Snake),
    46 (Hairpin) and 26 (Grand Prix). dev/tests/evolve.math.js checks them.
+   Its title, hook and big idea are in js/content/lab.js (section 3): the lab's picker shows
+   them before this file is loaded.
    ========================================================= */
 
 window.AICompass.addTranslations({
     en: {
-        "lab.evolve.title": "Evolution garage",
-        "lab.evolve.hook": "Nobody teaches these cars to drive. Watch good driving evolve by itself, generation after generation.",
-        "lab.evolve.idea": "Learning by evolution",
-
         // ----- The pictures (screen readers hear these) -----
         "lab.evolve.canvas": "The race track and the cars",
         "lab.evolve.brainCanvas": "The best car's brain: 6 inputs, 8 hidden neurons and 2 outputs",
@@ -141,10 +139,6 @@ window.AICompass.addTranslations({
         "lab.evolve.ch4Why": "A brain that learned one track by heart can get lost on a new one. This is called overfitting."
     },
     ru: {
-        "lab.evolve.title": "Гараж эволюции",
-        "lab.evolve.hook": "Никто не учит эти машинки водить. Смотри, как хорошее вождение появляется само, поколение за поколением.",
-        "lab.evolve.idea": "Обучение эволюцией",
-
         // ----- Картинки (их слышат программы экранного доступа) -----
         "lab.evolve.canvas": "Гоночная трасса и машинки",
         "lab.evolve.brainCanvas": "Мозг лучшей машинки: 6 входов, 8 скрытых нейронов и 2 выхода",

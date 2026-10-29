@@ -118,7 +118,11 @@ window.AICompass.addTranslations({
 
         "lab.maze.title": "Robot in a maze",
         "lab.maze.hook": "Nobody shows the robot the way. Watch it learn from rewards and penalties.",
-        "lab.maze.idea": "Reinforcement learning"
+        "lab.maze.idea": "Reinforcement learning",
+
+        "lab.evolve.title": "Evolution garage",
+        "lab.evolve.hook": "These cars start out crashing. Watch good driving evolve, generation after generation.",
+        "lab.evolve.idea": "Learning by evolution"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -131,7 +135,11 @@ window.AICompass.addTranslations({
 
         "lab.maze.title": "Робот в лабиринте",
         "lab.maze.hook": "Никто не показывает роботу дорогу. Смотри, как он учится на наградах и штрафах.",
-        "lab.maze.idea": "Обучение с подкреплением"
+        "lab.maze.idea": "Обучение с подкреплением",
+
+        "lab.evolve.title": "Гараж эволюции",
+        "lab.evolve.hook": "Сначала машинки врезаются в стены. Смотри, как вождение улучшается с каждым поколением.",
+        "lab.evolve.idea": "Обучение эволюцией"
     }
 });
 
@@ -167,6 +175,14 @@ window.AICompass.content.set("lab.icons", {
                 '<circle cx="18" cy="6" r="1.5"/>' +
             '</g>' +
             '<circle cx="6" cy="18" r="1.6" fill="currentColor"/>' +
+        '</symbol>' +
+        // A strand of DNA: two lines that twist around each other, with rungs between them
+        '<symbol id="lab-icon-evolve" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M7 3c0 4.5 10 4.5 10 9s-10 4.5-10 9"/>' +
+                '<path d="M17 3c0 4.5-10 4.5-10 9s10 4.5 10 9"/>' +
+                '<path d="M8.5 5h7M8.5 19h7M8 12h8"/>' +
+            '</g>' +
         '</symbol>'
 });
 
@@ -215,5 +231,15 @@ window.AICompass.content.set("lab.catalogue", [
         level: 2,
         emoji: "🤖",
         keywords: "lab maze robot reinforcement learning q-learning reward penalty trial and error agent лаборатория лабиринт робот обучение с подкреплением q-обучение награда штраф пробы ошибки агент"
+    },
+    {
+        id: "evolve",
+        icon: "lab-icon-evolve",
+        titleKey: "lab.evolve.title",
+        hookKey: "lab.evolve.hook",
+        ideaKey: "lab.evolve.idea",
+        level: 2,
+        emoji: "🧬",
+        keywords: "lab evolution evolve garage cars driving neuroevolution genetic algorithm mutation crossover generation fitness natural selection neural network лаборатория эволюция гараж машинки вождение нейроэволюция генетический алгоритм мутация скрещивание поколение приспособленность естественный отбор нейросеть"
     }
 ]);
