@@ -1161,7 +1161,7 @@
     switchCommand("underlineLinks", "settings.underline", "🔗",
         "underline links подчёркивать подчеркнуть ссылки");
     switchCommand("reduceTransparency", "settings.solid", "🌫️",
-        "reduce transparency solid glass background performance прозрачность сплошной фон стекло");
+        "reduce transparency solid glass background прозрачность сплошной фон стекло");
 
     // Line spacing: relaxed or normal
     A.registerCommand({

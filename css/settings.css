@@ -202,8 +202,11 @@ html.st-contrast .neural-bg {
 
 /* ===== 6. REDUCE TRANSPARENCY =====
    Solid backgrounds (the colours are in section 5), a solid page behind the
-   windows, and no blur behind anything. Less for the browser to mix on
-   every frame while the background moves: easier for weak computers too. */
+   windows, and no blur behind anything. It is for comfort: see-through
+   surfaces make text harder to read for some people. It is not a speed-up
+   on this site today (measured: the frame rate stays the same, because
+   nothing here blurs what is behind it); it would become one if a blur
+   (backdrop-filter) is ever added, since the rule below switches it off. */
 
 html.st-solid[data-theme="dark"],
 html.st-solid[data-theme="light"] {
