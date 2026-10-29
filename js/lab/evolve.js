@@ -1660,9 +1660,13 @@
             });
         }
 
-        // Challenge 4 has happened: what the kept brains did here, and the word for it
+        // Brains kept from another track have raced here once: what they did, in the words that
+        // fit. Brains that never finished a lap there had learned little (that is not
+        // overfitting); trained brains still drive a lap here, or fail: that is overfitting.
         function writeTransfer() {
-            const text = t("lab.evolve.transfer", { from: trackName(transfer.from), to: trackName(trackId), result: resultText(transfer.result) });
+            let key = "lab.evolve.transferUntrained";
+            if (transfer.lapped) key = transfer.result >= GATES ? "lab.evolve.transferWorks" : "lab.evolve.transfer";
+            const text = t(key, { from: trackName(transfer.from), to: trackName(trackId), result: resultText(transfer.result) });
             fillSentence(transferNote, text, {
                 overfitLink: function () { return kit.termLink("overfitting", "lab.evolve.overfitTerm"); }
             });

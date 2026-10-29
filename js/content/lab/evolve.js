@@ -125,7 +125,9 @@ window.AICompass.addTranslations({
         "lab.evolve.paramsTerm": "parameters",
         "lab.evolve.nnTerm": "neural network",
         "lab.evolve.real": "In the real world, evolution-style search designs things like antennas, the gaits of walking robots and game bots. Real self-driving cars are not trained like this: they mostly learn from huge amounts of recorded driving, and engineers test them very carefully.",
-        "lab.evolve.transfer": "These brains learned on {from}. Here on {to}, the best car drove {result}. A brain that has only ever seen one track can learn that track instead of learning to drive, and then fail on a new one. This is called {overfitLink}. The usual cure is variety: train the cars on several different tracks.",
+        "lab.evolve.transfer": "These brains learned on {from}. In their first race on {to}, the best car drove {result}. A brain that has only ever seen one track can learn that track instead of learning to drive, and then fail on a new one. This is called {overfitLink}. The usual cure is variety: train the cars on several different tracks.",
+        "lab.evolve.transferWorks": "These brains learned on {from}. In their first race on {to}, the best car drove {result}: what they learned works here too. That is not always so: a brain that has only ever seen one track can learn that track instead of learning to drive, and then fail on a new one. This is called {overfitLink}. Try it the other way round: train on an easy track, then switch to a harder one.",
+        "lab.evolve.transferUntrained": "No car had finished a lap on {from} yet, so these brains had little to bring along: in their first race on {to}, the best car drove {result}. To see what a trained brain does on a new track, first train the cars until one finishes a lap.",
         "lab.evolve.overfitTerm": "overfitting",
 
         // ----- "Try this" -----
@@ -246,7 +248,9 @@ window.AICompass.addTranslations({
         "lab.evolve.paramsTerm": "параметра",
         "lab.evolve.nnTerm": "нейросети",
         "lab.evolve.real": "В реальном мире поиском в духе эволюции придумывают антенны, походку шагающих роботов и ботов для игр. Но настоящие беспилотные автомобили так не обучают: в основном они учатся на огромном количестве записанных поездок, а инженеры очень тщательно их проверяют.",
-        "lab.evolve.transfer": "Эти мозги учились на трассе «{from}». Здесь, на трассе «{to}», лучшая машинка проехала {result}. Мозг, который видел только одну трассу, может выучить именно её, а не научиться водить, и тогда на новой трассе он теряется. Это называется {overfitLink}. Обычное лекарство — разнообразие: тренируй машинки на нескольких разных трассах.",
+        "lab.evolve.transfer": "Эти мозги учились на трассе «{from}». В первой гонке на трассе «{to}» лучшая машинка проехала {result}. Мозг, который видел только одну трассу, может выучить именно её, а не научиться водить, и тогда на новой трассе он теряется. Это называется {overfitLink}. Обычное лекарство — разнообразие: тренируй машинки на нескольких разных трассах.",
+        "lab.evolve.transferWorks": "Эти мозги учились на трассе «{from}». В первой гонке на трассе «{to}» лучшая машинка проехала {result}: то, чему они научились, пригодилось и здесь. Так бывает не всегда: мозг, который видел только одну трассу, может выучить именно её, а не научиться водить, и тогда на новой трассе он теряется. Это называется {overfitLink}. Попробуй наоборот: потренируй машинки на простой трассе, а потом перейди на трассу посложнее.",
+        "lab.evolve.transferUntrained": "На трассе «{from}» ещё ни одна машинка не проехала круг, так что этим мозгам почти нечего было взять с собой: в первой гонке на трассе «{to}» лучшая машинка проехала {result}. Чтобы проверить обученный мозг на новой трассе, сначала тренируй машинки, пока одна не проедет круг.",
         "lab.evolve.overfitTerm": "переобучением",
 
         // ----- «Попробуй» -----
