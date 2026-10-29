@@ -745,7 +745,8 @@
             taken.push({ x: point.p.x - 11, y: point.p.y - 11, w: 22, h: 22 });
             if (point.label) labels.unshift({ x: point.p.x + 4, y: point.p.y, text: point.label, rank: 3 });
         });
-        // (a word near an edge has the fewest places for its label, so it chooses first)
+        // Important labels first; among equals, a word near an edge first (it has the fewest
+        // places for its label)
         function room(label) {
             return Math.min(label.x, view.width - label.x, label.y, view.height - label.y);
         }
@@ -756,7 +757,7 @@
             g.font = label.rank ? kit.font(13, 700, "body") : kit.font(12, 500, "body");
             const w = g.measureText(label.text).width;
             const h = 16;
-            // right, left, above, below, then the four corners
+            // Where the label may go: right, left, above, below, then the four corners
             const middle = A.util.clamp(label.x - w / 2, 2, view.width - w - 2);
             const places = [[label.x + 9, label.y - h / 2], [label.x - 9 - w, label.y - h / 2], [middle, label.y - 10 - h], [middle, label.y + 10],
                 [label.x + 6, label.y - 3 - h], [label.x + 6, label.y + 3], [label.x - 6 - w, label.y - 3 - h], [label.x - 6 - w, label.y + 3]];
