@@ -104,6 +104,9 @@
     const FONT_FAMILY = { en: "Atkinson Hyperlegible", ru: "Andika" };
     const FONT_LINK_ID = "st-font-css";     // the font's <link> when the <head> script added it
 
+    // Kinds of <input> that type no text: "?" opens the shortcuts window there too
+    const NO_TEXT_INPUTS = ["radio", "checkbox", "range", "button", "submit", "reset", "color", "file"];
+
     const LIGHT_QUERY = "(prefers-color-scheme: light)";   // the device is in light mode
     const CLOSE_MS = 220;            // the windows' closing animation (css/settings.css)
     const HASH = "#settings";        // the page's address with this at the end opens the window
@@ -150,6 +153,13 @@
     // 1.25 -> "1.25×" (Russian: "1,25×")
     function speedText(rate) {
         return t("settings.speedValue", { n: A.format.number(rate) });
+    }
+
+    // Does a key pressed here type text (a text box, a drop-down list)? A.dom.isTyping
+    // says yes for every <input>, also for a radio button or a slider, which type nothing
+    function typesText(element) {
+        if (!A.dom.isTyping(element)) return false;
+        return !(element.tagName === "INPUT" && NO_TEXT_INPUTS.indexOf(element.type) !== -1);
     }
 
     // Adds or removes a class on <html>, only when it really changes
@@ -1049,13 +1059,14 @@
         repaint();      // also when only the device's own setting changed (the note under "Calm motion")
     });
 
-    // "?" opens (and closes) the shortcuts window, unless you are typing somewhere.
+    // "?" opens (and closes) the shortcuts window, unless you are typing text somewhere
+    // (on a radio button, a switch or a slider it works too).
     // On a Russian keyboard "?" is Shift+7, and event.key is "?" there too. The key
     // that has "/" and "?" on an English keyboard (event.code "Slash") counts with Shift.
     document.addEventListener("keydown", function (event) {
         if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
         const question = event.key === "?" || (event.code === "Slash" && event.shiftKey);
-        if (!question || A.dom.isTyping(event.target)) return;
+        if (!question || typesText(event.target)) return;
         event.preventDefault();
         shortcutsWindow.toggle();
     });
