@@ -1,12 +1,12 @@
 /* =========================================================
    AI COMPASS — COMMAND PALETTE (Ctrl + K)
-   1. The blurred layer over the page
+   1. The dimmed layer over the page
    2. The window and its search box
    3. Results, groups and highlighted letters
    4. Empty state and footer
    5. Phones
    6. Less motion
-   Layer: z-index 600 (above the lesson reader, below toasts).
+   Layer: --z-palette (style.css), above the lesson reader, below toasts.
    ========================================================= */
 
 /* ===== 1. THE LAYER OVER THE PAGE ===== */
@@ -14,21 +14,14 @@
 .cp-overlay {
     position: fixed;
     inset: 0;
-    z-index: 600;
+    z-index: var(--z-palette);
     display: flex;
     align-items: flex-start;
     justify-content: center;
     padding: 12vh 16px 16px;
-    background: rgba(var(--accent-rgb), 0.08);
-    background: color-mix(in srgb, var(--bg) 60%, transparent);
-    -webkit-backdrop-filter: blur(10px) saturate(130%);
-    backdrop-filter: blur(10px) saturate(130%);
+    background: var(--backdrop);
     opacity: 0;
     transition: opacity 0.18s ease;
-}
-
-.cp-overlay[hidden] {
-    display: none;
 }
 
 .cp-overlay.is-open {
@@ -193,10 +186,6 @@
     font-size: 12px;
 }
 
-.cp-note[hidden] {
-    display: none;
-}
-
 /* ===== 3. RESULTS ===== */
 
 .cp-body {
@@ -215,10 +204,6 @@
     overscroll-behavior: contain;
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--accent-rgb), 0.35) transparent;
-}
-
-.cp-list[hidden] {
-    display: none;
 }
 
 .cp-list::-webkit-scrollbar {
@@ -350,12 +335,12 @@
    so highlights and notes use the darker purple there */
 [data-theme="light"] .cp-title mark {
     background: rgba(var(--accent-rgb), 0.12);
-    color: var(--accent);
+    color: var(--text-accent);
 }
 
 [data-theme="light"] .cp-note,
 [data-theme="light"] .cp-enter {
-    color: var(--accent);
+    color: var(--text-accent);
 }
 
 /* The footer is tinted, so its small text needs the stronger grey in light mode */
@@ -393,10 +378,6 @@
 .cp-empty {
     padding: 34px 24px 26px;
     text-align: center;
-}
-
-.cp-empty[hidden] {
-    display: none;
 }
 
 .cp-empty-icon {
@@ -456,7 +437,7 @@
 }
 
 /* Touch screens: no keyboard hints, an X instead of "Esc", bigger rows */
-@media (pointer: coarse) {
+@media (hover: none), (pointer: coarse) {
     .cp-hint {
         display: none;
     }
@@ -517,20 +498,20 @@
 
 /* ===== 6. LESS MOTION ===== */
 
-@media (prefers-reduced-motion: reduce) {
-    .cp-overlay,
-    .cp-dialog,
-    .cp-search::after,
-    .cp-item,
-    .cp-icon,
-    .cp-enter {
-        transition: none;
-    }
+/* core.js puts "fx-motion-off" on <html> when the device asks for less
+   motion or calm mode is on */
+html.fx-motion-off .cp-overlay,
+html.fx-motion-off .cp-dialog,
+html.fx-motion-off .cp-search::after,
+html.fx-motion-off .cp-item,
+html.fx-motion-off .cp-icon,
+html.fx-motion-off .cp-enter {
+    transition: none;
+}
 
-    .cp-dialog,
-    .cp-overlay.is-closing .cp-dialog {
-        transform: none;
-    }
+html.fx-motion-off .cp-dialog,
+html.fx-motion-off .cp-overlay.is-closing .cp-dialog {
+    transform: none;
 }
 
 @media print {

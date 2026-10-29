@@ -7,15 +7,18 @@
    5. Inside a card
    6. "Lit up" milestones (the line has reached them)
    7. Slide-in animations
-      (+ light theme: darker small labels)
-   8. Phones and tablets (one column)
-   9. Reduced motion / calm mode
-   All colours come from the variables in style.css,
-   so both the dark and the light theme look right.
+   8. Phones and tablets (one column, bigger touch targets)
+   9. Less motion (reduced motion or calm mode)
+   All colours come from the variables in style.css, so both the
+   dark and the light theme look right. Coloured text uses the
+   --text-* versions, which are darker in the light theme.
    ========================================================= */
 
-[data-feature="timeline"] [hidden] {
-    display: none !important;
+/* Until js/timeline.js builds the timeline (when it comes near the screen), its
+   place keeps about the height it will have (measured in English), so the page
+   below doesn't jump. Smaller screens: see 8. Phones and tablets. */
+.js [data-feature="timeline"]:empty {
+    min-height: 7400px;
 }
 
 .tl {
@@ -27,7 +30,7 @@
 .tl-bar {
     position: sticky;
     top: calc(var(--nav-height) + 12px);
-    z-index: 20;
+    z-index: var(--z-sticky);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -40,8 +43,6 @@
     border: 1px solid var(--border-strong);
     border-radius: 20px;
     background: var(--nav-bg);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    backdrop-filter: blur(16px) saturate(140%);
     box-shadow: var(--shadow);
 }
 
@@ -51,12 +52,17 @@
     gap: 6px;
 }
 
+/* The chips are .ui-chip buttons with a dot and a count (css/components.css);
+   the dot of the chosen era lights up */
 .tl-chip {
     justify-content: center;
     min-width: 44px;
-    min-height: 40px;
-    padding: 7px 8px 7px 14px;
     font-size: 13.5px;
+}
+
+.tl-chip[aria-pressed="true"] {
+    --chip-dot: var(--accent-2);
+    --chip-dot-glow: 0 0 8px var(--accent-2);
 }
 
 /* When the chips need two rows (e.g. Russian on a narrow laptop), the bar
@@ -65,34 +71,6 @@
 .tl.is-stacked .tl-bar {
     position: relative;
     top: auto;
-}
-
-.tl-chip-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--text-dim);
-    transition: background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.tl-chip[aria-pressed="true"] .tl-chip-dot {
-    background: var(--accent-2);
-    box-shadow: 0 0 8px var(--accent-2);
-}
-
-.tl-chip-count {
-    min-width: 24px;
-    padding: 2px 7px;
-    border-radius: 999px;
-    background: var(--surface-hover);
-    color: var(--text-muted);
-    font-size: 11px;
-    text-align: center;
-}
-
-.tl-chip[aria-pressed="true"] .tl-chip-count {
-    background: rgba(var(--accent-2-rgb), 0.18);
-    color: var(--accent-2);
 }
 
 /* "1997 · 06/15" on the right of the bar */
@@ -155,7 +133,7 @@
     position: absolute;
     top: 0;
     left: 50%;
-    z-index: 0;
+    z-index: 0;     /* under the era headings and the dots (z-index 2) */
     width: 2px;
     height: 0;
     margin-left: -1px;
@@ -245,7 +223,7 @@
 }
 
 .tl-era-num {
-    color: var(--accent-2);
+    color: var(--text-accent-2);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 2.5px;
@@ -372,17 +350,11 @@
 .tl-card {
     min-width: 0;
     padding: 22px 24px 24px;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
     background:
         linear-gradient(160deg, rgba(var(--accent-rgb), 0.08), transparent 50%),
-        var(--surface);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+        var(--glass);
+    box-shadow: var(--shadow-card);
     transition: border-color 0.5s ease, box-shadow 0.5s ease, transform 0.35s var(--ease);
-}
-
-[data-theme="light"] .tl-card {
-    box-shadow: 0 12px 30px rgba(30, 30, 80, 0.08);
 }
 
 .tl-card:hover {
@@ -422,7 +394,7 @@
     border: 1px solid rgba(var(--accent-2-rgb), 0.35);
     border-radius: 999px;
     background: rgba(var(--accent-2-rgb), 0.08);
-    color: var(--accent-2);
+    color: var(--text-accent-2);
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 1px;
@@ -460,7 +432,7 @@
 }
 
 .tl-why-label {
-    color: var(--accent);
+    color: var(--text-accent);
     font-size: 10.5px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -536,11 +508,7 @@
 
 .tl-item.is-reached .tl-card {
     border-color: rgba(var(--accent-2-rgb), 0.32);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), 0 0 32px rgba(var(--accent-2-rgb), 0.08);
-}
-
-[data-theme="light"] .tl-item.is-reached .tl-card {
-    box-shadow: 0 12px 30px rgba(30, 30, 80, 0.08), 0 0 28px rgba(var(--accent-2-rgb), 0.1);
+    box-shadow: var(--shadow-card), var(--shadow-card-glow);
 }
 
 .tl-item.is-reached .tl-card::before {
@@ -589,26 +557,24 @@
     from { opacity: 0; transform: scale(0.4); }
 }
 
-/* ===== LIGHT THEME: DARKER SMALL LABELS ===== */
-/* Bright cyan is too pale for tiny text on white; a bit of the text colour
-   keeps the hue but makes it easy to read (contrast of at least 4.5 : 1). */
-
-[data-theme="light"] .tl-year,
-[data-theme="light"] .tl-era-num,
-[data-theme="light"] .tl-chip[aria-pressed="true"] .tl-chip-count {
-    color: color-mix(in srgb, var(--accent-2) 70%, var(--text));
-}
-
 /* ===== 8. PHONES AND TABLETS: ONE COLUMN ===== */
 
 /* Not enough room for the read-out next to the chips */
 @media (max-width: 1100px) {
+    .js [data-feature="timeline"]:empty {
+        min-height: 8000px;
+    }
+
     .tl-hud {
         display: none;
     }
 }
 
 @media (max-width: 899px) {
+    .js [data-feature="timeline"]:empty {
+        min-height: 6700px;
+    }
+
     /* The chips may need two rows here, so the bar scrolls away with the page */
     .tl-bar {
         position: relative;
@@ -661,6 +627,10 @@
 }
 
 @media (max-width: 640px) {
+    .js [data-feature="timeline"]:empty {
+        min-height: 9400px;
+    }
+
     .tl-bar {
         margin-bottom: 36px;
         padding: 10px;
@@ -673,7 +643,6 @@
 
     /* Compact chips, so they fit in two or three rows */
     .tl-chip {
-        min-height: 44px;
         padding: 6px 13px;
         font-size: 13px;
     }
@@ -719,10 +688,6 @@
         font-size: 14.5px;
     }
 
-    .tl-term {
-        min-height: 44px;
-    }
-
     .tl-era-head {
         padding: 16px 18px 18px;
     }
@@ -736,38 +701,17 @@
     }
 }
 
-@media (pointer: coarse) {
-    .tl-chip,
+/* Bigger touch targets on phones and on touch screens */
+@media (max-width: 640px), (hover: none), (pointer: coarse) {
     .tl-term {
         min-height: 44px;
     }
 }
 
-/* ===== 9. REDUCED MOTION / CALM MODE ===== */
+/* ===== 9. LESS MOTION (reduced motion or calm mode) =====
+   style.css already stops every animation and transition under
+   html.fx-motion-off; this rule only does what it can't. */
 
-@media (prefers-reduced-motion: reduce) {
-    .tl-head::after,
-    .tl-hud-dot {
-        animation: none;
-    }
-
-    .tl-card:hover {
-        transform: none;
-    }
-
-    .tl-ghost,
-    .tl-node,
-    .tl-node-icon {
-        transition: none;
-    }
-}
-
-html.fx-calm .tl-head::after,
-html.fx-calm .tl-hud-dot,
-html.fx-calm .tl-item.is-reached .tl-node::after {
-    animation: none;
-}
-
-html.fx-calm .tl-card:hover {
+html.fx-motion-off .tl-card:hover {
     transform: none;
 }

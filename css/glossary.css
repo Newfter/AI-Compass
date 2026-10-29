@@ -9,101 +9,84 @@
    7. Opening a card (example + related terms)
    8. Glowing "spotlight" when a term is shown
    9. Empty state and "show all"
-      (+ light theme: darker small labels)
-  10. Responsive
-  11. Reduced motion / calm mode
-   All colours come from the variables in style.css,
-   so both the dark and the light theme look right.
+  10. Responsive (and bigger touch targets)
+  11. Less motion (reduced motion or calm mode)
+   All colours come from the variables in style.css, so both the
+   dark and the light theme look right. Coloured text uses the
+   --text-* versions, which are darker in the light theme.
    ========================================================= */
 
-[data-feature="glossary"] [hidden] {
-    display: none !important;
+/* Until js/glossary.js builds the glossary (when it comes near the screen), its
+   place keeps about the height it will have (the first 12 cards, measured), so the
+   page below doesn't jump. Smaller screens: see 10. Responsive. */
+.js [data-feature="glossary"]:empty {
+    min-height: 1800px;
 }
 
 /* ===== 1. CATEGORY COLOURS ===== */
+/* --gl-c: the colour of a category (dots, lines, borders).
+   --gl-ink: the same colour for small text (darker in the light theme). */
 
 .gl {
     --gl-c: var(--accent);
+    --gl-ink: var(--text-accent);
 }
 
 [data-cat="basics"] {
     --gl-c: var(--accent-2);
+    --gl-ink: var(--text-accent-2);
 }
 
 [data-cat="learning"] {
     --gl-c: var(--accent);
+    --gl-ink: var(--text-accent);
 }
 
 [data-cat="generative"] {
     --gl-c: var(--accent-3);
+    --gl-ink: var(--text-accent-3);
 }
 
 [data-cat="ethics"] {
     --gl-c: var(--warning);
+    --gl-ink: var(--text-warning);
 }
 
 [data-cat="all"] {
     --gl-c: var(--text-muted);
+    --gl-ink: var(--text-muted);
 }
 
 /* ===== 2. THE CONTROL PANEL ===== */
 
 .gl-console {
-    z-index: 2;
+    z-index: 2;     /* above the cards below it (their hover lift and shadows) */
     padding: 26px 28px 22px;
     margin-bottom: 26px;
     border-color: var(--border-strong);
     background:
         radial-gradient(ellipse at 100% 0%, rgba(var(--accent-2-rgb), 0.1), transparent 55%),
         radial-gradient(ellipse at 0% 100%, rgba(var(--accent-rgb), 0.14), transparent 55%),
-        var(--surface);
+        var(--glass);
 }
 
-/* A thin light that slowly scans along the top edge */
-.gl-console::before {
-    content: "";
-    position: absolute;
-    top: -1px;
-    left: 0;
-    width: 30%;
-    height: 1px;
-    pointer-events: none;
-    background: linear-gradient(90deg, transparent, var(--accent-2), transparent);
-    animation: gl-scan 6s ease-in-out infinite;
-}
-
-@keyframes gl-scan {
-    0% { transform: translateX(-20%); opacity: 0; }
-    15% { opacity: 1; }
-    85% { opacity: 1; }
-    /* 233% of its own width (30%) ends exactly at the right edge, so it never sticks out */
-    100% { transform: translateX(233%); opacity: 0; }
-}
-
-/* Small corner brackets, like on a screen */
+/* The scanning light on the top edge (.ui-scan) and the corner brackets
+   (.ui-corners) come from css/components.css. The panel shows only two
+   brackets, top left and bottom right: each of its two corner spans draws one. */
 .gl-corner {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    pointer-events: none;
-    border-color: var(--accent-2);
-    border-style: solid;
-    border-width: 0;
-    opacity: 0.7;
+    --corners-inset: 12px;
 }
 
 .gl-corner-tl {
-    top: 12px;
-    left: 12px;
-    border-top-width: 1.5px;
-    border-left-width: 1.5px;
+    --corner-tr: transparent;
+    --corner-bl: transparent;
+    --corner-br: transparent;
 }
 
 .gl-corner-br {
-    right: 12px;
-    bottom: 12px;
-    border-right-width: 1.5px;
-    border-bottom-width: 1.5px;
+    --corner-tl: transparent;
+    --corner-tr: transparent;
+    --corner-bl: transparent;
 }
 
 .gl-console-head {
@@ -119,7 +102,7 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    color: var(--accent-2);
+    color: var(--text-accent-2);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 2px;
@@ -180,7 +163,7 @@
 }
 
 .gl-explored.is-complete .gl-explored-num {
-    color: var(--success);
+    color: var(--text-success);
 }
 
 /* ===== 3. SEARCH BOX AND RANDOM BUTTON ===== */
@@ -301,13 +284,13 @@
     box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.6);
     border-radius: 999px;
     background: var(--gradient-button);
-    color: #ffffff;
+    color: var(--on-accent);
     font-size: 11px;
 }
 
 .gl-filter-toggle[aria-expanded="true"] {
     border-color: var(--accent-2);
-    color: var(--accent-2);
+    color: var(--text-accent-2);
 }
 
 .gl-dice {
@@ -333,39 +316,16 @@
     margin-top: 16px;
 }
 
+/* The chips are .ui-chip buttons with a dot and a count (css/components.css);
+   the dot glows in the colour of its category ("All": the site gradient) */
 .gl-chip {
-    min-height: 40px;
-    padding: 7px 8px 7px 14px;
+    --chip-dot: var(--gl-c);
+    --chip-dot-glow: 0 0 8px var(--gl-c);
 }
 
-.gl-chip-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--gl-c);
-    box-shadow: 0 0 8px var(--gl-c);
-}
-
-.gl-chip[data-cat="all"] .gl-chip-dot {
-    background: var(--gradient);
-    box-shadow: none;
-}
-
-.gl-chip-count {
-    min-width: 26px;
-    padding: 2px 7px;
-    border-radius: 999px;
-    background: var(--surface-hover);
-    color: var(--text-muted);
-    font-size: 11px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-    transition: background 0.2s ease, color 0.2s ease;
-}
-
-.gl-chip[aria-pressed="true"] .gl-chip-count {
-    background: rgba(var(--accent-2-rgb), 0.18);
-    color: var(--accent-2);
+.gl-chip[data-cat="all"] {
+    --chip-dot: var(--gradient);
+    --chip-dot-glow: none;
 }
 
 .gl-chip.is-zero:not([aria-pressed="true"]) {
@@ -405,8 +365,14 @@
 .gl-letter[aria-pressed="true"] {
     border-color: var(--accent-2);
     background: rgba(var(--accent-2-rgb), 0.12);
-    color: var(--accent-2);
+    color: var(--text-accent-2);
     box-shadow: 0 0 16px rgba(var(--accent-2-rgb), 0.2);
+}
+
+/* The hover rule above is stronger than the pressed one, so under the mouse a pressed
+   letter takes the hover colour. In the light theme it keeps its own colour, as before. */
+[data-theme="light"] .gl-letter[aria-pressed="true"] {
+    color: var(--text-accent-2);
 }
 
 .gl-letter:disabled {
@@ -461,19 +427,12 @@
     min-width: 0;
     padding: 22px 22px 14px;
     overflow: hidden;
-    /* Many cards: a solid-looking glass instead of an expensive blur */
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    background: rgba(var(--accent-rgb), 0.06);
+    background: var(--glass);
     background:
         linear-gradient(160deg, color-mix(in srgb, var(--gl-c) 10%, transparent), transparent 45%),
-        var(--surface);
-    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+        var(--glass);
+    box-shadow: var(--shadow-card);
     transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.35s var(--ease);
-}
-
-[data-theme="light"] .gl-card {
-    box-shadow: 0 10px 28px rgba(30, 30, 80, 0.07);
 }
 
 /* A coloured line at the top of every card */
@@ -494,7 +453,7 @@
     transform: translateY(-3px);
     border-color: var(--border-strong);
     border-color: color-mix(in srgb, var(--gl-c) 45%, transparent);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22), 0 0 30px rgba(var(--accent-rgb), 0.1);
+    box-shadow: var(--shadow-card-hover), 0 0 30px rgba(var(--accent-rgb), 0.1);
 }
 
 .gl-card:hover::before,
@@ -536,7 +495,7 @@
 
 .gl-cat-tag {
     min-width: 0;
-    color: var(--gl-c);
+    color: var(--gl-ink);
     font-size: 10.5px;
     font-weight: 600;
     letter-spacing: 1.5px;
@@ -553,7 +512,7 @@
     margin-left: auto;
     border: 1px solid rgba(var(--accent-2-rgb), 0.4);
     border-radius: 50%;
-    color: var(--success);
+    color: var(--text-success);
     font-size: 11px;
     font-weight: 800;
 }
@@ -630,7 +589,7 @@
 
 .gl-toggle:hover,
 .gl-toggle[aria-expanded="true"] {
-    color: var(--accent-2);
+    color: var(--text-accent-2);
 }
 
 .gl-chevron {
@@ -718,10 +677,11 @@
     animation: gl-spotlight 2.4s var(--ease) both;
 }
 
+/* It ends on the card's usual shadow (of the current theme) */
 @keyframes gl-spotlight {
     0% { box-shadow: 0 0 0 0 rgba(var(--accent-2-rgb), 0.7), 0 0 0 rgba(var(--accent-rgb), 0); }
     25% { box-shadow: 0 0 0 6px rgba(var(--accent-2-rgb), 0.25), 0 0 46px rgba(var(--accent-rgb), 0.45); }
-    100% { box-shadow: 0 0 0 0 rgba(var(--accent-2-rgb), 0), 0 14px 34px rgba(0, 0, 0, 0.18); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--accent-2-rgb), 0), var(--shadow-card); }
 }
 
 /* A band of light sweeps across the card once */
@@ -732,11 +692,7 @@
     pointer-events: none;
     background: linear-gradient(105deg, transparent 30%, rgba(var(--accent-2-rgb), 0.16) 50%, transparent 70%);
     transform: translateX(-100%);
-    animation: gl-sweep 1.2s var(--ease) 0.15s both;
-}
-
-@keyframes gl-sweep {
-    to { transform: translateX(100%); }
+    animation: aic-slide 1.2s var(--ease) 0.15s both;
 }
 
 /* ===== 9. EMPTY STATE AND "SHOW ALL" ===== */
@@ -818,31 +774,20 @@
     transform: rotate(180deg);
 }
 
-@keyframes gl-drop {
-    from { opacity: 0; transform: translateY(-6px); }
-}
-
-/* ===== LIGHT THEME: DARKER SMALL LABELS ===== */
-/* On a white background the bright cyan and orange are too pale for tiny text.
-   Mixing in some of the text colour keeps the hue but makes it easy to read
-   (contrast of at least 4.5 : 1). */
-
-[data-theme="light"] .gl-cat-tag {
-    color: color-mix(in srgb, var(--gl-c) 70%, var(--text));
-}
-
-[data-theme="light"] .gl-kicker,
-[data-theme="light"] .gl-chip[aria-pressed="true"] .gl-chip-count,
-[data-theme="light"] .gl-letter[aria-pressed="true"],
-[data-theme="light"] .gl-toggle:hover,
-[data-theme="light"] .gl-toggle[aria-expanded="true"],
-[data-theme="light"] .gl-filter-toggle[aria-expanded="true"] {
-    color: color-mix(in srgb, var(--accent-2) 70%, var(--text));
-}
-
 /* ===== 10. RESPONSIVE ===== */
 
-@media (max-width: 760px) {
+/* Below about 980px the cards stand in two columns instead of three */
+@media (max-width: 960px) {
+    .js [data-feature="glossary"]:empty {
+        min-height: 2400px;
+    }
+}
+
+@media (max-width: 720px) {
+    .js [data-feature="glossary"]:empty {
+        min-height: 2600px;
+    }
+
     .gl-console {
         padding: 22px 18px 16px;
     }
@@ -866,6 +811,10 @@
 }
 
 @media (max-width: 640px) {
+    .js [data-feature="glossary"]:empty {
+        min-height: 4000px;
+    }
+
     .gl-console {
         margin-bottom: 20px;
         border-radius: 20px;
@@ -893,7 +842,7 @@
     }
 
     .gl.filters-open .gl-filters {
-        animation: gl-drop 0.35s var(--ease);
+        animation: aic-drop 0.35s var(--ease);
     }
 
     .gl-input {
@@ -906,24 +855,6 @@
 
     .gl-search-icon {
         width: 42px;
-    }
-
-    /* Bigger touch targets on phones */
-    .gl-chip,
-    .gl-letter,
-    .gl-reset,
-    .gl-empty-reset,
-    .gl-suggestion {
-        min-height: 44px;
-    }
-
-    .gl-letter {
-        min-width: 44px;
-        height: 44px;
-    }
-
-    .gl-rel {
-        min-height: 44px;
     }
 
     .gl-grid {
@@ -943,8 +874,8 @@
     }
 }
 
-@media (pointer: coarse) {
-    .gl-chip,
+/* Bigger touch targets on phones and on touch screens */
+@media (max-width: 640px), (hover: none), (pointer: coarse) {
     .gl-letter,
     .gl-rel,
     .gl-reset,
@@ -959,38 +890,21 @@
     }
 }
 
-/* ===== 11. REDUCED MOTION / CALM MODE ===== */
+/* ===== 11. LESS MOTION (reduced motion or calm mode) =====
+   style.css already stops every animation and transition under
+   html.fx-motion-off; these rules only do what it can't. */
 
-@media (prefers-reduced-motion: reduce) {
-    .gl-console::before,
-    .gl-card.is-spotlight::after {
-        display: none;
-    }
-
-    .gl-empty-orb,
-    .gl-card.is-spotlight {
-        animation: none;
-    }
-
-    .gl-card.is-spotlight {
-        box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.35);
-    }
-
-    .gl-card:hover {
-        transform: none;
-    }
-}
-
-html.fx-calm .gl-console::before,
-html.fx-calm .gl-card.is-spotlight::after {
+/* The sweeping band would stand still: hide it */
+html.fx-motion-off .gl-card.is-spotlight::after {
     display: none;
 }
 
-html.fx-calm .gl-card.is-spotlight {
+/* A shown term gets a steady ring instead of the glow */
+html.fx-motion-off .gl-card.is-spotlight {
     animation: none;
     box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.35);
 }
 
-html.fx-calm .gl-card:hover {
+html.fx-motion-off .gl-card:hover {
     transform: none;
 }

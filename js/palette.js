@@ -6,16 +6,19 @@
    with the arrow keys and press Enter.
 
    Sections of this file:
-    1. Translations
+    1. Settings
     2. Building the window
     3. Fuzzy search (how results are found and scored)
     4. Collecting and grouping results
     5. Drawing the results
     6. Keyboard and mouse
     7. Opening, closing and running a command
-    8. Shortcuts and start-up
+    8. Shortcuts and the language
+    9. Public API
    The list of commands lives in AICompass.commands: every
    feature adds its own with AICompass.registerCommand().
+   Other features use AICompass.palette (see the last section).
+   Every text (English and Russian) is in js/content/palette.js
    ========================================================= */
 
 (function () {
@@ -29,69 +32,17 @@
     const esc = A.escapeHTML;
 
     /* =========================================================
-       1. TRANSLATIONS
+       1. SETTINGS
        ========================================================= */
-    A.addTranslations({
-        en: {
-            "palette.title": "Command palette",
-            "palette.inputLabel": "Search lessons, sections and actions",
-            "palette.placeholder": "Search or jump to…",
-            "palette.listLabel": "Results",
-            "palette.close": "Close",
-            "palette.recent": "Recent",
-            "palette.other": "Other",
-            "palette.more": "Show {n} more",
-            "palette.empty": "No results for “{query}”",
-            "palette.emptyHint": "Try “quiz”, “lesson”, “theme” or “neural”.",
-            "palette.layout": "Showing results for “{query}”",
-            "palette.askBot": "Ask Compass Bot: “{query}”",
-            "palette.askGroup": "Compass Bot",
-            "palette.glossaryGroup": "Glossary",
-            "palette.hintMove": "to navigate",
-            "palette.hintOpen": "to open",
-            "palette.hintClose": "to close",
-            "palette.count": "{n} result|{n} results",
-            "palette.brand": "AI COMPASS · QUICK SEARCH"
-        },
-        ru: {
-            "palette.title": "Палитра команд",
-            "palette.inputLabel": "Поиск уроков, разделов и действий",
-            "palette.placeholder": "Найти или перейти…",
-            "palette.listLabel": "Результаты",
-            "palette.close": "Закрыть",
-            "palette.recent": "Недавние",
-            "palette.other": "Другое",
-            "palette.more": "Показать ещё {n}",
-            "palette.empty": "Ничего не найдено по запросу «{query}»",
-            "palette.emptyHint": "Попробуй «тест», «урок», «тема» или «нейросеть».",
-            "palette.layout": "Показаны результаты для «{query}»",
-            "palette.askBot": "Спросить Compass Bot: «{query}»",
-            "palette.askGroup": "Compass Bot",
-            "palette.glossaryGroup": "Словарь",
-            "palette.hintMove": "выбрать",
-            "palette.hintOpen": "открыть",
-            "palette.hintClose": "закрыть",
-            "palette.count": "{n} результат|{n} результата|{n} результатов",
-            "palette.brand": "AI COMPASS · БЫСТРЫЙ ПОИСК"
-        }
-    });
 
-    const RECENT_KEY = "palette.recent";
-    const RECENT_MAX = 5;
-    const GROUP_PREVIEW = 6;     // with an empty search, show at most 6 items per group
-
-    // Correct word for a number: "1 result / 2 results", "1 результат / 2 результата / 5 результатов"
-    function plural(n, forms) {
-        const list = forms.split("|");
-        if (A.lang === "ru") {
-            const mod10 = n % 10;
-            const mod100 = n % 100;
-            if (mod10 === 1 && mod100 !== 11) return list[0];
-            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return list[1];
-            return list[2] || list[1];
-        }
-        return n === 1 ? list[0] : list[1];
-    }
+    const RECENT_KEY = "palette.recent";  // the commands you ran last (localStorage "aic:palette.recent")
+    const RECENT_MAX = 5;                 // how many of them are kept
+    const GROUP_PREVIEW = 6;              // with an empty search, show at most 6 items per group
+    const STATUS_DELAY = 450;             // ms: the number of results is read out once you stop typing
+    const CLOSE_MS = 180;                 // the window's closing animation (css/palette.css)
+    const RUN_DELAY_MS = 10;              // the command runs just after the window has closed
+    const PAGE_STEP = 5;                  // Page Up / Page Down move the selection this far
+    const ASK_MAX = 80;                   // letters of your search shown in "Ask Compass Bot: «...»"
 
     /* =========================================================
        2. BUILDING THE WINDOW
@@ -160,8 +111,6 @@
         active: -1,         // which result is selected
         lastFocus: null,    // where the focus goes back to on close
         hideTimer: 0,
-        statusTimer: 0,
-        scroll: null,       // saved page scroll style while open
         pointer: { x: -1, y: -1 },
         expanded: {}        // big groups opened with "Show N more" (until the palette closes)
     };
@@ -193,10 +142,15 @@
     // Lower case, "ё" -> "е". Every character stays in its place,
     // so letter positions still match the original title.
     function fold(text) {
-        return String(text || "").split("").map(function (char) {
-            const lower = char.toLowerCase();
-            if (lower.length !== 1) return char;
-            return lower === "ё" ? "е" : lower;
+        const value = String(text || "");
+        const lower = value.toLowerCase();
+        if (lower.length === value.length) return lower.replace(/ё/g, "е");
+        // Very rare: a letter whose lower case is longer ("İ" -> "i̇").
+        // Then go letter by letter and keep such letters as they are.
+        return value.split("").map(function (char) {
+            const small = char.toLowerCase();
+            if (small.length !== 1) return char;
+            return small === "ё" ? "е" : small;
         }).join("");
     }
 
@@ -332,37 +286,20 @@
         return best;
     }
 
-    // Typed with the wrong keyboard layout? "ntcn" -> "тест", "руддщ" -> "hello"
-    const LAYOUT_EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`";
-    const LAYOUT_RU = "йцукенгшщзхъфывапролджэячсмитьбюё";
-
-    function switchLayout(text) {
-        return text.split("").map(function (char) {
-            let index = LAYOUT_EN.indexOf(char);
-            if (index !== -1) return LAYOUT_RU.charAt(index);
-            index = LAYOUT_RU.indexOf(char);
-            if (index !== -1) return LAYOUT_EN.charAt(index);
-            return char;
-        }).join("");
-    }
-
     /* =========================================================
        4. COLLECTING AND GROUPING RESULTS
        ========================================================= */
 
-    // Reads AICompass.commands fresh every time the palette opens,
-    // so commands added later by other features are included.
+    // Reads AICompass.commands and prepares them for the search (titles in the
+    // current language, folded to lower case). See commandList() below.
     function collectCommands() {
         const list = [];
         (A.commands || []).forEach(function (command, order) {
             if (!command || typeof command.run !== "function") return;
-            let title = "";
-            try {
-                title = typeof command.title === "function" ? command.title() : String(command.title || "");
-            } catch (error) {
-                title = "";
-            }
-            if (!title) title = String(command.id || "");
+            // A broken title() is reported and the command keeps its id as its title
+            const title = A.util.attempt(function () {
+                return typeof command.title === "function" ? command.title() : String(command.title || "");
+            }, "") || String(command.id || "");
             const groupName = command.group ? t(command.group) : t("palette.other");
             const folded = fold(title);
             list.push({
@@ -376,11 +313,30 @@
                 groupName: groupName,
                 groupFolded: fold(groupName),
                 order: order,
-                run: command.run,
+                command: command,
                 remember: true
             });
         });
         return list;
+    }
+
+    // The prepared commands are kept while the palette is open, so typing only
+    // searches them. They are read again when the palette opens (titles can
+    // change, like the theme command), when the language changes, and when a
+    // feature adds a command in the meantime.
+    const cache = { commands: null, size: 0 };
+
+    function commandList() {
+        const size = (A.commands || []).length;
+        if (!cache.commands || cache.size !== size) {
+            cache.commands = collectCommands();
+            cache.size = size;
+        }
+        return cache.commands;
+    }
+
+    function forgetCommands() {
+        cache.commands = null;
     }
 
     function getRecent() {
@@ -388,9 +344,15 @@
         return Array.isArray(saved) ? saved.filter(function (id) { return typeof id === "string"; }) : [];
     }
 
+    // The command you ran goes first. Saved commands that no longer exist
+    // (a newer version of the site renamed or removed them) are dropped,
+    // so they don't take the places of real ones.
     function remember(id) {
-        const list = getRecent().filter(function (item) { return item !== id; });
-        list.unshift(id);
+        const known = {};
+        commandList().forEach(function (item) { known[item.id] = true; });
+        const list = [id].concat(getRecent().filter(function (old) {
+            return old !== id && known[old];
+        }));
         A.storage.set(RECENT_KEY, list.slice(0, RECENT_MAX));
     }
 
@@ -458,16 +420,17 @@
 
     // Everything the palette shows for a search: { groups, note, nothing }
     function search(rawQuery) {
-        const commands = collectCommands();
+        const commands = commandList();
         const query = fold(rawQuery).replace(/\s+/g, " ").trim();
         if (!query) return { groups: browseGroups(commands), note: "", nothing: false };
 
         let found = rank(commands, query);
         let note = "";
 
-        // Nothing? Maybe the keyboard was in the other language
+        // Nothing? Maybe the keyboard was in the other language:
+        // "ntcn" -> "тест", "руддщ" -> "hello" (A.switchLayout in core.js)
         if (!found.length) {
-            const other = switchLayout(query);
+            const other = A.switchLayout(query);
             if (other !== query) {
                 const again = rank(commands, other);
                 if (again.length) {
@@ -478,13 +441,8 @@
         }
 
         // A glossary term mentioned anywhere in the search ("what is a transformer?")
-        if (A.glossary && typeof A.glossary.find === "function" && query.length >= 2) {
-            let term = null;
-            try {
-                term = A.glossary.find(rawQuery);
-            } catch (error) {
-                term = null;
-            }
+        if (A.glossary && query.length >= 2) {
+            const term = A.util.attempt(function () { return A.glossary.find(rawQuery); }, null);
             const termCommand = term && term.id ? commands.find(function (item) { return item.id === "glossary-" + term.id; }) : null;
             if (termCommand) {
                 // The glossary has its own command for this term: make sure it is in the results
@@ -516,8 +474,8 @@
         // Always offer to ask Compass Bot. It joins the bot's own group
         // (so there is only one "Compass Bot" heading) and is always its last item.
         const text = String(rawQuery).trim();
-        if (A.assistant && typeof A.assistant.ask === "function" && text.length >= 2) {
-            const title = t("palette.askBot", { query: text.slice(0, 80) });
+        if (A.assistant && text.length >= 2) {
+            const title = t("palette.askBot", { query: text.slice(0, ASK_MAX) });
             found.push({
                 id: "ask-bot",
                 icon: "🤖",
@@ -610,14 +568,15 @@
         ui.note.textContent = result.note;
         ui.list.hidden = !items.length;
 
-        // How many results (shown in the footer, and read out a moment later)
-        const commandCount = items.filter(function (item) { return item.id !== "ask-bot" && !item.more; }).length;
-        const countText = plural(commandCount, t("palette.count")).replace("{n}", commandCount);
+        // How many results you can choose ("Ask Compass Bot" too, but not the
+        // "Show N more" rows). Shown in the footer, and read out by screen
+        // readers once you stop typing (with "No results" first if no command matched).
+        const count = items.filter(function (item) { return !item.more; }).length;
+        const countText = A.plural("palette.count", count);
         ui.count.textContent = countText;
-        clearTimeout(state.statusTimer);
-        state.statusTimer = setTimeout(function () {
-            ui.status.textContent = result.nothing ? ui.emptyTitle.textContent : countText;
-        }, 450);
+        let message = countText;
+        if (result.nothing) message = ui.emptyTitle.textContent + (count ? ". " + countText : "");
+        A.announce(message, { region: ui.status, delay: STATUS_DELAY });
 
         setActive(items.length ? 0 : -1, false);
     }
@@ -687,24 +646,16 @@
                 break;
             case "PageDown":
                 event.preventDefault();
-                setActive(Math.min(state.items.length - 1, state.active + 5), true);
+                setActive(Math.min(state.items.length - 1, state.active + PAGE_STEP), true);
                 break;
             case "PageUp":
                 event.preventDefault();
-                setActive(Math.max(0, state.active - 5), true);
+                setActive(Math.max(0, state.active - PAGE_STEP), true);
                 break;
             case "Enter":
                 if (event.target === ui.close) return;   // the close button handles its own Enter
                 event.preventDefault();
                 if (state.items[state.active]) runItem(state.items[state.active]);
-                break;
-            case "Escape":
-                event.preventDefault();
-                event.stopPropagation();
-                close();
-                break;
-            case "Tab":
-                trapFocus(event);
                 break;
         }
     });
@@ -740,46 +691,31 @@
         if (event.target === ui.overlay) close();
     });
 
-    function trapFocus(event) {
-        const items = [ui.input, ui.close].filter(function (element) {
-            return element.getClientRects().length > 0;
-        });
-        const first = items[0];
-        const last = items[items.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-            event.preventDefault();
-            last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
-        }
-    }
-
-    // If the focus somehow leaves the window, bring it back
-    document.addEventListener("focusin", function (event) {
-        if (state.open && !ui.dialog.contains(event.target)) {
-            ui.input.focus({ preventScroll: true });
-        }
-    });
-
     /* =========================================================
        7. OPENING, CLOSING AND RUNNING A COMMAND
        ========================================================= */
 
-    function lockScroll() {
-        const body = document.body;
-        const gap = window.innerWidth - document.documentElement.clientWidth;
-        state.scroll = { overflow: body.style.overflow, paddingRight: body.style.paddingRight };
-        body.style.overflow = "hidden";
-        if (gap > 0) body.style.paddingRight = gap + "px";
-    }
-
-    function unlockScroll() {
-        if (!state.scroll) return;
-        document.body.style.overflow = state.scroll.overflow;
-        document.body.style.paddingRight = state.scroll.paddingRight;
-        state.scroll = null;
-    }
+    // The palette is a pop-up window of the page (see "overlays" in core.js).
+    // While it is open, core stops the page from scrolling, makes the rest of
+    // the page unreachable (inert), keeps Tab inside and closes it with Esc.
+    // A Ctrl+K command or a jump to another section closes it too.
+    const overlay = A.overlays.register("palette", {
+        root: ui.overlay,           // the window and the dark area around it
+        element: ui.dialog,
+        modal: true,
+        // Tab goes round the search box and the close button
+        // (the results are chosen with the arrow keys)
+        focusables: function () {
+            return [ui.input, ui.close].filter(function (element) {
+                return element.getClientRects().length > 0;
+            });
+        },
+        // If the focus somehow lands outside the window, it goes back to the search box
+        holdFocus: function () {
+            ui.input.focus({ preventScroll: true });
+        },
+        close: function () { close(); }
+    });
 
     // Phones: keep the window over the part of the screen you can see.
     // The page area can be bigger than the screen (on-screen keyboard,
@@ -800,11 +736,7 @@
         style.height = Math.round(viewport.height) + "px";
     }
 
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", fitOverlay);
-        window.visualViewport.addEventListener("scroll", fitOverlay);
-    }
-    window.addEventListener("resize", fitOverlay, { passive: true });
+    A.onResize(fitOverlay, { viewport: true });
 
     function setTriggersExpanded(open) {
         document.querySelectorAll("[data-open-palette]").forEach(function (button) {
@@ -819,22 +751,26 @@
         }
         clearTimeout(state.hideTimer);
         state.open = true;
+        // Where the focus goes back to. Opened again while it was still closing:
+        // the focus is still in the window, so the place from before stays.
         const active = document.activeElement;
-        state.lastFocus = active && active !== document.body ? active : null;
+        if (!ui.overlay.contains(active)) state.lastFocus = active && active !== document.body ? active : null;
 
-        lockScroll();
+        // Fill the list while the window is still hidden, so the page is
+        // laid out once with the window in it
         state.expanded = {};
         ui.input.value = "";
+        forgetCommands();
+        render();
         ui.overlay.hidden = false;
         ui.overlay.classList.remove("is-closing");
+        overlay.opened();     // before the focus moves in (core makes the rest inert)
         fitOverlay();
-        render();
         ui.list.scrollTop = 0;
         setTriggersExpanded(true);
 
         // Draw once in the hidden state, then animate in
-        void ui.overlay.offsetWidth;
-        ui.overlay.classList.add("is-open");
+        A.dom.replay(ui.overlay, "is-open");
         ui.input.focus({ preventScroll: true });
     }
 
@@ -843,10 +779,11 @@
         state.open = false;
         ui.overlay.classList.remove("is-open");
         ui.overlay.classList.add("is-closing");
-        unlockScroll();
+        // Core gives the focus back as soon as the page can take it (see core.js)
+        const target = state.lastFocus;
+        overlay.closed(function () { giveFocusBack(target); });
         setTriggersExpanded(false);
-        clearTimeout(state.statusTimer);
-        ui.status.textContent = "";
+        A.announce("", { region: ui.status, delay: 0 });   // drops a count still waiting
 
         state.hideTimer = setTimeout(function () {
             if (state.open) return;
@@ -855,12 +792,13 @@
             fitOverlay();
             ui.list.innerHTML = "";
             state.items = [];
-        }, A.reducedMotion ? 0 : 180);
+        }, A.motion.ok() ? CLOSE_MS : 0);
+    }
 
-        // Focus goes back to where it was before (if that is still possible).
-        // Something hidden in the meantime (a link in the mobile menu, say)
-        // cannot take it, so then the focus goes to the search button.
-        const target = state.lastFocus;
+    // Focus goes back to where it was before (if that is still possible).
+    // Something hidden in the meantime (a link in the mobile menu, say)
+    // cannot take it, so then the focus goes to the search button.
+    function giveFocusBack(target) {
         state.lastFocus = null;
         if (target && target.isConnected && typeof target.focus === "function" && !target.closest("[inert]")) {
             target.focus({ preventScroll: true });
@@ -889,7 +827,9 @@
         setActive(Math.max(0, Math.min(index, state.items.length - 1)), true);
     }
 
-    // Close first (so focus and scrolling are back to normal), then run
+    // Close first (so the focus and scrolling are back to normal), then run.
+    // The palette is off the window stack by then, so A.runCommand() only
+    // closes the windows below it that are in the way (the phone chat, a lesson).
     function runItem(item) {
         if (item.more) {
             expandGroup(item);
@@ -898,22 +838,15 @@
         if (item.remember) remember(item.id);
         close();
         setTimeout(function () {
-            try {
-                item.run();
-            } catch (error) {
-                if (window.console) console.warn("AI Compass palette: command failed", item.id, error);
-            }
-        }, 10);
+            // Core closes the windows that are in the way, then runs it.
+            // A command that fails is reported in the console; the page goes on.
+            A.util.attempt(function () { A.runCommand(item.command || { run: item.run }); });
+        }, RUN_DELAY_MS);
     }
 
     /* =========================================================
-       8. SHORTCUTS AND START-UP
+       8. SHORTCUTS AND THE LANGUAGE
        ========================================================= */
-
-    function isTyping(element) {
-        if (!element || !element.closest) return false;
-        return Boolean(element.isContentEditable || element.closest("input, textarea, select, [contenteditable='true']"));
-    }
 
     document.addEventListener("keydown", function (event) {
         // Ctrl+K / Cmd+K (event.code also works with a Russian keyboard layout)
@@ -927,7 +860,7 @@
         // key types "." — event.code ("Slash") still names the physical key.
         const isSlash = event.key === "/" || (event.code === "Slash" && !event.shiftKey);
         if (isSlash && !event.ctrlKey && !event.metaKey && !event.altKey &&
-            !state.open && !event.defaultPrevented && !isTyping(event.target)) {
+            !state.open && !event.defaultPrevented && !A.dom.isTyping(event.target)) {
             event.preventDefault();
             open();
         }
@@ -953,15 +886,21 @@
     A.onLanguageChange(function () {
         if (!state.open) return;
         const active = state.active;
+        forgetCommands();
         render();
         if (active >= 0 && active < state.items.length) setActive(active, true);
     });
 
-    // Other features can open the palette too
-    A.palette = {
+    /* =========================================================
+       9. PUBLIC API
+       ========================================================= */
+
+    // Other features can open the palette too:
+    // AICompass.palette.open(), .close(), .toggle() and .isOpen
+    A.feature("palette", {
         open: open,
         close: close,
         toggle: toggle,
         get isOpen() { return state.open; }
-    };
+    });
 })();

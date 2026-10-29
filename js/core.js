@@ -1,479 +1,1831 @@
 /* =========================================================
    AI COMPASS — CORE
-   Loaded before every other script. It provides:
-   - translations (English / Russian) and the language button
-   - light / dark theme and the theme button
-   - saving settings in the browser (localStorage)
-   - the mobile menu, the sticky menu and small helpers
-   Every feature file uses window.AICompass (see the bottom).
+   Loaded before every other script. It builds window.AICompass,
+   the toolkit that every feature file uses (called "A" there).
+   The words themselves live in js/content/ (one file per part of the site).
+
+   THE PARTS OF THIS FILE
+    1. storage       saving settings in the browser
+    2. events        A.on / A.emit (the "aic:..." events)
+    3. texts         translations, plurals, values inside texts, number formats, language,
+                     text typed with the other keyboard layout
+    4. theme         light / dark and the colour of the address bar
+    5. motion        reduced motion (device) + calm mode (our own switch),
+                     and numbers that count up
+    6. helpers       small tools: maths and easing, page elements, buttons that
+                     need a second press, colours, canvas
+    7. screen        media queries, visibility, resizing, the pixel ratio, layout sizes
+    8. announce      messages for screen readers
+    9. overlays      pop-up windows: scroll lock, focus, the Esc key
+   10. navigation    the page sections, A.navigate, one scroll pipeline, parts
+                     built when needed, the menu bar
+   11. commands      the command list of the Ctrl+K palette
+   12. features      how feature files share their API and content
+   13. toasts        small pop-up messages
+       the toolkit   window.AICompass itself, and the built-in commands
+   14. start-up      translating the page, the theme and language buttons
+
+   THE TOOLKIT AT A GLANCE (each one is explained where it is written)
+    1  A.storage.get(key, fallback) / set(key, value) / remove(key) / migrate(old, new)
+       A.storage.session: the same, forgotten when the tab closes
+    2  A.on(name, callback) -> stop()      A.emit(name, detail)
+       names: language, theme, motion, overlay, section, feature (sent as "aic:" + name)
+    3  A.t(key, values)   A.has(key)   A.plural(key, n, values)   A.pluralForm(n)
+       A.addTranslations({ en, ru })   A.applyTranslations(element)   A.i18nHTML(key, className, tag)
+       A.setTextValue(name, value)   A.textValue(name): a {name} that any text can show
+       in the HTML: data-i18n="key", data-i18n-attr="aria-label:key", data-i18n-plural="name"
+       A.format.number(n, options)   A.format.percent(share, options)   A.format.date(date, options) ("" if invalid)
+       A.switchLayout(text): "ntcn" -> "тест", the same keys in the other keyboard layout
+       A.lang   A.locale   A.setLanguage(lang)   A.toggleLanguage()   A.onLanguageChange(callback)
+    4  A.theme   A.setTheme(theme)   A.toggleTheme()   A.onThemeChange(callback)
+    5  A.motion.ok() / reduced / calm / setCalm(on) / toggleCalm() / onChange(callback) / ease
+       A.reducedMotion (the device setting only)
+       A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value, running }
+    6  A.util.clamp / lerp / easeOut / random / randomInt / pick / shuffle /
+              sampleWeighted / debounce / frameThrottle / attempt(fn, fallback)
+       A.dom.focusable / focusHeading / pauseScrollAnchoring / replay / fromHTML /
+             setText / setAttr / setHidden (write only what changed) / isTyping(element)
+       A.confirmPress(button, { onArm, onDisarm, onConfirm, enabled, timeout })
+           -> { armed, disarm() }: a button that needs a second press
+       A.colors.parse / rgb(cssName) / rgba(color, alpha) / mix(a, b, amount)
+       A.canvas.pixelRatio / fit / roundRect   A.cssVar(name)   A.escapeHTML(text)
+    7  A.breakpoints   A.queries   A.media(query)   A.onMedia(query, callback)
+       A.whenVisible(element, callback, options)   A.onResize(callback, options)
+       A.onPixelRatioChange(callback)   A.layout.px / navHeight
+    8  A.announce(text, options)
+    9  A.overlays.register(id, options) -> { opened(), closed(focusBack), close(reason) }
+       A.overlays.closeAll / isOpen / top / hasModal / contains / onChange / update
+       (while a window locks the page, <body> gets --scrollbar-gap for the fixed bars)
+   10  A.sections   A.navigate(id, options)   A.onScroll(callback)   A.onLayout(callback)
+       A.layoutChanged()   A.onSection(callback)   A.whenNeeded(element, build, options)
+       A.buildParts(target)   A.whenIdle(callback)
+   11  A.registerCommand(command)   A.runCommand(id or command)   A.commands
+   12  A.feature(name, api)   A.whenFeature(name) -> Promise   A.ready(callback)
+       A.content.set(name, data) / get(name)
+   13  A.toast(text, icon)
    ========================================================= */
 
 (function () {
-"use strict";
+    "use strict";
 
-// ---------- Saving settings safely ----------
-// Some browsers block localStorage (private mode), so every call is wrapped.
-const storage = {
-    get: function (key, fallback) {
+    const root = document.documentElement;
+    // Every storage key starts with this. The small script in the <head> of index.html
+    // reads "aic:theme" and "aic:motion.calm" itself (before the page is drawn).
+    const PREFIX = "aic:";
+
+    // Errors in one listener must not stop the others: report them and go on
+    function report(error) {
+        if (typeof window.reportError === "function") window.reportError(error);
+        else if (window.console) console.error(error);
+    }
+
+    // A.util.attempt: runs a function and gives back what it returns. If it throws,
+    // the error is reported (in the console) and "fallback" comes back instead.
+    function attempt(callback, fallback) {
         try {
-            const value = localStorage.getItem("aic:" + key);
-            return value === null ? fallback : JSON.parse(value);
+            return callback();
         } catch (error) {
+            report(error);
             return fallback;
         }
-    },
-    set: function (key, value) {
-        try {
-            localStorage.setItem("aic:" + key, JSON.stringify(value));
-        } catch (error) {}
-    },
-    remove: function (key) {
-        try {
-            localStorage.removeItem("aic:" + key);
-        } catch (error) {}
     }
-};
 
-// ---------- Translations ----------
-const translations = { en: {}, ru: {} };
+    function safeCall(callback, value) {
+        attempt(function () { callback(value); });
+    }
 
-function addTranslations(dictionary) {
-    ["en", "ru"].forEach(function (lang) {
-        Object.assign(translations[lang], dictionary[lang] || {});
-    });
-}
+    /* =========================================================
+       1. STORAGE
+       Some browsers block storage (private mode, strict settings),
+       so every call is wrapped. Values are saved as JSON under "aic:<key>".
+       ========================================================= */
+    function makeStore(area) {
+        return {
+            get: function (key, fallback) {
+                try {
+                    const value = window[area].getItem(PREFIX + key);
+                    return value === null ? fallback : JSON.parse(value);
+                } catch (error) {
+                    return fallback;
+                }
+            },
+            set: function (key, value) {
+                try {
+                    window[area].setItem(PREFIX + key, JSON.stringify(value));
+                    return true;
+                } catch (error) {
+                    return false;
+                }
+            },
+            remove: function (key) {
+                try {
+                    window[area].removeItem(PREFIX + key);
+                } catch (error) {}
+            }
+        };
+    }
 
-// t("quiz.title") returns the text in the current language.
-// Optional values fill in {placeholders}: t("quiz.score", { score: 5 })
-function t(key, values) {
-    let text = translations[state.lang][key];
-    if (text === undefined) text = translations.en[key];
-    if (text === undefined) return key;
-    if (values) {
-        Object.keys(values).forEach(function (name) {
-            text = text.split("{" + name + "}").join(values[name]);
+    const storage = makeStore("localStorage");
+
+    // The same, but forgotten when the tab is closed
+    storage.session = makeStore("sessionStorage");
+
+    // Moves a value saved under an old name to its new name
+    storage.migrate = function (oldKey, newKey) {
+        const value = storage.get(oldKey, undefined);
+        if (value === undefined) return;
+        if (storage.get(newKey, undefined) === undefined) storage.set(newKey, value);
+        storage.remove(oldKey);
+    };
+
+    /* =========================================================
+       2. EVENTS
+       Every event of the site is "aic:" + a name, sent on document:
+       language, theme, motion, overlay, section, feature.
+       ========================================================= */
+    function emit(name, detail) {
+        document.dispatchEvent(new CustomEvent(PREFIX + name, { detail: detail }));
+    }
+
+    // Listens to an event. Returns a function that stops listening.
+    function on(name, callback) {
+        const listener = function (event) { callback(event.detail); };
+        document.addEventListener(PREFIX + name, listener);
+        return function () { document.removeEventListener(PREFIX + name, listener); };
+    }
+
+    /* =========================================================
+       3. TEXTS: TRANSLATIONS, PLURALS, VALUES INSIDE TEXTS, NUMBERS, KEYBOARD LAYOUTS
+       ========================================================= */
+    const LANGUAGES = ["en", "ru"];
+
+    // How numbers and dates are written. English dates are day-month-year.
+    const LOCALES = { en: "en-GB", ru: "ru-RU" };
+
+    const translations = { en: {}, ru: {} };
+
+    const state = {
+        lang: storage.get("language", "en") === "ru" ? "ru" : "en",
+        theme: root.getAttribute("data-theme") === "light" ? "light" : "dark"
+    };
+
+    function addTranslations(dictionary) {
+        LANGUAGES.forEach(function (lang) {
+            Object.assign(translations[lang], dictionary[lang] || {});
         });
     }
-    return text;
-}
 
-// Updates every element with data-i18n="key" (its content)
-// and data-i18n-attr="aria-label:key,placeholder:key" (its attributes).
-function applyTranslations(root) {
-    root = root || document;
+    // The text of a key in the current language (English if it is missing)
+    function lookup(key) {
+        const text = translations[state.lang][key];
+        return text === undefined ? translations.en[key] : text;
+    }
 
-    root.querySelectorAll("[data-i18n]").forEach(function (element) {
-        const key = element.getAttribute("data-i18n");
-        if (translations.en[key] !== undefined || translations.ru[key] !== undefined) {
-            // Only touch the page when the text really changes (much faster at start-up)
-            const text = t(key);
-            if (element.innerHTML !== text) element.innerHTML = text;
+    // ----- Values inside texts -----
+    // Some texts show a number or a word that comes from the data, like the number of
+    // lessons. The feature that knows it registers it once, by name, while its file runs:
+    //     A.setTextValue("lessonCount", LESSONS.length);
+    //     A.setTextValue("questionCount", function () { return A.plural("quiz.questionCount", QUESTIONS.length); });
+    // Then any text can say {lessonCount}: t(), A.plural() and the data-i18n elements of
+    // the page fill it in, also after a language change. A function is asked again each
+    // time, so it can answer in the current language ("12 questions" / "12 вопросов").
+    // Numbers are written the local way (A.format.number). Values passed to t() itself
+    // win over these. Pick a name that says what it is ("lessonCount", not "n"): it fills
+    // that {name} in every text. A text that depends on a number names it on its element,
+    // and gets the plural form that suits it (see plural() below):
+    //     <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">lessons</span>
+    // Registered today: lessonCount (lessons.js), labExperimentCount (lab.js),
+    // quizQuestionCount (quiz.js) and languageCount (here). The hero numbers count up
+    // to them too (data-count-name in index.html, see js/effects.js).
+    const textValues = {
+        languageCount: LANGUAGES.length       // for texts like "2 languages"
+    };
+
+    function textValue(name) {
+        if (!Object.prototype.hasOwnProperty.call(textValues, name)) return undefined;
+        const value = textValues[name];
+        return typeof value === "function" ? value() : value;
+    }
+
+    function setTextValue(name, value) {
+        // The same number or word again: nothing to redo (a function may answer differently now)
+        if (textValues[name] === value && typeof value !== "function") return;
+        textValues[name] = value;
+        // Texts already on the page are filled in again (at start-up core translates them anyway)
+        if (pageReady) applyTranslations(document);
+    }
+
+    // Fills in {placeholders}: fill("{n} lessons", { n: 3 }) -> "3 lessons".
+    // A placeholder that "values" doesn't have takes a registered text value, if there is one.
+    function fill(text, values) {
+        if (text.indexOf("{") === -1) return text;
+        return text.replace(/\{(\w+)\}/g, function (match, name) {
+            if (values && Object.prototype.hasOwnProperty.call(values, name)) return values[name];
+            const value = textValue(name);
+            if (value === undefined) return match;
+            return typeof value === "number" ? formatNumber(value) : value;
+        });
+    }
+
+    // t("quiz.title") returns the text in the current language.
+    // Optional values fill in {placeholders}: t("quiz.q.counter", { n: 3, total: 12 }) -> "Question 3 / 12"
+    // (a value set with setTextValue() fills its {name} without being passed)
+    function t(key, values) {
+        const text = lookup(key);
+        return text === undefined ? key : fill(text, values);
+    }
+
+    // Which form a number needs: "one", "few" or "many".
+    // English: 1 lesson / 2 lessons. Russian: 1 урок / 2 урока / 5 уроков (and 1,5 урока).
+    function pluralForm(n) {
+        const value = Math.abs(Number(n)) || 0;
+        if (state.lang !== "ru") return value === 1 ? "one" : "many";
+        if (!Number.isInteger(value)) return "few";
+        const lastDigit = value % 10;
+        const lastTwo = value % 100;
+        if (lastDigit === 1 && lastTwo !== 11) return "one";
+        if (lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14)) return "few";
+        return "many";
+    }
+
+    const FORM_INDEX = { one: 0, few: 1, many: 2 };
+
+    // The right text for a number. A dictionary can write it in two ways:
+    //   with one key per form:  "quiz.points.one": "{n} point", "quiz.points.many": "{n} points"
+    //                           (Russian also has ".few")
+    //   or in one key:          "lab.dots": "dot|dots"   (Russian: "точка|точки|точек")
+    // A text for one exact number wins over the forms, so a count can be a word
+    // while the data has that many: "quiz.subtitle.12": "Twelve questions. ..."
+    // (a 13th question would show "13 questions. ..."). It must be in the current language.
+    // {n} is filled in with the number, written the local way (values can replace it).
+    function plural(key, n, values) {
+        const exact = Number.isInteger(Number(n)) ? translations[state.lang][key + "." + Number(n)] : undefined;
+        const form = pluralForm(n);
+        const forms = lookup(key);
+        let text;
+        if (exact !== undefined) {
+            text = exact;
+        } else if (typeof forms === "string" && forms.indexOf("|") !== -1) {
+            const list = forms.split("|");
+            text = list[Math.min(FORM_INDEX[form], list.length - 1)];
+        } else {
+            text = lookup(key + "." + form);
+            if (text === undefined) text = lookup(key + ".many");
+            if (text === undefined) text = lookup(key + ".one");
+            if (text === undefined) return key;
         }
+        return fill(text, Object.assign({ n: formatNumber(n) }, values));
+    }
+
+    // A translated piece of HTML that core re-translates by itself when the language changes:
+    // i18nHTML("quiz.q.next", "qz-label") -> <span class="qz-label" data-i18n="quiz.q.next">Next question</span>
+    function i18nHTML(key, className, tag) {
+        tag = tag || "span";
+        return "<" + tag + (className ? ' class="' + className + '"' : "") + ' data-i18n="' + key + '">' + t(key) + "</" + tag + ">";
+    }
+
+    // ----- Numbers and dates, written the local way -----
+    const formatters = {};
+
+    function formatter(kind, options) {
+        const id = kind + state.lang + JSON.stringify(options);
+        if (!formatters[id]) {
+            formatters[id] = kind === "date"
+                ? new Intl.DateTimeFormat(LOCALES[state.lang], options)
+                : new Intl.NumberFormat(LOCALES[state.lang], options);
+        }
+        return formatters[id];
+    }
+
+    // 1280.5 -> "1,280.5" in English, "1 280,5" in Russian. Negative numbers get a real minus "−".
+    // options (or just a number = the decimals):
+    //   digits     exact number of decimals (otherwise up to maxDigits, which is 3)
+    //   grouping   false: never "1,280"; "min2": only from 10,000 on
+    //   compact    true: "1.2M" / "1,2 млн"
+    //   minus      false: keep the plain "-"
+    function formatNumber(value, options) {
+        const settings = typeof options === "number" ? { digits: options } : (options || {});
+        let number = Number(value);
+        if (!isFinite(number)) return String(value);
+
+        // Fast path: whole numbers below 1000 look the same in both languages ("−42"), and the
+        // page's first Intl formatter is slow to make (about 45 ms on a slow phone)
+        if (Number.isInteger(number) && Math.abs(number) < 1000 && !settings.compact && !settings.digits) {
+            const text = String(number);
+            return settings.minus === false ? text : text.replace("-", "−");
+        }
+
+        const intl = {};
+        if (settings.compact) {
+            intl.notation = "compact";
+            intl.maximumFractionDigits = settings.digits === undefined ? 1 : settings.digits;
+        } else if (settings.digits !== undefined) {
+            intl.minimumFractionDigits = settings.digits;
+            intl.maximumFractionDigits = settings.digits;
+        } else {
+            intl.maximumFractionDigits = settings.maxDigits === undefined ? 3 : settings.maxDigits;
+        }
+        // A number that rounds to zero must not show as "−0"
+        if (Math.abs(number) < 0.5 * Math.pow(10, -intl.maximumFractionDigits)) number = 0;
+        if (settings.grouping === false || (settings.grouping === "min2" && Math.abs(number) < 10000)) {
+            intl.useGrouping = false;
+        }
+
+        const text = formatter("number", intl).format(number);
+        return settings.minus === false ? text : text.replace("-", "−");
+    }
+
+    // 0.25 -> "25%". A small share above zero shows as "<1%" (small: false turns that off).
+    function formatPercent(share, options) {
+        const settings = options || {};
+        if (settings.small !== false && share > 0 && share < 0.01) return "<1%";
+        return formatNumber(share * 100, { digits: settings.digits || 0, grouping: false }) + "%";
+    }
+
+    // A date: "27 October 2026" / "27 октября 2026 г." A date that isn't one
+    // (new Date("soon"), NaN) gives "" instead of an error. No date at all: now.
+    function formatDate(date, options) {
+        const time = date === undefined ? Date.now() : Number(date);
+        if (!isFinite(time)) return "";
+        return formatter("date", options || { day: "numeric", month: "long", year: "numeric" }).format(time);
+    }
+
+    // ----- Typed with the other keyboard layout -----
+    // switchLayout(text) gives the letters of the same keys in the other layout, so a search
+    // that finds nothing can try again: "ntcn" -> "тест", "ьщвуд" -> "model".
+    // Pass lower-case text. Other characters (digits, spaces, "?") stay as they are.
+    const LAYOUT_EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`";
+    const LAYOUT_RU = "йцукенгшщзхъфывапролджэячсмитьбюё";
+
+    function switchLayout(text) {
+        return String(text).split("").map(function (char) {
+            let index = LAYOUT_EN.indexOf(char);
+            if (index !== -1) return LAYOUT_RU.charAt(index);
+            index = LAYOUT_RU.indexOf(char);
+            return index !== -1 ? LAYOUT_EN.charAt(index) : char;
+        }).join("");
+    }
+
+    // ----- Writing only what changed (A.dom.setText / setAttr / setHidden) -----
+    // Writing the same text, attribute or hidden state again still makes the browser
+    // redo work (styles, layout), for nothing. These touch the page only on a real change.
+    //     A.dom.setText(counter, A.format.number(n));    // plain text, never HTML
+    //     A.dom.setAttr(button, "aria-pressed", String(on));
+    //     A.dom.setHidden(emptyMessage, results.length > 0);
+    function setText(element, text) {
+        text = String(text);
+        if (element.textContent !== text) element.textContent = text;
+    }
+
+    function setAttr(element, name, value) {
+        value = String(value);
+        if (element.getAttribute(name) !== value) element.setAttribute(name, value);
+    }
+
+    function setHidden(element, hidden) {
+        hidden = Boolean(hidden);
+        if (element.hidden !== hidden) element.hidden = hidden;
+    }
+
+    // ----- Translating the page -----
+    // Puts a translated text into an element, only when it really changes. The texts
+    // are our own and may contain simple HTML (like <strong>); plain texts are
+    // compared and set as text, which is much faster than HTML.
+    function writeTranslation(element, text) {
+        if (text.indexOf("<") === -1 && text.indexOf("&") === -1) {
+            if (element.firstElementChild || element.textContent !== text) element.textContent = text;
+        } else if (element.innerHTML !== text) {
+            element.innerHTML = text;
+        }
+    }
+
+    // The text of a data-i18n element, with its {placeholders} filled in. With
+    // data-i18n-plural="name" it is the plural form that suits the text value "name".
+    function elementText(element, key) {
+        const countName = element.getAttribute("data-i18n-plural");
+        const count = countName ? Number(textValue(countName)) : NaN;
+        if (isFinite(count)) {
+            const forms = plural(key, count);
+            if (forms !== key) return forms;
+        }
+        const text = lookup(key);
+        return text === undefined ? undefined : fill(text);
+    }
+
+    // Updates every element with data-i18n="key" (its content)
+    // and data-i18n-attr="aria-label:key,placeholder:key" (its attributes).
+    function applyTranslations(scope) {
+        scope = scope || document;
+
+        scope.querySelectorAll("[data-i18n]").forEach(function (element) {
+            const text = elementText(element, element.getAttribute("data-i18n"));
+            if (text !== undefined) writeTranslation(element, text);
+        });
+
+        scope.querySelectorAll("[data-i18n-attr]").forEach(function (element) {
+            element.getAttribute("data-i18n-attr").split(",").forEach(function (pair) {
+                const parts = pair.split(":");
+                if (parts.length !== 2) return;
+                setAttr(element, parts[0].trim(), t(parts[1].trim()));
+            });
+        });
+    }
+
+    function setLanguage(lang) {
+        if (LANGUAGES.indexOf(lang) === -1) return;
+        const changed = lang !== state.lang;
+        state.lang = lang;
+        storage.set("language", lang);
+        // Writing the same value would still make the browser restyle the whole page
+        if (root.lang !== lang) root.lang = lang;
+        applyTranslations(document);
+
+        // The browser tab title and the page description follow the language too
+        document.title = t("core.pageTitle");
+        const description = document.querySelector('meta[name="description"]');
+        if (description) description.setAttribute("content", t("core.pageDescription"));
+
+        const button = document.getElementById("language-toggle");
+        if (button) button.textContent = lang === "en" ? "RU" : "EN";
+
+        // Features redraw their texts. At start-up nothing changed, so nothing is sent:
+        // every feature already drew itself in the saved language.
+        if (changed) emit("language", { lang: lang });
+    }
+
+    /* =========================================================
+       4. THEME
+       ========================================================= */
+    // The colour of the browser's address bar on phones. Both colours are
+    // written once, on <meta name="theme-color" data-dark data-light> in index.html.
+    function updateThemeMeta() {
+        const meta = document.querySelector('meta[name="theme-color"]');
+        const color = meta && meta.getAttribute("data-" + state.theme);
+        if (color) meta.setAttribute("content", color);
+    }
+
+    function setTheme(theme) {
+        if (theme !== "light" && theme !== "dark") return;
+        const changed = theme !== state.theme;
+        state.theme = theme;
+        storage.set("theme", theme);
+        if (changed && motionOK()) {
+            // Only the page background fades to the new theme. The class "theme-switching"
+            // (style.css) turns every other transition off while the browser works out the
+            // new colours, or about a thousand buttons, links and cards would each fade.
+            root.classList.add("theme-switching");
+            root.setAttribute("data-theme", theme);
+            void getComputedStyle(root).color;      // work out the new colours now
+            root.classList.remove("theme-switching");
+        } else {
+            root.setAttribute("data-theme", theme);
+        }
+        updateThemeMeta();
+        if (changed) emit("theme", { theme: theme });
+    }
+
+    /* =========================================================
+       5. MOTION
+       Animations run only when motion.ok(): the device does not ask
+       for reduced motion AND calm mode (our own switch) is off.
+       <html> gets the class "fx-calm" in calm mode and "fx-motion-off"
+       whenever animations should stop, so the CSS can follow. (The script
+       in the <head> of index.html sets them first, before the page is drawn.)
+       ========================================================= */
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    storage.migrate("effects.calm", "motion.calm");   // the old name of the setting
+    let calm = storage.get("motion.calm", false) === true;
+
+    function motionOK() {
+        return !calm && !reducedMotionQuery.matches;
+    }
+
+    function updateMotionClasses() {
+        root.classList.toggle("fx-calm", calm);
+        root.classList.toggle("fx-motion-off", !motionOK());
+    }
+
+    function motionChanged() {
+        updateMotionClasses();
+        emit("motion", { ok: motionOK(), calm: calm, reduced: reducedMotionQuery.matches });
+    }
+
+    function setCalm(value) {
+        value = Boolean(value);
+        if (value === calm) return;
+        calm = value;
+        storage.set("motion.calm", calm);
+        motionChanged();
+    }
+
+    const motion = {
+        ok: motionOK,
+        get reduced() { return reducedMotionQuery.matches; },
+        get calm() { return calm; },
+        setCalm: setCalm,
+        toggleCalm: function () {
+            setCalm(!calm);
+            return calm;
+        },
+        onChange: function (callback) { return on("motion", callback); },
+        // The site's easing curve, for animations started from JavaScript
+        get ease() { return cssVar("--ease"); }
+    };
+
+    // ----- Numbers that count up -----
+    // countUp(element, from, to, duration, options) counts the number shown in "element"
+    // from "from" to "to" in "duration" milliseconds: fast at first, then slowing down.
+    //     A.countUp(scoreElement, 0, 120, 900);
+    // On every animation frame it writes A.format.number(Math.round(value)). Options:
+    //     format(value)    returns the text to show instead (decimals, a "%" sign...)
+    //     ease(progress)   another curve from 0..1 to 0..1 (default A.util.easeOut)
+    //     done()           runs once, when the number has arrived
+    // With animations off (A.motion.ok() is false, or turns false meanwhile) the end
+    // value is written at once. A new count-up on the same element replaces the running
+    // one. When the element has left the page, the count-up ends by itself.
+    // Returns { finish(), stop(), value, running }:
+    //     finish()   jumps to the end value and runs done (if it hasn't run yet)
+    //     stop()     stops where it is, without done
+    //     value      the number it has reached so far (not rounded)
+    //     running    true while it is still counting (a redraw can leave the number alone then)
+    const runningCounts = new Map();     // element -> its count-up
+
+    function countUp(element, from, to, duration, options) {
+        const settings = options || {};
+        const format = settings.format || function (value) { return formatNumber(Math.round(value)); };
+        const ease = settings.ease || util.easeOut;
+        const start = performance.now();
+        let frame = 0;
+        let ended = false;
+
+        const counter = {
+            value: from,
+            get running() { return !ended; },
+            finish: function () {
+                if (ended) return;
+                stop();
+                write(to);
+                if (settings.done) settings.done();
+            },
+            stop: stop
+        };
+
+        function write(value) {
+            counter.value = value;
+            // Only a real change is written: the page then has nothing new to lay out
+            setText(element, format(value));
+        }
+
+        function stop() {
+            ended = true;
+            cancelAnimationFrame(frame);
+            if (runningCounts.get(element) === counter) runningCounts.delete(element);
+        }
+
+        function step(now) {
+            // (the frame's time can be a hair earlier than "start": progress stays at 0 then)
+            const progress = util.clamp((now - start) / duration, 0, 1);
+            if (progress >= 1 || !element.isConnected) {
+                counter.finish();
+                return;
+            }
+            write(util.lerp(from, to, ease(progress)));
+            frame = requestAnimationFrame(step);
+        }
+
+        const previous = runningCounts.get(element);
+        if (previous) previous.stop();
+
+        if (!motionOK() || !(duration > 0) || from === to) {
+            counter.finish();
+        } else {
+            runningCounts.set(element, counter);
+            frame = requestAnimationFrame(step);
+        }
+        return counter;
+    }
+
+    // Animations switched off (calm mode): every number that is counting jumps to its end
+    on("motion", function (detail) {
+        if (!detail.ok) runningCounts.forEach(function (counter) { counter.finish(); });
     });
 
-    root.querySelectorAll("[data-i18n-attr]").forEach(function (element) {
-        element.getAttribute("data-i18n-attr").split(",").forEach(function (pair) {
-            const parts = pair.split(":");
-            if (parts.length === 2) {
-                const name = parts[0].trim();
-                const text = t(parts[1].trim());
-                if (element.getAttribute(name) !== text) element.setAttribute(name, text);
+    /* =========================================================
+       6. HELPERS
+       ========================================================= */
+    const util = {
+        clamp: function (value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        },
+
+        lerp: function (from, to, amount) {
+            return from + (to - from) * amount;
+        },
+
+        // An animation curve: fast at first, then gently slowing down (a cubic "ease-out").
+        // progress 0..1 -> 0..1: easeOut(0) = 0, easeOut(0.5) = 0.875, easeOut(1) = 1
+        // Example: lerp(from, to, easeOut(progress)) moves a value from "from" to "to".
+        easeOut: function (progress) {
+            const p = util.clamp(progress, 0, 1);
+            return 1 - Math.pow(1 - p, 3);
+        },
+
+        // A number from min up to max, with decimals (max itself never comes out).
+        // Example: random(0.62, 0.92) -> 0.7731...   For whole numbers use randomInt.
+        random: function (min, max) {
+            return min + Math.random() * (max - min);
+        },
+
+        // A whole number from min to max (both included)
+        randomInt: function (min, max) {
+            return min + Math.floor(Math.random() * (max - min + 1));
+        },
+
+        pick: function (list) {
+            return list[Math.floor(Math.random() * list.length)];
+        },
+
+        // A shuffled copy of a list (the Fisher–Yates shuffle)
+        shuffle: function (list) {
+            const copy = list.slice();
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const temp = copy[i];
+                copy[i] = copy[j];
+                copy[j] = temp;
+            }
+            return copy;
+        },
+
+        // A random position in a list of weights: [1, 3] returns 1 three times as often as 0
+        sampleWeighted: function (weights) {
+            let total = 0;
+            weights.forEach(function (weight) { total += Math.max(0, weight); });
+            let roll = Math.random() * total;
+            let last = 0;
+            for (let i = 0; i < weights.length; i++) {
+                if (weights[i] <= 0) continue;
+                last = i;
+                roll -= weights[i];
+                if (roll <= 0) return i;
+            }
+            return last;
+        },
+
+        // Runs a function once things have been quiet for "wait" milliseconds
+        debounce: function (callback, wait) {
+            let timer = 0;
+            return function () {
+                const self = this;
+                const args = arguments;
+                clearTimeout(timer);
+                timer = setTimeout(function () { callback.apply(self, args); }, wait);
+            };
+        },
+
+        // Runs a function at most once per screen frame
+        frameThrottle: function (callback) {
+            let queued = false;
+            return function () {
+                if (queued) return;
+                queued = true;
+                requestAnimationFrame(function () {
+                    queued = false;
+                    callback();
+                });
+            };
+        },
+
+        // Runs a function and gives back what it returns. If it throws, the error is
+        // reported (in the console) and the page goes on with "fallback" instead.
+        // For calls into another feature, which must not break this one:
+        //     const title = A.util.attempt(function () { return A.lessons.title(3); }, "");
+        attempt: attempt
+    };
+
+    // The browser's computed styles are read through one live object, so
+    // features that read many variables in a row don't ask for a new one each time.
+    let computedRoot = null;
+
+    function cssVar(name) {
+        if (!computedRoot) computedRoot = getComputedStyle(root);
+        return computedRoot.getPropertyValue(name).trim();
+    }
+
+    function escapeHTML(text) {
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    // ----- Page elements -----
+    const FOCUSABLE = 'a[href], area[href], button, input:not([type="hidden"]), select, textarea, ' +
+        'iframe, summary, [contenteditable="true"], [tabindex]';
+
+    const dom = {
+        // Everything inside a container that the Tab key can reach, in page order
+        focusable: function (container) {
+            if (!container) return [];
+            return Array.prototype.filter.call(container.querySelectorAll(FOCUSABLE), function (element) {
+                return !element.disabled && element.getAttribute("tabindex") !== "-1" &&
+                    !element.closest("[hidden], [inert]") && element.getClientRects().length > 0;
+            });
+        },
+
+        // Puts the keyboard focus on a section's heading, so the next Tab continues from there
+        focusHeading: function (section) {
+            const target = typeof section === "string" ? document.getElementById(section) : section;
+            const heading = target && target.querySelector("h1, h2");
+            if (!heading) return false;
+            if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
+            heading.focus({ preventScroll: true });
+            return true;
+        },
+
+        // Browsers try to keep what you are looking at in place when content above it
+        // changes ("scroll anchoring"). That would fight our own scrolling, so it is
+        // switched off for a moment while content appears and disappears.
+        pauseScrollAnchoring: function () {
+            root.style.overflowAnchor = "none";
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () { root.style.overflowAnchor = ""; });
+            });
+        },
+
+        // Plays a CSS animation (added with a class) again from the start
+        replay: function (element, className) {
+            if (!element) return;
+            element.classList.remove(className);
+            void element.offsetWidth;
+            element.classList.add(className);
+        },
+
+        // Turns an HTML string into an element
+        fromHTML: function (html) {
+            const box = document.createElement("div");
+            box.innerHTML = String(html).trim();
+            return box.firstElementChild;
+        },
+
+        // Write only what changed (see "Writing only what changed" in part 3)
+        setText: setText,
+        setAttr: setAttr,
+        setHidden: setHidden,
+
+        // Is a key press meant for a text box? True when the element (event.target)
+        // is or sits in a text field, a textarea, a drop-down list or editable text.
+        // Keyboard shortcuts leave those keys alone:
+        //     if (A.dom.isTyping(event.target)) return;   // "/" is just a slash there
+        isTyping: function (element) {
+            if (!element || !element.closest) return false;
+            return Boolean(element.isContentEditable || element.closest("input, textarea, select, [contenteditable='true']"));
+        }
+    };
+
+    // ----- Buttons that need a second press -----
+    // For a button that loses something ("Reset progress", "Quit"): the first press only
+    // arms it (the feature shows "Sure?"), a second press within a few seconds confirms.
+    // The second click of a double-click (or double tap) and a held-down Enter key are not
+    // a second press, so nothing is lost by accident.
+    //   const reset = A.confirmPress(button, {
+    //       onArm: function () { paint(); A.announce(t("lessons.hud.resetAsk")); },
+    //       onDisarm: paint,             // after the wait, after disarm(), and just before onConfirm
+    //       onConfirm: resetProgress,
+    //       enabled: function () { return !busy; },   // optional: presses are ignored while false
+    //       timeout: 4000                // optional: how long it stays armed (ms)
+    //   });
+    //   reset.armed      true between the two presses (paint the button from it)
+    //   reset.disarm()   back to the first state, e.g. when the screen changes
+    // A button that has left the page gets no more calls.
+    const CONFIRM_TIME = 4000;
+
+    function confirmPress(button, options) {
+        const settings = options || {};
+        let armed = false;
+        let timer = 0;
+
+        function disarm() {
+            clearTimeout(timer);
+            if (!armed) return;
+            armed = false;
+            if (settings.onDisarm && button.isConnected) settings.onDisarm();
+        }
+
+        button.addEventListener("click", function (event) {
+            if (settings.enabled && !settings.enabled()) return;
+            if (!armed) {
+                armed = true;
+                timer = setTimeout(disarm, settings.timeout || CONFIRM_TIME);
+                if (settings.onArm) settings.onArm(event);
+                return;
+            }
+            if (event.detail > 1) return;   // the second click of a double-click
+            disarm();
+            if (settings.onConfirm) settings.onConfirm(event);
+        });
+
+        // Holding Enter down repeats the click: only a new press counts
+        button.addEventListener("keydown", function (event) {
+            if (event.repeat && event.key === "Enter") event.preventDefault();
+        });
+
+        return {
+            get armed() { return armed; },
+            disarm: disarm
+        };
+    }
+
+    // ----- Colours (for canvas drawings, which can't use CSS variables directly) -----
+    // "#9b6dff", "155, 109, 255" or "rgb(155, 109, 255)" -> [155, 109, 255]
+    function parseColor(value) {
+        value = String(value || "").trim();
+        let match = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(value);
+        if (match) {
+            let hex = match[1];
+            if (hex.length === 3) hex = hex.replace(/./g, "$&$&");
+            return [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)];
+        }
+        match = /(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)/.exec(value);
+        return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+    }
+
+    const colorCache = {};
+
+    const colors = {
+        parse: parseColor,
+
+        // The colour of a CSS variable in the current theme, as [r, g, b]
+        rgb: function (name, fallback) {
+            const id = state.theme + name;
+            if (!(id in colorCache)) colorCache[id] = parseColor(cssVar(name));
+            return colorCache[id] || fallback || [0, 0, 0];
+        },
+
+        rgba: function (color, alpha) {
+            return "rgba(" + Math.round(color[0]) + "," + Math.round(color[1]) + "," + Math.round(color[2]) + "," + alpha + ")";
+        },
+
+        // Mixes two [r, g, b] colours: amount 0 gives a, 1 gives b, 0.5 the colour halfway.
+        // Returns a new [r, g, b] of whole numbers.
+        // Example: mix([0, 0, 0], [255, 255, 255], 0.5) -> [128, 128, 128]
+        mix: function (a, b, amount) {
+            return [0, 1, 2].map(function (i) { return Math.round(util.lerp(a[i], b[i], amount)); });
+        }
+    };
+
+    // ----- Canvas -----
+    const canvas = {
+        // Sharp on retina screens, but never more than 2x (faster)
+        pixelRatio: function (max) {
+            return Math.min(max || 2, window.devicePixelRatio || 1);
+        },
+
+        // Sizes a canvas for its size on the page (in CSS pixels), clears it,
+        // and returns its 2D context, already scaled: draw in CSS pixels.
+        fit: function (element, width, height, options) {
+            const ratio = canvas.pixelRatio(options && options.maxRatio);
+            element.width = Math.round(width * ratio);
+            element.height = Math.round(height * ratio);
+            const context = element.getContext("2d");
+            if (context) context.setTransform(ratio, 0, 0, ratio, 0, 0);
+            return context;
+        },
+
+        // A rectangle with rounded corners (as a path: fill or stroke it afterwards)
+        roundRect: function (context, x, y, width, height, radius) {
+            const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+            context.beginPath();
+            context.moveTo(x + r, y);
+            context.arcTo(x + width, y, x + width, y + height, r);
+            context.arcTo(x + width, y + height, x, y + height, r);
+            context.arcTo(x, y + height, x, y, r);
+            context.arcTo(x, y, x + width, y, r);
+            context.closePath();
+        }
+    };
+
+    /* =========================================================
+       7. SCREEN: MEDIA QUERIES, VISIBILITY, RESIZING, PIXEL RATIO, LAYOUT
+       ========================================================= */
+    // Screen widths where the layout changes (the same numbers as in the CSS files)
+    const breakpoints = { phone: 640, menu: 960, wide: 1360 };
+
+    // Media queries that several files use
+    const queries = {
+        reducedMotion: "(prefers-reduced-motion: reduce)",
+        finePointer: "(hover: hover) and (pointer: fine)",
+        phone: "(max-width: " + breakpoints.phone + "px)",
+        wideMenu: "(min-width: " + (breakpoints.menu + 1) + "px)"
+    };
+
+    const mediaLists = {};
+
+    // One shared MediaQueryList per query
+    function media(query) {
+        if (!mediaLists[query]) mediaLists[query] = window.matchMedia(query);
+        return mediaLists[query];
+    }
+
+    function listenMedia(list, listener) {
+        if (list.addEventListener) list.addEventListener("change", listener);
+        else if (list.addListener) list.addListener(listener);
+    }
+
+    // Calls callback(matches) now and whenever the query starts or stops matching.
+    // { immediate: false } skips the first call. Returns a function that stops listening.
+    function onMedia(query, callback, options) {
+        const list = typeof query === "string" ? media(query) : query;
+        const listener = function () { callback(list.matches); };
+        listenMedia(list, listener);
+        if (!options || options.immediate !== false) callback(list.matches);
+        return function () {
+            if (list.removeEventListener) list.removeEventListener("change", listener);
+            else if (list.removeListener) list.removeListener(listener);
+        };
+    }
+
+    listenMedia(reducedMotionQuery, motionChanged);
+
+    // ----- Is it on screen? -----
+    // whenVisible(element, callback) calls callback(true / false) once at the start and
+    // whenever the element comes on or goes off screen, or the browser tab is hidden.
+    // { pauseAnimations: true } also sets data-paused on the element while it can't be
+    // seen: one CSS rule then pauses its animations. Returns a function that stops watching.
+    const visibilityObservers = {};
+    const visibilityWatchers = new Set();
+    const hasIntersectionObserver = "IntersectionObserver" in window;
+
+    function updateWatcher(watcher) {
+        const visible = watcher.intersecting && !document.hidden;
+        if (visible === watcher.visible) return;
+        watcher.visible = visible;
+        if (watcher.pause) watcher.element.toggleAttribute("data-paused", !visible);
+        safeCall(watcher.callback, visible);
+    }
+
+    function visibilityObserver(rootMargin, threshold) {
+        const id = rootMargin + "|" + threshold;
+        if (!visibilityObservers[id]) {
+            visibilityObservers[id] = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    visibilityWatchers.forEach(function (watcher) {
+                        if (watcher.element !== entry.target || watcher.observerId !== id) return;
+                        watcher.intersecting = entry.isIntersecting;
+                        updateWatcher(watcher);
+                    });
+                });
+            }, { rootMargin: rootMargin, threshold: threshold });
+            visibilityObservers[id].id = id;
+        }
+        return visibilityObservers[id];
+    }
+
+    // The other watchers of the same element (with the same observer, if one is given)
+    function otherWatchers(watcher, observerId) {
+        return Array.from(visibilityWatchers).filter(function (other) {
+            return other !== watcher && other.element === watcher.element &&
+                (observerId === undefined || other.observerId === observerId);
+        });
+    }
+
+    function whenVisible(element, callback, options) {
+        const settings = options || {};
+        const watcher = {
+            element: element,
+            callback: callback,
+            pause: Boolean(settings.pauseAnimations),
+            intersecting: true,
+            visible: null,
+            observerId: null
+        };
+        visibilityWatchers.add(watcher);
+
+        if (hasIntersectionObserver) {
+            const observer = visibilityObserver(settings.rootMargin || "0px", settings.threshold || 0);
+            watcher.observerId = observer.id;
+            watcher.observer = observer;
+            // The observer reports the first state by itself, but only for an element it
+            // doesn't watch yet. For one it already watches, starting again makes it report
+            // once more (the other watchers get the same state, so nothing changes for them).
+            if (otherWatchers(watcher, observer.id).length) observer.unobserve(element);
+            observer.observe(element);
+        } else {
+            updateWatcher(watcher);          // old browsers: always "on screen"
+        }
+
+        return function () {
+            visibilityWatchers.delete(watcher);
+            const others = otherWatchers(watcher);
+            if (watcher.pause) {
+                // Another watcher that pauses this element decides from now on
+                const pauser = others.find(function (other) { return other.pause && other.visible !== null; });
+                element.toggleAttribute("data-paused", Boolean(pauser && !pauser.visible));
+            }
+            const stillWatched = others.some(function (other) { return other.observerId === watcher.observerId; });
+            if (watcher.observer && !stillWatched) watcher.observer.unobserve(element);
+        };
+    }
+
+    document.addEventListener("visibilitychange", function () {
+        visibilityWatchers.forEach(updateWatcher);
+    });
+
+    // ----- Resizing -----
+    // onResize(callback) calls callback once per frame after the window changed size.
+    // { viewport: true } also follows the visible part of the screen on phones
+    // (pinch zoom, the on-screen keyboard). Returns a function that stops listening.
+    const resizeCallbacks = new Set();
+    const viewportCallbacks = new Set();
+    let resizeQueued = false;
+    let viewportChanged = false;
+
+    function runResize() {
+        resizeQueued = false;
+        const withViewport = viewportChanged;
+        viewportChanged = false;
+        resizeCallbacks.forEach(function (callback) { safeCall(callback); });
+        if (withViewport) viewportCallbacks.forEach(function (callback) { safeCall(callback); });
+    }
+
+    function queueResize(fromViewport) {
+        if (fromViewport === true) viewportChanged = true;
+        if (resizeQueued) return;
+        resizeQueued = true;
+        requestAnimationFrame(runResize);
+    }
+
+    window.addEventListener("resize", function () { queueResize(true); }, { passive: true });
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", function () { queueResize(true); });
+        window.visualViewport.addEventListener("scroll", function () {
+            viewportChanged = true;
+            if (viewportCallbacks.size) queueResize(true);
+        });
+    }
+
+    function onResize(callback, options) {
+        const set = options && options.viewport ? viewportCallbacks : resizeCallbacks;
+        set.add(callback);
+        return function () { set.delete(callback); };
+    }
+
+    // ----- Sharper (or less sharp) pixels -----
+    // onPixelRatioChange(callback) calls callback(ratio) when the device pixel ratio changes,
+    // for example when the window is moved to a screen with sharper pixels. A canvas then
+    // needs a new backing size, and no resize event tells us, because the window keeps its
+    // size. (Browser zoom changes the ratio too, but it also sends a resize event.)
+    // A media query for the current ratio tells us; it is made again for each new ratio.
+    //     A.onPixelRatioChange(function (ratio) { fitCanvases(); });
+    // Returns a function that stops listening.
+    const ratioCallbacks = new Set();
+    let stopRatioQuery = null;
+
+    function watchPixelRatio() {
+        stopRatioQuery = onMedia("(resolution: " + (window.devicePixelRatio || 1) + "dppx)", function () {
+            stopRatioQuery();
+            watchPixelRatio();
+            const ratio = window.devicePixelRatio || 1;
+            ratioCallbacks.forEach(function (callback) { safeCall(callback, ratio); });
+        }, { immediate: false });
+    }
+
+    function onPixelRatioChange(callback) {
+        ratioCallbacks.add(callback);
+        if (!stopRatioQuery) watchPixelRatio();
+        return function () {
+            ratioCallbacks.delete(callback);
+            if (ratioCallbacks.size || !stopRatioQuery) return;
+            stopRatioQuery();
+            stopRatioQuery = null;
+        };
+    }
+
+    // ----- Sizes from the CSS -----
+    const layout = {
+        // A CSS length variable as a number of pixels: px("--nav-height", 76) -> 76
+        px: function (name, fallback) {
+            const value = parseFloat(cssVar(name));
+            return isFinite(value) ? value : fallback;
+        },
+
+        // Height of the menu bar at the top
+        navHeight: function () {
+            return layout.px("--nav-height", 76);
+        }
+    };
+
+    /* =========================================================
+       8. MESSAGES FOR SCREEN READERS
+       announce("3 results") — screen readers read text put into a "live" element.
+       A new message replaces one that is still waiting, and the same text
+       twice is read twice. { region } uses a feature's own live element,
+       { politeness: "assertive" } interrupts what is being read.
+       ========================================================= */
+    const liveRegions = {};
+    const announceTimers = new WeakMap();
+
+    function liveRegion(politeness) {
+        if (!liveRegions[politeness]) {
+            const region = document.createElement("div");
+            region.className = "sr-only";
+            region.setAttribute("aria-live", politeness);
+            region.setAttribute("aria-atomic", "true");
+            region.setAttribute("data-overlay-keep", "");
+            document.body.appendChild(region);
+            liveRegions[politeness] = region;
+        }
+        return liveRegions[politeness];
+    }
+
+    function announce(text, options) {
+        const settings = options || {};
+        const region = settings.region || liveRegion(settings.politeness === "assertive" ? "assertive" : "polite");
+        clearTimeout(announceTimers.get(region));
+        region.textContent = "";
+        announceTimers.set(region, setTimeout(function () {
+            region.textContent = text;
+        }, settings.delay === undefined ? 80 : settings.delay));
+    }
+
+    /* =========================================================
+       9. OVERLAYS (pop-up windows)
+       Every window that opens above the page (the lesson reader, the command
+       palette, the chat, the phone menu) registers here once. Then core does,
+       for all of them in one place:
+       - "modal" windows stop the page from scrolling and make everything else
+         unreachable (inert), so the keyboard and screen readers stay inside;
+         <body> then gets --scrollbar-gap, the width of the scrollbar that went
+         away, so bars with position: fixed can keep their place (style.css .navbar);
+       - Tab goes round inside the top modal window;
+       - Esc closes the window on top (only that one);
+       - A.navigate() and palette commands close the windows in the way first.
+
+       A feature opens and closes its window itself and reports it:
+           const overlay = A.overlays.register("palette", {
+               element: dialogElement,           // the window (or a function returning it)
+               close: function (reason) { ... }  // closes it; reason: "escape", "navigate", "command"...
+           });
+           overlay.opened();             // right after it opened, BEFORE moving the focus in
+           overlay.closed(function () {  // as soon as it starts closing (the animation may go on)
+               openButton.focus();       // gives the focus back, once the page can take it
+           });
+
+       The window comes first, the rest of the page one frame later. Making the
+       page inert (or taking that away) restyles all of its ~3000 elements: about
+       75 ms with the CPU slowed down 4x, like a cheap phone. So core does that
+       work only after the browser has drawn the window (and, on closing, the
+       first frame of its closing animation):
+       - at once: the order of the windows, the Esc and Tab keys, the scroll lock;
+       - one frame later: inert on the rest of the page, or taking it away. Then
+         core calls the function given to closed(), unless another window opened
+         in the meantime or the focus went somewhere else.
+       It all happens at once when a window under the closed one must take the
+       focus, and when the lock changes --scrollbar-gap (a classic scrollbar, as
+       on Windows): that variable restyles the whole page anyway.
+       In that one frame the window's aria-modal="true" keeps screen readers
+       inside and its backdrop takes the clicks. The Tab key, A.navigate() and
+       A.overlays.closeAll() finish the waiting work at once (A.navigate() moves
+       the focus itself, so a waiting closed() function is dropped).
+       So never move the focus back to the page right after closed(): the page
+       may still be inert. Give closed() a function (or the element) instead.
+
+       Options (each may also be a function, read again on every change):
+           modal            true (default): lock scrolling, make the rest inert, trap Tab
+           root             the element that stays reachable (default: element). Give the
+                            whole widget when the window has parts next to it, like a
+                            backdrop you can click or the button that opens it
+           closeOnNavigate  close it when the page goes to another section (default: modal)
+           escape           "anywhere" (default for modal), "inside" (only while the focus
+                            is in root: default for the rest) or false
+           scope            elements that count as "inside" instead of root
+           lockScroll, inert, trapFocus   switch one part of "modal" on or off
+           focusables       function returning the elements Tab goes round
+                            (default: the ones in element)
+           holdFocus        function called when the focus lands outside the top window
+       ========================================================= */
+    const overlayRecords = {};
+    const overlayStack = [];                 // open windows, the top one last
+    const inertByOverlays = new Set();
+    const focusReturns = [];                 // closed() functions waiting for the page
+    let lockedBodyStyle = null;
+    let scrollbarGap = 0;                    // the --scrollbar-gap on <body> now
+    let pageWaiting = false;                 // inert and --scrollbar-gap wait for the next frame
+    let finishPlanned = false;
+    let openedCount = 0;                     // windows opened so far (a newer one cancels older focus returns)
+    let lastOverlayState = "";
+
+    function overlayValue(record, name, fallback) {
+        let value = record.options[name];
+        if (typeof value === "function") value = value();
+        return value === undefined ? fallback : value;
+    }
+
+    function overlayElement(record) {
+        return overlayValue(record, "element", null);
+    }
+
+    function overlayRoot(record) {
+        return overlayValue(record, "root", null) || overlayElement(record);
+    }
+
+    function isModal(record) {
+        return overlayValue(record, "modal", true) !== false;
+    }
+
+    function insideOverlay(record, node) {
+        if (!node || !node.nodeType) return false;
+        const scope = [].concat(overlayValue(record, "scope", null) || overlayRoot(record));
+        return scope.some(function (element) { return Boolean(element) && element.contains(node); });
+    }
+
+    // The page behind a modal window must not scroll. The scrollbar's room is kept,
+    // so the page doesn't jump sideways. This part is cheap, so it happens at once:
+    // the window then appears where it stays.
+    function lockScroll(lock) {
+        const body = document.body;
+        if (lock && !lockedBodyStyle) {
+            const gap = window.innerWidth - root.clientWidth;
+            lockedBodyStyle = { overflow: body.style.overflow, paddingRight: body.style.paddingRight, gap: gap };
+            body.style.overflow = "hidden";
+            if (gap > 0) body.style.paddingRight = gap + "px";
+        } else if (!lock && lockedBodyStyle) {
+            body.style.overflow = lockedBodyStyle.overflow;
+            body.style.paddingRight = lockedBodyStyle.paddingRight;
+            lockedBodyStyle = null;
+        }
+    }
+
+    // Fixed bars (like the menu bar) are outside the body's padding: they keep
+    // their place with the CSS variable --scrollbar-gap, set in the same frame as
+    // the lock. Every element inherits a variable, so changing it restyles the
+    // whole page (inert then comes along in the same restyle, see applyOverlays).
+    function updateScrollbarGap() {
+        const gap = lockedBodyStyle ? lockedBodyStyle.gap : 0;
+        if (gap === scrollbarGap) return;
+        scrollbarGap = gap;
+        if (gap > 0) document.body.style.setProperty("--scrollbar-gap", gap + "px");
+        else document.body.style.removeProperty("--scrollbar-gap");
+    }
+
+    // Some elements must stay reachable under any window: toasts and screen-reader
+    // messages (data-overlay-keep), and of course the windows themselves
+    function staysActive(element, keep) {
+        if (element.hasAttribute("data-overlay-keep") || /^(SCRIPT|STYLE|LINK|TEMPLATE|NOSCRIPT)$/.test(element.tagName)) return true;
+        return keep.some(function (item) { return element === item || element.contains(item); });
+    }
+
+    // Makes everything inert except the windows in "keep" (and their parents).
+    // Only takes inert away from elements that got it here.
+    function updateInert(keep) {
+        const next = new Set();
+        keep.forEach(function (element) {
+            for (let node = element; node.parentElement && node !== document.body; node = node.parentElement) {
+                Array.prototype.forEach.call(node.parentElement.children, function (sibling) {
+                    if (!staysActive(sibling, keep)) next.add(sibling);
+                });
             }
         });
-    });
-}
-
-// ---------- State ----------
-const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-const state = {
-    lang: storage.get("language", "en") === "ru" ? "ru" : "en",
-    theme: document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"
-};
-
-function emit(name, detail) {
-    document.dispatchEvent(new CustomEvent(name, { detail: detail }));
-}
-
-function setLanguage(lang) {
-    if (lang !== "en" && lang !== "ru") return;
-    state.lang = lang;
-    storage.set("language", lang);
-    document.documentElement.lang = lang;
-    applyTranslations(document);
-
-    // The browser tab title and the page description follow the language too
-    document.title = t("core.pageTitle");
-    const description = document.querySelector('meta[name="description"]');
-    if (description) description.setAttribute("content", t("core.pageDescription"));
-
-    const button = document.getElementById("language-toggle");
-    if (button) button.textContent = lang === "en" ? "RU" : "EN";
-
-    emit("aic:language", { lang: lang });
-}
-
-// The colour of the browser's address bar on phones
-function updateThemeMeta() {
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", state.theme === "light" ? "#f4f6fd" : "#060812");
-}
-
-function setTheme(theme) {
-    if (theme !== "light" && theme !== "dark") return;
-    state.theme = theme;
-    storage.set("theme", theme);
-    document.documentElement.setAttribute("data-theme", theme);
-    updateThemeMeta();
-
-    emit("aic:theme", { theme: theme });
-}
-
-// ---------- Commands (used by the Ctrl+K command palette) ----------
-// Features add their own, e.g. "Open lesson: Machine Learning".
-const commands = [];
-
-function registerCommand(command) {
-    // command = { id, group, title: function () { return "text"; }, keywords, run: function () {} }
-    if (!commands.some(function (existing) { return existing.id === command.id; })) {
-        commands.push(command);
-    }
-}
-
-// ---------- Small pop-up messages ----------
-function toast(message, icon) {
-    const stack = document.getElementById("toast-stack");
-    if (!stack) return;
-
-    const item = document.createElement("div");
-    item.className = "toast";
-    item.innerHTML = '<span class="toast-icon" aria-hidden="true"></span><span class="toast-text"></span>';
-    item.querySelector(".toast-icon").textContent = icon || "✨";
-    item.querySelector(".toast-text").textContent = message;
-    stack.appendChild(item);
-
-    setTimeout(function () {
-        item.classList.add("toast-hide");
-        setTimeout(function () { item.remove(); }, 400);
-    }, 3200);
-}
-
-// ---------- Helpers ----------
-// The browser's computed styles are read through one live object, so
-// features that read many variables in a row don't ask for a new one each time.
-let computedRoot = null;
-
-function cssVar(name) {
-    if (!computedRoot) computedRoot = getComputedStyle(document.documentElement);
-    return computedRoot.getPropertyValue(name).trim();
-}
-
-function escapeHTML(text) {
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-}
-
-// Smoothly scroll to a section by its id, e.g. scrollToSection("quiz").
-// The keyboard focus moves to the section's heading, so the next Tab
-// continues from there (and doesn't jump back to where you were).
-function scrollToSection(id) {
-    const target = document.getElementById(id);
-    if (!target) return;
-    target.scrollIntoView({ behavior: reducedMotionQuery.matches ? "auto" : "smooth", block: "start" });
-
-    const heading = target.querySelector("h1, h2");
-    if (heading) {
-        if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
-        heading.focus({ preventScroll: true });
-    }
-}
-
-// ---------- Core translations ----------
-addTranslations({
-    en: {
-        "core.skip": "Skip to content",
-        "core.searchLabel": "Search the site (Ctrl + K)",
-        "core.themeLabel": "Switch light / dark theme",
-        "core.langLabel": "Switch language",
-        "core.menuLabel": "Open menu",
-        "core.menuClose": "Close menu",
-        "core.navMain": "Main menu",
-        "core.navFooter": "Footer links",
-        "core.pageTitle": "AI Compass | Explore Artificial Intelligence",
-        "core.pageDescription": "AI Compass — a free bilingual platform for learning about Artificial Intelligence: lessons, live AI experiments, a quiz, a glossary and more.",
-        "core.toastLight": "Light mode on",
-        "core.toastDark": "Dark mode on",
-        "core.toastLang": "Language: English",
-
-        "nav.lessons": "Lessons",
-        "nav.lab": "AI Lab",
-        "nav.quiz": "Quiz",
-        "nav.glossary": "Glossary",
-        "nav.timeline": "History",
-        "nav.about": "About",
-
-        "hero.label": "YOUR AI JOURNEY STARTS HERE",
-        "hero.titleStart": "Navigate the World of",
-        "hero.titleAccent": "AI",
-        "hero.subtitle": "A free, interactive guide to Artificial Intelligence for",
-        "hero.rotator": "students|teachers|parents|everyone",
-        "hero.ctaLessons": "Start learning",
-        "hero.ctaLab": "Try the AI Lab",
-        "hero.statLessons": "interactive lessons",
-        "hero.statDemos": "live AI experiments",
-        "hero.statQuiz": "quiz questions",
-        "hero.statLanguages": "languages",
-        "hero.scrollHint": "Scroll to the lessons",
-
-        "lessons.label": "LEARN SOMETHING NEW",
-        "lessons.title": "Explore the Basics",
-        "lessons.subtitle": "Six short lessons. Open one, read it, check yourself, and track your progress.",
-
-        "lab.label": "HANDS-ON EXPERIMENTS",
-        "lab.title": "The AI Lab",
-        "lab.subtitle": "Real machine learning, running right here in your browser. Teach a model, test it, and watch it think.",
-
-        "quiz.label": "TEST YOURSELF",
-        "quiz.title": "The AI Challenge",
-        "quiz.subtitle": "Twelve questions. How well do you really know AI?",
-
-        "glossary.label": "SPEAK THE LANGUAGE",
-        "glossary.title": "AI Glossary",
-        "glossary.subtitle": "The key words of Artificial Intelligence, explained simply.",
-
-        "timeline.label": "HOW WE GOT HERE",
-        "timeline.title": "A Short History of AI",
-        "timeline.subtitle": "From a single question in 1950 to the AI in your pocket today.",
-
-        "about.label": "OUR MISSION",
-        "about.title": "About AI Compass",
-        "about.text": "AI Compass is your starting point for exploring the world of Artificial Intelligence. It was made by students as a CAS project, to help anyone understand how AI works, how to use it wisely, and how to think about it critically.",
-        "about.value1Title": "Free for everyone",
-        "about.value1Text": "No sign-up, no ads, no cost. Just open it and learn.",
-        "about.value2Title": "Bilingual",
-        "about.value2Text": "Everything is available in English and Russian.",
-        "about.value3Title": "Learn by doing",
-        "about.value3Text": "Experiments, quizzes and an assistant make ideas stick.",
-
-        "footer.tagline": "Made for curious minds.",
-        "footer.cas": "A student CAS project.",
-        "footer.top": "Back to top ↑",
-
-        "cmd.groupNavigate": "Go to",
-        "cmd.groupActions": "Actions",
-        "cmd.home": "Home",
-        "cmd.toggleTheme": "Switch light / dark theme",
-        "cmd.toggleLang": "Language — switch to Russian"
-    },
-    ru: {
-        "core.skip": "Перейти к содержанию",
-        "core.searchLabel": "Поиск по сайту (Ctrl + K)",
-        "core.themeLabel": "Сменить светлую / тёмную тему",
-        "core.langLabel": "Сменить язык",
-        "core.menuLabel": "Открыть меню",
-        "core.menuClose": "Закрыть меню",
-        "core.navMain": "Главное меню",
-        "core.navFooter": "Ссылки в подвале сайта",
-        "core.pageTitle": "AI Compass | Исследуй искусственный интеллект",
-        "core.pageDescription": "AI Compass — бесплатная платформа на двух языках для знакомства с искусственным интеллектом: уроки, живые ИИ-эксперименты, тест, словарь и многое другое.",
-        "core.toastLight": "Включена светлая тема",
-        "core.toastDark": "Включена тёмная тема",
-        "core.toastLang": "Язык: русский",
-
-        "nav.lessons": "Уроки",
-        "nav.lab": "ИИ-лаборатория",
-        "nav.quiz": "Тест",
-        "nav.glossary": "Словарь",
-        "nav.timeline": "История",
-        "nav.about": "О проекте",
-
-        "hero.label": "ТВОЁ ПУТЕШЕСТВИЕ В МИР ИИ НАЧИНАЕТСЯ ЗДЕСЬ",
-        "hero.titleStart": "Исследуй мир",
-        "hero.titleAccent": "ИИ",
-        "hero.subtitle": "Бесплатный интерактивный путеводитель по искусственному интеллекту для",
-        "hero.rotator": "школьников|учителей|родителей|всех",
-        "hero.ctaLessons": "Начать обучение",
-        "hero.ctaLab": "Открыть ИИ-лабораторию",
-        "hero.statLessons": "интерактивных уроков",
-        "hero.statDemos": "живых ИИ-эксперимента",
-        "hero.statQuiz": "вопросов в тесте",
-        "hero.statLanguages": "языка",
-        "hero.scrollHint": "Прокрутить к урокам",
-
-        "lessons.label": "УЗНАЙ ЧТО-ТО НОВОЕ",
-        "lessons.title": "Изучаем основы",
-        "lessons.subtitle": "Шесть коротких уроков. Открой урок, прочитай, проверь себя и следи за своим прогрессом.",
-
-        "lab.label": "ЭКСПЕРИМЕНТЫ СВОИМИ РУКАМИ",
-        "lab.title": "ИИ-лаборатория",
-        "lab.subtitle": "Настоящее машинное обучение прямо в твоём браузере. Обучи модель, проверь её и посмотри, как она «думает».",
-
-        "quiz.label": "ПРОВЕРЬ СЕБЯ",
-        "quiz.title": "ИИ-испытание",
-        "quiz.subtitle": "Двенадцать вопросов. Насколько хорошо ты знаешь ИИ?",
-
-        "glossary.label": "ГОВОРИ НА ЯЗЫКЕ ИИ",
-        "glossary.title": "Словарь ИИ",
-        "glossary.subtitle": "Главные слова искусственного интеллекта простыми словами.",
-
-        "timeline.label": "КАК МЫ К ЭТОМУ ПРИШЛИ",
-        "timeline.title": "Краткая история ИИ",
-        "timeline.subtitle": "От одного вопроса в 1950 году до ИИ в твоём кармане.",
-
-        "about.label": "НАША МИССИЯ",
-        "about.title": "Об AI Compass",
-        "about.text": "AI Compass — твоя отправная точка для изучения мира искусственного интеллекта. Его создали школьники в рамках проекта CAS, чтобы помочь каждому понять, как работает ИИ, как пользоваться им с умом и как оценивать его критически.",
-        "about.value1Title": "Бесплатно для всех",
-        "about.value1Text": "Без регистрации, рекламы и оплаты. Просто открой и учись.",
-        "about.value2Title": "На двух языках",
-        "about.value2Text": "Всё доступно на английском и русском.",
-        "about.value3Title": "Учись на практике",
-        "about.value3Text": "Эксперименты, тесты и чат-бот помогают лучше запомнить материал.",
-
-        "footer.tagline": "Создано для любознательных умов.",
-        "footer.cas": "Школьный проект CAS.",
-        "footer.top": "Наверх ↑",
-
-        "cmd.groupNavigate": "Перейти",
-        "cmd.groupActions": "Действия",
-        "cmd.home": "Главная",
-        "cmd.toggleTheme": "Сменить светлую / тёмную тему",
-        "cmd.toggleLang": "Язык — переключить на английский"
-    }
-});
-
-// ---------- Public toolkit for the feature files ----------
-window.AICompass = {
-    storage: storage,
-    addTranslations: addTranslations,
-    applyTranslations: applyTranslations,
-    t: t,
-    get lang() { return state.lang; },
-    get theme() { return state.theme; },
-    setLanguage: setLanguage,
-    setTheme: setTheme,
-    toggleLanguage: function () { setLanguage(state.lang === "en" ? "ru" : "en"); },
-    toggleTheme: function () { setTheme(state.theme === "dark" ? "light" : "dark"); },
-    onLanguageChange: function (callback) {
-        document.addEventListener("aic:language", function (event) { callback(event.detail.lang); });
-    },
-    onThemeChange: function (callback) {
-        document.addEventListener("aic:theme", function (event) { callback(event.detail.theme); });
-    },
-    get reducedMotion() { return reducedMotionQuery.matches; },
-    commands: commands,
-    registerCommand: registerCommand,
-    toast: toast,
-    cssVar: cssVar,
-    escapeHTML: escapeHTML,
-    scrollToSection: scrollToSection
-};
-
-// ---------- Built-in commands ----------
-[
-    ["home", "cmd.home", "🏠"],
-    ["lessons", "nav.lessons", "📚"],
-    ["lab", "nav.lab", "🧪"],
-    ["quiz", "nav.quiz", "🏆"],
-    ["glossary", "nav.glossary", "📖"],
-    ["timeline", "nav.timeline", "🕰️"],
-    ["about", "nav.about", "💡"]
-].forEach(function (item) {
-    registerCommand({
-        id: "go-" + item[0],
-        group: "cmd.groupNavigate",
-        icon: item[2],
-        title: function () { return t(item[1]); },
-        keywords: item[0],
-        run: function () { scrollToSection(item[0]); }
-    });
-});
-
-registerCommand({
-    id: "toggle-theme",
-    group: "cmd.groupActions",
-    icon: "🌓",
-    title: function () { return t("cmd.toggleTheme"); },
-    keywords: "theme dark light mode night тема тёмная светлая тёмный светлый ночной режим",
-    run: function () { window.AICompass.toggleTheme(); }
-});
-
-registerCommand({
-    id: "toggle-language",
-    group: "cmd.groupActions",
-    icon: "🌐",
-    title: function () { return t("cmd.toggleLang"); },
-    keywords: "language english russian switch change translate язык русский английский сменить перевод",
-    run: function () { window.AICompass.toggleLanguage(); }
-});
-
-// ---------- Page setup once the HTML is ready ----------
-document.addEventListener("DOMContentLoaded", function () {
-    document.documentElement.classList.add("js");
-    setLanguage(state.lang);
-    updateThemeMeta();
-
-    // Language and theme buttons
-    const languageButton = document.getElementById("language-toggle");
-    if (languageButton) {
-        languageButton.addEventListener("click", function () {
-            window.AICompass.toggleLanguage();
-            toast(t("core.toastLang"), "🌐");
+        inertByOverlays.forEach(function (element) {
+            if (next.has(element)) return;
+            element.inert = false;
+            inertByOverlays.delete(element);
+        });
+        next.forEach(function (element) {
+            if (element.inert) return;
+            element.inert = true;
+            inertByOverlays.add(element);
         });
     }
 
-    const themeButton = document.getElementById("theme-toggle");
-    if (themeButton) {
-        themeButton.addEventListener("click", function () {
-            window.AICompass.toggleTheme();
-            toast(t(state.theme === "light" ? "core.toastLight" : "core.toastDark"), state.theme === "light" ? "☀️" : "🌙");
+    // The windows that stay usable: the top window that shuts out the page, and
+    // every window above it. None when no open window shuts out the page.
+    function windowsToKeep() {
+        const keep = [];
+        for (let i = overlayStack.length - 1; i >= 0; i--) {
+            const record = overlayStack[i];
+            const element = overlayRoot(record);
+            if (element) keep.push(element);
+            if (overlayValue(record, "inert", isModal(record))) return keep;
+        }
+        return [];
+    }
+
+    function applyOverlays() {
+        lockScroll(overlayStack.some(function (record) {
+            return overlayValue(record, "lockScroll", isModal(record));
+        }));
+
+        // Inert waits for the next frame (see the top of this part), except when:
+        // - a window that stays open is inert now (it was under the window that
+        //   closed, or it opens over another one): it must take the focus at once;
+        // - the lock changes --scrollbar-gap: the whole page is restyled anyway,
+        //   and the fixed bars must get the gap in the same frame as the lock;
+        // - the tab is hidden: it draws no frames.
+        pageWaiting = true;
+        const gap = lockedBodyStyle ? lockedBodyStyle.gap : 0;
+        const blocked = windowsToKeep().some(function (element) { return Boolean(element.closest("[inert]")); });
+        if (blocked || gap !== scrollbarGap || document.hidden) finishOverlays();
+        else planFinish();
+
+        const detail = {
+            top: overlays.top(),
+            modal: overlays.hasModal(),
+            open: overlayStack.map(function (record) { return record.id; })
+        };
+        const signature = JSON.stringify(detail);
+        if (signature !== lastOverlayState) {
+            lastOverlayState = signature;
+            emit("overlay", detail);
+        }
+    }
+
+    // After the next frame is drawn: requestAnimationFrame runs just before the
+    // browser draws, the timeout right after it
+    function planFinish() {
+        if (finishPlanned) return;
+        finishPlanned = true;
+        requestAnimationFrame(function () {
+            setTimeout(function () {
+                finishPlanned = false;
+                finishOverlays();
+            }, 0);
         });
     }
 
-    // Mobile menu
-    const menuButton = document.getElementById("menu-toggle");
-    const navLinks = document.getElementById("nav-links");
-    const navbar = document.getElementById("navbar");
-
-    function isMenuOpen() {
-        return Boolean(menuButton) && menuButton.getAttribute("aria-expanded") === "true";
+    // The waiting work: inert, --scrollbar-gap, then the focus going back
+    function finishOverlays() {
+        if (pageWaiting) {
+            pageWaiting = false;
+            updateInert(windowsToKeep());
+            updateScrollbarGap();
+        }
+        focusReturns.splice(0).forEach(function (item) {
+            if (item.opened !== openedCount) return;          // a newer window has the focus
+            const active = document.activeElement;
+            const lost = !active || active === document.body || (item.root && item.root.contains(active));
+            if (!lost) return;                                 // the focus went somewhere on purpose
+            if (typeof item.focus === "function") safeCall(item.focus);
+            else if (item.focus && typeof item.focus.focus === "function") item.focus.focus({ preventScroll: true });
+        });
     }
 
-    // The button says "Open menu" or "Close menu"
-    function updateMenuLabel() {
-        if (!menuButton) return;
-        const key = isMenuOpen() ? "core.menuClose" : "core.menuLabel";
-        menuButton.setAttribute("data-i18n-attr", "aria-label:" + key);
-        menuButton.setAttribute("aria-label", t(key));
+    function overlayOpened(id) {
+        const record = overlayRecords[id];
+        if (!record) return;
+        const index = overlayStack.indexOf(record);
+        if (index !== -1) overlayStack.splice(index, 1);
+        overlayStack.push(record);
+        openedCount++;
+        applyOverlays();
     }
 
-    function openMenu() {
-        menuButton.setAttribute("aria-expanded", "true");
-        navbar.classList.add("menu-open");
-        updateMenuLabel();
+    // focusBack: a function that gives the focus back (or the element that gets it).
+    // Core calls it once the page behind can take the focus (see the top of this part).
+    function overlayClosed(id, focusBack) {
+        const record = overlayRecords[id];
+        const index = overlayStack.indexOf(record);
+        if (index === -1) return;
+        overlayStack.splice(index, 1);
+        if (focusBack) focusReturns.push({ focus: focusBack, root: overlayRoot(record), opened: openedCount });
+        applyOverlays();
     }
 
-    function closeMenu() {
-        if (!isMenuOpen()) return;
-        // If the focus was on a link that is about to hide, give it back to the button
-        const focusWasInside = navLinks.contains(document.activeElement);
-        menuButton.setAttribute("aria-expanded", "false");
-        navbar.classList.remove("menu-open");
-        updateMenuLabel();
-        if (focusWasInside) menuButton.focus({ preventScroll: true });
+    function closeOverlay(id, reason) {
+        const record = overlayRecords[id];
+        if (!record || overlayStack.indexOf(record) === -1) return false;
+        safeCall(record.options.close, reason || "close");
+        // A window that forgot to report back is still taken off the stack,
+        // so the page never stays locked
+        overlayClosed(id);
+        return true;
     }
 
-    if (menuButton && navLinks && navbar) {
+    // Closes open windows, top first. options:
+    //   except      an id or a list of ids to keep open
+    //   navigating  true: only windows with closeOnNavigate
+    //   reason      passed to each window's close()
+    // The caller usually moves on to a place on the page, so the page is
+    // reachable at once afterwards (no waiting for the next frame).
+    function closeAll(options) {
+        const settings = options || {};
+        const keep = [].concat(settings.except || []);
+        let count = 0;
+        overlayStack.slice().reverse().forEach(function (record) {
+            if (keep.indexOf(record.id) !== -1) return;
+            if (settings.navigating && !overlayValue(record, "closeOnNavigate", isModal(record))) return;
+            if (closeOverlay(record.id, settings.reason || "close")) count++;
+        });
+        finishOverlays();
+        return count;
+    }
+
+    function register(id, options) {
+        const record = { id: id, options: Object.assign({}, options) };
+        overlayRecords[id] = record;
+        return {
+            id: id,
+            opened: function () { overlayOpened(id); },
+            closed: function (focusBack) { overlayClosed(id, focusBack); },
+            close: function (reason) { return closeOverlay(id, reason); },
+            // Changes options, or just re-reads them (e.g. after "modal" changed)
+            update: function (changes) {
+                if (changes) Object.assign(record.options, changes);
+                if (overlayStack.indexOf(record) !== -1) applyOverlays();
+            },
+            get isOpen() { return overlayStack.indexOf(record) !== -1; }
+        };
+    }
+
+    const overlays = {
+        register: register,
+        opened: overlayOpened,
+        closed: overlayClosed,
+        close: closeOverlay,
+        closeAll: closeAll,
+        update: function () { applyOverlays(); },
+        isOpen: function (id) { return overlayStack.indexOf(overlayRecords[id]) !== -1; },
+        // The id of the window on top, or null
+        top: function () {
+            return overlayStack.length ? overlayStack[overlayStack.length - 1].id : null;
+        },
+        // Is a modal window open (one that shuts out the page)?
+        hasModal: function () { return overlayStack.some(isModal); },
+        // Is this element (like the target of a key press) inside an open window?
+        contains: function (element) {
+            return overlayStack.some(function (record) { return insideOverlay(record, element); });
+        },
+        onChange: function (callback) { return on("overlay", callback); }
+    };
+
+    // ----- Keys: Esc closes the top window, Tab stays inside a modal one -----
+    function onOverlayEscape(event) {
+        for (let i = overlayStack.length - 1; i >= 0; i--) {
+            const record = overlayStack[i];
+            const mode = overlayValue(record, "escape", isModal(record) ? "anywhere" : "inside");
+            if (mode === "anywhere" || (mode === "inside" && insideOverlay(record, event.target))) {
+                event.preventDefault();
+                event.stopPropagation();
+                closeOverlay(record.id, "escape");
+                return;
+            }
+            if (isModal(record)) return;      // nothing below a modal window gets the key
+        }
+    }
+
+    function onOverlayTab(event) {
+        const record = overlayStack[overlayStack.length - 1];
+        if (!record || !overlayValue(record, "trapFocus", isModal(record))) return;
+        const element = overlayElement(record);
+        if (!element) return;
+        const custom = record.options.focusables;
+        const items = (typeof custom === "function" ? custom() : dom.focusable(element)).filter(Boolean);
+        if (!items.length) return;
+
+        const first = items[0];
+        const last = items[items.length - 1];
+        const active = document.activeElement;
+        if (!element.contains(active)) {
+            event.preventDefault();
+            (event.shiftKey ? last : first).focus();
+        } else if (event.shiftKey && active === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && active === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    }
+
+    document.addEventListener("keydown", function (event) {
+        // Tab must find the page as the windows say (it may be one frame behind)
+        if (event.key === "Tab") finishOverlays();
+        if (!overlayStack.length || event.defaultPrevented || event.isComposing) return;
+        if (event.key === "Escape" || event.key === "Esc") onOverlayEscape(event);
+        else if (event.key === "Tab" && !event.altKey && !event.ctrlKey && !event.metaKey) onOverlayTab(event);
+    }, true);
+
+    // If the focus somehow lands outside the top window, that window can take it back
+    document.addEventListener("focusin", function (event) {
+        const record = overlayStack[overlayStack.length - 1];
+        if (!record || typeof record.options.holdFocus !== "function") return;
+        if (insideOverlay(record, event.target)) return;
+        record.options.holdFocus(event);
+    });
+
+    /* =========================================================
+       10. NAVIGATION: SECTIONS, A.navigate, SCROLLING, PARTS BUILT WHEN NEEDED,
+           AND THE MENU BAR
+       ========================================================= */
+    // The sections of the page, in order: their id, the name (a translation key) and an icon
+    const SECTIONS = [
+        { id: "home", key: "cmd.home", icon: "🏠" },
+        { id: "lessons", key: "nav.lessons", icon: "📚" },
+        { id: "lab", key: "nav.lab", icon: "🧪" },
+        { id: "quiz", key: "nav.quiz", icon: "🏆" },
+        { id: "glossary", key: "nav.glossary", icon: "📖" },
+        { id: "timeline", key: "nav.timeline", icon: "🕰️" },
+        { id: "about", key: "nav.about", icon: "💡" }
+    ].map(Object.freeze);
+    Object.freeze(SECTIONS);
+
+    // Goes to a section: closes the windows in the way, scrolls there (smoothly
+    // when animations are on) and moves the keyboard focus to its heading, so the
+    // next Tab continues from there. options:
+    //   focus: false          leave the focus alone (the caller moves it)
+    //   keepOverlays: true    leave the windows open (or a list of ids to keep)
+    //   block: "center"       where the section ends up (default: at the top)
+    function navigate(id, options) {
+        const settings = options || {};
+        const target = document.getElementById(id);
+        if (!target) return false;
+        // The place we go to takes the focus, so a window closed just before
+        // doesn't give it back to its button first (see overlays, part 9)
+        if (settings.focus !== false) focusReturns.length = 0;
+        if (settings.keepOverlays !== true) {
+            closeAll({ reason: "navigate", navigating: true, except: settings.keepOverlays });
+        }
+        finishOverlays();     // the page must be reachable now, not one frame later
+        buildParts(target);
+        target.scrollIntoView({ behavior: motionOK() ? "smooth" : "auto", block: settings.block || "start" });
+        if (settings.focus !== false) dom.focusHeading(target);
+        return true;
+    }
+
+    // ----- Scrolling: one pipeline for the whole page -----
+    // Everything that follows the scroll position runs in ONE animation frame, in two steps:
+    // 1. onLayout(measure): only after the page changed size (resize, fonts, content
+    //    appearing). Read positions here (getBoundingClientRect) and keep them.
+    // 2. onScroll(update): every frame the page scrolls. Only write here, using the
+    //    numbers it gets and the positions kept in step 1: reading the page here
+    //    would make the browser lay it out again in every frame.
+    // update(info) gets:
+    //   y, viewport, max   the scroll position, the window height, the biggest scroll position
+    //   progress           0..1, how far down the page you are
+    //   atBottom           true at the very end of the page
+    //   section, index     the current section: the last one whose top passed the
+    //                      "reading line" 40% down the screen (the last one at the bottom)
+    //   fill               0..1, how far along the sections you are (between two of them too)
+    // onSection(callback) only runs when the current section changes: callback({ id, index }).
+    const READING_LINE = 0.4;
+    const scrolling = {
+        queued: false,
+        layoutDirty: true,
+        y: 0,
+        viewport: 0,
+        max: 0,
+        sections: [],               // { id, element, top } with top = position on the page
+        info: null,
+        layoutCallbacks: new Set(),
+        scrollCallbacks: new Set(),
+        navbar: null,
+        links: []
+    };
+
+    function queueScrollFrame() {
+        if (scrolling.queued) return;
+        scrolling.queued = true;
+        requestAnimationFrame(scrollFrame);
+    }
+
+    // The page may have changed size: measure again in the next frame
+    function layoutChanged() {
+        scrolling.layoutDirty = true;
+        queueScrollFrame();
+    }
+
+    function measureLayout() {
+        scrolling.layoutDirty = false;
+        const y = window.scrollY;
+        scrolling.y = y;
+        scrolling.viewport = window.innerHeight;
+        scrolling.max = Math.max(0, root.scrollHeight - scrolling.viewport);
+        scrolling.sections.forEach(function (section) {
+            section.top = section.element.getBoundingClientRect().top + y;
+        });
+        scrolling.layoutCallbacks.forEach(function (callback) { safeCall(callback); });
+    }
+
+    function scrollFrame() {
+        scrolling.queued = false;
+        if (scrolling.layoutDirty) measureLayout();
+
+        const y = scrolling.y;
+        const max = scrolling.max;
+        const atBottom = max - y < 4;
+        if (scrolling.navbar) scrolling.navbar.classList.toggle("scrolled", y > 10);
+
+        const sections = scrolling.sections;
+        let index = 0;
+        let fill = 1;
+        if (sections.length) {
+            const line = y + scrolling.viewport * READING_LINE;
+            sections.forEach(function (section, i) {
+                if (section.top <= line) index = i;
+            });
+            if (atBottom) {
+                index = sections.length - 1;
+            } else if (sections.length > 1) {
+                const next = sections[index + 1];
+                const part = next ? util.clamp((line - sections[index].top) / Math.max(1, next.top - sections[index].top), 0, 1) : 0;
+                fill = (index + part) / (sections.length - 1);
+            }
+        }
+
+        const previous = scrolling.info;
+        const info = {
+            y: y,
+            viewport: scrolling.viewport,
+            max: max,
+            progress: max > 0 ? util.clamp(y / max, 0, 1) : 0,
+            atBottom: atBottom,
+            section: sections.length ? sections[index].id : null,
+            index: index,
+            fill: util.clamp(fill, 0, 1)
+        };
+        scrolling.info = info;
+
+        if (!previous || previous.section !== info.section) {
+            scrolling.links.forEach(function (link) {
+                link.classList.toggle("active", link.getAttribute("href") === "#" + info.section);
+            });
+            if (info.section) emit("section", { id: info.section, index: index });
+        }
+        scrolling.scrollCallbacks.forEach(function (callback) { safeCall(callback, info); });
+    }
+
+    function startScrolling() {
+        scrolling.sections = SECTIONS.map(function (section) {
+            return { id: section.id, element: document.getElementById(section.id), top: 0 };
+        }).filter(function (section) { return section.element; });
+        scrolling.navbar = document.getElementById("navbar");
+        const navLinks = document.getElementById("nav-links");
+        scrolling.links = navLinks ? Array.prototype.slice.call(navLinks.querySelectorAll("a")) : [];
+
+        window.addEventListener("scroll", function () {
+            // Read here, before anything is drawn: the page is laid out already
+            scrolling.y = window.scrollY;
+            queueScrollFrame();
+        }, { passive: true });
+        resizeCallbacks.add(layoutChanged);
+        if ("ResizeObserver" in window) {
+            new ResizeObserver(layoutChanged).observe(document.body);   // the page got taller or shorter
+        }
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutChanged);
+        window.addEventListener("load", layoutChanged);
+        // The first frame measures everything
+        layoutChanged();
+    }
+
+    function onLayout(callback) {
+        scrolling.layoutCallbacks.add(callback);
+        layoutChanged();
+        return function () { scrolling.layoutCallbacks.delete(callback); };
+    }
+
+    function onScroll(callback) {
+        scrolling.scrollCallbacks.add(callback);
+        if (scrolling.info) queueScrollFrame();
+        return function () { scrolling.scrollCallbacks.delete(callback); };
+    }
+
+    function onSection(callback) {
+        return on("section", callback);
+    }
+
+    // ----- Building a part of the page only when it is needed -----
+    // Parts far down the page are built when they come near the screen, or when the
+    // browser has a quiet moment after the page loaded, or when ensure() is called
+    // (whichever comes first). Returns ensure(): call it before anything that needs
+    // the part to be built (a command, a link to it...). options:
+    //   eager: true     build right away
+    //   margin          how close counts as "near" (default: one and a half screens)
+    // Everything is built at once when the address points inside the page (#lab,
+    // #term-bias...), and the parts above a section are built before jumping to it,
+    // so the browser scrolls to the right place.
+    const IDLE_WAIT_MAX = 2500;         // a "quiet moment" comes at the latest this long after the page loaded
+    const IDLE_FALLBACK = 300;          // (browsers without requestIdleCallback simply wait this long)
+    let pageLoaded = document.readyState === "complete";
+    const afterLoad = [];
+    const waitingParts = new Set();     // { element, ensure } of the parts not built yet
+
+    window.addEventListener("load", function () {
+        pageLoaded = true;
+        afterLoad.splice(0).forEach(function (callback) { callback(); });
+    });
+
+    function whenIdle(callback) {
+        const start = function () {
+            if (window.requestIdleCallback) window.requestIdleCallback(callback, { timeout: IDLE_WAIT_MAX });
+            else setTimeout(callback, IDLE_FALLBACK);
+        };
+        if (pageLoaded) start();
+        else afterLoad.push(start);
+    }
+
+    function whenNeeded(element, init, options) {
+        const settings = options || {};
+        let done = false;
+        let observer = null;
+        const part = { element: element, ensure: ensure };
+
+        function ensure() {
+            if (done) return;
+            done = true;
+            waitingParts.delete(part);
+            if (observer) observer.disconnect();
+            init();
+            layoutChanged();
+        }
+
+        if (settings.eager || !element || !hasIntersectionObserver || location.hash.length > 1) {
+            ensure();
+            return ensure;
+        }
+        waitingParts.add(part);
+        observer = new IntersectionObserver(function (entries) {
+            if (entries.some(function (entry) { return entry.isIntersecting; })) ensure();
+        }, { rootMargin: (settings.margin || "150%") + " 0px" });
+        observer.observe(element);
+        whenIdle(ensure);
+        return ensure;
+    }
+
+    // Builds the parts that are still waiting: all of them, or only the ones above
+    // "target" and inside it (enough to know where target is on the page)
+    function buildParts(target) {
+        waitingParts.forEach(function (part) {
+            const element = part.element;
+            if (!target || target === element || target.contains(element) ||
+                (element.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+                part.ensure();
+            }
+        });
+    }
+
+    // A link to a place on the page (#timeline, #term-bias): build what comes before it first
+    document.addEventListener("click", function (event) {
+        if (!waitingParts.size || !event.target.closest) return;
+        const link = event.target.closest('a[href^="#"]');
+        if (!link) return;
+        let id = link.getAttribute("href").slice(1);
+        try {
+            id = decodeURIComponent(id);
+        } catch (error) {
+            return;
+        }
+        const target = id && document.getElementById(id);
+        if (target) buildParts(target);
+    }, true);
+
+    // ----- The menu on small screens (a window that doesn't shut out the page) -----
+    function setUpMenu() {
+        const menuButton = document.getElementById("menu-toggle");
+        const navLinks = document.getElementById("nav-links");
+        const navbar = document.getElementById("navbar");
+        if (!menuButton || !navLinks || !navbar) return;
+
+        function isOpen() {
+            return menuButton.getAttribute("aria-expanded") === "true";
+        }
+
+        function setOpen(open) {
+            menuButton.setAttribute("aria-expanded", String(open));
+            navbar.classList.toggle("menu-open", open);
+            // The button says "Open menu" or "Close menu"
+            const key = open ? "core.menuClose" : "core.menuLabel";
+            menuButton.setAttribute("data-i18n-attr", "aria-label:" + key);
+            menuButton.setAttribute("aria-label", t(key));
+            if (open) menu.opened();
+            else menu.closed();
+        }
+
+        function closeMenu() {
+            if (!isOpen()) return;
+            // If the focus was on a link that is about to hide, give it back to the button
+            const focusWasInside = navLinks.contains(document.activeElement);
+            setOpen(false);
+            if (focusWasInside) menuButton.focus({ preventScroll: true });
+        }
+
+        const menu = overlays.register("menu", {
+            element: navLinks,
+            scope: [navLinks, menuButton],
+            modal: false,
+            closeOnNavigate: true,
+            escape: "anywhere",
+            close: closeMenu
+        });
+
         menuButton.addEventListener("click", function (event) {
-            if (isMenuOpen()) {
+            if (isOpen()) {
                 closeMenu();
                 return;
             }
-            openMenu();
+            setOpen(true);
             // Opened with the keyboard (Enter / Space): go straight to the first link
             if (event.detail === 0) {
                 const firstLink = navLinks.querySelector("a");
@@ -482,21 +1834,15 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         navLinks.querySelectorAll("a").forEach(function (link) {
+            // The page is about to scroll to this link, so the focus stays on it
             link.addEventListener("click", function () {
-                // The page is about to scroll to this link, so the focus stays on it
-                menuButton.setAttribute("aria-expanded", "false");
-                navbar.classList.remove("menu-open");
-                updateMenuLabel();
+                if (isOpen()) setOpen(false);
             });
-        });
-
-        document.addEventListener("keydown", function (event) {
-            if (event.key === "Escape") closeMenu();
         });
 
         // A tap or click anywhere outside the menu closes it
         document.addEventListener("pointerdown", function (event) {
-            if (!isMenuOpen()) return;
+            if (!isOpen()) return;
             if (navLinks.contains(event.target) || menuButton.contains(event.target)) return;
             closeMenu();
         }, true);
@@ -504,7 +1850,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // So does moving the keyboard focus somewhere else (e.g. Tab past the last link)
         function onFocusOut(event) {
             const next = event.relatedTarget;
-            if (!isMenuOpen() || !next) return;
+            if (!isOpen() || !next) return;
             if (navLinks.contains(next) || menuButton.contains(next)) return;
             closeMenu();
         }
@@ -513,41 +1859,281 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // On a wide screen the links are always visible, so the menu state is reset
         // (without moving the focus: the links stay where they are)
-        const wideQuery = window.matchMedia("(min-width: 961px)");
-        const onWide = function () {
-            if (!wideQuery.matches || !isMenuOpen()) return;
-            menuButton.setAttribute("aria-expanded", "false");
-            navbar.classList.remove("menu-open");
-            updateMenuLabel();
-        };
-        if (wideQuery.addEventListener) wideQuery.addEventListener("change", onWide);
-        else if (wideQuery.addListener) wideQuery.addListener(onWide);
+        onMedia(queries.wideMenu, function (wide) {
+            if (wide && isOpen()) setOpen(false);
+        }, { immediate: false });
     }
 
-    // Menu gets a solid background once the page is scrolled,
-    // and the link of the section on screen is highlighted
-    // Only the page's own sections (not the sections that features put inside them)
-    const sections = Array.prototype.slice.call(document.querySelectorAll("main > section[id]"));
-    const links = navLinks ? Array.prototype.slice.call(navLinks.querySelectorAll("a")) : [];
+    /* =========================================================
+       11. COMMANDS (used by the Ctrl+K command palette)
+       A command: { id, group, icon, title: function () { return "text"; }, keywords, run }
+       Running one first closes the windows in the way (like navigate()).
+       Quick actions that keep you where you are say keepOverlays: true
+       (or a list of window ids to keep, like the lesson commands).
+       ========================================================= */
+    const commands = [];
 
-    function onScroll() {
-        if (navbar) navbar.classList.toggle("scrolled", window.scrollY > 10);
+    function registerCommand(command) {
+        if (!command || commands.some(function (existing) { return existing.id === command.id; })) return;
+        commands.push(command);
+    }
 
-        let current = "";
-        sections.forEach(function (section) {
-            if (section.getBoundingClientRect().top < window.innerHeight * 0.35) {
-                current = section.id;
-            }
-        });
+    function runCommand(command) {
+        const item = typeof command === "string"
+            ? commands.find(function (existing) { return existing.id === command; })
+            : command;
+        if (!item || typeof item.run !== "function") return false;
+        if (item.keepOverlays !== true) {
+            closeAll({ reason: "command", navigating: true, except: item.keepOverlays });
+        }
+        item.run();
+        return true;
+    }
 
-        links.forEach(function (link) {
-            link.classList.toggle("active", link.getAttribute("href") === "#" + current);
+    /* =========================================================
+       12. FEATURES AND CONTENT
+       A feature shares its API with A.feature("glossary", api): it becomes
+       A.glossary, and A.whenFeature("glossary") (a Promise) resolves with it.
+       A.ready(callback) runs once every script has run and the page is ready.
+       Content files (js/content/) keep data with A.content.set("quiz", {...}).
+       ========================================================= */
+    const featureAPIs = {};
+    const featureWaiting = {};
+
+    function feature(name, api) {
+        featureAPIs[name] = api;
+        window.AICompass[name] = api;
+        (featureWaiting[name] || []).forEach(function (resolve) { resolve(api); });
+        delete featureWaiting[name];
+        emit("feature", { name: name });
+        return api;
+    }
+
+    function whenFeature(name) {
+        if (featureAPIs[name]) return Promise.resolve(featureAPIs[name]);
+        return new Promise(function (resolve) {
+            (featureWaiting[name] = featureWaiting[name] || []).push(resolve);
         });
     }
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    // The first check waits for the next frame, when the page is laid out anyway
-    requestAnimationFrame(onScroll);
-});
+    let pageReady = false;
+    const readyCallbacks = [];
+
+    function ready(callback) {
+        if (pageReady) setTimeout(function () { safeCall(callback); }, 0);
+        else readyCallbacks.push(callback);
+    }
+
+    const contentStore = {};
+
+    const content = {
+        set: function (name, data) {
+            contentStore[name] = Object.assign(contentStore[name] || {}, data);
+            return contentStore[name];
+        },
+        get: function (name) {
+            return contentStore[name];
+        }
+    };
+
+    /* =========================================================
+       13. TOASTS (small pop-up messages)
+       ========================================================= */
+    const TOAST_TIME = 3200;     // how long a toast stays on screen (ms)
+    const TOAST_FADE = 400;      // its fade-out animation ("toast-out" in style.css)
+    const MAX_TOASTS = 3;        // more at once would cover the page: the oldest leave early
+    const toastTimers = new WeakMap();
+
+    function hideToast(item) {
+        if (item.classList.contains("toast-hide")) return;
+        clearTimeout(toastTimers.get(item));
+        item.classList.add("toast-hide");
+        setTimeout(function () { item.remove(); }, TOAST_FADE);
+    }
+
+    function toast(message, icon) {
+        const stack = document.getElementById("toast-stack");
+        if (!stack) return;
+
+        const item = document.createElement("div");
+        item.className = "toast";
+        item.innerHTML = '<span class="toast-icon" aria-hidden="true"></span><span class="toast-text"></span>';
+        item.querySelector(".toast-icon").textContent = icon || "✨";
+        item.querySelector(".toast-text").textContent = message;
+        stack.appendChild(item);
+        toastTimers.set(item, setTimeout(function () { hideToast(item); }, TOAST_TIME));
+
+        // Many toasts in a row (a button pressed again and again): only the newest stay
+        const showing = Array.prototype.filter.call(stack.children, function (other) {
+            return !other.classList.contains("toast-hide");
+        });
+        showing.slice(0, -MAX_TOASTS).forEach(hideToast);
+    }
+
+    /* =========================================================
+       THE PUBLIC TOOLKIT (window.AICompass)
+       ========================================================= */
+    window.AICompass = {
+        // 1-2. storage and events
+        storage: storage,
+        on: on,
+        emit: emit,
+
+        // 3. texts
+        addTranslations: addTranslations,
+        applyTranslations: applyTranslations,
+        t: t,
+        has: function (key) { return lookup(key) !== undefined; },
+        plural: plural,
+        pluralForm: pluralForm,
+        i18nHTML: i18nHTML,
+        setTextValue: setTextValue,
+        textValue: textValue,
+        format: { number: formatNumber, percent: formatPercent, date: formatDate },
+        switchLayout: switchLayout,
+        get lang() { return state.lang; },
+        get locale() { return LOCALES[state.lang]; },
+        setLanguage: setLanguage,
+        toggleLanguage: function () { setLanguage(state.lang === "en" ? "ru" : "en"); },
+        onLanguageChange: function (callback) {
+            return on("language", function (detail) { callback(detail.lang); });
+        },
+
+        // 4. theme
+        get theme() { return state.theme; },
+        setTheme: setTheme,
+        toggleTheme: function () { setTheme(state.theme === "dark" ? "light" : "dark"); },
+        onThemeChange: function (callback) {
+            return on("theme", function (detail) { callback(detail.theme); });
+        },
+
+        // 5. motion (reducedMotion = only the device setting; use motion.ok())
+        motion: motion,
+        get reducedMotion() { return reducedMotionQuery.matches; },
+        countUp: countUp,
+
+        // 6. helpers
+        util: util,
+        dom: dom,
+        colors: colors,
+        canvas: canvas,
+        cssVar: cssVar,
+        escapeHTML: escapeHTML,
+        confirmPress: confirmPress,
+
+        // 7. screen
+        breakpoints: breakpoints,
+        queries: queries,
+        media: media,
+        onMedia: onMedia,
+        whenVisible: whenVisible,
+        onResize: onResize,
+        onPixelRatioChange: onPixelRatioChange,
+        layout: layout,
+
+        // 8-9. screen readers and windows
+        announce: announce,
+        overlays: overlays,
+
+        // 10. navigation and scrolling (scrollToSection is the older name of navigate)
+        sections: SECTIONS,
+        navigate: navigate,
+        scrollToSection: navigate,
+        onScroll: onScroll,
+        onLayout: onLayout,
+        layoutChanged: layoutChanged,
+        onSection: onSection,
+        whenNeeded: whenNeeded,
+        buildParts: buildParts,
+        whenIdle: whenIdle,
+
+        // 11. commands
+        commands: commands,
+        registerCommand: registerCommand,
+        runCommand: runCommand,
+
+        // 12. features and content
+        feature: feature,
+        whenFeature: whenFeature,
+        ready: ready,
+        content: content,
+
+        // 13. toasts
+        toast: toast
+    };
+
+    // ---------- Built-in commands ----------
+    SECTIONS.forEach(function (section) {
+        registerCommand({
+            id: "go-" + section.id,
+            group: "cmd.groupNavigate",
+            icon: section.icon,
+            title: function () { return t(section.key); },
+            keywords: section.id,
+            run: function () { navigate(section.id); }
+        });
+    });
+
+    registerCommand({
+        id: "toggle-theme",
+        group: "cmd.groupActions",
+        icon: "🌓",
+        title: function () { return t("cmd.toggleTheme"); },
+        keywords: "theme dark light mode night тема тёмная светлая тёмный светлый ночной режим",
+        keepOverlays: true,
+        run: function () { window.AICompass.toggleTheme(); }
+    });
+
+    registerCommand({
+        id: "toggle-language",
+        group: "cmd.groupActions",
+        icon: "🌐",
+        title: function () { return t("cmd.toggleLang"); },
+        keywords: "language english russian switch change translate язык русский английский сменить перевод",
+        keepOverlays: true,
+        run: function () { window.AICompass.toggleLanguage(); }
+    });
+
+    /* =========================================================
+       14. START-UP
+       ========================================================= */
+    // The <head> script of index.html has set these already; core sets them again,
+    // so the page never depends on that script
+    root.classList.add("js");
+    updateMotionClasses();
+
+    document.addEventListener("DOMContentLoaded", function () {
+        // Every script has run, so every text is known: translate the page
+        setLanguage(state.lang);
+        updateThemeMeta();
+
+        // Language and theme buttons
+        const languageButton = document.getElementById("language-toggle");
+        if (languageButton) {
+            languageButton.addEventListener("click", function () {
+                window.AICompass.toggleLanguage();
+                toast(t("core.toastLang"), "🌐");
+            });
+        }
+
+        const themeButton = document.getElementById("theme-toggle");
+        if (themeButton) {
+            themeButton.addEventListener("click", function () {
+                window.AICompass.toggleTheme();
+                const light = state.theme === "light";
+                toast(t(light ? "core.toastLight" : "core.toastDark"), light ? "☀️" : "🌙");
+            });
+        }
+
+        setUpMenu();
+        startScrolling();
+
+        pageReady = true;
+        readyCallbacks.splice(0).forEach(function (callback) { safeCall(callback); });
+    });
+
+    // The page's first number formatter is slow to make: make it while the browser is idle
+    // after loading, so a click or a part built later doesn't wait for it
+    whenIdle(function () { formatter("number", { maximumFractionDigits: 3 }); });
 
 })();
