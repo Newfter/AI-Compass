@@ -910,6 +910,7 @@
         let flash = null;                     // the token that a merge has just made
         let fairId = data.fairPairs[0].id;
         let typed = 0;                        // a frame that will cut the typed text
+        let paused = false;                   // the hub paused the experiment: nothing may run
         let resumeTraining = false;
         let resumePlay = false;
 
@@ -1015,11 +1016,15 @@
             }
         });
 
-        // Makes sure the first `count` merges are (or will soon be) learned
+        // Makes sure the first `count` merges are (or will soon be) learned. While the
+        // experiment is paused (a language switch can still redraw it), the training waits
+        // for resume().
         function need(count) {
             const goal = Math.min(count, MAX_MERGES);
             while (!model.done && model.merges.length < goal && goal - model.merges.length <= QUICK_MERGES) model.learn(0);
-            if (!model.done && model.merges.length < goal) trainLoop.start();
+            if (model.done || model.merges.length >= goal) return;
+            if (paused) resumeTraining = true;
+            else trainLoop.start();
         }
 
         // ----- "Play": one more merge, PLAY_SPEED times a second -----
@@ -1300,17 +1305,20 @@
                 root.hidden = true;
             },
             pause: function () {
-                resumeTraining = trainLoop.running();
-                resumePlay = playLoop.running();
-                trainLoop.stop();
-                playLoop.stop();
+                // The typed text first: cutting it may start the training, which stops below
                 if (typed) {
                     cancelAnimationFrame(typed);
                     retype();
                 }
+                paused = true;
+                resumeTraining = resumeTraining || trainLoop.running();
+                resumePlay = playLoop.running();
+                trainLoop.stop();
+                playLoop.stop();
             },
             resume: function () {
-                if (resumeTraining) trainLoop.start();
+                paused = false;
+                if (resumeTraining && !model.done) trainLoop.start();
                 if (resumePlay && state === "running") playLoop.start();
                 resumeTraining = false;
                 resumePlay = false;
@@ -2220,8 +2228,10 @@
 
             // ----- The controller: the hub calls these -----
             return {
+                // Every built view is paused and resumed (a hidden view has nothing running,
+                // but it must know that the experiment runs again)
                 pause: function () { each("pause"); },
-                resume: function () { views[current].resume(); },
+                resume: function () { each("resume"); },
                 language: function () {
                     kit.relabel(stage);
                     each("language");
