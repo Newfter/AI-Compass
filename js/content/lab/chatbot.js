@@ -152,6 +152,7 @@ window.AICompass.addTranslations({
         "lab.chatbot.ctx.word": "The word that looks",
         "lab.chatbot.ctx.canvas": "Attention: lines from the chosen word to every word, thicker for more attention",
         "lab.chatbot.ctx.summary": "Layer {layer}: “{word}” gives <strong>{weight}</strong> of its attention to “{target}”.",
+        "lab.chatbot.ctx.summaryEven": "Layer {layer}: “{word}” asks nothing in this layer, so it spreads its attention evenly: <strong>{weight}</strong> to every word.",
         "lab.chatbot.ctx.showMaths": "Show the maths",
         "lab.chatbot.ctx.colWord": "Word",
         "lab.chatbot.ctx.colDot": "q · k",
@@ -183,6 +184,8 @@ window.AICompass.addTranslations({
         "lab.chatbot.ctx.step4": "Each step is the same small sum: score = q · k ÷ √{d}, softmax turns the scores into weights that add up to 100%, and the word adds Σ weight × value to its own numbers.",
         "lab.chatbot.ctx.describe": "{sentence} Layer {layer}, the word “{word}”: {list}.",
         "lab.chatbot.ctx.said": "In layer {layer}, “{word}” points to “{target}” ({weight}).",
+        "lab.chatbot.ctx.saidEven": "In layer {layer}, “{word}” spreads its attention evenly over all the words.",
+        "lab.chatbot.ctx.evenList": "{weight} to every word",
 
         // ----- View 4: next word (sampling) -----
         "lab.chatbot.next.prompt": "Prompt",
@@ -378,6 +381,7 @@ window.AICompass.addTranslations({
         "lab.chatbot.ctx.word": "Слово, которое смотрит",
         "lab.chatbot.ctx.canvas": "Внимание: линии от выбранного слова к каждому слову, чем толще, тем больше внимания",
         "lab.chatbot.ctx.summary": "Слой {layer}: «{word}» отдаёт <strong>{weight}</strong> своего внимания слову «{target}».",
+        "lab.chatbot.ctx.summaryEven": "Слой {layer}: «{word}» в этом слое ничего не ищет, поэтому делит внимание поровну: по <strong>{weight}</strong> каждому слову.",
         "lab.chatbot.ctx.showMaths": "Показать вычисления",
         "lab.chatbot.ctx.colWord": "Слово",
         "lab.chatbot.ctx.colDot": "q · k",
@@ -409,6 +413,8 @@ window.AICompass.addTranslations({
         "lab.chatbot.ctx.step4": "Каждый шаг — одна и та же простая сумма: оценка = q · k ÷ √{d}, софтмакс превращает оценки в веса, которые вместе дают 100%, и слово прибавляет Σ вес × значение к своим числам.",
         "lab.chatbot.ctx.describe": "{sentence} Слой {layer}, слово «{word}»: {list}.",
         "lab.chatbot.ctx.said": "В слое {layer} «{word}» указывает на «{target}» ({weight}).",
+        "lab.chatbot.ctx.saidEven": "В слое {layer} «{word}» делит внимание поровну между всеми словами.",
+        "lab.chatbot.ctx.evenList": "по {weight} каждому слову",
 
         // ----- Вид 4: новое слово (выбор) -----
         "lab.chatbot.next.prompt": "Начало фразы",

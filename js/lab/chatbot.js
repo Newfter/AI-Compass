@@ -785,7 +785,8 @@
     const CHIP_HEIGHT = 30;
 
     // Where the word chips go. Wide: one row, with room for the arcs above it. Narrow: the
-    // chosen word on the left, every word in a column on the right (a "fan").
+    // chosen word on the left, every word in a column on the right (a "fan"). The fan is
+    // sized for the chosen word, so the layout remembers which word that was (chosen).
     function chipLayout(g, texts, chosen, width) {
         g.font = kit.font(13, 600, "body");
         const widths = texts.map(function (text) { return Math.ceil(g.measureText(text).width) + 18; });
@@ -797,7 +798,7 @@
                 x += w + 6;
                 return chip;
             });
-            return { fan: false, height: 196, chips: chips };
+            return { fan: false, height: 196, chips: chips, chosen: chosen };
         }
         const height = texts.length * 32 + 14;
         const widest = Math.max.apply(null, widths);
@@ -806,6 +807,7 @@
         const shift = Math.max(0, Math.floor((width - (column + widest + 48)) / 2));
         return {
             fan: true,
+            chosen: chosen,
             height: height,
             from: { x: 8 + shift, y: (height - CHIP_HEIGHT) / 2, w: widths[chosen], h: CHIP_HEIGHT },
             chips: widths.map(function (w, i) { return { x: column + shift, y: 8 + i * 32, w: w, h: CHIP_HEIGHT - 2 }; })
@@ -1615,6 +1617,7 @@
         let pronoun = 0;
         let layers = null;                    // attention() of the sentence
         let shown = null;                     // the shares on the canvas now (they glide)
+        let target = -1;                      // the word that gets the most attention (-1: an even split)
         let arc = null;                       // the glide
         let layout = null;
 
@@ -1641,7 +1644,7 @@
             value: last,
             onChange: function (i) {
                 last = i;
-                build(true);
+                build(true, true);
                 say();
             }
         });
@@ -1717,16 +1720,20 @@
             draw();
         });
 
-        // The sentence in the current language, and its attention in both layers
-        function build(glide) {
+        // The sentence in the current language, and its attention in both layers. The chosen
+        // word stays chosen: at its place when only the last word was swapped (keepPlace), or
+        // as the first word with the same role after a language switch (the words differ).
+        function build(glide, keepPlace) {
             const role = words[chosen] ? words[chosen].role : "pronoun";
+            const place = chosen;
             const sentence = pair();
             words = sentence.words.concat([[sentence.last[last][0] + sentence.end, sentence.last[last][1]]]).map(function (word) {
                 return { text: word[0], name: word[0].replace(/[.,!?]+$/, ""), role: word[1] };
             });
             pronoun = words.map(function (word) { return word.role; }).indexOf("pronoun");
             const same = words.map(function (word) { return word.role; }).indexOf(role);
-            chosen = chosen === -1 || same === -1 ? pronoun : same;
+            if (keepPlace && place >= 0 && place < words.length) chosen = place;
+            else chosen = chosen === -1 || same === -1 ? pronoun : same;
             layers = attention(words.map(function (word) { return word.role; }));
             wordChoice.setOptions(words.map(function (word, i) { return { value: i, label: word.name }; }), chosen);
             layout = null;
@@ -1735,11 +1742,11 @@
 
         function draw() {
             if (!view.width || !shown) return;
-            if (!layout) {
+            if (!layout || layout.chosen !== chosen) {
                 layout = chipLayout(view.ctx, words.map(function (word) { return word.text; }), chosen, view.width);
                 if (view.box.style.height !== layout.height + "px") view.box.style.height = layout.height + "px";
             }
-            drawAttention(view, { layout: layout, texts: words.map(function (word) { return word.text; }), chosen: chosen, weights: shown, top: topOf(shown) });
+            drawAttention(view, { layout: layout, texts: words.map(function (word) { return word.text; }), chosen: chosen, weights: shown, top: target });
         }
 
         function topOf(list) {
@@ -1763,17 +1770,27 @@
             return parts.length ? parts.join(", ") : t("lab.chatbot.ctx.nothing");
         }
 
+        // A word whose query is all zeros asks nothing: every score is 0 and its attention is
+        // split evenly, so no word may be named as the one it points to
+        function asksNothing(result) {
+            return result.q[chosen].every(function (x) { return x === 0; });
+        }
+
         function say() {
-            const row = layers[layer - 1].weights[chosen];
+            const result = layers[layer - 1];
+            const row = result.weights[chosen];
             const top = topOf(row);
-            app.ctx.announce(t("lab.chatbot.ctx.said", { layer: String(layer), word: words[chosen].name, target: words[top].name, weight: percent(row[top]) }));
+            if (asksNothing(result)) app.ctx.announce(t("lab.chatbot.ctx.saidEven", { layer: String(layer), word: words[chosen].name }));
+            else app.ctx.announce(t("lab.chatbot.ctx.said", { layer: String(layer), word: words[chosen].name, target: words[top].name, weight: percent(row[top]) }));
         }
 
         function render(glide) {
             const result = layers[layer - 1];
             const row = result.weights[chosen];
-            const top = topOf(row);
+            const even = asksNothing(result);
+            const top = even ? -1 : topOf(row);
             const name = words[chosen].name;
+            target = top;
             // The lines glide from the old shares to the new ones (or jump there)
             if (arc) arc.cancel();
             arc = null;
@@ -1787,16 +1804,17 @@
                 shown = row;
                 draw();
             }
-            write(summary, tx("lab.chatbot.ctx.summary", { layer: String(layer), word: name, weight: percent(row[top]), target: words[top].name }));
+            if (even) write(summary, tx("lab.chatbot.ctx.summaryEven", { layer: String(layer), word: name, weight: percent(row[0]) }));
+            else write(summary, tx("lab.chatbot.ctx.summary", { layer: String(layer), word: name, weight: percent(row[top]), target: words[top].name }));
             view.describe(t("lab.chatbot.ctx.describe", {
-                sentence: words.map(function (word) { return word.text; }).join(" "), layer: String(layer), word: name, list: sharesText(row, 3)
+                sentence: words.map(function (word) { return word.text; }).join(" "), layer: String(layer), word: name,
+                list: even ? t("lab.chatbot.ctx.evenList", { weight: percent(row[0]) }) : sharesText(row, 3)
             }));
 
             maths.hidden = !mathsToggle.checked();
             if (!maths.hidden) {
                 write(formula, tx("lab.chatbot.ctx.formula", { d: String(FEATURES.length), word: name }));
-                const asks = result.q[chosen].some(function (x) { return x !== 0; });
-                write(query, asks ? tx("lab.chatbot.ctx.query", { word: name, list: featureText(result.q[chosen]) }) : tx("lab.chatbot.ctx.noQuery", { word: name }));
+                write(query, !even ? tx("lab.chatbot.ctx.query", { word: name, list: featureText(result.q[chosen]) }) : tx("lab.chatbot.ctx.noQuery", { word: name }));
                 write(caption, tx("lab.chatbot.ctx.tableCaption", { word: name, layer: String(layer) }));
                 body.textContent = "";
                 words.forEach(function (word, j) {
