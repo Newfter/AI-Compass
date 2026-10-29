@@ -745,14 +745,21 @@
             taken.push({ x: point.p.x - 11, y: point.p.y - 11, w: 22, h: 22 });
             if (point.label) labels.unshift({ x: point.p.x + 4, y: point.p.y, text: point.label, rank: 3 });
         });
-        labels.sort(function (p, q) { return q.rank - p.rank; });
+        // (a word near an edge has the fewest places for its label, so it chooses first)
+        function room(label) {
+            return Math.min(label.x, view.width - label.x, label.y, view.height - label.y);
+        }
+        labels.sort(function (p, q) { return q.rank - p.rank || room(p) - room(q); });
         g.textBaseline = "middle";
         g.lineJoin = "round";
         labels.forEach(function (label) {
             g.font = label.rank ? kit.font(13, 700, "body") : kit.font(12, 500, "body");
             const w = g.measureText(label.text).width;
             const h = 16;
-            const places = [[label.x + 9, label.y - h / 2], [label.x - 9 - w, label.y - h / 2], [label.x - w / 2, label.y - 10 - h], [label.x - w / 2, label.y + 10]];
+            // right, left, above, below, then the four corners
+            const middle = A.util.clamp(label.x - w / 2, 2, view.width - w - 2);
+            const places = [[label.x + 9, label.y - h / 2], [label.x - 9 - w, label.y - h / 2], [middle, label.y - 10 - h], [middle, label.y + 10],
+                [label.x + 6, label.y - 3 - h], [label.x + 6, label.y + 3], [label.x - 6 - w, label.y - 3 - h], [label.x - 6 - w, label.y + 3]];
             let spot = null;
             places.forEach(function (place) {
                 const box = { x: place[0], y: place[1], w: w, h: h };
@@ -761,7 +768,7 @@
             });
             if (!spot && label.rank < 2) return;
             spot = spot || { x: A.util.clamp(places[0][0], 2, view.width - w - 2), y: places[0][1], w: w, h: h };
-            taken.push(spot);
+            taken.push({ x: spot.x - 5, y: spot.y, w: w + 10, h: h });      // with some air on both sides
             g.lineWidth = 3;
             g.strokeStyle = c.surface;
             g.strokeText(label.text, spot.x, spot.y + h / 2);
@@ -792,12 +799,15 @@
             return { fan: false, height: 196, chips: chips };
         }
         const height = texts.length * 32 + 14;
-        const column = Math.max(widths[chosen] + 46, Math.min(width * 0.42, width - Math.max.apply(null, widths) - 56));
+        const widest = Math.max.apply(null, widths);
+        const column = Math.max(widths[chosen] + 46, Math.min(width * 0.42, width - widest - 56));
+        // The fan sits in the middle of a wide stage (the shares need about 40 px after a chip)
+        const shift = Math.max(0, Math.floor((width - (column + widest + 48)) / 2));
         return {
             fan: true,
             height: height,
-            from: { x: 8, y: (height - CHIP_HEIGHT) / 2, w: widths[chosen], h: CHIP_HEIGHT },
-            chips: widths.map(function (w, i) { return { x: column, y: 8 + i * 32, w: w, h: CHIP_HEIGHT - 2 }; })
+            from: { x: 8 + shift, y: (height - CHIP_HEIGHT) / 2, w: widths[chosen], h: CHIP_HEIGHT },
+            chips: widths.map(function (w, i) { return { x: column + shift, y: 8 + i * 32, w: w, h: CHIP_HEIGHT - 2 }; })
         };
     }
 
@@ -1450,7 +1460,7 @@
 
         const explain = kit.explain({ steps: [
             { key: "lab.chatbot.mean.step1" }, { key: "lab.chatbot.mean.step2" }, { key: "lab.chatbot.mean.step3" },
-            { key: "lab.chatbot.mean.step4", values: { near: "—", sim: "—" } }
+            { key: "lab.chatbot.mean.step4", values: { result: "" } }
         ] });
         ui.top.appendChild(modes.element);
         ui.side.append(wordPart, mathsPart, ownPart);
@@ -1564,9 +1574,9 @@
                 a: nameOf(parts[0]), b: nameOf(parts[1]), c: nameOf(parts[2]),
                 answer: nameOf(result.answer.word), sim: percent(result.answer.sim, 1)
             });
-            explain.setValues(3, empty ? { near: "—", sim: "—" } : { near: nameOf(ownClose[0].word), sim: percent(ownClose[0].sim, 1) });
+            explain.setValues(3, { result: empty ? t("lab.chatbot.mean.step4Empty")
+                : t("lab.chatbot.mean.step4Near", { near: nameOf(ownClose[0].word), sim: percent(ownClose[0].sim, 1) }) });
             explain.setStep(mode === "word" ? 1 : mode === "maths" ? 2 : 3);
-            explain.setText(mode === "own" && empty ? "lab.chatbot.mean.step4Empty" : null);
 
             app.challenges.check({ robot: !empty && ownClose[0].word.id === "robot" && ownClose[0].sim >= ROBOT_GOAL });
         }
