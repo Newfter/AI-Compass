@@ -58,6 +58,26 @@
     const PCA_ROUNDS = 200;          // rounds of power iteration (it settles long before)
     const WORD_STEP = 0.05;          // the sliders of your own word
     const PICK_RADIUS = 28;          // a click this close to a word on the map chooses it (px)
+    // View 3: context. Every word has 7 numbers ("features"): 1 for its role, 0 for the others.
+    const FEATURES = ["doer", "thing", "pronoun", "descDoer", "descThing", "verb", "other"];
+    // Two layers of attention, set by hand. A rule [from, to, amount] gives feature "to" of
+    // the query (what a word looks for), the key (what it offers) or the value (what it
+    // passes on) amount × the word's feature "from".
+    //   Layer 1: a pronoun looks for a word that describes something, and takes in what it describes.
+    //   Layer 2: a word that now carries "describes the doer" looks for the doer (or the thing).
+    const LAYERS = [
+        {
+            query: [["pronoun", "descDoer", 3], ["pronoun", "descThing", 3]],
+            key: [["descDoer", "descDoer", 3], ["descThing", "descThing", 3]],
+            value: [["descDoer", "descDoer", 1], ["descThing", "descThing", 1]]
+        },
+        {
+            query: [["descDoer", "doer", 4], ["descThing", "thing", 4]],
+            key: [["doer", "doer", 3], ["thing", "thing", 3]],
+            value: [["doer", "doer", 1], ["thing", "thing", 1]]
+        }
+    ];
+    const ARC_MS = 450;              // the attention lines glide to their new thickness
 
     /* =========================================================
        2. SMALL HELPERS
@@ -189,7 +209,8 @@
 
     // A short animation: onFrame(share) on every frame, share going from 0 to 1 in ms
     // (fast at first, then slowing down), then onDone(). With animations off (calm mode,
-    // reduced motion) it jumps to the end at once. finish() jumps to the end now.
+    // reduced motion) it jumps to the end at once. finish() jumps to the end now; cancel()
+    // stops it where it is.
     function tween(ms, onFrame, onDone) {
         let frame = 0;
         let started = 0;
@@ -219,6 +240,11 @@
         else end();
         return {
             finish: function () { if (!done) end(); },
+            cancel: function () {
+                if (frame) cancelAnimationFrame(frame);
+                frame = 0;
+                done = true;
+            },
             running: function () { return !done; }
         };
     }
@@ -471,6 +497,57 @@
     }
 
     /* =========================================================
+       5. CONTEXT: ATTENTION
+       ========================================================= */
+    // A word's first numbers: 1 for its role, 0 for every other feature
+    function oneHot(role) {
+        return FEATURES.map(function (feature) { return feature === role ? 1 : 0; });
+    }
+
+    // x × W, with W written as rules [from, to, amount]
+    function times(x, rules) {
+        const out = FEATURES.map(function () { return 0; });
+        rules.forEach(function (rule) { out[FEATURES.indexOf(rule[1])] += rule[2] * x[FEATURES.indexOf(rule[0])]; });
+        return out;
+    }
+
+    // Softmax: turns scores into shares that add up to 1. (Taking the biggest score away
+    // first changes nothing, but keeps e^score from growing too big.)
+    function softmax(scores) {
+        const top = Math.max.apply(null, scores);
+        const powers = scores.map(function (score) { return Math.exp(score - top); });
+        const total = powers.reduce(function (sum, p) { return sum + p; }, 0);
+        return powers.map(function (p) { return p / total; });
+    }
+
+    // One layer of attention, for every word at once:
+    //   q = x·Wq: what the word looks for     k = x·Wk: what it offers     v = x·Wv: what it passes on
+    //   score(i, j) = q_i · k_j ÷ √d          weights of word i = softmax of its scores
+    //   output_i = Σ_j weight(i, j) × v_j     the new numbers of word i = x_i + output_i
+    function attentionLayer(xs, layer) {
+        const root = Math.sqrt(FEATURES.length);
+        const q = xs.map(function (x) { return times(x, layer.query); });
+        const k = xs.map(function (x) { return times(x, layer.key); });
+        const v = xs.map(function (x) { return times(x, layer.value); });
+        const dots = q.map(function (qi) { return k.map(function (kj) { return dot(qi, kj); }); });
+        const scores = dots.map(function (row) { return row.map(function (s) { return s / root; }); });
+        const weights = scores.map(softmax);
+        const outputs = weights.map(function (row) {
+            return FEATURES.map(function (feature, n) {
+                return row.reduce(function (sum, w, j) { return sum + w * v[j][n]; }, 0);
+            });
+        });
+        const next = xs.map(function (x, i) { return x.map(function (value, n) { return value + outputs[i][n]; }); });
+        return { q: q, k: k, v: v, dots: dots, scores: scores, weights: weights, outputs: outputs, next: next };
+    }
+
+    // Both layers for a sentence, given the role of each word: [layer 1, layer 2]
+    function attention(roles) {
+        const first = attentionLayer(roles.map(oneHot), LAYERS[0]);
+        return [first, attentionLayer(first.next, LAYERS[1])];
+    }
+
+    /* =========================================================
        7. DRAWING THE MAP OF WORDS
        ========================================================= */
     const SHAPES = ["dot", "square", "triangle", "diamond", "ring"];     // one per group of words
@@ -624,6 +701,114 @@
             g.fillText(label.text, spot.x, spot.y + h / 2);
         });
         return spots;
+    }
+
+    /* =========================================================
+       8. DRAWING ATTENTION
+       ========================================================= */
+    const CHIP_HEIGHT = 30;
+
+    // Where the word chips go. Wide: one row, with room for the arcs above it. Narrow: the
+    // chosen word on the left, every word in a column on the right (a "fan").
+    function chipLayout(g, texts, chosen, width) {
+        g.font = kit.font(13, 600, "body");
+        const widths = texts.map(function (text) { return Math.ceil(g.measureText(text).width) + 18; });
+        const total = widths.reduce(function (sum, w) { return sum + w + 6; }, -6);
+        if (total <= width - 24) {
+            let x = Math.round((width - total) / 2);
+            const chips = widths.map(function (w) {
+                const chip = { x: x, y: 150, w: w, h: CHIP_HEIGHT };
+                x += w + 6;
+                return chip;
+            });
+            return { fan: false, height: 196, chips: chips };
+        }
+        const height = texts.length * 32 + 14;
+        const column = Math.max(widths[chosen] + 46, Math.min(width * 0.42, width - Math.max.apply(null, widths) - 56));
+        return {
+            fan: true,
+            height: height,
+            from: { x: 8, y: (height - CHIP_HEIGHT) / 2, w: widths[chosen], h: CHIP_HEIGHT },
+            chips: widths.map(function (w, i) { return { x: column, y: 8 + i * 32, w: w, h: CHIP_HEIGHT - 2 }; })
+        };
+    }
+
+    function paintChip(g, c, chip, text, chosen, top) {
+        const r = 8;
+        g.beginPath();
+        g.moveTo(chip.x + r, chip.y);
+        g.arcTo(chip.x + chip.w, chip.y, chip.x + chip.w, chip.y + chip.h, r);
+        g.arcTo(chip.x + chip.w, chip.y + chip.h, chip.x, chip.y + chip.h, r);
+        g.arcTo(chip.x, chip.y + chip.h, chip.x, chip.y, r);
+        g.arcTo(chip.x, chip.y, chip.x + chip.w, chip.y, r);
+        g.closePath();
+        g.fillStyle = chosen ? kit.alpha(c.accent2, 0.25) : top ? kit.alpha(c.accent, 0.22) : c.surface;
+        g.fill();
+        g.lineWidth = chosen || top ? 2 : 1;
+        g.strokeStyle = chosen ? c.accent2 : top ? c.accent : kit.alpha(c.text, 0.3);
+        g.stroke();
+        g.font = kit.font(13, 600, "body");
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.fillStyle = c.text;
+        g.fillText(text, chip.x + chip.w / 2, chip.y + chip.h / 2 + 1);
+    }
+
+    // The sentence as chips, and a line from the chosen word to every word: the thicker and
+    // brighter the line, the more of its attention goes there.
+    // scene = { layout, texts, chosen, weights, top (the word with the most attention) }
+    function drawAttention(view, scene) {
+        const g = view.ctx;
+        const c = kit.colors();
+        const shape = scene.layout;
+        const most = Math.max.apply(null, scene.weights) || 1;
+        const labels = [];
+        g.clearRect(0, 0, view.width, view.height);
+        g.lineCap = "round";
+        scene.weights.forEach(function (w, i) {
+            const to = shape.chips[i];
+            g.strokeStyle = kit.alpha(c.accent2, 0.2 + (0.8 * w) / most);
+            g.lineWidth = 1 + 10 * w;
+            g.beginPath();
+            if (shape.fan) {
+                const x0 = shape.from.x + shape.from.w;
+                const y0 = shape.from.y + shape.from.h / 2;
+                const y1 = to.y + to.h / 2;
+                const middle = (x0 + to.x) / 2;
+                g.moveTo(x0, y0);
+                g.bezierCurveTo(middle, y0, middle, y1, to.x, y1);
+                labels.push({ x: to.x + to.w + 8, y: y1, align: "left" });
+            } else if (i === scene.chosen) {
+                // A small loop: the attention a word gives to itself
+                g.arc(to.x + to.w / 2, to.y - 12, 10, 0.7 * Math.PI, 2.3 * Math.PI);
+                labels.push({ x: to.x + to.w / 2, y: to.y - 32, align: "center" });
+            } else {
+                const from = shape.chips[scene.chosen];
+                const x0 = from.x + from.w / 2;
+                const x1 = to.x + to.w / 2;
+                const h = Math.min(105, 18 + Math.abs(x1 - x0) * 0.4);
+                g.moveTo(x0, from.y - 2);
+                g.quadraticCurveTo((x0 + x1) / 2, from.y - 2 - 2 * h, x1, to.y - 2);
+                labels.push({ x: (x0 + x1) / 2, y: from.y - h - 11, align: "center" });
+            }
+            g.stroke();
+        });
+        shape.chips.forEach(function (chip, i) {
+            paintChip(g, c, chip, scene.texts[i], i === scene.chosen && !shape.fan, i === scene.top);
+        });
+        if (shape.fan) paintChip(g, c, shape.from, scene.texts[scene.chosen], true, false);
+        // The shares: all of them in the fan; in the row only the big ones (6% or more)
+        g.font = kit.font(12, 700);
+        g.lineWidth = 3;
+        labels.forEach(function (label, i) {
+            const w = scene.weights[i];
+            if (!shape.fan && w < 0.06 && i !== scene.top) return;
+            g.textAlign = label.align;
+            g.strokeStyle = c.surface;
+            g.strokeText(percent(w), label.x, label.y);
+            g.fillStyle = i === scene.top ? c.text : c.muted;
+            g.fillText(percent(w), label.x, label.y);
+        });
     }
 
     /* =========================================================
@@ -1313,6 +1498,253 @@
     }
 
     /* =========================================================
+       11. VIEW 3: CONTEXT
+       ========================================================= */
+    function contextView(app) {
+        const data = app.data;
+        const root = el("div", "ch-view");
+        const ui = kit.layout(root, { side: true });
+        let pairId = data.sentences[0].id;
+        let last = 0;                         // which of the two last words
+        let layer = 1;
+        let chosen = -1;                      // the word that looks (-1: the pronoun)
+        let words = [];                       // { text (as shown), name (no comma), role }
+        let pronoun = 0;
+        let layers = null;                    // attention() of the sentence
+        let shown = null;                     // the shares on the canvas now (they glide)
+        let arc = null;                       // the glide
+        let layout = null;
+
+        function pair() {
+            const sentences = data.sentences.filter(function (item) { return item.id === pairId; })[0];
+            return sentences[A.lang] || sentences.en;
+        }
+
+        // ----- The parts -----
+        const pairs = kit.segmented({
+            labelKey: "lab.chatbot.ctx.sentence",
+            options: data.sentences.map(function (item) { return { value: item.id, labelKey: "lab.chatbot.ctx.pair." + item.id }; }),
+            value: pairId,
+            onChange: function (id) {
+                pairId = id;
+                chosen = -1;
+                build(false);
+                kit.relabel(lastWord.element);
+            }
+        });
+        const lastWord = kit.segmented({
+            labelKey: "lab.chatbot.ctx.lastWord",
+            options: [0, 1].map(function (i) { return { value: i, labelKey: function () { return pair().last[i][0]; } }; }),
+            value: last,
+            onChange: function (i) {
+                last = i;
+                build(true);
+                say();
+            }
+        });
+        const layerChoice = kit.segmented({
+            labelKey: "lab.chatbot.ctx.layer",
+            options: [{ value: 1, labelKey: "lab.chatbot.ctx.layer1" }, { value: 2, labelKey: "lab.chatbot.ctx.layer2" }],
+            value: layer,
+            onChange: function (n) {
+                layer = n;
+                render(true);
+                say();
+            }
+        });
+        const wordChoice = kit.select({
+            labelKey: "lab.chatbot.ctx.word",
+            options: [],
+            onChange: function (i) {
+                chosen = i;
+                render(true);
+            }
+        });
+        const view = kit.canvas(ui.main, { height: 196, labelKey: "lab.chatbot.ctx.canvas" });
+        const summary = el("p", "ch-summary");
+        ui.main.append(summary, textEl("p", "ch-small", "lab.chatbot.ctx.lookBack"));
+
+        // ----- "Show the maths": the table of one word's scores, and its new numbers -----
+        const mathsToggle = kit.toggle({ labelKey: "lab.chatbot.ctx.showMaths", onChange: function () { render(false); } });
+        const maths = el("div", "ch-maths");
+        const formula = el("p", "ch-small");
+        const query = el("p", "ch-line");
+        const table = el("table", "ch-table");
+        const caption = el("caption");
+        const headRow = el("tr");
+        ["colWord", "colDot", "colScore", "colExp", "colWeight"].forEach(function (key, n) {
+            const cell = textEl("th", n === 1 || n === 3 ? "ch-wide" : "", "lab.chatbot.ctx." + key);
+            cell.scope = "col";
+            headRow.appendChild(cell);
+        });
+        const head = el("thead");
+        head.appendChild(headRow);
+        const body = el("tbody");
+        table.append(caption, head, body);
+        const sumLine = el("p", "ch-line");
+        const output = el("p", "ch-line");
+        const newTitle = el("h4", "ch-title");
+        const newBars = kit.bars(null, { max: 2, format: function (v) { return decimals(v, 2); } });
+        maths.append(formula, query, table, sumLine, output, newTitle, newBars.element);
+
+        const explain = kit.explain({ steps: [
+            { key: "lab.chatbot.ctx.step1" }, { key: "lab.chatbot.ctx.step2" }, { key: "lab.chatbot.ctx.step3" },
+            { key: "lab.chatbot.ctx.step4", values: { d: String(FEATURES.length) } }
+        ] });
+        explain.setText("lab.chatbot.ctx.handmade");
+        ui.side.append(pairs.element, lastWord.element, layerChoice.element, wordChoice.element, mathsToggle.element);
+        ui.bottom.append(maths, ideaLine("lab.chatbot.ctx.ideaLine", "transformer", "lab.chatbot.ctx.term"), explain.element);
+
+        // A click on a chip makes that word look
+        view.canvas.addEventListener("click", function (event) {
+            if (!layout) return;
+            const box = view.canvas.getBoundingClientRect();
+            const x = event.clientX - box.left;
+            const y = event.clientY - box.top;
+            layout.chips.forEach(function (chip, i) {
+                if (x >= chip.x && x <= chip.x + chip.w && y >= chip.y && y <= chip.y + chip.h) {
+                    chosen = i;
+                    wordChoice.set(i);
+                    render(true);
+                }
+            });
+        });
+        view.onResize(function () {
+            layout = null;
+            draw();
+        });
+
+        // The sentence in the current language, and its attention in both layers
+        function build(glide) {
+            const role = words[chosen] ? words[chosen].role : "pronoun";
+            const sentence = pair();
+            words = sentence.words.concat([[sentence.last[last][0] + sentence.end, sentence.last[last][1]]]).map(function (word) {
+                return { text: word[0], name: word[0].replace(/[.,!?]+$/, ""), role: word[1] };
+            });
+            pronoun = words.map(function (word) { return word.role; }).indexOf("pronoun");
+            const same = words.map(function (word) { return word.role; }).indexOf(role);
+            chosen = chosen === -1 || same === -1 ? pronoun : same;
+            layers = attention(words.map(function (word) { return word.role; }));
+            wordChoice.setOptions(words.map(function (word, i) { return { value: i, label: word.name }; }), chosen);
+            layout = null;
+            render(glide);
+        }
+
+        function draw() {
+            if (!view.width || !shown) return;
+            if (!layout) {
+                layout = chipLayout(view.ctx, words.map(function (word) { return word.text; }), chosen, view.width);
+                if (view.box.style.height !== layout.height + "px") view.box.style.height = layout.height + "px";
+            }
+            drawAttention(view, { layout: layout, texts: words.map(function (word) { return word.text; }), chosen: chosen, weights: shown, top: topOf(shown) });
+        }
+
+        function topOf(list) {
+            return list.indexOf(Math.max.apply(null, list));
+        }
+
+        // "box 72%, robot 3%, …": the biggest shares first
+        function sharesText(row, count) {
+            return row.map(function (w, j) { return { w: w, j: j }; })
+                .sort(function (p, q) { return q.w - p.w; })
+                .slice(0, count)
+                .map(function (item) { return words[item.j].name + " " + percent(item.w); }).join(", ");
+        }
+
+        // "describes the doer 3, pronoun 1"
+        function featureText(vector) {
+            const parts = [];
+            vector.forEach(function (x, n) {
+                if (Math.abs(x) >= 0.005) parts.push(t("lab.chatbot.ctx.feature." + FEATURES[n]) + " " + decimals(x, 2));
+            });
+            return parts.length ? parts.join(", ") : t("lab.chatbot.ctx.nothing");
+        }
+
+        function say() {
+            const row = layers[layer - 1].weights[chosen];
+            const top = topOf(row);
+            app.ctx.announce(t("lab.chatbot.ctx.said", { layer: String(layer), word: words[chosen].name, target: words[top].name, weight: percent(row[top]) }));
+        }
+
+        function render(glide) {
+            const result = layers[layer - 1];
+            const row = result.weights[chosen];
+            const top = topOf(row);
+            const name = words[chosen].name;
+            // The lines glide from the old shares to the new ones
+            const from = glide && shown && shown.length === row.length ? shown.slice() : row;
+            if (arc) arc.cancel();
+            arc = tween(ARC_MS, function (share) {
+                shown = from.map(function (w, j) { return w + (row[j] - w) * share; });
+                draw();
+            });
+            write(summary, tx("lab.chatbot.ctx.summary", { layer: String(layer), word: name, weight: percent(row[top]), target: words[top].name }));
+            view.describe(t("lab.chatbot.ctx.describe", {
+                sentence: words.map(function (word) { return word.text; }).join(" "), layer: String(layer), word: name, list: sharesText(row, 3)
+            }));
+
+            maths.hidden = !mathsToggle.checked();
+            if (!maths.hidden) {
+                write(formula, tx("lab.chatbot.ctx.formula", { d: String(FEATURES.length), word: name }));
+                const asks = result.q[chosen].some(function (x) { return x !== 0; });
+                write(query, asks ? tx("lab.chatbot.ctx.query", { word: name, list: featureText(result.q[chosen]) }) : tx("lab.chatbot.ctx.noQuery", { word: name }));
+                write(caption, tx("lab.chatbot.ctx.tableCaption", { word: name, layer: String(layer) }));
+                body.textContent = "";
+                words.forEach(function (word, j) {
+                    const tableRow = el("tr", j === top ? "is-top" : "");
+                    const score = result.scores[chosen][j];
+                    [word.name, decimals(result.dots[chosen][j], 2), decimals(score, 2), decimals(Math.exp(score), 2), percent(row[j], 1)].forEach(function (text, n) {
+                        const cell = el(n === 0 ? "th" : "td", n === 1 || n === 3 ? "ch-wide" : "", text);
+                        if (n === 0) cell.scope = "row";
+                        tableRow.appendChild(cell);
+                    });
+                    body.appendChild(tableRow);
+                });
+                write(sumLine, tx("lab.chatbot.ctx.sum", { sum: percent(row.reduce(function (sum, w) { return sum + w; }, 0), 1) }));
+                write(output, tx("lab.chatbot.ctx.output", { list: featureText(result.outputs[chosen]) }));
+                write(newTitle, tx("lab.chatbot.ctx.newVector", { word: name }));
+                newBars.update(FEATURES.map(function (feature, n) {
+                    return { labelKey: "lab.chatbot.ctx.feature." + feature, value: result.next[chosen][n], colorIndex: n };
+                }));
+            }
+
+            // What's happening? Steps 2 and 3 follow the pronoun
+            const first = layers[0].weights[pronoun];
+            const second = layers[1].weights[pronoun];
+            explain.setValues(1, { pronoun: words[pronoun].name, adjective: words[words.length - 1].name, weight1: percent(first[words.length - 1]) });
+            explain.setValues(2, { pronoun: words[pronoun].name, target: words[topOf(second)].name, weight2: percent(second[topOf(second)]) });
+            explain.setStep(!maths.hidden ? 3 : layer);
+
+            const doer = words.map(function (word) { return word.role; }).indexOf("doer");
+            app.challenges.check({ itRobot: pairId === "robot" && layer === 2 && chosen === pronoun && second[doer] > 0.5 });
+        }
+
+        return {
+            element: root,
+            show: function () {
+                root.hidden = false;
+                if (!layers) build(false);
+                else render(false);
+            },
+            hide: function () {
+                if (arc) arc.finish();
+                root.hidden = true;
+            },
+            pause: function () { if (arc) arc.finish(); },
+            resume: function () {},
+            language: function () {
+                if (arc) arc.finish();
+                build(false);
+            },
+            theme: draw,
+            destroy: function () {
+                if (arc) arc.cancel();
+                view.destroy();
+            }
+        };
+    }
+
+    /* =========================================================
        13. THE EXPERIMENT
        ========================================================= */
     // The icons of the pipeline strip (24 x 24, currentColor, like the kit's)
@@ -1328,7 +1760,7 @@
         next: "dice"
     };
 
-    const BUILDERS = { tokens: tokensView, meaning: meaningView };
+    const BUILDERS = { tokens: tokensView, meaning: meaningView, context: contextView };
 
     // Saved settings can be old, broken or edited by hand: everything is checked
     function savedIsGood(value, dims) {
@@ -1343,7 +1775,8 @@
         // The maths, for dev/tests/chatbot.math.js (the hub doesn't use it)
         maths: {
             splitWords: splitWords, tokenizer: tokenizer, encode: encode,
-            cosine: cosine, nearest: nearest, wordMaths: wordMaths, pca: pca, project: project, makeWords: makeWords
+            cosine: cosine, nearest: nearest, wordMaths: wordMaths, pca: pca, project: project, makeWords: makeWords,
+            softmax: softmax, attention: attention, FEATURES: FEATURES
         },
 
         create: function (stage, ctx) {

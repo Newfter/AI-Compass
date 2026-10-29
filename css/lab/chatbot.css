@@ -8,6 +8,7 @@
     2. Shared parts
     3. View 1: tokens
     4. View 2: meaning
+    5. View 3: context
    ========================================================= */
 
 /* ===== 1. THE PIPELINE STRIP =====
@@ -350,4 +351,76 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
     gap: 10px 18px;
+}
+
+/* ===== 5. VIEW 3: CONTEXT ===== */
+
+.ch-summary {
+    margin: 0;
+    color: var(--text);
+    font-size: 14.5px;
+    line-height: 1.5;
+}
+
+.ch-line {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    line-height: 1.55;
+}
+
+/* "Show the maths": a box that measures its own width (the table drops two columns
+   when it is narrow) */
+.ch-maths {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+.ch-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.ch-table caption {
+    margin-bottom: 8px;
+    color: var(--text);
+    font-weight: 700;
+    text-align: left;
+}
+
+.ch-table th,
+.ch-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.ch-table th:first-child {
+    font-family: var(--font-body);
+    text-align: left;
+}
+
+.ch-table thead th {
+    color: var(--text-label);
+    font-size: 12px;
+}
+
+.ch-table .is-top {
+    background: rgba(var(--accent-rgb), 0.14);
+}
+
+@container (max-width: 440px) {
+    .ch-wide {
+        display: none;
+    }
 }
