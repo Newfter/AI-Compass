@@ -568,7 +568,9 @@ html.st-solid *::after {
 /* ----- A row of options (segmented buttons) -----
    Real radio buttons: each one is invisible but covers its option, so
    a click, a tap and the arrow keys all work as usual. The visible part
-   is .st-seg-face next to it. */
+   is .st-seg-face next to it. (css/components.css has no segmented
+   buttons yet. When another feature needs them, these rules can move
+   there as .ui-seg; the switches already are .ui-switch from there.) */
 .st-seg-options {
     display: flex;
     gap: 4px;
