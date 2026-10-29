@@ -123,7 +123,8 @@
     const BRAIN_MS = 1000 / 15;          // ...and the brain diagram at most 15 times a second
 
     // ----- "Try this" -----
-    const STUCK_GENERATIONS = 5;         // 2: generations made with mutation rate 0 in a row, with no better best car
+    const STUCK_GENERATIONS = 5;         // 2: generations made with mutation rate 0 and no crossover in a row
+                                         //    (every child an exact copy), with no better best car
     const FALLS = 3;                     // 3: generations in a row made with the biggest mutation size whose average
                                          //    fitness is below the last one made with a smaller size
 
@@ -1063,7 +1064,7 @@
         let rng = null;
         let race = null;              // this generation's cars
         let generation = 1;
-        let made = null;              // { rate, size }: how this generation's brains were made (null: at random)
+        let made = null;              // { rate, size, crossover }: how this generation's brains were made (null: at random)
         let next = null;              // the next generation's brains, waiting for their race...
         let nextMade = null;          // ...and how they were made
         let rest = 0;                 // Watch: ticks left to look at the finished race
@@ -1373,8 +1374,10 @@
             const improved = !bestEver || best > bestEver.fitness;
             if (improved) bestEver = { fitness: best, weights: copyBrain(race.cars[bestIndex].weights), generation: generation };
 
-            // Challenge 2: made with rate 0, and no better than before
-            stuck = made && made.rate === 0 && !improved ? stuck + 1 : 0;
+            // Challenge 2: made with rate 0 and no crossover (so every child is an exact copy of
+            // a parent), and no better than before. With crossover on, mixing two parents still
+            // makes new brains, and evolution can go on improving for a while.
+            stuck = made && made.rate === 0 && !made.crossover && !improved ? stuck + 1 : 0;
             // Challenge 3: made with the biggest size, and a lower average than before that size
             if (made && made.size >= SIZE.max) {
                 below = reference !== null && average < reference ? below + 1 : 0;
@@ -1404,7 +1407,7 @@
             });
 
             next = nextGeneration(population, { rate: settings.rate, size: settings.size, crossover: settings.crossover, count: settings.population }, rng);
-            nextMade = { rate: settings.rate, size: settings.size };
+            nextMade = { rate: settings.rate, size: settings.size, crossover: settings.crossover };
             rest = speed === "watch" && !stepping ? REST_TICKS : 0;
             chartDirty = true;
             if (stepping) {

@@ -131,8 +131,8 @@ window.AICompass.addTranslations({
         // ----- "Try this" -----
         "lab.evolve.ch1": "On “Oval”, evolve a car that finishes a full lap.",
         "lab.evolve.ch1Why": "Nobody told the car how to steer. Random changes plus “the cars that get furthest become parents” were enough.",
-        "lab.evolve.ch2": "Set the mutation rate to 0 and press Start over. Can evolution still improve the best car?",
-        "lab.evolve.ch2Why": "Evolution is stuck: without mutations, children only copy their parents' numbers, so nothing new can appear. New ideas come from mutations.",
+        "lab.evolve.ch2": "Set the mutation rate to 0 (with crossover off) and press Start over. Can evolution still improve the best car?",
+        "lab.evolve.ch2Why": "Evolution is stuck: without mutations every child is an exact copy of a parent, so nothing new can appear. New numbers come only from mutations. (Crossover can mix old numbers into new brains for a while, but it never makes a new number.)",
         "lab.evolve.ch3": "Let the cars learn for a few generations, then set the mutation size to its maximum. Watch the average fitness.",
         "lab.evolve.ch3Why": "Changes that big break good brains: the children of good drivers crash. Only the 2 best, copied unchanged, keep the record.",
         "lab.evolve.ch4": "Train the cars until one finishes a lap. Then turn on “Keep the brains” and switch to another track. Do they still drive?",
@@ -252,8 +252,8 @@ window.AICompass.addTranslations({
         // ----- «Попробуй» -----
         "lab.evolve.ch1": "На «Овале» выведи машинку, которая проедет полный круг.",
         "lab.evolve.ch1Why": "Никто не объяснял машинке, как рулить. Хватило случайных изменений и правила «родителями становятся те, кто уехал дальше всех».",
-        "lab.evolve.ch2": "Поставь частоту мутаций на 0 и нажми «Начать заново». Сможет ли эволюция улучшить лучшую машинку?",
-        "lab.evolve.ch2Why": "Эволюция застряла: без мутаций потомки только копируют числа родителей, и новому взяться неоткуда. Новые идеи появляются именно из мутаций.",
+        "lab.evolve.ch2": "Поставь частоту мутаций на 0 (кроссовер выключен) и нажми «Начать заново». Сможет ли эволюция улучшить лучшую машинку?",
+        "lab.evolve.ch2Why": "Эволюция застряла: без мутаций каждый потомок — точная копия родителя, и новому взяться неоткуда. Новые числа появляются только из мутаций. (Кроссовер может какое-то время смешивать старые числа в новые мозги, но нового числа он не создаёт.)",
         "lab.evolve.ch3": "Дай машинкам поучиться несколько поколений, потом поставь силу мутаций на максимум. Следи за средней приспособленностью.",
         "lab.evolve.ch3Why": "Такие сильные изменения ломают хорошие мозги: потомки хороших водителей разбиваются. Рекорд держится только благодаря двум лучшим, которых копируют без изменений.",
         "lab.evolve.ch4": "Тренируй машинки, пока одна не проедет круг. Потом включи «Оставить мозги» и выбери другую трассу. Поедут ли они?",
