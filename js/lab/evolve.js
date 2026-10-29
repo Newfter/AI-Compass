@@ -1256,6 +1256,7 @@
 
         function chooseTrack(id) {
             if (id === "draw") startDrawing();
+            else if (mode === "draw" && id === trackId) cancelDraw();      // back to the cars' own track: like Cancel, nothing is lost
             else loadTrack(id);
         }
 
@@ -1563,6 +1564,8 @@
         }
 
         function stopDrawing() {
+            // The box is about to hide: if Cancel had the keyboard focus, the track select takes it
+            if (drawBox.contains(document.activeElement)) trackSelect.select.focus();
             mode = "evolve";
             stroke = null;
             drawBox.hidden = true;
