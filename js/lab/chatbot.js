@@ -41,12 +41,13 @@
     const VIEWS = ["tokens", "meaning", "context", "next"];
     const SAVE_VERSION = 1;          // ctx.store "settings" = { v: 1, view, text, word } (null: not changed)
     // View 1: tokens
-    const TEXT_LIMIT = 300;          // characters in the text box
-    const MAX_MERGES = 400;          // merges the tokenizer may learn
+    const TEXT_LIMIT = 300;          // characters in the text box (its hint says 300 too)
+    const MAX_MERGES = 400;          // merges the tokenizer may learn (the texts say 400 too)
     const CHOICES = ["en", "ru", "both"];   // what it may learn from
     const START_CHOICE = "both";
     const PLAY_SPEED = 25;           // merges per second while "Play" runs
-    const TRAIN_BUDGET = 8;          // ms of training per frame, so the page stays smooth
+    const TRAIN_BUDGET = 5;          // ms of learning per frame (one merge may run over): the frame stays near 8 ms
+    const QUICK_MERGES = 3;          // this many missing merges are learned at once; more, a few per frame
     const CHIP_COLORS = 6;           // token chips take turns with this many colours
     const SPACE_MARK = "▁";          // a word start, shown the way SentencePiece shows it
     const NEWLINE_MARK = "↵";
@@ -80,11 +81,11 @@
     const ARC_MS = 450;              // the attention lines glide to their new thickness
     // View 4: next word
     const TEMPERATURE = { min: 0, max: 2, step: 0.05, value: 1 };
-    const TOP_K_MAX = 10;            // top-k from 1 to this (0: off)
+    const TOP_K_MAX = 7;             // top-k from 1 to this (0: off); a prompt has 8 words, so 8 would keep all
     const TOP_P = { min: 0.5, step: 0.05 };     // top-p from min to 1 (1: off)
     const DICE_SEED = 7;             // the first dice of a prompt (+ the prompt's number), so a lesson can repeat it
     const ROLL_MS = 900;             // the needle runs to where the dice landed
-    const ENDINGS = 20;              // "Write 20 endings"
+    const ENDINGS = 20;              // "Write 20 endings" (the texts say 20 too)
     const LABEL_SHARE = 0.08;        // a part of the dice bar this big shows its word
     const BORING_ROLLS = 3;          // challenge 4: the same word this many rolls in a row...
     const SILLY_GOAL = 0.05;         // ...then the silly word gets at least this chance
@@ -319,13 +320,14 @@
     //   model.merges[i]  { a, b, count, token, id }: merge i + 1
     //   model.vocab      token -> its number (the characters first, then the new tokens)
     //   model.sizes[m]   how many tokens the vocabulary has after m merges
-    //   model.learn(ms)  learns merges for about ms milliseconds (Infinity: all of them)
+    //   model.learn(ms)  learns merges for about ms milliseconds (0: just one, Infinity: all)
+    //   model.done       true when it may not (or cannot) learn any more
     function tokenizer(text, maxMerges) {
         const counts = new Map();
         splitWords(text).forEach(function (word) { counts.set(word, (counts.get(word) || 0) + 1); });
         const words = [];
         counts.forEach(function (count, word) { words.push({ parts: Array.from(word), count: count }); });
-        const model = { base: [], vocab: new Map(), merges: [], ranks: new Map(), sizes: [], done: false };
+        const model = { base: [], vocab: new Map(), merges: [], ranks: new Map(), sizes: [], done: maxMerges < 1 };
         words.forEach(function (word) {
             word.parts.forEach(function (ch) {
                 if (model.vocab.has(ch)) return;
@@ -366,8 +368,8 @@
         model.learn = function (ms) {
             const started = performance.now();
             while (!model.done) {
-                if (model.merges.length >= maxMerges || !learnOne()) model.done = true;
-                else if (performance.now() - started >= ms) break;
+                model.done = !learnOne() || model.merges.length >= maxMerges;
+                if (performance.now() - started >= ms) break;
             }
             return model.done;
         };
@@ -897,7 +899,6 @@
         let typed = 0;                        // a frame that will cut the typed text
         let resumeTraining = false;
         let resumePlay = false;
-        let sayTrained = false;               // announce the end of a training somebody chose
 
         // ----- Your text and its tokens -----
         const box = textBox("lab.chatbot.tok.text", "lab.chatbot.tok.textHint", edited ? app.saved.text : example(), onType);
@@ -981,7 +982,10 @@
         ui.side.append(training.element, progress.element, slider.element, kit.toolbar([playButton, stepButton, status]), mergeLine);
         ui.bottom.append(fair, corpusToggle.element, corpus, ideaLine("lab.chatbot.tok.ideaLine", "token", "lab.chatbot.tok.term"), explain.element);
 
-        // ----- Learning, a few merges per frame -----
+        // ----- Learning: only when the view needs merges that aren't learned yet -----
+        // Opening the view learns nothing. A few missing merges are learned at once; more
+        // start the whole training, a few merges per frame with the progress bar. Each
+        // tokenizer stays trained for the rest of the visit.
         const trainLoop = kit.loop({
             rate: Infinity,
             budget: TRAIN_BUDGET,
@@ -989,18 +993,26 @@
                 if (model.learn(TRAIN_BUDGET)) trainLoop.stop();
             },
             draw: function () {
-                if (model.done && sayTrained) app.ctx.announce(t("lab.chatbot.tok.trained", { n: kit.number(model.merges.length) }));
-                if (model.done) sayTrained = false;
-                // The tokens on screen wait for merges that weren't learned yet
-                if (model.done || merges > shownMerges) update();
+                if (model.done) app.ctx.announce(t("lab.chatbot.tok.trained", { n: kit.number(model.merges.length) }));
+                // Only the bar moves, until the merges the tokens wait for are there (redrawing
+                // everything each frame would cost more than the learning)
+                if (model.done || (shownMerges < merges && model.merges.length > merges)) update();
                 else paintProgress();
             }
         });
+
+        // Makes sure the first `count` merges are (or will soon be) learned
+        function need(count) {
+            const goal = Math.min(count, MAX_MERGES);
+            while (!model.done && model.merges.length < goal && goal - model.merges.length <= QUICK_MERGES) model.learn(0);
+            if (!model.done && model.merges.length < goal) trainLoop.start();
+        }
 
         // ----- "Play": one more merge, PLAY_SPEED times a second -----
         const playLoop = kit.loop({
             rate: PLAY_SPEED,
             update: function () {
+                need(merges + 1);
                 if (merges < MAX_MERGES && merges < model.merges.length) {
                     merges += 1;
                     flash = model.merges[merges - 1].token;
@@ -1024,9 +1036,8 @@
 
         function setChoice(value) {
             choice = value;
+            trainLoop.stop();                 // the other tokenizer goes on later, if it's needed
             model = tokenizerFor(choice, data);
-            sayTrained = !model.done;
-            if (!model.done) trainLoop.start();
             paintCorpus();
             update();
         }
@@ -1058,6 +1069,7 @@
 
         function stepOnce() {
             playLoop.stop();
+            need(merges + 1);
             if (merges < MAX_MERGES && merges < model.merges.length) {
                 merges += 1;
                 flash = model.merges[merges - 1].token;
@@ -1182,6 +1194,10 @@
             });
         }
 
+        // The same message in two languages. A tokenizer that learned mostly from one language
+        // cuts the other into more, shorter pieces, so its speakers pay for more tokens and
+        // fit less text into the model's memory (Petrov et al., 2023, "Language Model
+        // Tokenizers Introduce Unfairness Between Languages").
         function paintFair(m) {
             const pair = data.fairPairs.filter(function (p) { return p.id === fairId; })[0];
             const en = encode(model, pair.en, m);
@@ -1192,7 +1208,10 @@
             ]);
             miniChips(fairRows.en, en);
             miniChips(fairRows.ru, ru);
-            if (ru.length > en.length) write(verdict, tx("lab.chatbot.tok.verdictMore", { ratio: decimals(ru.length / en.length, 1) }));
+            // A ratio below 1.1 would read "1.0×", like "the same": a small difference gets words
+            const ratio = ru.length / en.length;
+            if (ratio >= 1.1) write(verdict, tx("lab.chatbot.tok.verdictMore", { ratio: decimals(ratio, 1) }));
+            else if (ru.length > en.length) write(verdict, t("lab.chatbot.tok.verdictLittle"));
             else write(verdict, t(ru.length < en.length ? "lab.chatbot.tok.verdictFewer" : "lab.chatbot.tok.verdictSame"));
             return ru.length < en.length;
         }
@@ -1208,12 +1227,13 @@
         }
 
         function paintProgress() {
-            progress.element.hidden = model.done;
+            progress.element.hidden = !trainLoop.running();
             progress.set(model.merges.length / MAX_MERGES);
         }
 
         // Everything on screen follows the numbers
         function update() {
+            need(merges + 1);                 // + 1: "What's happening?" shows the next pair
             const m = Math.min(merges, model.merges.length);
             shownMerges = m;
             const text = input.value;
@@ -1238,11 +1258,14 @@
             const pair = next || model.merges[m - 1];
             explain.setValues(0, { base: model.base.length });
             if (pair) explain.setValues(1, { a: shown(pair.a), b: shown(pair.b), times: A.plural("lab.chatbot.tok.times", pair.count) });
-            explain.setValues(2, { merges: m, chars: chars, tokens: tokens.length, perToken: decimals(perToken, 2) });
+            explain.setValues(2, {
+                merges: m, chars: A.plural("lab.chatbot.tok.charCount", chars),
+                tokens: A.plural("lab.chatbot.tok.tokenCount", tokens.length), perToken: decimals(perToken, 2)
+            });
             const ids = tokens.slice(0, IDS_SHOWN).map(function (token) { return token.id < 0 ? "?" : String(token.id); });
             explain.setValues(3, { ids: ids.length ? ids.join(", ") + (tokens.length > IDS_SHOWN ? ", …" : "") : "—" });
             explain.setStep(state === "ready" ? 0 : state === "running" ? 1 : 2);
-            if (m >= MAX_MERGES) explain.setText("lab.chatbot.tok.step2Done", { merges: m });
+            if (m >= MAX_MERGES) explain.setText("lab.chatbot.tok.step2Done", { times: A.plural("lab.chatbot.tok.times", m) });
             else if (next && next.count === 1) explain.setText("lab.chatbot.tok.step2Once", { a: shown(next.a), b: shown(next.b) });
             else explain.setText(null);
 
@@ -1253,7 +1276,6 @@
             element: root,
             show: function () {
                 root.hidden = false;
-                if (!model.done) trainLoop.start();
                 update();
             },
             hide: function () {
@@ -1278,7 +1300,7 @@
             },
             language: function () {
                 if (!edited) input.value = example();
-                update();
+                if (!root.hidden) update();       // show() updates a hidden view
             },
             theme: function () {},
             destroy: function () {
@@ -1334,7 +1356,7 @@
         const modes = kit.segmented({
             labelKey: "lab.chatbot.mean.mode",
             options: ["word", "maths", "own"].map(function (value) {
-                return { value: value, labelKey: "lab.chatbot.mean.mode" + value.charAt(0).toUpperCase() + value.slice(1) };
+                return { value: value, labelKey: "lab.chatbot.mean.mode." + value };
             }),
             value: mode,
             onChange: function (value) {
@@ -1527,7 +1549,7 @@
                 focus = t("lab.chatbot.mean.describeOwn", { list: listOf(ownClose.slice(0, 3)) });
             }
             draw();
-            mapView.describe(t("lab.chatbot.mean.describe", { count: String(words.length), focus: focus }));
+            mapView.describe(t("lab.chatbot.mean.describe", { count: A.plural("lab.chatbot.mean.wordCount", words.length), focus: focus }));
 
             // What's happening? Step 1: the word's biggest numbers ("animal 1, pet 1, big 0.45")
             const top = data.dims.map(function (dim, n) { return { dim: dim, value: word.vector[n] }; })
@@ -1876,7 +1898,7 @@
         });
         const rollLine = el("p", "ch-summary");
         const history = el("p", "ch-small");
-        const endingBars = kit.bars(null, { max: ENDINGS, format: function (n) { return t("lab.chatbot.next.endingsCount", { n: String(n) }); } });
+        const endingBars = kit.bars(null, { max: ENDINGS, format: function (n) { return t("lab.chatbot.next.endingsCount", { n: kit.number(n), max: kit.number(ENDINGS) }); } });
         const endingPanel = panel("lab.chatbot.next.endings", [endingBars]);
 
         // ----- The settings, and the chances after each step -----
@@ -1976,7 +1998,7 @@
             step = 3;
             render();
             const most = counts.indexOf(Math.max.apply(null, counts));
-            app.ctx.announce(t("lab.chatbot.next.endingsSaid", { word: word(most), n: String(counts[most]) }));
+            app.ctx.announce(t("lab.chatbot.next.endingsSaid", { word: word(most), times: A.plural("lab.chatbot.tok.times", counts[most]) }));
         }
 
         // Everything on screen follows the numbers
