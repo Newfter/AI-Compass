@@ -393,11 +393,16 @@
             if (on !== node.item.on) {
                 node.item.on = on;
                 node.item.el.classList.toggle("is-reached", on);
-                if (on) trackEra(node.item.el.closest(".tl-era"));
             }
             if (on) {
                 reached++;
                 lastReached = node.item;
+            }
+            // An era counts as visited once the line has really moved: the first dot is
+            // lit at the start, before anybody has scrolled to the timeline
+            if (on && shown > 0 && !node.item.tracked) {
+                node.item.tracked = true;
+                trackEra(node.item.el.closest(".tl-era"));
             }
         });
 
