@@ -913,11 +913,12 @@
         const info = el("p", "ch-tok-info");
         const listField = el("div", "lk-field");
         listField.append(listLabel, list, info);
+        // (no first value: the first numbers appear at once, without counting up)
         const stats = {
-            chars: kit.stat({ labelKey: "lab.chatbot.tok.chars", value: 0 }),
-            tokens: kit.stat({ labelKey: "lab.chatbot.tok.tokens", value: 0 }),
+            chars: kit.stat({ labelKey: "lab.chatbot.tok.chars" }),
+            tokens: kit.stat({ labelKey: "lab.chatbot.tok.tokens" }),
             perToken: kit.stat({ labelKey: "lab.chatbot.tok.perToken", format: function (v) { return decimals(v, 2); } }),
-            vocab: kit.stat({ labelKey: "lab.chatbot.tok.vocab", value: 0 })
+            vocab: kit.stat({ labelKey: "lab.chatbot.tok.vocab" })
         };
 
         // ----- Training -----
@@ -1151,8 +1152,8 @@
             const token = tokens[active];
             if (!tokens.length) write(info, t("lab.chatbot.tok.empty"));
             else if (!token) write(info, t("lab.chatbot.tok.infoIdle"));
-            else if (token.id < 0) write(info, tx("lab.chatbot.tok.infoUnknown", { token: shown(token.text) }));
-            else write(info, tx("lab.chatbot.tok.info", { token: shown(token.text), id: String(token.id) }));
+            else if (token.id < 0) write(info, t("lab.chatbot.tok.infoUnknown", { token: tokenHTML(token.text) }));
+            else write(info, t("lab.chatbot.tok.info", { token: tokenHTML(token.text), id: String(token.id) }));
         }
 
         function chipIndex(target) {
@@ -1759,13 +1760,19 @@
             const row = result.weights[chosen];
             const top = topOf(row);
             const name = words[chosen].name;
-            // The lines glide from the old shares to the new ones
-            const from = glide && shown && shown.length === row.length ? shown.slice() : row;
+            // The lines glide from the old shares to the new ones (or jump there)
             if (arc) arc.cancel();
-            arc = tween(ARC_MS, function (share) {
-                shown = from.map(function (w, j) { return w + (row[j] - w) * share; });
+            arc = null;
+            if (glide && shown && shown.length === row.length) {
+                const from = shown.slice();
+                arc = tween(ARC_MS, function (share) {
+                    shown = from.map(function (w, j) { return w + (row[j] - w) * share; });
+                    draw();
+                });
+            } else {
+                shown = row;
                 draw();
-            });
+            }
             write(summary, tx("lab.chatbot.ctx.summary", { layer: String(layer), word: name, weight: percent(row[top]), target: words[top].name }));
             view.describe(t("lab.chatbot.ctx.describe", {
                 sentence: words.map(function (word) { return word.text; }).join(" "), layer: String(layer), word: name, list: sharesText(row, 3)
@@ -1821,7 +1828,7 @@
             pause: function () { if (arc) arc.finish(); },
             resume: function () {},
             language: function () {
-                if (arc) arc.finish();
+                if (arc) arc.cancel();        // build() draws the new sentence at once
                 build(false);
             },
             theme: draw,
