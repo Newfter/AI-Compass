@@ -78,6 +78,16 @@
         }
     ];
     const ARC_MS = 450;              // the attention lines glide to their new thickness
+    // View 4: next word
+    const TEMPERATURE = { min: 0, max: 2, step: 0.05, value: 1 };
+    const TOP_K_MAX = 10;            // top-k from 1 to this (0: off)
+    const TOP_P = { min: 0.5, step: 0.05 };     // top-p from min to 1 (1: off)
+    const DICE_SEED = 7;             // the first dice of a prompt (+ the prompt's number), so a lesson can repeat it
+    const ROLL_MS = 900;             // the needle runs to where the dice landed
+    const ENDINGS = 20;              // "Write 20 endings"
+    const LABEL_SHARE = 0.08;        // a part of the dice bar this big shows its word
+    const BORING_ROLLS = 3;          // challenge 4: the same word this many rolls in a row...
+    const SILLY_GOAL = 0.05;         // ...then the silly word gets at least this chance
 
     /* =========================================================
        2. SMALL HELPERS
@@ -545,6 +555,62 @@
     function attention(roles) {
         const first = attentionLayer(roles.map(oneHot), LAYERS[0]);
         return [first, attentionLayer(first.next, LAYERS[1])];
+    }
+
+    /* =========================================================
+       6. NEXT WORD: CHANCES AND DICE
+       ========================================================= */
+    // The chances after temperature T: softmax(score ÷ T). T = 0 always picks the top word.
+    function withTemperature(scores, temperature) {
+        if (!(temperature > 0)) {
+            const top = scores.indexOf(Math.max.apply(null, scores));
+            return scores.map(function (score, i) { return i === top ? 1 : 0; });
+        }
+        return softmax(scores.map(function (score) { return score / temperature; }));
+    }
+
+    // Only the words in keep keep their chance, scaled back up so that they add up to 1
+    function keepOnly(chances, keep) {
+        let total = 0;
+        chances.forEach(function (p, i) { if (keep[i]) total += p; });
+        return chances.map(function (p, i) { return keep[i] && total > 0 ? p / total : 0; });
+    }
+
+    // Top-k keeps the k most likely words (k = 0: off). Top-p then keeps the most likely
+    // words until their chances add up to p (p = 1: off): the smallest such group.
+    function cutTail(chances, k, p) {
+        const order = chances.map(function (x, i) { return i; }).sort(function (a, b) { return chances[b] - chances[a] || a - b; });
+        let kept = k > 0 ? keepOnly(chances, chances.map(function (x, i) { return order.indexOf(i) < k; })) : chances;
+        if (p < 1) {
+            const keep = chances.map(function () { return false; });
+            let sum = 0;
+            order.forEach(function (i) {
+                if (sum >= p - 1e-9 || !(kept[i] > 0)) return;
+                keep[i] = true;
+                sum += kept[i];
+            });
+            kept = keepOnly(kept, keep);
+        }
+        return kept;
+    }
+
+    // The three steps of view 4: softmax of the scores, after temperature, after top-k and top-p
+    function chances(scores, temperature, k, p) {
+        const warm = withTemperature(scores, temperature);
+        return { plain: softmax(scores), warm: warm, final: cutTail(warm, k, p) };
+    }
+
+    // The dice: a number u from 0 to 1 lands on the word whose part of the bar holds it
+    function pick(chances, u) {
+        let sum = 0;
+        let last = 0;
+        for (let i = 0; i < chances.length; i++) {
+            if (!(chances[i] > 0)) continue;
+            sum += chances[i];
+            last = i;
+            if (u < sum) return i;
+        }
+        return last;                      // rounding can leave the sum a hair below 1
     }
 
     /* =========================================================
@@ -1745,6 +1811,249 @@
     }
 
     /* =========================================================
+       12. VIEW 4: NEXT WORD
+       ========================================================= */
+    function nextView(app) {
+        const data = app.data;
+        const root = el("div", "ch-view");
+        const ui = kit.layout(root, { side: true });
+        let promptIndex = 0;
+        let temperature = TEMPERATURE.value;
+        let topK = 0;
+        let topP = 1;
+        let dice = kit.rng(DICE_SEED);
+        let rolls = [];                       // { word (its number), u (where the dice landed), boring }
+        let endings = null;                   // "Write 20 endings": { counts, chances }
+        let boringDone = false;               // challenge 4, first half
+        let needle = null;                    // the needle's run
+        let needleAt = 0;
+        let probs = null;                     // chances() of the words now
+        let step = 0;                         // the step of "What's happening?" last touched
+
+        function prompt() {
+            return data.prompts[promptIndex];
+        }
+
+        function word(i) {
+            return prompt().words[i][A.lang === "ru" ? 1 : 0];
+        }
+
+        function boring() {
+            return temperature === 0 || topK === 1;
+        }
+
+        // ----- The prompt and the dice -----
+        const prompts = kit.chips({
+            labelKey: "lab.chatbot.next.prompt",
+            options: data.prompts.map(function (item, i) { return { value: i, labelKey: "lab.chatbot.next.prompt." + item.id }; }),
+            value: promptIndex,
+            onChange: function (i) {
+                promptIndex = i;
+                dice = kit.rng(DICE_SEED + i);
+                clear();
+            }
+        });
+        const promptLine = el("p", "ch-prompt");
+        const bar = el("div", "ch-dice");
+        bar.setAttribute("role", "img");
+        bar.setAttribute("data-i18n-attr", "aria-label:lab.chatbot.next.diceLabel");
+        bar.setAttribute("aria-label", t("lab.chatbot.next.diceLabel"));
+        const parts = data.prompts[0].words.map(function () { return bar.appendChild(el("span", "ch-dice-part")); });
+        const needleMark = bar.appendChild(el("span", "ch-needle"));
+        const scale = el("div", "ch-dice-scale");
+        scale.setAttribute("aria-hidden", "true");
+        scale.append(el("span", "", "0"), el("span", "", "1"));
+        const rollButton = kit.button("lab.chatbot.next.roll", { icon: "dice", variant: "primary", onClick: roll });
+        const undoButton = kit.button("lab.chatbot.next.undo", { icon: "undo", onClick: undo });
+        const twentyButton = kit.button("lab.chatbot.next.twenty", { icon: "sparkle", onClick: writeEndings });
+        const newDice = kit.button("lab.chatbot.next.newDice", {
+            icon: "shuffle",
+            variant: "subtle",
+            onClick: function () {
+                dice = kit.rng(kit.newSeed());
+                clear();
+            }
+        });
+        const rollLine = el("p", "ch-summary");
+        const history = el("p", "ch-small");
+        const endingBars = kit.bars(null, { max: ENDINGS, format: function (n) { return t("lab.chatbot.next.endingsCount", { n: String(n) }); } });
+        const endingPanel = panel("lab.chatbot.next.endings", [endingBars]);
+
+        // ----- The settings, and the chances after each step -----
+        const sliders = [
+            kit.slider({
+                labelKey: "lab.chatbot.next.temperature", min: TEMPERATURE.min, max: TEMPERATURE.max, step: TEMPERATURE.step,
+                value: temperature, hintKey: "lab.chatbot.next.temperatureHint",
+                format: function (v) { return decimals(v, 2); },
+                onInput: function (v) { change(1, function () { temperature = v; }); }
+            }),
+            kit.slider({
+                labelKey: "lab.chatbot.next.topK", min: 0, max: TOP_K_MAX, step: 1, value: topK, hintKey: "lab.chatbot.next.topKHint",
+                format: function (v) { return v === 0 ? t("lab.chatbot.next.off") : String(v); },
+                onInput: function (v) { change(2, function () { topK = v; }); }
+            }),
+            kit.slider({
+                labelKey: "lab.chatbot.next.topP", min: TOP_P.min, max: 1, step: TOP_P.step, value: topP, hintKey: "lab.chatbot.next.topPHint",
+                format: function (v) { return v >= 1 ? t("lab.chatbot.next.off") : decimals(v, 2); },
+                onInput: function (v) { change(2, function () { topP = v; }); }
+            })
+        ];
+        const steps = ["panel1", "panel2", "panel3"].map(function (key) {
+            const list = kit.bars(null, { max: 1, format: function (v) { return percent(v, 1); } });
+            const sum = el("p", "ch-small ch-sum");
+            return { bars: list, sum: sum, element: panel("lab.chatbot.next." + key, [list, sum]) };
+        });
+        const stepRow = el("div", "ch-steps");
+        steps.forEach(function (item) { stepRow.appendChild(item.element); });
+
+        const link = el("p", "ch-idea");
+        const anchor = textEl("a", "", "lab.chatbot.next.predictorLink");
+        anchor.href = "#lab/predictor";
+        link.append(textEl("span", "", "lab.chatbot.next.predictor"), " ", anchor);
+        const explain = kit.explain({ steps: [
+            { key: "lab.chatbot.next.step1" }, { key: "lab.chatbot.next.step2" }, { key: "lab.chatbot.next.step3" },
+            { key: "lab.chatbot.next.step4" }, { key: "lab.chatbot.next.step5" }
+        ] });
+        explain.setText("lab.chatbot.next.wholeWords");
+
+        ui.top.appendChild(prompts.element);
+        ui.main.append(promptLine, panel("lab.chatbot.next.dice", [bar, scale, kit.toolbar([rollButton, undoButton, twentyButton, newDice]), rollLine, history]), endingPanel);
+        ui.side.append(sliders[0].element, sliders[1].element, sliders[2].element);
+        ui.bottom.append(stepRow, link, ideaLine("lab.chatbot.next.ideaLine", "llm", "lab.chatbot.next.term"), explain.element);
+
+        // A setting changed: the old 20 endings no longer match it
+        function change(explainStep, apply) {
+            apply();
+            step = explainStep;
+            endings = null;
+            render();
+        }
+
+        function clear() {
+            if (needle) needle.cancel();
+            needle = null;
+            rolls = [];
+            endings = null;
+            needleAt = 0;
+            step = 0;
+            render();
+        }
+
+        function roll() {
+            if (needle) needle.finish();
+            const u = dice.next();
+            const chosen = pick(probs.final, u);
+            const from = needleAt;
+            needleAt = u;
+            rolls.push({ word: chosen, u: u, boring: boring() });
+            const lastRolls = rolls.slice(-BORING_ROLLS);
+            if (lastRolls.length === BORING_ROLLS && lastRolls.every(function (r) { return r.boring && r.word === chosen; })) boringDone = true;
+            step = 3;
+            // The needle runs to u; the word shows when it gets there
+            needle = tween(ROLL_MS, function (share) { needleMark.style.left = ((from + (u - from) * share) * 100).toFixed(2) + "%"; }, function () {
+                needle = null;
+                render();
+                app.ctx.announce(t("lab.chatbot.next.said", { word: word(chosen) }));
+            });
+            if (needle.running()) render();
+        }
+
+        function undo() {
+            if (needle) needle.finish();
+            rolls.pop();
+            needleAt = rolls.length ? rolls[rolls.length - 1].u : 0;
+            // Undo may leave the focus on a button that is about to be disabled: Roll takes it
+            if (!rolls.length && document.activeElement === undoButton.element) rollButton.element.focus();
+            render();
+        }
+
+        function writeEndings() {
+            if (needle) needle.finish();
+            const counts = probs.final.map(function () { return 0; });
+            for (let n = 0; n < ENDINGS; n++) counts[pick(probs.final, dice.next())] += 1;
+            endings = { counts: counts, chances: probs.final.slice() };
+            if (boring() && counts.indexOf(ENDINGS) !== -1) boringDone = true;     // 20 times the same word
+            step = 3;
+            render();
+            const most = counts.indexOf(Math.max.apply(null, counts));
+            app.ctx.announce(t("lab.chatbot.next.endingsSaid", { word: word(most), n: String(counts[most]) }));
+        }
+
+        // Everything on screen follows the numbers
+        function render() {
+            const item = prompt();
+            const scores = item.words.map(function (w) { return w[2]; });
+            probs = chances(scores, temperature, topK, topP);
+            const last = rolls[rolls.length - 1];
+            const shownRoll = needle ? rolls[rolls.length - 2] : last;     // while the needle runs
+
+            // The three steps, each adding up to 100%
+            [probs.plain, probs.warm, probs.final].forEach(function (list, n) {
+                steps[n].bars.update(list.map(function (p, i) {
+                    const extra = n === 0 ? ' <span class="ch-score">' + tx("lab.chatbot.next.score", { score: decimals(scores[i], 1) }) + "</span>" : "";
+                    return { label: A.escapeHTML(word(i)) + extra, value: p, colorIndex: i };
+                }));
+                write(steps[n].sum, tx("lab.chatbot.next.sum", { sum: percent(list.reduce(function (sum, p) { return sum + p; }, 0)) }));
+            });
+
+            // The dice: one bar made of the final chances
+            parts.forEach(function (part, i) {
+                const share = probs.final[i];
+                part.style.width = (share * 100).toFixed(3) + "%";
+                part.style.background = "var(--lk-series-" + (i + 1) + ")";
+                write(part, share >= LABEL_SHARE ? word(i) : "");
+                part.classList.toggle("is-picked", Boolean(shownRoll) && shownRoll.word === i);
+            });
+            needleMark.hidden = !rolls.length;
+            if (!needle) needleMark.style.left = (needleAt * 100).toFixed(2) + "%";
+
+            promptLine.textContent = item[A.lang] || item.en;
+            promptLine.append(" ", el("span", shownRoll ? "ch-prompt-next" : "ch-prompt-gap", shownRoll ? word(shownRoll.word) : "…"));
+            write(rollLine, shownRoll ? tx("lab.chatbot.next.rolled", { u: decimals(shownRoll.u, 2), word: word(shownRoll.word) }) : t("lab.chatbot.next.rollHint"));
+            const done = needle ? rolls.slice(0, -1) : rolls;
+            history.hidden = !done.length;
+            write(history, tx("lab.chatbot.next.history", { list: done.map(function (r) { return word(r.word); }).join(", ") }));
+            undoButton.setDisabled(!rolls.length);
+
+            endingPanel.hidden = !endings;
+            if (endings) {
+                endingBars.update(endings.counts.map(function (n, i) {
+                    const chance = ' <span class="ch-score">' + tx("lab.chatbot.next.endingsChance", { p: percent(endings.chances[i]) }) + "</span>";
+                    return { label: A.escapeHTML(word(i)) + chance, value: n, colorIndex: i };
+                }).filter(function (row, i) { return endings.counts[i] > 0 || endings.chances[i] > 0; }));
+            }
+
+            // What's happening?
+            const kept = probs.final.filter(function (p) { return p > 0; }).length;
+            explain.setValues(0, { top: word(0), p: percent(probs.plain[0]) });
+            explain.setValues(1, { temp: decimals(temperature, 2) });
+            explain.setValues(2, { kept: kept, total: scores.length });
+            explain.setValues(3, { last: shownRoll ? t("lab.chatbot.next.step4Last", { u: decimals(shownRoll.u, 2), word: word(shownRoll.word) }) : t("lab.chatbot.next.step4None") });
+            explain.setValues(4, { text: (item[A.lang] || item.en) + " " + (shownRoll ? word(shownRoll.word) : "…") });
+            explain.setStep(step);
+
+            app.challenges.check({ boringSilly: boringDone && probs.final[scores.length - 1] >= SILLY_GOAL });
+        }
+
+        return {
+            element: root,
+            show: function () {
+                root.hidden = false;
+                render();
+            },
+            hide: function () {
+                if (needle) needle.finish();
+                root.hidden = true;
+            },
+            pause: function () { if (needle) needle.finish(); },
+            resume: function () {},
+            language: render,
+            theme: function () {},
+            destroy: function () { if (needle) needle.cancel(); }
+        };
+    }
+
+    /* =========================================================
        13. THE EXPERIMENT
        ========================================================= */
     // The icons of the pipeline strip (24 x 24, currentColor, like the kit's)
@@ -1760,7 +2069,7 @@
         next: "dice"
     };
 
-    const BUILDERS = { tokens: tokensView, meaning: meaningView, context: contextView };
+    const BUILDERS = { tokens: tokensView, meaning: meaningView, context: contextView, next: nextView };
 
     // Saved settings can be old, broken or edited by hand: everything is checked
     function savedIsGood(value, dims) {
@@ -1776,7 +2085,8 @@
         maths: {
             splitWords: splitWords, tokenizer: tokenizer, encode: encode,
             cosine: cosine, nearest: nearest, wordMaths: wordMaths, pca: pca, project: project, makeWords: makeWords,
-            softmax: softmax, attention: attention, FEATURES: FEATURES
+            softmax: softmax, attention: attention, FEATURES: FEATURES,
+            withTemperature: withTemperature, cutTail: cutTail, chances: chances, pick: pick
         },
 
         create: function (stage, ctx) {
