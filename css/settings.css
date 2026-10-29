@@ -5,7 +5,7 @@
    Part 1 changes the WHOLE SITE. Each setting is a class on <html>,
    put there before the page is drawn by the small script in the
    <head> of index.html (and again by js/settings.js):
-       html.st-large-text  a text size above 100% (js/settings.js only)
+       html.st-large-text  a text size above 100%
        html.st-relaxed     line spacing: relaxed
        html.st-font        the easy-to-read font
        html.st-underline   underlined links
@@ -53,6 +53,21 @@ html.st-large-text :is(.cp-title, .cp-sub, .cb-title, .cb-status-text) {
    text wraps between words as usual. */
 html.st-large-text body {
     overflow-wrap: break-word;
+}
+
+/* The AI Lab's sliders (css/lab.css): the value goes under its label when
+   the two don't fit side by side. At the normal size the label wraps
+   instead, as it always did. */
+html.st-large-text .lab-range-head {
+    flex-wrap: wrap;
+    row-gap: 6px;
+}
+
+/* Section titles (style.css, 7): on a phone a long word ("ИИ-лаборатория")
+   must still fit in its line, so a title is at most 10vw (a tenth of the
+   screen's width). On a 390px phone that only changes 150%. */
+html.st-large-text :is(.section-head h2, .about-card h2) {
+    font-size: min(clamp(1.75rem, 4.4vw, 3rem), 10vw);
 }
 
 /* ===== 2. LINE SPACING =====

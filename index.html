@@ -16,7 +16,8 @@
          - calm mode: the classes fx-calm and fx-motion-off (fx-motion-off also when the device
            asks for reduced motion), so the hero doesn't start its entrance animation;
          - the settings of js/settings.js: the text size (--text-scale) and the classes
-           st-relaxed, st-font, st-underline, st-contrast and st-solid (css/settings.css),
+           st-large-text, st-relaxed, st-font, st-underline, st-contrast and st-solid
+           (css/settings.css),
            and the easy-to-read font's stylesheet when that setting is on;
          - the class "js": the page runs JavaScript (the CSS can style the page without it).
          core.js and js/settings.js set the same things again, so nothing depends on this
@@ -57,9 +58,9 @@
             root.classList.toggle("fx-motion-off", calm || window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
             // Text size: 1 is the normal size, so only the bigger steps are written
-            if (settings.textSize === 1.125 || settings.textSize === 1.25 || settings.textSize === 1.5) {
-                root.style.setProperty("--text-scale", String(settings.textSize));
-            }
+            var largeText = settings.textSize === 1.125 || settings.textSize === 1.25 || settings.textSize === 1.5;
+            if (largeText) root.style.setProperty("--text-scale", String(settings.textSize));
+            root.classList.toggle("st-large-text", largeText);
             root.classList.toggle("st-relaxed", settings.lineSpacing === "relaxed");
             root.classList.toggle("st-font", settings.easyFont === true);
             root.classList.toggle("st-underline", settings.underlineLinks === true);
