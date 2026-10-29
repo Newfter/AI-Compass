@@ -997,6 +997,11 @@ html.st-solid *::after {
     .st-keys-button kbd {
         display: none;
     }
+
+    /* Big enough for a finger, like the window's other controls (44px) */
+    .st-foot-buttons .btn {
+        min-height: 44px;
+    }
 }
 
 /* Phones: the settings window comes up from the bottom, almost the
