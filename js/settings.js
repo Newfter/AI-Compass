@@ -26,13 +26,13 @@
    12. Changes, keys and links
    13. Ctrl+K commands and the public API
 
-   Progress event (A.track, see README.md): "settings.change" { name, value }
-   when a setting of this file changes: textSize, lineSpacing, easyFont,
-   underlineLinks, contrast, reduceTransparency, voiceEn, voiceRu,
-   speechRate, and "theme" when "Like my device" is turned on or off.
-   The language, the dark / light theme and calm mode belong to core.js,
-   which sends its own events (language.change, theme.change and
-   settings.change with name "calm").
+   Progress event (A.track, see README.md): "settings.change" { name, value },
+   once for every real change of a setting, wherever it was changed (this
+   window, Ctrl+K, the buttons in the menu bar): language, theme ("dark",
+   "light" or "system"), textSize, lineSpacing, easyFont, underlineLinks,
+   contrast, reduceTransparency, voiceEn, voiceRu and speechRate. For calm
+   mode core.js sends it itself (name "calm"). The language and the theme
+   also have core's own events: language.change and theme.change.
    Other features use AICompass.settings (see the last section).
    Every text (English and Russian) and the list of keyboard shortcuts
    are in js/content/settings.js
@@ -98,15 +98,18 @@
     // Atkinson Hyperlegible has no Russian letters, so Russian pages use Andika, a font
     // made for people who are learning to read. One small stylesheet describes both;
     // the browser then downloads only the letters that the page really shows.
+    // The <head> script of index.html has the same address: keep the two the same.
     const FONT_URL = "https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Andika:wght@400;700&display=swap";
     const FONT_FAMILY = { en: "Atkinson Hyperlegible", ru: "Andika" };
+    const FONT_LINK_ID = "st-font-css";     // the font's <link> when the <head> script added it
 
     const LIGHT_QUERY = "(prefers-color-scheme: light)";   // the device is in light mode
     const CLOSE_MS = 220;            // the windows' closing animation (css/settings.css)
     const HASH = "#settings";        // the page's address with this at the end opens the window
     const VOICE_NAME_MAX = 300;      // a saved voice name longer than this is not a real one
 
-    // The name of each setting, for messages like "High contrast: on"
+    // The name of each setting, for messages like "High contrast: on".
+    // Every public setting (see the API in section 13) is in this list.
     const LABELS = {
         language: "settings.language",
         theme: "settings.theme",
@@ -234,8 +237,11 @@
     function followDevice() {
         if (!prefs.followSystem) return;
         themeByThisFile = true;
-        A.util.attempt(function () { A.setTheme(deviceTheme()); });
-        themeByThisFile = false;
+        try {
+            A.setTheme(deviceTheme());
+        } finally {
+            themeByThisFile = false;     // also if something went wrong
+        }
     }
 
     // The device switched between light and dark mode
@@ -249,6 +255,9 @@
        Loaded only once somebody turns it on. If it fails (no internet),
        the page keeps its normal font, the window says so, and turning
        the setting on again (or the connection coming back) tries again.
+       When the setting was already on, the <head> script of index.html
+       has asked for the font's stylesheet before the page was drawn
+       (a <link> with the id FONT_LINK_ID): this file then uses that one.
        ========================================================= */
     const font = { state: "idle" };      // "idle", "loading", "ready" or "failed"
 
@@ -256,13 +265,34 @@
         if (font.state === "loading" || font.state === "ready") return;
         font.state = "loading";
         repaint();
-        A.loadStyle(FONT_URL).then(function () {
+        fontStylesheet().then(function () {
             font.state = "ready";
             fontArrived();
         }, function () {
             font.state = "failed";
             repaint();
             if (settingsWindow.isOpen) A.announce(t("settings.easyFontError"));
+        });
+    }
+
+    // The font's stylesheet: the <link> of the <head> script (its data-state says
+    // "ready" or "failed" once it is done), or else a new one through core
+    function fontStylesheet() {
+        const early = document.getElementById(FONT_LINK_ID);
+        if (!early) return A.loadStyle(FONT_URL);
+        return new Promise(function (resolve, reject) {
+            function check() {
+                const state = early.getAttribute("data-state");
+                if (state === "ready") {
+                    resolve();
+                } else if (state === "failed") {
+                    early.remove();     // the next try asks core for a new one
+                    reject(new Error("Could not load " + FONT_URL));
+                }
+            }
+            early.addEventListener("load", check);
+            early.addEventListener("error", check);
+            check();        // it may be done already
         });
     }
 
@@ -922,7 +952,7 @@
     function set(name, value) {
         if (name === "language") {
             if (value !== "en" && value !== "ru") return false;
-            A.setLanguage(value);
+            if (value !== A.lang) A.setLanguage(value);     // core translates the page again
             return true;
         }
         if (name === "theme") {
@@ -931,7 +961,6 @@
             if (follow !== prefs.followSystem) {
                 prefs.followSystem = follow;
                 save();
-                A.track("settings.change", { name: "theme", value: value });
             }
             if (follow) followDevice();
             else A.setTheme(value);
@@ -940,7 +969,7 @@
         }
         if (name === "calm") {
             if (!isBoolean(value)) return false;
-            A.motion.setCalm(value);       // core saves it and sends settings.change "calm"
+            A.motion.setCalm(value);       // core saves it (section 12 hears about it)
             return true;
         }
         if (name === "followSystem" || !CHECKS[name] || !CHECKS[name](value)) return false;
@@ -949,7 +978,6 @@
         save();
         applyToPage();
         if (LAYOUT_SETTINGS.indexOf(name) !== -1) A.layoutChanged();
-        A.track("settings.change", { name: name, value: value });
         changed(name);
         return true;
     }
@@ -963,14 +991,25 @@
         set("calm", false);
     }
 
-    // Tells the rest of the page that a setting changed (A.settings.onChange),
-    // and shows it in the open window
+    // The value of every setting the last time it was reported, so a change is
+    // reported once, and setting the same value again reports nothing
+    const reported = {};
+    Object.keys(LABELS).forEach(function (name) { reported[name] = get(name); });
+
+    // A setting may have changed, here or elsewhere: if it really did, the rest of
+    // the page hears about it (A.settings.onChange, and the progress event
+    // "settings.change", which core sends itself for calm mode), and the open
+    // window shows it
     function changed(name) {
-        A.emit("settings", { name: name, value: get(name) });
+        const value = get(name);
+        if (reported[name] === value) return;
+        reported[name] = value;
+        if (name !== "calm") A.track("settings.change", { name: name, value: value });
+        A.emit("settings", { name: name, value: value });
         repaint();
     }
 
-    // Changes made elsewhere (core's buttons, Ctrl+K commands) reach the window too
+    // Changes made elsewhere (core's buttons, Ctrl+K commands) count too
     A.onLanguageChange(function () {
         changed("language");
         if (prefs.easyFont) fontArrived();      // Russian pages use the other font
@@ -983,19 +1022,13 @@
         if (!themeByThisFile && prefs.followSystem) {
             prefs.followSystem = false;
             save();
-            A.track("settings.change", { name: "theme", value: A.theme });
         }
         changed("theme");
     });
 
-    let calmWas = A.motion.calm;
-    A.motion.onChange(function (detail) {
-        if (detail.calm === calmWas) {
-            repaint();          // the device's own setting changed: the note under "Calm motion"
-            return;
-        }
-        calmWas = detail.calm;
+    A.motion.onChange(function () {
         changed("calm");
+        repaint();      // also when only the device's own setting changed (the note under "Calm motion")
     });
 
     // "?" opens (and closes) the shortcuts window, unless you are typing somewhere.

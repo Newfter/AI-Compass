@@ -16,7 +16,8 @@
          - calm mode: the classes fx-calm and fx-motion-off (fx-motion-off also when the device
            asks for reduced motion), so the hero doesn't start its entrance animation;
          - the settings of js/settings.js: the text size (--text-scale) and the classes
-           st-relaxed, st-font, st-underline, st-contrast and st-solid (css/settings.css);
+           st-relaxed, st-font, st-underline, st-contrast and st-solid (css/settings.css),
+           and the easy-to-read font's stylesheet when that setting is on;
          - the class "js": the page runs JavaScript (the CSS can style the page without it).
          core.js and js/settings.js set the same things again, so nothing depends on this
          script running first. The settings are where A.storage keeps them: "aic:" is PREFIX
@@ -64,6 +65,18 @@
             root.classList.toggle("st-underline", settings.underlineLinks === true);
             root.classList.toggle("st-contrast", settings.contrast === true);
             root.classList.toggle("st-solid", settings.reduceTransparency === true);
+
+            // The easy-to-read font starts loading now, so it can be there when the page is
+            // first drawn. js/settings.js uses this link (the same address is FONT_URL there).
+            if (settings.easyFont === true) {
+                var font = document.createElement("link");
+                font.id = "st-font-css";
+                font.rel = "stylesheet";
+                font.href = "https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Andika:wght@400;700&display=swap";
+                font.onload = function () { font.setAttribute("data-state", "ready"); };
+                font.onerror = function () { font.setAttribute("data-state", "failed"); };
+                document.head.appendChild(font);
+            }
         })();
     </script>
 

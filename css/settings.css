@@ -1041,9 +1041,9 @@ html.st-solid *::after {
     }
 }
 
-/* A phone held sideways (or any low screen): the settings window keeps
-   to the right and uses the whole height */
-@media (max-height: 480px) and (min-width: 641px) {
+/* A phone held sideways (520px high or less, as in style.css): the settings
+   window keeps to the right and uses the whole height */
+@media (max-height: 520px) and (min-width: 641px) {
     .st-head {
         padding-top: 10px;
         padding-bottom: 10px;
