@@ -323,8 +323,9 @@
 
     /* =========================================================
        7. READING ALOUD: VOICES AND SPEED
-       The browser's own voices (speechSynthesis). The lessons read with
-       A.settings.voice(lang) and A.settings.get("speechRate").
+       The browser's own voices (speechSynthesis). For the lessons' "Listen"
+       button (js/lessons.js): A.settings.voice(lang) is the voice to read
+       with, A.settings.get("speechRate") the speed.
        ========================================================= */
     const canSpeak = "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function";
     const VOICE_SETTING = { en: "voiceEn", ru: "voiceRu" };
