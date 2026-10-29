@@ -231,7 +231,7 @@ window.AICompass.addTranslations({
         "lab.chatbot.next.endingsSaid": "20 endings written. The most frequent: “{word}”, {times}.",
 
         // ----- "Try this" -----
-        "lab.chatbot.ch1": "Tokens: make the Russian sentence in “Fair for every language?” need fewer tokens than the English one.",
+        "lab.chatbot.ch1": "Tokens: change the training text so that the Russian sentence in “Fair for every language?” needs fewer tokens than the English one.",
         "lab.chatbot.ch1Why": "The training text decides the vocabulary. A tokenizer that mostly read English cuts other languages into more pieces, so they cost more work.",
         "lab.chatbot.ch2": "Meaning: make your own word land next to “robot”: it must be the nearest word, at least 90% similar.",
         "lab.chatbot.ch2Why": "A robot is a machine that is a bit like a person. Meaning lives in the numbers: words with a similar mix of numbers mean similar things.",
@@ -457,7 +457,7 @@ window.AICompass.addTranslations({
         "lab.chatbot.next.endingsSaid": "Написано 20 концовок. Чаще всех: «{word}», {times}.",
 
         // ----- «Попробуй» -----
-        "lab.chatbot.ch1": "Токены: сделай так, чтобы русскому предложению в «Честно ли для всех языков?» понадобилось меньше токенов, чем английскому.",
+        "lab.chatbot.ch1": "Токены: измени текст для обучения так, чтобы русскому предложению в «Честно ли для всех языков?» понадобилось меньше токенов, чем английскому.",
         "lab.chatbot.ch1Why": "Словарь зависит от текста, на котором учился токенизатор. Если он читал в основном английский, другие языки он режет на большее число кусочков, и работать с ними дороже.",
         "lab.chatbot.ch2": "Смысл: сделай так, чтобы твоё слово оказалось рядом с «робот»: это должно быть ближайшее слово, сходство не меньше 90%.",
         "lab.chatbot.ch2Why": "Робот — это машина, немного похожая на человека. Смысл живёт в числах: слова с похожим набором чисел значат похожее.",

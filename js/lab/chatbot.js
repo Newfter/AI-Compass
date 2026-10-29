@@ -1281,7 +1281,10 @@
             else if (next && next.count === 1) explain.setText("lab.chatbot.tok.step2Once", { a: shown(next.a), b: shown(next.b) });
             else explain.setText(null);
 
-            app.challenges.check({ ruFewer: ruFewer });
+            // Challenge 1 counts only with "Russian only": its lesson is that the training text
+            // decides the vocabulary. (With "Both", one pair is a token cheaper in Russian at
+            // exactly 24 merges, for a moment, which teaches nothing.)
+            app.challenges.check({ ruFewer: ruFewer && choice === "ru" });
         }
 
         return {
