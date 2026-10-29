@@ -51,6 +51,13 @@
     const SPACE_MARK = "▁";          // a word start, shown the way SentencePiece shows it
     const NEWLINE_MARK = "↵";
     const IDS_SHOWN = 10;            // token numbers listed in "What's happening?"
+    // View 2: meaning
+    const START_WORD = "dog";
+    const NEIGHBOURS = 5;            // nearest words listed
+    const ROBOT_GOAL = 0.9;          // challenge 2: at least this similar to "robot"
+    const PCA_ROUNDS = 200;          // rounds of power iteration (it settles long before)
+    const WORD_STEP = 0.05;          // the sliders of your own word
+    const PICK_RADIUS = 28;          // a click this close to a word on the map chooses it (px)
 
     /* =========================================================
        2. SMALL HELPERS
@@ -116,8 +123,9 @@
     }
 
     // A box with a title (h4: the hub's stage title is an h3) around related parts
-    function panel(titleKey, children) {
-        const element = el("section", "ch-panel");
+    // (plain: true keeps the title but drops the box)
+    function panel(titleKey, children, plain) {
+        const element = el("section", plain ? "ch-panel ch-plain" : "ch-panel");
         const title = textEl("h4", "ch-title", titleKey);
         title.id = newId("title");
         element.setAttribute("aria-labelledby", title.id);
@@ -370,6 +378,252 @@
             tokenizers[choice] = tokenizer(text, MAX_MERGES);
         }
         return tokenizers[choice];
+    }
+
+    /* =========================================================
+       4. MEANING: WORD VECTORS AND THE MAP
+       ========================================================= */
+    function dot(a, b) {
+        let sum = 0;
+        for (let i = 0; i < a.length; i++) sum += a[i] * b[i];
+        return sum;
+    }
+
+    // Cosine similarity: 1 when two lists of numbers point the same way, 0 when they have
+    // nothing in common. A list of zeros points nowhere: 0.
+    function cosine(a, b) {
+        const size = Math.sqrt(dot(a, a) * dot(b, b));
+        return size > 0 ? dot(a, b) / size : 0;
+    }
+
+    // The words most similar to a list of numbers, the most similar first: [{ word, sim }].
+    // skip: ids of words to leave out.
+    function nearest(words, vector, count, skip) {
+        return words.filter(function (word) { return !skip || skip.indexOf(word.id) === -1; })
+            .map(function (word) { return { word: word, sim: cosine(vector, word.vector) }; })
+            .sort(function (x, y) { return y.sim - x.sim; })
+            .slice(0, count);
+    }
+
+    // Word maths: a − b + c, and the words nearest to the result, leaving out a, b and c
+    // themselves (word2vec's tests are scored the same way)
+    function wordMaths(words, a, b, c) {
+        const vector = a.vector.map(function (x, i) { return x - b.vector[i] + c.vector[i]; });
+        const list = nearest(words, vector, 3, [a.id, b.id, c.id]);
+        return { vector: vector, list: list, answer: list[0] };
+    }
+
+    // The two directions in which the words differ the most (principal component analysis).
+    // Power iteration: multiply a guess by the covariance matrix again and again, and it
+    // turns towards the strongest direction. That direction is then taken out of the matrix
+    // (deflation), and the next one is found the same way.
+    function pca(vectors, count) {
+        const n = vectors.length;
+        const d = vectors[0].length;
+        const mean = [];
+        for (let j = 0; j < d; j++) mean.push(vectors.reduce(function (sum, v) { return sum + v[j]; }, 0) / n);
+        const matrix = [];
+        for (let i = 0; i < d; i++) {
+            matrix.push([]);
+            for (let j = 0; j < d; j++) {
+                let sum = 0;
+                vectors.forEach(function (v) { sum += (v[i] - mean[i]) * (v[j] - mean[j]); });
+                matrix[i].push(sum / n);
+            }
+        }
+        const components = [];
+        for (let k = 0; k < count; k++) {
+            let v = mean.map(function (x, i) { return 1 + i / d; });     // any start will do
+            for (let round = 0; round < PCA_ROUNDS; round++) {
+                const next = matrix.map(function (row) { return dot(row, v); });
+                const size = Math.sqrt(dot(next, next));
+                if (!(size > 0)) break;
+                v = next.map(function (x) { return x / size; });
+            }
+            // Its biggest number is made positive, so the map never comes out mirrored
+            let big = 0;
+            v.forEach(function (x, i) { if (Math.abs(x) > Math.abs(v[big])) big = i; });
+            if (v[big] < 0) v = v.map(function (x) { return -x; });
+            const value = dot(v, matrix.map(function (row) { return dot(row, v); }));
+            components.push({ vector: v, value: value });
+            for (let i = 0; i < d; i++) {
+                for (let j = 0; j < d; j++) matrix[i][j] -= value * v[i] * v[j];
+            }
+        }
+        return { mean: mean, components: components };
+    }
+
+    // Where a list of numbers lands on the map: how far it goes along each direction
+    function project(map, vector) {
+        const centred = vector.map(function (x, i) { return x - map.mean[i]; });
+        return map.components.map(function (component) { return dot(centred, component.vector); });
+    }
+
+    // The words of the data: { id, en, ru, group (a number), vector, at (on the map) }
+    function makeWords(data) {
+        return data.words.map(function (row) {
+            return { id: row[0], en: row[1], ru: row[2], group: data.groups.indexOf(row[3]), vector: row[4], at: null };
+        });
+    }
+
+    function nameOf(word) {
+        return word[A.lang] || word.en;
+    }
+
+    /* =========================================================
+       7. DRAWING THE MAP OF WORDS
+       ========================================================= */
+    const SHAPES = ["dot", "square", "triangle", "diamond", "ring"];     // one per group of words
+    const SPREAD = 11;               // words drawn closer than this (px) are nudged apart
+
+    function overlaps(a, b) {
+        return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    }
+
+    // An arrow from one point to another, bent a little to one side (bend: 0 = straight)
+    function drawArrow(g, from, to, color, bend, dashed) {
+        const mx = (from.x + to.x) / 2 - (to.y - from.y) * bend;
+        const my = (from.y + to.y) / 2 + (to.x - from.x) * bend;
+        const angle = Math.atan2(to.y - my, to.x - mx);
+        g.strokeStyle = color;
+        g.fillStyle = color;
+        g.lineWidth = 2;
+        g.setLineDash(dashed ? [6, 5] : []);
+        g.beginPath();
+        g.moveTo(from.x, from.y);
+        g.quadraticCurveTo(mx, my, to.x - 9 * Math.cos(angle), to.y - 9 * Math.sin(angle));
+        g.stroke();
+        g.setLineDash([]);
+        g.beginPath();
+        g.moveTo(to.x, to.y);
+        g.lineTo(to.x - 11 * Math.cos(angle - 0.4), to.y - 11 * Math.sin(angle - 0.4));
+        g.lineTo(to.x - 11 * Math.cos(angle + 0.4), to.y - 11 * Math.sin(angle + 0.4));
+        g.closePath();
+        g.fill();
+    }
+
+    // The map. scene = { words, bounds, name(word), chosen (an id), focus: { id: 2 or 1 }
+    // (2: the label must show, 1: it comes before the others), points: [{ at, label }] (places that are no word: your word,
+    // the steps of word maths), lines: [[from, to]] and arrows: [{ from, to, color, dashed }]
+    // between words and points }. Returns where each word was drawn, for clicks.
+    function drawMap(view, scene) {
+        const g = view.ctx;
+        const c = kit.colors();
+        const pad = 26;
+        const b = scene.bounds;
+        function pixel(at) {
+            return {
+                x: A.util.clamp(pad + ((at[0] - b.x0) / (b.x1 - b.x0 || 1)) * (view.width - 2 * pad), 8, view.width - 8),
+                y: A.util.clamp(view.height - pad - ((at[1] - b.y0) / (b.y1 - b.y0 || 1)) * (view.height - 2 * pad), 8, view.height - 8)
+            };
+        }
+        g.clearRect(0, 0, view.width, view.height);
+        kit.drawGrid(g, view.width, view.height, 32);
+        const spots = scene.words.map(function (word) {
+            const p = pixel(word.at);
+            return { word: word, x: p.x, y: p.y };
+        });
+        // Words with (almost) the same two numbers would hide each other: they are nudged apart
+        // a little, on the screen only
+        for (let round = 0; round < 30; round++) {
+            let moved = false;
+            spots.forEach(function (a, i) {
+                spots.slice(i + 1).forEach(function (b, n) {
+                    let dx = b.x - a.x;
+                    let dy = b.y - a.y;
+                    let d = Math.hypot(dx, dy);
+                    if (d >= SPREAD) return;
+                    if (d < 0.01) {
+                        dx = Math.cos(i + n);       // the same spot: any direction will do
+                        dy = Math.sin(i + n);
+                        d = 1;
+                    }
+                    const push = (SPREAD - d) / 2 / d;
+                    a.x -= dx * push;
+                    a.y -= dy * push;
+                    b.x += dx * push;
+                    b.y += dy * push;
+                    moved = true;
+                });
+            });
+            if (!moved) break;
+        }
+        const spotOf = {};
+        spots.forEach(function (spot) { spotOf[spot.word.id] = spot; });
+        function place(thing) {
+            return thing.id ? spotOf[thing.id] : pixel(thing.at);
+        }
+
+        // Lines to the nearest words, and the arrows of word maths, under the points
+        g.lineWidth = 1.5;
+        g.strokeStyle = kit.alpha(c.accent2, 0.6);
+        scene.lines.forEach(function (line) {
+            const from = place(line[0]);
+            const to = place(line[1]);
+            g.beginPath();
+            g.moveTo(from.x, from.y);
+            g.lineTo(to.x, to.y);
+            g.stroke();
+        });
+        scene.arrows.forEach(function (arrow) { drawArrow(g, place(arrow.from), place(arrow.to), arrow.color, 0.18, arrow.dashed); });
+
+        spots.forEach(function (spot) {
+            const color = c.series[spot.word.group];
+            const chosen = spot.word.id === scene.chosen;
+            if (chosen) {
+                g.beginPath();
+                g.arc(spot.x, spot.y, 12, 0, Math.PI * 2);
+                g.fillStyle = kit.alpha(color, 0.28);
+                g.fill();
+            }
+            kit.marker(g, SHAPES[spot.word.group], spot.x, spot.y, chosen ? 6.5 : 4.5, color);
+        });
+        // A place that is no word: a dashed ring around a small dot
+        const points = scene.points.map(function (point) { return { p: pixel(point.at), label: point.label }; });
+        points.forEach(function (point) {
+            g.beginPath();
+            g.arc(point.p.x, point.p.y, 11, 0, Math.PI * 2);
+            g.setLineDash([3, 3]);
+            g.lineWidth = 2;
+            g.strokeStyle = c.text;
+            g.stroke();
+            g.setLineDash([]);
+            if (point.label) kit.marker(g, "dot", point.p.x, point.p.y, 3.5, c.text);
+        });
+
+        // The labels: the important ones first, the others only where there is room
+        const taken = spots.map(function (spot) { return { x: spot.x - 6, y: spot.y - 6, w: 12, h: 12 }; });
+        const labels = spots.map(function (spot) {
+            return { x: spot.x, y: spot.y, text: scene.name(spot.word), rank: scene.focus[spot.word.id] || 0 };
+        });
+        points.forEach(function (point) {
+            taken.push({ x: point.p.x - 11, y: point.p.y - 11, w: 22, h: 22 });
+            if (point.label) labels.unshift({ x: point.p.x + 4, y: point.p.y, text: point.label, rank: 3 });
+        });
+        labels.sort(function (p, q) { return q.rank - p.rank; });
+        g.textBaseline = "middle";
+        g.lineJoin = "round";
+        labels.forEach(function (label) {
+            g.font = label.rank ? kit.font(13, 700, "body") : kit.font(12, 500, "body");
+            const w = g.measureText(label.text).width;
+            const h = 16;
+            const places = [[label.x + 9, label.y - h / 2], [label.x - 9 - w, label.y - h / 2], [label.x - w / 2, label.y - 10 - h], [label.x - w / 2, label.y + 10]];
+            let spot = null;
+            places.forEach(function (place) {
+                const box = { x: place[0], y: place[1], w: w, h: h };
+                const inside = box.x >= 2 && box.y >= 2 && box.x + w <= view.width - 2 && box.y + h <= view.height - 2;
+                if (!spot && inside && !taken.some(function (other) { return overlaps(other, box); })) spot = box;
+            });
+            if (!spot && label.rank < 2) return;
+            spot = spot || { x: A.util.clamp(places[0][0], 2, view.width - w - 2), y: places[0][1], w: w, h: h };
+            taken.push(spot);
+            g.lineWidth = 3;
+            g.strokeStyle = c.surface;
+            g.strokeText(label.text, spot.x, spot.y + h / 2);
+            g.fillStyle = label.rank ? c.text : c.muted;
+            g.fillText(label.text, spot.x, spot.y + h / 2);
+        });
+        return spots;
     }
 
     /* =========================================================
@@ -786,6 +1040,279 @@
     }
 
     /* =========================================================
+       10. VIEW 2: MEANING
+       ========================================================= */
+    function meaningView(app) {
+        const data = app.data;
+        const words = makeWords(data);
+        const byId = {};
+        words.forEach(function (word) { byId[word.id] = word; });
+        // The map is worked out once: every word at its two numbers
+        const map = pca(words.map(function (word) { return word.vector; }), 2);
+        words.forEach(function (word) { word.at = project(map, word.vector); });
+        const xs = words.map(function (word) { return word.at[0]; });
+        const ys = words.map(function (word) { return word.at[1]; });
+        const bounds = { x0: Math.min.apply(null, xs), x1: Math.max.apply(null, xs), y0: Math.min.apply(null, ys), y1: Math.max.apply(null, ys) };
+        const root = el("div", "ch-view");
+        const ui = kit.layout(root, { side: true });
+        let mode = "word";                    // "word" | "maths" | "own"
+        let chosen = START_WORD;
+        let sum = data.arithmetic[0].slice(0, 3);       // [start from, take away, add]
+        let own = app.saved.word ? app.saved.word.slice() : data.dims.map(function () { return 0; });
+        let scene = null;                     // what the map shows
+        let spots = [];                       // where the words were drawn (for clicks)
+
+        function wordOptions() {
+            return words.map(function (word) { return { value: word.id, labelKey: function () { return nameOf(word); } }; });
+        }
+
+        function sumText(ids) {
+            return nameOf(byId[ids[0]]) + " − " + nameOf(byId[ids[1]]) + " + " + nameOf(byId[ids[2]]);
+        }
+
+        function barOf(item) {
+            return { label: nameOf(item.word), value: item.sim, colorIndex: item.word.group };
+        }
+
+        // "dog 99.5%, cat 98.2%" (for screen readers)
+        function listOf(items) {
+            return items.map(function (item) { return nameOf(item.word) + " " + percent(item.sim); }).join(", ");
+        }
+
+        // ----- The map -----
+        const modes = kit.segmented({
+            labelKey: "lab.chatbot.mean.mode",
+            options: ["word", "maths", "own"].map(function (value) {
+                return { value: value, labelKey: "lab.chatbot.mean.mode" + value.charAt(0).toUpperCase() + value.slice(1) };
+            }),
+            value: mode,
+            onChange: function (value) {
+                mode = value;
+                render();
+            }
+        });
+        const mapView = kit.canvas(ui.main, { aspect: 4 / 3, minHeight: 300, maxHeight: 520, labelKey: "lab.chatbot.mean.map" });
+        ui.main.append(
+            kit.legend(data.groups.map(function (group, i) {
+                return { labelKey: "lab.chatbot.mean.group." + group, colorIndex: i, shape: SHAPES[i] };
+            })).element,
+            textEl("p", "ch-small", "lab.chatbot.mean.mapNote")
+        );
+
+        // ----- A word: its numbers and the words nearest to it -----
+        const wordSelect = kit.select({
+            labelKey: "lab.chatbot.mean.word", options: wordOptions(), value: chosen,
+            onChange: function (id) {
+                chosen = id;
+                render();
+            }
+        });
+        const numbers = kit.bars(null, { max: 1, format: function (v) { return decimals(v, 2); } });
+        const near = kit.bars(null, { max: 1, format: function (v) { return percent(v, 1); } });
+        const wordPart = el("div", "ch-mode");
+        wordPart.append(wordSelect.element, panel("lab.chatbot.mean.numbers", [numbers], true), panel("lab.chatbot.mean.nearest", [near], true));
+
+        // ----- Word maths: a − b + c -----
+        const presets = kit.chips({
+            labelKey: "lab.chatbot.mean.presets",
+            options: data.arithmetic.map(function (example, i) { return { value: i, labelKey: function () { return sumText(example); } }; }),
+            value: 0,
+            onChange: function (i) {
+                sum = data.arithmetic[i].slice(0, 3);
+                sumSelects.forEach(function (select, n) { select.set(sum[n]); });
+                render();
+                sayAnswer();
+            }
+        });
+        const sumSelects = ["a", "b", "c"].map(function (name, n) {
+            return kit.select({
+                labelKey: "lab.chatbot.mean." + name, options: wordOptions(), value: sum[n],
+                onChange: function (id) {
+                    sum[n] = id;
+                    const same = data.arithmetic.filter(function (example) { return example.slice(0, 3).join() === sum.join(); })[0];
+                    presets.set(same ? data.arithmetic.indexOf(same) : null);
+                    render();
+                    sayAnswer();
+                }
+            });
+        });
+        const answer = el("p", "ch-answer");
+        const answerSim = el("p", "ch-small");
+        const candidates = kit.bars(null, { max: 1, format: function (v) { return percent(v, 1); } });
+        const mathsPart = el("div", "ch-mode");
+        mathsPart.append(presets.element, kit.row(sumSelects), answer, answerSim,
+            panel("lab.chatbot.mean.candidates", [candidates], true), textEl("p", "ch-small", "lab.chatbot.mean.mathsNote"));
+
+        // ----- Your own word: 10 sliders -----
+        const ownSliders = data.dims.map(function (dim, n) {
+            return kit.slider({
+                labelKey: "lab.chatbot.mean.dim." + dim, min: 0, max: 1, step: WORD_STEP, value: own[n],
+                format: function (v) { return decimals(v, 2); },
+                onInput: function (v) {
+                    own[n] = v;
+                    render();
+                },
+                onChange: function () { app.save({ word: own.slice() }); }
+            });
+        });
+        own = ownSliders.map(function (slider) { return slider.value(); });
+        const sliderBox = el("div", "ch-sliders");
+        ownSliders.forEach(function (slider) { sliderBox.appendChild(slider.element); });
+        const clear = kit.button("lab.chatbot.mean.ownClear", {
+            icon: "reset",
+            variant: "subtle",
+            onClick: function () {
+                own = own.map(function () { return 0; });
+                ownSliders.forEach(function (slider) { slider.set(0); });
+                render();
+                app.save({ word: null });
+            }
+        });
+        const ownEmpty = textEl("p", "ch-small", "lab.chatbot.mean.ownEmpty");
+        const ownNear = kit.bars(null, { max: 1, format: function (v) { return percent(v, 1); } });
+        const ownPart = el("div", "ch-mode");
+        ownPart.append(panel("lab.chatbot.mean.own", [sliderBox, kit.toolbar([clear])], true),
+            panel("lab.chatbot.mean.nearest", [ownEmpty, ownNear], true));
+
+        const explain = kit.explain({ steps: [
+            { key: "lab.chatbot.mean.step1" }, { key: "lab.chatbot.mean.step2" }, { key: "lab.chatbot.mean.step3" },
+            { key: "lab.chatbot.mean.step4", values: { near: "—", sim: "—" } }
+        ] });
+        ui.top.appendChild(modes.element);
+        ui.side.append(wordPart, mathsPart, ownPart);
+        ui.bottom.append(ideaLine("lab.chatbot.mean.ideaLine", "embedding", "lab.chatbot.mean.term"), explain.element);
+
+        // ----- A click on the map chooses the nearest word -----
+        function spotAt(event) {
+            const box = mapView.canvas.getBoundingClientRect();
+            const x = event.clientX - box.left;
+            const y = event.clientY - box.top;
+            let best = null;
+            let distance = PICK_RADIUS;
+            spots.forEach(function (spot) {
+                const d = Math.hypot(spot.x - x, spot.y - y);
+                if (d < distance) {
+                    best = spot;
+                    distance = d;
+                }
+            });
+            return best;
+        }
+
+        mapView.canvas.addEventListener("click", function (event) {
+            const spot = spotAt(event);
+            if (!spot) return;
+            chosen = spot.word.id;
+            wordSelect.set(chosen);
+            mode = "word";
+            modes.set(mode);
+            render();
+        });
+        mapView.canvas.addEventListener("pointermove", function (event) {
+            mapView.canvas.style.cursor = spotAt(event) ? "pointer" : "";
+        });
+        mapView.onResize(draw);
+
+        function draw() {
+            if (scene && mapView.width) spots = drawMap(mapView, scene);
+        }
+
+        function sayAnswer() {
+            const result = wordMaths(words, byId[sum[0]], byId[sum[1]], byId[sum[2]]);
+            app.ctx.announce(t("lab.chatbot.mean.answerSaid", {
+                a: nameOf(byId[sum[0]]), b: nameOf(byId[sum[1]]), c: nameOf(byId[sum[2]]), answer: nameOf(result.answer.word)
+            }));
+        }
+
+        // Everything on screen follows the numbers
+        function render() {
+            wordPart.hidden = mode !== "word";
+            mathsPart.hidden = mode !== "maths";
+            ownPart.hidden = mode !== "own";
+            const word = byId[chosen];
+            const close = nearest(words, word.vector, NEIGHBOURS, [word.id]);
+            const parts = sum.map(function (id) { return byId[id]; });
+            const result = wordMaths(words, parts[0], parts[1], parts[2]);
+            const empty = own.every(function (x) { return x === 0; });
+            const ownClose = empty ? [] : nearest(words, own, NEIGHBOURS);
+
+            numbers.update(data.dims.map(function (dim, n) {
+                return { labelKey: "lab.chatbot.mean.dim." + dim, value: word.vector[n], colorIndex: word.group };
+            }));
+            near.update(close.map(barOf));
+            write(answer, tx("lab.chatbot.mean.answer", { word: nameOf(result.answer.word) }));
+            write(answerSim, tx("lab.chatbot.mean.answerSim", { sim: percent(result.answer.sim, 1) }));
+            candidates.update(result.list.map(barOf));
+            ownEmpty.hidden = !empty;
+            ownNear.update(ownClose.map(barOf));
+
+            // The map: lines to the nearest words, the arrows of word maths, or your word
+            const c = kit.colors();
+            scene = { words: words, bounds: bounds, name: nameOf, chosen: null, focus: {}, points: [], lines: [], arrows: [] };
+            let focus = "";
+            if (mode === "word") {
+                scene.chosen = word.id;
+                scene.focus[word.id] = 2;
+                close.forEach(function (item, i) {
+                    scene.focus[item.word.id] = i === 0 ? 2 : 1;
+                    scene.lines.push([word, item.word]);
+                });
+                focus = t("lab.chatbot.mean.describeWord", { word: nameOf(word), list: listOf(close) });
+            } else if (mode === "maths") {
+                // a → a − b (a place that is no word) → a − b + c, which lands next to the answer
+                parts.concat(result.answer.word).forEach(function (part) { scene.focus[part.id] = 2; });
+                const middle = { at: project(map, parts[0].vector.map(function (x, i) { return x - parts[1].vector[i]; })), label: nameOf(parts[0]) + " − " + nameOf(parts[1]) };
+                const end = { at: project(map, result.vector) };
+                scene.points.push(middle, end);
+                scene.arrows.push({ from: parts[0], to: middle, color: c.danger, dashed: true }, { from: middle, to: end, color: c.success, dashed: false });
+                focus = t("lab.chatbot.mean.describeMaths", { a: nameOf(parts[0]), b: nameOf(parts[1]), c: nameOf(parts[2]), answer: nameOf(result.answer.word) });
+            } else if (!empty) {
+                const mine = { at: project(map, own), label: t("lab.chatbot.mean.ownPoint") };
+                scene.points.push(mine);
+                ownClose.slice(0, 3).forEach(function (item, i) {
+                    scene.focus[item.word.id] = i === 0 ? 2 : 1;
+                    scene.lines.push([mine, item.word]);
+                });
+                focus = t("lab.chatbot.mean.describeOwn", { list: listOf(ownClose.slice(0, 3)) });
+            }
+            draw();
+            mapView.describe(t("lab.chatbot.mean.describe", { count: String(words.length), focus: focus }));
+
+            // What's happening? Step 1: the word's biggest numbers ("animal 1, pet 1, big 0.45")
+            const top = data.dims.map(function (dim, n) { return { dim: dim, value: word.vector[n] }; })
+                .filter(function (item) { return item.value > 0; })
+                .sort(function (p, q) { return q.value - p.value; })
+                .slice(0, 3)
+                .map(function (item) { return t("lab.chatbot.mean.dim." + item.dim) + " " + kit.number(item.value); });
+            explain.setValues(0, { word: nameOf(word), top: top.join(", ") });
+            explain.setValues(1, { word: nameOf(word), near: nameOf(close[0].word), sim: percent(close[0].sim, 1) });
+            explain.setValues(2, {
+                a: nameOf(parts[0]), b: nameOf(parts[1]), c: nameOf(parts[2]),
+                answer: nameOf(result.answer.word), sim: percent(result.answer.sim, 1)
+            });
+            explain.setValues(3, empty ? { near: "—", sim: "—" } : { near: nameOf(ownClose[0].word), sim: percent(ownClose[0].sim, 1) });
+            explain.setStep(mode === "word" ? 1 : mode === "maths" ? 2 : 3);
+            explain.setText(mode === "own" && empty ? "lab.chatbot.mean.step4Empty" : null);
+
+            app.challenges.check({ robot: !empty && ownClose[0].word.id === "robot" && ownClose[0].sim >= ROBOT_GOAL });
+        }
+
+        return {
+            element: root,
+            show: function () {
+                root.hidden = false;
+                render();
+            },
+            hide: function () { root.hidden = true; },
+            pause: function () {},
+            resume: function () {},
+            language: render,
+            theme: render,
+            destroy: function () { mapView.destroy(); }
+        };
+    }
+
+    /* =========================================================
        13. THE EXPERIMENT
        ========================================================= */
     // The icons of the pipeline strip (24 x 24, currentColor, like the kit's)
@@ -801,7 +1328,7 @@
         next: "dice"
     };
 
-    const BUILDERS = { tokens: tokensView };
+    const BUILDERS = { tokens: tokensView, meaning: meaningView };
 
     // Saved settings can be old, broken or edited by hand: everything is checked
     function savedIsGood(value, dims) {
@@ -815,7 +1342,8 @@
     A.lab.define("chatbot", {
         // The maths, for dev/tests/chatbot.math.js (the hub doesn't use it)
         maths: {
-            splitWords: splitWords, tokenizer: tokenizer, encode: encode
+            splitWords: splitWords, tokenizer: tokenizer, encode: encode,
+            cosine: cosine, nearest: nearest, wordMaths: wordMaths, pca: pca, project: project, makeWords: makeWords
         },
 
         create: function (stage, ctx) {
