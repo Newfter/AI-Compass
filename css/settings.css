@@ -55,6 +55,17 @@ html.st-large-text body {
     overflow-wrap: break-word;
 }
 
+/* In these narrow labels a long Russian word does not fit its line on a phone
+   ("Предсказатель", "Медленно", "интерактивных", "Конфиденциальность"). Cut
+   without a hyphen it reads as a mistake, so the browser hyphenates it
+   ("Предсказа-тель"), using the page's language (lang on <html>). Browsers
+   without a dictionary for it still break it as above. Long texts are not
+   hyphenated: words cut at the end of every other line are harder to read. */
+html.st-large-text :is(.stat span, .lab-tab-title, .lab-seg button, .gl-rel) {
+    -webkit-hyphens: auto;
+    hyphens: auto;
+}
+
 /* The AI Lab's sliders (css/lab.css): the value goes under its label when
    the two don't fit side by side. At the normal size the label wraps
    instead, as it always did. */
