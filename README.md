@@ -171,9 +171,10 @@ Nothing leaves the browser: these events are only for features on the same page 
 | Timeline | `timeline.era` | `{ era }` | the timeline's line reaches an era for the first time |
 | Compass Bot | `bot.ask` | `{ typed: true }` or `{ intent }` | a typed question, or a chip |
 | Ctrl+K | `palette.run` | `{ id }` | a command is run |
+| Settings | `settings.change` | `{ name, value }` | a setting really changes, wherever it was changed (the settings window, Ctrl+K, the buttons in the menu bar). `name` is `language` (`"en"`, `"ru"`), `theme` (`"dark"`, `"light"` or `"system"`), `textSize` (1, 1.125, 1.25 or 1.5), `lineSpacing` (`"normal"`, `"relaxed"`), `easyFont`, `underlineLinks`, `contrast` or `reduceTransparency` (true, false), `voiceEn` or `voiceRu` (a voice, `""` for automatic) or `speechRate` (0.75, 1, 1.25 or 1.5) |
 | Core | `language.change` | `{ lang }` | the language changes |
 | | `theme.change` | `{ theme }` | the theme changes |
-| | `settings.change` | `{ name, value }` | a setting changes (today: `name: "calm"`) |
+| | `settings.change` | `{ name: "calm", value }` | calm mode is switched on (`true`) or off (`false`) |
 
 **Adding an event:** call `A.track("part.something", { ... })` where it happens, list it in your file's header, and add a row here. Listeners must not count the same thing twice: the same event can come many times (for example `lesson.open`).
 
