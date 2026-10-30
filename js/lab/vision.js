@@ -53,7 +53,7 @@
         edgeRatio: 4,                 // 1: vertical edges answer more than 4 times the horizontal ones...
         edgeMargin: 3,                //    ...measured at least 3 px away from the corners of the squares
         edgeLeast: 1,                 //    ...and the vertical ones answer at all
-        brighter: 1.4,                // 2: the map's average is 1.4 times the picture's...
+        brighter: 1.4,                // 2: the map's average is 1.4 times the picture's (ReLU and pooling off)...
         darkest: 10,                  //    ...which is not almost black to start with
         rounding: 1e-9,               //    (1.4 x 80 and the sum of 1.4 x every pixel can differ in the last digit)
         blurs: 3,                     // 3: "Apply again" 3 times in a row with a blur on Letters AI
@@ -1881,10 +1881,13 @@
                     const sameMap = state.edges === "same" ? raw : convolve(state.input, filterNow(), "same");
                     vertical = verticalOnly(edgeAnswers(sameMap, presets.filter(function (p) { return p.id === "checker"; })[0].shapes[0].size));
                 }
+                // Challenge 2 is about the filter alone: ReLU brightens a map too (it drops the negative
+                // answers), so Emboss, whose numbers add up to 1, would pass with ReLU on
                 const before = average(state.input);
+                const filterAlone = !state.pool && !state.relu;
                 challenges.check({
                     verticalOnly: vertical,
-                    brighter: !state.pool && before >= CHECK.darkest && average(output) >= CHECK.brighter * before - CHECK.rounding,
+                    brighter: filterAlone && before >= CHECK.darkest && average(output) >= CHECK.brighter * before - CHECK.rounding,
                     blurs: state.blurRun,
                     roof: state.roofSeen
                 });
