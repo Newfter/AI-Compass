@@ -664,18 +664,20 @@
         ];
     }
 
-    // The contour lines of a landscape at a size, kept: they only depend on the shape
-    const contourCache = {};
+    // The contour lines of a landscape, kept for its latest size: they only depend on the shape
+    // and the grid. Only one size per landscape, so resizing the window doesn't pile up old
+    // ones (each is 100-200 KB of numbers).
+    const contourCache = {};               // landscape id -> { cells, lines }
 
     function mapContours(land, size) {
         const cells = Math.max(24, Math.round(size / GRID_PX));
-        const key = land.id + "|" + cells;
-        if (!contourCache[key]) {
-            contourCache[key] = contours(function (x, y) { return heightShare(land, land.f(x, y)); }, {
-                x0: land.domain.x[0], x1: land.domain.x[1], y0: land.domain.y[0], y1: land.domain.y[1], nx: cells, ny: cells
-            }, contourLevels());
-        }
-        return contourCache[key];
+        const kept = contourCache[land.id];
+        if (kept && kept.cells === cells) return kept.lines;
+        const lines = contours(function (x, y) { return heightShare(land, land.f(x, y)); }, {
+            x0: land.domain.x[0], x1: land.domain.x[1], y0: land.domain.y[0], y1: land.domain.y[1], nx: cells, ny: cells
+        }, contourLevels());
+        contourCache[land.id] = { cells: cells, lines: lines };
+        return lines;
     }
 
     // A small five-pointed star (a lowest point: filled; another dip: an outline)
