@@ -113,6 +113,7 @@ window.AICompass.addTranslations({
         "settings.keysQuiz": "Quiz",
         "settings.keysLabHub": "AI Lab: choosing an experiment",
         "settings.keysDraw": "AI Lab: Draw and teach",
+        "settings.keysCluster": "AI Lab: Finding groups",
         "settings.keysLab": "AI Lab: Teach the machine",
         "settings.keysDescent": "AI Lab: Down the hill",
         "settings.keysVision": "AI Lab: How computers see",
@@ -281,6 +282,7 @@ window.AICompass.addTranslations({
         "settings.keysQuiz": "Тест",
         "settings.keysLabHub": "ИИ-лаборатория: выбор эксперимента",
         "settings.keysDraw": "ИИ-лаборатория: «Нарисуй и научи»",
+        "settings.keysCluster": "ИИ-лаборатория: «Поиск групп»",
         "settings.keysLab": "ИИ-лаборатория: «Обучи машину»",
         "settings.keysDescent": "ИИ-лаборатория: «Вниз с горы»",
         "settings.keysVision": "ИИ-лаборатория: «Как видит компьютер»",
@@ -424,6 +426,15 @@ window.AICompass.content.set("settings", {
                 { keys: [["home"], ["end"]], does: "settings.do.drawPickEnds" },
                 // js/lab/draw.js, thumbButton(): Delete or Backspace on a drawing (a click: press it twice)
                 { keys: [["delete"], ["backspace"]], does: "settings.do.drawDelete" }
+            ]
+        },
+        {
+            title: "settings.keysCluster",
+            items: [
+                // js/lab/cluster.js, the board's keydown: the arrows move the cursor (Shift: further),
+                // Enter or Space adds a point there. The same words as for Teach the machine.
+                { keys: [["arrows"], ["shift", "arrows"]], does: "settings.do.labMove" },
+                { keys: [["enter"], ["space"]], does: "settings.do.labDot" }
             ]
         },
         {

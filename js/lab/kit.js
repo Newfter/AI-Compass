@@ -58,7 +58,7 @@
      diverge(t) / diverge.rgb(t)     -1..1  -> red ... neutral ... cyan
      drawGrid(ctx, width, height, step)     marker(ctx, shape, x, y, radius, color)     shapes
      lineChart(canvasView, { series: [{ values, colorIndex, labelKey, faint, fill, points, marks }],
-               x0, xStep, yMin, yMax, log, highlightX, format, xFormat, xLabelKey, yLabelKey }) -> { draw(), set(changes) }
+               x0, xStep, xEvery, yMin, yMax, log, highlightX, format, xFormat, xLabelKey, yLabelKey }) -> { draw(), set(changes) }
    Running, chance, saving, messages
      loop({ update(stepMs), draw(info), rate, stepMs, budget }) -> { start(), stop(), running(), step(), setRate(rate) }
      rng(seed) -> { seed, next(), range(a, b), int(n), normal(mean, sd), pick(list), shuffle(list) }     newSeed()
@@ -1610,6 +1610,13 @@
         return { ticks: ticks, step: step, decimals: decimals, min: extend ? first : low, max: extend ? last : high };
     }
 
+    // lineChart's xEvery: low, low + every, low + 2 × every... up to high (at most 50)
+    function everyTick(low, high, every) {
+        const ticks = [];
+        for (let i = 0; low + i * every <= high + 1e-9 && i < 50; i++) ticks.push(low + i * every);
+        return { ticks: ticks };
+    }
+
     // The last number in a list that is a real number, and where it is
     function lastFinite(values) {
         for (let i = values.length - 1; i >= 0; i--) {
@@ -1625,6 +1632,8 @@
     //               fill: a light wash under the line; points: a dot on every value;
     //               marks: [indexes] get a ring (e.g. "the best car finished a lap here")
     //   x0, xStep   the x value of the first point and between points (default 0 and 1)
+    //   xEvery      a number on every xEvery-th x value (e.g. 1: k = 1, 2, 3...) instead of a few
+    //               round ones, for a short axis; a number that would touch the one before is still left out
     //   yMin, yMax  a fixed range (default: it follows the data)
     //   log: true   a logarithmic y axis (powers of ten), for values that span many sizes
     //   highlightX  an x value to mark with a vertical line (e.g. the chosen k)
@@ -1752,9 +1761,9 @@
         const xFirst = x0;
         const xLast = x0 + Math.max(0, count - 1) * xStep;
         if (count > 0) {
-            const xTicks = count > 1
-                ? ticksFor(Math.min(xFirst, xLast), Math.max(xFirst, xLast), Math.max(1, Math.floor(plotWidth / TICK_GAP_X)), false)
-                : { ticks: [xFirst] };
+            const xTicks = count < 2 ? { ticks: [xFirst] }
+                : settings.xEvery > 0 ? everyTick(Math.min(xFirst, xLast), Math.max(xFirst, xLast), settings.xEvery)
+                : ticksFor(Math.min(xFirst, xLast), Math.max(xFirst, xLast), Math.max(1, Math.floor(plotWidth / TICK_GAP_X)), false);
             // whole steps for whole x values (no "2.5 epochs")
             const ticks = Number.isInteger(xStep) && Number.isInteger(x0)
                 ? xTicks.ticks.filter(function (value) { return Number.isInteger(value); })
