@@ -354,6 +354,10 @@
     vertical-align: bottom;
 }
 
+.dw-scores thead th:first-child {
+    text-align: left;
+}
+
 .dw-scores thead th {
     color: var(--text-label);
     font-size: var(--lk-small);

@@ -109,7 +109,8 @@
     const MAP_CELLS = 2;                 // the small map of the whole picture covers 2 x 2 zoomed pixels
     const MIN_GRID_CELL = 6;             // px: smaller pixels get no lines between them
     const DARK_TEXT = 0.45;              // a number on a pixel with this much ink (or more) is written in the light colour
-    const FOCUS_INK = 0.35;              // "Where it looks": the drawing shows faintly over the colours...
+    const FOCUS_INK = 0.35;              // "Focus": the drawing shows faintly under the colours...
+    const FOCUS_FULL = 0.9;              // ...the pixels above the 90th percentile get the full colour...
     const FOCUS_GAMMA = 0.7;             // ...and weak colours are made a little stronger, so they show
     const MESSAGE_FONT = { min: 13, max: 16 };   // px: a message in the middle of a canvas
     const GLOW = 2.4;                    // the soft glow under the ink is this many times wider than the pen (not in calm mode)
@@ -992,15 +993,23 @@
         context.putImageData(image, 0, 0);
     }
 
-    // The network's map (see saliency()) in the kit's two-sided colours: cyan where more
-    // ink would make it surer, red where more ink would make it less sure
-    function paintFocus(canvas, map) {
-        let biggest = 0;
-        for (let i = 0; i < PIXELS; i++) biggest = Math.max(biggest, Math.abs(map[i]));
+    // Where the network looks, in the kit's two-sided colours. map is the gradient of the
+    // score (see saliency()); on each pixel you drew, gradient x ink is that pixel's share of
+    // the score (the network is made of straight pieces, so the shares add up to the score,
+    // apart from its biases). Cyan pixels push the score up, red ones push it down; the
+    // pixels without ink stay clear (their gradient is mostly the noise of unused weights).
+    function paintFocus(canvas, map, values) {
+        // Full colour from the 90th percentile up, so one strong pixel doesn't make the rest faint
+        const sizes = [];
+        for (let i = 0; i < PIXELS; i++) {
+            if (values[i]) sizes.push(Math.abs(map[i] * values[i]));
+        }
+        sizes.sort(function (a, b) { return a - b; });
+        const full = sizes.length ? sizes[Math.floor(FOCUS_FULL * (sizes.length - 1))] || sizes[sizes.length - 1] : 0;
         const context = canvas.getContext("2d");
         const image = context.createImageData(GRID, GRID);
         for (let i = 0; i < PIXELS; i++) {
-            const share = biggest ? map[i] / biggest : 0;
+            const share = full ? A.util.clamp((map[i] * values[i]) / full, -1, 1) : 0;
             const rgb = kit.diverge.rgb(share);
             image.data[i * 4] = rgb[0];
             image.data[i * 4 + 1] = rgb[1];
@@ -1120,12 +1129,12 @@
         if (values && how === "numbers") {
             drawNumbers(view, layer, values);
         } else {
-            if (values && map) {
-                paintFocus(layer, map);
-                drawEnlarged(context, layer, 0, 0, size);
-            }
             if (values) {
                 paintInk(layer, values, rgbOf(c.text), map ? FOCUS_INK : 1);
+                drawEnlarged(context, layer, 0, 0, size);
+            }
+            if (values && map) {
+                paintFocus(layer, map, values);
                 drawEnlarged(context, layer, 0, 0, size);
             }
             if (size / GRID >= MIN_GRID_CELL) kit.drawGrid(context, size, view.height, size / GRID);
@@ -1154,9 +1163,9 @@
         return best;
     }
 
+    // 0, 1, 0.5, 0.37: at most 2 decimals (0.996 is written 1)
     function numberText(value) {
-        if (value === 0 || value === 1) return String(value);
-        return A.format.number(value, { digits: 2 });
+        return A.format.number(value, { maxDigits: 2 });
     }
 
     // The numbers: a zoomed-in square of the picture with each pixel's number in it, and in its
@@ -1448,10 +1457,10 @@
 
             // Side: how good is each model?
             const table = el("table", "dw-scores");
-            table.innerHTML = '<thead><tr><td></td><th scope="col"></th><th scope="col"></th></tr></thead>' +
+            table.innerHTML = '<thead><tr><th scope="col"></th><th scope="col"></th><th scope="col"></th></tr></thead>' +
                 '<tbody><tr><th scope="row"></th><td></td><td></td></tr><tr><th scope="row"></th><td></td><td></td></tr></tbody>';
             const heads = table.querySelectorAll("th");
-            ["lab.draw.trainAccuracy", "lab.draw.testAccuracy", "lab.draw.knnTitle", "lab.draw.netTitle"].forEach(function (key, n) {
+            ["lab.kit.accuracy", "lab.draw.onTraining", "lab.draw.onTest", "lab.draw.knnTitle", "lab.draw.netTitle"].forEach(function (key, n) {
                 heads[n].setAttribute("data-i18n", key);
                 heads[n].textContent = t(key);
             });
@@ -2313,8 +2322,9 @@
                 status.set(trainState);
                 trainButton.setLabel(trainLabel);
                 trainButton.setIcon(trainState === "running" ? "pause" : "play");
-                resetButton.setDisabled(!net);
+                // Move the focus away first: a disabled button cannot keep it
                 if (!net && document.activeElement === resetButton.element) trainButton.element.focus();
+                resetButton.setDisabled(!net);
                 trainNote.textContent = trainingNote();
                 trainNote.classList.toggle("is-warn", netState === "stale" && trainState !== "running");
                 chartView.describe(losses.length ? A.plural("lab.draw.chartDescribe", losses.length, { loss: kit.number(losses[losses.length - 1]) }) : t("lab.kit.chartEmpty"));
