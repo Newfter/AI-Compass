@@ -98,6 +98,8 @@
     const CONFETTI_DELAY = 950;     // after the results appear (the ring is almost full then)
     const CONFETTI_MS = 3000;       // how long the confetti falls
     const START_DELAY = 80;         // quiz.start() waits for the command palette to close first
+    const STILL_FRAMES = 3;         // a smooth scroll has ended when the page stays put for this many frames
+    const MAX_WAIT_FRAMES = 120;    // ... or after this many frames at most (about 2 seconds)
 
     // Sizes and places
     const SCROLL_GAP = 8;           // px kept free below the menu bar and above the assistant's button
@@ -678,6 +680,8 @@
 
     // Swaps the current screen for a new one: the old one fades out,
     // the card smoothly changes its height and the new one slides in.
+    // options: { focus (a selector), forceFocus, reveal (scroll the card's top into view),
+    //            showNotice (scroll the message into view instead), after (runs at the end) }
     function showScreen(build, options) {
         const settings = options || {};
         const oldScreen = stage.firstElementChild;
@@ -719,8 +723,11 @@
 
             busy = false;
 
-            // Bring the top of the card back into view (e.g. after "Next" on a phone)
-            if (settings.reveal) {
+            // Bring the top of the card back into view (e.g. after "Next" on a phone).
+            // A message that comes with the new screen goes first: it must be seen.
+            if (settings.showNotice && ui.notice && !ui.notice.hidden) {
+                revealNotice();
+            } else if (settings.reveal) {
                 const box = card.getBoundingClientRect();
                 if (box.top < 0 || box.top > window.innerHeight * REVEAL_LINE) {
                     card.scrollIntoView({ block: "start", behavior: A.motion.ok() ? "smooth" : "auto" });
@@ -908,6 +915,53 @@
         if (!ui.notice) return;
         ui.notice.hidden = !state.notice;
         ui.notice.textContent = state.notice ? state.notice() : "";
+    }
+
+    // Scrolls the message into view if it is outside the window: on a phone it is far
+    // below the first modes, and a message nobody sees doesn't help. (Not for "Loading…":
+    // that one is gone again in a moment.) With animations on, a smooth scroll may still be
+    // on its way (the one to the quiz after a command): then this looks once it has ended.
+    function revealNotice() {
+        // Like the feedback after an answer (see answer()): the window scrolls, never the
+        // card (scrollIntoView would also scroll the card while its height changes), and
+        // the message stays clear of the menu bar and of the assistant's round button.
+        const look = () => {
+            const notice = ui.notice;
+            if (!notice || notice.hidden || !notice.isConnected) return;
+            const topSpace = A.layout.navHeight() + SCROLL_GAP;
+            const bottomSpace = A.layout.px("--launcher-room", LAUNCHER_ROOM) + SCROLL_GAP;
+            // A new screen may still slide in from a little lower ("qz-enter" in quiz.css):
+            // measure where it will stop ("m42" = how far it is moved down right now)
+            const screen = notice.closest(".qz-screen");
+            const slide = screen ? new DOMMatrixReadOnly(getComputedStyle(screen).transform).m42 : 0;
+            const box = notice.getBoundingClientRect();
+            const top = box.top - slide;
+            const lowest = window.innerHeight - bottomSpace;
+            let distance = 0;
+            if (box.bottom - slide > lowest) distance = Math.min(box.bottom - slide - lowest, top - topSpace);
+            else if (top < topSpace) distance = top - topSpace;
+            if (distance) window.scrollBy({ top: distance, behavior: A.motion.ok() ? "smooth" : "auto" });
+        };
+        if (A.motion.ok()) afterScrolling(look);
+        else look();
+    }
+
+    // Calls back once the page has stopped moving (the same scroll position for a few
+    // frames), or after about two seconds at most.
+    // TODO(core): other features could use this too (A.afterScrolling?)
+    function afterScrolling(callback) {
+        let lastY = window.scrollY;
+        let still = 0;
+        let frames = 0;
+        const check = () => {
+            const y = window.scrollY;
+            still = y === lastY ? still + 1 : 0;
+            lastY = y;
+            frames += 1;
+            if (still >= STILL_FRAMES || frames >= MAX_WAIT_FRAMES) callback();
+            else requestAnimationFrame(check);
+        };
+        requestAnimationFrame(check);
     }
 
     // A press on a mode card
@@ -1651,8 +1705,12 @@
                 const notice = info.count
                     ? () => t("quiz.notice.mistakesLater", { when: whenText(info.next) })
                     : () => t("quiz.notice.mistakesEmpty");
-                if (state.screen === "start") setNotice(notice);
-                else backToStart({ notice: notice, focusMode: "mistakes", forceFocus: options.forceFocus, reveal: options.reveal });
+                if (state.screen === "start") {
+                    setNotice(notice);
+                    revealNotice();
+                } else {
+                    backToStart({ notice: notice, focusMode: "mistakes", forceFocus: options.forceFocus, reveal: options.reveal });
+                }
                 return;
             }
         }
@@ -1674,9 +1732,18 @@
             pending = null;
             if (next) play(next.mode, next.settings);
         }, () => {
-            if (!pending) return;
+            const failed = pending;
+            if (!failed) return;
             pending = null;
-            setNotice(() => t("quiz.notice.loadFailed"));
+            const notice = () => t("quiz.notice.loadFailed");
+            // The start screen has the message right under the modes. From the other screens
+            // (the list of lessons, "come back tomorrow") go back there, so it can be seen.
+            if (state.screen === "start") {
+                setNotice(notice);
+                revealNotice();
+            } else {
+                backToStart({ notice: notice, focusMode: failed.mode });
+            }
         });
     }
 
@@ -1835,6 +1902,7 @@
             focus: settings.focusMode ? '.qz-mode[data-mode="' + settings.focusMode + '"]' : ".qz-start-title",
             forceFocus: settings.forceFocus,
             reveal: settings.reveal !== false,
+            showNotice: Boolean(state.notice),
             after: () => {
                 if (state.notice) A.announce(state.notice(), { region: live });
             }
@@ -2329,9 +2397,10 @@
 
     // core.js has already translated every [data-i18n] element;
     // here we re-write the texts that contain numbers. The last message for screen
-    // readers is emptied: it was in the other language.
+    // readers is emptied: it was in the other language. (Through A.announce, which also
+    // drops a message still on its way: it writes it a moment later.)
     A.onLanguageChange(() => {
-        if (live) live.textContent = "";
+        if (live) A.announce("", { region: live });
         paint();
         if (timer.active) {
             timer.seconds = -1;
