@@ -54,7 +54,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/neural-bg.js` | The animated "brain" drawn behind the page. |
 | `js/lessons.js` | The lessons: progress panel, lesson cards, the lesson reader, the mini-labs, reading aloud and the certificate. |
 | `js/lab.js` | The AI Lab: "Teach the machine" (a tiny neural network) and the "Next-word predictor" (a tiny language model). |
-| `js/quiz.js` | The AI Challenge: questions, the timer, points, streaks, ranks and the best score. |
+| `js/quiz.js` | The AI Challenge: the six modes (Classic, Timed, Daily challenge, Myth or fact, Lesson review, My mistakes), points, streaks, ranks, the saved results and the quiz's API. |
 | `js/glossary.js` | The glossary: search with "did you mean?", categories, the A–Z strip, term cards and a random term. |
 | `js/timeline.js` | "A Short History of AI": the era chips and the line that fills as you scroll. |
 | `js/assistant.js` | Compass Bot, the chat helper in the corner. |
@@ -64,7 +64,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/neural-bg.js` | The texts of the neural network background. |
 | `js/content/lessons.js` | The lesson texts, the mini-lab texts and the reader's buttons. |
 | `js/content/lab.js` | The AI Lab texts, and the sentences the next-word predictor learns from. |
-| `js/content/quiz.js` | The quiz texts, the list of questions and the ranks. |
+| `js/content/quiz.js` | The quiz's buttons and messages, the list of questions with their tags, the "Myth or fact" statements and the ranks. |
+| `js/content/quiz-bank.js` | The texts of the 60 questions and 20 "Myth or fact" statements, one block per lesson. Not in `index.html`: the quiz loads it when it is needed. |
 | `js/content/glossary.js` | The glossary texts, the categories and every term. |
 | `js/content/timeline.js` | The timeline texts, the eras and every milestone. |
 | `js/content/assistant.js` | Compass Bot's texts, fun facts and jokes, and its "brain" (the words it listens for and its answers). |
@@ -122,19 +123,20 @@ In `index.html`, an element with `data-i18n` gets its text from the same place, 
 <h2 data-i18n="quiz.title">The AI Challenge</h2>
 ```
 
-The lists sit in the same files, as data: `A.content.set("quiz", { questions: [...], ranks: [...] })` in `js/content/quiz.js`, read with `A.content.get("quiz")` in `js/quiz.js`. (The list of lessons is the exception: it is at the top of `js/lessons.js`, because each lesson is tied to the code of its mini-lab.)
+The lists sit in the same files, as data: `A.content.set("quiz", { questions: [...], myths: [...], ranks: [...] })` in `js/content/quiz.js`, read with `A.content.get("quiz")` in `js/quiz.js`. (The list of lessons is the exception: it is at the top of `js/lessons.js`, because each lesson is tied to the code of its mini-lab.)
 
 **Numbers come from the data.** Nothing says "6 lessons" or "12 questions" by hand. The scripts count the data and share the number: `A.setTextValue("quizQuestionCount", QUESTIONS.length)`. Texts then have a form for each kind of number, and the toolkit picks the right one:
 
 ```js
-"quiz.subtitle.12": "Twelve questions. How well do you really know AI?",   // only for exactly 12
-"quiz.subtitle.one": "{n} question. How well do you really know AI?",
-"quiz.subtitle.many": "{n} questions. How well do you really know AI?"
+"quiz.subtitle.one": "{n} question. Take the daily challenge, race the clock or bust a few myths.",
+"quiz.subtitle.many": "{n} questions. Take the daily challenge, race the clock or bust a few myths."
 ```
+
+A text for one exact number can be added too: `"quiz.subtitle.60"` would be used only for exactly 60 (to write "Sixty questions").
 
 Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `.many` (5–20, 25...).
 
-**Features talk to each other through their API.** The last section of each feature file shares a few functions with `A.feature(...)`: `A.lessons.open(3)`, `A.glossary.show("bias")`, `A.quiz.start()`, `A.lab.open("predictor")`, `A.assistant.open()`, `A.palette.open()`. For example, the timeline's "In the glossary" buttons call `A.glossary.show(id, { focus: true })`.
+**Features talk to each other through their API.** The last section of each feature file shares a few functions with `A.feature(...)`: `A.lessons.open(3)`, `A.glossary.show("bias")`, `A.quiz.start()`, `A.lab.open("predictor")`, `A.assistant.open()`, `A.palette.open()`. For example, the timeline's "In the glossary" buttons call `A.glossary.show(id, { focus: true })`. The quiz shares the most: `A.quiz.start(mode, options)`, `A.quiz.question(id)`, `A.quiz.bank()`, `A.quiz.stats()` and `A.quiz.ready()`, described at the end of `js/quiz.js`.
 
 **Pop-up windows** (the lesson reader, Compass Bot, the Ctrl+K palette, the phone menu) register with `A.overlays`. Core then treats them all the same way: a window that covers the page locks the page behind it, Esc closes the window on top, and the focus goes back to where it was.
 
@@ -163,8 +165,9 @@ Nothing leaves the browser: these events are only for features on the same page 
 | | `lesson.complete` | `{ n }` | the first time a lesson is marked as done |
 | | `lesson.check` | `{ n, correct }` | a "check yourself" question is answered |
 | | `certificate.make` | `{}` | the certificate is downloaded |
-| Quiz | `quiz.answer` | `{ id, correct }` | a question is answered |
-| | `quiz.finish` | `{ mode, score, total, points, timed, seconds }` | a round ends (`mode` is `"classic"` or `"timed"`, `score` is the number of right answers) |
+| Quiz | `quiz.answer` | `{ id, correct, mode }` | a question is answered (`id` is a question, `"q7"`, or a "Myth or fact" statement, `"m3"`) |
+| | `quiz.finish` | `{ mode, score, total, points, timed, seconds, answerSeconds, lesson }` | a game ends. `mode`: `"classic"`, `"timed"`, `"daily"`, `"myth"`, `"lesson"` or `"mistakes"`; `score`: right answers; `seconds`: from the first question to the end; `answerSeconds`: only the time spent answering; `lesson`: only in Lesson review |
+| | `daily.complete` | `{ date, score, total, streak }` | the daily challenge is finished (once a day; `date` is `"2026-01-15"`, `streak` the days in a row) |
 | AI Lab | `lab.use` | `{ exp }` | a tab is chosen, training starts, or auto-write starts |
 | | `lab.milestone` | `{ exp, kind, ... }` | the classifier has learned (`kind: "learned"`, `epochs`) or the predictor was taught (`kind: "taught"`, `sentences`) |
 | Glossary | `glossary.explore` | `{ id }` | a term is opened |
@@ -305,45 +308,52 @@ That's all: the cards, the progress panel, the hero number, the section subtitle
 
 ### Add a quiz question
 
-**File:** `js/content/quiz.js`.
+**Files:** the texts in `js/content/quiz-bank.js`, the entry in `js/content/quiz.js`.
 
-**1. The texts.** Add them after the last question's texts, in both parts. For a multiple-choice question, write four options and put the right one **first** (`o1`). The quiz shuffles the options in every game.
+**1. The texts.** In `js/content/quiz-bank.js`, find the block of the lesson (`// ----- Lesson 5: ...`) and add the texts at the end of both parts, English and Russian (with "ты"). Use the next free number: there are 60 questions, so the next one is `q61`. For a multiple-choice question, write four options and put the right one **first** (`o1`): the quiz shuffles the options in every game. The explanation says why the right answer is right, and why the tempting wrong one is wrong.
 
 English part:
 
 ```js
-        "quiz.q13.text": "What does a recommendation system do?",
-        "quiz.q13.o1": "Suggests videos, songs or products from what you and similar people liked",
-        "quiz.q13.o2": "Blocks every advert on a website",
-        "quiz.q13.o3": "Makes your internet connection faster",
-        "quiz.q13.o4": "Keeps your passwords safe",
-        "quiz.q13.explain": "Recommendation systems learn from what you watch, play and buy, and from what similar people like, to guess what you will enjoy next.",
+        "quiz.q61.text": "What does a recommendation system do?",
+        "quiz.q61.o1": "Suggests videos, songs or products from what you and similar people liked",
+        "quiz.q61.o2": "Blocks every advert on a website",
+        "quiz.q61.o3": "Makes your internet connection faster",
+        "quiz.q61.o4": "Keeps your passwords safe",
+        "quiz.q61.explain": "Recommendation systems learn from what you watch, play and buy, and from what similar people like, to guess what you will enjoy next.",
 ```
 
 Russian part:
 
 ```js
-        "quiz.q13.text": "Что делает рекомендательная система?",
-        "quiz.q13.o1": "Советует видео, песни или товары по тому, что нравилось тебе и похожим людям",
-        "quiz.q13.o2": "Блокирует всю рекламу на сайте",
-        "quiz.q13.o3": "Ускоряет твой интернет",
-        "quiz.q13.o4": "Защищает твои пароли",
-        "quiz.q13.explain": "Рекомендательные системы учатся на том, что ты смотришь, слушаешь и покупаешь, и на том, что нравится похожим людям, — и угадывают, что тебе понравится дальше.",
+        "quiz.q61.text": "Что делает рекомендательная система?",
+        "quiz.q61.o1": "Советует видео, песни или товары по тому, что нравилось тебе и похожим людям",
+        "quiz.q61.o2": "Блокирует всю рекламу на сайте",
+        "quiz.q61.o3": "Ускоряет твой интернет",
+        "quiz.q61.o4": "Защищает твои пароли",
+        "quiz.q61.explain": "Рекомендательные системы учатся на том, что ты смотришь, слушаешь и покупаешь, и на том, что нравится похожим людям, — и угадывают, что тебе понравится дальше.",
 ```
 
-**2. The entry.** At the bottom of the file, add a line to `questions`:
+A true-or-false question has only `.text` and `.explain`, and the explanation starts with "True." or "False." ("Верно." / "Неверно.").
+
+**2. The entry.** In `js/content/quiz.js`, add a line to `questions`, under the other questions of the lesson:
 
 ```js
-        { key: "q13", type: "choice", topic: "everyday", correct: 0, learn: 5 }
+        { key: "q61", lesson: 5, topic: "everyday", difficulty: 1, type: "choice", correct: 0 },
 ```
 
-- `type`: `"choice"` (four options, `correct: 0`) or `"truefalse"` (only `.text` and `.explain`; `correct: 0` means "True", `1` means "False").
-- `topic`: one of the `quiz.topic.…` texts (`basics`, `ml`, `data`, `nn`, `genai`, `hallucination`, `bias`, `privacy`, `everyday`, `history`, `responsible`).
-- `learn`: the number of the lesson that explains it, or `"timeline"`.
+- `lesson`: the lesson that explains it (1-12), or `"timeline"` for the history. Its "Learn more" button opens that lesson.
+- `topic`: one of the `quiz.topic.…` texts (`basics`, `ml`, `data`, `nn`, `genai`, `hallucination`, `bias`, `privacy`, `everyday`, `history`, `responsible`, `vision`, `rl`, `language`, `creative`, `safety`, `prompting`). Other features find questions by topic.
+- `difficulty`: 1 easy, 2 medium, 3 hard. A Classic game takes 4 easy, 5 medium and 3 hard questions, from every pair of lessons; the daily challenge 2 easy, 2 medium and 1 hard.
+- `type`: `"choice"` (four options, `correct: 0`) or `"truefalse"` (`correct: 0` means "True", `1` means "False").
 
-Below `questions` are the `ranks`: the number of right answers (`min`) you need for each rank. If you add several questions, check that these numbers still make sense.
+Good questions have one clearly right answer, wrong answers that sound possible (no "all of the above"), options of about the same length, and nothing that could change next year. Don't change the key or the meaning of a question that exists: "My mistakes" remembers questions by their key.
 
-**Check:** the quiz subtitle and the hero say 13; start a game and play it to the end (the questions come in a random order); the new question shows its four options and its explanation. Do it again in Russian.
+The `ranks` at the bottom are shares of right answers (`0.65` = 65 %), so they work for any number of questions.
+
+**A "Myth or fact" statement** works the same way: its texts go in the last block of `js/content/quiz-bank.js` (`"quiz.m21.text"`, and a one-sentence `"quiz.m21.explain"` without "True" or "False"), and its entry in `myths`: `{ key: "m21", lesson: 6, fact: false }` (`fact: false` for a myth, `true` for a fact). Keep about as many myths as facts.
+
+**Check:** the quiz subtitle and the hero say 61; open Lesson review, pick the lesson, and play it to the end: the new question shows its four options and its explanation. Do it again in Russian. Answer the new question wrong once: "My mistakes" then offers it for review.
 
 ### Add a glossary term
 
