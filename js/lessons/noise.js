@@ -353,7 +353,8 @@
                 api.announce(api.text("promptSet", { prompt: api.text("p." + prompt) }));
                 return;
             }
-            const button = event.target.closest("[data-noise]");
+            // "button": the icon and the text inside the Play button have a data-noise of their own
+            const button = event.target.closest("button[data-noise]");
             const action = button ? button.getAttribute("data-noise") : "";
             if (action === "denoise") {
                 if (state.step >= STEPS) return;
