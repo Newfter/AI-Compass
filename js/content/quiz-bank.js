@@ -780,7 +780,7 @@ window.AICompass.addTranslations({
         "quiz.q58.o2": "Its first chatbot, ELIZA",
         "quiz.q58.o3": "Its first robot that could walk",
         "quiz.q58.o4": "Its first program to beat a chess champion",
-        "quiz.q58.explain": "John McCarthy and his colleagues used the term “artificial intelligence” in their 1955 proposal for the workshop, and the name stuck. ELIZA came ten years later, in 1966, and it was only in 1997 that a computer won a match against the world chess champion.",
+        "quiz.q58.explain": "John McCarthy and his colleagues used the term “artificial intelligence” in their 1955 proposal for the workshop, and the name stuck. ELIZA came ten years later, in 1966, and it was only in 1997 that a computer won a six-game match against the world chess champion.",
 
         "quiz.q59.text": "In 2012, a neural network called AlexNet won a big photo-recognition contest by a wide margin. Why was that a turning point?",
         "quiz.q59.o1": "It helped start the deep learning boom",
@@ -808,7 +808,7 @@ window.AICompass.addTranslations({
         "quiz.q58.o2": "Первого чат-бота, ELIZA",
         "quiz.q58.o3": "Первого шагающего робота",
         "quiz.q58.o4": "Первую программу, обыгравшую чемпиона по шахматам",
-        "quiz.q58.explain": "Джон Маккарти и его коллеги использовали слова «искусственный интеллект» в заявке на семинар в 1955 году, и название прижилось. ELIZA появилась через десять лет, в 1966 году, а выиграть матч у чемпиона мира по шахматам компьютер впервые смог только в 1997-м.",
+        "quiz.q58.explain": "Джон Маккарти и его коллеги использовали слова «искусственный интеллект» в заявке на семинар в 1955 году, и название прижилось. ELIZA появилась через десять лет, в 1966 году, а выиграть у чемпиона мира по шахматам матч из шести партий компьютер впервые смог только в 1997-м.",
 
         "quiz.q59.text": "В 2012 году нейросеть AlexNet с большим отрывом выиграла крупный конкурс по распознаванию фотографий. Почему это стало поворотным моментом?",
         "quiz.q59.o1": "Она помогла начать бум глубокого обучения",
