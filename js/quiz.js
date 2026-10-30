@@ -2325,8 +2325,10 @@
     });
 
     // core.js has already translated every [data-i18n] element;
-    // here we re-write the texts that contain numbers
+    // here we re-write the texts that contain numbers. The last message for screen
+    // readers is emptied: it was in the other language.
     A.onLanguageChange(() => {
+        if (live) live.textContent = "";
         paint();
         if (timer.active) {
             timer.seconds = -1;
