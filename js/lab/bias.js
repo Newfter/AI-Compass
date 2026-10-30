@@ -1280,9 +1280,10 @@
                     ctx.announce(pairSentence(index));  // a click reads the pair out
                 }
             });
-            // Reached with the Tab key (not a click): show a pair straight away
+            // Reached with the Tab key (not a click): show a pair straight away (the one under
+            // the mouse, if there is one) and read it out
             scene.canvas.addEventListener("focus", function () {
-                if (active === -1 && scene.canvas.matches(":focus-visible")) setActive(firstForKeys(), "key");
+                if (scene.canvas.matches(":focus-visible")) setActive(active === -1 ? firstForKeys() : active, "key");
             });
             scene.canvas.addEventListener("blur", function () {
                 if (activeBy === "key") setActive(-1, "");
