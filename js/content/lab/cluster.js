@@ -131,12 +131,12 @@ window.AICompass.addTranslations({
         "lab.cluster.quoted": "“{name}”",
 
         // ----- Counted words -----
-        "lab.cluster.nPoints": "{n} point|{n} points",
-        "lab.cluster.nPointsSees": "{n} point|{n} points",
-        "lab.cluster.nCentres": "{n} centre|{n} centres",
-        "lab.cluster.nCustomers": "{n} customer|{n} customers",
-        "lab.cluster.nVisits": "{n} visit|{n} visits",
-        "lab.cluster.inGroups": "in {n} group|in {n} groups"
+        "lab.cluster.nPoints": "{n}\u00a0point|{n}\u00a0points",
+        "lab.cluster.nPointsSees": "{n}\u00a0point|{n}\u00a0points",
+        "lab.cluster.nCentres": "{n}\u00a0centre|{n}\u00a0centres",
+        "lab.cluster.nCustomers": "{n}\u00a0customer|{n}\u00a0customers",
+        "lab.cluster.nVisits": "{n}\u00a0visit|{n}\u00a0visits",
+        "lab.cluster.inGroups": "in {n}\u00a0group|in {n}\u00a0groups"
     },
     ru: {
         // ----- В списке экспериментов лаборатории -----
@@ -189,7 +189,7 @@ window.AICompass.addTranslations({
         "lab.cluster.phaseDone": "Готово: больше ничего не меняется",
 
         // ----- Покупатели: оси и названия групп -----
-        "lab.cluster.money": "{n} $",
+        "lab.cluster.money": "{n}\u00a0$",
         "lab.cluster.visitsAxis": "Визиты в месяц →",
         "lab.cluster.moneyAxis": "Траты в месяц →",
         "lab.cluster.namesTitle": "Назови группы",
@@ -263,12 +263,12 @@ window.AICompass.addTranslations({
         "lab.cluster.quoted": "«{name}»",
 
         // ----- Слова при числах -----
-        "lab.cluster.nPoints": "{n} точка|{n} точки|{n} точек",
-        "lab.cluster.nPointsSees": "{n} точку|{n} точки|{n} точек",
-        "lab.cluster.nCentres": "{n} центр|{n} центра|{n} центров",
-        "lab.cluster.nCustomers": "{n} покупатель|{n} покупателя|{n} покупателей",
-        "lab.cluster.nVisits": "{n} визит|{n} визита|{n} визитов",
-        "lab.cluster.inGroups": "в {n} группе|в {n} группах|в {n} группах"
+        "lab.cluster.nPoints": "{n}\u00a0точка|{n}\u00a0точки|{n}\u00a0точек",
+        "lab.cluster.nPointsSees": "{n}\u00a0точку|{n}\u00a0точки|{n}\u00a0точек",
+        "lab.cluster.nCentres": "{n}\u00a0центр|{n}\u00a0центра|{n}\u00a0центров",
+        "lab.cluster.nCustomers": "{n}\u00a0покупатель|{n}\u00a0покупателя|{n}\u00a0покупателей",
+        "lab.cluster.nVisits": "{n}\u00a0визит|{n}\u00a0визита|{n}\u00a0визитов",
+        "lab.cluster.inGroups": "в {n}\u00a0группе|в {n}\u00a0группах|в {n}\u00a0группах"
     }
 });
 

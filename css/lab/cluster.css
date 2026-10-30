@@ -211,9 +211,13 @@
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
-/* The idea in real life, with its glossary links */
+/* The idea in real life, with its glossary links (a term stays on one line) */
 .km-idea {
     color: var(--text-muted);
     font-size: 14px;
     line-height: 1.6;
+}
+
+.km-idea .lk-term-link {
+    white-space: nowrap;
 }
