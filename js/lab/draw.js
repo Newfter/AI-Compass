@@ -1058,13 +1058,15 @@
 
     // A short message in the middle of a canvas, on a soft patch so it reads over a picture.
     // Measuring text is slow, so the last message's lines are kept (it is drawn again while you draw).
+    // A canvas font is slow to set when it changes (the browser works out the page's styles
+    // first), but the same font again costs nothing. So the canvas keeps its font: there is
+    // no save() and restore() here, which would put the old font back.
     const lastMessage = { key: "", lines: [], widest: 0 };
     function drawMessage(view, text) {
         const context = view.ctx;
         const c = kit.colors();
         const size = A.util.clamp(Math.round(view.width / 24), MESSAGE_FONT.min, MESSAGE_FONT.max);
         const lineHeight = Math.round(size * 1.35);
-        context.save();
         context.font = kit.font(size, 600, "body");
         const key = context.font + "|" + view.width + "|" + text;
         if (key !== lastMessage.key) {
@@ -1084,7 +1086,6 @@
         context.textAlign = "center";
         context.textBaseline = "middle";
         lines.forEach(function (line, n) { context.fillText(line, view.width / 2, top + (n + 0.5) * lineHeight); });
-        context.restore();
     }
 
     function traceStrokes(context, strokes, size, width, color) {
@@ -1201,8 +1202,7 @@
         const cell = size / count;
         const spot = busiestSquare(values, count);
         const valueAt = function (col, row) { return values[(spot.y + row) * GRID + spot.x + col]; };
-        context.save();
-        context.font = kit.font(A.util.clamp(Math.round(cell * 0.3), 11, 14), 600, "mono");
+        context.font = kit.font(A.util.clamp(Math.round(cell * 0.3), 11, 14), 600, "mono");     // kept (see drawMessage)
         context.textAlign = "center";
         context.textBaseline = "middle";
         for (let row = 0; row < count; row++) {
@@ -1216,7 +1216,6 @@
                 context.fillText(numberText(value), (col + 0.5) * cell, (row + 0.5) * cell);
             }
         }
-        context.restore();
         kit.drawGrid(context, size, view.height, cell);
 
         // The small map goes into the corner of the square with the least ink
@@ -1838,8 +1837,8 @@
                 input = result ? picture(result.pixels) : null;
                 knnGuess = input && train.length ? knnPredict(train, input, k, classes.length) : null;
                 netGuess = input && net && netState !== "none" ? netPredict(net, input) : null;
+                showSeen();               // the canvas first, then the page's texts
                 showGuesses();
-                showSeen();
                 showPadButtons();
                 renderExplain();
                 if (final) checkChallenges();
@@ -2315,9 +2314,9 @@
                 if (resultsFrame) cancelAnimationFrame(resultsFrame);
                 resultsFrame = 0;
                 if (input && net) netGuess = netPredict(net, input);
+                if (seenMode === "focus") showSeen();     // the other views don't show the network
                 measureNet(lastAccuracy, lastGuesses.length === test.length ? lastGuesses : undefined);
                 showGuesses();
-                if (seenMode === "focus") showSeen();     // the other views don't show the network
             }
 
             // The last epoch's check measured the network as it is now (the training stopped)
