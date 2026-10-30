@@ -112,6 +112,7 @@ window.AICompass.addTranslations({
         "settings.keysLessons": "In a lesson",
         "settings.keysQuiz": "Quiz",
         "settings.keysLabHub": "AI Lab: choosing an experiment",
+        "settings.keysDraw": "AI Lab: Draw and teach",
         "settings.keysLab": "AI Lab: Teach the machine",
         "settings.keysMaze": "AI Lab: Robot in a maze",
         "settings.keysGlossary": "Glossary search",
@@ -137,6 +138,12 @@ window.AICompass.addTranslations({
         "settings.do.labPick": "Move between the experiment cards (in the grid: also ↑ and ↓)",
         "settings.do.labPickEnds": "The first or the last experiment",
         "settings.do.labPickOpen": "Open the experiment",
+        "settings.do.drawMove": "Move the pen on the drawing pad (with Shift: faster)",
+        "settings.do.drawPen": "Put the pen down or lift it",
+        "settings.do.drawDone": "Finish the drawing: the models guess what it is",
+        "settings.do.drawPick": "Move between the drawings in a row",
+        "settings.do.drawPickEnds": "The first or the last drawing in the row",
+        "settings.do.drawDelete": "Delete the drawing",
         "settings.do.mazeMove": "Move between the squares of the maze",
         "settings.do.mazeRead": "Hear what the robot learned about the square (while editing: put the chosen tile there)",
         "settings.do.glossaryOpen": "Open the first term found",
@@ -263,6 +270,7 @@ window.AICompass.addTranslations({
         "settings.keysLessons": "В уроке",
         "settings.keysQuiz": "Тест",
         "settings.keysLabHub": "ИИ-лаборатория: выбор эксперимента",
+        "settings.keysDraw": "ИИ-лаборатория: «Нарисуй и научи»",
         "settings.keysLab": "ИИ-лаборатория: «Обучи машину»",
         "settings.keysMaze": "ИИ-лаборатория: «Робот в лабиринте»",
         "settings.keysGlossary": "Поиск в словаре",
@@ -287,6 +295,12 @@ window.AICompass.addTranslations({
         "settings.do.labPick": "Переходить между карточками экспериментов (в сетке — ещё ↑ и ↓)",
         "settings.do.labPickEnds": "Первый или последний эксперимент",
         "settings.do.labPickOpen": "Открыть эксперимент",
+        "settings.do.drawMove": "Двигать перо по полю для рисования (с Shift — быстрее)",
+        "settings.do.drawPen": "Опустить или поднять перо",
+        "settings.do.drawDone": "Закончить рисунок: модели угадают, что на нём",
+        "settings.do.drawPick": "Переходить между рисунками в ряду",
+        "settings.do.drawPickEnds": "Первый или последний рисунок в ряду",
+        "settings.do.drawDelete": "Удалить рисунок",
         "settings.do.mazeMove": "Переходить по клеткам лабиринта",
         "settings.do.mazeRead": "Узнать, что робот выучил про клетку (в режиме правки — поставить туда выбранную плитку)",
         "settings.do.glossaryOpen": "Открыть первый найденный термин",
@@ -374,6 +388,22 @@ window.AICompass.content.set("settings", {
                 { keys: [["home"], ["end"]], does: "settings.do.labPickEnds" },
                 // the cards are buttons
                 { keys: [["enter"], ["space"]], does: "settings.do.labPickOpen" }
+            ]
+        },
+        {
+            title: "settings.keysDraw",
+            items: [
+                // js/lab/draw.js, the pad's keydown: the arrow keys move the pen, Shift + arrows 4 steps
+                { keys: [["arrows"], ["shift", "arrows"]], does: "settings.do.drawMove" },
+                // js/lab/draw.js, the pad's keydown: Space puts the pen down or lifts it
+                { keys: [["space"]], does: "settings.do.drawPen" },
+                // js/lab/draw.js, the pad's keydown: Enter finishes the drawing
+                { keys: [["enter"]], does: "settings.do.drawDone" },
+                // js/lab/draw.js, roving(): a row of drawings is one Tab stop; the arrows, Home and End move in it
+                { keys: [["←"], ["→"]], does: "settings.do.drawPick" },
+                { keys: [["home"], ["end"]], does: "settings.do.drawPickEnds" },
+                // js/lab/draw.js, thumbButton(): Delete or Backspace on a drawing (a click: press it twice)
+                { keys: [["delete"], ["backspace"]], does: "settings.do.drawDelete" }
             ]
         },
         {
