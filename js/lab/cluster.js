@@ -534,19 +534,52 @@
         ctx.stroke();
     }
 
-    // A group's name on a small plate under its centre (gap px under it), or over it when
-    // there is no room below. It stays inside the square, off the numbers of the axes.
-    function drawName(ctx, square, x, y, gap, text, color, c) {
+    // Where a name plate (width × height) goes: under its centre (x, y), gap px away, else over
+    // it, else to its right or left. Each spot is kept inside the square (off the numbers of the
+    // axes); the first one that covers no centre (spots: all of them, on screen) and no plate
+    // drawn before (taken) wins. On a small board there may be none: then the first spot that
+    // leaves its own centre free.
+    function namePlace(square, x, y, gap, width, height, spots, taken) {
+        function inside(left, top) {
+            return {
+                left: A.util.clamp(left, square.left + 2, square.left + square.size - width - 2),
+                top: A.util.clamp(top, square.top + 2, square.top + square.size - height - 2)
+            };
+        }
+        // A centre is covered when the plate's nearest point to it is closer than gap - 2 px
+        function covers(place, spot) {
+            const dx = A.util.clamp(spot.x, place.left, place.left + width) - spot.x;
+            const dy = A.util.clamp(spot.y, place.top, place.top + height) - spot.y;
+            return dx * dx + dy * dy < (gap - 2) * (gap - 2);
+        }
+        function overlaps(place, box) {
+            return place.left < box.left + box.width + 4 && box.left < place.left + width + 4 &&
+                place.top < box.top + box.height + 4 && box.top < place.top + height + 4;
+        }
+        const places = [
+            inside(x - width / 2, y + gap),
+            inside(x - width / 2, y - gap - height),
+            inside(x + gap, y - height / 2),
+            inside(x - gap - width, y - height / 2)
+        ];
+        const free = places.filter(function (place) {
+            return !spots.some(function (spot) { return covers(place, spot); }) &&
+                !taken.some(function (box) { return overlaps(place, box); });
+        });
+        const ownFree = places.filter(function (place) { return !covers(place, { x: x, y: y }); });
+        return free[0] || ownFree[0] || places[0];
+    }
+
+    // A group's name on a small plate next to its centre (see namePlace). taken: the plates
+    // drawn so far; this one is added to it.
+    function drawName(ctx, square, x, y, gap, text, color, c, spots, taken) {
         ctx.font = kit.font(12, 700, "body");
         const width = ctx.measureText(text).width + 14;
         const height = 22;
-        const bottom = square.top + square.size;
-        let top = y + gap;
-        if (top + height > bottom) top = y - gap - height;
-        top = Math.max(square.top + 2, Math.min(top, bottom - height - 2));
-        const left = Math.max(square.left + 2, Math.min(x - width / 2, square.left + square.size - width - 2));
+        const place = namePlace(square, x, y, gap, width, height, spots, taken);
+        taken.push({ left: place.left, top: place.top, width: width, height: height });
         ctx.beginPath();
-        A.canvas.roundRect(ctx, left, top, width, height, 8);
+        A.canvas.roundRect(ctx, place.left, place.top, width, height, 8);
         ctx.fillStyle = kit.alpha(c.surface, 0.9);
         ctx.fill();
         ctx.lineWidth = 1.5;
@@ -555,7 +588,7 @@
         ctx.fillStyle = c.text;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(text, left + width / 2, top + height / 2 + 0.5);
+        ctx.fillText(text, place.left + width / 2, place.top + height / 2 + 0.5);
     }
 
     // The keyboard cursor: a cross-hair in a circle
@@ -628,11 +661,14 @@
             drawCentre(ctx, spot.x, spot.y, centreRadius, c.series[group % c.series.length], c, scene.glow);
         });
 
-        (scene.names || []).forEach(function (name, group) {
-            if (!name || !centres[group]) return;
-            const spot = toScreen(square, centres[group]);
-            drawName(ctx, square, spot.x, spot.y, centreRadius + 6, name, c.series[group % c.series.length], c);
-        });
+        if (scene.names) {
+            const spots = centres.map(function (centre) { return toScreen(square, centre); });
+            const taken = [];         // the name plates drawn so far: the next one looks for a free spot
+            scene.names.forEach(function (name, group) {
+                if (!name || !centres[group]) return;
+                drawName(ctx, square, spots[group].x, spots[group].y, centreRadius + 6, name, c.series[group % c.series.length], c, spots, taken);
+            });
+        }
 
         if (scene.cursor) {
             const spot = toScreen(square, scene.cursor);
