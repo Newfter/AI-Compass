@@ -54,7 +54,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/effects.js` | Small touches: the scroll progress bar, cards that rise in, numbers that count up, typewriter words, tilting cards, the mouse spotlight, magnetic buttons, ripples, the section mini-map and confetti. |
 | `js/neural-bg.js` | The animated "brain" drawn behind the page. |
 | `js/lessons.js` | The lessons: the list of lessons and tracks, progress panel, lesson cards, the lesson reader, the first six mini-labs, reading aloud and the certificates. |
-| `js/lessons/` | One file per newer mini-lab (`pixels.js`, `slots.js`, `temperature.js`). `js/lessons.js` loads a file the first time its lesson opens. |
+| `js/lessons/` | One file per newer mini-lab (`pixels.js`, `slots.js`, `temperature.js`, `noise.js`, `fairness.js`, `prompt.js`). `js/lessons.js` loads a file the first time its lesson opens. |
 | `js/lab.js` | The AI Lab: "Teach the machine" (a tiny neural network) and the "Next-word predictor" (a tiny language model). |
 | `js/quiz.js` | The AI Challenge: questions, the timer, points, streaks, ranks and the best score. |
 | `js/glossary.js` | The glossary: search with "did you mean?", categories, the A–Z strip, term cards and a random term. |
@@ -225,7 +225,7 @@ The lessons come in tracks: "Basics" (lessons 1-6) and "Deep dive" (7 and on). A
 
 ```js
         {
-            number: 10, track: "deep", icon: "🗨️", level: "beginner", minutes: 3, rgb: "--accent-2-rgb",
+            number: 13, track: "deep", icon: "🗨️", level: "beginner", minutes: 3, rgb: "--accent-2-rgb",
             sections: 2, notes: { 2: "tip" }, lab: "words", correct: 1,
             tryIt: "lab", tryIcon: "🔮",
             keywords: "prompt prompting ask chatbot questions промпт запрос чат-бот вопросы"
@@ -242,31 +242,31 @@ The lessons come in tracks: "Basics" (lessons 1-6) and "Deep dive" (7 and on). A
 - `tryIt`: where the "Try it" button goes: a section (`"timeline"`, `"glossary"`, `"quiz"`, `"lab"`) or an experiment of the AI Lab (`"classifier"`, `"predictor"`, ...; while the AI Lab doesn't have that experiment yet, the button opens the AI Lab). `tryIcon`: its emoji.
 - `keywords`: extra words (both languages) that find the lesson in the Ctrl+K search.
 
-**2. The texts.** In `js/content/lessons-deep.js`, copy the block of lesson 7 to the end of the file and change `l7` to `l10` and `w7` to `w10`. Every key starts with `lessons.l10.` (the lesson) or `lessons.w10.` (its mini-lab). Each part needs `.h` (title) and `.p` (text), each box needs `.note`, and there are always three key ideas, a tip and three answers:
+**2. The texts.** In `js/content/lessons-deep.js`, copy the block of lesson 7 to the end of the file and change `l7` to `l13` and `w7` to `w13`. Every key starts with `lessons.l13.` (the lesson) or `lessons.w13.` (its mini-lab). Each part needs `.h` (title) and `.p` (text), each box needs `.note`, and there are always three key ideas, a tip and three answers:
 
 ```js
-// Lesson 10 — Talking to AI
+// Lesson 13 — Talking to AI (an example made up for this guide)
 window.AICompass.addTranslations({
     en: {
-        "lessons.l10.title": "Talking to AI",
-        "lessons.l10.desc": "How to ask a chatbot good questions — and check its answers.",
-        "lessons.l10.s1.h": "Say what you need",
-        "lessons.l10.s1.p": "A chatbot only knows what you type. Say what you need, who it is for and how long the answer should be: <em>“Explain photosynthesis to a 14-year-old in five sentences”</em> works much better than <em>“photosynthesis”</em>.",
-        "lessons.l10.s2.h": "Check before you trust",
-        "lessons.l10.s2.p": "Chatbots can sound sure and still be wrong. A <strong data-term='hallucination'>hallucination</strong> looks just like a true answer. Compare important answers with a textbook or a trusted website, and never type in passwords or private details.",
-        "lessons.l10.s2.note": "If an answer matters (homework, health, money), check it in a second place.",
-        "lessons.l10.key1": "A clear, detailed question gets a more useful answer.",
-        "lessons.l10.key2": "Chatbots can be confidently wrong: check what matters.",
-        "lessons.l10.key3": "Never share passwords or private details with a chatbot.",
-        "lessons.l10.tip": "See how a language model picks its next word, live in the AI Lab.",
-        "lessons.l10.tipBtn": "Open the AI Lab",
-        "lessons.l10.q": "Which question will probably get the most useful answer?",
-        "lessons.l10.a1": "“Volcanoes”",
-        "lessons.l10.a2": "“Explain in five sentences, for a 14-year-old, why volcanoes erupt”",
-        "lessons.l10.a3": "“Tell me everything you know”",
-        "lessons.l10.explain": "The second question says what you need, who it is for and how long the answer should be. The first is too short to know what you want, and the third is far too wide.",
-        "lessons.w10.title": "Be the language model",
-        "lessons.w10.intro": "A chatbot writes one word at a time. Pick the next word yourself and see how the “temperature” changes the choice."
+        "lessons.l13.title": "Talking to AI",
+        "lessons.l13.desc": "How to ask a chatbot good questions — and check its answers.",
+        "lessons.l13.s1.h": "Say what you need",
+        "lessons.l13.s1.p": "A chatbot only knows what you type. Say what you need, who it is for and how long the answer should be: <em>“Explain photosynthesis to a 14-year-old in five sentences”</em> works much better than <em>“photosynthesis”</em>.",
+        "lessons.l13.s2.h": "Check before you trust",
+        "lessons.l13.s2.p": "Chatbots can sound sure and still be wrong. A <strong data-term='hallucination'>hallucination</strong> looks just like a true answer. Compare important answers with a textbook or a trusted website, and never type in passwords or private details.",
+        "lessons.l13.s2.note": "If an answer matters (homework, health, money), check it in a second place.",
+        "lessons.l13.key1": "A clear, detailed question gets a more useful answer.",
+        "lessons.l13.key2": "Chatbots can be confidently wrong: check what matters.",
+        "lessons.l13.key3": "Never share passwords or private details with a chatbot.",
+        "lessons.l13.tip": "See how a language model picks its next word, live in the AI Lab.",
+        "lessons.l13.tipBtn": "Open the AI Lab",
+        "lessons.l13.q": "Which question will probably get the most useful answer?",
+        "lessons.l13.a1": "“Volcanoes”",
+        "lessons.l13.a2": "“Explain in five sentences, for a 14-year-old, why volcanoes erupt”",
+        "lessons.l13.a3": "“Tell me everything you know”",
+        "lessons.l13.explain": "The second question says what you need, who it is for and how long the answer should be. The first is too short to know what you want, and the third is far too wide.",
+        "lessons.w13.title": "Be the language model",
+        "lessons.w13.intro": "A chatbot writes one word at a time. Pick the next word yourself and see how the “temperature” changes the choice."
     },
     ru: {
         // the same keys, in Russian (see below)
@@ -281,25 +281,25 @@ window.AICompass.addTranslations({
 
 ```js
     ru: {
-        "lessons.l10.title": "Как говорить с ИИ",
-        "lessons.l10.desc": "Как задавать чат-боту хорошие вопросы — и проверять его ответы.",
-        "lessons.l10.s1.h": "Скажи, что тебе нужно",
-        "lessons.l10.s1.p": "Чат-бот знает только то, что ты напишешь. Скажи, что тебе нужно, для кого и какой длины должен быть ответ: <em>«Объясни фотосинтез четырнадцатилетнему в пяти предложениях»</em> работает гораздо лучше, чем просто <em>«фотосинтез»</em>.",
-        "lessons.l10.s2.h": "Проверяй, прежде чем верить",
-        "lessons.l10.s2.p": "Чат-бот может говорить уверенно и всё равно ошибаться. <strong data-term='hallucination'>Галлюцинация</strong> выглядит точно так же, как верный ответ. Сверяй важные ответы с учебником или надёжным сайтом и никогда не вводи пароли и личные данные.",
-        "lessons.l10.s2.note": "Если ответ важен (домашка, здоровье, деньги), проверь его ещё в одном месте.",
-        "lessons.l10.key1": "На понятный подробный вопрос ты получишь более полезный ответ.",
-        "lessons.l10.key2": "Чат-бот может уверенно ошибаться: проверяй то, что важно.",
-        "lessons.l10.key3": "Никогда не сообщай чат-боту пароли и личные данные.",
-        "lessons.l10.tip": "Посмотри в ИИ-лаборатории, как языковая модель выбирает следующее слово.",
-        "lessons.l10.tipBtn": "Открыть ИИ-лабораторию",
-        "lessons.l10.q": "На какой вопрос ты, скорее всего, получишь самый полезный ответ?",
-        "lessons.l10.a1": "«Вулканы»",
-        "lessons.l10.a2": "«Объясни в пяти предложениях для четырнадцатилетнего, почему извергаются вулканы»",
-        "lessons.l10.a3": "«Расскажи всё, что знаешь»",
-        "lessons.l10.explain": "Во втором вопросе сказано, что нужно, для кого и какой длины должен быть ответ. Первый слишком короткий, чтобы понять, чего ты хочешь, а третий слишком широкий.",
-        "lessons.w10.title": "Побудь языковой моделью",
-        "lessons.w10.intro": "Чат-бот пишет по одному слову. Выбери следующее слово сам и посмотри, как «температура» меняет выбор."
+        "lessons.l13.title": "Как говорить с ИИ",
+        "lessons.l13.desc": "Как задавать чат-боту хорошие вопросы — и проверять его ответы.",
+        "lessons.l13.s1.h": "Скажи, что тебе нужно",
+        "lessons.l13.s1.p": "Чат-бот знает только то, что ты напишешь. Скажи, что тебе нужно, для кого и какой длины должен быть ответ: <em>«Объясни фотосинтез четырнадцатилетнему в пяти предложениях»</em> работает гораздо лучше, чем просто <em>«фотосинтез»</em>.",
+        "lessons.l13.s2.h": "Проверяй, прежде чем верить",
+        "lessons.l13.s2.p": "Чат-бот может говорить уверенно и всё равно ошибаться. <strong data-term='hallucination'>Галлюцинация</strong> выглядит точно так же, как верный ответ. Сверяй важные ответы с учебником или надёжным сайтом и никогда не вводи пароли и личные данные.",
+        "lessons.l13.s2.note": "Если ответ важен (домашка, здоровье, деньги), проверь его ещё в одном месте.",
+        "lessons.l13.key1": "На понятный подробный вопрос ты получишь более полезный ответ.",
+        "lessons.l13.key2": "Чат-бот может уверенно ошибаться: проверяй то, что важно.",
+        "lessons.l13.key3": "Никогда не сообщай чат-боту пароли и личные данные.",
+        "lessons.l13.tip": "Посмотри в ИИ-лаборатории, как языковая модель выбирает следующее слово.",
+        "lessons.l13.tipBtn": "Открыть ИИ-лабораторию",
+        "lessons.l13.q": "На какой вопрос ты, скорее всего, получишь самый полезный ответ?",
+        "lessons.l13.a1": "«Вулканы»",
+        "lessons.l13.a2": "«Объясни в пяти предложениях для четырнадцатилетнего, почему извергаются вулканы»",
+        "lessons.l13.a3": "«Расскажи всё, что знаешь»",
+        "lessons.l13.explain": "Во втором вопросе сказано, что нужно, для кого и какой длины должен быть ответ. Первый слишком короткий, чтобы понять, чего ты хочешь, а третий слишком широкий.",
+        "lessons.w13.title": "Побудь языковой моделью",
+        "lessons.w13.intro": "Чат-бот пишет по одному слову. Выбери следующее слово сам и посмотри, как «температура» меняет выбор."
     }
 ```
 
@@ -316,10 +316,10 @@ window.AICompass.addTranslations({
     A.lessons.defineLab("<name>", {
         // Draws the lab inside host (an empty <div>). Runs when the lesson opens, and again after a language change.
         build: function (host, api) {
-            host.innerHTML = '<button type="button" class="btn btn-primary btn-small" data-fid="w10-go">' + api.text("go") + "</button>";
+            host.innerHTML = '<button type="button" class="btn btn-primary btn-small" data-fid="w13-go">' + api.text("go") + "</button>";
             host.querySelector("button").addEventListener("click", function () {
                 api.state.clicks = (api.state.clicks || 0) + 1;   // api.state survives closing the reader
-                api.announce(api.plural("clicked", api.state.clicks));   // "lessons.w10.clicked.one" / ".many"
+                api.announce(api.plural("clicked", api.state.clicks));   // "lessons.w13.clicked.one" / ".many"
             });
         },
         destroy: function (host) { /* optional: stop timers */ },
@@ -328,11 +328,11 @@ window.AICompass.addTranslations({
 })();
 ```
 
-The whole contract (what `api` has, and the rules: listeners only inside `host`, a `data-fid` on every button, `event.preventDefault()` for arrow keys) is at the top of `js/lessons.js`, in "A MINI-LAB IN ITS OWN FILE". The three mini-labs in `js/lessons/` are complete examples; their styles go in `css/lessons-labs.css`.
+The whole contract (what `api` has, and the rules: listeners only inside `host`, a `data-fid` on every button, `event.preventDefault()` for arrow keys, no `data-action`, `data-option` or `data-goto` attributes because the reader's own buttons use them, numbers formatted with `A.format` before they go into a text, no `{placeholders}` in the intro) is at the top of `js/lessons.js`, in "A MINI-LAB IN ITS OWN FILE". The mini-labs in `js/lessons/` are complete examples (`prompt.js` is the shortest); their styles go in `css/lessons-labs.css`, one section and one class prefix per lab.
 
-That's all: the track's cards, the lesson map, the counts ("0 of 4 done"), the hero number, the section subtitle, the certificates, the Ctrl+K command and the site search follow the list by themselves. (Numbers in texts come from the data: the subtitle says "10 short lessons"; to spell a number out, add an exact key such as `"lessons.subtitle.10"`, in both languages.)
+That's all: the track's cards, the lesson map, the counts ("0 of 7 done"), the hero number, the section subtitle, the certificates, the Ctrl+K command and the site search follow the list by themselves. (Numbers in texts come from the data: the subtitle says "13 short lessons"; to spell a number out, add an exact key such as `"lessons.subtitle.13"`, in both languages.)
 
-**Check:** there are 10 cards (4 in "Deep dive") and the hero says 10; open the lesson (click its card, or go to `http://localhost:8000/#lesson-10`) and look at every part, the box, the glossary word, the mini-lab, the three key ideas and the three answers; pick the right answer (it says "Correct!" and the panel counts 1 more); try the "Try it" button; press Ctrl+K and type the lesson's title. Do it again in Russian, and once on a phone (the "Deep dive" cards fold away there until you open one).
+**Check:** there are 13 cards (7 in "Deep dive") and the hero says 13; open the lesson (click its card, or go to `http://localhost:8000/#lesson-13`) and look at every part, the box, the glossary word, the mini-lab, the three key ideas and the three answers; pick the right answer (it says "Correct!" and the panel counts 1 more); try the "Try it" button; press Ctrl+K and type the lesson's title. Do it again in Russian, and once on a phone (the "Deep dive" cards fold away there until you open one).
 
 ### Add a quiz question
 
