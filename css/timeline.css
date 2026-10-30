@@ -1,14 +1,16 @@
 /* =========================================================
    AI COMPASS — TIMELINE ("A Short History of AI")
-   1. The bar with the era filters (sticks to the top)
-   2. The glowing line that fills as you scroll
-   3. Era headings
-   4. Milestones: dot, big year, card
-   5. Inside a card
-   6. "Lit up" milestones (the line has reached them)
-   7. Slide-in animations
-   8. Phones and tablets (one column, bigger touch targets)
-   9. Less motion (reduced motion or calm mode)
+    1. The bar with the era filters (sticks to the top)
+    2. Theme chips and "nothing found"
+    3. The glowing line that fills as you scroll
+    4. Era headings and "Open all"
+    5. Milestones: dot, big year, card
+    6. Inside a card (folding, links, glossary buttons)
+    7. "Lit up" milestones (the line has reached them)
+    8. A milestone shown by the site search (spotlight)
+    9. Slide-in animations
+   10. Phones and tablets (one column, bigger touch targets)
+   11. Less motion (reduced motion or calm mode)
    All colours come from the variables in style.css, so both the
    dark and the light theme look right. Coloured text uses the
    --text-* versions, which are darker in the light theme.
@@ -16,7 +18,7 @@
 
 /* Until js/timeline.js builds the timeline (when it comes near the screen), its
    place keeps about the height it will have (measured in English), so the page
-   below doesn't jump. Smaller screens: see 8. Phones and tablets. */
+   below doesn't jump. Smaller screens: see 10. Phones and tablets. */
 .js [data-feature="timeline"]:empty {
     min-height: 7400px;
 }
@@ -38,7 +40,7 @@
     gap: 10px 18px;
     width: fit-content;
     max-width: 100%;
-    margin: 0 auto 48px;
+    margin: 0 auto 16px;
     padding: 8px;
     border: 1px solid var(--border-strong);
     border-radius: 20px;
@@ -55,6 +57,7 @@
 /* The chips are .ui-chip buttons with a dot and a count (css/components.css);
    the dot of the chosen era lights up */
 .tl-chip {
+    position: relative;
     justify-content: center;
     min-width: 44px;
     font-size: 13.5px;
@@ -65,6 +68,29 @@
     --chip-dot-glow: 0 0 8px var(--accent-2);
 }
 
+/* A thin bar at the bottom of each era chip fills up as the line passes the
+   milestones of that era (timeline.js sets --tl-progress, 0 to 1) */
+.tl-chip::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 4px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transform: scaleX(var(--tl-progress, 0));
+    transform-origin: left;
+    transition: transform 0.4s var(--ease);
+    pointer-events: none;
+}
+
+/* A filter that would show nothing (together with the other one) */
+.tl-chip.is-zero,
+.tl-theme.is-zero {
+    opacity: 0.55;
+}
+
 /* When the chips need two rows (e.g. Russian on a narrow laptop), the bar
    would cover too much of the screen, so it scrolls away with the page.
    timeline.js adds the class "is-stacked" in that case. */
@@ -73,7 +99,22 @@
     top: auto;
 }
 
-/* "1997 · 06/15" on the right of the bar */
+/* The chosen theme ("🎮 Games ✕"): a click shows every theme again */
+.tl-theme-tag {
+    min-height: 40px;
+    padding: 6px 12px;
+    border-color: rgba(var(--accent-2-rgb), 0.5);
+    background: rgba(var(--accent-2-rgb), 0.1);
+    color: var(--text-accent-2);
+    font-size: 13px;
+}
+
+.tl-theme-tag-x {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+/* "1997 · 06/29" on the right of the bar */
 .tl-hud {
     display: flex;
     align-items: center;
@@ -114,7 +155,55 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* ===== 2. THE LINE ===== */
+/* ===== 2. THEME CHIPS AND "NOTHING FOUND" ===== */
+
+.tl-themes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    max-width: 1120px;
+    margin: 0 auto 48px;
+}
+
+.tl-themes-title {
+    margin-right: 4px;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.tl-theme {
+    font-size: 13px;
+}
+
+.tl-theme-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Both filters together left nothing */
+.tl-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-width: 460px;
+    margin: 0 auto 48px;
+    padding: 28px 24px;
+    text-align: center;
+}
+
+.tl-empty-text {
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+/* ===== 3. THE LINE ===== */
 
 .tl-wrap {
     position: relative;
@@ -123,9 +212,12 @@
 }
 
 /* Keyboard focus must never hide under the sticky bar: when the browser
-   scrolls to a button, it leaves this much room above it.
+   scrolls to a button or a link, it leaves this much room above it.
    timeline.js sets --tl-bar-room (0px when the bar doesn't stick). */
-.tl-wrap button {
+.tl-wrap button,
+.tl-wrap a,
+.tl-themes button,
+.tl-empty button {
     scroll-margin-top: var(--tl-bar-room, 0px);
 }
 
@@ -186,7 +278,7 @@
     to { transform: scale(1.7); opacity: 0; }
 }
 
-/* ===== 3. ERA HEADINGS ===== */
+/* ===== 4. ERA HEADINGS ===== */
 
 .tl-era {
     position: relative;
@@ -250,7 +342,15 @@
     line-height: 1.55;
 }
 
-/* ===== 4. MILESTONES ===== */
+/* "Open all 4" / "Main ones only" */
+.tl-openall {
+    margin-top: 12px;
+    padding: 7px 12px 7px 16px;
+    gap: 10px;
+    font-size: 13.5px;
+}
+
+/* ===== 5. MILESTONES ===== */
 
 .tl-list {
     display: flex;
@@ -258,12 +358,23 @@
     gap: 40px;
 }
 
-/* Three columns: card | dot | big year (or the other way round) */
+/* Three columns: card | dot | big year (or the other way round).
+   The dot's middle is --tl-node-mid below the top of the item, for main and
+   folded milestones alike, so the short line from the card always meets it.
+   --tl-row: the height of a folded milestone's one row (year and title). */
 .tl-item {
+    --tl-node-size: 54px;
+    --tl-node-mid: 43px;
+    --tl-row: 40px;
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr);
     align-items: start;
+}
+
+/* The other milestones have smaller dots */
+.tl-item.is-minor {
+    --tl-node-size: 42px;
 }
 
 .tl-node {
@@ -274,15 +385,19 @@
     justify-self: center;
     display: grid;
     place-items: center;
-    width: 54px;
-    height: 54px;
-    margin-top: 16px;
+    width: var(--tl-node-size);
+    height: var(--tl-node-size);
+    margin-top: calc(var(--tl-node-mid) - var(--tl-node-size) / 2);
     border: 2px solid var(--border-strong);
     border-radius: 50%;
     background: var(--surface-solid);
     font-size: 22px;
     line-height: 1;
     transition: border-color 0.5s ease, box-shadow 0.5s ease, background 0.5s ease, transform 0.5s var(--ease);
+}
+
+.tl-item.is-minor .tl-node {
+    font-size: 18px;
 }
 
 .tl-node-icon {
@@ -325,6 +440,11 @@
     user-select: none;
 }
 
+.tl-item.is-minor .tl-ghost {
+    margin-top: 20px;
+    font-size: clamp(30px, 3.6vw, 48px);
+}
+
 .tl-item.is-left .tl-card {
     grid-column: 1;
     grid-row: 1;
@@ -345,7 +465,7 @@
     text-align: right;
 }
 
-/* ===== 5. INSIDE A CARD ===== */
+/* ===== 6. INSIDE A CARD ===== */
 
 .tl-card {
     min-width: 0;
@@ -366,7 +486,7 @@
 .tl-card::before {
     content: "";
     position: absolute;
-    top: 42px;
+    top: calc(var(--tl-node-mid) - 1px);
     width: 18px;
     height: 2px;
     background: var(--border-strong);
@@ -379,6 +499,32 @@
 
 .tl-item.is-right .tl-card::before {
     left: -19px;
+}
+
+/* The other milestones: the year and the title in one row, level with the dot
+   (the era is clear from the heading above). Their text opens below the row. */
+.tl-item.is-minor .tl-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: 12px;
+    padding-top: calc(var(--tl-node-mid) - var(--tl-row) / 2 - 1px);
+}
+
+.tl-item.is-folded .tl-card {
+    padding-bottom: calc(var(--tl-node-mid) - var(--tl-row) / 2 - 1px);
+}
+
+.tl-item.is-minor .tl-meta {
+    margin: 0;
+}
+
+.tl-item.is-minor .tl-era-tag {
+    display: none;
+}
+
+.tl-item.is-minor .tl-body {
+    grid-column: 1 / -1;
 }
 
 .tl-meta {
@@ -416,6 +562,79 @@
     letter-spacing: -0.01em;
 }
 
+/* ...in the body font, so they read as the smaller stories */
+.tl-item.is-minor .tl-title {
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+/* The title of a milestone that folds is a button across the card */
+.tl-fold {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: var(--tl-row);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.tl-fold-text {
+    transition: color 0.2s ease;
+}
+
+.tl-fold:hover .tl-fold-text {
+    color: var(--text-accent-2);
+}
+
+/* A round button with a chevron: down while folded, up while open */
+.tl-fold-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.tl-fold-icon::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 0.3s var(--ease);
+}
+
+[aria-expanded="true"] > .tl-fold-icon::before {
+    transform: translateY(2px) rotate(-135deg);
+}
+
+.tl-fold:hover .tl-fold-icon,
+.tl-openall:hover .tl-fold-icon {
+    border-color: var(--accent-2);
+    color: var(--text-accent-2);
+}
+
+.tl-openall .tl-fold-icon {
+    width: 24px;
+    height: 24px;
+}
+
 .tl-text {
     margin-top: 10px;
     color: var(--text-muted);
@@ -446,6 +665,8 @@
     line-height: 1.6;
 }
 
+/* "Learn more": the lesson and the lab experiment */
+.tl-links,
 .tl-terms {
     display: flex;
     flex-wrap: wrap;
@@ -454,11 +675,34 @@
     margin-top: 16px;
 }
 
+.tl-links-label,
 .tl-terms-label {
     color: var(--text-dim);
     font-size: 10.5px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
+}
+
+.tl-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 6px 12px;
+    border: 1px solid rgba(var(--accent-rgb), 0.35);
+    border-radius: 12px;
+    background: rgba(var(--accent-rgb), 0.08);
+    color: var(--text-accent);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-decoration: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.tl-link:hover {
+    border-color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.16);
 }
 
 .tl-term {
@@ -478,7 +722,7 @@
     transform: translate(2px, -2px);
 }
 
-/* ===== 6. LIT-UP MILESTONES ===== */
+/* ===== 7. LIT-UP MILESTONES ===== */
 
 .tl-item.is-reached .tl-node {
     border-color: var(--accent-2);
@@ -521,7 +765,29 @@
     animation: tl-ring 2s ease-out infinite;
 }
 
-/* ===== 7. SLIDE-IN ANIMATIONS ===== */
+/* ===== 8. SPOTLIGHT (the site search showed this milestone) =====
+   The glow is on ::after, so it never fights the card's slide-in animation */
+
+.tl-card.is-spotlight {
+    border-color: var(--accent-2);
+}
+
+.tl-card.is-spotlight::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    animation: tl-spotlight 2.4s var(--ease) both;
+}
+
+@keyframes tl-spotlight {
+    0% { box-shadow: 0 0 0 0 rgba(var(--accent-2-rgb), 0.7), 0 0 0 rgba(var(--accent-rgb), 0); }
+    25% { box-shadow: 0 0 0 6px rgba(var(--accent-2-rgb), 0.25), 0 0 46px rgba(var(--accent-rgb), 0.45); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--accent-2-rgb), 0), 0 0 0 rgba(var(--accent-rgb), 0); }
+}
+
+/* ===== 9. SLIDE-IN ANIMATIONS ===== */
 /* js/effects.js fades the whole milestone in ([data-reveal="fade"]);
    while that runs, the card slides in from its own side. */
 
@@ -557,7 +823,7 @@
     from { opacity: 0; transform: scale(0.4); }
 }
 
-/* ===== 8. PHONES AND TABLETS: ONE COLUMN ===== */
+/* ===== 10. PHONES AND TABLETS: ONE COLUMN ===== */
 
 /* Not enough room for the read-out next to the chips */
 @media (max-width: 1100px) {
@@ -590,12 +856,22 @@
         column-gap: 16px;
     }
 
+    .tl-item {
+        --tl-node-size: 50px;
+        --tl-node-mid: 41px;
+    }
+
+    .tl-item.is-minor {
+        --tl-node-size: 38px;
+    }
+
     .tl-node {
         grid-column: 1;
-        width: 50px;
-        height: 50px;
-        margin-top: 16px;
         font-size: 20px;
+    }
+
+    .tl-item.is-minor .tl-node {
+        font-size: 17px;
     }
 
     .tl-ghost {
@@ -611,7 +887,6 @@
     .tl-item.is-right .tl-card::before {
         left: -19px;
         right: auto;
-        top: 40px;
     }
 
     .tl-era-head {
@@ -624,6 +899,10 @@
     .tl-list {
         gap: 28px;
     }
+
+    .tl-themes {
+        justify-content: flex-start;
+    }
 }
 
 @media (max-width: 640px) {
@@ -632,7 +911,7 @@
     }
 
     .tl-bar {
-        margin-bottom: 36px;
+        margin-bottom: 12px;
         padding: 10px;
         border-radius: 18px;
     }
@@ -652,36 +931,105 @@
         display: none;
     }
 
+    .tl-chip::after {
+        left: 12px;
+        right: 12px;
+        bottom: 5px;
+    }
+
+    .tl-themes {
+        gap: 6px 5px;
+        margin-bottom: 36px;
+    }
+
+    .tl-themes-title {
+        width: 100%;
+        margin: 0 0 2px;
+    }
+
+    .tl-theme {
+        gap: 5px;
+        padding: 6px 7px 6px 10px;
+        font-size: 12.5px;
+    }
+
+    .tl-theme .ui-chip-count {
+        min-width: 22px;
+        padding: 2px 5px;
+    }
+
     .tl-line {
-        left: 21px;
+        left: 18px;
     }
 
     .tl-item {
-        grid-template-columns: 42px minmax(0, 1fr);
-        column-gap: 12px;
+        --tl-node-size: 36px;
+        --tl-node-mid: 36px;
+        grid-template-columns: 36px minmax(0, 1fr);
+        column-gap: 10px;
+    }
+
+    .tl-item.is-minor {
+        --tl-node-size: 28px;
     }
 
     .tl-node {
-        width: 42px;
-        height: 42px;
-        margin-top: 18px;
-        font-size: 17px;
+        font-size: 15px;
         border-width: 1.5px;
+    }
+
+    .tl-item.is-minor .tl-node {
+        font-size: 13px;
     }
 
     .tl-item.is-left .tl-card::before,
     .tl-item.is-right .tl-card::before {
-        left: -13px;
-        width: 12px;
-        top: 38px;
+        left: -11px;
+        width: 10px;
     }
 
     .tl-card {
-        padding: 18px 16px 18px;
+        padding: 18px 14px 18px;
+    }
+
+    .tl-item.is-minor .tl-card {
+        column-gap: 10px;
+    }
+
+    .tl-item.is-minor .tl-year {
+        padding: 2px 7px;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+    }
+
+    .tl-fold {
+        gap: 8px;
+    }
+
+    .tl-fold-icon {
+        width: 26px;
+        height: 26px;
+    }
+
+    .tl-list {
+        gap: 22px;
+    }
+
+    .tl-why {
+        padding: 10px 12px;
+    }
+
+    .tl-links,
+    .tl-terms {
+        margin-top: 12px;
     }
 
     .tl-title {
         font-size: 17px;
+    }
+
+    .tl-item.is-minor .tl-title {
+        font-size: 15.5px;
     }
 
     .tl-text {
@@ -703,15 +1051,28 @@
 
 /* Bigger touch targets on phones and on touch screens */
 @media (max-width: 640px), (hover: none), (pointer: coarse) {
-    .tl-term {
+    .tl-item {
+        --tl-row: 44px;
+    }
+
+    .tl-term,
+    .tl-link,
+    .tl-openall,
+    .tl-theme-tag {
         min-height: 44px;
     }
 }
 
-/* ===== 9. LESS MOTION (reduced motion or calm mode) =====
+/* ===== 11. LESS MOTION (reduced motion or calm mode) =====
    style.css already stops every animation and transition under
-   html.fx-motion-off; this rule only does what it can't. */
+   html.fx-motion-off; these rules only do what it can't. */
 
 html.fx-motion-off .tl-card:hover {
     transform: none;
+}
+
+/* A shown milestone gets a steady ring instead of the glow */
+html.fx-motion-off .tl-card.is-spotlight::after {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.35);
 }
