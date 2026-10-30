@@ -3,15 +3,12 @@
    Keys: lab.bias.*  The shared words (Step, Loss, Steps...) are lab.kit.*
    in js/content/lab/kit.js. Plurals: "one|other" (English), "one|few|many" (Russian).
    The Blue and Orange groups are made up on purpose: no real group gets a stereotype.
+   Its title, hook and big idea are in js/content/lab.js (section 3): the lab's picker shows
+   them before this file is loaded.
    ========================================================= */
 
 window.AICompass.addTranslations({
     en: {
-        // ----- The lab's list of experiments -----
-        "lab.bias.title": "Bias detective",
-        "lab.bias.hook": "Twins with the same skill: one gets in, the other doesn't. Find out how an AI learned to be unfair.",
-        "lab.bias.idea": "Bias and fairness",
-
         // ----- The story -----
         "lab.bias.story": "A made-up summer coding camp has only a few places. For years, people chose who got in. Now the camp wants an AI to choose, trained on those past decisions.",
         "lab.bias.twins": "The applicants belong to two made-up groups, Blue and Orange. Every Blue applicant has an Orange twin with exactly the same skill, so if twins are treated differently, that is plainly unfair.",
@@ -159,11 +156,6 @@ window.AICompass.addTranslations({
         "lab.bias.realHealth": "A US health-care algorithm used past spending on patients as a stand-in for how ill they were. Less had been spent on Black patients with the same needs, so it underestimated how ill they were (Obermeyer and colleagues, Science, 2019)."
     },
     ru: {
-        // ----- Список экспериментов лаборатории -----
-        "lab.bias.title": "Детектив предвзятости",
-        "lab.bias.hook": "Близнецы с одинаковым навыком: одного принимают, другого нет. Разберись, как ИИ научился несправедливости.",
-        "lab.bias.idea": "Предвзятость и справедливость",
-
         // ----- История -----
         "lab.bias.story": "В придуманном летнем лагере по программированию мало мест. Много лет участников отбирали люди. Теперь лагерь хочет, чтобы выбирал ИИ, обученный на этих прошлых решениях.",
         "lab.bias.twins": "Участники делятся на две придуманные группы: синих и оранжевых. У каждого синего есть оранжевый близнец с точно таким же навыком. Если с близнецами обходятся по-разному, это явно несправедливо.",

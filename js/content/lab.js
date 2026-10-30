@@ -138,7 +138,11 @@ window.AICompass.addTranslations({
 
         "lab.vision.title": "How computers see",
         "lab.vision.hook": "Slide a 3\u00a0×\u00a03 filter over a picture: it finds edges, blurs and sharpens. Then look through the eyes of a tiny neural network.",
-        "lab.vision.idea": "Convolution: how computers find edges and shapes"
+        "lab.vision.idea": "Convolution: how computers find edges and shapes",
+
+        "lab.bias.title": "Bias detective",
+        "lab.bias.hook": "Twins with the same skill: one gets in, the other doesn't. Find out how an AI learned to be unfair.",
+        "lab.bias.idea": "Bias and fairness"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -171,7 +175,11 @@ window.AICompass.addTranslations({
 
         "lab.vision.title": "Как видит компьютер",
         "lab.vision.hook": "Проведи фильтром 3\u00a0×\u00a03 по картинке: он находит края, размывает и добавляет резкость. А потом посмотри глазами маленькой нейросети.",
-        "lab.vision.idea": "Свёртка: как компьютер находит края и формы"
+        "lab.vision.idea": "Свёртка: как компьютер находит края и формы",
+
+        "lab.bias.title": "Детектив предвзятости",
+        "lab.bias.hook": "Близнецы с одинаковым навыком: одного принимают, другого нет. Разберись, как ИИ научился несправедливости.",
+        "lab.bias.idea": "Предвзятость и справедливость"
     }
 });
 
@@ -250,6 +258,15 @@ window.AICompass.content.set("lab.icons", {
                 '<path d="M6 12c1.5-2.8 3.7-4.3 6-4.3s4.5 1.5 6 4.3c-1.5 2.8-3.7 4.3-6 4.3S7.5 14.8 6 12z"/>' +
             '</g>' +
             '<rect x="10.25" y="10.25" width="3.5" height="3.5" rx=".6" fill="currentColor"/>' +
+        '</symbol>' +
+        // Scales that tip to one side
+        '<symbol id="lab-icon-bias" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M12 4v16M8.5 20h7"/>' +
+                '<path d="M5 9.5 19 6.5"/>' +
+                '<path d="M5 9.5 2.8 14.5h4.4zM19 6.5l-2.2 5h4.4z"/>' +
+            '</g>' +
+            '<circle cx="12" cy="4" r="1.3" fill="currentColor"/>' +
         '</symbol>'
 });
 
@@ -348,5 +365,15 @@ window.AICompass.content.set("lab.catalogue", [
         level: 2,
         emoji: "🧬",
         keywords: "lab evolution evolve garage cars driving neuroevolution genetic algorithm mutation crossover generation fitness natural selection neural network лаборатория эволюция гараж машинки вождение нейроэволюция генетический алгоритм мутация скрещивание поколение приспособленность естественный отбор нейросеть"
+    },
+    {
+        id: "bias",
+        icon: "lab-icon-bias",
+        titleKey: "lab.bias.title",
+        hookKey: "lab.bias.hook",
+        ideaKey: "lab.bias.idea",
+        level: 2,
+        emoji: "⚖️",
+        keywords: "lab bias detective fairness fair unfair discrimination proxy twins threshold admission camp group data labels decisions model ethics лаборатория детектив предвзятости предвзятость справедливость несправедливость дискриминация прокси близнецы порог приём лагерь группа данные метки решения модель этика"
     }
 ]);
