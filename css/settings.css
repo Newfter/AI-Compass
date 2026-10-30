@@ -63,7 +63,8 @@ html.st-large-text body {
 html.st-large-text :is(.stat span, .gl-rel,
     .lab-pick-title, .lab-seg button, .lab-lm-stat span,       /* the AI Lab: the picker, Teach the machine, the predictor */
     .lk-explain-text strong, .lk-challenge-text,               /* the experiments' "How it works" and challenges (css/lab/kit.css) */
-    .cv-map .lk-btn-text) {                                    /* the names of the maps in How computers see (css/lab/vision.css) */
+    .cv-map .lk-btn-text,                                      /* the names of the maps in How computers see (css/lab/vision.css) */
+    .bd-table th) {                                            /* the headings of Bias detective's scorecard (css/lab/bias.css) */
     -webkit-hyphens: auto;
     hyphens: auto;
 }

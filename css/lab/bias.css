@@ -15,14 +15,14 @@
 /* ===== 1. THE STORY AND THE DATA ===== */
 .bd-lead {
     color: var(--text);
-    font-size: 15px;
+    font-size: 0.9375rem;
     line-height: 1.6;
 }
 
 /* The sentence with the glossary links */
 .bd-idea {
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.6;
 }
 
@@ -36,7 +36,7 @@
     padding-left: 12px;
     border-left: 2px solid var(--border-strong);
     color: var(--text-muted);
-    font-size: 13.5px;
+    font-size: 0.84375rem;
     line-height: 1.5;
 }
 
@@ -69,7 +69,7 @@
     border: 1px dashed var(--border-strong);
     border-radius: var(--radius-sm);
     color: var(--text-muted);
-    font-size: 13.5px;
+    font-size: 0.84375rem;
     line-height: 1.45;
 }
 
@@ -156,7 +156,7 @@
 .bd-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 1.3;
     font-variant-numeric: tabular-nums;
 }
@@ -182,7 +182,7 @@
 
 .bd-table thead th {
     color: var(--text-label);
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 700;
 }
 
@@ -241,7 +241,7 @@
    The warning sign goes; the warning colour and the wash stay. */
 @container (max-width: 480px) {
     .bd-table {
-        font-size: 12px;
+        font-size: 0.75rem;
     }
 
     .bd-table th,
@@ -250,7 +250,7 @@
     }
 
     .bd-table thead th {
-        font-size: 11px;
+        font-size: 0.6875rem;
     }
 
     .bd-group-head .bd-dot {
@@ -261,6 +261,23 @@
 
     .bd-gap.is-big .bd-gap-icon {
         display: none;
+    }
+
+    /* Bigger text (Settings): the dot goes above the group's name and the cells get
+       narrower, and long words in the headings may hyphenate (css/settings.css), so
+       the four columns still fit. Where they can't, the table scrolls in its box. */
+    html.st-large-text .bd-group-head {
+        white-space: normal;
+    }
+
+    html.st-large-text .bd-group-head .bd-dot {
+        display: block;
+        margin: 0 0 3px auto;
+    }
+
+    html.st-large-text .bd-table th,
+    html.st-large-text .bd-table td {
+        padding: 6px 2px;
     }
 }
 
@@ -277,7 +294,7 @@
     position: relative;
     padding-left: 16px;
     color: var(--text-muted);
-    font-size: 13.5px;
+    font-size: 0.84375rem;
     line-height: 1.45;
 }
 
@@ -310,7 +327,7 @@
 
 .bd-empty {
     color: var(--text-muted);
-    font-size: 13.5px;
+    font-size: 0.84375rem;
     line-height: 1.5;
 }
 
@@ -321,7 +338,7 @@
     border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
     background: color-mix(in srgb, var(--warning) 10%, transparent);
     color: var(--text);
-    font-size: 13.5px;
+    font-size: 0.84375rem;
     line-height: 1.5;
 }
 
@@ -338,6 +355,6 @@
     padding-left: 14px;
     border-left: 2px solid var(--border-strong);
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.6;
 }
