@@ -109,10 +109,11 @@
         })();
     </script>
 
-    <!-- Fonts: Unbounded (headings), Manrope (text), JetBrains Mono (labels). All support Cyrillic. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- Fonts: Unbounded (headings), Manrope (text), JetBrains Mono (labels). All support Cyrillic.
+         "crossorigin": loaded in CORS mode, so the offline copy (sw.js) can check that it is a good one. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" crossorigin>
 
     <!-- Main design (colours, layout, menu, hero, sections) -->
     <link rel="stylesheet" href="./style.css">
@@ -143,8 +144,11 @@
     <script src="./js/content/timeline.js" defer></script>
     <script src="./js/content/assistant.js" defer></script>
     <script src="./js/content/palette.js" defer></script>
+    <script src="./js/content/platform.js" defer></script>
 
-    <!-- The features -->
+    <!-- The features. platform.js (the app, offline use, sharing, printing) comes first: a language
+         asked for in the address is then switched on before the other features draw themselves. -->
+    <script src="./js/platform.js" defer></script>
     <script src="./js/effects.js" defer></script>
     <script src="./js/neural-bg.js" defer></script>
     <script src="./js/lessons.js" defer></script>
@@ -432,6 +436,15 @@
                 <span class="logo-text">AI <span>Compass</span></span>
             </a>
             <p data-i18n="footer.tagline">Made for curious minds.</p>
+            <!-- "Install the app" (js/platform.js shows it when the browser offers to install the
+                 site; on iPhones and iPads the button opens the short help below it) -->
+            <p id="install-app" hidden>
+                <button class="btn btn-ghost" type="button">
+                    <span aria-hidden="true">📲</span>
+                    <span data-i18n="platform.install">Install the app</span>
+                </button>
+            </p>
+            <p id="install-help" data-i18n="platform.iosHelp" hidden>On an iPhone or iPad: tap the Share button (a square with an arrow), then “Add to Home Screen”.</p>
         </div>
 
         <nav class="footer-links" aria-label="Footer links" data-i18n-attr="aria-label:core.navFooter">
