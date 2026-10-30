@@ -884,15 +884,23 @@
     }
 
     // ----- What the network looks at -----
-    // For each pixel: how much the score of class c grows when that pixel gets a little more
-    // ink (the gradient of the score with respect to the input). Through the hidden neurons
-    // that are on: Σ over j of W2[c, j] · W1[j, pixel].
+    // For each pixel: how much surer the network gets of class c when that pixel gets a
+    // little more ink (the gradient of log p_c, which grows exactly when p_c grows). A pixel
+    // that lifts c's score is not enough: if it lifts another class's score more, the network
+    // gets less sure of c. So the gradient is
+    //   Σ over the other classes k of p_k · (gradient of score c − gradient of score k):
+    // how much the pixel lifts c above each rival, counted as much as that rival is likely.
+    // Through the hidden neurons that are on, the gradient of score c is Σ over j of
+    // W2[c, j] · W1[j, pixel]. (Written this way, it stays right when p_c rounds to 1.)
     function saliency(net, input, c) {
         const pass = forward(net, input);
         const map = new Float64Array(PIXELS);
         for (let j = 0; j < HIDDEN; j++) {
             if (pass.sums[j] <= 0) continue;
-            const weight = net.W2[c * HIDDEN + j];
+            let weight = 0;
+            for (let k = 0; k < net.classes; k++) {
+                if (k !== c) weight += pass.probs[k] * (net.W2[c * HIDDEN + j] - net.W2[k * HIDDEN + j]);
+            }
             const row = j * PIXELS;
             for (let i = 0; i < PIXELS; i++) map[i] += weight * net.W1[row + i];
         }
@@ -1007,11 +1015,11 @@
         context.putImageData(image, 0, 0);
     }
 
-    // Where the network looks, in the kit's two-sided colours. map is the gradient of the
-    // score (see saliency()); on each pixel you drew, gradient x ink is that pixel's share of
-    // the score (the network is made of straight pieces, so the shares add up to the score,
-    // apart from its biases). Cyan pixels push the score up, red ones push it down; the
-    // pixels without ink stay clear (their gradient is mostly the noise of unused weights).
+    // Where the network looks, in the kit's two-sided colours. map says how much surer the
+    // network gets when a pixel gets more ink (see saliency()); on each pixel you drew,
+    // gradient x ink is about how much surer that pixel's ink makes it (how much less sure it
+    // would be without it). Cyan pixels make it surer, red ones less sure; the pixels without
+    // ink stay clear (their gradient is mostly the noise of unused weights).
     function paintFocus(canvas, map, values) {
         // Full colour from the 90th percentile up, so one strong pixel doesn't make the rest faint
         const sizes = [];
