@@ -10,8 +10,11 @@
          The full addresses below are where the site lives on GitHub Pages. If it ever moves,
          change them here (also in the JSON-LD at the end of <head>), in robots.txt and in sitemap.xml.
          The site is one page in two languages: ?lang=en / ?lang=ru open it in English / Russian,
-         the plain address in the visitor's own language (the script below handles ?lang=). -->
-    <link rel="canonical" href="https://newfter.github.io/AI-Compass/">
+         the plain address in the visitor's own language (the script below handles ?lang=).
+         The canonical address (the one search engines should list) is not written here: this one
+         file is served at all three addresses, so the script below adds it for the address that
+         was opened (from og:url). A canonical that a script changes afterwards would give search
+         engines two different answers. -->
     <link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/?lang=en">
     <link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/?lang=ru">
     <link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/">
@@ -57,7 +60,8 @@
          - the class "js": the page runs JavaScript (the CSS can style the page without it);
          - the language on <html lang>: the saved one, or the one asked for in the address
            (?lang=ru or ?lang=en, used by shared links and search engines), which is saved like
-           a normal language switch, so core.js starts in it.
+           a normal language switch, so core.js starts in it;
+         - the canonical address for search engines (see the top of <head>).
          core.js sets the same things again, so nothing depends on this script running first.
          The settings are where A.storage keeps them: "aic:" is PREFIX in js/core.js, and each
          value is saved as JSON ("dark" with its quotes). Keep the names the same as there. -->
@@ -91,16 +95,27 @@
             // The language: the saved one is on <html> from the start (core.js then shows the texts in it).
             // ?lang=ru or ?lang=en in the address wins: it is saved as the language ("aic:language",
             // like core.js does), then taken out of the address, so that a later reload follows the
-            // visitor's own choice. The canonical link names this language's address.
+            // visitor's own choice.
             // If the browser can't save, ?lang stays in the address and js/platform.js switches.
             var savedLang = saved("language");
             if (savedLang === "en" || savedLang === "ru") root.setAttribute("lang", savedLang);
             var params = new URLSearchParams(window.location.search);
             var lang = String(params.get("lang") || "").toLowerCase();
-            if (lang === "en" || lang === "ru") {
+            if (lang !== "en" && lang !== "ru") lang = "";
+
+            // The canonical address: the public address (og:url above), with ?lang= when the address
+            // asks for a language, so ?lang=ru names itself as the Russian page (as the hreflang links do).
+            // js/platform.js also starts from it when it shares the site.
+            var publicAddress = document.querySelector('meta[property="og:url"]');
+            if (publicAddress) {
+                var canonical = document.createElement("link");
+                canonical.rel = "canonical";
+                canonical.href = publicAddress.getAttribute("content") + (lang ? "?lang=" + lang : "");
+                document.head.appendChild(canonical);
+            }
+
+            if (lang) {
                 root.setAttribute("lang", lang);
-                var canonical = document.querySelector('link[rel="canonical"]');
-                if (canonical) canonical.setAttribute("href", canonical.getAttribute("href").split("?")[0] + "?lang=" + lang);
                 try {
                     localStorage.setItem("aic:language", JSON.stringify(lang));
                     params.delete("lang");

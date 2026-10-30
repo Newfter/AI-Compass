@@ -212,10 +212,10 @@ A.share({ text: A.t("quiz.shareResult", { score: 10 }), url: A.platform.link("qu
 
 **Printing.** Ctrl+P (or "Print this page" in Ctrl+K) prints the page in black on white, without the menu, the effects, the buttons, the AI Lab and the quiz. An open lesson prints alone, as a handout; the certificate, while it is shown, prints alone on one A4 page. The rules are in `css/print.css`: look at the print preview in both themes after changing a feature's layout.
 
-**Search engines and shared links.** The top of `index.html` tells search engines and chat apps about the site: a description, the canonical address and the language versions (`hreflang`), Open Graph and Twitter tags (the title, text and picture shown when a link is shared), and the JSON-LD at the end of `<head>`, which describes the site and the lessons as a free course. `robots.txt` and `sitemap.xml` help search engines find the pages. To check: https://validator.schema.org for the JSON-LD, and F12 → Application → Manifest for the app.
+**Search engines and shared links.** The top of `index.html` tells search engines and chat apps about the site: a description, the canonical address (added by the script at the top of `index.html`, for the address that was opened: with `?lang=` it names that language's page) and the language versions (`hreflang`), Open Graph and Twitter tags (the title, text and picture shown when a link is shared), and the JSON-LD at the end of `<head>`, which describes the site and the lessons as a free course. `robots.txt` and `sitemap.xml` help search engines find the pages. To check: https://validator.schema.org for the JSON-LD, and F12 → Application → Manifest for the app.
 
 **If the site ever moves** (a new address, or the repository is renamed), change the address in all these places:
-- `index.html`: the canonical and `hreflang` links, `og:url` and `og:image`, and every address in the JSON-LD;
+- `index.html`: the `hreflang` links, `og:url` (the canonical address is made from it) and `og:image`, and every address in the JSON-LD;
 - `robots.txt` and `sitemap.xml`;
 - `404.html`: `SITE_FOLDER` and the `<base>` tag (both are the folder, `/AI-Compass/`);
 - `css/print.css`: the address printed at the bottom of every page.

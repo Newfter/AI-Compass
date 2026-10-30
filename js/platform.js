@@ -245,8 +245,8 @@
 
     // The address to share: the site in the current language, with an optional part,
     // e.g. link("quiz") -> https://newfter.github.io/AI-Compass/?lang=ru#quiz.
-    // It starts from <link rel="canonical"> in index.html, the public address, so a
-    // copy of the site opened on your own computer still shares the real one.
+    // It starts from <link rel="canonical"> (the <head> script of index.html adds it), the
+    // public address, so a copy of the site opened on your own computer still shares the real one.
     function link(hash) {
         const canonical = document.querySelector('link[rel="canonical"]');
         const base = (canonical && canonical.href ? canonical.href : window.location.href).split(/[?#]/)[0];
