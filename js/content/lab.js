@@ -126,7 +126,11 @@ window.AICompass.addTranslations({
 
         "lab.chatbot.title": "Inside a chatbot",
         "lab.chatbot.hook": "See what a chatbot does with your words: tokens, meanings, attention and weighted dice.",
-        "lab.chatbot.idea": "Large language models"
+        "lab.chatbot.idea": "Large language models",
+
+        "lab.draw.title": "Draw and teach",
+        "lab.draw.hook": "Teach the computer your own drawings, then test it on new ones.",
+        "lab.draw.idea": "Training data and generalisation"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -147,7 +151,11 @@ window.AICompass.addTranslations({
 
         "lab.chatbot.title": "Внутри чат-бота",
         "lab.chatbot.hook": "Посмотри, что чат-бот делает с твоими словами: токены, смыслы, внимание и взвешенные кубики.",
-        "lab.chatbot.idea": "Большие языковые модели"
+        "lab.chatbot.idea": "Большие языковые модели",
+
+        "lab.draw.title": "Нарисуй и научи",
+        "lab.draw.hook": "Научи компьютер узнавать твои рисунки — а потом проверь его на новых.",
+        "lab.draw.idea": "Обучающие данные и обобщение"
     }
 });
 
@@ -200,6 +208,16 @@ window.AICompass.content.set("lab.icons", {
                 '<rect x="10.3" y="9" width="3.4" height="3" rx="1"/>' +
                 '<rect x="14.6" y="9" width="3.4" height="3" rx="1"/>' +
             '</g>' +
+        '</symbol>' +
+        // A pencil, and the pixels its line becomes
+        '<symbol id="lab-icon-draw" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M9.6 14.4l.6-3.4 8.1-8.1a1.9 1.9 0 0 1 2.8 2.8L13 13.8z"/>' +
+                '<path d="M10.2 11l2.8 2.8"/>' +
+            '</g>' +
+            '<rect x="6.2" y="15.3" width="3" height="3" rx=".6" fill="currentColor"/>' +
+            '<rect x="3" y="15.3" width="3" height="3" rx=".6" fill="currentColor"/>' +
+            '<rect x="3" y="18.5" width="3" height="3" rx=".6" fill="currentColor" opacity=".5"/>' +
         '</symbol>'
 });
 
@@ -219,6 +237,16 @@ window.AICompass.content.set("lab.icons", {
      emoji       its icon in the Ctrl+K palette
      keywords    more words the palette finds it by (both languages) */
 window.AICompass.content.set("lab.catalogue", [
+    {
+        id: "draw",
+        icon: "lab-icon-draw",
+        titleKey: "lab.draw.title",
+        hookKey: "lab.draw.hook",
+        ideaKey: "lab.draw.idea",
+        level: 1,
+        emoji: "✏️",
+        keywords: "lab draw and teach drawing doodle sketch picture image recognition classifier classes training data examples test generalisation generalization overfitting mnist pixels nearest neighbours k-nn neural network focus лаборатория нарисуй и научи рисунок рисовать картинка изображение распознавание классификатор классы обучающие данные примеры тест обобщение переобучение пиксели ближайшие соседи нейросеть"
+    },
     {
         id: "classifier",
         icon: "lab-icon-network",

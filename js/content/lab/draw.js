@@ -6,15 +6,12 @@
    is used as a plural always has the "|", even when its forms are the same.
    {name} is a class's name (the user may type it), so the Russian texts
    put it in «quotes» after a colon or a noun, and never change its ending.
+   Its title, hook and big idea are in js/content/lab.js (section 3): the lab's picker shows
+   them before this file is loaded.
    ========================================================= */
 
 window.AICompass.addTranslations({
     en: {
-        // The lab catalogue
-        "lab.draw.title": "Draw and teach",
-        "lab.draw.hook": "Teach the computer your own drawings, then test it on new ones.",
-        "lab.draw.idea": "Training data and generalisation",
-
         // Teach and Test
         "lab.draw.mode": "Mode",
         "lab.draw.teach": "Teach",
@@ -185,11 +182,6 @@ window.AICompass.addTranslations({
         "lab.draw.ch4Why": "Both were sure, and both were wrong. A model can only choose between the classes it knows, and on a drawing unlike its examples it can be confidently wrong."
     },
     ru: {
-        // Каталог лаборатории
-        "lab.draw.title": "Нарисуй и научи",
-        "lab.draw.hook": "Научи компьютер узнавать твои рисунки — а потом проверь его на новых.",
-        "lab.draw.idea": "Обучающие данные и обобщение",
-
         // Учить и проверять
         "lab.draw.mode": "Режим",
         "lab.draw.teach": "Учить",
