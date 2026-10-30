@@ -39,7 +39,7 @@
 .dw-note {
     margin: 0;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.5;
 }
 
@@ -50,7 +50,7 @@
 .dw-real {
     margin: 0;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.6;
 }
 
@@ -133,7 +133,7 @@
 .dw-verdict {
     margin: 0;
     color: var(--text-muted);
-    font-size: 15px;
+    font-size: 0.9375rem;
     line-height: 1.4;
 }
 
@@ -285,7 +285,7 @@
     background: var(--surface-solid);
     color: var(--text);
     font-family: var(--font-body);
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-weight: 700;
     transition: border-color 0.2s ease;
 }
@@ -354,7 +354,7 @@
 .dw-scores {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
 .dw-scores th,
@@ -385,7 +385,7 @@
 .dw-scores td {
     color: var(--text);
     font-family: var(--font-mono);
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: 700;
     white-space: nowrap;
 }
