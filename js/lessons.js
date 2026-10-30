@@ -2971,13 +2971,16 @@
                 };
             });
         },
-        // [{ id, icon, lessons: [numbers], title(), description() }] in order
+        // [{ id, icon, lessons: [numbers], done, total, title(), description() }] in order
+        // (done: how many of its lessons are finished now; total: how many it has)
         tracks: function () {
             return TRACKS.map(function (track) {
                 return {
                     id: track.id,
                     icon: track.icon,
                     lessons: TRACK_LESSONS[track.id].slice(),
+                    done: countDone(TRACK_LESSONS[track.id]),
+                    total: TRACK_LESSONS[track.id].length,
                     title: function () { return trackTitle(track.id); },
                     description: function () { return t("lessons.track." + track.id + ".desc"); }
                 };
