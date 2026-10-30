@@ -12,16 +12,13 @@
     4. Data: the words and their numbers (view 2)
     5. Data: the sentences for attention (view 3)
     6. Data: the prompts and their candidate next words (view 4)
+   Its title, hook and big idea are in js/content/lab.js (section 3): the lab's picker shows
+   them before this file is loaded.
    ========================================================= */
 
 window.AICompass.addTranslations({
     /* ===== 1. TEXTS IN ENGLISH ===== */
     en: {
-        // ----- The experiment in the lab's picker -----
-        "lab.chatbot.title": "Inside a chatbot",
-        "lab.chatbot.hook": "Follow your words through a chatbot: tokens, meanings, attention, and the weighted dice that pick the next word.",
-        "lab.chatbot.idea": "How a chatbot writes",
-
         // ----- The pipeline strip (the four views) -----
         "lab.chatbot.pipe": "The steps inside a chatbot",
         "lab.chatbot.pipeStart": "Text",
@@ -246,11 +243,6 @@ window.AICompass.addTranslations({
 
     /* ===== 2. TEXTS IN RUSSIAN ===== */
     ru: {
-        // ----- Эксперимент в списке лаборатории -----
-        "lab.chatbot.title": "Внутри чат-бота",
-        "lab.chatbot.hook": "Проследи, что чат-бот делает с твоими словами: токены, смыслы, внимание и взвешенные кубики, которые выбирают следующее слово.",
-        "lab.chatbot.idea": "Как чат-бот пишет текст",
-
         // ----- Полоса шагов (четыре вида) -----
         "lab.chatbot.pipe": "Шаги внутри чат-бота",
         "lab.chatbot.pipeStart": "Текст",

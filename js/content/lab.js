@@ -122,7 +122,11 @@ window.AICompass.addTranslations({
 
         "lab.evolve.title": "Evolution garage",
         "lab.evolve.hook": "These cars start out crashing. Watch good driving evolve, generation after generation.",
-        "lab.evolve.idea": "Learning by evolution"
+        "lab.evolve.idea": "Learning by evolution",
+
+        "lab.chatbot.title": "Inside a chatbot",
+        "lab.chatbot.hook": "See what a chatbot does with your words: tokens, meanings, attention and weighted dice.",
+        "lab.chatbot.idea": "How a chatbot writes"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -139,7 +143,11 @@ window.AICompass.addTranslations({
 
         "lab.evolve.title": "Гараж эволюции",
         "lab.evolve.hook": "Сначала машинки врезаются в стены. Смотри, как вождение улучшается с каждым поколением.",
-        "lab.evolve.idea": "Обучение эволюцией"
+        "lab.evolve.idea": "Обучение эволюцией",
+
+        "lab.chatbot.title": "Внутри чат-бота",
+        "lab.chatbot.hook": "Посмотри, что чат-бот делает с твоими словами: токены, смыслы, внимание и взвешенные кубики.",
+        "lab.chatbot.idea": "Как чат-бот пишет текст"
     }
 });
 
@@ -183,6 +191,15 @@ window.AICompass.content.set("lab.icons", {
                 '<path d="M17 3c0 4.5-10 4.5-10 9s10 4.5 10 9"/>' +
                 '<path d="M8.5 5h7M8.5 19h7M8 12h8"/>' +
             '</g>' +
+        '</symbol>' +
+        // A speech bubble with three token chips in a row inside it
+        '<symbol id="lab-icon-chatbot" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-4.5 3.5V17H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>' +
+                '<rect x="6" y="9" width="3.4" height="3" rx="1"/>' +
+                '<rect x="10.3" y="9" width="3.4" height="3" rx="1"/>' +
+                '<rect x="14.6" y="9" width="3.4" height="3" rx="1"/>' +
+            '</g>' +
         '</symbol>'
 });
 
@@ -221,6 +238,16 @@ window.AICompass.content.set("lab.catalogue", [
         level: 1,
         emoji: "💬",
         keywords: "lab next word predictor language model chatbot text autocomplete gpt лаборатория следующее слово предсказатель языковая модель чат-бот текст автодополнение"
+    },
+    {
+        id: "chatbot",
+        icon: "lab-icon-chatbot",
+        titleKey: "lab.chatbot.title",
+        hookKey: "lab.chatbot.hook",
+        ideaKey: "lab.chatbot.idea",
+        level: 3,
+        emoji: "🔍",
+        keywords: "lab inside a chatbot chatgpt chat bot language model llm gpt transformer token tokens tokenizer bpe byte pair encoding embedding embeddings word vectors meaning attention context next word temperature top-k top-p sampling probability лаборатория внутри чат-бота чат-бот языковая модель трансформер токен токены токенизатор эмбеддинг векторы смысл внимание контекст следующее слово температура вероятность"
     },
     {
         id: "maze",

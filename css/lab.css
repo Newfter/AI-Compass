@@ -72,6 +72,14 @@
     min-height: 1880px;
 }
 
+.js [data-feature="lab"][data-lab-last="chatbot"]:empty {
+    min-height: 1880px;
+}
+
+.lab-stage[data-loading="chatbot"] {
+    min-height: 1620px;
+}
+
 /* ===== 2. THE CARD ===== */
 
 .lab {
@@ -798,6 +806,14 @@
         min-height: 2890px;
     }
 
+    .js [data-feature="lab"][data-lab-last="chatbot"]:empty {
+        min-height: 2340px;
+    }
+
+    .lab-stage[data-loading="chatbot"] {
+        min-height: 2040px;
+    }
+
     .lab-skeleton {
         grid-template-columns: minmax(0, 1fr);
         grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1fr);
@@ -863,6 +879,14 @@
         min-height: 2870px;
     }
 
+    .js [data-feature="lab"][data-lab-last="chatbot"]:empty {
+        min-height: 2510px;
+    }
+
+    .lab-stage[data-loading="chatbot"] {
+        min-height: 2210px;
+    }
+
     .lab-steps-3 {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -911,6 +935,14 @@
 
     .lab-stage[data-loading="evolve"] {
         min-height: 2960px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="chatbot"]:empty {
+        min-height: 2650px;
+    }
+
+    .lab-stage[data-loading="chatbot"] {
+        min-height: 2360px;
     }
 
     .lab {
@@ -1015,6 +1047,14 @@
 
     .lab-stage[data-loading="evolve"] {
         min-height: 3590px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="chatbot"]:empty {
+        min-height: 3300px;
+    }
+
+    .lab-stage[data-loading="chatbot"] {
+        min-height: 2950px;
     }
 
     /* "All experiments" takes the row, previous / next stay at its end.
