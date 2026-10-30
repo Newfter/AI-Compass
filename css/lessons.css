@@ -1,11 +1,12 @@
 /* =========================================================
    AI COMPASS — LESSONS
-   1. Progress panel (ring + lesson map)
-   2. Certificate
-   3. Lesson cards
+   1. Progress panel (ring + lesson map, one row per track)
+   2. Certificates (and their picker)
+   3. Tracks and lesson cards
    4. Lesson reader (full-screen dialog)
-   5. Lesson text, key ideas, "try it", "check yourself"
-   6. Mini-labs (shared parts + one block per lab)
+   5. Lesson text, glossary words, key ideas, "try it", "check yourself"
+   6. Mini-labs (shared parts + one block per lab; the mini-labs
+      with their own file in js/lessons/ are styled in css/lessons-labs.css)
    7. Responsive
    8. Calm mode and reduced motion
    The confetti for "every lesson done" comes from effects.js.
@@ -43,7 +44,8 @@
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
         "ring info actions"
-        "path path path";
+        "path path path"
+        "note note note";
     align-items: center;
     gap: 22px 28px;
     margin-bottom: 30px;
@@ -173,18 +175,50 @@
     color: var(--text-danger);
 }
 
-/* The lesson map: numbered nodes joined by lines */
-.lsn-path {
+/* The lesson map: one row per track (its name, then its lessons). The rows line
+   their nodes up in the same columns: --lsn-cols is the longest track (lessons.js). */
+.lsn-map {
     grid-area: path;
-    display: flex;
-    align-items: flex-start;
+    display: grid;
+    gap: 14px;
     padding-top: 18px;
     border-top: 1px dashed var(--border);
 }
 
+.lsn-map-row {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+}
+
+.lsn-map-label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    min-height: 44px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.lsn-map-count {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Numbered nodes joined by lines */
+.lsn-path {
+    display: grid;
+    grid-template-columns: repeat(var(--lsn-cols, 6), minmax(0, 1fr));
+    align-items: start;
+}
+
 .lsn-step {
     position: relative;
-    flex: 1 1 0;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -305,6 +339,14 @@
     color: var(--text-accent-2);
 }
 
+/* "Saved only in this browser" */
+.lsn-privacy {
+    grid-area: note;
+    margin-top: -6px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
 /* ===== 2. CERTIFICATE ===== */
 
 .lsn-cert {
@@ -375,6 +417,79 @@
     box-shadow: var(--field-focus-glow);
 }
 
+/* The certificate picker: one button per certificate. The ones not earned yet
+   are dimmed and say how many lessons are left (aria-disabled). */
+.lsn-cert-picks {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+}
+
+.lsn-cert-pick {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 56px;
+    padding: 8px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: var(--surface-solid);
+    color: var(--text);
+    text-align: left;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.lsn-cert-pick.is-earned:hover {
+    border-color: var(--accent-2);
+}
+
+.lsn-cert-pick[aria-pressed="true"] {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.1);
+    box-shadow: 0 0 0 1px rgba(var(--accent-2-rgb), 0.35), 0 0 22px rgba(var(--accent-2-rgb), 0.18);
+}
+
+.lsn-cert-pick[aria-disabled="true"] {
+    cursor: not-allowed;
+}
+
+.lsn-cert-pick[aria-disabled="true"] .lsn-cert-pick-icon {
+    filter: grayscale(1);
+    opacity: 0.55;
+}
+
+.lsn-cert-pick-icon {
+    flex: none;
+    font-size: 24px;
+}
+
+.lsn-cert-pick-text {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.lsn-cert-pick-name {
+    font-weight: 700;
+}
+
+.lsn-cert-pick-state {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.lsn-cert-pick.is-earned .lsn-cert-pick-state {
+    color: var(--text-success);
+    font-weight: 600;
+}
+
+.lsn-cert-privacy {
+    margin-top: -4px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
 .lsn-cert-preview {
     padding: 8px;
     border: 1px solid var(--border);
@@ -389,7 +504,123 @@
     box-shadow: var(--glow);
 }
 
-/* ===== 3. LESSON CARDS ===== */
+/* ===== 3. TRACKS AND LESSON CARDS ===== */
+
+.lsn-tracks {
+    display: grid;
+    gap: 44px;
+}
+
+/* A track's header: icon, name and description, then its progress on the right */
+.lsn-track-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.lsn-track-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid rgba(var(--lsn-rgb), 0.45);
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 30% 25%, rgba(var(--lsn-rgb), 0.34), transparent 70%),
+        var(--surface-2);
+    box-shadow: 0 0 24px rgba(var(--lsn-rgb), 0.2);
+    font-size: 26px;
+}
+
+.lsn-track-label {
+    color: var(--text-accent-2);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.lsn-track-title {
+    margin-top: 2px;
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2.4vw, 25px);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.lsn-track-desc {
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+/* "Best after the Basics, but every lesson is open" */
+.lsn-track-hint {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 5px 12px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.lsn-track-progress {
+    display: grid;
+    justify-items: end;
+    gap: 8px;
+    min-width: 150px;
+}
+
+.lsn-track-count {
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.lsn-track.is-complete .lsn-track-count {
+    color: var(--text-success);
+}
+
+.lsn-track-bar {
+    width: 150px;
+    height: 6px;
+    border-radius: 6px;
+    background: var(--surface-solid);
+    box-shadow: inset 0 0 0 1px var(--border);
+    overflow: hidden;
+}
+
+.lsn-track-bar span {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: 6px;
+    background: var(--gradient);
+    transition: width 0.6s var(--ease);
+}
+
+/* The button that folds a track's cards away exists on phones only (section 7) */
+.lsn-track-fold {
+    display: none;
+}
+
+.lsn-fold-arrow {
+    display: inline-block;
+    font-size: 18px;
+    line-height: 1;
+    transition: transform 0.3s var(--ease);
+}
+
+.lsn-track-fold[aria-expanded="true"] .lsn-fold-arrow {
+    transform: rotate(180deg);
+}
 
 .lsn-grid {
     display: grid;
@@ -733,6 +964,15 @@
     white-space: nowrap;
 }
 
+/* "Deep dive · Lesson 08 / 09": the track in its colour (on phones, on its own line) */
+.lsn-crumb-track {
+    color: var(--text-accent-2);
+}
+
+.lsn-crumb-sep {
+    color: var(--text-muted);
+}
+
 .lsn-reader-keys {
     padding-left: 12px;
     border-left: 1px solid var(--border);
@@ -995,6 +1235,16 @@
     color: var(--text-success);
 }
 
+/* "Next · Deep dive": the button that crosses into another track */
+.lsn-nav.is-new-track {
+    border-color: rgba(var(--accent-2-rgb), 0.55);
+}
+
+.lsn-nav.is-new-track .lsn-nav-small,
+.lsn-nav.is-new-track .lsn-nav-arrow {
+    color: var(--text-accent-2);
+}
+
 .lsn-nav[aria-disabled="true"] {
     opacity: 0.35;
     cursor: not-allowed;
@@ -1160,6 +1410,82 @@
 
 .lsn-part-text em {
     color: var(--text-muted);
+}
+
+/* A word the glossary has: a button that looks like the other bold words,
+   with a dotted line under it */
+.lsn-term {
+    position: relative;
+    display: inline;
+    padding: 0;
+    border: none;
+    border-bottom: 2px dotted rgba(var(--lsn-rgb), 0.9);
+    border-radius: 0;
+    background: linear-gradient(transparent 62%, rgba(var(--lsn-rgb), 0.28) 62%);
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    line-height: inherit;
+    text-align: inherit;
+    cursor: help;
+}
+
+.lsn-term:hover,
+.lsn-term[aria-expanded="true"] {
+    border-bottom-style: solid;
+    background: rgba(var(--lsn-rgb), 0.22);
+}
+
+/* The meaning of a glossary word, just under its paragraph */
+.lsn-peek {
+    margin-top: 14px;
+    padding: 14px 16px 12px;
+    border: 1px solid rgba(var(--lsn-rgb), 0.45);
+    border-radius: 14px;
+    background:
+        linear-gradient(135deg, rgba(var(--lsn-rgb), 0.12), transparent 60%),
+        var(--surface-2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    animation: lsn-peek-in 0.25s var(--ease);
+}
+
+@keyframes lsn-peek-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+}
+
+.lsn-peek-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.lsn-peek-term {
+    margin-top: 4px;
+    font-family: var(--font-display);
+    font-size: calc(var(--lsn-text) + 1px);
+    font-weight: 600;
+}
+
+.lsn-peek-text {
+    margin-top: 4px;
+    font-size: calc(var(--lsn-text) - 1px);
+    line-height: 1.65;
+}
+
+.lsn-peek-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.lsn-peek-actions .btn {
+    min-height: 40px;
 }
 
 /* While reading aloud */
@@ -2360,6 +2686,50 @@
     color: var(--text-warning);
 }
 
+/* A mini-lab in its own file: "Loading the mini-lab…", then the lab (or an error
+   with "Try again"). The space is kept so the page doesn't jump when the lab shows. */
+.lsn-lab-body[data-lab-state="loading"] .lsn-lab-view,
+.lsn-lab-body[data-lab-state="error"] .lsn-lab-view {
+    display: grid;
+    place-items: center;
+    min-height: 240px;
+}
+
+.lsn-lab-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+.lsn-lab-spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid rgba(var(--lsn-rgb), 0.25);
+    border-top-color: rgba(var(--lsn-rgb), 1);
+    border-radius: 50%;
+    animation: lsn-spin 0.9s linear infinite;
+}
+
+@keyframes lsn-spin {
+    to { transform: rotate(360deg); }
+}
+
+.lsn-lab-error {
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    max-width: 420px;
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.lsn-lab-error .btn {
+    min-height: 44px;
+}
+
 /* ===== 7. RESPONSIVE ===== */
 
 @media (max-width: 1024px) {
@@ -2380,7 +2750,8 @@
         grid-template-areas:
             "ring info"
             "actions actions"
-            "path path";
+            "path path"
+            "note note";
     }
 
     .lsn-hud-actions {
@@ -2413,6 +2784,16 @@
 @media (max-width: 720px) {
     .lsn-step-label {
         display: none;
+    }
+
+    /* The track's name goes above its row of lessons */
+    .lsn-map-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+    }
+
+    .lsn-map-label {
+        min-height: 0;
     }
 
     .lsn-fit,
@@ -2483,6 +2864,61 @@
 
     .lsn-cert {
         padding: 18px 16px;
+    }
+
+    .lsn-tracks {
+        gap: 32px;
+    }
+
+    /* Track header: icon and name, then the progress on its own line */
+    .lsn-track-head {
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 12px 14px;
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+    }
+
+    .lsn-track-icon {
+        align-self: start;
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        font-size: 22px;
+    }
+
+    .lsn-track-desc {
+        font-size: 14.5px;
+    }
+
+    .lsn-track-progress {
+        grid-column: 1 / -1;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        justify-items: stretch;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .lsn-track-bar {
+        width: 100%;
+    }
+
+    /* A later track can fold its cards away (the lesson map above still shows
+       every lesson, and nothing is locked): see "trackUnfolded" in js/lessons.js */
+    .lsn-track-fold {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 48px;
+        margin-bottom: 16px;
+    }
+
+    .lsn-track.is-folded .lsn-track-fold {
+        margin-bottom: 0;
+    }
+
+    .lsn-track.is-folded .lsn-grid {
+        display: none;
     }
 
     .lsn-card {
@@ -2559,9 +2995,24 @@
         padding: 10px 10px 10px 16px;
     }
 
+    /* The track on a small line above "Lesson 08 / 09" */
     .lsn-reader-crumb {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
         font-size: 0.71875rem;
         letter-spacing: 1.5px;
+        line-height: 1.35;
+    }
+
+    .lsn-crumb-track {
+        overflow: hidden;
+        font-size: 10px;
+        text-overflow: ellipsis;
+    }
+
+    .lsn-crumb-sep {
+        display: none;
     }
 
     .lsn-tool {
@@ -2601,10 +3052,19 @@
     }
 }
 
-/* Keyboard hint only makes sense with a real keyboard and mouse */
+/* Touch screens (the one query every file uses, see style.css) */
 @media (hover: none), (pointer: coarse) {
+    /* Keyboard hint only makes sense with a real keyboard and mouse */
     .lsn-reader-keys {
         display: none;
+    }
+
+    /* A glossary word in a sentence gets a taller touch area (about 46px with
+       the 17px text) without moving the text around it */
+    .lsn-term::after {
+        content: "";
+        position: absolute;
+        inset: -8px -2px;
     }
 }
 
@@ -2619,4 +3079,10 @@ html.fx-motion-off .lsn-reader-panel {
 
 html.fx-motion-off .lsn-card::before {
     display: none;
+}
+
+/* A spinner that can't turn: three quarters of a ring still reads as "busy" */
+html.fx-motion-off .lsn-lab-spinner {
+    border-right-color: rgba(var(--lsn-rgb), 1);
+    border-bottom-color: rgba(var(--lsn-rgb), 1);
 }

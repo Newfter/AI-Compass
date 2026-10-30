@@ -43,7 +43,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `style.css` | What the whole page shares: the design tokens (colours, fonts and sizes of both themes), buttons, cards, the menu, the hero, the section frames, toasts, the phone layout and calm mode. |
 | `css/components.css` | Small visual parts that several features share, each written once as a `ui-...` class: corner brackets, the light that scans along a card, sliders, on/off switches, filter chips, answer options and progress rings. |
 | `css/effects.css` | The visual effects and the neural network background. |
-| `css/lessons.css` | The lessons: progress panel, cards, the lesson reader, the mini-labs and the certificate. |
+| `css/lessons.css` | The lessons: progress panel, the tracks and their cards, the lesson reader, the first six mini-labs and the certificates. |
+| `css/lessons-labs.css` | The mini-labs that have their own file in `js/lessons/`. It loads with the first of them, not with the page. |
 | `css/lab.css` | The AI Lab: the lab's card, the picker of experiments (a grid of cards, or a rail while one is open), the header above the open experiment, loading and errors. Section 1 keeps the height of each experiment while it loads, so the page below doesn't jump. |
 | `css/lab/` | The styles of each AI Lab experiment (`<id>.css`) and of the lab kit (`kit.css`). The lab loads them when an experiment opens. |
 | `css/quiz.css` | The quiz. |
@@ -57,7 +58,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/core.js` | The toolkit that every other script uses (`window.AICompass`, called `A`): saved settings, texts and languages, the theme, calm mode, pop-up windows, scrolling to sections, Ctrl+K commands and toasts. It is loaded first. |
 | `js/effects.js` | Small touches: the scroll progress bar, cards that rise in, numbers that count up, typewriter words, tilting cards, the mouse spotlight, magnetic buttons, ripples, the section mini-map and confetti. |
 | `js/neural-bg.js` | The animated "brain" drawn behind the page. |
-| `js/lessons.js` | The lessons: progress panel, lesson cards, the lesson reader, the mini-labs, reading aloud and the certificate. |
+| `js/lessons.js` | The lessons: the list of lessons and tracks, progress panel, lesson cards, the lesson reader, the first six mini-labs, reading aloud and the certificates. |
+| `js/lessons/` | One file per newer mini-lab (`pixels.js`, `slots.js`, `temperature.js`). `js/lessons.js` loads a file the first time its lesson opens. |
 | `js/lab.js` | The AI Lab's hub: the picker, loading an experiment's files when it opens (or a moment before), links like `#lab/maze`, the Ctrl+K commands, remembering the last experiment, and the progress events. |
 | `js/lab/` | The experiments, one file each, loaded when they open: `draw.js` ("Draw and teach": your drawings teach two models, nearest neighbours and a small neural network), `classifier.js` ("Teach the machine", a tiny neural network), `descent.js` ("Down the hill": three balls race down a hill of error, the way a model learns by gradient descent), `predictor.js` (the next-word predictor, a tiny language model), `chatbot.js` ("Inside a chatbot": tokens, word meanings, attention and the dice that pick the next word), `maze.js` (a robot that learns from rewards), `evolve.js` (cars that learn to drive by evolution). `kit.js` is the lab kit (`A.labKit`) they are all built from: buttons, sliders, charts, canvases, a frame loop, seeded random numbers, saved settings and "Try this" challenges. `sample.js` ("Guess the line") is a small, complete experiment to copy; it is not in the lab. |
 | `js/quiz.js` | The AI Challenge: questions, the timer, points, streaks, ranks and the best score. |
@@ -73,7 +75,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
-| `js/content/lessons.js` | The lesson texts, the mini-lab texts and the reader's buttons. |
+| `js/content/lessons.js` | The texts of the tracks, the reader's buttons, the certificates and lessons 1-6 (with their mini-labs). |
+| `js/content/lessons-deep.js` | The texts of the "Deep dive" lessons (7 and on) and of their mini-labs. |
 | `js/content/lab.js` | The AI Lab's texts, each experiment's title, hook and big idea (the picker shows them before the experiment loads), the icons, and the catalogue: which experiments the lab shows, in which order. |
 | `js/content/lab/` | Each experiment's own texts (`<id>.js`, loaded with it) and the lab kit's texts (`kit.js`). `predictor.js` also has the sentences the next-word predictor learns from. |
 | `js/content/quiz.js` | The quiz texts, the list of questions and the ranks. |
@@ -183,7 +186,8 @@ Nothing leaves the browser: these events are only for features on the same page 
 | Lessons | `lesson.open` | `{ n }` | every time a lesson is shown |
 | | `lesson.complete` | `{ n }` | the first time a lesson is marked as done |
 | | `lesson.check` | `{ n, correct }` | a "check yourself" question is answered |
-| | `certificate.make` | `{}` | the certificate is downloaded |
+| | `track.complete` | `{ track }` | the last lesson of a track is done (`"basics"` or `"deep"`) |
+| | `certificate.make` | `{ track }` | a certificate is downloaded (`"basics"`, `"deep"` or `"all"`: the full course) |
 | Quiz | `quiz.answer` | `{ id, correct }` | a question is answered |
 | | `quiz.finish` | `{ mode, score, total, points, timed, seconds }` | a round ends (`mode` is `"classic"` or `"timed"`, `score` is the number of right answers) |
 | AI Lab | `lab.use` | `{ exp }` | an experiment is opened; also when training starts (Teach the machine) or auto-write starts (the predictor) |
@@ -279,54 +283,54 @@ Good to know:
 
 ### Add a lesson
 
-A lesson needs one entry in `js/lessons.js` and its texts in `js/content/lessons.js`. Add new lessons at the end: saved progress remembers lessons by their number, so don't change the order of the ones that exist.
+The lessons come in tracks: "Basics" (lessons 1-6) and "Deep dive" (7 and on). A lesson needs one entry in `js/lessons.js`, its texts in `js/content/lessons-deep.js` and a mini-lab. Add new lessons at the end, in the last track: saved progress remembers lessons by their number, so don't change the order of the ones that exist.
 
 **1. The entry.** In `js/lessons.js`, section 2, add it at the end of `LESSONS`:
 
 ```js
         {
-            number: 7, icon: "🗨️", level: "beginner", minutes: 3, rgb: "--accent-2-rgb",
+            number: 10, track: "deep", icon: "🗨️", level: "beginner", minutes: 3, rgb: "--accent-2-rgb",
             sections: 2, notes: { 2: "tip" }, lab: "words", correct: 1,
-            tryIt: "predictor", tryIcon: "🔮",
+            tryIt: "lab", tryIcon: "🔮",
             keywords: "prompt prompting ask chatbot questions промпт запрос чат-бот вопросы"
         }
 ```
 
-- `number`: the next number. `icon`: the emoji on the card. `minutes`: the reading time on the card.
+- `number`: the next number. `track`: the track it belongs to (`"basics"` or `"deep"`, the ids in `TRACKS` just above). `icon`: the emoji on the card. `minutes`: the reading time on the card.
 - `level`: `"beginner"` or `"intermediate"`.
 - `rgb`: the lesson's colour: `"--accent-rgb"` (violet), `"--accent-2-rgb"` (cyan) or `"--accent-3-rgb"` (pink).
 - `sections`: how many parts the text has (`s1`, `s2`, ...).
 - `notes`: which parts have a small box, and its kind: `"fact"`, `"example"` or `"tip"`.
-- `lab`: which mini-lab it shows. Reuse one of the six: `"sort"` (AI or not AI?), `"fit"` (watch a model learn), `"neuron"`, `"words"` (be the language model), `"day"` (spot the hidden AI) or `"dilemmas"` (what would you do?). A brand-new mini-lab needs new code in `js/lessons.js` (sections 10 to 15 show how the others are made).
+- `lab`: which mini-lab it shows: one of the six in `js/lessons.js` (`"sort"`, `"fit"`, `"neuron"`, `"words"`, `"day"`, `"dilemmas"`), or the name of a mini-lab with its own file (step 3).
 - `correct`: which answer to "Check yourself" is right: 0, 1 or 2 (for `a1`, `a2`, `a3`).
-- `tryIt`: where the "Try it on this site" button goes: `"timeline"`, `"glossary"`, `"quiz"`, `"classifier"` (Teach the machine) or `"predictor"` (Next-word predictor). `tryIcon`: its emoji.
+- `tryIt`: where the "Try it" button goes: a section (`"timeline"`, `"glossary"`, `"quiz"`, `"lab"`) or an experiment of the AI Lab (`"classifier"`, `"predictor"`, ...; while the AI Lab doesn't have that experiment yet, the button opens the AI Lab). `tryIcon`: its emoji.
 - `keywords`: extra words (both languages) that find the lesson in the Ctrl+K search.
 
-**2. The texts.** In `js/content/lessons.js`, add a block after the lesson 6 block. Every key starts with `lessons.l7.` (the lesson) or `lessons.w7.` (its mini-lab's title and intro). Each part needs `.h` (title) and `.p` (text), each box needs `.note`, and there are always three key ideas and three answers:
+**2. The texts.** In `js/content/lessons-deep.js`, copy the block of lesson 7 to the end of the file and change `l7` to `l10` and `w7` to `w10`. Every key starts with `lessons.l10.` (the lesson) or `lessons.w10.` (its mini-lab). Each part needs `.h` (title) and `.p` (text), each box needs `.note`, and there are always three key ideas, a tip and three answers:
 
 ```js
-// Lesson 7 — Talking to AI
+// Lesson 10 — Talking to AI
 window.AICompass.addTranslations({
     en: {
-        "lessons.l7.title": "Talking to AI",
-        "lessons.l7.desc": "How to ask a chatbot good questions — and check its answers.",
-        "lessons.l7.s1.h": "Say what you need",
-        "lessons.l7.s1.p": "A chatbot only knows what you type. Say what you need, who it is for and how long the answer should be: <em>“Explain photosynthesis to a 14-year-old in five sentences”</em> works much better than <em>“photosynthesis”</em>.",
-        "lessons.l7.s2.h": "Check before you trust",
-        "lessons.l7.s2.p": "Chatbots can sound sure and still be wrong. Compare important answers with a textbook or a trusted website, and never type in passwords or private details.",
-        "lessons.l7.s2.note": "If an answer matters (homework, health, money), check it in a second place.",
-        "lessons.l7.key1": "A clear, detailed question gets a more useful answer.",
-        "lessons.l7.key2": "Chatbots can be confidently wrong: check what matters.",
-        "lessons.l7.key3": "Never share passwords or private details with a chatbot.",
-        "lessons.l7.tip": "See how a language model picks its next word, live in the AI Lab.",
-        "lessons.l7.tipBtn": "Open the predictor",
-        "lessons.l7.q": "Which question will probably get the most useful answer?",
-        "lessons.l7.a1": "“Volcanoes”",
-        "lessons.l7.a2": "“Explain in five sentences, for a 14-year-old, why volcanoes erupt”",
-        "lessons.l7.a3": "“Tell me everything you know”",
-        "lessons.l7.explain": "The second question says what you need, who it is for and how long the answer should be.",
-        "lessons.w7.title": "Be the language model",
-        "lessons.w7.intro": "A chatbot writes one word at a time. Pick the next word yourself and see how the “temperature” changes the choice."
+        "lessons.l10.title": "Talking to AI",
+        "lessons.l10.desc": "How to ask a chatbot good questions — and check its answers.",
+        "lessons.l10.s1.h": "Say what you need",
+        "lessons.l10.s1.p": "A chatbot only knows what you type. Say what you need, who it is for and how long the answer should be: <em>“Explain photosynthesis to a 14-year-old in five sentences”</em> works much better than <em>“photosynthesis”</em>.",
+        "lessons.l10.s2.h": "Check before you trust",
+        "lessons.l10.s2.p": "Chatbots can sound sure and still be wrong. A <strong data-term='hallucination'>hallucination</strong> looks just like a true answer. Compare important answers with a textbook or a trusted website, and never type in passwords or private details.",
+        "lessons.l10.s2.note": "If an answer matters (homework, health, money), check it in a second place.",
+        "lessons.l10.key1": "A clear, detailed question gets a more useful answer.",
+        "lessons.l10.key2": "Chatbots can be confidently wrong: check what matters.",
+        "lessons.l10.key3": "Never share passwords or private details with a chatbot.",
+        "lessons.l10.tip": "See how a language model picks its next word, live in the AI Lab.",
+        "lessons.l10.tipBtn": "Open the AI Lab",
+        "lessons.l10.q": "Which question will probably get the most useful answer?",
+        "lessons.l10.a1": "“Volcanoes”",
+        "lessons.l10.a2": "“Explain in five sentences, for a 14-year-old, why volcanoes erupt”",
+        "lessons.l10.a3": "“Tell me everything you know”",
+        "lessons.l10.explain": "The second question says what you need, who it is for and how long the answer should be. The first is too short to know what you want, and the third is far too wide.",
+        "lessons.w10.title": "Be the language model",
+        "lessons.w10.intro": "A chatbot writes one word at a time. Pick the next word yourself and see how the “temperature” changes the choice."
     },
     ru: {
         // the same keys, in Russian (see below)
@@ -334,40 +338,67 @@ window.AICompass.addTranslations({
 });
 ```
 
+`<strong data-term='hallucination'>` is a glossary word: the reader turns it into a button that shows its meaning (when the glossary has that id; until then it stays bold text).
+
 <details>
 <summary>The Russian part of this example</summary>
 
 ```js
     ru: {
-        "lessons.l7.title": "Как говорить с ИИ",
-        "lessons.l7.desc": "Как задавать чат-боту хорошие вопросы — и проверять его ответы.",
-        "lessons.l7.s1.h": "Скажи, что тебе нужно",
-        "lessons.l7.s1.p": "Чат-бот знает только то, что ты напишешь. Скажи, что тебе нужно, для кого и какой длины должен быть ответ: <em>«Объясни фотосинтез четырнадцатилетнему в пяти предложениях»</em> работает гораздо лучше, чем просто <em>«фотосинтез»</em>.",
-        "lessons.l7.s2.h": "Проверяй, прежде чем верить",
-        "lessons.l7.s2.p": "Чат-бот может говорить уверенно и всё равно ошибаться. Сверяй важные ответы с учебником или надёжным сайтом и никогда не вводи пароли и личные данные.",
-        "lessons.l7.s2.note": "Если ответ важен (домашка, здоровье, деньги), проверь его ещё в одном месте.",
-        "lessons.l7.key1": "На понятный подробный вопрос ты получишь более полезный ответ.",
-        "lessons.l7.key2": "Чат-бот может уверенно ошибаться: проверяй то, что важно.",
-        "lessons.l7.key3": "Никогда не сообщай чат-боту пароли и личные данные.",
-        "lessons.l7.tip": "Посмотри в ИИ-лаборатории, как языковая модель выбирает следующее слово.",
-        "lessons.l7.tipBtn": "Открыть предсказатель",
-        "lessons.l7.q": "На какой вопрос ты, скорее всего, получишь самый полезный ответ?",
-        "lessons.l7.a1": "«Вулканы»",
-        "lessons.l7.a2": "«Объясни в пяти предложениях для четырнадцатилетнего, почему извергаются вулканы»",
-        "lessons.l7.a3": "«Расскажи всё, что знаешь»",
-        "lessons.l7.explain": "Во втором вопросе сказано, что нужно, для кого и какой длины должен быть ответ.",
-        "lessons.w7.title": "Побудь языковой моделью",
-        "lessons.w7.intro": "Чат-бот пишет по одному слову. Выбери следующее слово сам и посмотри, как «температура» меняет выбор."
+        "lessons.l10.title": "Как говорить с ИИ",
+        "lessons.l10.desc": "Как задавать чат-боту хорошие вопросы — и проверять его ответы.",
+        "lessons.l10.s1.h": "Скажи, что тебе нужно",
+        "lessons.l10.s1.p": "Чат-бот знает только то, что ты напишешь. Скажи, что тебе нужно, для кого и какой длины должен быть ответ: <em>«Объясни фотосинтез четырнадцатилетнему в пяти предложениях»</em> работает гораздо лучше, чем просто <em>«фотосинтез»</em>.",
+        "lessons.l10.s2.h": "Проверяй, прежде чем верить",
+        "lessons.l10.s2.p": "Чат-бот может говорить уверенно и всё равно ошибаться. <strong data-term='hallucination'>Галлюцинация</strong> выглядит точно так же, как верный ответ. Сверяй важные ответы с учебником или надёжным сайтом и никогда не вводи пароли и личные данные.",
+        "lessons.l10.s2.note": "Если ответ важен (домашка, здоровье, деньги), проверь его ещё в одном месте.",
+        "lessons.l10.key1": "На понятный подробный вопрос ты получишь более полезный ответ.",
+        "lessons.l10.key2": "Чат-бот может уверенно ошибаться: проверяй то, что важно.",
+        "lessons.l10.key3": "Никогда не сообщай чат-боту пароли и личные данные.",
+        "lessons.l10.tip": "Посмотри в ИИ-лаборатории, как языковая модель выбирает следующее слово.",
+        "lessons.l10.tipBtn": "Открыть ИИ-лабораторию",
+        "lessons.l10.q": "На какой вопрос ты, скорее всего, получишь самый полезный ответ?",
+        "lessons.l10.a1": "«Вулканы»",
+        "lessons.l10.a2": "«Объясни в пяти предложениях для четырнадцатилетнего, почему извергаются вулканы»",
+        "lessons.l10.a3": "«Расскажи всё, что знаешь»",
+        "lessons.l10.explain": "Во втором вопросе сказано, что нужно, для кого и какой длины должен быть ответ. Первый слишком короткий, чтобы понять, чего ты хочешь, а третий слишком широкий.",
+        "lessons.w10.title": "Побудь языковой моделью",
+        "lessons.w10.intro": "Чат-бот пишет по одному слову. Выбери следующее слово сам и посмотри, как «температура» меняет выбор."
     }
 ```
 
 </details>
 
-**Search engines.** In `index.html`, add the lesson to `"syllabusSections"` in the JSON-LD at the end of `<head>` (its number, its English title and description, and its reading time, `"PT3M"` for 3 minutes), and add its minutes to `"courseWorkload"`. This is the only list of lessons that doesn't count itself: search engines read it without running any script.
+**3. A new mini-lab (only if none of the others fits).** Give it its own file, `js/lessons/<name>.js`, and put `lab: "<name>"` in the entry. `js/lessons.js` loads the file (and `css/lessons-labs.css`) the first time the lesson opens, shows "Loading…" meanwhile, and a "Try again" button if it can't be loaded:
 
-That's all: the cards, the progress panel, the hero number, the section subtitle, the Ctrl+K command and the certificate count the lessons by themselves. (The subtitle says "Six short lessons" only while there are exactly six; with seven it says "7 short lessons". To spell the number out, add `"lessons.subtitle.7"` next to `"lessons.subtitle.6"`, in both languages.)
+```js
+(function () {
+    "use strict";
+    const A = window.AICompass;
+    if (!A || !A.lessons) return;
 
-**Check:** there are 7 cards and the hero says 7; open the lesson (click its card, or go to `http://localhost:8000/#lesson-7`) and look at every part, the box, the mini-lab, the three key ideas and the three answers; pick the right answer (it says "Correct!" and the panel counts 1 more); try the "Try it" button; press Ctrl+K and type the lesson's title. Do it again in Russian.
+    A.lessons.defineLab("<name>", {
+        // Draws the lab inside host (an empty <div>). Runs when the lesson opens, and again after a language change.
+        build: function (host, api) {
+            host.innerHTML = '<button type="button" class="btn btn-primary btn-small" data-fid="w10-go">' + api.text("go") + "</button>";
+            host.querySelector("button").addEventListener("click", function () {
+                api.state.clicks = (api.state.clicks || 0) + 1;   // api.state survives closing the reader
+                api.announce(api.plural("clicked", api.state.clicks));   // "lessons.w10.clicked.one" / ".many"
+            });
+        },
+        destroy: function (host) { /* optional: stop timers */ },
+        theme: function (host) { /* optional: the theme changed (redraw a <canvas>) */ }
+    });
+})();
+```
+
+The whole contract (what `api` has, and the rules: listeners only inside `host`, a `data-fid` on every button, `event.preventDefault()` for arrow keys) is at the top of `js/lessons.js`, in "A MINI-LAB IN ITS OWN FILE". The three mini-labs in `js/lessons/` are complete examples; their styles go in `css/lessons-labs.css`.
+
+**4. Search engines.** In `index.html`, add the lesson to `"syllabusSections"` in the JSON-LD at the end of `<head>` (its number, its English title and description, and its reading time, `"PT3M"` for 3 minutes), and add its minutes to `"courseWorkload"`. This is the only list of lessons that doesn't count itself: search engines read it without running any script.
+
+That's all: the track's cards, the lesson map, the counts ("0 of 4 done"), the hero number, the section subtitle, the certificates, the Ctrl+K command and the site search follow the list by themselves. (Numbers in texts come from the data: the subtitle says "10 short lessons"; to spell a number out, add an exact key such as `"lessons.subtitle.10"`, in both languages.)
+
+**Check:** there are 10 cards (4 in "Deep dive") and the hero says 10; open the lesson (click its card, or go to `http://localhost:8000/#lesson-10`) and look at every part, the box, the glossary word, the mini-lab, the three key ideas and the three answers; pick the right answer (it says "Correct!" and the panel counts 1 more); try the "Try it" button; press Ctrl+K and type the lesson's title. Do it again in Russian, and once on a phone (the "Deep dive" cards fold away there until you open one).
 
 ### Add a quiz question
 

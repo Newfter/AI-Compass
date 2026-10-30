@@ -1,33 +1,100 @@
 /* =========================================================
    AI COMPASS — LESSONS
-   Short interactive lessons about AI. This file builds a
-   progress panel (ring, lesson map, continue / reset), a grid of
-   lesson cards, a full-screen lesson reader (text, a mini-lab, key
-   ideas, a "check yourself" question, previous / next) and a
-   certificate to download once every lesson is done.
+   Short interactive lessons about AI, in tracks: "Basics" (lessons
+   1-6) and "Deep dive" (7 and on). This file builds a progress panel
+   (ring, a lesson map with one row per track, continue / reset), one
+   group of lesson cards per track, a full-screen lesson reader (text,
+   a mini-lab, key ideas, a "check yourself" question, previous / next)
+   and the certificates: one per finished track, one for all lessons.
    Sections of this file:
     1. Settings
-    2. The lessons (icon, colour, mini-lab, palette keywords)
+    2. The tracks and the lessons (icon, colour, mini-lab, keywords)
     3. Small helpers
     4. Saved progress
-    5. Progress panel and cards (built once)
-    6. Updating the panel and the cards
+    5. Progress panel, certificates and track groups (built once)
+    6. Updating the panel, the tracks and the cards
     7. Completing lessons
-    8. The certificate
-    9. Clicks on the panel and the cards
+    8. The certificates
+    9. Clicks on the panel, the certificates and the tracks
    10. Mini-lab 1: AI or not AI?
    11. Mini-lab 2: watch a model learn
    12. Mini-lab 3: play with a neuron
    13. Mini-lab 4: be the language model
    14. Mini-lab 5: spot the hidden AI
-   15. Mini-lab 6: what would you do?
-   16. The lesson reader
-   17. Reading aloud
-   18. Language and theme changes
-   19. Start (and links like #lesson-3)
-   20. Ctrl+K commands and the public API
-   Other features use AICompass.lessons (see the last section).
+   15. Mini-lab 6: what would you do? (and the list of these six)
+   16. Mini-labs in their own files (A.lessons.defineLab)
+   17. The lesson reader (and the glossary words in its text)
+   18. Reading aloud
+   19. Language and theme changes
+   20. Start (and links like #lesson-3)
+   21. Ctrl+K commands and the public API
    Every text (English and Russian) is in js/content/lessons.js
+   (tracks, reader, lessons 1-6) and js/content/lessons-deep.js
+   (lessons 7 and on). Other features use AICompass.lessons (section 21).
+
+   Events (A.track; see "Progress events" in README.md):
+     lesson.open { n }             every time a lesson is shown
+     lesson.complete { n }         the first time a lesson is marked as done
+     lesson.check { n, correct }   a "check yourself" question is answered
+     track.complete { track }      the last lesson of a track is done ("basics", "deep")
+     certificate.make { track }    a certificate is downloaded ("basics", "deep" or "all")
+   Saved in this browser only (A.storage, as "aic:" + the key):
+     lessons.completed   [the numbers of the finished lessons]
+     lessons.certName    the name typed for the certificates
+     lessons.textSize    "s", "m" or "l": the reader's text size
+     lessons.view        { v: 1, tracks: { deep: "auto" | "open" | "closed" } }:
+                         on phones, whether a track's cards are folded away
+     lessons.probe       written and removed at start-up: can the browser save?
+
+   A MINI-LAB IN ITS OWN FILE
+   The six first mini-labs live in this file (sections 10-15). A new
+   one gets its own file, js/lessons/<name>.js, which loads (together
+   with css/lessons-labs.css) the first time its lesson is shown:
+
+       (function () {
+           "use strict";
+           const A = window.AICompass;
+           A.lessons.defineLab("<name>", {
+               build: function (host, api) { ... },  // draw the lab inside host (an empty <div>)
+               destroy: function (host) { ... },     // optional: stop timers, forget host
+               theme: function (host) { ... }        // optional: the theme changed (redraw a <canvas>)
+           });
+       })();
+
+   build(host, api) runs each time the lab is shown: when its lesson
+   opens, and again after a language change (destroy runs first).
+   api.lesson          the lesson's number
+   api.state           an object for the lab's state: it survives closing
+                       the reader and language changes; "Reset progress"
+                       empties it
+   api.text(key, values)            t("lessons.w<lesson>.<key>", values)
+   api.plural(key, count, values)   the same with A.plural
+   api.lang            "en" or "ru"
+   api.motion          A.motion: animate only when api.motion.ok()
+   api.announce(text)  tells screen readers what changed (a live region)
+   Closing the reader (or going to another lesson) calls destroy(host);
+   the next lesson shown replaces what is inside host, so listeners on
+   elements inside it go with them.
+   Rules: put listeners on host or inside it (never on window or
+   document, unless destroy removes them); give every button a
+   data-fid="..." (after a language change the focus comes back to
+   the button with the same data-fid); a lab that uses the arrow keys
+   calls event.preventDefault() (then ← → don't change the lesson).
+   A focused box that scrolls sideways (overflow-x: auto, like the
+   wide table of lesson 9 on a phone) keeps ← → for its scrolling.
+
+   HOW TO ADD A LESSON (the same recipe is in README.md, "Add a lesson")
+   1. Section 2: add an entry at the end of LESSONS with the next
+      number and its track. Always add at the end: saved progress
+      remembers lessons by their number.
+   2. Its texts, "lessons.l<n>.*", in js/content/lessons-deep.js, in
+      both languages: copy the block of lesson 7 (title, desc, s1-s4
+      .h / .p / .note, key1-3, tip, tipBtn, q, a1-a3, explain).
+   3. Its mini-lab: reuse one of the six (lab: "sort", ...) or write
+      js/lessons/<name>.js as above (lab: "<name>"), with its texts
+      "lessons.w<n>.*" (at least .title and .intro).
+   The cards, the lesson map, the counts, the certificates, the Ctrl+K
+   command and the site search follow the list by themselves.
    ========================================================= */
 
 (function () {
@@ -59,55 +126,105 @@
     const NO_VOICE_WARNING_GAP = 5000;            // "no voice" is shown at most once in this time
     const CERT_ICON_STEP = 190;                   // the space between the lesson icons on the certificate (canvas pixels)
     const CERT_ICON_ROW = 1330;                   // their row is never wider than this: with more than 8 lessons, the icons get smaller
+    const CERT_ROW_GAP = 152;                     // the full-course certificate has one row of icons per track, this far apart
     const DOWNLOAD_CLEANUP_TIME = 4000;           // the certificate's temporary download address is freed after this
+    const LAB_FOLDER = "js/lessons/";             // a mini-lab with its own file is js/lessons/<name>.js ...
+    const LAB_STYLES = "css/lessons-labs.css";    // ... and these are the styles of those mini-labs (both load on first use)
 
-    // ---------- 2. The lessons ----------
-    // The texts are in js/content/lessons.js (keys "lessons.l1.title", ...).
-    // rgb: which accent colour the lesson uses. lab: which mini-lab it shows.
+    // ---------- 2. The tracks and the lessons ----------
+    // The tracks, in order. A track's lessons are the lessons that name it.
+    // Texts: "lessons.track.<id>.title" and ".desc". rgb: the track's colour.
+    const TRACKS = [
+        { id: "basics", icon: "🌱", rgb: "--accent-rgb" },
+        { id: "deep", icon: "🤿", rgb: "--accent-2-rgb" }
+    ];
+
+    // The texts are in js/content/lessons.js (lessons 1-6) and js/content/lessons-deep.js
+    // (7 and on): keys "lessons.l1.title", ... track: the lesson's track (see TRACKS).
+    // rgb: which accent colour the lesson uses. lab: which mini-lab it shows (one of the
+    // six in sections 10-15, or the name of its own file in js/lessons/, see section 16).
     // correct: index (0, 1 or 2) of the right answer to "Check yourself".
     // notes: which sections have a small highlighted box, and its type.
+    // tryIt: where "Try it on this site" goes: a section of the page (TRY_SECTIONS below)
+    // or the id of an AI Lab experiment ("classifier", "vision"...). tryIcon: its emoji.
     const LESSONS = [
         {
-            number: 1, icon: "🤖", level: "beginner", minutes: 4, rgb: "--accent-rgb",
+            number: 1, track: "basics", icon: "🤖", level: "beginner", minutes: 4, rgb: "--accent-rgb",
             sections: 4, notes: { 1: "fact", 2: "example" }, lab: "sort", correct: 1,
             tryIt: "timeline", tryIcon: "🕰️",
             keywords: "what is ai artificial intelligence basics что такое ии искусственный интеллект основы"
         },
         {
-            number: 2, icon: "📊", level: "beginner", minutes: 5, rgb: "--accent-2-rgb",
+            number: 2, track: "basics", icon: "📊", level: "beginner", minutes: 5, rgb: "--accent-2-rgb",
             sections: 4, notes: { 2: "tip" }, lab: "fit", correct: 2,
             tryIt: "classifier", tryIcon: "🧪",
             keywords: "machine learning training data model машинное обучение данные модель"
         },
         {
-            number: 3, icon: "🧠", level: "intermediate", minutes: 6, rgb: "--accent-3-rgb",
+            number: 3, track: "basics", icon: "🧠", level: "intermediate", minutes: 6, rgb: "--accent-3-rgb",
             sections: 4, notes: { 3: "example" }, lab: "neuron", correct: 0,
             tryIt: "classifier", tryIcon: "🧪",
             keywords: "neural networks neuron deep learning нейронные сети нейрон глубокое обучение нейросеть"
         },
         {
-            number: 4, icon: "💬", level: "intermediate", minutes: 6, rgb: "--accent-rgb",
+            number: 4, track: "basics", icon: "💬", level: "intermediate", minutes: 6, rgb: "--accent-rgb",
             sections: 4, notes: { 3: "example" }, lab: "words", correct: 2,
             tryIt: "predictor", tryIcon: "🔮",
             keywords: "generative ai chatbots llm chatgpt генеративный ии чат-боты чатбот языковая модель"
         },
         {
-            number: 5, icon: "📱", level: "beginner", minutes: 4, rgb: "--accent-2-rgb",
+            number: 5, track: "basics", icon: "📱", level: "beginner", minutes: 4, rgb: "--accent-2-rgb",
             sections: 4, notes: { 1: "fact" }, lab: "day", correct: 1,
             tryIt: "glossary", tryIcon: "📖",
             keywords: "everyday life phone recommendations повседневная жизнь телефон рекомендации"
         },
         {
-            number: 6, icon: "⚖️", level: "intermediate", minutes: 5, rgb: "--accent-3-rgb",
+            number: 6, track: "basics", icon: "⚖️", level: "intermediate", minutes: 5, rgb: "--accent-3-rgb",
             sections: 4, notes: { 2: "tip" }, lab: "dilemmas", correct: 0,
             tryIt: "quiz", tryIcon: "🏆",
             keywords: "ethics safety bias deepfakes privacy этика безопасность предвзятость дипфейки приватность"
+        },
+        {
+            number: 7, track: "deep", icon: "👁️", level: "intermediate", minutes: 7, rgb: "--accent-2-rgb",
+            sections: 4, notes: { 1: "fact", 2: "example", 4: "example" }, lab: "pixels", correct: 2,
+            tryIt: "vision", tryIcon: "🔬",
+            keywords: "computer vision how computers see pixels images filters convolution cnn компьютерное зрение как компьютер видит пиксели картинки фильтры свёртка свёрточная сеть"
+        },
+        {
+            number: 8, track: "deep", icon: "🎯", level: "intermediate", minutes: 7, rgb: "--accent-3-rgb",
+            sections: 4, notes: { 1: "example", 3: "fact", 4: "example" }, lab: "slots", correct: 0,
+            tryIt: "maze", tryIcon: "🤖",
+            keywords: "reinforcement learning trial and error reward agent q-learning обучение с подкреплением пробы ошибки награда агент"
+        },
+        {
+            number: 9, track: "deep", icon: "✍️", level: "intermediate", minutes: 8, rgb: "--accent-rgb",
+            sections: 4, notes: { 1: "fact", 3: "fact", 4: "tip" }, lab: "temperature", correct: 1,
+            tryIt: "chatbot", tryIcon: "💬",
+            keywords: "how chatbots write tokens next token attention transformer temperature gpt как чат-боты пишут токены внимание трансформер температура"
         }
     ];
+
+    // "Try it on this site" targets that are sections of the page (any other tryIt
+    // is an experiment of the AI Lab)
+    const TRY_SECTIONS = ["timeline", "glossary", "quiz", "lab"];
 
     const TOTAL = LESSONS.length;
     // Texts and the hero number can show it: {lessonCount}, data-count-name="lessonCount"
     A.setTextValue("lessonCount", TOTAL);
+
+    // Each track's lesson numbers, in order: { basics: [1, 2, ...], deep: [7, ...] }
+    const TRACK_BY_ID = {};
+    const TRACK_LESSONS = {};
+    TRACKS.forEach(function (track) {
+        TRACK_BY_ID[track.id] = track;
+        TRACK_LESSONS[track.id] = LESSONS.filter(function (lesson) { return lesson.track === track.id; })
+            .map(function (lesson) { return lesson.number; });
+    });
+    // The lesson map lines its rows up in this many columns (the longest track)
+    const LONGEST_TRACK = Math.max.apply(null, TRACKS.map(function (track) { return TRACK_LESSONS[track.id].length; }));
+
+    // The certificates: one per track, and "all" for every lesson (the full course)
+    const CERTIFICATES = TRACKS.map(function (track) { return track.id; }).concat("all");
 
     // ---------- 3. Small helpers ----------
     // (Only what core.js has no helper for.)
@@ -129,6 +246,26 @@
 
     function lessonTitle(n) {
         return t(lessonKey(n, "title"));
+    }
+
+    // The track of lesson n: "basics", "deep"... ("" when there is no such lesson)
+    function trackOf(n) {
+        const lesson = LESSONS[n - 1];
+        return lesson ? lesson.track : "";
+    }
+
+    function trackTitle(id) {
+        return t("lessons.track." + id + ".title");
+    }
+
+    // The lessons a certificate is for: a track's lessons, or all of them ("all")
+    function certLessons(kind) {
+        if (kind === "all") return LESSONS.map(function (lesson) { return lesson.number; });
+        return TRACK_LESSONS[kind] || [];
+    }
+
+    function certTitle(kind) {
+        return kind === "all" ? t("lessons.cert.all") : trackTitle(kind);
     }
 
     // Redraws a part of the page from scratch, but keeps the keyboard focus on
@@ -153,9 +290,42 @@
 
     const checkAnswers = {};   // lesson number -> chosen option (this visit only)
     const labState = {};       // lesson number -> state of its mini-lab
+    // Can this browser keep the progress? A test write, removed at once, so the panel
+    // says the truth from the start (it changes again if a later save fails)
+    let canSave = A.storage.set("lessons.probe", 1);
+    A.storage.remove("lessons.probe");
 
     function saveCompleted() {
-        A.storage.set("lessons.completed", Array.from(completed).sort(function (a, b) { return a - b; }));
+        canSave = A.storage.set("lessons.completed", Array.from(completed).sort(function (a, b) { return a - b; }));
+    }
+
+    // How many of these lessons are done
+    function countDone(numbers) {
+        return numbers.filter(function (n) { return completed.has(n); }).length;
+    }
+
+    function isTrackDone(id) {
+        const numbers = TRACK_LESSONS[id] || [];
+        return numbers.length > 0 && countDone(numbers) === numbers.length;
+    }
+
+    // On phones, the cards of a track after the first can be folded away, so the
+    // section doesn't get endless: "open", "closed", or "auto" (open once the track
+    // before it is done or one of its lessons was opened; see trackUnfolded)
+    const FOLD_CHOICES = ["auto", "open", "closed"];
+    const savedView = A.storage.get("lessons.view", null);
+    const savedFolds = savedView && savedView.v === 1 && savedView.tracks && typeof savedView.tracks === "object"
+        ? savedView.tracks
+        : {};
+    const view = { v: 1, tracks: {} };
+    TRACKS.forEach(function (track, index) {
+        if (index === 0) return;
+        const choice = savedFolds[track.id];
+        view.tracks[track.id] = FOLD_CHOICES.indexOf(choice) !== -1 ? choice : "auto";
+    });
+
+    function saveView() {
+        A.storage.set("lessons.view", view);
     }
 
     // The first lesson that is not completed yet (0 when all are done)
@@ -166,7 +336,7 @@
         return 0;
     }
 
-    // ---------- 5. Progress panel and cards (built once) ----------
+    // ---------- 5. Progress panel, certificates and track groups (built once) ----------
     function cardHTML(lesson) {
         const n = lesson.number;
         return `
@@ -180,7 +350,7 @@
                     <span>${lesson.icon}</span>
                     <span class="lsn-card-tick">✓</span>
                 </div>
-                <h3 class="lsn-card-title" data-i18n="lessons.l${n}.title">${lessonTitle(n)}</h3>
+                <h4 class="lsn-card-title" data-i18n="lessons.l${n}.title">${lessonTitle(n)}</h4>
                 <p class="lsn-card-desc" data-i18n="lessons.l${n}.desc">${t(lessonKey(n, "desc"))}</p>
                 <div class="lsn-card-meta">
                     <span class="chip lsn-level lsn-level-${lesson.level}">
@@ -194,6 +364,73 @@
                     <span class="lsn-arrow" aria-hidden="true">→</span>
                 </button>
             </article>`;
+    }
+
+    // One round button per lesson on the map, joined by glowing lines
+    function stepHTML(n) {
+        return `
+            <li class="lsn-step" data-step="${n}">
+                <button type="button" class="lsn-node" data-open="${n}">
+                    <span class="lsn-node-num" aria-hidden="true">${n}</span>
+                    <span class="lsn-node-check" aria-hidden="true">✓</span>
+                </button>
+                <span class="lsn-step-label" aria-hidden="true" data-i18n="lessons.l${n}.title">${lessonTitle(n)}</span>
+            </li>`;
+    }
+
+    // The lesson map has one row per track: its name, then its lessons.
+    // (The list is named "Basics: 2 of 6 done" by updateHUD, so the label is only for the eyes.)
+    function mapRowHTML(track) {
+        return `
+            <div class="lsn-map-row" data-track="${track.id}">
+                <p class="lsn-map-label" aria-hidden="true">
+                    <span class="lsn-map-icon">${track.icon}</span>
+                    <span class="lsn-map-name" data-i18n="lessons.track.${track.id}.title">${trackTitle(track.id)}</span>
+                    <span class="lsn-map-count mono" data-ref="mapCount"></span>
+                </p>
+                <ol class="lsn-path" data-ref="mapRow">${TRACK_LESSONS[track.id].map(stepHTML).join("")}</ol>
+            </div>`;
+    }
+
+    // A track: its header (name, description, progress), then its lesson cards.
+    // A track after the first has a button that folds its cards away on phones.
+    function trackHTML(track, index) {
+        const id = track.id;
+        const fold = index === 0 ? "" : `
+                <button type="button" class="btn btn-ghost lsn-track-fold" data-fold="${id}" aria-controls="lsn-cards-${id}" aria-expanded="true">
+                    <span data-ref="foldText"></span>
+                    <span class="lsn-fold-arrow" aria-hidden="true">⌄</span>
+                </button>`;
+        return `
+            <section class="lsn-track" id="lsn-track-${id}" data-track="${id}" aria-labelledby="lsn-track-title-${id}" style="--lsn-rgb: var(${track.rgb});">
+                <header class="lsn-track-head">
+                    <span class="lsn-track-icon" aria-hidden="true">${track.icon}</span>
+                    <div class="lsn-track-text">
+                        <p class="lsn-track-label mono" data-ref="trackLabel"></p>
+                        <h3 class="lsn-track-title" id="lsn-track-title-${id}" data-i18n="lessons.track.${id}.title">${trackTitle(id)}</h3>
+                        <p class="lsn-track-desc" data-i18n="lessons.track.${id}.desc">${t("lessons.track." + id + ".desc")}</p>
+                        ${index === 0 ? "" : '<p class="lsn-track-hint" data-ref="trackHint" hidden></p>'}
+                    </div>
+                    <div class="lsn-track-progress">
+                        <p class="lsn-track-count" data-ref="trackCount"></p>
+                        <span class="lsn-track-bar" aria-hidden="true"><span data-ref="trackBar"></span></span>
+                    </div>
+                </header>${fold}
+                <div class="lsn-grid" id="lsn-cards-${id}">${TRACK_LESSONS[id].map(function (n) { return cardHTML(LESSONS[n - 1]); }).join("")}</div>
+            </section>`;
+    }
+
+    // One button per certificate in the certificate panel (a track's, or the full course)
+    function certPickHTML(kind) {
+        const icon = kind === "all" ? "🏆" : TRACK_BY_ID[kind].icon;
+        return `
+            <button type="button" class="lsn-cert-pick" data-cert="${kind}" data-fid="cert-${kind}" aria-pressed="false">
+                <span class="lsn-cert-pick-icon" aria-hidden="true">${icon}</span>
+                <span class="lsn-cert-pick-text">
+                    <span class="lsn-cert-pick-name" data-ref="certName"></span>
+                    <span class="lsn-cert-pick-state" data-ref="certState"></span>
+                </span>
+            </button>`;
     }
 
     mount.innerHTML = `
@@ -228,7 +465,8 @@
                 </button>
                 <button type="button" class="btn btn-ghost btn-small lsn-reset" data-ref="reset"></button>
             </div>
-            <ol class="lsn-path" data-ref="path"></ol>
+            <div class="lsn-map" data-ref="path" role="group" style="--lsn-cols: ${LONGEST_TRACK};">${TRACKS.map(mapRowHTML).join("")}</div>
+            <p class="lsn-privacy"><span aria-hidden="true">🔒</span> <span data-ref="privacy"></span></p>
             <p class="sr-only" aria-live="polite" data-ref="live"></p>
         </div>
 
@@ -237,9 +475,12 @@
                 <p class="lsn-hud-label mono">🏆 AI Compass</p>
                 <h3 class="lsn-cert-title" id="lsn-cert-title" data-i18n="lessons.cert.title">${t("lessons.cert.title")}</h3>
                 <p class="lsn-cert-intro" data-i18n="lessons.cert.intro">${t("lessons.cert.intro")}</p>
+                <p class="lsn-field-label" id="lsn-cert-pick-label" data-i18n="lessons.cert.pick">${t("lessons.cert.pick")}</p>
+                <div class="lsn-cert-picks" role="group" aria-labelledby="lsn-cert-pick-label">${CERTIFICATES.map(certPickHTML).join("")}</div>
                 <label class="lsn-field-label" for="lsn-cert-name" data-i18n="lessons.cert.nameLabel">${t("lessons.cert.nameLabel")}</label>
-                <input class="lsn-input" id="lsn-cert-name" type="text" maxlength="40" autocomplete="name" spellcheck="false"
+                <input class="lsn-input" id="lsn-cert-name" type="text" maxlength="40" autocomplete="name" spellcheck="false" aria-describedby="lsn-cert-privacy"
                        data-i18n-attr="placeholder:lessons.cert.placeholder" placeholder="${esc(t("lessons.cert.placeholder"))}">
+                <p class="lsn-cert-privacy" id="lsn-cert-privacy"><span aria-hidden="true">🔒</span> <span data-i18n="lessons.cert.privacy">${t("lessons.cert.privacy")}</span></p>
                 <button type="button" class="btn btn-primary" data-ref="certDownload">
                     <span aria-hidden="true">⬇</span>
                     <span data-i18n="lessons.cert.download">${t("lessons.cert.download")}</span>
@@ -250,7 +491,7 @@
             </div>
         </section>
 
-        <div class="lsn-grid">${LESSONS.map(cardHTML).join("")}</div>
+        <div class="lsn-tracks">${TRACKS.map(trackHTML).join("")}</div>
     `;
 
     const hud = {
@@ -263,34 +504,40 @@
         certToggle: ref(mount, "certToggle"),
         reset: ref(mount, "reset"),
         path: ref(mount, "path"),
+        privacy: ref(mount, "privacy"),
         live: ref(mount, "live")
     };
 
     const cert = {
         root: mount.querySelector(".lsn-cert"),
+        picks: Array.prototype.slice.call(mount.querySelectorAll(".lsn-cert-pick")),
         input: mount.querySelector("#lsn-cert-name"),
         download: ref(mount, "certDownload"),
         canvas: ref(mount, "certCanvas")
     };
 
-    const grid = mount.querySelector(".lsn-grid");
-    const cards = Array.prototype.slice.call(grid.querySelectorAll(".lsn-card"));
-
-    // The lesson map: one round button per lesson, joined by glowing lines
-    hud.path.innerHTML = LESSONS.map(function (lesson) {
-        return `
-            <li class="lsn-step" data-step="${lesson.number}">
-                <button type="button" class="lsn-node" data-open="${lesson.number}">
-                    <span class="lsn-node-num" aria-hidden="true">${lesson.number}</span>
-                    <span class="lsn-node-check" aria-hidden="true">✓</span>
-                </button>
-                <span class="lsn-step-label" aria-hidden="true" data-i18n="lessons.l${lesson.number}.title">${lessonTitle(lesson.number)}</span>
-            </li>`;
-    }).join("");
-
+    const tracksRoot = mount.querySelector(".lsn-tracks");
+    const cards = Array.prototype.slice.call(tracksRoot.querySelectorAll(".lsn-card"));
     const steps = Array.prototype.slice.call(hud.path.querySelectorAll(".lsn-step"));
 
-    // ---------- 6. Updating the panel and the cards ----------
+    // The parts of each track that change: its header, its fold button, its row on the map
+    const trackParts = TRACKS.map(function (track) {
+        const root = tracksRoot.querySelector('.lsn-track[data-track="' + track.id + '"]');
+        const row = hud.path.querySelector('.lsn-map-row[data-track="' + track.id + '"]');
+        return {
+            track: track,
+            root: root,
+            label: ref(root, "trackLabel"),
+            count: ref(root, "trackCount"),
+            bar: ref(root, "trackBar"),
+            hint: ref(root, "trackHint"),
+            fold: root.querySelector("[data-fold]"),
+            mapRow: ref(row, "mapRow"),
+            mapCount: ref(row, "mapCount")
+        };
+    });
+
+    // ---------- 6. Updating the panel, the tracks and the cards ----------
     let ringCount = null;       // the percentage counting up (A.countUp), once the ring has started
     let ringStarted = false;
 
@@ -314,21 +561,32 @@
             ? t("lessons.hud.allDone")
             : A.plural("lessons.hud.left", TOTAL - done) + " · " + t("lessons.hud.upNext", { title: lessonTitle(next) });
 
-        // Buttons
+        // Buttons. The certificate button shows as soon as one certificate is earned.
         hud.continueButton.hidden = done === TOTAL;
         hud.continueButton.innerHTML = esc(done === 0 ? t("lessons.hud.start") : t("lessons.hud.continue", { n: next })) +
             ' <span class="lsn-arrow" aria-hidden="true">→</span>';
-        hud.certToggle.hidden = done !== TOTAL;
-        if (done !== TOTAL) toggleCertificate(false);
+        const hasCertificate = earnedCertificates().length > 0;
+        hud.certToggle.hidden = !hasCertificate;
+        if (!hasCertificate) toggleCertificate(false);
+        else if (!cert.root.hidden) updateCertificatePicker();
         hud.reset.hidden = done === 0;
         const armed = resetPress.armed;
         hud.reset.classList.toggle("is-armed", armed);
         hud.reset.textContent = (armed ? "⚠ " : "↺ ") + t(armed ? "lessons.hud.resetConfirm" : "lessons.hud.reset");
 
-        // The lesson map
+        // The lesson map: one row per track ("Basics: 2 of 6 done"), one node per lesson
         hud.path.setAttribute("aria-label", t("lessons.hud.pathLabel"));
-        steps.forEach(function (step, index) {
-            const n = index + 1;
+        trackParts.forEach(function (part) {
+            const numbers = TRACK_LESSONS[part.track.id];
+            const doneHere = countDone(numbers);
+            part.mapCount.textContent = A.format.number(doneHere) + "/" + A.format.number(numbers.length);
+            part.mapRow.setAttribute("aria-label", t("lessons.hud.mapRow", {
+                track: trackTitle(part.track.id),
+                done: A.plural("lessons.track.done", doneHere, { total: numbers.length })
+            }));
+        });
+        steps.forEach(function (step) {
+            const n = Number(step.getAttribute("data-step"));
             const isDone = completed.has(n);
             step.classList.toggle("is-done", isDone);
             step.classList.toggle("is-next", n === next);
@@ -338,7 +596,63 @@
             node.title = lessonTitle(n);
         });
 
+        // Where the progress is kept (or that it can't be kept)
+        hud.privacy.textContent = t(canSave ? "lessons.hud.privacy" : "lessons.hud.noSave");
+
         if (ringStarted) setRing(percent);
+    }
+
+    // On phones a track after the first shows its cards when the learner unfolds it,
+    // or ("auto") once the track before it is done or one of its own lessons is done
+    function trackUnfolded(index) {
+        const id = TRACKS[index].id;
+        const choice = view.tracks[id];
+        if (choice === "open") return true;
+        if (choice === "closed") return false;
+        return isTrackDone(TRACKS[index - 1].id) || countDone(TRACK_LESSONS[id]) > 0;
+    }
+
+    // Opening a lesson of a folded track unfolds it (for good): the reader comes back to its card
+    function unfoldTrackOf(n) {
+        const id = trackOf(n);
+        if (!Object.prototype.hasOwnProperty.call(view.tracks, id) || view.tracks[id] === "open") return;
+        view.tracks[id] = "open";
+        saveView();
+        updateTracks();
+    }
+
+    function toggleFold(id) {
+        const index = TRACKS.indexOf(TRACK_BY_ID[id]);
+        if (index < 1) return;
+        view.tracks[id] = trackUnfolded(index) ? "closed" : "open";
+        saveView();
+        updateTracks();
+    }
+
+    // The track headers: "TRACK 2 · 3 LESSONS", "1 of 3 done" and its bar, the hint,
+    // the fold button. (The folding itself only happens on phones: see css/lessons.css.)
+    function updateTracks() {
+        trackParts.forEach(function (part, index) {
+            const id = part.track.id;
+            const numbers = TRACK_LESSONS[id];
+            const doneHere = countDone(numbers);
+            const isComplete = numbers.length > 0 && doneHere === numbers.length;
+            part.root.classList.toggle("is-complete", isComplete);
+            part.label.textContent = t("lessons.track.label", { n: index + 1 }) + " · " + A.plural("lessons.track.lessons", numbers.length);
+            part.count.textContent = (isComplete ? "✓ " : "") + A.plural("lessons.track.done", doneHere, { total: numbers.length });
+            part.bar.style.width = (numbers.length ? (doneHere / numbers.length) * 100 : 0) + "%";
+            if (index === 0) return;
+
+            // Nothing is locked: the hint only suggests finishing the track before it first
+            const before = TRACKS[index - 1].id;
+            part.hint.hidden = isTrackDone(before);
+            part.hint.textContent = "💡 " + t("lessons.track.hint", { before: trackTitle(before) });
+
+            const open = trackUnfolded(index);
+            part.root.classList.toggle("is-folded", !open);
+            part.fold.setAttribute("aria-expanded", String(open));
+            ref(part.fold, "foldText").textContent = t(open ? "lessons.track.hide" : "lessons.track.show", { track: trackTitle(id) });
+        });
     }
 
     function updateCards() {
@@ -364,6 +678,7 @@
 
     function updateProgress() {
         updateHUD();
+        updateTracks();
         updateCards();
         if (reader.open) updateReaderChrome();
     }
@@ -400,20 +715,28 @@
     function setCompleted(n, isDone) {
         const before = completed.size;
         const wasDone = completed.has(n);
+        const track = trackOf(n);
+        const trackWasDone = isTrackDone(track);
         if (isDone) completed.add(n);
         else completed.delete(n);
         saveCompleted();
         updateProgress();
+        const finishedTrack = isDone && !trackWasDone && isTrackDone(track);
         if (isDone && !wasDone) A.track("lesson.complete", { n: n });
+        if (finishedTrack) A.track("track.complete", { track: track });
 
         if (!isDone) {
             A.toast(t("lessons.toast.undone"), "↩️");
             return;
         }
-        // The very last lesson gets one big message instead of two small ones
+        // The very last lesson gets one big message instead of two small ones,
+        // and the last lesson of a track says that its certificate is ready
         if (completed.size === TOTAL && before < TOTAL) {
             if (A.effects) A.effects.confetti();   // two bursts from the bottom corners
             A.toast(A.plural("lessons.toast.all", TOTAL), "🏆");
+        } else if (finishedTrack) {
+            if (A.effects) A.effects.confetti();
+            A.toast(t("lessons.toast.track", { track: trackTitle(track) }), "🎓");
         } else {
             A.toast(t("lessons.toast.done", { title: lessonTitle(n) }), "✅");
         }
@@ -443,16 +766,54 @@
         timeout: RESET_CONFIRM_TIME
     });
 
-    // ---------- 8. The certificate ----------
-    // A picture drawn on a <canvas> (only while it is shown) that can be saved as a PNG file
+    // ---------- 8. The certificates ----------
+    // One per finished track, and one for every lesson ("all", the full course).
+    // The picture is drawn on a <canvas> (only while it is shown) and can be saved as a PNG file.
     let certFrame = 0;
+    let certKind = "";   // the certificate shown: "basics", "deep" or "all" ("" when none is earned)
+
+    // The certificates earned so far, in the order of CERTIFICATES
+    function earnedCertificates() {
+        return CERTIFICATES.filter(function (kind) {
+            const numbers = certLessons(kind);
+            return numbers.length > 0 && countDone(numbers) === numbers.length;
+        });
+    }
+
+    // The picker: the earned certificates can be chosen, the others say how many lessons are left.
+    // If the one shown is no longer earned (a lesson was un-completed), the best earned one is shown:
+    // the last in the list, so the full course comes first, then the later tracks.
+    function updateCertificatePicker() {
+        const earned = earnedCertificates();
+        if (earned.indexOf(certKind) === -1) certKind = earned.length ? earned[earned.length - 1] : "";
+        cert.picks.forEach(function (button) {
+            const kind = button.getAttribute("data-cert");
+            const isEarned = earned.indexOf(kind) !== -1;
+            const numbers = certLessons(kind);
+            button.setAttribute("aria-pressed", String(kind === certKind));
+            button.setAttribute("aria-disabled", String(!isEarned));
+            button.classList.toggle("is-earned", isEarned);
+            ref(button, "certName").textContent = certTitle(kind);
+            ref(button, "certState").textContent = isEarned
+                ? "✓ " + t("lessons.cert.earned")
+                : A.plural("lessons.cert.toGo", numbers.length - countDone(numbers));
+        });
+    }
+
+    function pickCertificate(kind) {
+        if (earnedCertificates().indexOf(kind) === -1) return;
+        certKind = kind;
+        updateCertificatePicker();
+        drawCertificate();
+    }
 
     function toggleCertificate(force) {
         const show = typeof force === "boolean" ? force : cert.root.hidden;
-        if (show && completed.size !== TOTAL) return;
+        if (show && !earnedCertificates().length) return;
         cert.root.hidden = !show;
         hud.certToggle.setAttribute("aria-expanded", String(show));
         if (show) {
+            updateCertificatePicker();
             drawCertificate();
             cert.root.scrollIntoView({ behavior: A.motion.ok() ? "smooth" : "auto", block: "nearest" });
         }
@@ -508,7 +869,48 @@
         });
     }
 
+    // One lesson on the certificate: its icon in a ring, a check mark, and (if
+    // withTitle) its title under it. scale 1 is full size.
+    function drawLessonBadge(ctx, lesson, x, y, scale, withTitle, look) {
+        const scaled = function (size) { return Math.round(size * scale); };
+        ctx.beginPath();
+        ctx.arc(x, y, 54 * scale, 0, Math.PI * 2);
+        ctx.fillStyle = look.rgba("--accent", 0.14);
+        ctx.fill();
+        ctx.strokeStyle = look.gradient;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.font = scaled(46) + "px " + look.fonts.body;
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = look.color.text;
+        ctx.fillText(lesson.icon, x, y + 3 * scale);
+        ctx.beginPath();
+        ctx.arc(x + 40 * scale, y - 40 * scale, 17 * scale, 0, Math.PI * 2);
+        ctx.fillStyle = look.color.success;
+        ctx.fill();
+        ctx.fillStyle = look.color.bg;
+        ctx.font = "700 " + scaled(20) + "px " + look.fonts.body;
+        ctx.fillText("✓", x + 40 * scale, y - 39 * scale);
+        ctx.textBaseline = "alphabetic";
+        if (withTitle) {
+            ctx.fillStyle = look.color.muted;
+            wrapText(ctx, lessonTitle(lesson.number), x, y + 92 * scale, 176 * scale, "600", scaled(19), look.fonts.body);
+        }
+    }
+
+    // A row of lessons centred on x = W / 2. The row is never wider than
+    // CERT_ICON_ROW: with many lessons, the icons get smaller (never bigger than maxScale).
+    function drawLessonRow(ctx, numbers, W, y, maxScale, withTitle, look) {
+        const count = numbers.length;
+        const scale = Math.min(maxScale, CERT_ICON_ROW / Math.max(1, (count - 1) * CERT_ICON_STEP));
+        numbers.forEach(function (n, index) {
+            const x = W / 2 + (index - (count - 1) / 2) * CERT_ICON_STEP * scale;
+            drawLessonBadge(ctx, LESSONS[n - 1], x, y, scale, withTitle, look);
+        });
+    }
+
     function drawCertificate() {
+        if (!certKind) return;
         const canvas = cert.canvas;
         const ctx = canvas.getContext("2d");
         const W = canvas.width;
@@ -531,9 +933,12 @@
             mono: A.cssVar("--font-mono") || "monospace"
         };
         const name = cert.input.value.trim() || t("lessons.cert.defaultName");
+        const numbers = certLessons(certKind);
         const gradient = ctx.createLinearGradient(0, 0, W, H);
         gradient.addColorStop(0, color.accent);
         gradient.addColorStop(1, color.accent2);
+        // What the lesson badges need (see drawLessonBadge)
+        const look = { rgba: rgba, color: color, fonts: fonts, gradient: gradient };
 
         ctx.save();
         ctx.clearRect(0, 0, W, H);
@@ -588,11 +993,10 @@
             ctx.stroke();
         });
 
-        // Brand and heading
+        // Brand with the certificate's name ("AI COMPASS: BASICS"), and heading
         ctx.fillStyle = color.accent2;
-        ctx.font = "600 30px " + fonts.mono;
         if ("letterSpacing" in ctx) ctx.letterSpacing = "8px";
-        ctx.fillText("🧭 AI COMPASS", W / 2, 168);
+        fitText(ctx, "🧭 AI COMPASS: " + certTitle(certKind).toUpperCase(), W / 2, 168, 1300, "600", 30, fonts.mono);
         if ("letterSpacing" in ctx) ctx.letterSpacing = "2px";
         ctx.fillStyle = gradient;
         fitText(ctx, t("lessons.cert.heading").toUpperCase(), W / 2, 268, 1280, "700", 58, fonts.display);
@@ -612,41 +1016,30 @@
         ctx.fillStyle = line;
         ctx.fillRect(W / 2 - 380, 492, 760, 3);
 
-        // "for completing all six lessons": the number as a word when the texts have one
-        const countWord = "lessons.cert.count." + TOTAL;
+        // "for completing all six lessons (of the Basics track)": the number as a word
+        // when the texts have one ("lessons.cert.count.6"), otherwise in digits
+        const countWord = "lessons.cert.count." + numbers.length;
+        const values = A.has(countWord) ? { n: t(countWord) } : {};
+        const forText = certKind === "all"
+            ? A.plural("lessons.cert.for", numbers.length, values)
+            : A.plural("lessons.cert.forTrack", numbers.length, Object.assign({ track: certTitle(certKind) }, values));
         ctx.fillStyle = color.muted;
-        fitText(ctx, A.plural("lessons.cert.for", TOTAL, A.has(countWord) ? { n: t(countWord) } : null),
-            W / 2, 566, 1240, "500", 34, fonts.body);
+        fitText(ctx, forText, W / 2, 566, 1240, "500", 34, fonts.body);
 
-        // Every lesson with a check mark, in one row around the middle
-        // (scale is 1, full size, for up to 8 lessons; smaller for more)
-        const scale = Math.min(1, CERT_ICON_ROW / Math.max(1, (TOTAL - 1) * CERT_ICON_STEP));
-        const scaled = function (size) { return Math.round(size * scale); };
-        LESSONS.forEach(function (lesson, index) {
-            const x = W / 2 + (index - (TOTAL - 1) / 2) * CERT_ICON_STEP * scale;
-            const y = 700;
-            ctx.beginPath();
-            ctx.arc(x, y, 54 * scale, 0, Math.PI * 2);
-            ctx.fillStyle = rgba("--accent", 0.14);
-            ctx.fill();
-            ctx.strokeStyle = gradient;
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.font = scaled(46) + "px " + fonts.body;
-            ctx.textBaseline = "middle";
-            ctx.fillStyle = color.text;
-            ctx.fillText(lesson.icon, x, y + 3 * scale);
-            ctx.beginPath();
-            ctx.arc(x + 40 * scale, y - 40 * scale, 17 * scale, 0, Math.PI * 2);
-            ctx.fillStyle = color.success;
-            ctx.fill();
-            ctx.fillStyle = color.bg;
-            ctx.font = "700 " + scaled(20) + "px " + fonts.body;
-            ctx.fillText("✓", x + 40 * scale, y - 39 * scale);
-            ctx.textBaseline = "alphabetic";
-            ctx.fillStyle = color.muted;
-            wrapText(ctx, lessonTitle(lesson.number), x, y + 92 * scale, 176 * scale, "600", scaled(19), fonts.body);
-        });
+        // The lessons with a check mark: a track's in one row around the middle, with
+        // their titles; the full course's in one row per track, with the track's name
+        if (certKind !== "all") {
+            drawLessonRow(ctx, numbers, W, 700, 1, true, look);
+        } else {
+            TRACKS.forEach(function (track, index) {
+                const y = 690 + index * CERT_ROW_GAP;
+                ctx.fillStyle = color.muted;
+                if ("letterSpacing" in ctx) ctx.letterSpacing = "4px";
+                fitText(ctx, trackTitle(track.id).toUpperCase(), W / 2, y - 60, 900, "600", 20, fonts.mono);
+                if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+                drawLessonRow(ctx, TRACK_LESSONS[track.id], W, y, 0.8, false, look);
+            });
+        }
 
         // Date and seal
         const date = A.format.date(new Date());
@@ -655,7 +1048,7 @@
         ctx.font = "500 26px " + fonts.mono;
         ctx.fillText(t("lessons.cert.date", { date: date }), 132, H - 128);
 
-        // The round "6/6" seal (lessons done / all lessons) sits low enough to leave space under the lesson names
+        // The round "6/6" seal (the certificate's lessons, all done) sits low enough to leave space under the lesson names
         const sealX = W - 220;
         const sealY = H - 168;
         ctx.textAlign = "center";
@@ -675,21 +1068,23 @@
         ctx.setLineDash([]);
         ctx.fillStyle = gradient;
         ctx.font = "700 40px " + fonts.display;
-        ctx.fillText(completed.size + "/" + TOTAL, sealX, sealY + 7);
+        ctx.fillText(A.format.number(countDone(numbers)) + "/" + A.format.number(numbers.length), sealX, sealY + 7);
         ctx.fillStyle = color.muted;
-        fitText(ctx, A.plural("lessons.cert.lessons", TOTAL).toUpperCase(), sealX, sealY + 36, 100, "600", 16, fonts.mono);
+        fitText(ctx, A.plural("lessons.cert.lessons", numbers.length).toUpperCase(), sealX, sealY + 36, 100, "600", 16, fonts.mono);
         ctx.restore();
 
-        canvas.setAttribute("aria-label", t("lessons.cert.preview", { name: name }));
+        canvas.setAttribute("aria-label", t("lessons.cert.preview", { cert: certTitle(certKind), name: name }));
     }
 
     function downloadCertificate() {
+        if (!certKind) return;
         drawCertificate();
-        A.track("certificate.make", {});
+        A.track("certificate.make", { track: certKind });
+        const fileName = "ai-compass-certificate-" + certKind + ".png";
         function save(url, isBlob) {
             const link = document.createElement("a");
             link.href = url;
-            link.download = "ai-compass-certificate.png";
+            link.download = fileName;
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -719,7 +1114,7 @@
     });
     cert.download.addEventListener("click", downloadCertificate);
 
-    // ---------- 9. Clicks on the panel and the cards ----------
+    // ---------- 9. Clicks on the panel, the certificates and the tracks ----------
     hud.root.addEventListener("click", function (event) {
         const node = event.target.closest("[data-open]");
         if (node) {
@@ -734,8 +1129,19 @@
         // (Reset listens by itself: see resetPress in section 7)
     });
 
-    // A click anywhere on a card opens it (the button is the keyboard way in)
-    grid.addEventListener("click", function (event) {
+    cert.root.addEventListener("click", function (event) {
+        const pick = event.target.closest("[data-cert]");
+        if (pick) pickCertificate(pick.getAttribute("data-cert"));
+    });
+
+    // The fold button of a track (phones), and a click anywhere on a card, which
+    // opens it (the card's button is the keyboard way in)
+    tracksRoot.addEventListener("click", function (event) {
+        const fold = event.target.closest("[data-fold]");
+        if (fold) {
+            toggleFold(fold.getAttribute("data-fold"));
+            return;
+        }
         const card = event.target.closest(".lsn-card");
         if (!card) return;
         const selection = window.getSelection ? String(window.getSelection()) : "";
@@ -1455,7 +1861,7 @@
         return null;
     }
 
-    // Which mini-lab each lesson uses, and how a fresh one starts.
+    // The six mini-labs of this file, and how a fresh one starts.
     // intro: the text under the lab's title, for a lab whose text counts something
     // (the others simply use "lessons.w<lesson>.intro")
     const LAB_TYPES = {
@@ -1476,8 +1882,10 @@
         }
     };
 
+    // Shows the mini-lab of lesson n in box. Returns what stops it (or null).
     function mountLab(n, box) {
         const type = LAB_TYPES[LESSONS[n - 1].lab];
+        if (!type) return mountFileLab(n, box);   // a mini-lab with its own file (section 16)
         if (!labState[n]) labState[n] = type.fresh();
         return type.mount(box, labState[n]);
     }
@@ -1485,10 +1893,123 @@
     // The text under the mini-lab's title in lesson n
     function labIntro(n) {
         const type = LAB_TYPES[LESSONS[n - 1].lab];
-        return type.intro ? type.intro() : t("lessons.w" + n + ".intro");
+        return type && type.intro ? type.intro() : t("lessons.w" + n + ".intro");
     }
 
-    // ---------- 16. The lesson reader (a full-screen dialog) ----------
+    // ---------- 16. Mini-labs in their own files (A.lessons.defineLab) ----------
+    // The contract is in the header of this file. js/lessons/<name>.js calls
+    // A.lessons.defineLab(name, { build, destroy, theme }) when it loads.
+    const fileLabs = Object.create(null);   // name -> the lab, once its file has run
+    let shownFileLab = null;                // { lab, host } while such a lab is on screen
+
+    function defineLab(name, lab) {
+        if (!/^[a-z0-9-]+$/.test(String(name)) || !lab || typeof lab.build !== "function") {
+            throw new Error("A.lessons.defineLab(name, { build(host, api) }): the name uses a-z, 0-9 and -");
+        }
+        fileLabs[name] = lab;
+    }
+
+    // What a lab gets to work with (see "A MINI-LAB IN ITS OWN FILE" at the top)
+    function labAPI(n, live) {
+        if (!labState[n]) labState[n] = {};
+        const prefix = "lessons.w" + n + ".";
+        return {
+            lesson: n,
+            state: labState[n],
+            text: function (key, values) { return t(prefix + key, values); },
+            plural: function (key, count, values) { return A.plural(prefix + key, count, values); },
+            get lang() { return A.lang; },
+            motion: A.motion,
+            announce: function (text) { A.announce(text, { region: live }); }
+        };
+    }
+
+    // Shows a lab whose code is in js/lessons/<name>.js: at once if that file has
+    // already run, otherwise after loading it (with a "loading" line, and a
+    // "Try again" button if it can't be loaded, for example offline)
+    function mountFileLab(n, box) {
+        const name = LESSONS[n - 1].lab;
+        const shell = labShell(box);
+        let stopped = false;
+        let shown = null;
+
+        function setState(state) {
+            box.setAttribute("data-lab-state", state);
+            if (state === "loading") shell.view.setAttribute("aria-busy", "true");
+            else shell.view.removeAttribute("aria-busy");
+        }
+
+        function showError() {
+            setState("error");
+            shell.view.innerHTML = `
+                <div class="lsn-lab-error" role="alert">
+                    <p><span aria-hidden="true">⚠️</span> ${t("lessons.lab.error")}</p>
+                    <button type="button" class="btn btn-ghost btn-small" data-lab-retry data-fid="lab-retry"><span aria-hidden="true">↻</span> ${t("lessons.lab.retry")}</button>
+                </div>`;
+        }
+
+        function build() {
+            const lab = fileLabs[name];
+            if (!lab) {
+                showError();   // the file ran but didn't define this lab
+                return;
+            }
+            shell.view.innerHTML = "";
+            try {
+                lab.build(shell.view, labAPI(n, shell.live));
+            } catch (error) {
+                console.error(error);
+                showError();
+                return;
+            }
+            shown = lab;
+            shownFileLab = { lab: lab, host: shell.view };
+            setState("ready");
+        }
+
+        function load() {
+            setState("loading");
+            shell.view.innerHTML = `
+                <p class="lsn-lab-loading" role="status">
+                    <span class="lsn-lab-spinner" aria-hidden="true"></span>
+                    <span>${t("lessons.lab.loading")}</span>
+                </p>`;
+            Promise.all([A.loadScript(LAB_FOLDER + name + ".js"), A.loadStyle(LAB_STYLES)]).then(function () {
+                if (!stopped) build();
+            }, function () {
+                if (!stopped) showError();
+            });
+        }
+
+        // "Try again": the button is about to go away, so the focus waits on the lab's
+        // title (screen readers hear the loading message, then the lab is there).
+        // A tap doesn't always focus the button, so the title gets the focus either way.
+        box.onclick = function (event) {
+            if (!event.target.closest("[data-lab-retry]")) return;
+            const title = parts.article.querySelector("#lsn-lab-title");
+            if (title) title.focus({ preventScroll: true });
+            load();
+        };
+
+        if (fileLabs[name]) build();
+        else load();
+
+        // Closing the reader, another lesson or a language change: the lab stops
+        return function () {
+            stopped = true;
+            if (shown && typeof shown.destroy === "function") {
+                try {
+                    shown.destroy(shell.view);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+            if (shownFileLab && shownFileLab.lab === shown) shownFileLab = null;
+            shown = null;
+        };
+    }
+
+    // ---------- 17. The lesson reader (a full-screen dialog) ----------
     // Its empty frame (about 50 elements) is built once, here at start-up: that costs
     // less than a millisecond. The lesson text, its mini-lab and the contents list
     // are built each time a lesson is shown.
@@ -1499,7 +2020,8 @@
         closeTimer: 0,
         scrollRatio: 0,
         cleanupLab: null,
-        previousHash: ""
+        previousHash: "",
+        peek: ""            // data-fid of the glossary word whose meaning is shown ("" for none)
     };
 
     let textSize = A.storage.get("lessons.textSize", "m");
@@ -1516,7 +2038,7 @@
             <header class="lsn-reader-top">
                 <div class="lsn-reader-where">
                     <span class="lsn-reader-pulse" aria-hidden="true"></span>
-                    <p class="lsn-reader-crumb mono" data-ref="crumb"></p>
+                    <p class="lsn-reader-crumb mono" data-ref="crumb"><span class="lsn-crumb-track" data-ref="crumbTrack"></span><span class="lsn-crumb-sep" aria-hidden="true"> · </span><span class="lsn-crumb-lesson" data-ref="crumbLesson"></span></p>
                     <p class="lsn-reader-keys mono" data-ref="keys"></p>
                 </div>
                 <div class="lsn-reader-tools">
@@ -1554,6 +2076,8 @@
                     <span class="lsn-nav-arrow" aria-hidden="true">→</span>
                 </button>
             </footer>
+            <p class="sr-only" aria-live="polite" data-ref="readerLive"></p>
+            <span id="lsn-term-hint" data-ref="termHint" hidden></span>
         </div>`;
     document.body.appendChild(readerEl);
 
@@ -1562,6 +2086,8 @@
         backdrop: readerEl.querySelector(".lsn-reader-backdrop"),
         progress: ref(readerEl, "progress"),
         crumb: ref(readerEl, "crumb"),
+        crumbTrack: ref(readerEl, "crumbTrack"),
+        crumbLesson: ref(readerEl, "crumbLesson"),
         keys: ref(readerEl, "keys"),
         listen: readerEl.querySelector('[data-action="listen"]'),
         listenText: ref(readerEl, "listenText"),
@@ -1574,7 +2100,9 @@
         prev: readerEl.querySelector('[data-action="prev"]'),
         next: readerEl.querySelector('[data-action="next"]'),
         complete: readerEl.querySelector('[data-action="complete"]'),
-        completeText: ref(readerEl, "completeText")
+        completeText: ref(readerEl, "completeText"),
+        live: ref(readerEl, "readerLive"),
+        termHint: ref(readerEl, "termHint")
     };
 
     // On very narrow screens the "Listen" button shows only its sound bars. The word
@@ -1749,9 +2277,71 @@
         if (first) first.focus({ preventScroll: true });
     }
 
+    // ----- Glossary words in the text -----
+    // The texts mark glossary words as <strong data-term="id">. A word that the glossary
+    // has becomes a button that shows its meaning just below the paragraph (with a way
+    // to the glossary); a word it doesn't have yet stays bold text.
+    function linkTerms(root) {
+        if (!A.glossary) return;
+        root.querySelectorAll("strong[data-term]").forEach(function (word, index) {
+            const id = word.getAttribute("data-term");
+            if (!A.glossary.term(id)) return;
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "lsn-term";
+            button.setAttribute("data-term", id);
+            button.setAttribute("data-fid", "term-" + index);
+            button.setAttribute("aria-expanded", "false");
+            button.setAttribute("aria-describedby", "lsn-term-hint");
+            button.innerHTML = word.innerHTML;
+            word.replaceWith(button);
+        });
+    }
+
+    // Shows the meaning of a glossary word under its paragraph (quiet: without telling screen readers)
+    function openPeek(word, quiet) {
+        const id = word.getAttribute("data-term");
+        const term = A.glossary ? A.glossary.term(id) : null;
+        if (!term) return;
+        closePeek(false);
+        reader.peek = word.getAttribute("data-fid");
+        const peek = document.createElement("div");
+        peek.className = "lsn-peek";
+        peek.id = "lsn-peek";
+        peek.innerHTML = `
+            <p class="lsn-peek-label mono"><span aria-hidden="true">📖</span> ${esc(t("lessons.term.label"))}</p>
+            <p class="lsn-peek-term">${esc(term.term)}</p>
+            <p class="lsn-peek-text">${esc(term.definition)}</p>
+            <div class="lsn-peek-actions">
+                <button type="button" class="btn btn-ghost btn-small" data-action="glossary" data-term="${esc(id)}" data-fid="peek-open">
+                    ${esc(t("lessons.term.open"))} <span aria-hidden="true">↗</span>
+                </button>
+                <button type="button" class="btn btn-ghost btn-small" data-action="peek-close" data-fid="peek-close" aria-label="${esc(t("lessons.term.closeLabel", { term: term.term }))}">
+                    ${esc(t("lessons.term.close"))}
+                </button>
+            </div>`;
+        (word.closest("p, li") || word).after(peek);
+        word.setAttribute("aria-expanded", "true");
+        word.setAttribute("aria-controls", "lsn-peek");
+        if (!quiet) A.announce(term.term + ": " + term.definition, { region: parts.live });
+    }
+
+    // focusWord: give the focus back to the word (the peek's own button is going away)
+    function closePeek(focusWord) {
+        const peek = parts.article.querySelector(".lsn-peek");
+        const word = reader.peek ? parts.article.querySelector('[data-fid="' + reader.peek + '"]') : null;
+        reader.peek = "";
+        if (peek) peek.remove();
+        if (!word) return;
+        word.setAttribute("aria-expanded", "false");
+        word.removeAttribute("aria-controls");
+        if (focusWord) word.focus({ preventScroll: true });
+    }
+
     // ----- Building and updating the reader -----
     function stopLab(pause) {
-        if (pause && labState[reader.lesson]) labState[reader.lesson].running = false;
+        const lesson = LESSONS[reader.lesson - 1];
+        if (pause && lesson && LAB_TYPES[lesson.lab] && labState[reader.lesson]) labState[reader.lesson].running = false;
         if (reader.cleanupLab) reader.cleanupLab();
         reader.cleanupLab = null;
     }
@@ -1761,6 +2351,7 @@
         stopLab(false);
         panel.style.setProperty("--lsn-rgb", "var(" + LESSONS[n - 1].rgb + ")");
         parts.article.innerHTML = articleHTML(n);
+        linkTerms(parts.article);
         // The window is named by the lesson's title. That title only exists from the
         // first lesson on, so the name is linked here and not in the HTML above.
         A.dom.setAttr(panel, "aria-labelledby", "lsn-reader-title");
@@ -1769,15 +2360,23 @@
         renderCheck();
     }
 
-    // Previous / next buttons. After the last lesson, "next" becomes "Finish".
+    // Previous / next buttons. After the last lesson, "next" becomes "Finish". When the
+    // other lesson is in another track, the button names that track ("Next · Deep dive").
     function setNavButton(button, target, kind) {
         const exists = target >= 1 && target <= TOTAL;
         const isFinish = kind === "next" && !exists;
+        const otherTrack = exists && trackOf(target) !== trackOf(reader.lesson);
+        const track = exists ? trackTitle(trackOf(target)) : "";
         button.setAttribute("aria-disabled", String(!exists && !isFinish));
         button.classList.toggle("is-finish", isFinish);
-        button.querySelector(".lsn-nav-small").textContent = t(isFinish ? "lessons.reader.finish" : "lessons.reader." + kind);
+        button.classList.toggle("is-new-track", otherTrack);
+        let small = t("lessons.reader." + kind);
+        if (isFinish) small = t("lessons.reader.finish");
+        else if (otherTrack) small = t("lessons.reader." + kind + "Track", { track: track });
+        button.querySelector(".lsn-nav-small").textContent = small;
         button.querySelector(".lsn-nav-title").textContent = exists ? lessonTitle(target) : isFinish ? t("lessons.reader.finishTitle") : "";
-        if (exists) button.setAttribute("aria-label", t("lessons.reader." + kind + "Label", { title: lessonTitle(target) }));
+        if (otherTrack) button.setAttribute("aria-label", t("lessons.reader." + kind + "TrackLabel", { track: track, title: lessonTitle(target) }));
+        else if (exists) button.setAttribute("aria-label", t("lessons.reader." + kind + "Label", { title: lessonTitle(target) }));
         else button.setAttribute("aria-label", t(isFinish ? "lessons.reader.finishLabel" : "lessons.reader.firstLesson"));
     }
 
@@ -1787,8 +2386,11 @@
         if (!n) return;
         const isDone = completed.has(n);
 
-        parts.crumb.textContent = t("lessons.reader.crumb", { n: pad(n), total: pad(TOTAL) });
+        // "Deep dive · Lesson 08 / 09": the track, then the lesson's place among all lessons
+        parts.crumbTrack.textContent = trackTitle(trackOf(n));
+        parts.crumbLesson.textContent = t("lessons.reader.crumb", { n: pad(n), total: pad(TOTAL) });
         parts.keys.textContent = t("lessons.reader.keys");
+        parts.termHint.textContent = t("lessons.term.hint");
         parts.tocTitle.textContent = t("lessons.reader.toc");
         parts.close.setAttribute("aria-label", t("lessons.reader.close"));
         parts.close.title = t("lessons.reader.close");
@@ -1901,14 +2503,19 @@
     parts.scroll.addEventListener("wheel", endHold, { passive: true });
     parts.scroll.addEventListener("touchstart", endHold, { passive: true });
 
-    function goToPart(name) {
+    // Scrolls the reader to a part ("s1", "lab", "keys", "check"...) and focuses its title.
+    // options.instant: no smooth scrolling (a lesson that opens at a part).
+    function goToPart(name, options) {
         const target = parts.article.querySelector('[data-part="' + name + '"]');
         if (!target) return;
         const box = parts.scroll;
-        const top = target.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - PART_TOP_GAP;
+        // While the window opens it is drawn a little smaller (a CSS scale): measure in its own size
+        const scale = panel.offsetHeight ? panel.getBoundingClientRect().height / panel.offsetHeight : 1;
+        const top = (target.getBoundingClientRect().top - box.getBoundingClientRect().top) / (scale || 1) + box.scrollTop - PART_TOP_GAP;
+        const smooth = A.motion.ok() && !(options && options.instant);
         markCurrentPart(name);
         holdSpy(A.util.clamp(top, 0, box.scrollHeight - box.clientHeight));
-        box.scrollTo({ top: top, behavior: A.motion.ok() ? "smooth" : "auto" });
+        box.scrollTo({ top: top, behavior: smooth ? "smooth" : "auto" });
         const heading = target.querySelector("[tabindex='-1']");
         if (heading) heading.focus({ preventScroll: true });
     }
@@ -1918,6 +2525,8 @@
         stopSpeaking();
         stopLab(true);
         reader.lesson = n;
+        reader.peek = "";
+        unfoldTrackOf(n);
         A.track("lesson.open", { n: n });
         renderLessonContent();
         updateReaderChrome();
@@ -1948,20 +2557,26 @@
         onReaderScroll();
     }
 
-    // An experiment of the lab (any id of its catalogue), or a section of the page
-    function isExperiment(id) {
-        if (id === "classifier" || id === "predictor") return true;
-        return !!A.lab && A.util.attempt(A.lab.list, []).some(function (entry) { return entry.id === id; });
+    // Does the AI Lab have this experiment? (The lab hub lists them; the lab before
+    // it had two: "classifier" and "predictor".)
+    function labHas(id) {
+        if (!A.lab) return false;
+        if (typeof A.lab.list === "function") {
+            return A.lab.list().some(function (item) { return item && item.id === id; });
+        }
+        return id === "classifier" || id === "predictor";
     }
 
-    // "Try it on this site": close the reader and jump to the right place
+    // "Try it on this site": close the reader and jump to the right place: a section,
+    // or an AI Lab experiment (the lab itself while it doesn't have that experiment)
     function runTryIt() {
         const target = LESSONS[reader.lesson - 1].tryIt;
+        const isSection = TRY_SECTIONS.indexOf(target) !== -1;
+        const sectionId = isSection ? target : "lab";
         closeReader({ restoreFocus: false });
         requestAnimationFrame(function () {
-            const sectionId = isExperiment(target) ? "lab" : target;
             A.dom.focusHeading(sectionId);   // the focus waits there if the feature moves it nowhere
-            if (sectionId === "lab" && A.lab) A.lab.open(target);
+            if (!isSection && labHas(target)) A.lab.open(target);
             else if (sectionId === "quiz" && A.quiz) A.quiz.start();
             else A.navigate(sectionId);
         });
@@ -2000,13 +2615,18 @@
             element.getClientRects().length > 0);
     }
 
-    function openLesson(number, opener) {
+    // options.part: open the lesson at one of its parts ("s2", "lab", "keys", "check"...)
+    function openLesson(number, opener, options) {
         const n = Number(number);
         if (!Number.isInteger(n) || n < 1 || n > TOTAL) return;
+        const part = options && /^[a-z0-9]+$/.test(String(options.part)) ? String(options.part) : "";
         if (reader.open) {
             if (n !== reader.lesson) showLesson(n);
+            if (part) goToPart(part, { instant: true });
             return;
         }
+        // The lesson's card must be there to come back to (a folded track unfolds)
+        unfoldTrackOf(n);
         clearTimeout(reader.closeTimer);
         reader.open = true;
         reader.opener = canTakeFocus(opener) ? opener : null;
@@ -2021,6 +2641,7 @@
         A.dom.replay(readerEl, "is-open");   // the opening animation starts from the beginning
         overlay.opened();            // before the focus moves into the reader
         showLesson(n);
+        if (part) goToPart(part, { instant: true });
     }
 
     // options.restoreFocus = false: another part of the page takes the focus
@@ -2076,11 +2697,16 @@
     });
 
     readerEl.addEventListener("click", function (event) {
-        const target = event.target.closest("[data-action], [data-option], [data-goto]");
+        const target = event.target.closest("[data-action], [data-option], [data-goto], .lsn-term");
         if (!target || !readerEl.contains(target)) return;
         if (target.getAttribute("aria-disabled") === "true") return;
         if (target === parts.backdrop && (!pressOnBackdrop || event.detail > 1)) return;
 
+        if (target.classList.contains("lsn-term")) {
+            if (target.getAttribute("aria-expanded") === "true") closePeek(false);
+            else openPeek(target, false);
+            return;
+        }
         if (target.hasAttribute("data-option")) {
             answerCheck(Number(target.getAttribute("data-option")));
             return;
@@ -2104,24 +2730,40 @@
             case "size": cycleTextSize(); break;
             case "try": runTryIt(); break;
             case "retry": retryCheck(); break;
+            case "peek-close": closePeek(true); break;
+            case "glossary":
+                // The glossary closes the reader and shows the word there
+                if (A.glossary) A.glossary.show(target.getAttribute("data-term"), { focus: true });
+                break;
         }
     });
+
+    // Is the focus in a box of the lesson that scrolls sideways (a wide table on a phone)?
+    // There ← and → scroll that box, as browsers do, instead of changing the lesson.
+    // (The reader's own scrolling area, which scrolls up and down, is not such a box.)
+    function inSidewaysScroll(element) {
+        for (let box = element; box && box !== parts.scroll && box !== readerEl && readerEl.contains(box); box = box.parentElement) {
+            if (box.scrollWidth > box.clientWidth + 1 && /auto|scroll/.test(getComputedStyle(box).overflowX)) return true;
+        }
+        return false;
+    }
 
     // ← and → go to the previous / next lesson. (Esc and Tab are handled by core.)
     document.addEventListener("keydown", function (event) {
         if (!reader.open || A.overlays.top() !== READER_ID) return;
         if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-        // Only when the focus is in the reader (or lost on the page body),
-        // and never while typing or moving a slider
+        if (event.defaultPrevented) return;   // a mini-lab moved around its own grid with them
+        // Only when the focus is in the reader (or lost on the page body), and never
+        // while typing, moving a slider or scrolling a wide box sideways
         const target = event.target;
         if (!readerEl.contains(target) && target !== document.body && target !== document.documentElement) return;
-        if (A.dom.isTyping(target)) return;
+        if (A.dom.isTyping(target) || inSidewaysScroll(target)) return;
         event.preventDefault();
         goRelative(event.key === "ArrowLeft" ? -1 : 1);
     });
 
-    // ---------- 17. Reading aloud (the browser's built-in speech) ----------
+    // ---------- 18. Reading aloud (the browser's built-in speech) ----------
     const canSpeak = "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function";
     const speech = { active: false, session: 0, element: null, warnedAt: 0 };
 
@@ -2207,20 +2849,29 @@
         updateReaderChrome();
     }
 
-    // ---------- 18. Language and theme changes ----------
+    // ---------- 19. Language and theme changes ----------
     A.onLanguageChange(function () {
         updateHUD();
+        updateTracks();
         updateCards();
-        if (!cert.root.hidden) drawCertificate();
+        if (!cert.root.hidden) {
+            updateCertificatePicker();
+            drawCertificate();
+        }
         if (!reader.open) return;
 
-        // Re-draw the open lesson in the new language, keeping its place, answers and focus
+        // Re-draw the open lesson in the new language, keeping its place, answers, the
+        // open glossary word and the focus (a mini-lab is built again with its state)
         const ratio = reader.scrollRatio;
         const active = document.activeElement;
         const focusWasInside = Boolean(active) && readerEl.contains(active);
         const fid = focusWasInside ? active.getAttribute("data-fid") : null;
+        const peek = reader.peek;
         stopSpeaking();
         renderLessonContent();
+        reader.peek = "";
+        const word = peek ? parts.article.querySelector('[data-fid="' + peek + '"]') : null;
+        if (word) openPeek(word, true);
         updateReaderChrome();
         const box = parts.scroll;
         box.scrollTop = ratio * (box.scrollHeight - box.clientHeight);
@@ -2234,6 +2885,14 @@
 
     A.onThemeChange(function () {
         scheduleCertificate();
+        // A mini-lab with its own file may draw on a <canvas> with the theme's colours
+        if (shownFileLab && typeof shownFileLab.lab.theme === "function") {
+            try {
+                shownFileLab.lab.theme(shownFileLab.host);
+            } catch (error) {
+                console.error(error);
+            }
+        }
     });
 
     // Fonts arrive a little later: redraw the certificate with them
@@ -2241,8 +2900,9 @@
         document.fonts.ready.then(scheduleCertificate);
     }
 
-    // ---------- 19. Start ----------
+    // ---------- 20. Start ----------
     updateHUD();
+    updateTracks();
     updateCards();
 
     // A link like index.html#lesson-3 opens that lesson (0: the address names no lesson)
@@ -2266,8 +2926,19 @@
         if (n) openLesson(n);
     });
 
-    // ---------- 20. Ctrl+K commands and the public API ----------
-    // One command per lesson, plus "continue where I stopped"
+    // ---------- 21. Ctrl+K commands and the public API ----------
+    // "Continue where I stopped", then one command per lesson. "Continue" comes first:
+    // with an empty search the palette shows only the first 6 commands of a group
+    A.registerCommand({
+        id: "lessons-continue",
+        group: "lessons.cmdGroup",
+        icon: "▶️",
+        title: function () { return t("lessons.cmdContinue"); },
+        keywords: "continue next lesson learning продолжить следующий урок обучение",
+        keepOverlays: [READER_ID],
+        run: function () { openLesson(nextLesson() || 1, document.activeElement); }
+    });
+
     LESSONS.forEach(function (lesson) {
         A.registerCommand({
             id: "lesson-" + lesson.number,
@@ -2283,32 +2954,46 @@
         });
     });
 
-    A.registerCommand({
-        id: "lessons-continue",
-        group: "lessons.cmdGroup",
-        icon: "▶️",
-        title: function () { return t("lessons.cmdContinue"); },
-        keywords: "continue next lesson learning продолжить следующий урок обучение",
-        keepOverlays: [READER_ID],
-        run: function () { openLesson(nextLesson() || 1, document.activeElement); }
-    });
-
     // Other features use AICompass.lessons (AICompass.openLesson and closeLesson are
     // older names). Closing the reader brings the focus back to "opener": the button
     // they used (by default, whatever has the focus).
     A.feature("lessons", {
         count: TOTAL,
-        // [{ number, icon, title(), description() }] in order
+        // [{ number, icon, track, level, minutes, experiment, title(), description() }] in order.
+        // experiment: the AI Lab experiment of "Try it on this site" (null for a section)
         list: function () {
             return LESSONS.map(function (lesson) {
                 return {
                     number: lesson.number,
                     icon: lesson.icon,
+                    track: lesson.track,
+                    level: lesson.level,
+                    minutes: lesson.minutes,
+                    experiment: TRY_SECTIONS.indexOf(lesson.tryIt) === -1 ? lesson.tryIt : null,
                     title: function () { return lessonTitle(lesson.number); },
                     description: function () { return t(lessonKey(lesson.number, "desc")); }
                 };
             });
         },
+        // [{ id, icon, lessons: [numbers], done, total, title(), description() }] in order
+        // (done: how many of its lessons are finished now; total: how many it has)
+        tracks: function () {
+            return TRACKS.map(function (track) {
+                return {
+                    id: track.id,
+                    icon: track.icon,
+                    lessons: TRACK_LESSONS[track.id].slice(),
+                    done: countDone(TRACK_LESSONS[track.id]),
+                    total: TRACK_LESSONS[track.id].length,
+                    title: function () { return trackTitle(track.id); },
+                    description: function () { return t("lessons.track." + track.id + ".desc"); }
+                };
+            });
+        },
+        // The track of lesson n ("basics", "deep"; "" for no such lesson)
+        trackOf: trackOf,
+        // The certificates earned so far: some of "basics", "deep" and "all"
+        certificates: earnedCertificates,
         title: function (number) {
             return number >= 1 && number <= TOTAL ? lessonTitle(number) : "";
         },
@@ -2319,12 +3004,16 @@
         isCompleted: function (number) { return completed.has(number); },
         // The first lesson that is not finished yet (0 when all are)
         next: nextLesson,
-        open: function (number, opener) {
-            openLesson(number, opener || document.activeElement);
+        // open(3), open(3, button), open(3, button, { part: "s2" }): at a part of the
+        // lesson ("s1"-"s4", "lab", "keys", "check"); an unknown part opens it at the top
+        open: function (number, opener, options) {
+            openLesson(number, opener || document.activeElement, options);
         },
         // Like Esc: the focus goes back to the opener (or to the lesson's card)
         close: function () { closeReader(); },
-        isOpen: function () { return reader.open; }
+        isOpen: function () { return reader.open; },
+        // For the mini-labs in js/lessons/ (see the top of this file)
+        defineLab: defineLab
     });
 
     A.openLesson = A.lessons.open;
