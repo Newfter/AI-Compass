@@ -41,7 +41,7 @@ window.AICompass.addTranslations({
 
         // Mini-lab: Pixel detective (js/lessons/pixels.js)
         "lessons.w7.title": "Pixel detective",
-        "lessons.w7.intro": "Paint a picture (or pick a shape) and choose a filter: the result shows what the filter finds. Point at a square of the result, or move to it with the arrow keys, to see how its number was worked out.",
+        "lessons.w7.intro": "Paint a picture (or pick a shape) and choose a filter: the result shows what the filter finds. Here a pixel is just 0 (black) or 1 (white), to keep the sums small. Tap or point at a square of the result (or move to it with the arrow keys) to see how its number was worked out.",
         "lessons.w7.picture": "Your picture: {size} × {size} pixels",
         "lessons.w7.result": "What the filter finds: {size} × {size}",
         "lessons.w7.filter": "Filter",
@@ -61,10 +61,8 @@ window.AICompass.addTranslations({
         "lessons.w7.pixel": "Row {row}, column {col}: {value}",
         "lessons.w7.cell": "Result, row {row}, column {col}: {value}",
         "lessons.w7.window": "Window at row {row}, column {col}",
-        "lessons.w7.filterGrid": "Filter",
         "lessons.w7.sum": "Multiply square by square and add up:",
         "lessons.w7.sumSpoken": "Window: {window}. Filter: {filter}. Multiplied square by square and added up: {sum}.",
-        "lessons.w7.pointAt": "Point at a square of the result to see how its number was made.",
         "lessons.w7.legendPos": "positive: dark → white",
         "lessons.w7.legendNeg": "negative: white → dark",
         "lessons.w7.legendBlur": "each square: the average of {n} pixels",
@@ -78,7 +76,7 @@ window.AICompass.addTranslations({
         "lessons.l7.title": "Как компьютер видит",
         "lessons.l7.desc": "Как картинка превращается в числа и как нейросеть находит в них края, формы и предметы.",
         "lessons.l7.s1.h": "Картинка — это сетка чисел",
-        "lessons.l7.s1.p": "Для компьютера фотография — это не кошка и не лицо. Это сетка из крошечных квадратиков — <strong data-term='pixel'>пикселей</strong>, и каждый пиксель — просто число. В чёрно-белой (серой) картинке 0 означает чёрный цвет, 255 — белый, а числа между ними — оттенки серого. У цветного пикселя три числа: сколько в нём <em>красного</em>, <em>зелёного</em> и <em>синего</em> света (RGB). В снимке с телефона на 12 мегапикселей около 12 миллионов пикселей — это примерно 36 миллионов чисел.",
+        "lessons.l7.s1.p": "Для компьютера фотография — это не кошка и не лицо. Это сетка из крошечных квадратиков — <strong data-term='pixel'>пикселей</strong>, и каждый пиксель — просто число. В чёрно-белой картинке (в оттенках серого) 0 означает чёрный цвет, 255 — белый, а числа между ними — оттенки серого. У цветного пикселя три числа: сколько в нём <em>красного</em>, <em>зелёного</em> и <em>синего</em> света (RGB). В снимке с телефона на 12 мегапикселей около 12 миллионов пикселей — это примерно 36 миллионов чисел.",
         "lessons.l7.s1.note": "В знаменитом наборе данных MNIST, на котором компьютеры учатся читать рукописные цифры, 70 тысяч картинок. Каждая — всего 28 × 28 пикселей, то есть 784 числа на одну цифру.",
         "lessons.l7.s2.h": "Фильтры ищут узоры",
         "lessons.l7.s2.p": "Как найти край в сетке чисел? Возьми маленькую сетку чисел — <strong>фильтр</strong> (например, 3 × 3) — и веди её по картинке, клетку за клеткой. В каждом месте умножь каждое число под фильтром на число фильтра над ним и всё сложи. Там, где на картинке есть край, похожий на тот, что ищет фильтр, сумма получается большой. Там, где всё одного цвета, — нулевой или почти нулевой. Такое «скольжение со сложением» называется <strong data-term='convolution'>свёрткой</strong>.",
@@ -101,7 +99,7 @@ window.AICompass.addTranslations({
 
         // Мини-лаборатория «Пиксельный детектив» (js/lessons/pixels.js)
         "lessons.w7.title": "Пиксельный детектив",
-        "lessons.w7.intro": "Нарисуй картинку (или выбери фигуру) и выбери фильтр: результат покажет, что фильтр находит. Наведи курсор на клетку результата или перейди к ней стрелками — увидишь, как получилось её число.",
+        "lessons.w7.intro": "Нарисуй картинку (или возьми готовую фигуру) и выбери фильтр: результат покажет, что фильтр находит. Пиксель здесь — просто 0 (чёрный) или 1 (белый), чтобы суммы были маленькими. Нажми на клетку результата или наведи на неё курсор (с клавиатуры — перейди к ней стрелками), и увидишь, как получилось её число.",
         "lessons.w7.picture": "Твоя картинка: {size} × {size} пикселей",
         "lessons.w7.result": "Что находит фильтр: {size} × {size}",
         "lessons.w7.filter": "Фильтр",
@@ -121,10 +119,8 @@ window.AICompass.addTranslations({
         "lessons.w7.pixel": "Строка {row}, столбец {col}: {value}",
         "lessons.w7.cell": "Результат, строка {row}, столбец {col}: {value}",
         "lessons.w7.window": "Окно в строке {row}, столбце {col}",
-        "lessons.w7.filterGrid": "Фильтр",
         "lessons.w7.sum": "Умножаем клетку на клетку и складываем:",
         "lessons.w7.sumSpoken": "Окно: {window}. Фильтр: {filter}. Умножаем клетку на клетку и складываем: {sum}.",
-        "lessons.w7.pointAt": "Наведи курсор на клетку результата, чтобы увидеть, как получилось её число.",
         "lessons.w7.legendPos": "плюс: от тёмного к белому",
         "lessons.w7.legendNeg": "минус: от белого к тёмному",
         "lessons.w7.legendBlur": "каждая клетка — среднее из {n} пикселей",
