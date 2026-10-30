@@ -20,7 +20,7 @@
    place keeps about the height it will have (measured in English), so the page
    below doesn't jump. Smaller screens: see 10. Phones and tablets. */
 .js [data-feature="timeline"]:empty {
-    min-height: 7400px;
+    min-height: 9450px;
 }
 
 .tl {
@@ -828,7 +828,7 @@
 /* Not enough room for the read-out next to the chips */
 @media (max-width: 1100px) {
     .js [data-feature="timeline"]:empty {
-        min-height: 8000px;
+        min-height: 10100px;
     }
 
     .tl-hud {
@@ -838,7 +838,7 @@
 
 @media (max-width: 899px) {
     .js [data-feature="timeline"]:empty {
-        min-height: 6700px;
+        min-height: 8500px;
     }
 
     /* The chips may need two rows here, so the bar scrolls away with the page */
@@ -907,7 +907,7 @@
 
 @media (max-width: 640px) {
     .js [data-feature="timeline"]:empty {
-        min-height: 9400px;
+        min-height: 10500px;
     }
 
     .tl-bar {
