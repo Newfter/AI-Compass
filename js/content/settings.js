@@ -117,6 +117,7 @@ window.AICompass.addTranslations({
         "settings.keysDescent": "AI Lab: Down the hill",
         "settings.keysVision": "AI Lab: How computers see",
         "settings.keysMaze": "AI Lab: Robot in a maze",
+        "settings.keysBias": "AI Lab: Bias detective",
         "settings.keysGlossary": "Glossary search",
         "settings.keysTimeline": "History",
         "settings.keysJourney": "My Compass: the activity calendar",
@@ -151,6 +152,10 @@ window.AICompass.addTranslations({
         "settings.do.visionMove": "Move the magnifier over the picture (with Shift: faster); in “Step by step”, move the window",
         "settings.do.mazeMove": "Move between the squares of the maze",
         "settings.do.mazeRead": "Hear what the robot learned about the square (while editing: put the chosen tile there)",
+        "settings.do.biasWalk": "Go along a row of applicants, in order of test score",
+        "settings.do.biasJump": "10 applicants at a time, or to the ends of the row",
+        "settings.do.biasTwin": "Go to the Blue twin or the Orange twin",
+        "settings.do.biasLetGo": "Let go of the applicant",
         "settings.do.glossaryOpen": "Open the first term found",
         "settings.do.glossaryClear": "Clear the search",
         "settings.do.timelineMove": "Go through the eras and the “In the glossary” buttons",
@@ -280,6 +285,7 @@ window.AICompass.addTranslations({
         "settings.keysDescent": "ИИ-лаборатория: «Вниз с горы»",
         "settings.keysVision": "ИИ-лаборатория: «Как видит компьютер»",
         "settings.keysMaze": "ИИ-лаборатория: «Робот в лабиринте»",
+        "settings.keysBias": "ИИ-лаборатория: «Детектив предвзятости»",
         "settings.keysGlossary": "Поиск в словаре",
         "settings.keysTimeline": "История",
         "settings.keysJourney": "«Мой компас»: календарь активности",
@@ -313,6 +319,10 @@ window.AICompass.addTranslations({
         "settings.do.visionMove": "Двигать лупу по картинке (с Shift — быстрее); в режиме «По шагам» — двигать окно",
         "settings.do.mazeMove": "Переходить по клеткам лабиринта",
         "settings.do.mazeRead": "Узнать, что робот выучил про клетку (в режиме правки — поставить туда выбранную плитку)",
+        "settings.do.biasWalk": "Идти по ряду участников, по баллам за тест",
+        "settings.do.biasJump": "Сразу на 10 участников или к началу и концу ряда",
+        "settings.do.biasTwin": "Перейти к синему или к оранжевому близнецу",
+        "settings.do.biasLetGo": "Снять выбор с участника",
         "settings.do.glossaryOpen": "Открыть первый найденный термин",
         "settings.do.glossaryClear": "Очистить поиск",
         "settings.do.timelineMove": "Переходить по эпохам и кнопкам «В словаре»",
@@ -455,6 +465,17 @@ window.AICompass.content.set("settings", {
                 { keys: [["arrows"]], does: "settings.do.mazeMove" },
                 // js/lab/maze.js, the board's keydown: Enter or Space
                 { keys: [["enter"], ["space"]], does: "settings.do.mazeRead" }
+            ]
+        },
+        {
+            title: "settings.keysBias",
+            items: [
+                // js/lab/bias.js, the applicants' keydown: ← → along a row (by test score),
+                // PageUp / PageDown 10 at a time, Home / End to the ends, ↑ ↓ to a twin, Escape lets go
+                { keys: [["←"], ["→"]], does: "settings.do.biasWalk" },
+                { keys: [["pageUp"], ["pageDown"], ["home"], ["end"]], does: "settings.do.biasJump" },
+                { keys: [["↑"], ["↓"]], does: "settings.do.biasTwin" },
+                { keys: [["esc"]], does: "settings.do.biasLetGo" }
             ]
         },
         {
