@@ -1,0 +1,538 @@
+/* =========================================================
+   AI COMPASS — LAB: HOW COMPUTERS SEE (js/lab/vision.js)
+   Every class starts with "cv-". Colours, fonts and sizes come from the
+   site's tokens (style.css) and the kit's (css/lab/kit.css). Pictures
+   and maps are small canvases (96 x 96 or less) that CSS scales up
+   with sharp square pixels.
+   Sections:
+    1. The work area: the view and its panel (container queries)
+    2. Pictures, the feature map and the magnifier
+    3. The filter panel and its number boxes
+    4. Step by step: the equation
+    5. What a CNN sees
+    6. Text bits
+    7. Calm mode
+   ========================================================= */
+
+/* ===== 1. THE WORK AREA ===== */
+.cv-work {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--lk-gap);
+    align-items: start;
+}
+
+.cv-show,
+.cv-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+.cv-panel {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+/* From 820px of stage: the view on the left, its panel on the right. Step by step
+   needs the whole width for its two grids, so its equation goes under them, next
+   to the filter panel. */
+@container (min-width: 820px) {
+    .cv-work {
+        grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+    }
+
+    .cv-work[data-view="step"] > .cv-show-step {
+        display: contents;
+    }
+
+    .cv-work[data-view="step"] .cv-step-canvas {
+        grid-column: 1 / -1;
+    }
+}
+
+.cv-photo-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--lk-gap-sm);
+}
+
+.cv-file {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.cv-file-button {
+    display: inline-flex;
+}
+
+/* ===== 2. PICTURES, THE FEATURE MAP AND THE MAGNIFIER ===== */
+.cv-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.cv-figure {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+}
+
+/* A square frame; the picture fills it, the feature map takes its true share of it
+   (2 px smaller, or half as wide after pooling), in the middle */
+.cv-frame {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface-2);
+}
+
+.cv-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+}
+
+.cv-pixels {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.cv-input {
+    cursor: crosshair;
+}
+
+.cv-input:focus-visible,
+.cv-step-canvas canvas:focus-visible {
+    outline: 3px solid var(--accent-2);
+    outline-offset: -3px;
+}
+
+/* While drawing, a finger draws instead of scrolling the page */
+.cv-frame.is-drawing .cv-input {
+    touch-action: none;
+}
+
+.cv-loupe-box,
+.cv-spot {
+    position: absolute;
+    border: 2px solid var(--accent-2);
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px var(--surface-solid);
+    pointer-events: none;
+}
+
+.cv-caption {
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: var(--lk-small);
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* Under the pictures: the magnifier, and the two brightness tiles next to it when there is room */
+.cv-under {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+}
+
+.cv-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    align-content: start;
+}
+
+.cv-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cv-legend-bar {
+    height: 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+}
+
+.cv-legend-ends {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: var(--lk-small);
+}
+
+.cv-legend-text {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--lk-small);
+    line-height: 1.5;
+}
+
+.cv-loupe {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+.cv-loupe-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 12px;
+}
+
+.cv-loupe-where {
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: var(--lk-small);
+}
+
+.cv-loupe-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 46px));
+    gap: 3px;
+}
+
+.cv-loupe-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 34px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.cv-loupe-cell.is-middle {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 1px;
+}
+
+.cv-loupe-cell.is-outside {
+    border: 1px dashed var(--border-strong);
+}
+
+@container (min-width: 560px) {
+    .cv-under {
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .cv-stats {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* ===== 3. THE FILTER PANEL AND ITS NUMBER BOXES ===== */
+.cv-numbers {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cv-grid3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 84px));
+    gap: 6px;
+}
+
+/* TODO(kit): a number box in the kit's style (like .lk-select-input) */
+.cv-number {
+    width: 100%;
+    min-width: 0;
+    min-height: var(--lk-control);
+    padding: 0 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-solid);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    transition: border-color 0.2s ease;
+}
+
+.cv-number:focus-visible {
+    border-color: var(--accent-2);
+    outline: 2px solid var(--accent-2);
+    outline-offset: 1px;
+}
+
+@media (hover: hover) {
+    .cv-number:hover {
+        border-color: var(--accent-2);
+    }
+}
+
+.cv-divisor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-label);
+    font-size: var(--lk-label);
+    font-weight: 600;
+}
+
+.cv-divisor .cv-number {
+    width: 84px;
+}
+
+.cv-sum {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+/* ===== 4. STEP BY STEP: THE EQUATION ===== */
+.cv-step-canvas {
+    min-width: 0;
+}
+
+.cv-step-canvas canvas {
+    cursor: pointer;
+}
+
+.cv-equation {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+.cv-step-count {
+    margin: 0;
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: var(--lk-small);
+}
+
+.cv-eq-grids {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px 10px;
+}
+
+.cv-eq-part {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cv-eq-label {
+    color: var(--text-label);
+    font-size: var(--lk-small);
+    font-weight: 600;
+}
+
+.cv-eq-sign {
+    padding-bottom: 32px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 18px;
+}
+
+.cv-mini {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(38px, auto));
+    gap: 2px;
+}
+
+.cv-mini-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 26px;
+    padding: 0 4px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--surface-solid);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.cv-mini-cell.is-negative {
+    color: var(--text-danger);
+}
+
+.cv-eq-line {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.cv-eq-result {
+    margin: 0;
+    color: var(--text-accent-2);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* ===== 5. WHAT A CNN SEES ===== */
+.cv-net-input {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+}
+
+.cv-net-input .cv-pixels {
+    width: 96px;
+    height: 96px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+}
+
+.cv-maps {
+    display: grid;
+    gap: 10px;
+}
+
+.cv-maps-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cv-maps-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@container (min-width: 560px) {
+    .cv-maps-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* A map is a kit button with its picture on top of its name (pictures in a row line up
+   at the top, whatever the length of the names) */
+.lk-btn.cv-map {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 6px;
+    min-width: 0;
+    padding: 6px 6px 8px;
+    white-space: normal;
+}
+
+.cv-map .lk-btn-icon {
+    display: none;
+}
+
+.cv-map .lk-btn-text {
+    font-size: 12.5px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.cv-map-canvas {
+    aspect-ratio: 1;
+    height: auto;
+    border-radius: 6px;
+}
+
+.cv-map-body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+}
+
+.cv-map-part {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cv-map-about {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.cv-honest {
+    margin: 0;
+    padding: 10px 14px;
+    border-left: 3px solid var(--accent-2);
+    border-radius: 4px;
+    background: var(--surface-2);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ===== 6. TEXT BITS ===== */
+.cv-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.cv-subtitle {
+    margin: 0;
+    color: var(--text-label);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.cv-help,
+.cv-note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--lk-small);
+    line-height: 1.5;
+}
+
+.cv-idea {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* A glossary link of two words ("computer vision") stays on one line */
+.cv-idea .lk-term-link {
+    white-space: nowrap;
+}
+
+/* ===== 7. CALM MODE: no easing of the number boxes ===== */
+html.fx-motion-off .cv-number {
+    transition: none;
+}
