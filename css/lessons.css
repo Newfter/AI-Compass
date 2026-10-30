@@ -199,14 +199,14 @@
     gap: 4px 8px;
     min-height: 44px;
     color: var(--text);
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 700;
     line-height: 1.3;
 }
 
 .lsn-map-count {
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
 }
 
@@ -344,7 +344,7 @@
     grid-area: note;
     margin-top: -6px;
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 0.8125rem;
 }
 
 /* ===== 2. CERTIFICATE ===== */
@@ -461,7 +461,7 @@
 
 .lsn-cert-pick-icon {
     flex: none;
-    font-size: 24px;
+    font-size: 1.5rem;
 }
 
 .lsn-cert-pick-text {
@@ -476,7 +476,7 @@
 
 .lsn-cert-pick-state {
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 0.8125rem;
 }
 
 .lsn-cert-pick.is-earned .lsn-cert-pick-state {
@@ -487,7 +487,7 @@
 .lsn-cert-privacy {
     margin-top: -4px;
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 0.8125rem;
 }
 
 .lsn-cert-preview {
@@ -533,12 +533,12 @@
         radial-gradient(circle at 30% 25%, rgba(var(--lsn-rgb), 0.34), transparent 70%),
         var(--surface-2);
     box-shadow: 0 0 24px rgba(var(--lsn-rgb), 0.2);
-    font-size: 26px;
+    font-size: 26px;     /* px: a glyph in a tile of fixed size */
 }
 
 .lsn-track-label {
     color: var(--text-accent-2);
-    font-size: 11.5px;
+    font-size: 0.71875rem;
     font-weight: 600;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -547,7 +547,7 @@
 .lsn-track-title {
     margin-top: 2px;
     font-family: var(--font-display);
-    font-size: clamp(20px, 2.4vw, 25px);
+    font-size: clamp(1.25rem, 2.4vw, 1.5625rem);
     font-weight: 600;
     letter-spacing: -0.01em;
 }
@@ -555,7 +555,7 @@
 .lsn-track-desc {
     margin-top: 4px;
     color: var(--text-muted);
-    font-size: 15px;
+    font-size: 0.9375rem;
     line-height: 1.55;
 }
 
@@ -567,7 +567,7 @@
     border: 1px dashed var(--border-strong);
     border-radius: 999px;
     color: var(--text);
-    font-size: 13px;
+    font-size: 0.8125rem;
 }
 
 .lsn-track-progress {
@@ -579,7 +579,7 @@
 
 .lsn-track-count {
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 600;
     white-space: nowrap;
 }
@@ -613,7 +613,7 @@
 
 .lsn-fold-arrow {
     display: inline-block;
-    font-size: 18px;
+    font-size: 1.125rem;
     line-height: 1;
     transition: transform 0.3s var(--ease);
 }
@@ -1458,7 +1458,7 @@
 
 .lsn-peek-label {
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 0.6875rem;
     font-weight: 600;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -1467,13 +1467,13 @@
 .lsn-peek-term {
     margin-top: 4px;
     font-family: var(--font-display);
-    font-size: calc(var(--lsn-text) + 1px);
+    font-size: calc(var(--lsn-text) + 0.0625rem);
     font-weight: 600;
 }
 
 .lsn-peek-text {
     margin-top: 4px;
-    font-size: calc(var(--lsn-text) - 1px);
+    font-size: calc(var(--lsn-text) - 0.0625rem);
     line-height: 1.65;
 }
 
@@ -2700,7 +2700,7 @@
     align-items: center;
     gap: 12px;
     color: var(--text-muted);
-    font-size: 15px;
+    font-size: 0.9375rem;
 }
 
 .lsn-lab-spinner {
@@ -2722,7 +2722,7 @@
     gap: 14px;
     max-width: 420px;
     text-align: center;
-    font-size: 15px;
+    font-size: 0.9375rem;
     line-height: 1.6;
 }
 
@@ -2883,11 +2883,11 @@
         width: 44px;
         height: 44px;
         border-radius: 14px;
-        font-size: 22px;
+        font-size: 22px;     /* px: a glyph in a tile of fixed size */
     }
 
     .lsn-track-desc {
-        font-size: 14.5px;
+        font-size: 0.90625rem;
     }
 
     .lsn-track-progress {
@@ -3007,7 +3007,7 @@
 
     .lsn-crumb-track {
         overflow: hidden;
-        font-size: 10px;
+        font-size: 0.625rem;
         text-overflow: ellipsis;
     }
 
