@@ -72,7 +72,7 @@ window.AICompass.addTranslations({
         "lab.bias.colOrange": "Group",
         "lab.bias.noColumns": "With no columns the model knows nothing about anyone, so it gives everyone the same chance.",
         "lab.bias.betterLabels": "Train on better labels",
-        "lab.bias.betterLabelsHint": "Learn who was really qualified instead of the past decisions. Only possible in a made-up world like this one.",
+        "lab.bias.betterLabelsHint": "Learn who was really qualified instead of the past decisions. Here we know the truth; in real life it is usually hard to find out.",
         "lab.bias.train": "Train the model",
         "lab.bias.trainAgain": "Train again",
         "lab.bias.training": "Training…",
@@ -224,7 +224,7 @@ window.AICompass.addTranslations({
         "lab.bias.colOrange": "Группа",
         "lab.bias.noColumns": "Без столбцов модель ничего ни о ком не знает, поэтому даёт всем одинаковый шанс.",
         "lab.bias.betterLabels": "Учить на лучших метках",
-        "lab.bias.betterLabelsHint": "Учиться на том, кто на самом деле подходил, а не на прошлых решениях. Так можно только в придуманном мире вроде этого.",
+        "lab.bias.betterLabelsHint": "Учиться на том, кто на самом деле подходил, а не на прошлых решениях. Здесь мы знаем правду, а в жизни её обычно трудно узнать.",
         "lab.bias.train": "Обучить модель",
         "lab.bias.trainAgain": "Обучить заново",
         "lab.bias.training": "Обучение…",
@@ -308,6 +308,6 @@ window.AICompass.addTranslations({
         // ----- В реальном мире -----
         "lab.bias.realTitle": "В реальном мире",
         "lab.bias.realHiring": "Экспериментальная программа Amazon для найма училась на резюме за десять лет, в основном мужских, и занижала оценку резюме со словом «women's» («женский»). Компания перестала ею пользоваться (об этом сообщило агентство Reuters в 2018 году).",
-        "lab.bias.realHealth": "Алгоритм в здравоохранении США считал прошлые расходы на лечение пациента заменой того, насколько тот болен. На темнокожих пациентов с теми же нуждами раньше тратили меньше, поэтому алгоритм недооценивал, насколько они больны (Обермейер и соавторы, журнал Science, 2019)."
+        "lab.bias.realHealth": "Алгоритм в здравоохранении США судил о том, насколько пациент болен, по прошлым расходам на его лечение. На темнокожих пациентов с теми же нуждами раньше тратили меньше, поэтому алгоритм недооценивал, насколько они больны (Обермейер и соавторы, журнал Science, 2019)."
     }
 });
