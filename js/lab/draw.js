@@ -96,7 +96,7 @@
     // ----- "Try this" -----
     const SURE_SUN = 0.8;                // challenge 1: the network says "sun" this surely
     const LOOKS_GOOD = { train: 1, test: 0.6, tests: 5 };   // challenge 2: 100% training, 60% test at most
-    const FIXED = { test: 0.8, tests: 5 };                   // challenge 3: 80% test accuracy at least
+    const FIXED = { test: 0.8, tests: 5 };                   // challenge 3 (after challenge 2): 80% test accuracy at least
     const FOOLED = 0.7;                  // challenge 4: both models wrong, each at least this sure
 
     // ----- Saving: ctx.store "data" = { v: 1, classes, train, test } and "settings" = { v: 1, k, wiggle } -----
@@ -2502,7 +2502,8 @@
                 challenges.check({
                     sureSun: trained && Boolean(netGuess) && netGuess.best === sun && netGuess.confidence >= SURE_SUN,
                     looksGood: enough && ((trained && looksGood(scores.net)) || looksGood(scores.knn)),
-                    fixed: test.length >= FIXED.tests && trained && scores.net.test !== null && scores.net.test >= FIXED.test,
+                    // "Fix it" means the model of challenge 2: there is something to fix only after that
+                    fixed: challenges.isDone(1) && test.length >= FIXED.tests && trained && scores.net.test !== null && scores.net.test >= FIXED.test,
                     fooled: fooled
                 });
             }
