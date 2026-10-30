@@ -57,8 +57,8 @@ window.AICompass.addTranslations({
         "lab.vision.legendWhite": "255 white",
         "lab.vision.legendGray": "Shades: 0 is black, 255 and more is white.",
         "lab.vision.legendColors": "Colours: red below 0, grey at 0, cyan above 0.",
-        "lab.vision.statIn": "Picture brightness",
-        "lab.vision.statOut": "Map brightness",
+        "lab.vision.statIn": "Average of the picture",
+        "lab.vision.statOut": "Average of the map",
 
         // The magnifier
         "lab.vision.loupeTitle": "The computer sees numbers",
@@ -166,7 +166,7 @@ window.AICompass.addTranslations({
         "lab.vision.ch1": "<strong>Vertical edges only.</strong> Make a filter that finds the vertical edges of the Checkerboard, but not its horizontal ones.",
         "lab.vision.ch1Why": "A filter that takes the left column away from the right column only notices changes from left to right. Along a horizontal edge, left and right are the same, so it answers 0.",
         "lab.vision.ch2": "<strong>Brighter.</strong> Make the picture brighter with a filter alone, with max pooling off.",
-        "lab.vision.ch2Why": "When the filter's numbers add up to more than 1, every flat area comes out brighter: 9 pixels of 100, times numbers that add up to 1.5, give 150.",
+        "lab.vision.ch2Why": "When the filter's numbers add up to more than 1, every flat area comes out brighter: 9 pixels of 100, times numbers that add up to 1.5, give 150. Above 255 the screen can only show white, but the map keeps the real number.",
         "lab.vision.ch3": "<strong>Blur 3 times.</strong> Pick “Letters AI” and a blur filter, then press “Apply again” 3 times in a row.",
         "lab.vision.ch3Why": "Each blur mixes every pixel with its neighbours and throws a little detail away. Sharpen can make the edges crisper again, but it can't bring back what was lost: those numbers are gone.",
         "lab.vision.ch4": "<strong>The roof.</strong> In “What a CNN sees”, with the House picture, find the layer-1 map that lights up the roof, and click it.",
@@ -221,8 +221,8 @@ window.AICompass.addTranslations({
         "lab.vision.legendWhite": "255 — белый",
         "lab.vision.legendGray": "Оттенки: 0 — чёрный, 255 и больше — белый.",
         "lab.vision.legendColors": "Цвета: красный — меньше 0, серый — 0, бирюзовый — больше 0.",
-        "lab.vision.statIn": "Яркость картинки",
-        "lab.vision.statOut": "Яркость карты",
+        "lab.vision.statIn": "Среднее по картинке",
+        "lab.vision.statOut": "Среднее по карте",
 
         // The magnifier
         "lab.vision.loupeTitle": "Компьютер видит числа",
@@ -330,7 +330,7 @@ window.AICompass.addTranslations({
         "lab.vision.ch1": "<strong>Только вертикальные края.</strong> Сделай фильтр, который находит вертикальные края «Шахматной доски», но не горизонтальные.",
         "lab.vision.ch1Why": "Фильтр, который вычитает левый столбец из правого, замечает только перемены слева направо. Вдоль горизонтального края слева и справа одно и то же, поэтому он отвечает 0.",
         "lab.vision.ch2": "<strong>Ярче.</strong> Сделай картинку ярче одним только фильтром, без макс-пулинга.",
-        "lab.vision.ch2Why": "Если числа фильтра в сумме больше 1, каждый ровный участок становится светлее: 9 пикселей по 100, умноженные на числа с суммой 1,5, дают 150.",
+        "lab.vision.ch2Why": "Если числа фильтра в сумме больше 1, каждый ровный участок становится светлее: 9 пикселей по 100, умноженные на числа с суммой 1,5, дают 150. Выше 255 экран может показать только белый, но в карте остаётся настоящее число.",
         "lab.vision.ch3": "<strong>Размой 3 раза.</strong> Выбери «Буквы AI» и фильтр размытия, а потом нажми «Применить ещё раз» 3 раза подряд.",
         "lab.vision.ch3Why": "Каждое размытие смешивает пиксель с соседями и выбрасывает немного деталей. Резкость сделает края чётче, но потерянное не вернёт: этих чисел больше нет.",
         "lab.vision.ch4": "<strong>Крыша.</strong> В режиме «Что видит нейросеть» с картинкой «Дом» найди карту первого слоя, на которой светится крыша, и нажми на неё.",

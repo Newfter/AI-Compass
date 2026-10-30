@@ -53,8 +53,9 @@
         edgeRatio: 4,                 // 1: vertical edges answer more than 4 times the horizontal ones...
         edgeMargin: 3,                //    ...measured at least 3 px away from the corners of the squares
         edgeLeast: 1,                 //    ...and the vertical ones answer at all
-        brighter: 1.4,                // 2: the map is 1.4 times as bright as the picture...
+        brighter: 1.4,                // 2: the map's average is 1.4 times the picture's...
         darkest: 10,                  //    ...which is not almost black to start with
+        rounding: 1e-9,               //    (1.4 x 80 and the sum of 1.4 x every pixel can differ in the last digit)
         blurs: 3,                     // 3: "Apply again" 3 times in a row with a blur on Letters AI
         blurSum: 0.05                 //    a blur's numbers add up to 1 (give or take 0.05)
     };
@@ -281,11 +282,14 @@
         return out;
     }
 
-    // The average brightness as the eye sees it: below 0 shows as black, above 255 as white
-    function brightness(grid) {
+    // The average of all the numbers. For a picture it is its brightness (0 to 255); a map
+    // keeps its real numbers (below 0 and above 255 too), so a filter whose numbers add up
+    // to 1.5 gives a map 1.5 times the picture's average, on every picture (even where the
+    // screen can only show white).
+    function average(grid) {
         if (!grid.data.length) return 0;
         let sum = 0;
-        for (let i = 0; i < grid.data.length; i++) sum += A.util.clamp(grid.data[i], 0, 255);
+        for (let i = 0; i < grid.data.length; i++) sum += grid.data[i];
         return sum / grid.data.length;
     }
 
@@ -792,7 +796,7 @@
         // The maths, for dev/tests/vision.math.js (the hub doesn't use it)
         maths: {
             makeGrid: makeGrid, pixelAt: pixelAt, outputSize: outputSize, windowAt: windowAt, convolveAt: convolveAt,
-            convolve: convolve, relu: relu, maxPool: maxPool, toPicture: toPicture, brightness: brightness,
+            convolve: convolve, relu: relu, maxPool: maxPool, toPicture: toPicture, average: average,
             grayscale: grayscale, cropBox: cropBox, shrink: shrink, isBlur: isBlur, hasBothSigns: hasBothSigns,
             drawPicture: drawPicture, paintLine: paintLine, blankPicture: blankPicture, encodePicture: encodePicture,
             decodePicture: decodePicture, runNetwork: runNetwork, biggestAnswer: biggestAnswer,
@@ -1582,7 +1586,7 @@
                 A.dom.setAttr(inCanvas, "aria-label", t(drawingNow() && state.applied === 0 ? "lab.vision.inputLabelDraw" : "lab.vision.inputLabel"));
                 inFrame.classList.toggle("is-drawing", drawingNow() && state.applied === 0);
                 inDescription.textContent = t("lab.vision.describeInput", {
-                    name: pictureName(), w: input.w, h: input.h, mean: num(Math.round(brightness(input)))
+                    name: pictureName(), w: input.w, h: input.h, mean: num(Math.round(average(input)))
                 });
                 const range = extremes(output);
                 outDescription.textContent = t("lab.vision.describeOutput", {
@@ -1643,8 +1647,8 @@
                     cell.style.background = cellColor(value, false);
                     cell.style.color = inkFor(value, false);
                 });
-                statIn.set(brightness(input));
-                statOut.set(brightness(output));
+                statIn.set(average(input));
+                statOut.set(average(output));
             }
 
             function paintStep() {
@@ -1812,10 +1816,10 @@
                     const sameMap = state.edges === "same" ? raw : convolve(state.input, filterNow(), "same");
                     vertical = verticalOnly(edgeAnswers(sameMap, presets.filter(function (p) { return p.id === "checker"; })[0].shapes[0].size));
                 }
-                const before = brightness(state.input);
+                const before = average(state.input);
                 challenges.check({
                     verticalOnly: vertical,
-                    brighter: !state.pool && before >= CHECK.darkest && brightness(output) >= CHECK.brighter * before,
+                    brighter: !state.pool && before >= CHECK.darkest && average(output) >= CHECK.brighter * before - CHECK.rounding,
                     blurs: state.blurRun,
                     roof: state.roofSeen
                 });
