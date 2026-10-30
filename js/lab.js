@@ -1484,6 +1484,7 @@
         nn.training = false;
         nn.learned = true;
         updateTrainButton();
+        A.track("lab.milestone", { exp: "classifier", kind: "learned", epochs: nn.epoch });
         A.toast(t("lab.toastLearned", { n: A.format.number(nn.epoch), epochs: A.plural("lab.pluralEpochs", nn.epoch) }), "🎯");
         announceStats();
     }
@@ -1510,6 +1511,7 @@
         if (on && nn.learned) nn.keepGoing = true;
         nn.training = on;
         if (on) nn.learned = false;
+        if (on) A.track("lab.use", { exp: "classifier" });
         updateTrainButton();
         A.announce(t(on ? "lab.srTraining" : "lab.srPaused"), { region: nnEls.live });
         schedule();
@@ -2423,6 +2425,7 @@
             stopAuto(true, true);
             return;
         }
+        A.track("lab.use", { exp: "predictor" });
         // base = the text before the current word, word = the word being typed, typed = the letters so far
         const job = { cancelled: false, count: 0, timer: 0, typing: false, base: "", word: "", typed: "" };
         lm.writer = job;
@@ -2523,6 +2526,7 @@
         }
         lm.taught.push(sentence.slice(0, MAX_TEACH));
         A.storage.set("lab.taught." + lm.lang, lm.taught);
+        A.track("lab.milestone", { exp: "predictor", kind: "taught", sentences: lm.taught.length });
         lm.model = buildModel(CORPUS[lm.lang].concat(lm.taught));
         lmEls.teachInput.value = "";
         renderLmStats();
@@ -2628,6 +2632,7 @@
         });
         if (name !== "predictor") stopAuto(false);
         A.storage.set("lab.tab", name);
+        if (!how.start) A.track("lab.use", { exp: name });
         if (!how.start && !canWatchSizes) measureAll();
         schedule();
     }
