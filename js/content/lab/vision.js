@@ -38,7 +38,6 @@ window.AICompass.addTranslations({
         "lab.vision.drawHint": "Draw with the mouse, a pen or a finger. Using the keyboard? Pick one of the ready pictures: the pad needs a pointer.",
         "lab.vision.clear": "Clear",
         "lab.vision.cleared": "The pad is empty.",
-        "lab.vision.padRole": "drawing pad",
         "lab.vision.pictureRole": "picture",
         "lab.vision.pictureSay": "Picture: {name}.",
 
@@ -50,11 +49,6 @@ window.AICompass.addTranslations({
         "lab.vision.outputLabel": "The feature map: the picture after the filter",
         "lab.vision.describeInput": "{name}: {w}\u00a0×\u00a0{h} pixels, average brightness {mean} of 255.",
         "lab.vision.describeOutput": "The feature map: {w}\u00a0×\u00a0{h} pixels, from {min} to {max}.",
-        "lab.vision.legendNegative": "below 0",
-        "lab.vision.legendZero": "0",
-        "lab.vision.legendPositive": "above 0",
-        "lab.vision.legendBlack": "0 black",
-        "lab.vision.legendWhite": "255 white",
         "lab.vision.legendGray": "Shades: 0 is black, 255 and more is white.",
         "lab.vision.legendColors": "Colours: red below 0, grey at 0, cyan above 0.",
         "lab.vision.statIn": "Average of the picture",
@@ -65,7 +59,6 @@ window.AICompass.addTranslations({
         "lab.vision.loupeWhere": "Row {row}, column {col}",
         "lab.vision.loupeHelp": "Point at the picture, or click it and use the arrow keys.",
         "lab.vision.loupeSay": "Row {row}, column {col}: {value}.",
-        "lab.vision.loupeOutside": "Outside the picture",
 
         // The filter
         "lab.vision.filterTitle": "The filter",
@@ -202,7 +195,6 @@ window.AICompass.addTranslations({
         "lab.vision.drawHint": "Рисуй мышью, стилусом или пальцем. Работаешь с клавиатуры? Выбери одну из готовых картинок: для рисования нужен указатель.",
         "lab.vision.clear": "Стереть",
         "lab.vision.cleared": "Поле для рисования пустое.",
-        "lab.vision.padRole": "поле для рисования",
         "lab.vision.pictureRole": "картинка",
         "lab.vision.pictureSay": "Картинка: {name}.",
 
@@ -214,11 +206,6 @@ window.AICompass.addTranslations({
         "lab.vision.outputLabel": "Карта признаков: картинка после фильтра",
         "lab.vision.describeInput": "{name}: {w}\u00a0×\u00a0{h} пикселей, средняя яркость {mean} из 255.",
         "lab.vision.describeOutput": "Карта признаков: {w}\u00a0×\u00a0{h} пикселей, значения от {min} до {max}.",
-        "lab.vision.legendNegative": "меньше 0",
-        "lab.vision.legendZero": "0",
-        "lab.vision.legendPositive": "больше 0",
-        "lab.vision.legendBlack": "0 — чёрный",
-        "lab.vision.legendWhite": "255 — белый",
         "lab.vision.legendGray": "Оттенки: 0 — чёрный, 255 и больше — белый.",
         "lab.vision.legendColors": "Цвета: красный — меньше 0, серый — 0, бирюзовый — больше 0.",
         "lab.vision.statIn": "Среднее по картинке",
@@ -229,7 +216,6 @@ window.AICompass.addTranslations({
         "lab.vision.loupeWhere": "Строка {row}, столбец {col}",
         "lab.vision.loupeHelp": "Наведи указатель на картинку или нажми на неё и двигай лупу стрелками.",
         "lab.vision.loupeSay": "Строка {row}, столбец {col}: {value}.",
-        "lab.vision.loupeOutside": "За краем картинки",
 
         // The filter
         "lab.vision.filterTitle": "Фильтр",
