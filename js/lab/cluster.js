@@ -534,13 +534,17 @@
         ctx.stroke();
     }
 
-    // A group's name under its centre, on a small plate (kept inside the canvas)
-    function drawName(ctx, view, x, y, text, color, c) {
+    // A group's name on a small plate under its centre (gap px under it), or over it when
+    // there is no room below. It stays inside the square, off the numbers of the axes.
+    function drawName(ctx, square, x, y, gap, text, color, c) {
         ctx.font = kit.font(12, 700, "body");
         const width = ctx.measureText(text).width + 14;
         const height = 22;
-        const left = A.util.clamp(x - width / 2, 2, view.width - width - 2);
-        const top = A.util.clamp(y, 2, view.height - height - 2);
+        const bottom = square.top + square.size;
+        let top = y + gap;
+        if (top + height > bottom) top = y - gap - height;
+        top = Math.max(square.top + 2, Math.min(top, bottom - height - 2));
+        const left = Math.max(square.left + 2, Math.min(x - width / 2, square.left + square.size - width - 2));
         ctx.beginPath();
         A.canvas.roundRect(ctx, left, top, width, height, 8);
         ctx.fillStyle = kit.alpha(c.surface, 0.9);
@@ -627,7 +631,7 @@
         (scene.names || []).forEach(function (name, group) {
             if (!name || !centres[group]) return;
             const spot = toScreen(square, centres[group]);
-            drawName(ctx, view, spot.x, spot.y + centreRadius + 6, name, c.series[group % c.series.length], c);
+            drawName(ctx, square, spot.x, spot.y, centreRadius + 6, name, c.series[group % c.series.length], c);
         });
 
         if (scene.cursor) {
@@ -1003,7 +1007,10 @@
                     if (current.changed === 0) finish();
                 } else {
                     const moved = update(points, current.labels, current.centres);
-                    if (A.motion.ok()) glide = { from: current.centres, started: performance.now(), ms: GLIDE[speed] };
+                    if (A.motion.ok()) {
+                        glide = { from: current.centres, started: performance.now(), ms: GLIDE[speed] };
+                        wake();          // (after Step too: the frames draw the glide)
+                    }
                     current.centres = moved;
                     current.inertia = inertia(points, current.labels, moved);
                     current.next = "assign";
@@ -1086,7 +1093,6 @@
                 k = value;
                 names = [];
                 newRun(current.seed);
-                chart.set({ highlightX: k });
                 setState("ready");
                 render();
             }
@@ -1171,7 +1177,7 @@
                 const spot = fromScreen(square, event.clientX - box.left, event.clientY - box.top);
                 if (!isUnit(spot.x) || !isUnit(spot.y)) return;      // a click beside the square
                 cursor.shown = false;
-                if (addPoint(spot.x, spot.y)) warning.hide();
+                addPoint(spot.x, spot.y);
             });
 
             const MOVES = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
@@ -1259,6 +1265,7 @@
             function nameTyped(group, value) {
                 names[group] = value.slice(0, NAME_LENGTH);
                 paint();
+                scene.describe(describeBoard());
                 checkChallenges();
                 if (!namedOnce && allNamed()) {
                     namedOnce = true;
@@ -1277,7 +1284,6 @@
                 namesPanel.hidden = !showNames();
                 if (namesPanel.hidden) return;
                 if (nameFields.length !== k) buildNameFields();
-                const axes = presetAxes();
                 const sizes = groupSizes();
                 nameFields.forEach(function (field, group) {
                     const centre = current.centres[group];
@@ -1288,7 +1294,6 @@
                     }));
                     field.input.setAttribute("placeholder", t("lab.cluster.namePlaceholder"));
                     if (field.input.value !== (names[group] || "")) field.input.value = names[group] || "";
-                    if (!axes) field.input.value = "";
                 });
             }
 
@@ -1413,6 +1418,7 @@
                 if (points.length) {
                     for (let size = K_RANGE.min; size <= K_RANGE.max; size++) runValues.push(size === k ? current.inertia : null);
                 }
+                chart.set({ highlightX: k });        // the chosen k is marked
                 chart.draw();
 
                 // "What's happening?"
@@ -1438,7 +1444,6 @@
                 if (preset) k = preset.k;
             }
             kSlider.set(k);
-            chart.set({ highlightX: k });
             restartElbow();
             setState("ready");
             writeIdea();
