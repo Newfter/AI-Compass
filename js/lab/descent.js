@@ -44,7 +44,8 @@
     const EXPLODE_SCALE = 5;                 // "exploded": farther from the map's centre than 5 times its half-width
     const NOISE_SEED = 1717;                 // the noise of a race (ball i uses NOISE_SEED + i): the same every time
     // With noisy gradients a ball never stops: it jiggles. It has "settled" when its smoothed place
-    // (each step it moves 5% of the way to the ball) stays within 0.15 for 100 steps.
+    // (each step it moves 5% of the way to the ball) stays within 0.15 for 100 steps, at most
+    // 0.15 from the exact bottom of a dip.
     const SETTLE = { smooth: 0.05, radius: 0.15, steps: 100 };
     const LEAVE_SADDLE = 0.5;                // challenge 4: a stuck ball must get this far from the flat spot
     const NEWTON = { steps: 30, reach: 0.6 }; // finding the exact flat point near a stop (section 3)
@@ -511,9 +512,11 @@
         return true;
     }
 
-    // With noise: the smoothed place stayed in one small spot for SETTLE.steps steps. A flat
-    // ridge can't hold a jiggling ball (sooner or later a nudge sends it down), so a ball
-    // only settles in a dip.
+    // With noise: the smoothed place stayed in one small spot for SETTLE.steps steps, right next
+    // to a dip. A slow ball (a small learning rate) also stays in a small spot while it still
+    // rolls down a slope, so the exact flat point (Newton's method) must be that close too.
+    // A flat ridge can't hold a jiggling ball (sooner or later a nudge sends it down), so a
+    // ball only settles in a dip.
     function settled(land, racer) {
         const s = racer.smooth;
         s[0] += SETTLE.smooth * (racer.p[0] - s[0]);
@@ -525,12 +528,14 @@
         }
         racer.still += 1;
         if (racer.still < SETTLE.steps) return false;
-        const kind = classify(land, s[0], s[1]);
-        if (kind === "saddle") {
-            racer.still = 0;
+        const flat = flatPointNear(land, s[0], s[1]);
+        const close = flat && Math.hypot(flat[0] - s[0], flat[1] - s[1]) <= SETTLE.radius;
+        const kind = close ? classify(land, flat[0], flat[1]) : null;
+        if (!kind || kind === "saddle") {
+            racer.still = 0;               // still on a slope, or on a ridge: look again later
             return false;
         }
-        stop(racer, kind, s);
+        stop(racer, kind, flat);
         racer.jiggling = true;
         return true;
     }
