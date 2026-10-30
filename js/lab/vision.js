@@ -160,6 +160,18 @@
         });
     }
 
+    // A translated attribute that follows the language. It joins the element's other
+    // data-i18n-attr pairs, so a binding the kit made (a canvas's aria-label) stays.
+    // TODO(kit): export kit.bindAttribute (kit.js has it inside)
+    function translateAttr(element, attribute, key) {
+        const pairs = (element.getAttribute("data-i18n-attr") || "").split(",").filter(function (pair) {
+            return pair && pair.split(":")[0].trim() !== attribute;
+        });
+        pairs.push(attribute + ":" + key);
+        element.setAttribute("data-i18n-attr", pairs.join(","));
+        element.setAttribute(attribute, t(key));
+    }
+
     // TODO(kit): kit.pixelCanvas(): a canvas that shows a grid of numbers at its own size and
     // is scaled up by CSS with sharp square pixels (image-rendering: pixelated)
     function pixelCanvas(className) {
@@ -905,7 +917,7 @@
             const inCanvas = pixelCanvas("cv-input");
             inCanvas.tabIndex = 0;
             inCanvas.setAttribute("role", "application");
-            inCanvas.setAttribute("data-i18n-attr", "aria-roledescription:lab.vision.pictureRole");
+            translateAttr(inCanvas, "aria-roledescription", "lab.vision.pictureRole");
             const inDescription = el("p", "sr-only", { id: "cv-in-" + Math.random().toString(36).slice(2) });
             inCanvas.setAttribute("aria-describedby", inDescription.id);
             const loupeBox = el("div", "cv-loupe-box", { "aria-hidden": "true" });
@@ -919,7 +931,7 @@
             const outBox = el("div", "cv-box");
             const outCanvas = pixelCanvas("cv-output");
             outCanvas.setAttribute("role", "img");
-            outCanvas.setAttribute("data-i18n-attr", "aria-label:lab.vision.outputLabel");
+            translateAttr(outCanvas, "aria-label", "lab.vision.outputLabel");
             const outDescription = el("p", "sr-only", { id: "cv-out-" + Math.random().toString(36).slice(2) });
             outCanvas.setAttribute("aria-describedby", outDescription.id);
             const spot = el("div", "cv-spot", { "aria-hidden": "true" });
@@ -968,8 +980,7 @@
             stepShow.appendChild(stepCanvasBox);
             const stepView = kit.canvas(stepCanvasBox, { height: 300, labelKey: "lab.vision.stepLabel" });
             stepView.canvas.setAttribute("role", "application");
-            stepView.canvas.setAttribute("data-i18n-attr", "aria-roledescription:lab.vision.stepRole");
-            stepView.canvas.setAttribute("aria-roledescription", t("lab.vision.stepRole"));
+            translateAttr(stepView.canvas, "aria-roledescription", "lab.vision.stepRole");
             stepView.canvas.tabIndex = 0;
             const equation = el("section", "cv-equation");
             const stepButton = kit.button("lab.kit.step", { icon: "step", variant: "primary", onClick: stepOnce });

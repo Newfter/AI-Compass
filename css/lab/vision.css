@@ -525,6 +525,11 @@
     line-height: 1.6;
 }
 
+/* A glossary link of two words ("computer vision") stays on one line */
+.cv-idea .lk-term-link {
+    white-space: nowrap;
+}
+
 /* ===== 7. CALM MODE: no easing of the number boxes ===== */
 html.fx-motion-off .cv-number {
     transition: none;
