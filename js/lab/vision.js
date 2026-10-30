@@ -375,11 +375,13 @@
             case "line":
                 return segmentDistance(x, y, shape.from, shape.to) <= shape.width / 2;
             case "arc": {
-                // a band around a circle between two angles (degrees, clockwise from "right"), round ends
-                const distance = Math.hypot(x - shape.x, y - shape.y);
+                // a band around a circle between two angles (degrees, clockwise from "right"), with
+                // round ends. The round ends lie inside the band too, so a point off it is out.
+                const distance = Math.sqrt((x - shape.x) * (x - shape.x) + (y - shape.y) * (y - shape.y));
+                if (Math.abs(distance - shape.r) > shape.width / 2) return false;
                 let angle = (Math.atan2(y - shape.y, x - shape.x) * 180) / Math.PI;
                 if (angle < 0) angle += 360;
-                if (Math.abs(distance - shape.r) <= shape.width / 2 && angle >= shape.from && angle <= shape.to) return true;
+                if (angle >= shape.from && angle <= shape.to) return true;
                 return [shape.from, shape.to].some(function (end) {
                     const ex = shape.x + shape.r * Math.cos((end * Math.PI) / 180);
                     const ey = shape.y + shape.r * Math.sin((end * Math.PI) / 180);
@@ -395,6 +397,40 @@
         }
     }
 
+    // The box a shape stays in, in pixels (the whole picture for patterns): only the points in it
+    // need testing, which makes drawing a picture about ten times quicker
+    function shapeBounds(shape) {
+        let box;
+        switch (shape.type) {
+            case "rect":
+                box = [shape.x, shape.y, shape.x + shape.w, shape.y + shape.h];
+                break;
+            case "circle":
+                box = [shape.x - shape.r, shape.y - shape.r, shape.x + shape.r, shape.y + shape.r];
+                break;
+            case "polygon": {
+                const xs = shape.points.map(function (p) { return p[0]; });
+                const ys = shape.points.map(function (p) { return p[1]; });
+                box = [Math.min.apply(null, xs), Math.min.apply(null, ys), Math.max.apply(null, xs), Math.max.apply(null, ys)];
+                break;
+            }
+            case "line": {
+                const half = shape.width / 2;
+                box = [Math.min(shape.from[0], shape.to[0]) - half, Math.min(shape.from[1], shape.to[1]) - half,
+                    Math.max(shape.from[0], shape.to[0]) + half, Math.max(shape.from[1], shape.to[1]) + half];
+                break;
+            }
+            case "arc": {
+                const reach = shape.r + shape.width / 2;
+                box = [shape.x - reach, shape.y - reach, shape.x + reach, shape.y + reach];
+                break;
+            }
+            default:
+                box = [0, 0, SIZE, SIZE];
+        }
+        return box.map(function (v, i) { return A.util.clamp(i < 2 ? Math.floor(v) - 1 : Math.ceil(v) + 1, 0, SIZE); });
+    }
+
     // A preset picture, drawn by code (no image files): the background, then each shape on top,
     // tested at 4 x 4 points in every pixel and averaged, so edges are smooth. Plain maths and no
     // canvas, so a preset is the same number for number in every browser.
@@ -402,9 +438,10 @@
         const fine = SIZE * SAMPLES;
         const points = new Float64Array(fine * fine).fill(spec.background);
         spec.shapes.forEach(function (shape) {
-            for (let py = 0; py < fine; py++) {
+            const box = shapeBounds(shape);
+            for (let py = box[1] * SAMPLES; py < box[3] * SAMPLES; py++) {
                 const y = (py + 0.5) / SAMPLES;
-                for (let px = 0; px < fine; px++) {
+                for (let px = box[0] * SAMPLES; px < box[2] * SAMPLES; px++) {
                     if (insideShape(shape, (px + 0.5) / SAMPLES, y)) points[py * fine + px] = shape.value;
                 }
             }
