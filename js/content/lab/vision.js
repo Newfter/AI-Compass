@@ -5,15 +5,12 @@
    Plurals: "one|other" (English), "one|few|many" (Russian).
    The data at the end (A.content "lab.vision"): the preset pictures,
    the ready filters and the hand-set filters of the tiny network.
+   Its title, hook and big idea are in js/content/lab.js (section 3): the lab's picker shows
+   them before this file is loaded.
    ========================================================= */
 
 window.AICompass.addTranslations({
     en: {
-        // The lab catalogue
-        "lab.vision.title": "How computers see",
-        "lab.vision.hook": "Slide a 3\u00a0×\u00a03 filter over a picture: it finds edges, blurs and sharpens. Then look through the eyes of a tiny neural network.",
-        "lab.vision.idea": "Convolution: how computers find edges and shapes",
-
         // The three views
         "lab.vision.view": "Show",
         "lab.vision.viewFilter": "Filters",
@@ -166,11 +163,6 @@ window.AICompass.addTranslations({
         "lab.vision.ch4Why": "The roof's slopes are slanted edges, so the two diagonal filters answer there most strongly, each on its own side of the roof. “Horizontal edges” sees both slopes too, but more weakly: a slanted edge is only partly horizontal. Deeper layers put maps like these together: two slopes that meet at the top make a roof."
     },
     ru: {
-        // The lab catalogue
-        "lab.vision.title": "Как видит компьютер",
-        "lab.vision.hook": "Проведи фильтром 3\u00a0×\u00a03 по картинке: он находит края, размывает и добавляет резкость. А потом посмотри глазами маленькой нейросети.",
-        "lab.vision.idea": "Свёртка: как компьютер находит края и формы",
-
         // The three views
         "lab.vision.view": "Показать",
         "lab.vision.viewFilter": "Фильтры",

@@ -134,7 +134,11 @@ window.AICompass.addTranslations({
 
         "lab.descent.title": "Down the hill: gradient descent",
         "lab.descent.hook": "Race three balls down a hill of error, and see why the size of each step decides everything.",
-        "lab.descent.idea": "Gradient descent: how models learn"
+        "lab.descent.idea": "Gradient descent: how models learn",
+
+        "lab.vision.title": "How computers see",
+        "lab.vision.hook": "Slide a 3\u00a0×\u00a03 filter over a picture: it finds edges, blurs and sharpens. Then look through the eyes of a tiny neural network.",
+        "lab.vision.idea": "Convolution: how computers find edges and shapes"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -163,7 +167,11 @@ window.AICompass.addTranslations({
 
         "lab.descent.title": "Вниз с горы: градиентный спуск",
         "lab.descent.hook": "Устрой гонку трёх шариков вниз по склону ошибки и узнай, почему всё решает размер шага.",
-        "lab.descent.idea": "Градиентный спуск: как учатся модели"
+        "lab.descent.idea": "Градиентный спуск: как учатся модели",
+
+        "lab.vision.title": "Как видит компьютер",
+        "lab.vision.hook": "Проведи фильтром 3\u00a0×\u00a03 по картинке: он находит края, размывает и добавляет резкость. А потом посмотри глазами маленькой нейросети.",
+        "lab.vision.idea": "Свёртка: как компьютер находит края и формы"
     }
 });
 
@@ -234,6 +242,14 @@ window.AICompass.content.set("lab.icons", {
                 '<path d="M12 9.4c.9 1.7 1.6 3.5 1.9 5.5M12.3 13.4l1.6 1.5 1.3-1.8"/>' +
             '</g>' +
             '<circle cx="7.75" cy="10.4" r="2.2" fill="currentColor"/>' +
+        '</symbol>' +
+        // An eye inside a camera's frame; its pupil is one square pixel
+        '<symbol id="lab-icon-vision" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M3 7.5V5a2 2 0 0 1 2-2h2.5M16.5 3H19a2 2 0 0 1 2 2v2.5M21 16.5V19a2 2 0 0 1-2 2h-2.5M7.5 21H5a2 2 0 0 1-2-2v-2.5"/>' +
+                '<path d="M6 12c1.5-2.8 3.7-4.3 6-4.3s4.5 1.5 6 4.3c-1.5 2.8-3.7 4.3-6 4.3S7.5 14.8 6 12z"/>' +
+            '</g>' +
+            '<rect x="10.25" y="10.25" width="3.5" height="3.5" rx=".6" fill="currentColor"/>' +
         '</symbol>'
 });
 
@@ -302,6 +318,16 @@ window.AICompass.content.set("lab.catalogue", [
         level: 3,
         emoji: "🔍",
         keywords: "lab inside a chatbot chatgpt chat bot language model llm gpt transformer token tokens tokenizer bpe byte pair encoding embedding embeddings word vectors meaning attention context next word temperature top-k top-p sampling probability лаборатория внутри чат-бота чат-бот языковая модель трансформер токен токены токенизатор эмбеддинг векторы смысл внимание контекст следующее слово температура вероятность"
+    },
+    {
+        id: "vision",
+        icon: "lab-icon-vision",
+        titleKey: "lab.vision.title",
+        hookKey: "lab.vision.hook",
+        ideaKey: "lab.vision.idea",
+        level: 2,
+        emoji: "👁️",
+        keywords: "lab how computers see computer vision convolution filter kernel edges edge detection blur sharpen emboss sobel pixels picture image photo relu max pooling cnn convolutional neural network feature map лаборатория как видит компьютер компьютерное зрение свёртка фильтр ядро края границы размытие резкость тиснение пиксели картинка изображение фото пулинг свёрточная нейросеть карта признаков"
     },
     {
         id: "maze",
