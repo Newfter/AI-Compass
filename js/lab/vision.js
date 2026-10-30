@@ -1462,9 +1462,15 @@
                 return outputSize(COARSE, COARSE, state.edges);
             }
 
+            // Keeps the window on the map after the map's size changed ("Only full windows" <->
+            // "Same size"), and the status true: a finished map that got bigger is not finished
+            // any more, and a paused window pushed onto the last pixel has finished it
             function clampStep() {
                 const size = stepSize();
-                state.stepIndex = Math.min(state.stepIndex, size.w * size.h - 1);
+                const last = size.w * size.h - 1;
+                state.stepIndex = Math.min(state.stepIndex, last);
+                if (state.stepState === "done" && state.stepIndex < last) setStepState("paused");
+                else if (state.stepState === "paused" && state.stepIndex === last) setStepState("done");
             }
 
             function stepMotion() {
