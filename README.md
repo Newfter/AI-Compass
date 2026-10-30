@@ -9,6 +9,7 @@ This guide is for the people who look after the site. It explains how the code i
 - [Run it on your computer](#run-it-on-your-computer)
 - [The folder map](#the-folder-map)
 - [How the pieces talk](#how-the-pieces-talk)
+- [The app, offline use, sharing, printing and search engines](#the-app-offline-use-sharing-printing-and-search-engines)
 - [Recipes](#recipes): [change a text](#change-a-text-in-both-languages), [add a lesson](#add-a-lesson), [add a quiz question](#add-a-quiz-question), [add a glossary term](#add-a-glossary-term), [add a timeline milestone](#add-a-timeline-milestone), [add a fact or a joke to Compass Bot](#add-a-fun-fact-or-a-joke-to-compass-bot), [help Compass Bot find an answer](#help-compass-bot-find-an-answer), [add a Ctrl+K command](#add-a-command-to-the-ctrlk-palette), [add an AI Lab experiment](#add-an-ai-lab-experiment)
 - [House rules](#house-rules)
 - [Before you merge: a test checklist](#before-you-merge-a-test-checklist)
@@ -52,6 +53,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `css/palette.css` | The Ctrl+K command palette. |
 | `css/journey.css` | My Compass: the button in the menu, the badge picture in a toast, and the dashboard window. |
 | `css/settings.css` | The Settings window and the keyboard shortcuts window, and what the settings change on the whole page: bigger text, relaxed lines, the easy-to-read font, underlined links, high contrast and solid surfaces. It comes after the other styles. |
+| `css/print.css` | The page on paper (used only when printing): black on white, an open lesson as a handout, the certificate on one A4 page. |
 | `js/core.js` | The toolkit that every other script uses (`window.AICompass`, called `A`): saved settings, texts and languages, the theme, calm mode, pop-up windows, scrolling to sections, Ctrl+K commands and toasts. It is loaded first. |
 | `js/effects.js` | Small touches: the scroll progress bar, cards that rise in, numbers that count up, typewriter words, tilting cards, the mouse spotlight, magnetic buttons, ripples, the section mini-map and confetti. |
 | `js/neural-bg.js` | The animated "brain" drawn behind the page. |
@@ -67,6 +69,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/journey.js` | My Compass: counts XP from the progress events, and keeps the level, the badges and the streak in this browser. It also draws the button in the menu. |
 | `js/journey-panel.js` | The My Compass window (the dashboard). It is loaded the first time the window opens. |
 | `js/settings.js` | The Settings window (the gear in the menu, Ctrl+K or `#settings`): language, theme, text size, line spacing, font, underlined links, contrast, transparency, calm motion and the read-aloud voice and speed, saved in this browser (`A.settings`). Also the keyboard shortcuts window (press `?`). |
+| `js/platform.js` | The app around the site: starts the offline copy (`sw.js`), the "Install the app" button, the offline / back online messages, `?lang=` in the address, sharing (`A.share`) and the Share and Print commands. |
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
@@ -81,6 +84,12 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/search.js` | The search's texts and word lists: little words it skips (also words that only judge, like "good" or "лучше"), words that mean the same thing ("нейросеть" = "neural network"), words that point back to the sentence before ("This is called..."), and the parts of the page it searches. |
 | `js/content/journey.js` | My Compass: its texts, the XP table, the levels and the badges. |
 | `js/content/settings.js` | The texts of the Settings and keyboard shortcuts windows, and the list of every keyboard shortcut of the site. |
+| `js/content/platform.js` | The texts of installing, the offline messages and sharing. |
+| `sw.js` | The service worker: the copy of the site that works without a connection. You never need to change it when you edit the site. |
+| `manifest.webmanifest` | The app's name, colours and icons, used when the site is installed as an app. |
+| `404.html` | The page GitHub Pages shows for an address that doesn't exist, however deep, in both languages. |
+| `robots.txt`, `sitemap.xml` | For search engines: everything may be read, and the site's three addresses (plain, `?lang=en`, `?lang=ru`). |
+| `images/` | The app icons, the browser tab's icon, and the picture shown when a link is shared (`og-image.png`, 1200 × 630). |
 | `README.md` | This guide. |
 
 
@@ -188,6 +197,8 @@ Nothing leaves the browser: these events are only for features on the same page 
 | Ctrl+K | `palette.run` | `{ id }` | a command is run |
 | Search | `search.open` | `{ type, id, from }` | a text found by the search is opened: a palette row (`from: "palette"`) or a source under a bot answer (`from: "bot"`) |
 | Settings | `settings.change` | `{ name, value }` | a setting really changes, wherever it was changed (the settings window, Ctrl+K, the buttons in the menu bar). `name` is `language` (`"en"`, `"ru"`), `theme` (`"dark"`, `"light"` or `"system"`), `textSize` (1, 1.125, 1.25 or 1.5), `lineSpacing` (`"normal"`, `"relaxed"`), `easyFont`, `underlineLinks`, `contrast` or `reduceTransparency` (true, false), `voiceEn` or `voiceRu` (a voice, `""` for automatic) or `speechRate` (0.75, 1, 1.25 or 1.5) |
+| Platform | `app.install` | `{}` | the site was installed as an app |
+| | `app.share` | `{ via }` | something was shared: `via` is `"share"` (the device's share window) or `"copy"` (the link was copied) |
 | Core | `language.change` | `{ lang }` | the language changes |
 | | `theme.change` | `{ theme }` | the theme changes |
 | | `settings.change` | `{ name: "calm", value }` | calm mode is switched on (`true`) or off (`false`) |
@@ -199,6 +210,38 @@ My Compass also sends its own event, `"journey"`, after a new level (`{ type: "l
 **Adding an event:** call `A.track("part.something", { ... })` where it happens, list it in your file's header, and add a row here. Listeners must not count the same thing twice: the same event can come many times (for example `lesson.open`).
 
 **Loading files on demand:** `A.loadScript(src)` and `A.loadStyle(href)` load a file the first time it is needed and return a Promise; asking again for the same file reuses the first load, and a failed load can be tried again.
+
+
+## The app, offline use, sharing, printing and search engines
+
+**The offline copy (`sw.js`).** Once the page has loaded, `js/platform.js` starts a *service worker*: a small script the browser keeps for the site, which sees every file the page asks for. Online it always asks the server first, so everyone gets what you published on their next visit (and you see your change on a normal reload). Every answer is saved, and without a connection (or when the server takes more than about 4 seconds) the saved copy answers instead. The first visit saves the page and every file `index.html` loads; files loaded later are saved the first time they are used. A page that was never saved shows a small "You're offline" page.
+
+- **You never need to change `sw.js` when you edit the site.** It reads its list of files from `index.html`. Only a change to the way `sw.js` itself works needs a higher `CACHE_VERSION` at its top (the old copies are then deleted).
+- **To try it:** open the site on a local server, then F12 → Application → Service workers: it should say "activated and is running". Tick "Offline" (there, or in the Network tab) and reload: the site still works. "Unregister" and "Clear site data" (Application → Storage) remove the worker and the copy.
+- It never starts when you open `index.html` as a file (`file://`), and not in browsers driven by a test program (`navigator.webdriver`), so automatic tests always see exactly the files on the server.
+
+**Install the app.** When the browser offers to install the site (Chrome, Edge, Samsung Internet), an "Install the app" button appears in the footer and a command in Ctrl+K. Safari on iPhones and iPads never offers it: there the button shows how to do it with Share → "Add to Home Screen". The app's name, colours and icons are in `manifest.webmanifest`.
+
+**Links in a language.** An address ending in `?lang=ru` or `?lang=en` opens the site in that language, and saves it like the RU / EN button does (the script at the top of `index.html` does it before the page is drawn). Share links use it, and so do search engines.
+
+**Sharing.** `A.share({ title, text, url })` opens the device's share window (phones, tablets); where there is none, it copies the text and the link and says so. Every part is optional: `A.share()` shares the site itself. Call it from a click (browsers allow sharing and copying only right after one). It returns a Promise of what happened: `"shared"`, `"copied"`, `"cancelled"` or `"failed"`. `A.platform.link("quiz")` is the site's public address in the current language, with a part:
+
+```js
+// For example after a quiz round, with a text "quiz.shareResult" added to js/content/quiz.js
+A.share({ text: A.t("quiz.shareResult", { score: 10 }), url: A.platform.link("quiz") });
+```
+
+**Printing.** Ctrl+P (or "Print this page" in Ctrl+K) prints the page in black on white, without the menu, the effects, the buttons, the AI Lab and the quiz. An open lesson prints alone, as a handout; the certificate, while it is shown, prints alone on one A4 page. The rules are in `css/print.css`: look at the print preview in both themes after changing a feature's layout.
+
+**Search engines and shared links.** The top of `index.html` tells search engines and chat apps about the site: a description, the canonical address (added by the script at the top of `index.html`, for the address that was opened: with `?lang=` it names that language's page) and the language versions (`hreflang`), Open Graph and Twitter tags (the title, text and picture shown when a link is shared), and the JSON-LD at the end of `<head>`, which describes the site and the lessons as a free course. `robots.txt` and `sitemap.xml` help search engines find the pages. To check: https://validator.schema.org for the JSON-LD, and F12 → Application → Manifest for the app.
+
+**If the site ever moves** (a new address, or the repository is renamed), change the address in all these places:
+- `index.html`: the `hreflang` links, `og:url` (the canonical address is made from it) and `og:image`, and every address in the JSON-LD;
+- `robots.txt` and `sitemap.xml`;
+- `404.html`: `SITE_FOLDER` and the `<base>` tag (both are the folder, `/AI-Compass/`);
+- `css/print.css`: the address printed at the bottom of every page.
+
+**The pictures** in `images/` are PNG files of fixed sizes: `icon-192.png` and `icon-512.png` (the app), `icon-maskable-512.png` (the app on Android, which cuts it into a circle: keep the drawing inside the middle 80 %), `apple-touch-icon.png` (180 × 180, iPhones), `favicon-32.png` (the browser tab) and `og-image.png` (1200 × 630, shared links). To change one, replace it with a picture of the same size and name. The pictures are saved with 256 colours, which looks the same here and takes less than half the space: do the same with a new one, with a free tool such as pngquant or tinypng.com (but not for `favicon-32.png`, which is tiny anyway).
 
 
 ## Recipes
@@ -319,6 +362,8 @@ window.AICompass.addTranslations({
 ```
 
 </details>
+
+**Search engines.** In `index.html`, add the lesson to `"syllabusSections"` in the JSON-LD at the end of `<head>` (its number, its English title and description, and its reading time, `"PT3M"` for 3 minutes), and add its minutes to `"courseWorkload"`. This is the only list of lessons that doesn't count itself: search engines read it without running any script.
 
 That's all: the cards, the progress panel, the hero number, the section subtitle, the Ctrl+K command and the certificate count the lessons by themselves. (The subtitle says "Six short lessons" only while there are exactly six; with seven it says "7 short lessons". To spell the number out, add `"lessons.subtitle.7"` next to `"lessons.subtitle.6"`, in both languages.)
 
@@ -612,6 +657,8 @@ Open the site on a local server and go through this list for the parts you chang
 - [ ] **The console.** Press F12, open Console and reload: no red errors.
 - [ ] **Links into the page.** `#lesson-4`, `#term-bias` and `#quiz` at the end of the address open the right place.
 - [ ] **Saved progress.** Finish a lesson, change the language and the theme, reload: everything is remembered.
+- [ ] **Offline** (if you added a file to `index.html`). Load the page, then in F12 → Network tick "Offline" and reload: everything still works.
+- [ ] **Printing** (if you changed a layout). Ctrl+P: the preview is black on white, and an open lesson prints as a handout.
 
 
 ## Credits

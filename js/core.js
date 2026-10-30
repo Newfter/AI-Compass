@@ -471,12 +471,14 @@
     /* =========================================================
        4. THEME
        ========================================================= */
-    // The colour of the browser's address bar on phones. Both colours are
-    // written once, on <meta name="theme-color" data-dark data-light> in index.html.
+    // The colour of the browser's address bar on phones. Both colours are written
+    // on each <meta name="theme-color" data-dark data-light> in index.html (there is
+    // one for a device in dark mode and one for light mode: both follow the theme).
     function updateThemeMeta() {
-        const meta = document.querySelector('meta[name="theme-color"]');
-        const color = meta && meta.getAttribute("data-" + state.theme);
-        if (color) meta.setAttribute("content", color);
+        document.querySelectorAll('meta[name="theme-color"]').forEach(function (meta) {
+            const color = meta.getAttribute("data-" + state.theme);
+            if (color) meta.setAttribute("content", color);
+        });
     }
 
     function setTheme(theme) {
@@ -1963,6 +1965,9 @@
                 element.src = url;
             } else {
                 element.rel = "stylesheet";
+                // A stylesheet from another site (the easy-to-read font) in CORS mode, so the
+                // offline copy (sw.js) gets an answer it can check
+                if (new URL(url, document.baseURI).origin !== window.location.origin) element.crossOrigin = "anonymous";
                 element.href = url;
             }
             element.addEventListener("load", function () { resolve(); });
