@@ -55,14 +55,15 @@ html.st-large-text body {
 
 /* In these narrow labels a long Russian word does not fit its line on a phone
    ("Предсказатель", "Медленно", "интерактивных", "Конфиденциальность",
-   "приспособленностью"). Cut without a hyphen it reads as a mistake, so the
-   browser hyphenates it ("Предсказа-тель"), using the page's language (lang on
-   <html>). Browsers without a dictionary for it still break it as above. Long
-   texts are not hyphenated: words cut at the end of every other line are harder
-   to read (a lab challenge is one short sentence). */
+   "приспособленностью", "Горизонтальные"). Cut without a hyphen it reads as a
+   mistake, so the browser hyphenates it ("Предсказа-тель"), using the page's
+   language (lang on <html>). Browsers without a dictionary for it still break
+   it as above. Long texts are not hyphenated: words cut at the end of every
+   other line are harder to read (a lab challenge is one short sentence). */
 html.st-large-text :is(.stat span, .gl-rel,
     .lab-pick-title, .lab-seg button, .lab-lm-stat span,       /* the AI Lab: the picker, Teach the machine, the predictor */
-    .lk-explain-text strong, .lk-challenge-text) {             /* the experiments' "How it works" and challenges (css/lab/kit.css) */
+    .lk-explain-text strong, .lk-challenge-text,               /* the experiments' "How it works" and challenges (css/lab/kit.css) */
+    .cv-map .lk-btn-text) {                                    /* the names of the maps in How computers see (css/lab/vision.css) */
     -webkit-hyphens: auto;
     hyphens: auto;
 }
