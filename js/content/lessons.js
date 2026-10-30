@@ -2,8 +2,8 @@
    AI COMPASS — TEXTS: LESSONS
    Every word in English and in Russian (informal "ты").
    The tracks, lessons 1-6 (the Basics), their mini-labs and the
-   lesson reader. Lessons 7-12 (the Deep dive) and their mini-labs
-   are in js/content/lessons-deep.js.
+   lesson reader. Lessons 7 and on (the Deep dive) and their
+   mini-labs are in js/content/lessons-deep.js.
    Used by js/lessons.js (and the lessons section of index.html).
    To change a text, change it here (in both languages).
    ========================================================= */

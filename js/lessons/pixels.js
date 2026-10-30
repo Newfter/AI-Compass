@@ -295,6 +295,6 @@
     }
 
     // ---------- 7. The lab for js/lessons.js ----------
-    // No timers and no listeners outside host, so there is nothing to stop.
+    // No timer keeps running and no listener is outside host: nothing to stop.
     A.lessons.defineLab("pixels", { build: build });
 })();

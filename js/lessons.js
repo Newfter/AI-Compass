@@ -30,7 +30,7 @@
    21. Ctrl+K commands and the public API
    Every text (English and Russian) is in js/content/lessons.js
    (tracks, reader, lessons 1-6) and js/content/lessons-deep.js
-   (lessons 7-12). Other features use AICompass.lessons (section 21).
+   (lessons 7 and on). Other features use AICompass.lessons (section 21).
 
    Events (A.track; see "Progress events" in README.md):
      lesson.open { n }             every time a lesson is shown
@@ -137,7 +137,7 @@
     ];
 
     // The texts are in js/content/lessons.js (lessons 1-6) and js/content/lessons-deep.js
-    // (7-12): keys "lessons.l1.title", ... track: the lesson's track (see TRACKS).
+    // (7 and on): keys "lessons.l1.title", ... track: the lesson's track (see TRACKS).
     // rgb: which accent colour the lesson uses. lab: which mini-lab it shows (one of the
     // six in sections 10-15, or the name of its own file in js/lessons/, see section 16).
     // correct: index (0, 1 or 2) of the right answer to "Check yourself".

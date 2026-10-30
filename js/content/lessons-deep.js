@@ -1,8 +1,9 @@
 /* =========================================================
    AI COMPASS — TEXTS: THE "DEEP DIVE" LESSONS
    Every word in English and in Russian (informal "ты").
-   Lessons 7-12 (the "Deep dive" track) and the texts of their
-   mini-labs ("lessons.w<n>.*", used by the files in js/lessons/).
+   The lessons of the "Deep dive" track (7-9 so far; the next ones
+   go here too) and the texts of their mini-labs ("lessons.w<n>.*",
+   used by the files in js/lessons/).
    Lessons 1-6, the tracks and the reader's buttons are in
    js/content/lessons.js (that file would be too long with these).
    Glossary words are written <strong data-term='id'>...</strong>:
