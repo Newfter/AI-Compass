@@ -88,7 +88,7 @@
     const MORE_EPOCHS = 20;              // "Train more": 20 more epochs
     const CHUNK = 2;                     // examples per loop step (the loop fits as many steps as it can into a frame)
     const CHECK_CHUNK = 8;               // examples per step of the check after each epoch (no learning, so quicker)
-    const TRAIN_BUDGET = 3;              // ms of training per frame: with the chart and the scores, a frame stays under 8 ms
+    const TRAIN_BUDGET = 2;              // ms of training per frame: with the chart and the scores, a frame stays well under 8 ms
     // "Wiggle the examples" (data augmentation): each time an example is used it is
     // moved by up to 2 pixels, turned by up to 12 degrees and scaled by up to 10%
     const WIGGLE = { shift: 2, turn: 12, scale: 0.1 };
@@ -2384,8 +2384,7 @@
             // Training accuracy: the examples it learned from (for k-NN each one is left out and
             // guessed from the others). Test accuracy: the test drawings, which it never learned.
             function measure() {
-                if (resultsFrame) cancelAnimationFrame(resultsFrame);     // measured afresh here
-                resultsFrame = 0;
+                if (resultsFrame) showResults();       // a waiting update of the network's results goes first
                 measureKnn();
                 measureNet();
             }
