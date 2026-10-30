@@ -845,6 +845,7 @@
                 ],
                 x0: K_RANGE.min,
                 xStep: 1,
+                xEvery: 1,             // every k has its number, also on a phone
                 yMin: 0,
                 highlightX: k,
                 xLabelKey: "lab.cluster.kAxis",
