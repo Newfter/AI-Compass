@@ -151,7 +151,7 @@ window.AICompass.addTranslations({
         // Measuring
         "lab.draw.measureTitle": "How good is it?",
         "lab.draw.needTests": "Draw some test pictures in Test mode. The test accuracy needs {n} more.|Draw some test pictures in Test mode. The test accuracy needs {n} more.",
-        "lab.draw.looNote": "Nearest neighbours guesses each of its examples from the others. With the example itself among them, it would always find itself and score 100%.",
+        "lab.draw.looNote": "Nearest neighbours guesses each of its examples from the other examples. If the example itself were among them, it would always be its own nearest neighbour, and with k = 1 the score would always be 100%.",
         "lab.draw.overfitLine": "Training accuracy is often 100%. Only test accuracy shows whether a model learned the idea and not just its examples: doing well on new drawings is called {generalization}. A model that learns its examples by heart but fails on new drawings is {overfitting}.",
         "lab.draw.termGeneralization": "generalisation",
         "lab.draw.termOverfitting": "overfitting",
@@ -326,7 +326,7 @@ window.AICompass.addTranslations({
         // Измерения
         "lab.draw.measureTitle": "Насколько хорошо?",
         "lab.draw.needTests": "Нарисуй несколько тестовых картинок в режиме «Проверять». Для точности на тесте нужна ещё {n}.|Нарисуй несколько тестовых картинок в режиме «Проверять». Для точности на тесте нужны ещё {n}.|Нарисуй несколько тестовых картинок в режиме «Проверять». Для точности на тесте нужно ещё {n}.",
-        "lab.draw.looNote": "Ближайшие соседи угадывают каждый свой пример по остальным. Если бы пример сам был среди них, метод всегда находил бы его и получал 100%.",
+        "lab.draw.looNote": "Ближайшие соседи угадывают каждый свой пример по остальным примерам. Если бы пример сам был среди них, он всегда был бы своим самым близким соседом, и при k = 1 точность всегда была бы 100%.",
         "lab.draw.overfitLine": "Точность на обучении часто бывает 100%. Только точность на тесте показывает, поняла ли модель идею, а не просто запомнила примеры. Умение справляться с новыми рисунками — это {generalization}. Когда модель выучила примеры наизусть, но ошибается на новых рисунках, — это {overfitting}.",
         "lab.draw.termGeneralization": "обобщение",
         "lab.draw.termOverfitting": "переобучение",
