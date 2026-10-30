@@ -1150,7 +1150,7 @@
             });
             const againButton = kit.button("lab.vision.applyAgain", { icon: AGAIN_ICON, onClick: applyAgain });
             const backButton = kit.button("lab.vision.backToPicture", { icon: "undo", variant: "subtle", onClick: backToPicture });
-            const appliedNote = el("p", "cv-help cv-applied");
+            const appliedNote = el("p", "cv-help cv-applied", { tabindex: "-1" });    // takes the focus from a switched-off "Apply again"
             panel.append(textEl("h4", "cv-title", "lab.vision.filterTitle"), filterChips.element, numbersBox,
                 edgesSwitch.element, reluSwitch.element, poolSwitch.element,
                 kit.toolbar([againButton, backButton]), appliedNote);
@@ -1856,10 +1856,19 @@
                 const total = state.numbers.reduce(function (a, b) { return a + b; }, 0);
                 A.dom.setText(sumLine, state.divisor === 1 ? t("lab.vision.sum", { sum: num(total) })
                     : t("lab.vision.sumDivided", { raw: num(total), divisor: num(state.divisor), sum: num(total / state.divisor) }));
-                appliedNote.hidden = state.applied === 0;
-                A.dom.setText(appliedNote, state.applied ? A.plural("lab.vision.applied", state.applied, { n: state.applied }) : "");
-                backButton.setDisabled(state.applied === 0);
-                againButton.setDisabled(!output || output.w < SMALLEST || output.h < SMALLEST);
+                const backOff = state.applied === 0;
+                const againOff = !output || output.w < SMALLEST || output.h < SMALLEST;
+                appliedNote.hidden = backOff;
+                A.dom.setText(appliedNote, backOff ? "" : A.plural("lab.vision.applied", state.applied, { n: state.applied }) +
+                    (againOff ? " " + t("lab.vision.tooSmall") : ""));
+                // A button that switches itself off would drop the keyboard focus onto the page.
+                // "Back to the picture" hands it to "Apply again"; "Apply again" hands it to the
+                // note under them, which says why (not to "Back", so that one more Enter undoes nothing).
+                if (!againOff) againButton.setDisabled(false);      // on first, so that it can take the focus
+                if (backOff && document.activeElement === backButton.element) againButton.element.focus();
+                if (againOff && document.activeElement === againButton.element) appliedNote.focus();
+                backButton.setDisabled(backOff);
+                againButton.setDisabled(againOff);
                 cells.forEach(function (field, i) {
                     A.dom.setAttr(field.element, "aria-label", t("lab.vision.cell", { row: Math.floor(i / 3) + 1, col: (i % 3) + 1 }));
                 });
