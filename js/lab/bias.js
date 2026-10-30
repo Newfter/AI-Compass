@@ -523,14 +523,17 @@
     }
 
     const GOALS = [
-        // 1. Trained on the history with all the columns, in "Unfair decisions"
+        // 1. Trained on the history with all the columns, in "Unfair decisions", with the gap there
+        //    to be found: Orange accepted more than 5 points less often (a threshold that hides the
+        //    gap doesn't count, because the insight that opens talks about it)
         function (s) {
-            return s.trained && s.preset === "decisions" && !s.betterLabels && s.columns.length === COLUMNS.length;
+            return s.trained && s.preset === "decisions" && !s.betterLabels && s.columns.length === COLUMNS.length &&
+                s.gaps.accepted < -GAP_LIMIT;
         },
-        // 2. The same without the group column, but with the neighbourhood: still a gap
+        // 2. The same without the group column, but with the neighbourhood: Orange still loses out
         function (s) {
             return s.trained && s.preset === "decisions" && !s.betterLabels && !hasColumn(s, "orange") &&
-                hasColumn(s, "south") && Math.abs(s.gaps.accepted) > GAP_LIMIT;
+                hasColumn(s, "south") && s.gaps.accepted < -GAP_LIMIT;
         },
         // 3. An acceptance gap under 5 points, and right about at least 80 % of each group
         function (s) {
