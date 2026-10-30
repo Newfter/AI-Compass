@@ -305,7 +305,7 @@ window.AICompass.addTranslations({
         "quiz.stat.none": "Рекорда пока нет",
         "quiz.stat.dailyNew": "Сегодня новое испытание",
         "quiz.stat.dailyStreak": "Сегодня новое · 🔥 {days}",
-        "quiz.stat.dailyDone": "Сегодня пройдено ✓ · 🔥 {days}",
+        "quiz.stat.dailyDone": "На сегодня всё ✓ · 🔥 {days}",
         "quiz.stat.lessons": "Повторено: {n} из {total}",
         "quiz.stat.lessonsNone": "Уроки 1–{last} и история ИИ",
         "quiz.stat.mistakesDue.one": "{n} вопрос ждёт повторения",
@@ -337,7 +337,7 @@ window.AICompass.addTranslations({
 
         "quiz.daily.kicker": "Испытание дня",
         "quiz.daily.doneTitle": "Возвращайся завтра!",
-        "quiz.daily.doneText": "Испытание дня пройдено: верно {correct} из {total}. Завтра тебя будет ждать новое.",
+        "quiz.daily.doneText": "На сегодня испытание закончено: верно {correct} из {total}. Завтра тебя будет ждать новое.",
         "quiz.daily.streak": "Серия дней",
         "quiz.daily.best": "Лучшая серия дней",
         "quiz.daily.days": "Всего дней",
