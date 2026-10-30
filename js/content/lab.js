@@ -130,7 +130,11 @@ window.AICompass.addTranslations({
 
         "lab.draw.title": "Draw and teach",
         "lab.draw.hook": "Teach the computer your own drawings, then test it on new ones.",
-        "lab.draw.idea": "Training data and generalisation"
+        "lab.draw.idea": "Training data and generalisation",
+
+        "lab.descent.title": "Down the hill: gradient descent",
+        "lab.descent.hook": "Race three balls down a hill of error, and see why the size of each step decides everything.",
+        "lab.descent.idea": "Gradient descent: how models learn"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -155,7 +159,11 @@ window.AICompass.addTranslations({
 
         "lab.draw.title": "Нарисуй и научи",
         "lab.draw.hook": "Научи компьютер узнавать твои рисунки — а потом проверь его на новых.",
-        "lab.draw.idea": "Обучающие данные и обобщение"
+        "lab.draw.idea": "Обучающие данные и обобщение",
+
+        "lab.descent.title": "Вниз с горы: градиентный спуск",
+        "lab.descent.hook": "Устрой гонку трёх шариков вниз по склону ошибки и узнай, почему всё решает размер шага.",
+        "lab.descent.idea": "Градиентный спуск: как учатся модели"
     }
 });
 
@@ -218,6 +226,14 @@ window.AICompass.content.set("lab.icons", {
             '<rect x="6.2" y="15.3" width="3" height="3" rx=".6" fill="currentColor"/>' +
             '<rect x="3" y="15.3" width="3" height="3" rx=".6" fill="currentColor"/>' +
             '<rect x="3" y="18.5" width="3" height="3" rx=".6" fill="currentColor" opacity=".5"/>' +
+        '</symbol>' +
+        // A valley, a ball on its left wall, and an arrow down the slope
+        '<symbol id="lab-icon-descent" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M3 4c1.6 9.5 4.6 15 9 15s7.4-5.5 9-15"/>' +
+                '<path d="M12 9.4c.9 1.7 1.6 3.5 1.9 5.5M12.3 13.4l1.6 1.5 1.3-1.8"/>' +
+            '</g>' +
+            '<circle cx="7.75" cy="10.4" r="2.2" fill="currentColor"/>' +
         '</symbol>'
 });
 
@@ -256,6 +272,16 @@ window.AICompass.content.set("lab.catalogue", [
         level: 2,
         emoji: "🧠",
         keywords: "lab neural network train teach classifier dots points machine learning лаборатория нейросеть нейронная сеть обучить обучение машина точки классификатор"
+    },
+    {
+        id: "descent",
+        icon: "lab-icon-descent",
+        titleKey: "lab.descent.title",
+        hookKey: "lab.descent.hook",
+        ideaKey: "lab.descent.idea",
+        level: 3,
+        emoji: "⛰️",
+        keywords: "lab down the hill gradient descent loss error slope gradient learning rate step size optimizer momentum adam local minimum saddle point landscape valley ball training parameters лаборатория вниз с горы градиентный спуск ошибка функция потерь склон градиент скорость обучения размер шага оптимизатор импульс адам локальный минимум седловая точка ландшафт долина шарик обучение параметры"
     },
     {
         id: "predictor",

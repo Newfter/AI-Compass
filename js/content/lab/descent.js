@@ -5,15 +5,12 @@
    "one|few|many" (Russian).
    Below the texts: the presets, a good race for each landscape
    (A.content "lab.descent").
+   Its title, hook and big idea are in js/content/lab.js (section 3): the lab's picker shows
+   them before this file is loaded.
    ========================================================= */
 
 window.AICompass.addTranslations({
     en: {
-        // ----- The lab's catalogue -----
-        "lab.descent.title": "Down the hill: gradient descent",
-        "lab.descent.hook": "Race three balls down a hill of error, and see why the size of each step decides everything.",
-        "lab.descent.idea": "Gradient descent: how models learn",
-
         // ----- Words used everywhere -----
         "lab.descent.ball": "Ball {n}",
         "lab.descent.pair": "({x}, {y})",
@@ -115,11 +112,6 @@ window.AICompass.addTranslations({
         "lab.descent.ch4Why": "On the ridge the slope has no sideways part, so plain descent slides to the flat middle and stops there, although the ground goes down on both sides. A little noise pushes it off the ridge, and then it rolls down. Training on small random batches of data makes the slope a little noisy in much the same way, and that helps real networks get past flat spots."
     },
     ru: {
-        // ----- The lab's catalogue -----
-        "lab.descent.title": "Вниз с горы: градиентный спуск",
-        "lab.descent.hook": "Устрой гонку трёх шариков вниз по склону ошибки и узнай, почему всё решает размер шага.",
-        "lab.descent.idea": "Градиентный спуск: как учатся модели",
-
         // ----- Words used everywhere -----
         "lab.descent.ball": "Шарик {n}",
         "lab.descent.pair": "({x}; {y})",
