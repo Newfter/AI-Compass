@@ -10,9 +10,10 @@
    2. Three slot machines (lesson 8, js/lessons/slots.js): .slot-
    3. Temperature dial (lesson 9, js/lessons/temperature.js): .tmp-
    4. From noise to picture (lesson 10, js/lessons/noise.js): .noise-
-   5. Switches of the mini-labs
-   6. Responsive
-   7. Calm mode and reduced motion
+   5. Fair or not? (lesson 11, js/lessons/fairness.js): .fair-
+   6. Switches of the mini-labs
+   7. Responsive
+   8. Calm mode and reduced motion
    ========================================================= */
 
 /* ===== 1. PIXEL DETECTIVE =====
@@ -818,11 +819,231 @@
     line-height: 1.55;
 }
 
-/* ===== 5. SWITCHES OF THE MINI-LABS =====
+/* ===== 5. FAIR OR NOT? =====
+   One case at a time, in a card. Above it, a round numbered button per case
+   (with a green tick once the problem is spotted, an amber cross if missed)
+   and the score. The answers are .ui-option buttons (css/components.css)
+   with the letters of the "check yourself" question (.lsn-option-mark,
+   css/lessons.css). In the face-unlock case, a result below the overall
+   one is amber, so the gap stands out. */
+
+.fair-lab {
+    container-type: inline-size;   /* for the @container rule below */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+.fair-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+}
+
+.fair-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fair-dot {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: var(--surface-solid);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fair-dot:hover {
+    border-color: var(--accent-2);
+}
+
+.fair-dot.is-now {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.28);
+}
+
+/* The status, as a small badge on the corner of the button */
+.fair-dot.is-spotted::after,
+.fair-dot.is-missed::after {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: grid;
+    place-items: center;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    color: var(--surface-solid);
+    font-size: 11px;
+    line-height: 1;
+}
+
+.fair-dot.is-spotted::after {
+    content: "✓";
+    background: var(--success);
+}
+
+.fair-dot.is-missed::after {
+    content: "✗";
+    background: var(--warning);
+}
+
+.fair-case {
+    display: grid;
+    gap: 12px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface-solid);
+}
+
+.fair-tag {
+    color: var(--text-muted);
+    font-size: 11.5px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.fair-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.fair-title:focus {
+    outline: none;   /* it gets the focus from the script only, so screen readers read the new case */
+}
+
+.fair-story {
+    font-size: var(--lsn-text);
+    line-height: 1.65;
+}
+
+.fair-question {
+    margin-top: 4px;
+    font-weight: 700;
+}
+
+.fair-options {
+    margin-top: 0;
+}
+
+.fair-option {
+    --option-height: 52px;
+    --option-pad: 10px 14px;
+    font-size: calc(var(--lsn-text) - 1px);
+}
+
+.fair-feedback {
+    margin-top: 4px;
+}
+
+/* The face-unlock test: one bar per row of results */
+.fair-test {
+    display: grid;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 14px;
+}
+
+.fair-bars {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fair-bar-row {
+    display: grid;
+    grid-template-columns: minmax(7.5em, auto) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 12px;
+    font-size: 14px;
+}
+
+.fair-bar-name {
+    font-weight: 700;
+}
+
+.fair-bar {
+    display: block;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(var(--accent-2-rgb), 0.14);
+}
+
+.fair-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent-2);
+}
+
+.fair-bar-row.is-low .fair-bar span {
+    background: var(--warning);
+}
+
+.fair-bar-value {
+    color: var(--text-muted);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.fair-bar-row.is-low .fair-bar-value {
+    color: var(--text-warning);
+    font-weight: 700;
+}
+
+.fair-share {
+    color: var(--text-muted);
+    font-size: 13.5px;
+}
+
+/* A narrow lab: the name and the numbers on one line, the bar under them */
+@container (max-width: 520px) {
+    .fair-bar-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 4px 10px;
+    }
+
+    .fair-bar {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .fair-case {
+        padding: 16px;
+    }
+}
+
+.fair-done {
+    margin-top: 0;
+}
+
+/* ===== 6. SWITCHES OF THE MINI-LABS =====
    The track and the knob are .ui-switch (css/components.css). */
 
 .px-switch,
-.slot-switch {
+.slot-switch,
+.fair-switch {
     display: inline-flex;
     align-items: center;
     gap: 11px;
@@ -839,7 +1060,7 @@
     cursor: pointer;
 }
 
-/* ===== 6. RESPONSIVE ===== */
+/* ===== 7. RESPONSIVE ===== */
 
 @media (max-width: 640px) {
     /* 12 squares across the width of a phone (the reader and the lab take 62px of it) */
@@ -910,7 +1131,7 @@
     }
 }
 
-/* ===== 7. CALM MODE AND REDUCED MOTION =====
+/* ===== 8. CALM MODE AND REDUCED MOTION =====
    core.js puts "fx-motion-off" on <html>, and style.css then stops every
    animation and transition. The labs also skip the reel's spin and the
    word's pop (api.motion.ok() in their files). Nothing else to do here. */
