@@ -1171,6 +1171,9 @@
        (or type "2", "true"); then the bot says right or wrong, with the
        quiz's explanation. A saved question remembers the order of its
        options and the answer, so it is drawn again the same way.
+       The texts of the questions are in the quiz's own file
+       (js/content/quiz-bank.js), loaded the first time they are needed:
+       "quiz me" waits for it (the typing dots go on meanwhile).
        ========================================================= */
 
     function quizQuestions() {
@@ -1179,6 +1182,21 @@
         return list.filter(function (question) {
             return question && typeof question.key === "string" && A.has("quiz." + question.key + ".text");
         });
+    }
+
+    // A Promise, kept once the texts of the questions are here (at once if they are
+    // already). It fails without the quiz on the page, or without a network.
+    function quizReady() {
+        if (quizQuestions().length) return Promise.resolve();
+        const quiz = A.quiz;
+        if (!quiz || typeof quiz.ready !== "function") return Promise.reject(new Error("no quiz"));
+        return Promise.resolve(A.util.attempt(quiz.ready, null)).then(function () {
+            if (!quizQuestions().length) throw new Error("no questions");
+        });
+    }
+
+    function isQuizMessage(message) {
+        return message.reply === "quizAsk" || message.reply === "quizResult";
     }
 
     // A question of the quiz in the current language:
@@ -1265,7 +1283,15 @@
     // A question about the topic (if the quiz has one), else the next one from the "bag"
     function quizMeAnswer(topic) {
         const all = quizQuestions();
-        if (!all.length) return { reply: "noQuiz" };
+        // Not here yet: the reply queue waits for them, then plans this answer again
+        // (ready and redo, see nextJob)
+        if (!all.length) {
+            return {
+                reply: "noQuiz",
+                ready: quizReady(),
+                redo: function (loaded) { return loaded ? quizMeAnswer(topic) : { reply: "noQuiz" }; }
+            };
+        }
         let key = "";
         let miss = "";
         if (topic && A.search) {
@@ -1687,6 +1713,13 @@
         if (state.drawn) return;
         state.drawn = true;
         renderAll();
+        // Saved quiz questions need the quiz's texts: once they are here, draw them again
+        if (!quizQuestions().length && chat.messages.some(isQuizMessage)) {
+            quizReady().then(function () {
+                if (state.open) retranslateMessages();
+                else state.stale = true;
+            }, function () {});
+        }
     }
 
     // On language change: redraw the bot's answers in the new language,
@@ -1752,6 +1785,21 @@
         }
         state.busy = true;
         setTyping(true);
+        // An answer that needs a file first ("quiz me" before the quiz's questions are
+        // here): the dots go on until it has come, then the answer is planned again
+        if (job.ready) {
+            const ready = job.ready;
+            job.ready = null;
+            ready.then(function () { return true; }, function () { return false; }).then(function (loaded) {
+                if (job.generation !== state.generation) return;   // the chat was restarted
+                const fresh = job.redo(loaded);
+                job.redo = null;
+                Object.assign(job, fresh, { data: Object.assign({}, job.data, fresh.data) });
+                state.queue.unshift(job);
+                nextJob();
+            });
+            return;
+        }
         setTimeout(function () {
             if (job.generation !== state.generation) return;   // the chat was restarted
             setTyping(false);

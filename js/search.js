@@ -1209,21 +1209,32 @@
     });
 
     // ----- Quiz: every question with its explanation -----
+    // Their texts are in the quiz's own file (js/content/quiz-bank.js), loaded the first
+    // time they are needed. Until then the quiz has no documents: the first search asks
+    // for the file, and the index is built again once it is here (its version changes).
     function questions() {
         return listOf((A.content.get("quiz") || {}).questions);
     }
 
+    function questionTexts() {
+        const first = questions()[0];
+        return Boolean(first && A.has("quiz." + first.key + ".text"));
+    }
+
     // A question leads to what explains it: its lesson, or the timeline, or else the quiz
     function openQuestion(question) {
-        const lesson = Number(question.learn);
+        const lesson = Number(question.lesson);
         if (Number.isInteger(lesson) && lesson >= 1 && lesson <= lessonCount()) return openLesson(lesson);
-        A.navigate(question.learn === "timeline" ? "timeline" : "quiz");
+        A.navigate(question.lesson === "timeline" ? "timeline" : "quiz");
     }
 
     register("quiz", {
         icon: "🏆",
-        version: function () { return questions().length; },
+        version: function () { return questions().length + (questionTexts() ? "" : " without texts"); },
         documents: function () {
+            if (!questionTexts() && A.quiz && typeof A.quiz.ready === "function") {
+                A.util.attempt(function () { A.quiz.ready().catch(function () {}); });
+            }
             return questions().map(function (question) {
                 const k = "quiz." + (question && question.key) + ".";
                 if (!A.has(k + "text")) return null;
