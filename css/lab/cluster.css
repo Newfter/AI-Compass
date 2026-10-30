@@ -9,7 +9,7 @@
 /* What the chosen board is about (under the presets) */
 .km-caption {
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.55;
 }
 
@@ -50,7 +50,7 @@
     border-radius: 999px;
     background: var(--surface);
     color: var(--text);
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 700;
     line-height: 1.4;
 }
@@ -169,7 +169,7 @@
     background: var(--surface-solid);
     color: var(--text);
     font-family: var(--font-body);
-    font-size: 15px;
+    font-size: 0.9375rem;
     transition: border-color 0.2s ease;
 }
 
@@ -214,7 +214,7 @@
 /* The idea in real life, with its glossary links (a term stays on one line) */
 .km-idea {
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.6;
 }
 

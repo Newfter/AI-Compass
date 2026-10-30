@@ -142,7 +142,11 @@ window.AICompass.addTranslations({
 
         "lab.bias.title": "Bias detective",
         "lab.bias.hook": "Twins with the same skill: one gets in, the other doesn't. Find out how an AI learned to be unfair.",
-        "lab.bias.idea": "Bias and fairness"
+        "lab.bias.idea": "Bias and fairness",
+
+        "lab.cluster.title": "Finding groups",
+        "lab.cluster.hook": "Nobody tells the computer the answers. Watch k-means find the groups in a cloud of points by itself.",
+        "lab.cluster.idea": "Unsupervised learning: finding groups"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -179,7 +183,11 @@ window.AICompass.addTranslations({
 
         "lab.bias.title": "Детектив предвзятости",
         "lab.bias.hook": "Близнецы с одинаковым навыком: одного принимают, другого нет. Разберись, как ИИ научился несправедливости.",
-        "lab.bias.idea": "Предвзятость и справедливость"
+        "lab.bias.idea": "Предвзятость и справедливость",
+
+        "lab.cluster.title": "Поиск групп",
+        "lab.cluster.hook": "Компьютеру никто не подсказывает ответы. Посмотри, как k-means сам находит группы в облаке точек.",
+        "lab.cluster.idea": "Обучение без учителя: поиск групп"
     }
 });
 
@@ -267,6 +275,20 @@ window.AICompass.content.set("lab.icons", {
                 '<path d="M5 9.5 2.8 14.5h4.4zM19 6.5l-2.2 5h4.4z"/>' +
             '</g>' +
             '<circle cx="12" cy="4" r="1.3" fill="currentColor"/>' +
+        '</symbol>' +
+        // Three groups of points, each group with its own shape (dots, rings, squares), as on the board
+        '<symbol id="lab-icon-cluster" viewBox="0 0 24 24">' +
+            '<circle cx="9.3" cy="4.6" r="1.75" fill="currentColor"/>' +
+            '<circle cx="14.7" cy="4.6" r="1.75" fill="currentColor"/>' +
+            '<circle cx="12" cy="9.2" r="1.75" fill="currentColor"/>' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.5">' +
+                '<circle cx="4.6" cy="14.6" r="1.6"/>' +
+                '<circle cx="8.6" cy="19.4" r="1.6"/>' +
+                '<circle cx="3.8" cy="20.2" r="1.6"/>' +
+            '</g>' +
+            '<rect x="17.6" y="12.9" width="3.4" height="3.4" rx=".5" fill="currentColor"/>' +
+            '<rect x="13.8" y="17.7" width="3.4" height="3.4" rx=".5" fill="currentColor"/>' +
+            '<rect x="18.4" y="18.5" width="3.4" height="3.4" rx=".5" fill="currentColor"/>' +
         '</symbol>'
 });
 
@@ -295,6 +317,16 @@ window.AICompass.content.set("lab.catalogue", [
         level: 1,
         emoji: "✏️",
         keywords: "lab draw and teach drawing doodle sketch picture image recognition classifier classes training data examples test generalisation generalization overfitting mnist pixels nearest neighbours k-nn neural network focus лаборатория нарисуй и научи рисунок рисовать картинка изображение распознавание классификатор классы обучающие данные примеры тест обобщение переобучение пиксели ближайшие соседи нейросеть"
+    },
+    {
+        id: "cluster",
+        icon: "lab-icon-cluster",
+        titleKey: "lab.cluster.title",
+        hookKey: "lab.cluster.hook",
+        ideaKey: "lab.cluster.idea",
+        level: 2,
+        emoji: "🍇",
+        keywords: "lab finding groups clustering cluster clusters k-means kmeans unsupervised learning groups centres centroids elbow chart customers shop segments data points лаборатория поиск групп кластеризация кластер кластеры k-средних обучение без учителя группы центры центроиды метод локтя покупатели магазин сегменты данные точки"
     },
     {
         id: "classifier",

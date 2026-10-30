@@ -3,15 +3,12 @@
    Keys: lab.cluster.*  The shared words (Play, Step, Reset...) are lab.kit.*
    in js/content/lab/kit.js. Plurals: "one|other" (English), "one|few|many"
    (Russian). The presets (the examples) are at the end, as generator settings.
+   Its title, hook and big idea are in js/content/lab.js (section 3): the lab's picker shows
+   them before this file is loaded.
    ========================================================= */
 
 window.AICompass.addTranslations({
     en: {
-        // ----- In the lab's list of experiments -----
-        "lab.cluster.title": "Finding groups",
-        "lab.cluster.hook": "Nobody tells the computer the answers. Watch k-means find the groups in a cloud of points by itself.",
-        "lab.cluster.idea": "Unsupervised learning: finding groups",
-
         // ----- The examples -----
         "lab.cluster.preset.three": "Three clear groups",
         "lab.cluster.preset.five": "Five groups",
@@ -139,11 +136,6 @@ window.AICompass.addTranslations({
         "lab.cluster.inGroups": "in {n}\u00a0group|in {n}\u00a0groups"
     },
     ru: {
-        // ----- В списке экспериментов лаборатории -----
-        "lab.cluster.title": "Поиск групп",
-        "lab.cluster.hook": "Компьютеру никто не подсказывает ответы. Посмотри, как k-means сам находит группы в облаке точек.",
-        "lab.cluster.idea": "Обучение без учителя: поиск групп",
-
         // ----- Примеры -----
         "lab.cluster.preset.three": "Три чёткие группы",
         "lab.cluster.preset.five": "Пять групп",
