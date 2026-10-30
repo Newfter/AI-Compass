@@ -163,7 +163,6 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    max-width: 1120px;
     margin: 0 auto 48px;
 }
 
@@ -177,6 +176,7 @@
 }
 
 .tl-theme {
+    padding-left: 12px;
     font-size: 13px;
 }
 

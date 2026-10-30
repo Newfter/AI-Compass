@@ -579,10 +579,11 @@
             }
         });
 
-        // Each era chip fills up as the line passes its milestones ("All": the whole line)
+        // Each era chip fills up as the line passes its milestones ("All": the whole line).
+        // They stay empty until the line has moved (the first dot is lit from the start).
         Object.keys(chips).forEach(function (era) {
             const count = era === "all" ? { reached: reached, total: layout.nodes.length } : perEra[era];
-            const progress = count && count.total ? (count.reached / count.total).toFixed(3) : "0";
+            const progress = shown > 0 && count && count.total ? (count.reached / count.total).toFixed(3) : "0";
             if (progress !== drawn.progress[era]) {
                 drawn.progress[era] = progress;
                 chips[era].style.setProperty("--tl-progress", progress);
