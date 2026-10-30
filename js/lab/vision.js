@@ -1190,7 +1190,13 @@
             ] });
             ui.bottom.append(ideaLine, explain.element, challenges.element);
 
-            const sweep = kit.loop({ rate: SWEEP_RATE, update: sweepStep, draw: paintStep });
+            // The loop asks for a drawing every frame; the picture only changes when the window
+            // has moved (6 times a second), so the other frames draw nothing
+            const sweep = kit.loop({
+                rate: SWEEP_RATE,
+                update: sweepStep,
+                draw: function (info) { if (info.steps > 0) paintStep(); }
+            });
 
             // ----- Saving -----
             function save() {
