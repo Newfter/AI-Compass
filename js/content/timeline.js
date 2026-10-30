@@ -199,7 +199,7 @@ window.AICompass.addTranslations({
 
         "timeline.e27.year": "2023",
         "timeline.e27.title": "Chatbots learn to see: multimodal AI",
-        "timeline.e27.text": "In March 2023, OpenAI released GPT-4, which could take pictures as well as text, for example to describe what is in a photo. Other companies released their own large models, such as Anthropic's Claude and Google's Gemini. Models that handle several kinds of data, like text, images and sound, are called multimodal.",
+        "timeline.e27.text": "In March 2023, OpenAI released GPT-4, a model that could understand pictures as well as text, for example to describe what is in a photo (in ChatGPT, this arrived that autumn). Other companies released their own large models, such as Anthropic's Claude and Google's Gemini. Models that handle several kinds of data, like text, images and sound, are called multimodal.",
         "timeline.e27.why": "AI assistants could now help with what you see, not only with what you type — but they still make mistakes, so their answers need checking.",
 
         "timeline.e28.year": "2024",
@@ -214,7 +214,7 @@ window.AICompass.addTranslations({
 
         "timeline.e29.year": "2024–25",
         "timeline.e29.title": "AI that reasons step by step, and agents that act",
-        "timeline.e29.text": "In September 2024, OpenAI released o1, one of the first “reasoning” models: it was trained to work through a problem step by step before answering, which made it much better at maths and coding. Others, such as DeepSeek-R1, soon followed. AI agents also appeared that can use tools, search the web or click through websites to carry out tasks with many steps.",
+        "timeline.e29.text": "In September 2024, OpenAI released a preview of o1, one of the first “reasoning” models: it was trained to work through a problem step by step before answering, which made it much better at maths and coding. Others, such as DeepSeek-R1, soon followed. AI agents also appeared that can use tools, search the web or click through websites to carry out tasks with many steps.",
         "timeline.e29.why": "AI began to move from answering questions to doing tasks, but it still makes mistakes, so people need to check its work and decide what it is allowed to do.",
 
         "timeline.e15.year": "Today",
@@ -398,7 +398,7 @@ window.AICompass.addTranslations({
 
         "timeline.e27.year": "2023",
         "timeline.e27.title": "Чат-боты учатся видеть: мультимодальный ИИ",
-        "timeline.e27.text": "В марте 2023 года OpenAI выпустила GPT-4: ей можно было показать не только текст, но и картинку — например, попросить описать, что на фото. Другие компании выпустили свои большие модели, например Claude от Anthropic и Gemini от Google. Модели, которые работают с разными видами данных — текстом, изображениями, звуком, — называют мультимодальными.",
+        "timeline.e27.text": "В марте 2023 года OpenAI выпустила GPT-4 — модель, которая понимает не только текст, но и картинки: например, может описать, что на фото (в ChatGPT это появилось осенью того же года). Другие компании выпустили свои большие модели, например Claude от Anthropic и Gemini от Google. Модели, которые работают с разными видами данных — текстом, изображениями, звуком, — называют мультимодальными.",
         "timeline.e27.why": "ИИ-помощники теперь могли помочь с тем, что ты видишь, а не только с тем, что печатаешь, — но они всё так же ошибаются, и их ответы нужно проверять.",
 
         "timeline.e28.year": "2024",
@@ -413,7 +413,7 @@ window.AICompass.addTranslations({
 
         "timeline.e29.year": "2024–25",
         "timeline.e29.title": "ИИ, который рассуждает по шагам, и агенты, которые действуют",
-        "timeline.e29.text": "В сентябре 2024 года OpenAI выпустила o1 — одну из первых «рассуждающих» моделей: её научили разбирать задачу шаг за шагом, прежде чем ответить, и она стала гораздо лучше решать задачи по математике и программированию. Вскоре за ней последовали другие, например DeepSeek-R1. А ИИ-агенты научились пользоваться инструментами, искать в интернете и сами нажимать кнопки на сайтах, чтобы выполнять задачи из многих шагов.",
+        "timeline.e29.text": "В сентябре 2024 года OpenAI выпустила предварительную версию модели o1 — одной из первых «рассуждающих» моделей: её научили разбирать задачу шаг за шагом, прежде чем ответить, и она стала гораздо лучше решать задачи по математике и программированию. Вскоре за ней последовали другие, например DeepSeek-R1. А ИИ-агенты научились пользоваться инструментами, искать в интернете и сами нажимать кнопки на сайтах, чтобы выполнять задачи из многих шагов.",
         "timeline.e29.why": "ИИ начал переходить от ответов на вопросы к выполнению дел, но он по-прежнему ошибается, поэтому людям нужно проверять его работу и решать, что ему можно делать.",
 
         "timeline.e15.year": "Сегодня",
