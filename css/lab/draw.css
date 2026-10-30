@@ -74,9 +74,19 @@
     align-items: start;
 }
 
+/* In one column (phones), the picture is as wide as the pad and the controls under it */
+.dw-seen-box {
+    max-width: 460px;
+}
+
 @container (min-width: 560px) {
     .dw-board {
         grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    }
+
+    /* Next to the pad, the picture stays smaller than the pad */
+    .dw-seen-box {
+        max-width: 280px;
     }
 }
 
@@ -105,10 +115,6 @@
 .dw-pad:focus-visible {
     outline-offset: -4px;
     border-radius: 14px;
-}
-
-.dw-seen-box {
-    max-width: 280px;
 }
 
 .dw-caption {
