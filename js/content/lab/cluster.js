@@ -29,7 +29,7 @@ window.AICompass.addTranslations({
         "lab.cluster.about.edited": "“{preset}”, plus {points} of your own.",
 
         // ----- What a finished run shows (under the board) -----
-        "lab.cluster.lesson.three": "k-means found all three groups. But you chose k\u00a0=\u00a03: the computer can't tell by itself how many groups to look for.",
+        "lab.cluster.lesson.three": "k-means found all three groups. But you chose k\u00a0=\u00a03: k-means can't tell by itself how many groups to look for.",
         "lab.cluster.lesson.bad": "A bad result: one centre took two groups, so the centres don't match the groups you see. The run got stuck because of where it started, and a new start can fix it.",
         "lab.cluster.lesson.five": "Five centres for five groups. The elbow chart pointed the way.",
         "lab.cluster.lesson.sizes": "Look at the borders: the big, loose group lost its outer points to the small groups. k-means draws every border halfway between two centres, so it works best with groups of about the same size and spread.",
@@ -77,7 +77,7 @@ window.AICompass.addTranslations({
         "lab.cluster.regions": "Show regions",
         "lab.cluster.regionsHint": "Each coloured area holds the spots nearest to one centre.",
         "lab.cluster.distances": "Show distances",
-        "lab.cluster.distancesHint": "A line from each point to its centre. Inertia adds up their lengths, squared.",
+        "lab.cluster.distancesHint": "A line from each point to its centre. Inertia squares each length and adds them all up.",
 
         // ----- Live numbers and the elbow chart -----
         "lab.cluster.iteration": "Iteration",
@@ -89,7 +89,7 @@ window.AICompass.addTranslations({
         "lab.cluster.thisRun": "This run",
         "lab.cluster.kAxis": "k",
         "lab.cluster.chartEmpty": "No points yet",
-        "lab.cluster.elbowHint": "More centres mean less inertia, so the lowest point isn't the answer. Look for the elbow: the k where the line stops falling steeply. After it, extra centres only cut real groups in two.",
+        "lab.cluster.elbowHint": "More centres mean less inertia, so the lowest point isn't the answer. Look for the elbow: the k where the line goes flat. From there on, extra centres only cut real groups in two, so the inertia hardly falls any more.",
 
         // ----- "What's happening?" -----
         "lab.cluster.step1": "Nobody told the computer the answers. It only sees {points}.",
@@ -105,8 +105,8 @@ window.AICompass.addTranslations({
 
         // ----- "Try this" -----
         "lab.cluster.ch1": "Use the elbow chart to find the right k for “Five groups”, then run k-means to the end.",
-        "lab.cluster.ch1Why": "Up to k\u00a0=\u00a05, every extra centre takes a big bite out of the inertia; after 5 the line is almost flat, because extra centres only split real groups. That bend is the elbow. Real data rarely has one this clear, so people also look at the groups themselves.",
-        "lab.cluster.ch2": "On “Three clear groups” with k\u00a0=\u00a03, pick “Random points” and press “New start” until you get a bad result: two centres in one group, and one centre for two groups.",
+        "lab.cluster.ch1Why": "Up to k\u00a0=\u00a05, every extra centre still pulls the line down; from 5 on, the line is flat, because extra centres only split real groups. That bend is the elbow. Real data rarely has one this clear, so people also look at the groups themselves.",
+        "lab.cluster.ch2": "On “Three clear groups” with k\u00a0=\u00a03, pick “Random points”, then press “New start” and “Play” until a run ends badly: two centres in one group, and one centre for two groups.",
         "lab.cluster.ch2Why": "k-means only improves its start, step by step, so a bad start can end in a bad answer. k-means++ starts with the centres far apart, which makes this rare. Real programs also run k-means several times and keep the result with the lowest inertia.",
         "lab.cluster.ch3": "Try to separate “Two moons” with k\u00a0=\u00a02.",
         "lab.cluster.ch3Why": "It can't be done: every point joins its nearest centre, so the border between two groups is always a straight line, and no straight line separates these moons. k-means expects round groups. Other methods, such as DBSCAN, follow the shapes: they chain together points that sit close to each other.",
@@ -161,12 +161,12 @@ window.AICompass.addTranslations({
         "lab.cluster.about.edited": "«{preset}» и ещё {points} от тебя.",
 
         // ----- Что показывает законченный запуск (под полем) -----
-        "lab.cluster.lesson.three": "k-means нашёл все три группы. Но k\u00a0=\u00a03 выбрал ты: сам компьютер не знает, сколько групп искать.",
+        "lab.cluster.lesson.three": "k-means нашёл все три группы. Но k\u00a0=\u00a03 выбрал ты: сам k-means не знает, сколько групп искать.",
         "lab.cluster.lesson.bad": "Неудачный результат: один центр захватил сразу две группы, и центры не совпадают с группами, которые видишь ты. Запуск застрял из-за того, откуда он начался, и новый старт может это исправить.",
         "lab.cluster.lesson.five": "Пять центров для пяти групп. График «локтя» подсказал верно.",
         "lab.cluster.lesson.sizes": "Посмотри на границы: большая рыхлая группа отдала свои крайние точки маленьким. k-means проводит каждую границу посередине между двумя центрами, поэтому лучше всего справляется с группами примерно одного размера и разброса.",
         "lab.cluster.lesson.stretched": "k-means измеряет расстояние до центра по прямой и поэтому ищет круглые группы, а такие длинные группы обычно разрезает поперёк. И у таких кусков инерция даже меньше, чем у настоящих групп!",
-        "lab.cluster.lesson.moons": "k-means разделил полумесяцы прямой границей, и каждой группе достались куски обоих. Он ожидает круглые группы. Другие методы, например DBSCAN, следуют за формой.",
+        "lab.cluster.lesson.moons": "k-means разделил полумесяцы прямой границей, и каждой группе достались куски обоих. Он ожидает круглые группы. Другие методы, например DBSCAN, находят группы любой формы.",
         "lab.cluster.lesson.shop": "Компьютер нашёл группы, но кто эти покупатели? Дай группам названия под полем: что значат группы, решают люди.",
         "lab.cluster.lesson.otherK": "k-means всегда ищет ровно k групп, здесь {k}, даже если в данных их больше или меньше. Выбрать k помогает график «локтя».",
 
@@ -221,7 +221,7 @@ window.AICompass.addTranslations({
         "lab.cluster.thisRun": "Этот запуск",
         "lab.cluster.kAxis": "k",
         "lab.cluster.chartEmpty": "Точек пока нет",
-        "lab.cluster.elbowHint": "Чем больше центров, тем меньше инерция, так что самая низкая точка — не ответ. Ищи «локоть»: то k, после которого линия перестаёт круто падать. Дальше лишние центры только разрезают настоящие группы надвое.",
+        "lab.cluster.elbowHint": "Чем больше центров, тем меньше инерция, так что самая низкая точка — не ответ. Ищи «локоть»: то k, с которого линия идёт горизонтально. Дальше лишние центры только разрезают настоящие группы надвое, и инерция почти не падает.",
 
         // ----- «Что здесь происходит?» -----
         "lab.cluster.step1": "Ответов компьютеру никто не подсказывал. Он видит только {points}.",
@@ -237,11 +237,11 @@ window.AICompass.addTranslations({
 
         // ----- «Попробуй» -----
         "lab.cluster.ch1": "Найди с помощью графика «локтя» правильное k для примера «Пять групп» и доведи k-means до конца.",
-        "lab.cluster.ch1Why": "До k\u00a0=\u00a05 каждый новый центр сильно уменьшает инерцию, а после 5 линия почти не падает: лишние центры только делят настоящие группы. Этот изгиб и есть «локоть». В настоящих данных он редко бывает таким чётким, поэтому люди смотрят ещё и на сами группы.",
-        "lab.cluster.ch2": "В примере «Три чёткие группы» при k\u00a0=\u00a03 выбери «Случайные точки» и жми «Новый старт», пока не получится неудачный результат: два центра в одной группе и один центр на две группы.",
-        "lab.cluster.ch2Why": "k-means только улучшает свой старт шаг за шагом, поэтому плохое начало может закончиться плохим ответом. k-means++ ставит первые центры далеко друг от друга, и так случается редко. А настоящие программы запускают k-means несколько раз и оставляют результат с самой маленькой инерцией.",
+        "lab.cluster.ch1Why": "До k\u00a0=\u00a05 каждый новый центр ещё тянет линию вниз, а с 5 она идёт горизонтально: лишние центры только делят настоящие группы. Этот изгиб и есть «локоть». В настоящих данных он редко бывает таким чётким, поэтому люди смотрят ещё и на сами группы.",
+        "lab.cluster.ch2": "В примере «Три чёткие группы» при k\u00a0=\u00a03 выбери «Случайные точки», а потом жми «Новый старт» и «Пуск», пока запуск не закончится неудачно: два центра в одной группе и один центр на две группы.",
+        "lab.cluster.ch2Why": "k-means только улучшает свой старт шаг за шагом, поэтому плохое начало может закончиться плохим ответом. k-means++ ставит первые центры далеко друг от друга, и тогда такое случается редко. А настоящие программы запускают k-means несколько раз и оставляют результат с самой маленькой инерцией.",
         "lab.cluster.ch3": "Попробуй разделить «Два полумесяца» при k\u00a0=\u00a02.",
-        "lab.cluster.ch3Why": "Ничего не выйдет: каждая точка выбирает ближайший центр, поэтому граница между двумя группами всегда прямая, а эти полумесяцы прямой линией не разделить. k-means ожидает круглые группы. Другие методы, например DBSCAN, следуют за формой: они связывают в цепочку точки, которые лежат близко друг к другу.",
+        "lab.cluster.ch3Why": "Ничего не выйдет: каждая точка выбирает ближайший центр, поэтому граница между двумя группами всегда прямая, а эти полумесяцы прямой линией не разделить. k-means ожидает круглые группы. Другие методы, например DBSCAN, находят группы любой формы: они связывают в цепочку точки, которые лежат близко друг к другу.",
         "lab.cluster.ch4": "Найди группы в примере «Покупатели» и дай название каждой группе.",
         "lab.cluster.ch4Why": "Компьютер нашёл группы только по числам, а смысл им дал ты. В магазинах так и делают: люди смотрят на группы и решают, например, какое предложение подойдёт каким покупателям.",
 
