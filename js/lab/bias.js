@@ -82,8 +82,9 @@
     const TRAINING_FLASH = 350;         // ms of the short "Training…" state after a change
 
     // ----- The decision and the scorecard -----
-    // The threshold sliders. They reach down to 1 %: on "Unfair test", qualified Orange applicants
-    // get the same chance as Blue ones only with an Orange threshold of about 5 to 12 %
+    // The threshold sliders. They reach down to 1 %: on "Unfair test", with Blue at 50 %, qualified
+    // Orange applicants get the same chance as Blue ones only with a low Orange threshold, between
+    // about 2 and 18 % depending on the applicants (seed 16 needs 2 to 8 %; bias.math.js checks it)
     const THRESHOLD = { min: 0.01, max: 0.99, step: 0.01, value: 0.5 };
     const GAP_LIMIT = 5;                // points: a bigger gap between the groups is highlighted
     const GOAL_ACCURACY = 80;           // challenges 3 and 4: right about at least this % of each group
