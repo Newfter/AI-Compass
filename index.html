@@ -117,10 +117,12 @@
 
             // The easy-to-read font starts loading now, so it can be there when the page is
             // first drawn. js/settings.js uses this link (the same address is FONT_URL there).
+            // crossOrigin: in CORS mode, like the fonts below, so the offline copy (sw.js) can check it.
             if (settings.easyFont === true) {
                 var font = document.createElement("link");
                 font.id = "st-font-css";
                 font.rel = "stylesheet";
+                font.crossOrigin = "anonymous";
                 font.href = "https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Andika:wght@400;700&display=swap";
                 font.onload = function () { font.setAttribute("data-state", "ready"); };
                 font.onerror = function () { font.setAttribute("data-state", "failed"); };

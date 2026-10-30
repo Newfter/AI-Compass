@@ -1965,6 +1965,9 @@
                 element.src = url;
             } else {
                 element.rel = "stylesheet";
+                // A stylesheet from another site (the easy-to-read font) in CORS mode, so the
+                // offline copy (sw.js) gets an answer it can check
+                if (new URL(url, document.baseURI).origin !== window.location.origin) element.crossOrigin = "anonymous";
                 element.href = url;
             }
             element.addEventListener("load", function () { resolve(); });
