@@ -648,30 +648,33 @@
 
     // Where everything goes in the step-by-step canvas, for a canvas `width` px wide: two grids
     // with numbers in the cells if they fit, else the picture with numbers and a smaller map,
-    // else (a phone) two small grids and the numbers only in the equation below.
+    // else (a phone) two small grids and the numbers only in the equation below. The picture
+    // has a ring of one empty cell around it, for the window where it sticks out at the border.
     function stepLayout(width) {
         const S = STEP_LAYOUT;
+        const ringed = COARSE + 2;
         const room = width - S.gap - 2 * S.margin;
-        let cellIn = Math.floor(room / (2 * COARSE));
+        let cellIn = Math.floor(room / (ringed + COARSE));
         let cellOut = cellIn;
         if (cellIn < S.numbers) {
-            const big = Math.min(S.uneven, Math.floor((room - COARSE * S.least) / COARSE));
+            const big = Math.min(S.uneven, Math.floor((room - COARSE * S.least) / ringed));
             if (big >= S.numbers) {
                 cellIn = big;
-                cellOut = Math.floor((room - COARSE * big) / COARSE);
+                cellOut = Math.floor((room - ringed * big) / COARSE);
             }
         }
         cellIn = Math.max(4, Math.min(S.most, cellIn));
         cellOut = Math.max(4, Math.min(S.most, cellOut));
-        const used = COARSE * (cellIn + cellOut) + S.gap;
+        const used = ringed * cellIn + S.gap + COARSE * cellOut;
         const left = Math.max(S.margin, Math.floor((width - used) / 2));
+        const top = S.caption + cellIn;
         return {
             cellIn: cellIn,
             cellOut: cellOut,
-            inX: left,
-            outX: left + COARSE * cellIn + S.gap,
-            top: S.caption + S.margin,
-            height: S.caption + 2 * S.margin + COARSE * Math.max(cellIn, cellOut),
+            inX: left + cellIn,
+            outX: left + ringed * cellIn + S.gap,
+            top: top,
+            height: top + Math.max((COARSE + 1) * cellIn, COARSE * cellOut) + S.margin,
             numbersIn: cellIn >= S.numbers,
             numbersOut: cellOut >= S.uneven
         };
@@ -752,9 +755,9 @@
         }
         context.stroke();
 
-        // The arrow from the picture to the map
+        // The arrow from the picture (and its ring) to the map
         const arrowY = L.top + (COARSE * Math.min(L.cellIn, L.cellOut)) / 2;
-        const arrowX = L.inX + COARSE * L.cellIn + 8;
+        const arrowX = L.inX + (COARSE + 1) * L.cellIn + 8;
         context.strokeStyle = c.muted;
         context.lineWidth = 2;
         context.beginPath();
@@ -766,17 +769,33 @@
         context.stroke();
 
         // The window on the picture and the pixel of the map it makes. At the border the window
-        // sticks out of the picture (those pixels count as 0): it is cut off a little way out.
+        // sticks out of the picture: the cells outside are dashed, with the 0 they count as.
         const ox = s.index % map.w;
         const oy = Math.floor(s.index / map.w);
         const cx = ox + shift;
         const cy = oy + shift;
-        const reach = STEP_LAYOUT.margin;
+        context.font = small;
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const x = cx + dx;
+                const y = cy + dy;
+                if (x >= 0 && y >= 0 && x < COARSE && y < COARSE) continue;
+                const gx = L.inX + x * L.cellIn;
+                const gy = L.top + y * L.cellIn;
+                context.fillStyle = kit.alpha(c.text, 0.06);
+                context.fillRect(gx, gy, L.cellIn, L.cellIn);
+                context.strokeStyle = kit.alpha(c.text, 0.35);
+                context.lineWidth = 1;
+                context.setLineDash([3, 3]);
+                context.strokeRect(gx + 0.5, gy + 0.5, L.cellIn - 1, L.cellIn - 1);
+                context.setLineDash([]);
+                if (L.numbersIn) {
+                    context.fillStyle = c.muted;
+                    context.fillText("0", gx + L.cellIn / 2, gy + L.cellIn / 2 + 0.5);
+                }
+            }
+        }
         context.save();
-        context.beginPath();
-        context.rect(L.inX - reach, L.top - reach, COARSE * L.cellIn + 2 * reach, COARSE * L.cellIn + 2 * reach);
-        context.rect(L.outX - reach, L.top - reach, COARSE * L.cellOut + 2 * reach, COARSE * L.cellOut + 2 * reach);
-        context.clip();
         if (s.glow) {
             context.shadowColor = c.accent;
             context.shadowBlur = 10;
