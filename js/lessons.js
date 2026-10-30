@@ -44,6 +44,7 @@
      lessons.textSize    "s", "m" or "l": the reader's text size
      lessons.view        { v: 1, tracks: { deep: "auto" | "open" | "closed" } }:
                          on phones, whether a track's cards are folded away
+     lessons.probe       written and removed at start-up: can the browser save?
 
    A MINI-LAB IN ITS OWN FILE
    The six first mini-labs live in this file (sections 10-15). A new
@@ -287,7 +288,10 @@
 
     const checkAnswers = {};   // lesson number -> chosen option (this visit only)
     const labState = {};       // lesson number -> state of its mini-lab
-    let canSave = true;        // false once the browser refused to save (the panel then says so)
+    // Can this browser keep the progress? A test write, removed at once, so the panel
+    // says the truth from the start (it changes again if a later save fails)
+    let canSave = A.storage.set("lessons.probe", 1);
+    A.storage.remove("lessons.probe");
 
     function saveCompleted() {
         canSave = A.storage.set("lessons.completed", Array.from(completed).sort(function (a, b) { return a - b; }));

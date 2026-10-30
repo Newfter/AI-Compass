@@ -15,8 +15,12 @@
    ========================================================= */
 
 /* ===== 1. PIXEL DETECTIVE =====
-   --px-cell   one square of the picture and of the result. 24px or more,
-               so a finger can tap one (the minimum target size of WCAG 2.2).
+   --px-cell   one square of the picture and of the result: 24px, so a finger
+               can tap one (the minimum target size of WCAG 2.2). Only phones
+               narrower than 352px get smaller squares (section 5).
+   The two grids sit side by side when the lab is 640px wide or more (a
+   container query: the reader's width depends on the screen and on its
+   contents list), otherwise one under the other.
    The picture is a photo: its black and white are the same in both themes.
    The result is coloured with the theme: cyan for a positive number
    (dark → white), pink for a negative one (white → dark). */
@@ -25,6 +29,7 @@
     --px-cell: 24px;
     --px-black: #05070d;
     --px-white: #ffffff;
+    container-type: inline-size;   /* for the @container rule below */
     display: grid;
     grid-template-columns: minmax(0, 1fr);   /* never wider than the reader */
     gap: 18px;
@@ -51,10 +56,11 @@
     font-size: 13.5px;
 }
 
+/* One grid under the other, the arrow pointing down... */
 .px-boards {
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     gap: 14px 20px;
 }
 
@@ -76,6 +82,20 @@
     align-self: center;
     color: var(--text-muted);
     font-size: 22px;
+    transform: rotate(90deg);
+}
+
+/* ... or side by side, when both fit: 290 + 21 + 288px and two gaps */
+@container (min-width: 640px) {
+    .px-boards {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    .px-arrow {
+        transform: none;
+    }
 }
 
 /* The two grids: buttons without gaps (the thin lines are inset shadows), so the
@@ -658,28 +678,6 @@
 }
 
 /* ===== 5. RESPONSIVE ===== */
-
-/* The reader's text column gets narrower: smaller squares, so both grids fit side by side */
-@media (max-width: 1024px) {
-    .px-lab {
-        --px-cell: 22px;
-    }
-}
-
-/* One grid under the other, the arrow pointing down */
-@media (max-width: 720px) {
-    .px-lab {
-        --px-cell: 24px;
-    }
-
-    .px-boards {
-        flex-direction: column;
-    }
-
-    .px-arrow {
-        transform: rotate(90deg);
-    }
-}
 
 @media (max-width: 640px) {
     /* 12 squares across the width of a phone (the reader and the lab take 62px of it) */
