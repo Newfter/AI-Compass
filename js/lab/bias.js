@@ -104,10 +104,15 @@
         { nameKey: "lab.bias.orange", oneKey: "lab.bias.orangeOne", whomKey: "lab.bias.orangeWhom", color: 6 }
     ];
     const DRAW = {
+        aspect: 3 / 2,      // the picture's width / height...
+        minHeight: 380,     // ...but at least this tall (a phone)...
+        maxHeight: 440,     // ...and at most this tall (px). Tall enough for 120 dots to pile up in a lane
         side: 14,           // px of room left and right of the score axis
         top: 6,             // px above the Blue row
         head: 22,           // px for a group's name and count
         groupGap: 12,       // px between the Blue and the Orange rows
+        laneFloor: 30,      // a lane's height follows how many applicants it holds, plus this many
+                            // (so the North lane of 120 Blue is taller than the South lane of 30)
         axis: 34,           // px for the score axis at the bottom
         radius: { min: 3, max: 4.6, per: 150 },     // a dot's radius: the canvas width / 150, within these limits
         dotGap: 1,          // px between two dots of a pile
@@ -544,21 +549,25 @@
        reaches the threshold: one line per group, with a step in it when
        the neighbourhood changes the model's mind.
        ========================================================= */
-    // Where everything goes for the canvas's current size
-    function sceneLayout(width, height) {
+    // Where everything goes for the canvas's current size. counts: how many applicants each lane
+    // holds (Blue North, Blue South, Orange North, Orange South). A crowded lane gets more of its
+    // row's height, so its dots pile up without covering each other as much.
+    function sceneLayout(width, height, counts) {
         const left = DRAW.side;
         const right = width - DRAW.side;
-        const laneHeight = Math.max(20, (height - DRAW.top - 2 * DRAW.head - DRAW.groupGap - DRAW.axis) / 4);
+        const rowHeight = Math.max(40, (height - DRAW.top - 2 * DRAW.head - DRAW.groupGap - DRAW.axis) / 2);
         const heads = [];
         const lanes = [];             // group * 2 + south: Blue North, Blue South, Orange North, Orange South
         let y = DRAW.top;
         for (let group = 0; group < 2; group++) {
             heads.push(y + DRAW.head / 2);
             y += DRAW.head;
-            for (let south = 0; south < 2; south++) {
+            const shares = [counts[group * 2] + DRAW.laneFloor, counts[group * 2 + 1] + DRAW.laneFloor];
+            shares.forEach(function (share) {
+                const laneHeight = (rowHeight * share) / (shares[0] + shares[1]);
                 lanes.push({ top: y, middle: y + laneHeight / 2, bottom: y + laneHeight });
                 y += laneHeight;
-            }
+            });
             y += DRAW.groupGap;
         }
         return {
@@ -611,6 +620,13 @@
         offsets.forEach(function (y) { tallest = Math.max(tallest, Math.abs(y)); });
         if (tallest > half) offsets.forEach(function (y, i) { offsets[i] = (y * half) / tallest; });
         return offsets;
+    }
+
+    // How many applicants each lane holds: [Blue North, Blue South, Orange North, Orange South]
+    function laneCounts(people) {
+        const counts = [0, 0, 0, 0];
+        people.forEach(function (person) { counts[person.group * 2 + person.south] += 1; });
+        return counts;
     }
 
     // Every applicant's place on the canvas: [{ x, y }], one per applicant
@@ -861,6 +877,7 @@
             goals: GOALS,
             swarm: swarm,
             sceneLayout: sceneLayout,
+            laneCounts: laneCounts,
             placeDots: placeDots
         },
 
@@ -924,7 +941,7 @@
             viewRow.classList.add("bd-view");
             ui.main.appendChild(viewRow);
 
-            const scene = kit.canvas(ui.main, { aspect: 16 / 9, minHeight: 340, maxHeight: 420, labelKey: "lab.bias.canvas" });
+            const scene = kit.canvas(ui.main, { aspect: DRAW.aspect, minHeight: DRAW.minHeight, maxHeight: DRAW.maxHeight, labelKey: "lab.bias.canvas" });
             scene.box.classList.add("bd-scene");
             scene.canvas.tabIndex = 0;
             scene.canvas.setAttribute("role", "application");     // a widget with its own keys (the arrows)
@@ -1396,7 +1413,7 @@
             function drawPicture(shown, limits) {
                 if (!scene.width) return;
                 if (!layout || layout.width !== scene.width || layout.height !== scene.height) {
-                    layout = sceneLayout(scene.width, scene.height);
+                    layout = sceneLayout(scene.width, scene.height, laneCounts(people));
                     places = placeDots(people, layout);
                 }
                 const lines = view === "model" && model;
