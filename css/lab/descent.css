@@ -24,7 +24,7 @@
     min-width: 0;
     margin: 0;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.55;
 }
 
@@ -81,7 +81,7 @@
     gap: 6px 16px;
     margin: 0;
     color: var(--text-muted);
-    font-size: 12.5px;
+    font-size: 0.78125rem;
     line-height: 1.4;
 }
 
@@ -167,7 +167,7 @@
 }
 
 .gd-card-numbers .lk-stat-value {
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
 /* A narrow card (a phone, or the side column of a small window): a number as long as
@@ -178,7 +178,7 @@
     }
 
     .gd-card-numbers .lk-stat-value {
-        font-size: 13px;
+        font-size: 0.8125rem;
     }
 }
 
@@ -186,7 +186,7 @@
 .gd-state {
     margin: 0;
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 1.45;
 }
 
@@ -217,6 +217,6 @@
 .gd-idea {
     margin: 0;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     line-height: 1.6;
 }
