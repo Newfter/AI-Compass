@@ -114,6 +114,7 @@ window.AICompass.addTranslations({
         "settings.keysLabHub": "AI Lab: choosing an experiment",
         "settings.keysDraw": "AI Lab: Draw and teach",
         "settings.keysLab": "AI Lab: Teach the machine",
+        "settings.keysDescent": "AI Lab: Down the hill",
         "settings.keysMaze": "AI Lab: Robot in a maze",
         "settings.keysGlossary": "Glossary search",
         "settings.keysTimeline": "History",
@@ -144,6 +145,8 @@ window.AICompass.addTranslations({
         "settings.do.drawPick": "Move between the drawings in a row",
         "settings.do.drawPickEnds": "The first or the last drawing in the row",
         "settings.do.drawDelete": "Delete the drawing",
+        "settings.do.descentMove": "Move the start on the map (with Shift: faster); in the 3-D view, turn the surface",
+        "settings.do.descentRace": "Start or pause the race",
         "settings.do.mazeMove": "Move between the squares of the maze",
         "settings.do.mazeRead": "Hear what the robot learned about the square (while editing: put the chosen tile there)",
         "settings.do.glossaryOpen": "Open the first term found",
@@ -272,6 +275,7 @@ window.AICompass.addTranslations({
         "settings.keysLabHub": "ИИ-лаборатория: выбор эксперимента",
         "settings.keysDraw": "ИИ-лаборатория: «Нарисуй и научи»",
         "settings.keysLab": "ИИ-лаборатория: «Обучи машину»",
+        "settings.keysDescent": "ИИ-лаборатория: «Вниз с горы»",
         "settings.keysMaze": "ИИ-лаборатория: «Робот в лабиринте»",
         "settings.keysGlossary": "Поиск в словаре",
         "settings.keysTimeline": "История",
@@ -301,6 +305,8 @@ window.AICompass.addTranslations({
         "settings.do.drawPick": "Переходить между рисунками в ряду",
         "settings.do.drawPickEnds": "Первый или последний рисунок в ряду",
         "settings.do.drawDelete": "Удалить рисунок",
+        "settings.do.descentMove": "Двигать старт по карте (с Shift — быстрее); в 3D — поворачивать поверхность",
+        "settings.do.descentRace": "Запустить гонку или поставить её на паузу",
         "settings.do.mazeMove": "Переходить по клеткам лабиринта",
         "settings.do.mazeRead": "Узнать, что робот выучил про клетку (в режиме правки — поставить туда выбранную плитку)",
         "settings.do.glossaryOpen": "Открыть первый найденный термин",
@@ -419,6 +425,15 @@ window.AICompass.content.set("settings", {
                 { keys: [["backspace"], ["delete"], ["mod", "Z"]], does: "settings.do.labUndo" },
                 // js/lab/classifier.js, pointer handlers: Shift+click or a right click adds a dot of the other class
                 { keys: [["shift", "click"], ["rightClick"]], does: "settings.do.labOther" }
+            ]
+        },
+        {
+            title: "settings.keysDescent",
+            items: [
+                // js/lab/descent.js, the map's keydown: the arrows move the start (Shift: 5 steps); in 3-D they turn the surface
+                { keys: [["arrows"], ["shift", "arrows"]], does: "settings.do.descentMove" },
+                // js/lab/descent.js, the map's keydown: Enter or Space starts or pauses the race
+                { keys: [["enter"], ["space"]], does: "settings.do.descentRace" }
             ]
         },
         {
