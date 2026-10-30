@@ -109,8 +109,10 @@
     text-transform: uppercase;
 }
 
-/* One card per ball, with a stripe in the ball's colour (--gd-ball, set by the JS) */
+/* One card per ball, with a stripe in the ball's colour (--gd-ball, set by the JS).
+   The card measures its own width: its number tiles tighten up when it is narrow. */
 .gd-card {
+    container-type: inline-size;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -166,6 +168,18 @@
 
 .gd-card-numbers .lk-stat-value {
     font-size: 14px;
+}
+
+/* A narrow card (a phone, or the side column of a small window): a number as long as
+   "4.6×10⁻¹⁰" still fits in its tile */
+@container (max-width: 300px) {
+    .gd-card-numbers .lk-stat {
+        padding-inline: 7px;
+    }
+
+    .gd-card-numbers .lk-stat-value {
+        font-size: 13px;
+    }
 }
 
 /* The ball's state in words; the colour only repeats what the words say */
