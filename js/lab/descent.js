@@ -582,16 +582,17 @@
             for (let i = 0; i <= nx; i++) values[j * (nx + 1) + i] = f(grid.x0 + i * dx, grid.y0 + j * dy);
         }
 
+        const cornerX = [0, 1, 1, 0];          // the corners a, b, c, d of a square, going round
+        const cornerY = [0, 0, 1, 1];
         return levels.map(function (level) {
             const pieces = [];
             const corner = [0, 0, 0, 0];
-            // the point where side "side" of square (i, j) crosses the level
+            // the point where side "side" of square (i, j) crosses the level: side k joins
+            // corner k and the next one round
             function crossing(i, j, side) {
-                const from = side === 3 ? 3 : side;        // the side's two corners, going round
+                const from = side;
                 const to = (side + 1) % 4;
                 const share = (level - corner[from]) / (corner[to] - corner[from]);
-                const cornerX = [0, 1, 1, 0];
-                const cornerY = [0, 0, 1, 1];
                 const x = grid.x0 + (i + cornerX[from] + (cornerX[to] - cornerX[from]) * share) * dx;
                 const y = grid.y0 + (j + cornerY[from] + (cornerY[to] - cornerY[from]) * share) * dy;
                 pieces.push(x, y);
@@ -695,6 +696,22 @@
         }
     }
 
+    // A flat spot that isn't a dip (a saddle): a small cross
+    function flatSpot(g, x, y, c) {
+        g.lineCap = "round";
+        g.lineWidth = 4;
+        g.strokeStyle = kit.alpha(c.surface, 0.9);
+        g.beginPath();
+        g.moveTo(x - 5, y - 5);
+        g.lineTo(x + 5, y + 5);
+        g.moveTo(x + 5, y - 5);
+        g.lineTo(x - 5, y + 5);
+        g.stroke();
+        g.lineWidth = 1.8;
+        g.strokeStyle = c.text;
+        g.stroke();
+    }
+
     // Text on a soft plate, so it stays readable over the colours
     function label(g, text, x, y, align, c) {
         g.font = kit.font(11, 600);
@@ -772,18 +789,7 @@
         });
         (land.saddles || []).forEach(function (point) {
             const at = toScreen(land, box, point.x, point.y);
-            g.lineCap = "round";
-            g.lineWidth = 4;
-            g.strokeStyle = kit.alpha(c.surface, 0.9);
-            g.beginPath();
-            g.moveTo(at[0] - 5, at[1] - 5);
-            g.lineTo(at[0] + 5, at[1] + 5);
-            g.moveTo(at[0] + 5, at[1] - 5);
-            g.lineTo(at[0] - 5, at[1] + 5);
-            g.stroke();
-            g.lineWidth = 1.8;
-            g.strokeStyle = c.text;
-            g.stroke();
+            flatSpot(g, at[0], at[1], c);
         });
 
         // 4. The colour key, top right: low ... high
@@ -1143,11 +1149,16 @@
             g.fill();
         }
 
-        // the dips, on the surface
+        // the dips and the flat spots, on the surface
         land.minima.forEach(function (point) {
             const p = boxPoint(land, point.x, point.y);
             const at = project(cam, p[0], p[1], p[2]);
             star(g, at[0], at[1], 6, point.lowest, c);
+        });
+        (land.saddles || []).forEach(function (point) {
+            const p = boxPoint(land, point.x, point.y);
+            const at = project(cam, p[0], p[1], p[2]);
+            flatSpot(g, at[0], at[1], c);
         });
 
         // the axes' names, just outside the middle of the floor's nearest edge along x and along y
@@ -1899,8 +1910,17 @@
             function showLandscape() {
                 about.innerHTML = t("lab.descent.about." + land.id);
                 ridgeButton.element.hidden = land.id !== "saddle";
-                // the marks this map has, each with its little picture
-                const names = ["start", "arrow", "lowest"];
+                updateLegend();
+                labelScene();
+            }
+
+            // The canvas's name says which landscape and which view it shows (and the CSS picks the
+            // cursor). The line under it names the marks this view draws, each with its little
+            // picture: the downhill arrow is on the map only.
+            function labelScene() {
+                scene.box.setAttribute("data-view", viewName);
+                kit.relabel(scene.box);
+                const names = viewName === "3d" ? ["start", "lowest"] : ["start", "arrow", "lowest"];
                 if (land.minima.some(function (point) { return !point.lowest; })) names.push("dip");
                 if (land.saddles) names.push("saddle");
                 marks.textContent = "";
@@ -1910,14 +1930,6 @@
                     item.appendChild(document.createTextNode(t("lab.descent.mark." + name)));
                     marks.appendChild(item);
                 });
-                updateLegend();
-                labelScene();
-            }
-
-            // The canvas's name says which landscape and which view it shows (and the CSS picks the cursor)
-            function labelScene() {
-                scene.box.setAttribute("data-view", viewName);
-                kit.relabel(scene.box);
             }
 
             function updateLegend() {
