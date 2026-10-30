@@ -81,7 +81,9 @@
 
     // ----- The 3-D view -----
     const MESH = 48;                         // the surface: 48 x 48 tiles...
-    const MESH_TURNING = 32;                 // ...and 32 x 32 while it is being dragged round (smooth on slow computers)
+    // ...and fewer while a drag turns it: 32 x 32, or 24 x 24 on a slow computer (where 3 turning
+    // frames in a row took more than 10 ms), so turning stays smooth there too
+    const MESH_TURNING = { tiles: 32, slowTiles: 24, budgetMs: 10, slowFrames: 3 };
     const VIEW_3D = {
         yaw: -32,                            // degrees: how far it is turned around the vertical axis
         tilt: 38,                            // degrees: how steeply the camera looks down (90 = from above)
@@ -1241,6 +1243,8 @@
             let mapKey = "";
             let surfacePicture = null;
             let surfaceKey = "";
+            let turningTiles = MESH_TURNING.tiles;
+            let slowTurns = 0;               // turning frames in a row over MESH_TURNING.budgetMs
 
             // ----- The page: only kit parts, plus a few texts of our own -----
             const ui = kit.layout(stage, { side: true });
@@ -1750,14 +1754,21 @@
                 const g = scene.ctx;
                 const c = kit.colors();
                 const cam = camera(scene, yaw, tilt);
-                const mesh = buildMesh(land, dragging && dragging.mode === "turn" ? MESH_TURNING : MESH);
+                const turning = Boolean(dragging) && dragging.mode === "turn";
+                const mesh = buildMesh(land, turning ? turningTiles : MESH);
                 const key = [land.id, mesh.n, c.theme, scene.width, scene.height, scene.dpr, yaw, tilt].join("|");
-                if (!surfacePicture || surfaceKey !== key) {
+                const started = performance.now();
+                const fresh = !surfacePicture || surfaceKey !== key;
+                if (fresh) {
                     surfacePicture = buildSurfacePicture(scene, land, cam, mesh, surfacePicture || document.createElement("canvas"));
                     surfaceKey = key;
                 }
                 g.clearRect(0, 0, scene.width, scene.height);
-                g.drawImage(surfacePicture, 0, 0, scene.width, scene.height);
+                g.drawImage(surfacePicture, 0, 0, scene.width, scene.height);     // (the tiles are painted here)
+                if (fresh && turning) {
+                    slowTurns = performance.now() - started > MESH_TURNING.budgetMs ? slowTurns + 1 : 0;
+                    if (slowTurns >= MESH_TURNING.slowFrames) turningTiles = MESH_TURNING.slowTiles;
+                }
                 const glow = A.motion.ok();
                 const now = performance.now();
 
