@@ -88,7 +88,8 @@
     const GAP_LIMIT = 5;                // points: a bigger gap between the groups is highlighted
     const GOAL_ACCURACY = 80;           // challenges 3 and 4: right about at least this % of each group
     const WEIGHT_MAX = 5;               // the weight of a full bar in "What the model learned"
-    const SMALL_WEIGHT = 0.1;           // a weight closer to 0 than this "hardly pushes at all"
+    const SMALL_WEIGHT = 0.1;           // a weight shown as 0.1 or less (either sign) "hardly matters". The words
+                                        // follow the number shown (one decimal), so one number never gets two
     // The scorecard's rows (whole percentages for Blue and Orange, then the gap)
     const ROWS = [
         { id: "past", key: "lab.bias.rowPast", saysKey: "lab.bias.saysPast" },              // accepted in the past
@@ -214,9 +215,14 @@
         return { element: table, cells: cells };
     }
 
+    // A weight as the page shows it: rounded to one decimal
+    function shownWeight(value) {
+        return Math.round(value * 10) / 10;
+    }
+
     // A weight with one decimal and its sign: "+3.9", "−1.7", "0.0"
     function weightText(value) {
-        const rounded = Math.round(value * 10) / 10;
+        const rounded = shownWeight(value);
         return (rounded > 0 ? "+" : "") + A.format.number(rounded, { digits: 1 });
     }
 
@@ -1530,10 +1536,11 @@
             function paintWeights() {
                 const items = model ? model.columns.map(function (column, j) {
                     const value = model.weights[j];
+                    const shown = shownWeight(value);          // the words follow the number shown
                     const info = COLUMNS.filter(function (item) { return item.id === column; })[0];
                     let push = "lab.bias.pushNone";
-                    if (value >= SMALL_WEIGHT) push = "lab.bias.pushYes";
-                    if (value <= -SMALL_WEIGHT) push = "lab.bias.pushNo";
+                    if (shown > SMALL_WEIGHT) push = "lab.bias.pushYes";
+                    if (shown < -SMALL_WEIGHT) push = "lab.bias.pushNo";
                     return {
                         value: value,
                         labelKey: function () {
@@ -1551,7 +1558,7 @@
                 // test score is known, so a South weight there is only chance, not a proxy.
                 const south = model ? weightOf(model, "south") : null;
                 const proxy = preset === "decisions" && !betterLabels && south !== null &&
-                    south <= -SMALL_WEIGHT && weightOf(model, "orange") === null;
+                    shownWeight(south) < -SMALL_WEIGHT && weightOf(model, "orange") === null;
                 A.dom.setHidden(proxyLine, !proxy);
             }
 
