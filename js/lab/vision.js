@@ -46,6 +46,7 @@
     const PEN = { radius: 3.5, value: 255, background: 0 };   // the draw pad: a white pen on black
     const DEFAULTS = { picture: "shapes", filter: "outline", edges: "same", relu: false, pool: false, view: "filter" };
     const DIVERGE_RANGE = 255;        // without ReLU, colours go from −255 (full red) to 255 (full cyan)
+    const INK_SWITCH = 120;           // a number on a cell brighter than this grey is written in black, else in white
     const MAP_FLOOR = 0.1;            // a network map stays dark until it reaches 10% of its biggest possible answer
     const STEP_LAYOUT = { gap: 34, caption: 24, margin: 12, most: 30, numbers: 22, uneven: 26, least: 8, side: 10 };
     // The "Try this" goals
@@ -640,10 +641,11 @@
         return "rgb(" + grey + ", " + grey + ", " + grey + ")";
     }
 
-    // Dark text on light cells, light text on dark ones (the cells are data, not theme)
+    // Dark text on light cells, light text on dark ones, judged by the cell's own colour (a strong
+    // answer is bright cyan in the dark theme and dark teal in the light one)
     function inkFor(value, diverging) {
-        if (diverging) return kit.colors().text;
-        return value > 120 ? "rgb(0, 0, 0)" : "rgb(255, 255, 255)";
+        const rgb = diverging ? kit.diverge.rgb(value / DIVERGE_RANGE) : [value, value, value];
+        return grayscale(rgb[0], rgb[1], rgb[2]) > INK_SWITCH ? "rgb(0, 0, 0)" : "rgb(255, 255, 255)";
     }
 
     // Where everything goes in the step-by-step canvas, for a canvas `width` px wide: two grids
