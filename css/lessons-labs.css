@@ -9,9 +9,10 @@
    1. Pixel detective (lesson 7, js/lessons/pixels.js): .px-
    2. Three slot machines (lesson 8, js/lessons/slots.js): .slot-
    3. Temperature dial (lesson 9, js/lessons/temperature.js): .tmp-
-   4. Switches of the mini-labs
-   5. Responsive
-   6. Calm mode and reduced motion
+   4. From noise to picture (lesson 10, js/lessons/noise.js): .noise-
+   5. Switches of the mini-labs
+   6. Responsive
+   7. Calm mode and reduced motion
    ========================================================= */
 
 /* ===== 1. PIXEL DETECTIVE =====
@@ -656,7 +657,168 @@
     font-weight: 700;
 }
 
-/* ===== 4. SWITCHES OF THE MINI-LABS =====
+/* ===== 4. FROM NOISE TO PICTURE =====
+   The picture is a 16 × 16 canvas, scaled up without smoothing, so every
+   pixel stays a crisp square. Its colours are the picture's own: the same
+   in both themes. The slider, the noise meter and the buttons sit beside it
+   when the lab is 560px wide or more, otherwise under it. Under both, the
+   film strip: one small canvas per step, filled in as the steps are done. */
+
+.noise-lab {
+    container-type: inline-size;   /* for the @container rule below */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+}
+
+.noise-prompts {
+    display: grid;
+    gap: 8px;
+}
+
+.noise-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.noise-pill {
+    white-space: normal;   /* a long prompt may wrap on a small phone */
+    text-align: left;
+}
+
+.noise-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+}
+
+@container (min-width: 560px) {
+    .noise-stage {
+        grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+        gap: 24px;
+    }
+}
+
+.noise-picture {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+}
+
+.noise-canvas {
+    display: block;
+    width: min(100%, 240px);
+    height: auto;
+    aspect-ratio: 1;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(var(--accent-2-rgb), 0.16);
+    image-rendering: crisp-edges;   /* older Firefox */
+    image-rendering: pixelated;
+}
+
+.noise-caption {
+    min-height: 3em;   /* two lines: the text below doesn't jump when the caption gets longer */
+    color: var(--text-muted);
+    font-size: 13.5px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.noise-controls {
+    display: grid;
+    gap: 14px;
+}
+
+.noise-left {
+    display: grid;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* The share of noise left: a "noisy" striped bar that shrinks step by step */
+.noise-meter {
+    display: block;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.14);
+}
+
+.noise-meter span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: repeating-linear-gradient(90deg, var(--accent-3) 0 5px, var(--accent-2) 5px 10px, var(--accent) 10px 15px);
+    transition: width 0.3s var(--ease);
+}
+
+.noise-film {
+    display: grid;
+    gap: 8px;
+}
+
+.noise-strip {
+    display: flex;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.noise-frame {
+    flex: 1 1 0;
+    min-width: 0;
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+}
+
+.noise-frame canvas {
+    display: block;
+    width: 100%;
+    max-width: 44px;
+    height: auto;
+    aspect-ratio: 1;
+    border: 1px dashed var(--border-strong);
+    border-radius: 6px;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+
+.noise-frame.is-done canvas {
+    border-style: solid;
+    border-color: var(--border);
+}
+
+.noise-frame.is-now canvas {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 2px rgba(var(--accent-2-rgb), 0.35);
+}
+
+.noise-frame span {
+    color: var(--text-muted);
+    font-size: 10.5px;
+}
+
+.noise-frame.is-now span {
+    color: var(--text-accent-2);
+    font-weight: 700;
+}
+
+.noise-honest {
+    padding: 10px 14px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    line-height: 1.55;
+}
+
+/* ===== 5. SWITCHES OF THE MINI-LABS =====
    The track and the knob are .ui-switch (css/components.css). */
 
 .px-switch,
@@ -677,7 +839,7 @@
     cursor: pointer;
 }
 
-/* ===== 5. RESPONSIVE ===== */
+/* ===== 6. RESPONSIVE ===== */
 
 @media (max-width: 640px) {
     /* 12 squares across the width of a phone (the reader and the lab take 62px of it) */
@@ -748,7 +910,7 @@
     }
 }
 
-/* ===== 6. CALM MODE AND REDUCED MOTION =====
+/* ===== 7. CALM MODE AND REDUCED MOTION =====
    core.js puts "fx-motion-off" on <html>, and style.css then stops every
    animation and transition. The labs also skip the reel's spin and the
    word's pop (api.motion.ok() in their files). Nothing else to do here. */
