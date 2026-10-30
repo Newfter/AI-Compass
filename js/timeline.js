@@ -463,6 +463,8 @@
         layoutWritten = true;
         line.style.top = layout.lineTop + "px";
         line.style.height = layout.lineLength + "px";
+        // No milestone shown (both filters together match none): no line, no glowing head
+        line.hidden = !layout.nodes.length;
         root.classList.toggle("is-stacked", layout.stacked);
         // How much room focused buttons need above them (see css/timeline.css)
         root.style.setProperty("--tl-bar-room", layout.barSticky ? layout.barHeight + BAR_GAP + "px" : "0px");
