@@ -184,17 +184,33 @@
 
     // What the button and the command do. The result says what happened:
     // "accepted" or "dismissed" (the browser's window), "help" (iPhone), "installed"
-    // (nothing to do) or "unavailable" (the browser offers nothing now).
+    // (nothing to do) or "unavailable" (the browser offers nothing now, or didn't show
+    // its window because this didn't come right after a click).
     function install() {
         if (offer) {
             const asked = offer;
             offer = null;
             showInstall(false);   // an offer can be used only once
-            asked.prompt();
-            return asked.userChoice.then(function (choice) {
-                return choice && choice.outcome === "accepted" ? "accepted" : "dismissed";
+            let shown;
+            try {
+                shown = Promise.resolve(asked.prompt());
+            } catch (error) {
+                shown = Promise.reject(error);
+            }
+            return shown.then(function () {
+                return asked.userChoice.then(function (choice) {
+                    return choice && choice.outcome === "accepted" ? "accepted" : "dismissed";
+                }, function () {
+                    return "dismissed";
+                });
             }, function () {
-                return "dismissed";
+                // The browser didn't show its window (it does so only right after a click):
+                // the offer is still good, so the button comes back for the next try
+                if (!offer && !installed) {
+                    offer = asked;
+                    showInstall(true);
+                }
+                return "unavailable";
             });
         }
         if (installed) {
