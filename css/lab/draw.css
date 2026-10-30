@@ -54,6 +54,11 @@
     line-height: 1.6;
 }
 
+/* A glossary word in a sentence stays on one line */
+.dw-term {
+    white-space: nowrap;
+}
+
 /* ===== 2. THE BOARD =====
    The pad and "What the computer sees" side by side once there is room,
    one under the other on a phone. The board follows its own width. */

@@ -86,9 +86,9 @@
     const EPOCHS = 60;                   // "Train" stops after 60 epochs (passes over all examples)...
     const GOOD_LOSS = 0.05;              // ...or as soon as the loss is below 0.05
     const MORE_EPOCHS = 20;              // "Train more": 20 more epochs
-    const CHUNK = 4;                     // examples per loop step (the loop fits as many steps as it can into a frame)
-    const CHECK_CHUNK = 16;              // examples per step of the check after each epoch (no learning, so quicker)
-    const TRAIN_BUDGET = 6;              // ms of training per frame (drawing the chart takes a little more)
+    const CHUNK = 2;                     // examples per loop step (the loop fits as many steps as it can into a frame)
+    const CHECK_CHUNK = 8;               // examples per step of the check after each epoch (no learning, so quicker)
+    const TRAIN_BUDGET = 3;              // ms of training per frame: with the chart and the scores, a frame stays under 8 ms
     // "Wiggle the examples" (data augmentation): each time an example is used it is
     // moved by up to 2 pixels, turned by up to 12 degrees and scaled by up to 10%
     const WIGGLE = { shift: 2, turn: 12, scale: 0.1 };
@@ -209,12 +209,18 @@
     }
 
     // TODO(kit): a sentence with glossary links in it (kit.sentence). The text "... {overfitting} ..."
-    // is cut at its {placeholders}, and each one becomes the element given for it (kit.termLink).
+    // is cut at its {placeholders}, and each one becomes the element given for it (kit.termLink),
+    // kept on one line.
     function fillSentence(element, key, links) {
         element.textContent = "";
         t(key).split(/\{(\w+)\}/).forEach(function (part, index) {
-            if (index % 2 === 0) element.append(part);
-            else element.append(links[part] || "{" + part + "}");
+            if (index % 2 === 0) {
+                element.append(part);
+            } else {
+                const term = el("span", "dw-term");
+                term.append(links[part] || "{" + part + "}");
+                element.append(term);
+            }
         });
     }
 
@@ -790,7 +796,8 @@
     //   1. "learn": the examples in a shuffled order, in mini-batches of 16 (wiggled when
     //      that is on): backpropagation, then an Adam step after each batch;
     //   2. "check": every example as it is (not wiggled), to measure the loss and the
-    //      training accuracy with the weights at the end of the epoch.
+    //      training accuracy with the weights at the end of the epoch; then the network's
+    //      guess for each test drawing (for the test accuracy), still in small pieces.
     // settings: { seed, wiggle, epochs, goodLoss (0: never stop early) }
     function newRun(settings) {
         return {
@@ -805,14 +812,15 @@
             inBatch: 0,            // examples in the mini-batch so far
             lossSum: 0,
             right: 0,
+            guesses: [],           // the check's guesses for the test drawings
             finished: false,
             ending: ""             // "goal" (the loss is small) or "epochs" (the run is over)
         };
     }
 
-    // The next piece of work. Returns the epoch's result { loss, accuracy } when an epoch
-    // has just ended, else null.
-    function trainChunk(net, run, examples) {
+    // The next piece of work. Returns the epoch's result { loss, accuracy, guesses } when an
+    // epoch has just ended, else null. tests (may be left out): the test drawings to guess.
+    function trainChunk(net, run, examples, tests) {
         if (run.finished || !examples.length) return null;
         if (run.phase === "learn") {
             if (!run.order) {
@@ -833,18 +841,24 @@
                 run.next = 0;
                 run.lossSum = 0;
                 run.right = 0;
+                run.guesses = [];
             }
             return null;
         }
-        // the check
-        for (let n = 0; n < CHECK_CHUNK && run.next < examples.length; n++) {
-            const example = examples[run.next++];
-            const probs = forward(net, example).probs;
-            run.lossSum -= Math.log(Math.max(probs[example.c], 1e-12));
-            if (probs.indexOf(Math.max.apply(null, probs)) === example.c) run.right += 1;
+        // the check: the examples first, then the test drawings
+        const testCount = tests ? tests.length : 0;
+        for (let n = 0; n < CHECK_CHUNK && run.next < examples.length + testCount; n++) {
+            if (run.next < examples.length) {
+                const example = examples[run.next++];
+                const probs = forward(net, example).probs;
+                run.lossSum -= Math.log(Math.max(probs[example.c], 1e-12));
+                if (probs.indexOf(Math.max.apply(null, probs)) === example.c) run.right += 1;
+            } else {
+                run.guesses.push(netPredict(net, tests[run.next++ - examples.length]));
+            }
         }
-        if (run.next < examples.length) return null;
-        const result = { loss: run.lossSum / examples.length, accuracy: run.right / examples.length };
+        if (run.next < examples.length + testCount) return null;
+        const result = { loss: run.lossSum / examples.length, accuracy: run.right / examples.length, guesses: run.guesses };
         run.done += 1;
         run.phase = "learn";
         run.order = null;
@@ -1042,7 +1056,9 @@
         return lines;
     }
 
-    // A short message in the middle of a canvas, on a soft patch so it reads over a picture
+    // A short message in the middle of a canvas, on a soft patch so it reads over a picture.
+    // Measuring text is slow, so the last message's lines are kept (it is drawn again while you draw).
+    const lastMessage = { key: "", lines: [], widest: 0 };
     function drawMessage(view, text) {
         const context = view.ctx;
         const c = kit.colors();
@@ -1050,8 +1066,14 @@
         const lineHeight = Math.round(size * 1.35);
         context.save();
         context.font = kit.font(size, 600, "body");
-        const lines = wrapLines(context, text, view.width * 0.78);
-        const widest = Math.max.apply(null, lines.map(function (line) { return context.measureText(line).width; }));
+        const key = context.font + "|" + view.width + "|" + text;
+        if (key !== lastMessage.key) {
+            lastMessage.key = key;
+            lastMessage.lines = wrapLines(context, text, view.width * 0.78);
+            lastMessage.widest = Math.max.apply(null, lastMessage.lines.map(function (line) { return context.measureText(line).width; }));
+        }
+        const lines = lastMessage.lines;
+        const widest = lastMessage.widest;
         const top = view.height / 2 - (lines.length * lineHeight) / 2;
         context.fillStyle = kit.alpha(c.surface, 0.88);
         context.beginPath();
@@ -1235,7 +1257,7 @@
         // The maths, for dev/tests/draw.math.js (the hub doesn't use it)
         maths: {
             GRID: GRID, PIXELS: PIXELS, FIT: FIT, PEN_RADIUS: PEN_RADIUS, HIDDEN: HIDDEN, BATCH: BATCH,
-            EPOCHS: EPOCHS, GOOD_LOSS: GOOD_LOSS, WEIGHT_DECAY: WEIGHT_DECAY, WIGGLE: WIGGLE, KINDS: KINDS,
+            EPOCHS: EPOCHS, GOOD_LOSS: GOOD_LOSS, WEIGHT_DECAY: WEIGHT_DECAY, WIGGLE: WIGGLE, KINDS: KINDS, CHECK_CHUNK: CHECK_CHUNK,
             EXAMPLE_SEED: EXAMPLE_SEED, EXAMPLES_PER_KIND: EXAMPLES_PER_KIND, CHECK_SEED: CHECK_SEED, TRAIN_SEED: TRAIN_SEED, NET_SEED: NET_SEED,
             toBase64: toBase64, fromBase64: fromBase64,
             boundingBox: boundingBox, rasterise: rasterise, centreOfMass: centreOfMass, preprocess: preprocess, picture: picture,
@@ -1275,13 +1297,17 @@
             let ending = "";                         // how the last run ended: "goal" | "epochs"
             let resumeOnShow = false;                // training was running when the hub paused us
             const losses = [];                       // the network's loss after each epoch
-            let lastAccuracy = null;                 // its training accuracy after the last epoch
+            let lastAccuracy = null;                 // its training accuracy after the last epoch...
+            let lastGuesses = [];                    // ...and its guesses for the test drawings then
             let newEpochs = false;                   // an epoch ended since the screen was last updated
+            let resultsFrame = 0;                    // a requested frame to show what the network says now
             let runs = 0;                            // training runs so far (each one gets its own seed)
             let ranks = null;                        // kept until the examples change: each example's neighbours...
             let testRanks = null;                    // ...and each test drawing's
             let scores = { knn: { train: null, test: null, guesses: [] }, net: { train: null, test: null, guesses: [] } };
             let mistakesShown = "";                  // the mistakes on screen (drawn again only when they change)
+            let nearShown = "";                      // the same for the nearest examples...
+            let explainShown = "";                   // ...and for the numbers in "What's happening?"
             let fooled = false;                      // challenge 4 happened
             let lastGuess = -Infinity;               // when the models last guessed (ms)
             let frame = 0;                           // a requested animation frame for the pad
@@ -1515,7 +1541,7 @@
                 } }
             ];
 
-            const loop = kit.loop({ rate: Infinity, budget: TRAIN_BUDGET, update: trainStep, draw: showTraining });
+            const loop = kit.loop({ rate: Infinity, budget: TRAIN_BUDGET, update: trainStep, draw: drawTraining });
             pad.onResize(paintPad);
             seen.onResize(showSeen);
 
@@ -1845,9 +1871,13 @@
                 const knnShares = knnGuess ? knnGuess.shares : null;
                 showModel(knn, knnShares, knnGuess ? knnGuess.best : 0, !train.length ? "lab.draw.noExamples" : !input ? "lab.draw.drawToGuess" : null, false);
                 knn.near.hidden = !knnGuess;
-                knn.list.textContent = "";
-                if (knnGuess) {
-                    knnGuess.nearest.forEach(function (index) {
+                // the small pictures are made again only when the nearest examples change
+                const nearest = knnGuess ? knnGuess.nearest : [];
+                const near = nearest.map(function (index) { return index + ":" + nameOf(train[index].c); }).join(" ");
+                if (near !== nearShown) {
+                    nearShown = near;
+                    knn.list.textContent = "";
+                    nearest.forEach(function (index) {
                         const item = el("li", "dw-near-item", { role: "img", "aria-label": nameOf(train[index].c), title: nameOf(train[index].c) });
                         item.style.setProperty("--dw-color", "var(--lk-series-" + (classes[train[index].c].color + 1) + ")");
                         item.appendChild(thumbCanvas(train[index].values, train[index].c));
@@ -1937,6 +1967,7 @@
             function examplesChanged() {
                 ranks = null;
                 testRanks = null;
+                nearShown = "";
                 if (netState === "trained") netState = "stale";
                 stopRun();
                 saveData();
@@ -2242,36 +2273,62 @@
                 loop.stop();
                 if (!run) newTrainingRun();
                 let result = null;
-                while (!result && !run.finished) result = trainChunk(net, run, train);
+                while (!result && !run.finished) result = trainChunk(net, run, train, test);
                 if (result) epochEnded(result);
                 if (run.finished) finishTraining();
                 else trainState = "paused";
+                showResults();
                 showTraining();
                 ctx.announce(t("lab.draw.epochSay", { n: losses.length, loss: kit.number(losses[losses.length - 1]), accuracy: percent(lastAccuracy) }));
             }
 
             function trainStep() {
-                const result = trainChunk(net, run, train);
-                if (result) epochEnded(result);
+                const result = trainChunk(net, run, train, test);
+                if (result) {
+                    epochEnded(result);
+                    newEpochs = true;
+                }
                 if (run.finished) finishTraining();
+            }
+
+            // The loop's drawing: the screen changes only when an epoch has ended. The chart
+            // goes first; what the network says now comes in the next frame (in a frame of its
+            // own), so that no frame has too much to do.
+            function drawTraining() {
+                if (!newEpochs) return;
+                newEpochs = false;
+                showTraining();
+                if (!resultsFrame) resultsFrame = requestAnimationFrame(showResults);
             }
 
             function epochEnded(result) {
                 losses.push(result.loss);
                 lastAccuracy = result.accuracy;
+                lastGuesses = result.guesses;
                 netState = "trained";
-                newEpochs = true;
             }
 
+            // What the network says with its new weights: the scores, its guess for your
+            // drawing, and the Focus view. The epoch's check measured it already (unless the
+            // test drawings changed since).
+            function showResults() {
+                if (resultsFrame) cancelAnimationFrame(resultsFrame);
+                resultsFrame = 0;
+                if (input && net) netGuess = netPredict(net, input);
+                measureNet(lastAccuracy, lastGuesses.length === test.length ? lastGuesses : undefined);
+                showGuesses();
+                if (seenMode === "focus") showSeen();     // the other views don't show the network
+            }
+
+            // The last epoch's check measured the network as it is now (the training stopped)
             function finishTraining() {
                 loop.stop();
                 ending = run.ending;
                 run = null;
                 trainState = "done";
-                measureNet();
                 ctx.announce(A.plural(ending === "goal" ? "lab.draw.doneGoal" : "lab.draw.doneEpochs", losses.length,
-                    { loss: kit.number(GOOD_LOSS), accuracy: percent(scores.net.train) }));
-                ctx.track("milestone", { kind: "trained", epochs: losses.length, accuracy: scores.net.train });
+                    { loss: kit.number(GOOD_LOSS), accuracy: percent(lastAccuracy) }));
+                ctx.track("milestone", { kind: "trained", epochs: losses.length, accuracy: lastAccuracy });
             }
 
             // The examples changed while training: the run's plan no longer fits them
@@ -2301,20 +2358,13 @@
                 if (trainState === "paused") return A.plural("lab.draw.pausedAt", losses.length);
                 if (trainState === "done") {
                     return A.plural(ending === "goal" ? "lab.draw.doneGoal" : "lab.draw.doneEpochs", losses.length,
-                        { loss: kit.number(GOOD_LOSS), accuracy: percent(scores.net.train) });
+                        { loss: kit.number(GOOD_LOSS), accuracy: percent(lastAccuracy) });
                 }
                 return A.plural(net ? "lab.draw.readyMore" : "lab.draw.readyToTrain", train.length);
             }
 
-            // Everything about training on screen (the loop calls it once per frame)
+            // The training panel: the chart, the numbers, the buttons and the note
             function showTraining() {
-                if (newEpochs) {
-                    newEpochs = false;
-                    measureNet(trainState === "running" ? lastAccuracy : undefined);
-                    if (input && net) netGuess = netPredict(net, input);
-                    showGuesses();
-                    showSeen();
-                }
                 chart.draw();
                 epochStat.set(losses.length);
                 lossStat.set(losses.length ? losses[losses.length - 1] : null);
@@ -2335,6 +2385,8 @@
             // Training accuracy: the examples it learned from (for k-NN each one is left out and
             // guessed from the others). Test accuracy: the test drawings, which it never learned.
             function measure() {
+                if (resultsFrame) cancelAnimationFrame(resultsFrame);     // measured afresh here
+                resultsFrame = 0;
                 measureKnn();
                 measureNet();
             }
@@ -2347,10 +2399,11 @@
                 showScores();
             }
 
-            // trainAccuracy: known already (from the epoch that just ended), else it is measured
-            function measureNet(trainAccuracy) {
+            // trainAccuracy and testGuesses: known already (from the epoch that just ended), else measured
+            function measureNet(trainAccuracy, testGuesses) {
                 const ready = Boolean(net) && netState !== "none";
-                const guessed = ready ? test.map(function (example) { return netPredict(net, example); }) : [];
+                let guessed = [];
+                if (ready) guessed = testGuesses || test.map(function (example) { return netPredict(net, example); });
                 let accuracy = null;
                 if (ready) accuracy = trainAccuracy !== undefined ? trainAccuracy : (train.length ? netAccuracy(net, train).accuracy : null);
                 scores.net = { train: accuracy, test: testAccuracy(guessed), guesses: guessed };
@@ -2362,7 +2415,8 @@
                 return guessed.filter(function (guess, n) { return guess.best === test[n].c; }).length / test.length;
             }
 
-            function showScores() {
+            // force: draw the list of mistakes again even if it didn't change (a new language)
+            function showScores(force) {
                 [scores.knn.train, scores.knn.test, scores.net.train, scores.net.test].forEach(function (value, n) {
                     cells[n].textContent = value === null ? "—" : percent(value);
                 });
@@ -2371,8 +2425,8 @@
                     cells[n * 2 + 1].classList.toggle("is-low", gap(score) >= OVERFIT_GAP);
                 });
                 testsNote.hidden = test.length >= MIN_TEST;
-                testsNote.textContent = A.plural("lab.draw.needTests", MIN_TEST - test.length);
-                showMistakes(false);
+                testsNote.textContent = testsNote.hidden ? "" : A.plural("lab.draw.needTests", MIN_TEST - test.length);
+                showMistakes(force);
                 checkChallenges();
                 renderExplain();
             }
@@ -2414,15 +2468,21 @@
 
             // ----- "What's happening?" and "Try this" -----
             function renderExplain() {
-                explain.setValues(0, { pixels: PIXELS, ink: input ? input.ink.length : 0 });
-                explain.setValues(1, { examples: train.length, k: k });
-                explain.setValues(2, { weights: weightCount(classes.length) });
-                explain.setValues(3, { loss: losses.length ? losses[losses.length - 1] : "—" });
+                const ink = input ? input.ink.length : 0;
+                const loss = losses.length ? losses[losses.length - 1] : "—";
                 let step = 0;
                 if (trainState === "running") step = 3;
                 else if (gap(scores.knn) >= OVERFIT_GAP || gap(scores.net) >= OVERFIT_GAP) step = 4;
                 else if (input && netGuess) step = 2;
                 else if (input && knnGuess) step = 1;
+                // written again only when a number changed (this runs while you draw)
+                const shown = [ink, train.length, k, classes.length, loss, step].join(" ");
+                if (shown === explainShown) return;
+                explainShown = shown;
+                explain.setValues(0, { pixels: PIXELS, ink: ink });
+                explain.setValues(1, { examples: train.length, k: k });
+                explain.setValues(2, { weights: weightCount(classes.length) });
+                explain.setValues(3, { loss: loss });
                 explain.setStep(step);
             }
 
@@ -2447,7 +2507,7 @@
                 modeHelp.textContent = t(mode === "teach" ? "lab.draw.teachHelp" : "lab.draw.testHelp");
                 fillRows();
                 fillTests();
-                showMistakes(true);
+                showScores(true);
                 paintPad();
                 guessNow(false);
                 showTraining();
@@ -2466,6 +2526,7 @@
                 pause: function () {
                     resumeOnShow = loop.running();
                     loop.stop();
+                    if (resultsFrame) showResults();       // now, instead of in a frame
                     if (frame) cancelAnimationFrame(frame);
                     frame = 0;
                     drawing = null;
@@ -2495,7 +2556,9 @@
                 destroy: function () {
                     loop.stop();
                     if (frame) cancelAnimationFrame(frame);
+                    if (resultsFrame) cancelAnimationFrame(resultsFrame);
                     frame = 0;
+                    resultsFrame = 0;
                     disarm();
                     pad.destroy();
                     seen.destroy();
