@@ -227,9 +227,17 @@
     function lessonAction(n) {
         return { act: "lesson", arg: n, icon: "📘", label: t("assistant.act.lesson", { n: n }) };
     }
-    function labAction(tab) {
-        return tab === "predictor"
-            ? { act: "lab", arg: "predictor", icon: "💬", label: t("assistant.act.predictor") }
+    // An experiment of the lab's catalogue ({ id, titleKey, icon... }), or null
+    function labEntry(id) {
+        if (!A.lab || typeof A.lab.list !== "function") return null;
+        return A.util.attempt(A.lab.list, []).filter(function (entry) { return entry.id === id; })[0] || null;
+    }
+    // Any experiment of the lab, by its id; one the lab doesn't have becomes the classifier
+    function labAction(id) {
+        if (id === "predictor") return { act: "lab", arg: "predictor", icon: "💬", label: t("assistant.act.predictor") };
+        const entry = id === "classifier" ? null : labEntry(id);
+        return entry
+            ? { act: "lab", arg: entry.id, icon: entry.icon, label: t(entry.titleKey) }
             : { act: "lab", arg: "classifier", icon: "🧠", label: t("assistant.act.classifier") };
     }
     function sectionAction(id) {
@@ -1845,7 +1853,7 @@
                 else A.navigate("quiz");
                 break;
             case "lab":
-                if (A.lab) A.util.attempt(function () { A.lab.open(action.arg === "predictor" ? "predictor" : "classifier"); });
+                if (A.lab) A.util.attempt(function () { A.lab.open(labEntry(action.arg) ? action.arg : "classifier"); });
                 else A.navigate("lab");
                 break;
             case "glossary":

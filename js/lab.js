@@ -38,7 +38,7 @@
                                    goes to the lab's heading. An id that isn't in the catalogue
                                    shows the grid with a note, and returns false.
      A.lab.close()                 back to the grid of all experiments
-     A.lab.list()                  [{ id, titleKey, hookKey, ideaKey, level }], in the catalogue's order
+     A.lab.list()                  [{ id, titleKey, hookKey, ideaKey, level, icon }], in the catalogue's order
      A.lab.current()               the id of the experiment in the stage, or null
      A.openLab(id)                 the older name of A.lab.open (Compass Bot, the lessons)
 
@@ -943,7 +943,7 @@
         close: function () { close({ focus: false }); },
         list: function () {
             return CATALOGUE.map(function (entry) {
-                return { id: entry.id, titleKey: entry.titleKey, hookKey: entry.hookKey, ideaKey: entry.ideaKey, level: levelOf(entry) };
+                return { id: entry.id, titleKey: entry.titleKey, hookKey: entry.hookKey, ideaKey: entry.ideaKey, level: levelOf(entry), icon: entry.emoji || "🧪" };
             });
         },
         current: function () { return current; }

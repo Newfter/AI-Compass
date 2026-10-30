@@ -716,7 +716,7 @@ window.AICompass.content.set("assistant", {
        text: the answer (a text key from above).
        buttons, one of:
          { lesson: 4 }                open lesson 4
-         { lab: "classifier" }        open the lab ("classifier" or "predictor")
+         { lab: "classifier" }        open an experiment of the lab (its id in js/content/lab.js)
          { section: "timeline" }      go to a section of the page
          { quiz: true }               start the quiz
          { ask: "fact", label: "assistant.chip.fact", icon: "💡" }
@@ -733,7 +733,7 @@ window.AICompass.content.set("assistant", {
         ai: { text: "assistant.r.ai", buttons: [{ lesson: 1 }] },
         ml: { text: "assistant.r.ml", buttons: [{ lesson: 2 }, { lab: "classifier" }] },
         nn: { text: "assistant.r.nn", buttons: [{ lesson: 3 }, { lab: "classifier" }] },
-        llm: { text: "assistant.r.llm", buttons: [{ lesson: 4 }, { lab: "predictor" }] },
+        llm: { text: "assistant.r.llm", buttons: [{ lesson: 4 }, { lab: "chatbot" }, { lab: "predictor" }] },
         hallucination: { text: "assistant.r.hallucination", buttons: [{ lesson: 4 }] },
         bias: { text: "assistant.r.bias", buttons: [{ lesson: 6 }] },
         privacy: { text: "assistant.r.privacy", buttons: [{ lesson: 6 }] },

@@ -1948,12 +1948,18 @@
         onReaderScroll();
     }
 
+    // An experiment of the lab (any id of its catalogue), or a section of the page
+    function isExperiment(id) {
+        if (id === "classifier" || id === "predictor") return true;
+        return !!A.lab && A.util.attempt(A.lab.list, []).some(function (entry) { return entry.id === id; });
+    }
+
     // "Try it on this site": close the reader and jump to the right place
     function runTryIt() {
         const target = LESSONS[reader.lesson - 1].tryIt;
         closeReader({ restoreFocus: false });
         requestAnimationFrame(function () {
-            const sectionId = target === "classifier" || target === "predictor" ? "lab" : target;
+            const sectionId = isExperiment(target) ? "lab" : target;
             A.dom.focusHeading(sectionId);   // the focus waits there if the feature moves it nowhere
             if (sectionId === "lab" && A.lab) A.lab.open(target);
             else if (sectionId === "quiz" && A.quiz) A.quiz.start();
