@@ -2112,8 +2112,9 @@ details[open] .qz-ri-chevron {
         font-size: 14px;
     }
 
+    /* A long mode name ("Myth or fact") wraps before the icon in the corner */
     .qz-tile-mode .qz-tile-value {
-        padding-right: 0;
+        padding-right: 18px;
         font-size: 15px;
     }
 
