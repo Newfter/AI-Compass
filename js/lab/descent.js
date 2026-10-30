@@ -1614,12 +1614,13 @@
                         turn(yaw + move[0] * VIEW_3D.keyTurn, tilt + move[1] * VIEW_3D.keyTilt);
                         return;
                     }
-                    // steps on a grid of the key's step, so the start can land exactly on y = 0
+                    // on a grid of 1/40 of the map, so the start can land exactly on y = 0
                     const d = land.domain;
-                    const stepX = (d.x[1] - d.x[0]) * KEY_MOVE * (event.shiftKey ? 5 : 1);
-                    const stepY = (d.y[1] - d.y[0]) * KEY_MOVE * (event.shiftKey ? 5 : 1);
-                    const x = Math.round((start[0] + move[0] * stepX) / stepX) * stepX;
-                    const y = Math.round((start[1] + move[1] * stepY) / stepY) * stepY;
+                    const gridX = (d.x[1] - d.x[0]) * KEY_MOVE;
+                    const gridY = (d.y[1] - d.y[0]) * KEY_MOVE;
+                    const times = event.shiftKey ? 5 : 1;
+                    const x = Math.round(start[0] / gridX + move[0] * times) * gridX;
+                    const y = Math.round(start[1] / gridY + move[1] * times) * gridY;
                     moveStart(Number(x.toFixed(10)), Number(y.toFixed(10)));
                     save();
                 } else if (event.key === "Enter" || event.key === " ") {
