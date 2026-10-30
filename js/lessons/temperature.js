@@ -29,9 +29,7 @@
     const T_MIN = 0.2;                                // the temperature dial goes from T_MIN to T_MAX ...
     const T_MAX = 2;
     const T_STEP = 0.1;                               // ... in steps of T_STEP
-    const T_START = 1;                                // where the dial starts
-    const COOL = 0.6;                                 // below this, the note says "low temperature" ...
-    const HOT = 1.3;                                  // ... above this, "high temperature" (as in lesson 4)
+    const T_START = 1;                                // where the dial starts (at 1 the scores are used as they are)
     const MANY = 10;                                  // the words that "Generate 10" picks
 
     // ---------- 2. The maths: softmax with temperature ----------
@@ -136,7 +134,11 @@
             A.dom.setText(part("temp"), temperature);
             slider.setAttribute("aria-valuetext", temperature);
             slider.style.setProperty("--fill", ((state.temp - T_MIN) / (T_MAX - T_MIN) * 100) + "%");
-            A.dom.setText(part("note"), api.text(state.temp < COOL ? "tempLow" : state.temp > HOT ? "tempHigh" : "tempMid"));
+            // The note says what dividing by T does, compared with T = 1: below 1 the scores
+            // move further apart (the top word gets likelier), above 1 they move closer
+            // together (the unlikely words get likelier). The dial moves in steps of 0.1.
+            const atOne = Math.abs(state.temp - 1) < T_STEP / 2;
+            A.dom.setText(part("note"), api.text(atOne ? "tempMid" : state.temp < 1 ? "tempLow" : "tempHigh"));
             A.dom.setText(part("tally"), total ? api.plural("tallyCount", total) : api.text("empty"));
             const blank = part("blank");
             A.dom.setText(blank, state.last === null ? "…" : words[state.last]);
