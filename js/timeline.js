@@ -398,6 +398,12 @@
                 reached++;
                 lastReached = node.item;
             }
+            // An era counts as visited once the line has really moved: the first dot is
+            // lit at the start, before anybody has scrolled to the timeline
+            if (on && shown > 0 && !node.item.tracked) {
+                node.item.tracked = true;
+                trackEra(node.item.el.closest(".tl-era"));
+            }
         });
 
         // The read-out in the bar: the year the line has reached, and how many milestones
@@ -408,6 +414,16 @@
             hudYear.textContent = year;
             hudCount.textContent = count;
         }
+    }
+
+    // The first time the line reaches an era, it counts as visited (for "My Compass")
+    const visitedEras = new Set();
+
+    function trackEra(section) {
+        const era = section && section.getAttribute("data-era");
+        if (!era || visitedEras.has(era)) return;
+        visitedEras.add(era);
+        A.track("timeline.era", { era: era });
     }
 
     // ---------- 5. Era filter ----------

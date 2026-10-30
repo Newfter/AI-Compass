@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#060812">
+    <title>Page not found · AI Compass</title>
+
+    <!-- =========================================================
+         AI COMPASS — PAGE NOT FOUND (404)
+         GitHub Pages shows this page for every address of the site that doesn't
+         exist, at any depth (newfter.github.io/AI-Compass/a/b/c too). It stands
+         alone: its own styles and texts are in this file, so it works even if the
+         rest of the site changes.
+         - Links: <base> makes "./" mean the site's folder, wherever this page is
+           shown. It is /AI-Compass/ (SITE_FOLDER below) on GitHub Pages; the
+           script changes it to "/" when the site is served at the top of an
+           address (your own computer, or a domain of its own). If the project is
+           renamed, change SITE_FOLDER and the <base> tag together.
+         - Language: ?lang= in the address, else the one saved by the site, else
+           the browser's. The RU / EN button switches it and saves it, like the site.
+         - Theme and calm mode: the ones saved by the site (calm mode, or "reduce
+           motion" on the device, stops the compass from spinning).
+         ========================================================= -->
+    <base href="/AI-Compass/">
+    <script>
+        (function () {
+            var SITE_FOLDER = "/AI-Compass/";
+            var root = document.documentElement;
+            var path = window.location.pathname;
+            var folder = path.toLowerCase().indexOf(SITE_FOLDER.toLowerCase()) === 0 ? path.slice(0, SITE_FOLDER.length) : "/";
+            document.querySelector("base").setAttribute("href", folder);
+
+            // The site's saved settings ("aic:" + name, as JSON), like the <head> script of index.html
+            function saved(name) {
+                try { return JSON.parse(localStorage.getItem("aic:" + name)); } catch (error) { return null; }
+            }
+            // The theme: the saved one, or the device's when the Settings say "Like my device"
+            var theme = saved("theme");
+            var settings = saved("settings");
+            if (settings && settings.v === 1 && settings.followSystem === true && window.matchMedia) {
+                theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+            }
+            if (theme === "light") {
+                root.setAttribute("data-theme", "light");
+                document.querySelector('meta[name="theme-color"]').setAttribute("content", "#f4f6fd");
+            }
+            var calm = saved("motion.calm");
+            if (calm === null) calm = saved("effects.calm");
+            var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            root.classList.toggle("fx-motion-off", calm === true || reduce);
+        })();
+    </script>
+
+    <link rel="icon" href="./images/favicon-32.png" sizes="32x32" type="image/png">
+    <!-- The site's fonts. "crossorigin", as in index.html: the offline copy (sw.js) then gets an
+         answer it can check, and saves it like the site's own fonts. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600&family=Manrope:wght@400;600;700&family=Unbounded:wght@600;700&display=swap" crossorigin>
+
+    <style>
+        /* ===== 1. Colours and fonts: the site's tokens (style.css, section 1) ===== */
+        :root {
+            --bg: #060812;
+            --glass: rgba(16, 22, 42, 0.9);
+            --surface-2: rgba(29, 37, 68, 0.78);
+            --border: rgba(143, 130, 255, 0.18);
+            --border-strong: rgba(143, 130, 255, 0.42);
+            --text: #eef1ff;
+            --text-muted: #aab5d0;
+            --accent-rgb: 155, 109, 255;
+            --accent-2: #50e3ff;
+            --accent-2-rgb: 80, 227, 255;
+            --warning: #ffc861;
+            --gradient: linear-gradient(110deg, #b69aff 10%, #70edff 90%);
+            --gradient-button: linear-gradient(115deg, #8758ee, #536cf0);
+            --grid-line: rgba(135, 116, 255, 0.05);
+            --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+            --ring-a: #b69aff;
+            --ring-b: #70edff;
+            --north: #ff6ad5;
+            --hub: #0b1020;
+            --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
+            --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+            --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
+            color-scheme: dark;
+        }
+
+        [data-theme="light"] {
+            --bg: #f4f6fd;
+            --glass: rgba(255, 255, 255, 0.9);
+            --surface-2: rgba(238, 241, 252, 0.92);
+            --border: rgba(80, 70, 180, 0.16);
+            --border-strong: rgba(90, 70, 200, 0.4);
+            --text: #12162b;
+            --text-muted: #4a5470;
+            --accent-rgb: 107, 63, 224;
+            --accent-2: #07728f;
+            --accent-2-rgb: 7, 114, 143;
+            --warning: #a86a12;
+            --gradient: linear-gradient(110deg, #6b3fe0 10%, #0a8fb3 90%);
+            --gradient-button: linear-gradient(115deg, #7446ea, #3d5ee8);
+            --grid-line: rgba(90, 70, 200, 0.06);
+            --shadow: 0 24px 50px rgba(30, 30, 80, 0.12);
+            --ring-a: #6b3fe0;
+            --ring-b: #0a8fb3;
+            --north: #c42f98;
+            --hub: #ffffff;
+            color-scheme: light;
+        }
+
+        /* ===== 2. The page ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background:
+                radial-gradient(ellipse at 15% 10%, rgba(var(--accent-rgb), 0.14), transparent 40%),
+                radial-gradient(ellipse at 85% 60%, rgba(var(--accent-2-rgb), 0.08), transparent 40%),
+                var(--bg);
+            background-attachment: fixed;
+            color: var(--text);
+            font-family: var(--font-body);
+            font-size: 16px;
+            line-height: 1.65;
+        }
+
+        /* The faint grid of the site's background */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background-image:
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 48px 48px;
+            -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 80%);
+            mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 80%);
+        }
+
+        a { color: inherit; text-decoration: none; }
+        button { font: inherit; color: inherit; cursor: pointer; }
+
+        a:focus-visible,
+        button:focus-visible {
+            outline: 2px solid var(--accent-2);
+            outline-offset: 3px;
+        }
+
+        /* ===== 3. The top bar: the logo and the language button ===== */
+        .nf-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            width: min(100% - 32px, 1180px);
+            margin: 0 auto;
+            padding: 16px 0;
+        }
+
+        .nf-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 44px;
+            font-family: var(--font-display);
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            white-space: nowrap;
+        }
+
+        .nf-logo-mark {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border-strong);
+            border-radius: 11px;
+            background: rgba(var(--accent-rgb), 0.12);
+            font-size: 18px;
+        }
+
+        .nf-gradient {
+            background: var(--gradient);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nf-lang {
+            min-width: 44px;
+            height: 44px;
+            padding: 0 12px;
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
+            background: var(--glass);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 600;
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+
+        .nf-lang:hover { border-color: var(--accent-2); color: var(--accent-2); }
+
+        /* ===== 4. The card: 4 (compass) 4, the message and the way back ===== */
+        .nf-main {
+            flex: 1;
+            display: grid;
+            place-items: center;
+            padding: 8px 16px 40px;
+        }
+
+        .nf-card {
+            width: min(100%, 620px);
+            padding: 36px 32px 34px;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            background: var(--glass);
+            box-shadow: var(--shadow), 0 0 40px rgba(var(--accent-rgb), 0.12);
+            text-align: center;
+        }
+
+        .nf-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 15px;
+            border: 1px solid rgba(var(--accent-2-rgb), 0.35);
+            border-radius: 999px;
+            background: rgba(var(--accent-2-rgb), 0.07);
+            color: var(--accent-2);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        .nf-label::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--warning);
+            box-shadow: 0 0 10px var(--warning);
+        }
+
+        /* The big "404": the zero is the compass */
+        .nf-code {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.06em;
+            margin: 14px 0 6px;
+            font-family: var(--font-display);
+            font-size: clamp(84px, 22vw, 156px);
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.04em;
+        }
+
+        .nf-compass {
+            width: 0.86em;
+            height: 0.86em;
+            flex: none;
+            overflow: visible;
+            filter: drop-shadow(0 0 22px rgba(var(--accent-rgb), 0.35));
+        }
+
+        .nf-stop-a { stop-color: var(--ring-a); }
+        .nf-stop-b { stop-color: var(--ring-b); }
+        .nf-north { fill: var(--north); }
+        .nf-hub { fill: var(--hub); }
+
+        /* The needle spins once and settles on north, like a real compass finding its way */
+        .nf-needle {
+            transform-origin: 50px 50px;
+            animation: nf-spin 2.2s cubic-bezier(0.3, 1.35, 0.45, 1) 0.25s both;
+        }
+
+        @keyframes nf-spin {
+            from { transform: rotate(-400deg); }
+            to { transform: rotate(0deg); }
+        }
+
+        .nf-title {
+            margin: 10px 0 10px;
+            font-family: var(--font-display);
+            font-size: clamp(22px, 5.4vw, 30px);
+            font-weight: 600;
+            line-height: 1.25;
+            letter-spacing: -0.5px;
+        }
+
+        .nf-text {
+            max-width: 460px;
+            margin: 0 auto 26px;
+            color: var(--text-muted);
+        }
+
+        .nf-home {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+            padding: 12px 24px;
+            border: 1px solid rgba(190, 170, 255, 0.35);
+            border-radius: 14px;
+            background: var(--gradient-button);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 15px;
+            box-shadow: 0 10px 35px rgba(var(--accent-rgb), 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: transform 0.25s var(--ease), box-shadow 0.25s ease;
+        }
+
+        .nf-home:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 44px rgba(var(--accent-rgb), 0.45), 0 0 26px rgba(var(--accent-2-rgb), 0.18);
+        }
+
+        .nf-sections { margin-top: 26px; }
+
+        .nf-sections-title {
+            margin-bottom: 12px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        .nf-sections ul {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .nf-sections a {
+            display: inline-flex;
+            align-items: center;
+            min-height: 40px;
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface-2);
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 600;
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+
+        .nf-sections a:hover { border-color: var(--accent-2); color: var(--accent-2); }
+
+        /* ===== 5. Phones, and calm mode ===== */
+        @media (max-width: 480px) {
+            .nf-card { padding: 28px 18px 26px; }
+        }
+
+        @media (hover: none), (pointer: coarse) {
+            .nf-sections a { min-height: 44px; }
+        }
+
+        html.fx-motion-off .nf-needle { animation: none; }
+        html.fx-motion-off *, html.fx-motion-off *::before, html.fx-motion-off *::after { transition-duration: 0s !important; }
+    </style>
+</head>
+<body>
+    <header class="nf-top">
+        <a class="nf-logo" href="./" data-link="">
+            <span class="nf-logo-mark" aria-hidden="true">🧭</span>
+            <span>AI <span class="nf-gradient">Compass</span></span>
+        </a>
+        <button class="nf-lang" type="button" id="nf-lang" aria-label="RU — switch to Russian">RU</button>
+    </header>
+
+    <main class="nf-main">
+        <div class="nf-card">
+            <p class="nf-label" data-text="label">ERROR 404</p>
+
+            <p class="nf-code" aria-hidden="true">
+                <span class="nf-gradient">4</span>
+                <svg class="nf-compass" viewBox="0 0 100 100" focusable="false">
+                    <defs>
+                        <linearGradient id="nf-ring" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" class="nf-stop-a"/>
+                            <stop offset="1" class="nf-stop-b"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="50" cy="50" r="44" fill="none" stroke="url(#nf-ring)" stroke-width="7"/>
+                    <g stroke="url(#nf-ring)" stroke-width="3" stroke-linecap="round" opacity="0.8">
+                        <path d="M50 14v6M50 80v6M14 50h6M80 50h6"/>
+                    </g>
+                    <g class="nf-needle">
+                        <path class="nf-north" d="M50 18 L58 50 L42 50 Z"/>
+                        <path d="M50 82 L58 50 L42 50 Z" fill="url(#nf-ring)"/>
+                        <circle class="nf-hub" cx="50" cy="50" r="7" stroke="url(#nf-ring)" stroke-width="3.5"/>
+                    </g>
+                </svg>
+                <span class="nf-gradient">4</span>
+            </p>
+
+            <h1 class="nf-title" data-text="title">This page is off the map</h1>
+            <p class="nf-text" data-text="text">The address may have a typo, or the page has moved. Let the compass point you back.</p>
+
+            <a class="nf-home" href="./" data-link="">
+                <span aria-hidden="true">🧭</span>
+                <span data-text="home">Back to the home page</span>
+            </a>
+
+            <nav class="nf-sections" aria-labelledby="nf-sections-title">
+                <p class="nf-sections-title" id="nf-sections-title" data-text="sections">OR JUMP TO</p>
+                <ul>
+                    <li><a href="./#lessons" data-link="lessons" data-text="lessons">Lessons</a></li>
+                    <li><a href="./#lab" data-link="lab" data-text="lab">AI Lab</a></li>
+                    <li><a href="./#quiz" data-link="quiz" data-text="quiz">Quiz</a></li>
+                    <li><a href="./#glossary" data-link="glossary" data-text="glossary">Glossary</a></li>
+                    <li><a href="./#timeline" data-link="timeline" data-text="timeline">History</a></li>
+                    <li><a href="./#about" data-link="about" data-text="about">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </main>
+
+    <script>
+        (function () {
+            // Every text of this page, in English and Russian (the section names are the
+            // menu's, as in js/content/page.js)
+            var TEXTS = {
+                en: {
+                    pageTitle: "Page not found · AI Compass",
+                    label: "ERROR 404",
+                    title: "This page is off the map",
+                    text: "The address may have a typo, or the page has moved. Let the compass point you back.",
+                    home: "Back to the home page",
+                    sections: "OR JUMP TO",
+                    lessons: "Lessons",
+                    lab: "AI Lab",
+                    quiz: "Quiz",
+                    glossary: "Glossary",
+                    timeline: "History",
+                    about: "About",
+                    switchTo: "RU",
+                    switchLabel: "RU — switch to Russian"
+                },
+                ru: {
+                    pageTitle: "Страница не найдена · AI Compass",
+                    label: "ОШИБКА 404",
+                    title: "Этой страницы нет на карте",
+                    text: "Возможно, в адресе опечатка или страница переехала. Компас подскажет дорогу назад.",
+                    home: "На главную",
+                    sections: "ИЛИ СРАЗУ В РАЗДЕЛ",
+                    lessons: "Уроки",
+                    lab: "ИИ-лаборатория",
+                    quiz: "Тест",
+                    glossary: "Словарь",
+                    timeline: "История",
+                    about: "О проекте",
+                    switchTo: "EN",
+                    switchLabel: "EN — переключить на английский"
+                }
+            };
+
+            function saved(name) {
+                try { return JSON.parse(localStorage.getItem("aic:" + name)); } catch (error) { return null; }
+            }
+
+            function save(name, value) {
+                try { localStorage.setItem("aic:" + name, JSON.stringify(value)); } catch (error) { /* storage blocked */ }
+            }
+
+            function known(lang) {
+                lang = String(lang || "").toLowerCase();
+                return lang === "en" || lang === "ru" ? lang : null;
+            }
+
+            var browserLang = /^ru\b/i.test((navigator.languages && navigator.languages[0]) || navigator.language || "") ? "ru" : "en";
+            var lang = known(new URLSearchParams(window.location.search).get("lang")) || known(saved("language")) || browserLang;
+            var button = document.getElementById("nf-lang");
+
+            // Shows every text in one language. The links take it along (?lang=), so the
+            // site opens in the same language, even where the browser can't save it.
+            function show(newLang) {
+                lang = newLang;
+                var texts = TEXTS[lang];
+                document.documentElement.lang = lang;
+                document.title = texts.pageTitle;
+                document.querySelectorAll("[data-text]").forEach(function (element) {
+                    element.textContent = texts[element.getAttribute("data-text")];
+                });
+                document.querySelectorAll("[data-link]").forEach(function (link) {
+                    var part = link.getAttribute("data-link");
+                    link.setAttribute("href", "./?lang=" + lang + (part ? "#" + part : ""));
+                });
+                button.textContent = texts.switchTo;
+                button.setAttribute("aria-label", texts.switchLabel);
+            }
+
+            button.addEventListener("click", function () {
+                var other = lang === "en" ? "ru" : "en";
+                save("language", other);
+                show(other);
+            });
+
+            show(lang);
+        })();
+    </script>
+</body>
+</html>

@@ -399,10 +399,12 @@
     // ---------- 7. Completing lessons ----------
     function setCompleted(n, isDone) {
         const before = completed.size;
+        const wasDone = completed.has(n);
         if (isDone) completed.add(n);
         else completed.delete(n);
         saveCompleted();
         updateProgress();
+        if (isDone && !wasDone) A.track("lesson.complete", { n: n });
 
         if (!isDone) {
             A.toast(t("lessons.toast.undone"), "↩️");
@@ -683,6 +685,7 @@
 
     function downloadCertificate() {
         drawCertificate();
+        A.track("certificate.make", {});
         function save(url, isBlob) {
             const link = document.createElement("a");
             link.href = url;
@@ -1733,6 +1736,7 @@
         const n = reader.lesson;
         if (checkAnswers[n] !== undefined) return;
         checkAnswers[n] = choice;
+        A.track("lesson.check", { n: n, correct: choice === LESSONS[n - 1].correct });
         // A right answer completes the lesson automatically
         if (choice === LESSONS[n - 1].correct && !completed.has(n)) setCompleted(n, true);
         renderCheck();
@@ -1914,6 +1918,7 @@
         stopSpeaking();
         stopLab(true);
         reader.lesson = n;
+        A.track("lesson.open", { n: n });
         renderLessonContent();
         updateReaderChrome();
         releaseSpy();
@@ -1943,12 +1948,18 @@
         onReaderScroll();
     }
 
+    // An experiment of the lab (any id of its catalogue), or a section of the page
+    function isExperiment(id) {
+        if (id === "classifier" || id === "predictor") return true;
+        return !!A.lab && A.util.attempt(A.lab.list, []).some(function (entry) { return entry.id === id; });
+    }
+
     // "Try it on this site": close the reader and jump to the right place
     function runTryIt() {
         const target = LESSONS[reader.lesson - 1].tryIt;
         closeReader({ restoreFocus: false });
         requestAnimationFrame(function () {
-            const sectionId = target === "classifier" || target === "predictor" ? "lab" : target;
+            const sectionId = isExperiment(target) ? "lab" : target;
             A.dom.focusHeading(sectionId);   // the focus waits there if the feature moves it nowhere
             if (sectionId === "lab" && A.lab) A.lab.open(target);
             else if (sectionId === "quiz" && A.quiz) A.quiz.start();
@@ -2150,10 +2161,13 @@
             });
         });
 
+        // The voice and the speed chosen in the Settings window (js/settings.js); without
+        // that feature, the device's first voice for the language at its normal speed
         const langCode = A.lang === "ru" ? "ru" : "en";
-        const voice = window.speechSynthesis.getVoices().filter(function (item) {
+        const voice = (A.settings && A.settings.voice(langCode)) || window.speechSynthesis.getVoices().filter(function (item) {
             return item.lang && item.lang.toLowerCase().indexOf(langCode) === 0;
         })[0] || null;
+        const rate = A.settings ? A.settings.get("speechRate") : 1;
 
         speech.active = true;
         speech.session += 1;
@@ -2173,6 +2187,7 @@
             const utterance = new window.SpeechSynthesisUtterance(chunk.text);
             utterance.lang = langCode === "ru" ? "ru-RU" : "en-US";
             if (voice) utterance.voice = voice;
+            utterance.rate = rate;
             utterance.onstart = function () { started = true; };
             utterance.onend = next;
             utterance.onerror = function (event) {

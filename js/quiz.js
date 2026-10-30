@@ -175,6 +175,7 @@
         points: 0,
         streak: 0,
         bestStreak: 0,
+        startedAt: 0,                 // when the current game started (Date.now())
         result: null,                 // filled in when the game ends
         reviewFilter: "all"           // "all" or "mistakes"
     };
@@ -685,6 +686,7 @@
         const correct = picked === question.correct;
         const secondsLeft = state.gameTimed ? Math.max(0, timer.remaining) / 1000 : 0;
         stopTimer();
+        A.track("quiz.answer", { id: question.key, correct: correct });
 
         const record = {
             picked: picked,
@@ -828,6 +830,7 @@
         state.points = 0;
         state.streak = 0;
         state.bestStreak = 0;
+        state.startedAt = Date.now();
         state.result = null;
         state.reviewFilter = "all";
         state.screen = "question";
@@ -869,6 +872,14 @@
             previousBest: best ? best.points : null,
             rank: rankFor(correct)
         };
+        A.track("quiz.finish", {
+            mode: state.gameTimed ? "timed" : "classic",
+            score: correct,
+            total: total,
+            points: state.points,
+            timed: state.gameTimed,
+            seconds: Math.round((Date.now() - state.startedAt) / 1000)
+        });
         state.screen = "results";
         ringShown = false;
         showScreen(buildResults, {
