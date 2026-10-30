@@ -637,7 +637,7 @@
         bestStreak: 0,
         boxes: [],                    // My mistakes: the box of each question when the game started
         moves: null,                  // My mistakes: { cleared, up, back } in this game
-        startedAt: 0,                 // when the current game started (Date.now())
+        askedAt: 0,                   // when the current question appeared (Date.now())
         result: null,                 // filled in when the game ends
         reviewFilter: "all",          // "all" or "mistakes"
         notice: null                  // a message under the modes: a function that returns its text
@@ -1444,6 +1444,8 @@
 
         const correct = picked === question.correct;
         const secondsLeft = state.timed ? Math.max(0, timer.remaining) / 1000 : 0;
+        // How long the answer took (with the timer: the time it counted down)
+        const ms = state.timed ? TIME_LIMIT * 1000 - secondsLeft * 1000 : Math.max(0, Date.now() - state.askedAt);
         stopTimer();
         A.track("quiz.answer", { id: question.key, correct: correct, mode: state.mode });
 
@@ -1457,6 +1459,7 @@
             points: 0,
             lostStreak: 0,
             praise: A.util.randomInt(1, PRAISE_COUNT),      // which "Correct!" message
+            ms: Math.round(ms),                              // how long the answer took
             box: noteMistake(question, correct)               // what happened in "My mistakes"
         };
 
@@ -1617,7 +1620,9 @@
     }
 
     function beginQuestion() {
-        if (state.timed && !state.answers[state.index]) startTimer();
+        if (state.answers[state.index]) return;
+        state.askedAt = Date.now();
+        if (state.timed) startTimer();
     }
 
     // ---------- 14. Starting and finishing a game ----------
@@ -1708,7 +1713,6 @@
         state.bestStreak = 0;
         state.boxes = questions.map((question) => (mode === "mistakes" ? saved.mistakes[question.key].box : 0));
         state.moves = { cleared: 0, up: 0, back: 0 };
-        state.startedAt = Date.now();
         state.result = null;
         state.reviewFilter = "all";
         state.notice = null;
@@ -1777,7 +1781,8 @@
             total: total,
             points: state.points,
             timed: state.timed,
-            seconds: Math.round((Date.now() - state.startedAt) / 1000)
+            // the time spent answering (reading the explanations doesn't count)
+            seconds: Math.round(state.answers.reduce((sum, record) => sum + (record ? record.ms : 0), 0) / 1000)
         };
         if (mode === "lesson") detail.lesson = state.lesson;
         A.track("quiz.finish", detail);
@@ -2532,8 +2537,10 @@
     //                          (it fails without a network; calling it again tries again)
     //   modes                  the modes, in the order of the start screen
     // Progress events (A.track): "quiz.answer" { id, correct, mode } after every answer,
-    // "quiz.finish" { mode, score, total, points, timed, seconds, lesson } after every game,
-    // and "daily.complete" { date, score, total, streak } once a day, after the daily challenge.
+    // "quiz.finish" { mode, score, total, points, timed, seconds, lesson } after every game
+    // (score = right answers; seconds = the time spent answering, without the explanations;
+    // lesson only in "lesson" mode), and "daily.complete" { date, score, total, streak }
+    // once a day, after the daily challenge.
     A.feature("quiz", {
         start: startQuiz,
         question: questionInfo,
