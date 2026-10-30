@@ -187,7 +187,7 @@
 
 .lsn-map-row {
     display: grid;
-    grid-template-columns: 132px minmax(0, 1fr);
+    grid-template-columns: 150px minmax(0, 1fr);
     align-items: start;
     gap: 16px;
 }
@@ -2688,8 +2688,8 @@
 
 /* A mini-lab in its own file: "Loading the mini-lab…", then the lab (or an error
    with "Try again"). The space is kept so the page doesn't jump when the lab shows. */
-.lsn-lab[data-lab-state="loading"] .lsn-lab-view,
-.lsn-lab[data-lab-state="error"] .lsn-lab-view {
+.lsn-lab-body[data-lab-state="loading"] .lsn-lab-view,
+.lsn-lab-body[data-lab-state="error"] .lsn-lab-view {
     display: grid;
     place-items: center;
     min-height: 240px;
@@ -2750,7 +2750,8 @@
         grid-template-areas:
             "ring info"
             "actions actions"
-            "path path";
+            "path path"
+            "note note";
     }
 
     .lsn-hud-actions {
@@ -2878,6 +2879,7 @@
     }
 
     .lsn-track-icon {
+        align-self: start;
         width: 44px;
         height: 44px;
         border-radius: 14px;

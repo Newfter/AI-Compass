@@ -1,0 +1,756 @@
+/* =========================================================
+   AI COMPASS — MINI-LABS IN THEIR OWN FILES
+   The styles of the mini-labs in js/lessons/. js/lessons.js loads this
+   file together with the first of them, so the page doesn't load it at
+   start-up. Shared parts (.lsn-lab, .lsn-lab-sub, .lsn-pill,
+   .lsn-lab-actions, .lsn-slider, .lsn-sentence...) are in
+   css/lessons.css; switches and sliders (.ui-switch, .ui-range) in
+   css/components.css.
+   1. Pixel detective (lesson 7, js/lessons/pixels.js): .px-
+   2. Three slot machines (lesson 8, js/lessons/slots.js): .slot-
+   3. Temperature dial (lesson 9, js/lessons/temperature.js): .tmp-
+   4. Switches of the mini-labs
+   5. Responsive
+   6. Calm mode and reduced motion
+   ========================================================= */
+
+/* ===== 1. PIXEL DETECTIVE =====
+   --px-cell   one square of the picture and of the result. 24px or more,
+               so a finger can tap one (the minimum target size of WCAG 2.2).
+   The picture is a photo: its black and white are the same in both themes.
+   The result is coloured with the theme: cyan for a positive number
+   (dark → white), pink for a negative one (white → dark). */
+
+.px-lab {
+    --px-cell: 24px;
+    --px-black: #05070d;
+    --px-white: #ffffff;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);   /* never wider than the reader */
+    gap: 18px;
+}
+
+.px-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+}
+
+.px-group .lsn-lab-sub {
+    margin-bottom: 8px;
+}
+
+.px-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.px-pill {
+    padding: 8px 14px;
+    font-size: 13.5px;
+}
+
+.px-boards {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 14px 20px;
+}
+
+.px-board {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.px-caption {
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.px-arrow {
+    align-self: center;
+    color: var(--text-muted);
+    font-size: 22px;
+}
+
+/* The two grids: buttons without gaps (the thin lines are inset shadows), so the
+   window around 3 × 3 pixels lines up with them exactly */
+.px-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--px-n), var(--px-cell));
+    grid-auto-rows: var(--px-cell);
+    border: 1px solid var(--border-strong);
+    background: var(--surface-solid);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.px-cell {
+    display: grid;
+    place-items: center;
+    width: var(--px-cell);
+    height: var(--px-cell);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: inset 0 0 0 0.5px rgba(128, 128, 128, 0.35);
+    color: var(--text);
+    font: 600 10px/1 var(--font-mono);
+    cursor: pointer;
+}
+
+/* A focus ring that shows on black, on white and on every colour of the result */
+.px-cell:focus-visible {
+    position: relative;
+    z-index: 2;
+    outline: 3px solid var(--accent-2);
+    outline-offset: 0;
+    box-shadow: 0 0 0 5px var(--px-black), 0 0 0 7px var(--px-white);
+}
+
+.px-picture .px-cell {
+    background: var(--px-black);
+    color: var(--px-white);
+}
+
+.px-picture .px-cell.is-white {
+    background: var(--px-white);
+    color: var(--px-black);
+}
+
+/* The 3 × 3 window that makes the explained square of the result */
+.px-window {
+    position: absolute;
+    top: calc(var(--px-row, 0) * var(--px-cell));
+    left: calc(var(--px-col, 0) * var(--px-cell));
+    z-index: 1;
+    width: calc(3 * var(--px-cell));
+    height: calc(3 * var(--px-cell));
+    border: 3px solid var(--accent-2);
+    box-shadow: 0 0 0 1.5px var(--px-black), inset 0 0 0 1.5px var(--px-black);
+    pointer-events: none;
+    transition: top 0.15s ease, left 0.15s ease;
+}
+
+/* The result. --px-alpha: how strong the colour is (1, 2 or 3 of a 3 × 3 column
+   or row found the edge). The text colours keep a contrast of 4.5:1 or more. */
+.px-lab:not(.is-blur) .px-result .px-cell[data-sign="pos"] {
+    background: rgba(var(--accent-2-rgb), var(--px-alpha));
+}
+
+.px-lab:not(.is-blur) .px-result .px-cell[data-sign="neg"] {
+    background: rgba(var(--accent-3-rgb), var(--px-alpha));
+}
+
+.px-result .px-cell[data-level="1"] {
+    --px-alpha: 0.3;
+}
+
+.px-result .px-cell[data-level="2"] {
+    --px-alpha: 0.75;
+    color: var(--px-black);
+}
+
+.px-result .px-cell[data-level="3"] {
+    --px-alpha: 1;
+    color: var(--px-black);
+}
+
+[data-theme="light"] .px-result .px-cell[data-level="2"] {
+    color: var(--text);
+}
+
+[data-theme="light"] .px-result .px-cell[data-level="3"] {
+    color: var(--px-white);
+}
+
+/* A blur: shades of grey (js/lessons/pixels.js sets each one) */
+.px-result .px-cell[data-level="dark"] {
+    color: var(--px-white);
+}
+
+.px-result .px-cell[data-level="light"] {
+    color: var(--px-black);
+}
+
+.px-result .px-cell.is-spot {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid var(--text);
+    outline-offset: -2px;
+    box-shadow: inset 0 0 0 3.5px var(--surface-solid);
+}
+
+.px-result .px-cell.is-spot:focus-visible {
+    outline: 3px solid var(--accent-2);
+    outline-offset: 0;
+    box-shadow: 0 0 0 5px var(--px-black), 0 0 0 7px var(--px-white);
+}
+
+.px-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 4px 14px;
+    max-width: calc(12 * var(--px-cell));
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+.px-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.px-lab.is-blur .px-for-edges,
+.px-lab:not(.is-blur) .px-for-blur {
+    display: none;
+}
+
+.px-key {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    background: var(--px-black);
+}
+
+.px-key.is-white {
+    background: var(--px-white);
+}
+
+.px-key.is-pos {
+    background: rgb(var(--accent-2-rgb));
+}
+
+.px-key.is-neg {
+    background: rgb(var(--accent-3-rgb));
+}
+
+.px-key.is-grey {
+    width: 30px;
+    background: linear-gradient(90deg, #000, #fff);
+}
+
+/* How the explained square's number was made */
+.px-explain {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-solid);
+}
+
+.px-explain-title {
+    font-weight: 700;
+}
+
+.px-explain-lead {
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.px-sum {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.px-mini {
+    display: grid;
+    grid-template-columns: repeat(3, 30px);
+    grid-auto-rows: 24px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.px-mini span {
+    display: grid;
+    place-items: center;
+    box-shadow: inset 0 0 0 0.5px var(--border);
+    font: 600 12px/1 var(--font-mono);
+}
+
+.px-mini.is-filter span {
+    color: var(--text-accent-2);
+}
+
+.px-op {
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.px-total {
+    color: var(--text-accent-2);
+    font: 700 18px/1.2 var(--font-mono);
+}
+
+.px-status {
+    font-weight: 600;
+}
+
+/* ===== 2. THREE SLOT MACHINES ===== */
+
+.slot-lab {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+.slot-note {
+    padding: 10px 14px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    line-height: 1.55;
+}
+
+.slot-machines {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.slot-machine {
+    display: grid;
+    justify-items: center;
+    align-content: start;
+    gap: 6px;
+    padding: 14px 12px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface-solid);
+    text-align: center;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.slot-machine.is-last {
+    border-color: rgba(var(--accent-2-rgb), 0.6);
+}
+
+.slot-machine.is-best {
+    border-color: var(--success);
+    box-shadow: 0 0 0 1px var(--success), 0 0 24px color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.slot-name {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.slot-reel {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: var(--surface-2);
+    box-shadow: inset 0 6px 14px rgba(0, 0, 0, 0.25);
+    font-size: 30px;
+    line-height: 1;
+    overflow: hidden;
+}
+
+.slot-reel span {
+    display: inline-block;
+}
+
+.slot-reel.is-spin span {
+    animation: slot-spin 0.45s var(--ease);
+}
+
+@keyframes slot-spin {
+    0% { transform: translateY(-130%); filter: blur(3px); }
+    60% { transform: translateY(10%); filter: none; }
+    100% { transform: none; }
+}
+
+.slot-stats {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.slot-estimate {
+    font-size: 13.5px;
+}
+
+.slot-estimate-label {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.slot-bar {
+    width: 100%;
+    height: 6px;
+    border-radius: 6px;
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--border);
+    overflow: hidden;
+}
+
+.slot-bar span {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: var(--gradient);
+    transition: width 0.35s var(--ease);
+}
+
+/* The hidden chance, shown when the game is over */
+.slot-chance {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(var(--accent-3-rgb), 0.14);
+    color: var(--text-accent-3);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.slot-machine.is-best .slot-chance {
+    background: color-mix(in srgb, var(--success) 14%, transparent);
+    color: var(--text-success);
+}
+
+.slot-pull {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 4px;
+}
+
+.slot-robot {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.slot-score {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-2);
+    font-size: 14.5px;
+    font-weight: 700;
+}
+
+.slot-score [data-slot="left"] {
+    color: var(--text-muted);
+}
+
+.slot-end {
+    display: grid;
+    gap: 8px;
+    padding: 16px 18px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.45);
+    border-radius: 16px;
+    background:
+        linear-gradient(135deg, rgba(var(--accent-2-rgb), 0.1), transparent 60%),
+        var(--surface-solid);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.slot-end-title {
+    font-weight: 700;
+}
+
+/* ===== 3. TEMPERATURE DIAL ===== */
+
+.tmp-lab {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+}
+
+.tmp-bars {
+    display: grid;
+    gap: 6px;
+}
+
+.tmp-bar {
+    display: grid;
+    grid-template-columns: minmax(80px, 8.5em) minmax(0, 1fr) 56px 44px;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    transition: background 0.25s ease;
+}
+
+.tmp-bar.is-picked {
+    background: rgba(var(--accent-2-rgb), 0.1);
+}
+
+.tmp-word {
+    overflow: hidden;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tmp-track {
+    height: 12px;
+    border-radius: 12px;
+    background: var(--surface-solid);
+    box-shadow: inset 0 0 0 1px var(--border);
+    overflow: hidden;
+}
+
+.tmp-fill {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: 12px;
+    background: var(--gradient);
+    transition: width 0.35s var(--ease);
+}
+
+.tmp-value {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: right;
+}
+
+.tmp-count {
+    color: var(--text-accent-2);
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: right;
+}
+
+.tmp-tally {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    font-size: 14.5px;
+}
+
+.tmp-maths {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-solid);
+}
+
+.tmp-maths summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* The details' own triangle is hidden by style.css: an arrow that turns instead */
+.tmp-maths summary::-webkit-details-marker {
+    display: none;
+}
+
+.tmp-maths summary::after {
+    content: "⌄";
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    transition: transform 0.3s var(--ease);
+}
+
+.tmp-maths[open] summary::after {
+    transform: rotate(180deg);
+}
+
+.tmp-maths-intro {
+    padding: 0 16px;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* On a phone the table is wider than the screen: its box scrolls sideways (and
+   can be scrolled with the arrow keys once it has the focus) */
+.tmp-table-box {
+    margin: 8px 10px 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    /* A soft shadow on a side where more of the table is hidden ("local" covers
+       it once that side is scrolled into view) */
+    background:
+        linear-gradient(90deg, var(--surface-solid) 30%, transparent) left / 32px 100% no-repeat local,
+        linear-gradient(270deg, var(--surface-solid) 30%, transparent) right / 32px 100% no-repeat local,
+        radial-gradient(farthest-side at 0 50%, rgba(var(--accent-2-rgb), 0.35), transparent) left / 12px 100% no-repeat scroll,
+        radial-gradient(farthest-side at 100% 50%, rgba(var(--accent-2-rgb), 0.35), transparent) right / 12px 100% no-repeat scroll;
+}
+
+.tmp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.tmp-table th,
+.tmp-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.tmp-table th:first-child {
+    text-align: left;
+}
+
+.tmp-table thead th {
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: normal;
+    vertical-align: bottom;
+}
+
+.tmp-table tfoot th,
+.tmp-table tfoot td {
+    border-bottom: none;
+    font-weight: 700;
+}
+
+/* ===== 4. SWITCHES OF THE MINI-LABS =====
+   The track and the knob are .ui-switch (css/components.css). */
+
+.px-switch,
+.slot-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    justify-self: start;
+    min-height: 44px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+
+/* ===== 5. RESPONSIVE ===== */
+
+/* The reader's text column gets narrower: smaller squares, so both grids fit side by side */
+@media (max-width: 1024px) {
+    .px-lab {
+        --px-cell: 22px;
+    }
+}
+
+/* One grid under the other, the arrow pointing down */
+@media (max-width: 720px) {
+    .px-lab {
+        --px-cell: 24px;
+    }
+
+    .px-boards {
+        flex-direction: column;
+    }
+
+    .px-arrow {
+        transform: rotate(90deg);
+    }
+}
+
+@media (max-width: 640px) {
+    /* 12 squares across the width of a phone (the reader and the lab take 62px of it) */
+    .px-lab {
+        --px-cell: max(20px, min(24px, calc((100vw - 64px) / 12)));
+    }
+
+    .px-mini {
+        grid-template-columns: repeat(3, 26px);
+        grid-auto-rows: 22px;
+    }
+
+    .px-mini span {
+        font-size: 11px;
+    }
+
+    /* The machines one under the other: the reel beside the numbers, the button under them */
+    .slot-machines {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .slot-machine {
+        grid-template-columns: auto minmax(0, 1fr);
+        justify-items: start;
+        align-items: center;
+        gap: 2px 14px;
+        padding: 12px 14px;
+        text-align: left;
+    }
+
+    .slot-machine > * {
+        grid-column: 2;
+    }
+
+    .slot-reel {
+        grid-column: 1;
+        grid-row: 1 / span 5;
+        width: 56px;
+        height: 56px;
+        font-size: 26px;
+    }
+
+    .slot-machine > .slot-pull,
+    .slot-machine > .slot-robot {
+        grid-column: 1 / -1;
+    }
+
+    .slot-pull {
+        margin-top: 8px;
+    }
+
+    /* Word and numbers on one line, the bar under them */
+    .tmp-bar {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 4px 10px;
+        padding: 6px 8px;
+    }
+
+    .tmp-track {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .tmp-table th,
+    .tmp-table td {
+        padding: 5px 5px;
+        font-size: 12.5px;
+    }
+}
+
+/* ===== 6. CALM MODE AND REDUCED MOTION =====
+   core.js puts "fx-motion-off" on <html>, and style.css then stops every
+   animation and transition. The labs also skip the reel's spin and the
+   word's pop (api.motion.ok() in their files). Nothing else to do here. */
