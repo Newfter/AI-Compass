@@ -2911,7 +2911,18 @@
     });
 
     // ---------- 21. Ctrl+K commands and the public API ----------
-    // One command per lesson, plus "continue where I stopped"
+    // "Continue where I stopped", then one command per lesson. "Continue" comes first:
+    // with an empty search the palette shows only the first 6 commands of a group
+    A.registerCommand({
+        id: "lessons-continue",
+        group: "lessons.cmdGroup",
+        icon: "▶️",
+        title: function () { return t("lessons.cmdContinue"); },
+        keywords: "continue next lesson learning продолжить следующий урок обучение",
+        keepOverlays: [READER_ID],
+        run: function () { openLesson(nextLesson() || 1, document.activeElement); }
+    });
+
     LESSONS.forEach(function (lesson) {
         A.registerCommand({
             id: "lesson-" + lesson.number,
@@ -2925,16 +2936,6 @@
             // focused element is where the reader returns to when it closes
             run: function () { openLesson(lesson.number, document.activeElement); }
         });
-    });
-
-    A.registerCommand({
-        id: "lessons-continue",
-        group: "lessons.cmdGroup",
-        icon: "▶️",
-        title: function () { return t("lessons.cmdContinue"); },
-        keywords: "continue next lesson learning продолжить следующий урок обучение",
-        keepOverlays: [READER_ID],
-        run: function () { openLesson(nextLesson() || 1, document.activeElement); }
     });
 
     // Other features use AICompass.lessons (AICompass.openLesson and closeLesson are
