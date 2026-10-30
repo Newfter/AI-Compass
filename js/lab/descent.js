@@ -1771,7 +1771,9 @@
                 racers.forEach(function (racer) {
                     if (!racer.on || racer.steps === 0) return;
                     const color = c.series[BALL_COLORS[racer.index]];
-                    const count = racer.trail.length / 2;
+                    // the places before the newest one: the line then runs to where the ball is
+                    // shown, so it never runs ahead of a ball that is still sliding (Watch)
+                    const count = racer.trail.length / 2 - 1;
                     const stride = Math.max(1, Math.ceil(count / TRAIL_POINTS_3D));
                     const points = [];
                     for (let k = 0; k < count; k += stride) {
