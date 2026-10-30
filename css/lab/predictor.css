@@ -1,0 +1,542 @@
+/* =========================================================
+   AI COMPASS — AI LAB EXPERIMENT: THE NEXT-WORD PREDICTOR
+   The styles of js/lab/predictor.js. The lab hub loads this file
+   when the experiment opens. The parts it shares with "Teach the
+   machine" (boxes, small labels, sliders' value pills, the
+   explanation panel) are in css/lab.css, with the lab's card.
+   1. The text box, starters and candidates
+   2. Auto-write and creativity
+   3. Tokens, what it knows, teaching it
+   4. Like ChatGPT, only smaller
+   5. Responsive
+   6. Calm mode and reduced motion
+   All colours come from the variables in style.css,
+   so both the dark and the light theme look right.
+   ========================================================= */
+
+/* ===== 1. THE TEXT BOX, STARTERS AND CANDIDATES ===== */
+
+.lab-lm {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 26px 28px;
+    align-items: start;
+}
+
+.lab-lm-main,
+.lab-lm-side {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+.lab-lm-side {
+    gap: 16px;
+}
+
+.lab-lm-label {
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 700;
+}
+
+.lab-lm-field {
+    position: relative;
+}
+
+.lab-lm-input {
+    display: block;
+    width: 100%;
+    min-height: 124px;
+    padding: 16px 56px 16px 18px;
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    background: var(--surface-solid);
+    color: var(--text);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.55;
+    resize: vertical;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.lab-lm-input::placeholder {
+    color: var(--text-label);
+    font-weight: 500;
+}
+
+/* The focus shows as a glow. The outline is transparent: it is invisible here, but
+   in Windows High Contrast mode (which removes shadows) it becomes a visible ring. */
+.lab-lm-input:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.35), 0 0 30px rgba(var(--accent-2-rgb), 0.15);
+}
+
+.lab-lm-field.is-writing .lab-lm-input {
+    border-color: var(--accent-3);
+    animation: lab-writing 1.4s ease-in-out infinite;
+}
+
+@keyframes lab-writing {
+    50% { box-shadow: 0 0 0 3px rgba(var(--accent-3-rgb), 0.2), 0 0 34px rgba(var(--accent-3-rgb), 0.25); }
+}
+
+.lab-lm-clear {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    color: var(--text-dim);
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.lab-lm-clear:hover {
+    background: var(--surface-hover);
+    color: var(--danger);
+}
+
+.lab-starters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.lab-starters .lab-mini-label {
+    margin-right: 2px;
+}
+
+.lab-starter {
+    min-height: 44px;
+    padding: 8px 14px;
+    font-size: 0.84375rem;
+    text-align: left;
+}
+
+.lab-lm-notice {
+    display: flex;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--warning);
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.5;
+}
+
+.lab-lm-notice::before {
+    content: "!";
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--warning);
+    color: var(--surface-solid);
+    font-weight: 800;
+    font-size: 13px;     /* px: a glyph in a tile of fixed size */
+}
+
+.lab-predict .lab-box-head {
+    margin-bottom: 4px;
+}
+
+.lab-lm-context {
+    min-height: 1.5em;
+    margin-bottom: 12px;
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;    /* a very long typed word wraps instead of sticking out */
+}
+
+.lab-cands {
+    display: grid;
+    gap: 8px;
+}
+
+.lab-cand {
+    position: relative;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 50px;
+    padding: 8px 14px 8px 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: var(--surface-solid);
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: left;
+    transition: border-color 0.2s ease, transform 0.3s var(--ease), box-shadow 0.25s ease;
+}
+
+.lab-cand:hover {
+    border-color: var(--accent-2);
+    transform: translateX(4px);
+    box-shadow: 0 0 22px rgba(var(--accent-2-rgb), 0.15);
+}
+
+.lab-cand-item:first-child .lab-cand {
+    border-color: var(--border-strong);
+}
+
+.lab-cand-fill {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.32), rgba(var(--accent-2-rgb), 0.22));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.55s var(--ease);
+}
+
+.lab-cand-pick {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: var(--accent-3);
+    box-shadow: 0 0 10px rgba(var(--accent-3-rgb), 0.7);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.45s var(--ease);
+}
+
+.lab-cand-rank,
+.lab-cand-word,
+.lab-cand-pct {
+    position: relative;
+}
+
+.lab-cand-rank {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 12px;     /* px: a glyph in a tile of fixed size */
+    font-weight: 600;
+}
+
+.lab-cand-item:first-child .lab-cand-rank {
+    border-color: rgba(var(--accent-2-rgb), 0.5);
+    color: var(--text-accent-2);
+}
+
+.lab-cand-word {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lab-cand.is-end .lab-cand-word {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-style: italic;
+}
+
+.lab-cand-pct {
+    color: var(--text-accent-2);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.lab-cand.is-picked {
+    border-color: var(--accent-3);
+    box-shadow: 0 0 0 1px var(--accent-3), 0 0 28px rgba(var(--accent-3-rgb), 0.35);
+    transform: scale(1.02);
+}
+
+.lab-cands-legend {
+    margin-top: 10px;
+    color: var(--text-label);
+    font-size: 0.78125rem;
+    line-height: 1.5;
+}
+
+/* ===== 2. AUTO-WRITE AND CREATIVITY ===== */
+
+.lab-lm-controls {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px 20px;
+}
+
+.lab-auto {
+    min-width: 168px;
+}
+
+.lab-auto-icon {
+    display: inline-flex;
+}
+
+.lab-auto.is-writing {
+    box-shadow: 0 10px 35px rgba(var(--accent-rgb), 0.3), 0 0 0 1px rgba(var(--accent-3-rgb), 0.6), 0 0 30px rgba(var(--accent-3-rgb), 0.35);
+}
+
+.lab-temp {
+    min-width: 0;
+}
+
+.lab-range-temp {
+    margin-top: 2px;
+}
+
+/* ===== 3. TOKENS, WHAT IT KNOWS, TEACHING IT ===== */
+
+/* How expected was each word? */
+.lab-tokens {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 6px;
+    min-height: 60px;
+    max-height: 230px;
+    overflow-y: auto;
+}
+
+.lab-tok {
+    --p: 0;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
+    padding: 5px 9px 4px;
+    border: 1px solid rgba(var(--accent-2-rgb), calc(0.14 + var(--p) * 0.66));
+    border-radius: 10px;
+    background: rgba(var(--accent-2-rgb), calc(0.03 + var(--p) * 0.26));
+    box-shadow: 0 0 calc(var(--p) * 16px) rgba(var(--accent-2-rgb), calc(var(--p) * 0.3));
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+    animation: lab-tok-in 0.35s var(--ease) both;
+}
+
+.lab-tok > span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@keyframes lab-tok-in {
+    from { opacity: 0; transform: translateY(4px); }
+}
+
+.lab-tok small {
+    margin-top: 2px;
+    color: var(--text);
+    font-size: 0.625rem;
+    font-weight: 600;
+}
+
+.lab-tok.is-new {
+    border-style: dashed;
+    border-color: var(--warning);
+    background: transparent;
+    box-shadow: none;
+}
+
+.lab-tok.is-new small {
+    color: var(--text-warning);
+}
+
+.lab-tok.is-typing {
+    border-style: dotted;
+    border-color: var(--border-strong);
+    background: transparent;
+    box-shadow: none;
+}
+
+.lab-tok.is-typing > span {
+    color: var(--text-muted);
+}
+
+.lab-tokens-empty {
+    color: var(--text-label);
+    font-size: 0.84375rem;
+}
+
+/* What it knows */
+.lab-lm-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.lab-lm-stat {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+/* The numbers are gradient text: lab.js gives them the .gradient-text class of style.css */
+.lab-lm-stat strong {
+    display: block;
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.lab-lm-stat span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
+
+/* Teach it a sentence */
+.lab-teach {
+    display: flex;
+    gap: 8px;
+}
+
+.lab-teach-input {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface-solid);
+    color: var(--text);
+    font-size: 0.875rem;
+}
+
+.lab-teach-input::placeholder {
+    color: var(--text-label);
+}
+
+.lab-teach-btn {
+    flex: none;
+    min-height: 44px;
+}
+
+.lab-teach-status {
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 0.78125rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.lab-teach-status.is-error {
+    color: var(--text-danger);
+}
+
+.lab-link-btn {
+    min-height: 44px;
+    margin-top: 2px;
+    color: var(--text-accent-2);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* A note under a box */
+.lab-box-note {
+    margin-top: 10px;
+    color: var(--text-label);
+    font-size: 0.78125rem;
+    line-height: 1.5;
+}
+
+/* ===== 4. LIKE CHATGPT, ONLY SMALLER ===== */
+
+.lab-real {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-top: 16px;
+    padding: 18px;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.14), rgba(var(--accent-2-rgb), 0.08));
+}
+
+.lab-real-icon {
+    flex: none;
+    font-size: 1.875rem;
+    line-height: 1;
+}
+
+/* (h5: style.css styles h1-h4 only, so the colour, line height and weight are given here) */
+.lab-real h5 {
+    margin-bottom: 6px;
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.lab-real p {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.65;
+}
+
+/* ===== 5. RESPONSIVE ===== */
+
+@media (max-width: 1024px) {
+    .lab-lm {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .lab-lm-controls {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .lab-auto {
+        width: 100%;
+    }
+
+    /* 16px text stops phones from zooming in when you tap a field */
+    .lab-lm-input,
+    .lab-teach-input {
+        font-size: 1rem;
+    }
+
+    .lab-real {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .lab-teach {
+        flex-direction: column;
+    }
+}
+
+/* ===== 6. CALM MODE AND REDUCED MOTION =====
+   style.css already stops every animation and transition under html.fx-motion-off
+   (core.js sets it for reduced motion and for calm mode). The predictor only adds: */
+
+/* a candidate doesn't slide to the right under the mouse */
+html.fx-motion-off .lab-cand:hover {
+    transform: none;
+}

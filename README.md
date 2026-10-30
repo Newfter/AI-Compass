@@ -1,6 +1,6 @@
 # AI Compass
 
-AI Compass is a free website that teaches teenagers about artificial intelligence, in English and in Russian. It has short lessons with mini-labs, two live AI experiments, a quiz, a glossary, a history timeline, a chat helper (Compass Bot) and a search window for the whole site (Ctrl+K).
+AI Compass is a free website that teaches teenagers about artificial intelligence, in English and in Russian. It has short lessons with mini-labs, an AI Lab of live experiments (small, real models that learn in your browser), a quiz, a glossary, a history timeline, a chat helper (Compass Bot), a search window for the whole site (Ctrl+K), My Compass, where learners see their XP, level, badges and streak, and Settings (bigger text, high contrast, an easy-to-read font and more).
 
 It is plain HTML, CSS and JavaScript: no libraries, no frameworks, no build step. The files in this folder are exactly what visitors get.
 
@@ -9,7 +9,8 @@ This guide is for the people who look after the site. It explains how the code i
 - [Run it on your computer](#run-it-on-your-computer)
 - [The folder map](#the-folder-map)
 - [How the pieces talk](#how-the-pieces-talk)
-- [Recipes](#recipes): [change a text](#change-a-text-in-both-languages), [add a lesson](#add-a-lesson), [add a quiz question](#add-a-quiz-question), [add a glossary term](#add-a-glossary-term), [add a timeline milestone](#add-a-timeline-milestone), [add a fact or a joke to Compass Bot](#add-a-fun-fact-or-a-joke-to-compass-bot), [add a Ctrl+K command](#add-a-command-to-the-ctrlk-palette)
+- [The app, offline use, sharing, printing and search engines](#the-app-offline-use-sharing-printing-and-search-engines)
+- [Recipes](#recipes): [change a text](#change-a-text-in-both-languages), [add a lesson](#add-a-lesson), [add a quiz question](#add-a-quiz-question), [add a glossary term](#add-a-glossary-term), [add a timeline milestone](#add-a-timeline-milestone), [add a fact or a joke to Compass Bot](#add-a-fun-fact-or-a-joke-to-compass-bot), [help Compass Bot find an answer](#help-compass-bot-find-an-answer), [add a Ctrl+K command](#add-a-command-to-the-ctrlk-palette), [add an AI Lab experiment](#add-an-ai-lab-experiment)
 - [House rules](#house-rules)
 - [Before you merge: a test checklist](#before-you-merge-a-test-checklist)
 - [Credits](#credits)
@@ -38,37 +39,57 @@ A local server shows you the site the way GitHub Pages serves it.
 
 | File | What it is for |
 | --- | --- |
-| `index.html` | The page: the menu, the first screen (the "hero"), one `<section>` for each part of the site, and the list of styles and scripts. Each part has an empty `<div data-feature="...">` that its script fills. A small script in the `<head>` applies the saved theme and calm mode before the page is drawn. |
+| `index.html` | The page: the menu, the first screen (the "hero"), one `<section>` for each part of the site, and the list of styles and scripts. Each part has an empty `<div data-feature="...">` that its script fills. A small script in the `<head>` applies the saved theme, calm mode and settings (text size, line spacing, font, contrast...) before the page is drawn, so nothing flashes. |
 | `style.css` | What the whole page shares: the design tokens (colours, fonts and sizes of both themes), buttons, cards, the menu, the hero, the section frames, toasts, the phone layout and calm mode. |
 | `css/components.css` | Small visual parts that several features share, each written once as a `ui-...` class: corner brackets, the light that scans along a card, sliders, on/off switches, filter chips, answer options and progress rings. |
 | `css/effects.css` | The visual effects and the neural network background. |
 | `css/lessons.css` | The lessons: progress panel, cards, the lesson reader, the mini-labs and the certificate. |
-| `css/lab.css` | The AI Lab. |
+| `css/lab.css` | The AI Lab: the lab's card, the picker of experiments (a grid of cards, or a rail while one is open), the header above the open experiment, loading and errors. Section 1 keeps the height of each experiment while it loads, so the page below doesn't jump. |
+| `css/lab/` | The styles of each AI Lab experiment (`<id>.css`) and of the lab kit (`kit.css`). The lab loads them when an experiment opens. |
 | `css/quiz.css` | The quiz. |
 | `css/glossary.css` | The glossary. |
 | `css/timeline.css` | The history timeline. |
 | `css/assistant.css` | Compass Bot. |
 | `css/palette.css` | The Ctrl+K command palette. |
+| `css/journey.css` | My Compass: the button in the menu, the badge picture in a toast, and the dashboard window. |
+| `css/settings.css` | The Settings window and the keyboard shortcuts window, and what the settings change on the whole page: bigger text, relaxed lines, the easy-to-read font, underlined links, high contrast and solid surfaces. It comes after the other styles. |
+| `css/print.css` | The page on paper (used only when printing): black on white, an open lesson as a handout, the certificate on one A4 page. |
 | `js/core.js` | The toolkit that every other script uses (`window.AICompass`, called `A`): saved settings, texts and languages, the theme, calm mode, pop-up windows, scrolling to sections, Ctrl+K commands and toasts. It is loaded first. |
 | `js/effects.js` | Small touches: the scroll progress bar, cards that rise in, numbers that count up, typewriter words, tilting cards, the mouse spotlight, magnetic buttons, ripples, the section mini-map and confetti. |
 | `js/neural-bg.js` | The animated "brain" drawn behind the page. |
 | `js/lessons.js` | The lessons: progress panel, lesson cards, the lesson reader, the mini-labs, reading aloud and the certificate. |
-| `js/lab.js` | The AI Lab: "Teach the machine" (a tiny neural network) and the "Next-word predictor" (a tiny language model). |
+| `js/lab.js` | The AI Lab's hub: the picker, loading an experiment's files when it opens (or a moment before), links like `#lab/maze`, the Ctrl+K commands, remembering the last experiment, and the progress events. |
+| `js/lab/` | The experiments, one file each, loaded when they open: `classifier.js` ("Teach the machine", a tiny neural network), `predictor.js` (the next-word predictor, a tiny language model), `chatbot.js` ("Inside a chatbot": tokens, word meanings, attention and the dice that pick the next word), `maze.js` (a robot that learns from rewards), `evolve.js` (cars that learn to drive by evolution). `kit.js` is the lab kit (`A.labKit`) they are all built from: buttons, sliders, charts, canvases, a frame loop, seeded random numbers, saved settings and "Try this" challenges. `sample.js` ("Guess the line") is a small, complete experiment to copy; it is not in the lab. |
 | `js/quiz.js` | The AI Challenge: questions, the timer, points, streaks, ranks and the best score. |
 | `js/glossary.js` | The glossary: search with "did you mean?", categories, the A–Z strip, term cards and a random term. |
 | `js/timeline.js` | "A Short History of AI": the era chips and the line that fills as you scroll. |
-| `js/assistant.js` | Compass Bot, the chat helper in the corner. |
+| `js/assistant.js` | Compass Bot, the chat helper in the corner: its prepared answers, answers looked up in the site, follow-ups ("tell me more") and "quiz me". |
 | `js/palette.js` | The Ctrl+K search window. |
+| `js/search.js` | The site search (`A.search`): finds things in the lessons, glossary, timeline, quiz, AI Lab and page texts, in the current language, with typos, synonyms and the wrong keyboard layout. The Ctrl+K palette and Compass Bot use it. |
+| `js/journey.js` | My Compass: counts XP from the progress events, and keeps the level, the badges and the streak in this browser. It also draws the button in the menu. |
+| `js/journey-panel.js` | The My Compass window (the dashboard). It is loaded the first time the window opens. |
+| `js/settings.js` | The Settings window (the gear in the menu, Ctrl+K or `#settings`): language, theme, text size, line spacing, font, underlined links, contrast, transparency, calm motion and the read-aloud voice and speed, saved in this browser (`A.settings`). Also the keyboard shortcuts window (press `?`). |
+| `js/platform.js` | The app around the site: starts the offline copy (`sw.js`), the "Install the app" button, the offline / back online messages, `?lang=` in the address, sharing (`A.share`) and the Share and Print commands. |
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
 | `js/content/lessons.js` | The lesson texts, the mini-lab texts and the reader's buttons. |
-| `js/content/lab.js` | The AI Lab texts, and the sentences the next-word predictor learns from. |
+| `js/content/lab.js` | The AI Lab's texts, each experiment's title, hook and big idea (the picker shows them before the experiment loads), the icons, and the catalogue: which experiments the lab shows, in which order. |
+| `js/content/lab/` | Each experiment's own texts (`<id>.js`, loaded with it) and the lab kit's texts (`kit.js`). `predictor.js` also has the sentences the next-word predictor learns from. |
 | `js/content/quiz.js` | The quiz texts, the list of questions and the ranks. |
 | `js/content/glossary.js` | The glossary texts, the categories and every term. |
 | `js/content/timeline.js` | The timeline texts, the eras and every milestone. |
 | `js/content/assistant.js` | Compass Bot's texts, fun facts and jokes, and its "brain" (the words it listens for and its answers). |
 | `js/content/palette.js` | The texts of the Ctrl+K palette. |
+| `js/content/search.js` | The search's texts and word lists: little words it skips (also words that only judge, like "good" or "лучше"), words that mean the same thing ("нейросеть" = "neural network"), words that point back to the sentence before ("This is called..."), and the parts of the page it searches. |
+| `js/content/journey.js` | My Compass: its texts, the XP table, the levels and the badges. |
+| `js/content/settings.js` | The texts of the Settings and keyboard shortcuts windows, and the list of every keyboard shortcut of the site. |
+| `js/content/platform.js` | The texts of installing, the offline messages and sharing. |
+| `sw.js` | The service worker: the copy of the site that works without a connection. You never need to change it when you edit the site. |
+| `manifest.webmanifest` | The app's name, colours and icons, used when the site is installed as an app. |
+| `404.html` | The page GitHub Pages shows for an address that doesn't exist, however deep, in both languages. |
+| `robots.txt`, `sitemap.xml` | For search engines: everything may be read, and the site's three addresses (plain, `?lang=en`, `?lang=ru`). |
+| `images/` | The app icons, the browser tab's icon, and the picture shown when a link is shared (`og-image.png`, 1200 × 630). |
 | `README.md` | This guide. |
 
 
@@ -143,6 +164,84 @@ Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `
 **Shared components.** A visual part that several features use (corner brackets, sliders, on/off switches, chips...) is written once in `css/components.css`, as a `ui-...` class. A feature adds that class next to its own one in its HTML template, for example `<input class="lsn-range ui-range" type="range">`, and changes only the custom properties listed at the top of that file.
 
 **Screen sizes.** Every CSS file uses the same few widths (breakpoints), listed at the top of `style.css`. The three main ones are also in `js/core.js` as `A.breakpoints`: change both together.
+
+
+## Progress events
+
+Every part of the site reports what the learner just did with `A.track(type, detail)`. Core sends it as the `"activity"` event with `{ type, detail, time }`, so any feature can listen:
+
+```js
+A.on("activity", function (activity) {
+    if (activity.type === "lesson.complete") { /* activity.detail.n is the lesson number */ }
+});
+```
+
+Nothing leaves the browser: these events are only for features on the same page (for example "My Compass", which turns them into XP with the table in `js/content/journey.js`).
+
+| Part | Event | Detail | When |
+| --- | --- | --- | --- |
+| Lessons | `lesson.open` | `{ n }` | every time a lesson is shown |
+| | `lesson.complete` | `{ n }` | the first time a lesson is marked as done |
+| | `lesson.check` | `{ n, correct }` | a "check yourself" question is answered |
+| | `certificate.make` | `{}` | the certificate is downloaded |
+| Quiz | `quiz.answer` | `{ id, correct }` | a question is answered |
+| | `quiz.finish` | `{ mode, score, total, points, timed, seconds }` | a round ends (`mode` is `"classic"` or `"timed"`, `score` is the number of right answers) |
+| AI Lab | `lab.use` | `{ exp }` | an experiment is opened; also when training starts (Teach the machine) or auto-write starts (the predictor) |
+| | `lab.milestone` | `{ exp, kind, ... }` | the classifier has learned (`kind: "learned"`, `epochs`) or the predictor was taught (`kind: "taught"`, `sentences`) |
+| | `lab.challenge` | `{ exp, n, done, total }` | a "Try this" challenge is reached (`n` counts from 1; `done` of the `total` are reached now). It can come again for the same `n` after the experiment resets its challenges. |
+| Glossary | `glossary.explore` | `{ id }` | a term is opened |
+| Timeline | `timeline.era` | `{ era }` | the timeline's line reaches an era for the first time |
+| Compass Bot | `bot.ask` | `{ typed: true }` or `{ intent }` | a typed question, or a chip |
+| | `bot.quiz` | `{ correct }` | a "quiz me" question in the chat is answered |
+| | `bot.feedback` | `{ helpful }` | 👍 (`true`) or 👎 (`false`) under an answer from the site |
+| Ctrl+K | `palette.run` | `{ id }` | a command is run |
+| Search | `search.open` | `{ type, id, from }` | a text found by the search is opened: a palette row (`from: "palette"`) or a source under a bot answer (`from: "bot"`) |
+| Settings | `settings.change` | `{ name, value }` | a setting really changes, wherever it was changed (the settings window, Ctrl+K, the buttons in the menu bar). `name` is `language` (`"en"`, `"ru"`), `theme` (`"dark"`, `"light"` or `"system"`), `textSize` (1, 1.125, 1.25 or 1.5), `lineSpacing` (`"normal"`, `"relaxed"`), `easyFont`, `underlineLinks`, `contrast` or `reduceTransparency` (true, false), `voiceEn` or `voiceRu` (a voice, `""` for automatic) or `speechRate` (0.75, 1, 1.25 or 1.5) |
+| Platform | `app.install` | `{}` | the site was installed as an app |
+| | `app.share` | `{ via }` | something was shared: `via` is `"share"` (the device's share window) or `"copy"` (the link was copied) |
+| Core | `language.change` | `{ lang }` | the language changes |
+| | `theme.change` | `{ theme }` | the theme changes |
+| | `settings.change` | `{ name: "calm", value }` | calm mode is switched on (`true`) or off (`false`) |
+| My Compass | `journey.open` | `{}` | the window opens |
+| | `journey.export` | `{ how }` | the progress is saved to a file (`how: "file"`) or copied as text (`how: "text"`) |
+
+My Compass also sends its own event, `"journey"`, after a new level (`{ type: "level", level, name }`) or a new badge (`{ type: "badge", id, name }`), and offers `A.journey`: `xp()`, `level()`, `badges()`, `streak()`, `open()`, `export()` and `import(data)`.
+
+**Adding an event:** call `A.track("part.something", { ... })` where it happens, list it in your file's header, and add a row here. Listeners must not count the same thing twice: the same event can come many times (for example `lesson.open`).
+
+**Loading files on demand:** `A.loadScript(src)` and `A.loadStyle(href)` load a file the first time it is needed and return a Promise; asking again for the same file reuses the first load, and a failed load can be tried again.
+
+
+## The app, offline use, sharing, printing and search engines
+
+**The offline copy (`sw.js`).** Once the page has loaded, `js/platform.js` starts a *service worker*: a small script the browser keeps for the site, which sees every file the page asks for. Online it always asks the server first, so everyone gets what you published on their next visit (and you see your change on a normal reload). Every answer is saved, and without a connection (or when the server takes more than about 4 seconds) the saved copy answers instead. The first visit saves the page and every file `index.html` loads; files loaded later are saved the first time they are used. A page that was never saved shows a small "You're offline" page.
+
+- **You never need to change `sw.js` when you edit the site.** It reads its list of files from `index.html`. Only a change to the way `sw.js` itself works needs a higher `CACHE_VERSION` at its top (the old copies are then deleted).
+- **To try it:** open the site on a local server, then F12 → Application → Service workers: it should say "activated and is running". Tick "Offline" (there, or in the Network tab) and reload: the site still works. "Unregister" and "Clear site data" (Application → Storage) remove the worker and the copy.
+- It never starts when you open `index.html` as a file (`file://`), and not in browsers driven by a test program (`navigator.webdriver`), so automatic tests always see exactly the files on the server.
+
+**Install the app.** When the browser offers to install the site (Chrome, Edge, Samsung Internet), an "Install the app" button appears in the footer and a command in Ctrl+K. Safari on iPhones and iPads never offers it: there the button shows how to do it with Share → "Add to Home Screen". The app's name, colours and icons are in `manifest.webmanifest`.
+
+**Links in a language.** An address ending in `?lang=ru` or `?lang=en` opens the site in that language, and saves it like the RU / EN button does (the script at the top of `index.html` does it before the page is drawn). Share links use it, and so do search engines.
+
+**Sharing.** `A.share({ title, text, url })` opens the device's share window (phones, tablets); where there is none, it copies the text and the link and says so. Every part is optional: `A.share()` shares the site itself. Call it from a click (browsers allow sharing and copying only right after one). It returns a Promise of what happened: `"shared"`, `"copied"`, `"cancelled"` or `"failed"`. `A.platform.link("quiz")` is the site's public address in the current language, with a part:
+
+```js
+// For example after a quiz round, with a text "quiz.shareResult" added to js/content/quiz.js
+A.share({ text: A.t("quiz.shareResult", { score: 10 }), url: A.platform.link("quiz") });
+```
+
+**Printing.** Ctrl+P (or "Print this page" in Ctrl+K) prints the page in black on white, without the menu, the effects, the buttons, the AI Lab and the quiz. An open lesson prints alone, as a handout; the certificate, while it is shown, prints alone on one A4 page. The rules are in `css/print.css`: look at the print preview in both themes after changing a feature's layout.
+
+**Search engines and shared links.** The top of `index.html` tells search engines and chat apps about the site: a description, the canonical address (added by the script at the top of `index.html`, for the address that was opened: with `?lang=` it names that language's page) and the language versions (`hreflang`), Open Graph and Twitter tags (the title, text and picture shown when a link is shared), and the JSON-LD at the end of `<head>`, which describes the site and the lessons as a free course. `robots.txt` and `sitemap.xml` help search engines find the pages. To check: https://validator.schema.org for the JSON-LD, and F12 → Application → Manifest for the app.
+
+**If the site ever moves** (a new address, or the repository is renamed), change the address in all these places:
+- `index.html`: the `hreflang` links, `og:url` (the canonical address is made from it) and `og:image`, and every address in the JSON-LD;
+- `robots.txt` and `sitemap.xml`;
+- `404.html`: `SITE_FOLDER` and the `<base>` tag (both are the folder, `/AI-Compass/`);
+- `css/print.css`: the address printed at the bottom of every page.
+
+**The pictures** in `images/` are PNG files of fixed sizes: `icon-192.png` and `icon-512.png` (the app), `icon-maskable-512.png` (the app on Android, which cuts it into a circle: keep the drawing inside the middle 80 %), `apple-touch-icon.png` (180 × 180, iPhones), `favicon-32.png` (the browser tab) and `og-image.png` (1200 × 630, shared links). To change one, replace it with a picture of the same size and name. The pictures are saved with 256 colours, which looks the same here and takes less than half the space: do the same with a new one, with a free tool such as pngquant or tinypng.com (but not for `favicon-32.png`, which is tiny anyway).
 
 
 ## Recipes
@@ -263,6 +362,8 @@ window.AICompass.addTranslations({
 ```
 
 </details>
+
+**Search engines.** In `index.html`, add the lesson to `"syllabusSections"` in the JSON-LD at the end of `<head>` (its number, its English title and description, and its reading time, `"PT3M"` for 3 minutes), and add its minutes to `"courseWorkload"`. This is the only list of lessons that doesn't count itself: search engines read it without running any script.
 
 That's all: the cards, the progress panel, the hero number, the section subtitle, the Ctrl+K command and the certificate count the lessons by themselves. (The subtitle says "Six short lessons" only while there are exactly six; with seven it says "7 short lessons". To spell the number out, add `"lessons.subtitle.7"` next to `"lessons.subtitle.6"`, in both languages.)
 
@@ -399,6 +500,24 @@ Don't skip a number: the bot stops counting at the first missing one. Only add f
 
 **Check:** ask the bot "tell me a fun fact" (or press its "Fun fact" button) until the new one comes up. It shows every fact once, in a random order, before it repeats one. Do it again in Russian ("расскажи интересный факт").
 
+### Help Compass Bot find an answer
+
+Compass Bot answers in this order:
+
+1. **A prepared answer** when the message clearly matches an intent (the word lists in `brain.intents`, `js/content/assistant.js`): greetings, jokes, "what is AI?"... Under it, "On the site" chips show where the site tells more (`brain.replySources`).
+2. **An answer from the site**: otherwise it looks the question up with `A.search` in the lessons, the glossary and the timeline, and shows 1–3 sentences of the best text with its source. "When...?" questions look in the timeline first.
+3. **"Not sure"**: when it is not sure, it says so and shows up to 3 places to look.
+
+It is sure when the best text holds at least 70 % of the question's words (`SITE_CONFIDENT` in `js/assistant.js`), has a search score of at least 2.5 (`SITE_MIN_SCORE`) and is about the question: its title holds one of the words, or the question has 2 or more words. Without that last rule, "what is photosynthesis?" was answered with the glossary's "Prompt" (whose example asks about photosynthesis). The numbers were tuned on 129 questions with a known right source and 40 questions the site cannot answer (pizza, the weather...), looked up without the prepared answers: the search step gives 107 right answers and 6 wrong ones (13 without the title rule), and says "not sure" 11 times although its best text was right.
+
+When the bot misses a question:
+
+- **People use another word for the same thing:** add it to a line of `synonyms` in `js/content/search.js` (both languages), like `["deepfake", "deep fake", "дипфейк"]`.
+- **A word only shapes the question** ("who *invented*...", "how does it *work*"): add it to `askWords` in `js/content/assistant.js`.
+- **A prepared answer fits better:** add the words to its intent in `brain.intents`. A prepared answer wins over the site, so keep its words precise ("deep learning" is not in the neural network intent: the glossary explains it better).
+
+**Check:** ask the question in both languages, with a typo, and once with "tell me more" after it. The source chip under the answer must open the right text.
+
 ### Add a command to the Ctrl+K palette
 
 Each feature adds its own commands in its last section. A command has an `id` (unique), a `group` (the text key of its heading in the palette), an `icon`, a `title` (a function, so it follows the language), `keywords` for the search (both languages) and `run`.
@@ -433,6 +552,79 @@ Running a command first closes the windows in the way (the palette itself, the l
 
 **Check:** press Ctrl+K, type "random" (in Russian: "случайный"), press Enter: a random term opens and gets the focus.
 
+### Add an AI Lab experiment
+
+An experiment is three files of its own and a few lines in `js/content/lab.js`. The lab loads an experiment's files the first time it opens, so `index.html` doesn't list them. Before you start, read the header of `js/lab.js` (what the lab gives an experiment and what it expects back) and "The kit at a glance" at the top of `js/lab/kit.js`.
+
+**1. Copy the sample.** "Guess the line" is a small, complete experiment made of kit parts. Copy its three files, named with your experiment's id (small letters, digits and "-"), for example `spam`:
+
+| Copy | to |
+| --- | --- |
+| `js/lab/sample.js` | `js/lab/spam.js` |
+| `css/lab/sample.css` | `css/lab/spam.css` |
+| `js/content/lab/sample.js` | `js/content/lab/spam.js` |
+
+In the copies, replace `sample` with `spam` (in `A.lab.define("spam", ...)` and in every `lab.sample.` text key), and the class prefix `smp-` with a short prefix of your own. Then turn the copy into your experiment, step by step. Keep what the lab relies on: `create(stage, ctx)` builds everything inside `stage` and returns `{ pause, resume, language, theme, destroy }`, and `destroy()` stops every loop and listener.
+
+**2. Its name in the picker.** The picker shows an experiment's title, a one-line hook and its big idea before its files load, so these three texts go in `js/content/lab.js`, section 3, instead of the experiment's own text file. Move them there, in both parts:
+
+```js
+        "lab.spam.title": "Spam filter",
+        "lab.spam.hook": "Mark a few messages as spam, and watch a filter learn which words give them away.",
+        "lab.spam.idea": "Probability",
+```
+
+```js
+        "lab.spam.title": "Спам-фильтр",
+        "lab.spam.hook": "Отметь несколько сообщений как спам и посмотри, как фильтр учится узнавать их по словам.",
+        "lab.spam.idea": "Вероятность",
+```
+
+(Mind the commas: every line of a part ends with one, except the last.)
+
+**3. Its icon.** In section 4, add a `<symbol>` to the sprite. Draw it like the others (24 × 24, lines of 1.75 px in `currentColor`), with a comment that says what it shows:
+
+```js
+        // An envelope
+        '<symbol id="lab-icon-spam" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<rect x="3" y="5" width="18" height="14" rx="2"/>' +
+                '<path d="M3.5 6.5l8.5 6.5 8.5-6.5"/>' +
+            '</g>' +
+        '</symbol>' +
+```
+
+(The pieces are joined with `+`: the last `'</symbol>'` of the sprite has none.)
+
+**4. Its place in the lab.** In section 5, add one entry to the catalogue, at its place on the learning path (first steps, networks, language, vision, learning by reward, evolution, ethics). Mind the commas between the entries:
+
+```js
+    {
+        id: "spam",
+        icon: "lab-icon-spam",
+        titleKey: "lab.spam.title",
+        hookKey: "lab.spam.hook",
+        ideaKey: "lab.spam.idea",
+        level: 1,
+        emoji: "📨",
+        keywords: "lab spam filter email messages probability лаборатория спам фильтр почта сообщения вероятность"
+    },
+```
+
+The picker, the numbers of experiments on the page, the Ctrl+K command and the link `#lab/spam` all come from this entry.
+
+**5. The first paint.** The page counts the experiments by itself, but before the scripts run it shows what `index.html` says. There, add one to the hero's number of experiments (`data-count` and the number after it) and to the number in the lab's subtitle.
+
+**6. Its height while it loads (optional).** Until an experiment's files arrive, the lab keeps a box of about its height, so the page below doesn't jump; without your numbers, it keeps a default height. Open your experiment and run this in the console (F12):
+
+```js
+[document.querySelector('[data-feature="lab"]').offsetHeight, document.querySelector(".lab-stage").offsetHeight]
+```
+
+In `css/lab.css`, section 1, copy the two rules of another experiment (`[data-lab-last="maze"]` and `[data-loading="maze"]`), with your id and these two numbers (the card, then the stage), rounded up. Section 8 has the same rules for smaller screens: measure again at those widths (the device toolbar, Ctrl+Shift+M) and add yours there too.
+
+**Check:** go to `http://localhost:8000/#lab/spam`: your experiment opens, with its icon and title above it. Close it: its card is in the grid, with the hook and the idea, and the subtitle counts one more experiment. Ctrl+K finds it by its title. While it is open, switch the language, the theme and calm mode: it follows. Open another experiment and come back: nothing appears twice, and the console has no red errors.
+
 
 ## House rules
 
@@ -447,6 +639,8 @@ These keep the code easy to read, as if one person wrote it all.
 - **Use the toolkit.** If `js/core.js` already does it (saving, plurals, pop-up windows, scrolling, random numbers...), use it instead of writing it again.
 - **Saved data.** Use `A.storage` (it adds the `aic:` prefix). Don't rename a saved key: people would lose their progress. If you really must, move the value with `A.storage.migrate(oldKey, newKey)`.
 - **Respect calm mode.** Before an animation, check `A.motion.ok()`.
+- **Font sizes in rem** (px ÷ 16: `0.875rem` is 14 px), so the text size setting reaches them. Only a letter or an emoji in a box of fixed size keeps px, with the comment `/* px: a glyph in a tile of fixed size */`.
+- **A new keyboard shortcut** goes into the list at the end of `js/content/settings.js`, so the `?` window shows it.
 - **No libraries, no build step, no `import` / `export`.** Every script is a plain `<script defer>` in `index.html`.
 
 
@@ -458,10 +652,13 @@ Open the site on a local server and go through this list for the parts you chang
 - [ ] **Both themes.** Switch light / dark. Everything is readable; nothing disappears.
 - [ ] **A phone.** In the browser's developer tools (F12), turn on the device toolbar (Ctrl+Shift+M) and pick a width of 360 px. Nothing sticks out to the side, and the menu works.
 - [ ] **Keyboard only.** Put the mouse away. Tab reaches every button and you can see where the focus is; Enter and Space work; Esc closes the lesson reader, Compass Bot and the palette; Ctrl+K opens the palette.
+- [ ] **Bigger text.** Open Settings (the gear in the menu) and choose the biggest text size. At 360 px, nothing sticks out to the side and no word is cut.
 - [ ] **Calm mode.** Press Ctrl+K and run "Calm mode: pause animations". Nothing big moves any more, and everything still works. Run it again to turn the animations back on.
 - [ ] **The console.** Press F12, open Console and reload: no red errors.
 - [ ] **Links into the page.** `#lesson-4`, `#term-bias` and `#quiz` at the end of the address open the right place.
 - [ ] **Saved progress.** Finish a lesson, change the language and the theme, reload: everything is remembered.
+- [ ] **Offline** (if you added a file to `index.html`). Load the page, then in F12 → Network tick "Offline" and reload: everything still works.
+- [ ] **Printing** (if you changed a layout). Ctrl+P: the preview is black on white, and an open lesson prints as a handout.
 
 
 ## Credits

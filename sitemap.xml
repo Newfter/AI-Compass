@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The pages of AI Compass for search engines. The site is one page in two languages:
+     ?lang=en and ?lang=ru open it in English or Russian, the plain address in the
+     visitor's own language. Each entry names all three versions (hreflang). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/?lang=en"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/?lang=ru"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/?lang=en</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/?lang=en"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/?lang=ru"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/?lang=ru</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/?lang=en"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/?lang=ru"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/"/>
+    </url>
+</urlset>
