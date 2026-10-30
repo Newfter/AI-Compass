@@ -1632,6 +1632,14 @@
                 armed = null;
             }
 
+            // TODO(kit): kit.iconButton writes a label function's text as HTML (so a class name in
+            // it comes escaped: "Dad&#39;s car") and puts that same text into the tooltip, where
+            // the "&#39;" would show. The tooltip gets the button's own text instead, which reads
+            // "Dad's car" again. Called after every new label.
+            function plainTitle(button) {
+                button.element.title = button.element.textContent.trim();
+            }
+
             // A picture in the gallery: press it twice to delete it (or press Delete once)
             function thumbButton(example, label, onDelete) {
                 const button = el("button", "dw-thumb", { type: "button", "aria-label": label, title: label });
@@ -2119,10 +2127,12 @@
                     confirmButton(row.remove.element, {
                         onArm: function () {
                             row.remove.setLabel(function () { return A.escapeHTML(A.plural("lab.draw.deleteClassConfirm", countOf(c), { name: nameOf(c) })); });
+                            plainTitle(row.remove);
                             ctx.announce(A.plural("lab.draw.deleteClassConfirm", countOf(c), { name: nameOf(c) }));
                         },
                         onDisarm: function () {
                             row.remove.setLabel(function () { return A.escapeHTML(t("lab.draw.deleteClass", { name: nameOf(c) })); });
+                            plainTitle(row.remove);
                         },
                         onConfirm: function () { deleteClass(c); }
                     });
@@ -2151,6 +2161,8 @@
                 });
                 row.name.placeholder = defaultName(c);
                 row.name.setAttribute("aria-label", t("lab.draw.nameLabel", { n: c + 1 }));
+                kit.relabel(row.remove.element);      // its name says the class's name, which may have changed
+                plainTitle(row.remove);
                 row.count.textContent = t("lab.draw.count", { n: examples.length, max: MAX_PER_CLASS });
                 // The average drawing: every pixel's mean over the class's examples
                 row.average.textContent = "";
