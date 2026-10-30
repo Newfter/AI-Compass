@@ -2318,3 +2318,13 @@ html.fx-motion-off .qz-best.is-new {
 html.fx-motion-off .qz-auto {
     display: none;
 }
+
+/* No lift on hover. With the transitions off, a button lifted from under a pointer
+   that rests on its bottom edge drops back at once, lifts again, and flickers.
+   (The glossary and the timeline do the same for their cards.) */
+html.fx-motion-off .qz-mode:hover,
+html.fx-motion-off .qz-lesson:hover,
+html.fx-motion-off .qz-option:not(.is-locked):hover,
+html.fx-motion-off .qz-card .btn:hover {
+    transform: none;
+}
