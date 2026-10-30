@@ -1253,9 +1253,18 @@
                 return nearest(places, event.clientX - box.left, event.clientY - box.top, Math.max(DRAW.hit, layout ? layout.radius * 3 : 0));
             }
 
-            // Where the keyboard starts: the middle of the Blue row
+            // Where the keyboard starts: in the Blue row, the twin pair nearest the middle that
+            // is treated differently (the lesson at once), or the middle when no pair is
             function firstForKeys() {
-                return walk[0][Math.floor(walk[0].length / 2)];
+                const row = walk[0];
+                const shown = decisionsShown(thresholds());
+                const middle = Math.floor(row.length / 2);
+                let best = -1;
+                row.forEach(function (index, place) {
+                    if (shown[index] === shown[twinOf(index)]) return;
+                    if (best === -1 || Math.abs(place - middle) < Math.abs(best - middle)) best = place;
+                });
+                return row[best === -1 ? middle : best];
             }
 
             // Shows the twin pair of an applicant (-1: none). by: "pointer", "touch" or "key".
