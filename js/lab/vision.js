@@ -1715,8 +1715,11 @@
                 stepShown = state.relu ? relu(stepMap) : stepMap;
                 clampStep();
                 const L = stepLayout(stepView.width || 320);
-                if (Math.abs(stepView.box.clientHeight - L.height) > 1) {
-                    stepView.box.style.height = L.height + "px";      // the canvas follows (onResize)
+                // the box's own border comes on top (the canvas fills the inside, and follows: onResize);
+                // a hidden box (0 wide) is measured when it shows
+                const box = stepView.box;
+                if (box.clientWidth > 0 && box.clientHeight !== L.height) {
+                    box.style.height = L.height + box.offsetHeight - box.clientHeight + "px";
                 }
                 if (stepView.width) {
                     drawStep(stepView, {
