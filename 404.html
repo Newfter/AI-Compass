@@ -36,7 +36,13 @@
             function saved(name) {
                 try { return JSON.parse(localStorage.getItem("aic:" + name)); } catch (error) { return null; }
             }
-            if (saved("theme") === "light") {
+            // The theme: the saved one, or the device's when the Settings say "Like my device"
+            var theme = saved("theme");
+            var settings = saved("settings");
+            if (settings && settings.v === 1 && settings.followSystem === true && window.matchMedia) {
+                theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+            }
+            if (theme === "light") {
                 root.setAttribute("data-theme", "light");
                 document.querySelector('meta[name="theme-color"]').setAttribute("content", "#f4f6fd");
             }
