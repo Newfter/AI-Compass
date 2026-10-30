@@ -439,7 +439,9 @@
     line-height: 1.2;
 }
 
+/* A long idea wraps between its words on a narrow phone with big text */
 .lab-head-idea {
+    max-width: 100%;
     padding: 3px 10px;
     border: 1px solid rgba(var(--accent-2-rgb), 0.35);
     border-radius: 999px;
@@ -450,7 +452,6 @@
     letter-spacing: 1.6px;
     line-height: 1.4;
     text-transform: uppercase;
-    white-space: nowrap;
 }
 
 .lab-head-nav {
