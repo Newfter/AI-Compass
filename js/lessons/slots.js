@@ -7,6 +7,7 @@
    play the same machines next to the learner, one pull for each of
    theirs: it tries every machine once, then explores (a random
    machine) 10% of the time and otherwise picks the best estimate.
+   Estimates are shown as percentages, like the chances revealed at the end.
    Loaded by js/lessons.js (see "A MINI-LAB IN ITS OWN FILE" there).
    Texts: "lessons.w8.*" (js/content/lessons-deep.js). Styles:
    css/lessons-labs.css ("slot-"). Sections:
@@ -112,10 +113,11 @@
         const machines = Array.prototype.slice.call(lab.querySelectorAll(".slot-machine"));
 
         // ---------- 4. Updating it ----------
-        // "2 ÷ 3 = 0.67", or "not tried yet"
+        // "2 ÷ 3 = 67%", or "not tried yet". A percentage, like the hidden chances
+        // shown at the end, so the learner can compare the two at once.
         function estimateText(player, m) {
             if (!player.pulls[m]) return api.text("untried");
-            const value = A.format.number(player.stars[m] / player.pulls[m], 2);
+            const value = A.format.percent(player.stars[m] / player.pulls[m]);
             return api.text("estimateMath", { wins: player.stars[m], pulls: player.pulls[m], value: value });
         }
 
