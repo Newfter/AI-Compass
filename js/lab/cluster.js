@@ -1201,8 +1201,11 @@
                     const at = job.k - K_RANGE.min;
                     if (at >= elbowValues.length || result.inertia < elbowValues[at]) elbowValues[at] = result.inertia;
                 } while (elbowJobs.length && performance.now() - started < ELBOW_BUDGET);
-                chart.draw();
-                if (!elbowJobs.length) checkChallenges();
+                // Once the chart is complete, everything is written again: a run that ended
+                // before it was ready needs its lesson checked against the best inertia
+                // (a bad result, challenge 2)
+                if (elbowJobs.length) chart.draw();
+                else render();
             }
 
             // ----- The board: clicks, taps and the keyboard -----
@@ -1381,7 +1384,10 @@
                 const preset = presetOf(exactPreset());
                 if (!preset || state !== "done") return null;
                 if (k !== preset.lessonK) return "lab.cluster.lesson.otherK";
-                if (isBad() && ROUND_PRESETS.indexOf(preset.id) !== -1) return "lab.cluster.lesson.bad";
+                if (ROUND_PRESETS.indexOf(preset.id) !== -1) {
+                    if (elbowJobs.length) return null;       // good or bad? The elbow chart isn't ready to tell yet
+                    if (isBad()) return "lab.cluster.lesson.bad";
+                }
                 return "lab.cluster.lesson." + preset.id;
             }
 
