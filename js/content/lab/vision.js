@@ -136,7 +136,7 @@ window.AICompass.addTranslations({
         "lab.vision.aboutHorizontal": "Looks for edges where the picture gets brighter downwards. The opposite edges give negative numbers, and ReLU turns them into 0.",
         "lab.vision.aboutRising": "Looks for slanted edges like /, where the picture gets brighter towards the bottom right.",
         "lab.vision.aboutFalling": "Looks for slanted edges like \\, where the picture gets brighter towards the bottom left.",
-        "lab.vision.aboutCorners": "Looks for ┌ corners: a vertical edge that runs down from here and a horizontal edge that runs to the right. The ends of thick lines have corners too, so it answers there as well.",
+        "lab.vision.aboutCorners": "Looks for ┌ corners: a vertical edge that runs down from here and a horizontal edge that runs to the right. It also lights up along slanted edges like /: there the picture gets brighter to the right and downwards at every point, like a staircase of tiny ┌ corners. The ends of thick lines have corners too.",
         "lab.vision.aboutEnds": "Looks for places where an edge stops: the ends of lines, and the corners of shapes, where one edge stops and another begins.",
         "lab.vision.aboutCurves": "Looks for edges that bend away from a straight line. It answers at corners too (they are the sharpest bends) and a little on slanted lines: filters set by hand are clumsy.",
         "lab.vision.aboutLayer2": "A layer-2 filter has 3\u00a0×\u00a03\u00a0×\u00a04 numbers: one 3\u00a0×\u00a03 grid for each map of layer 1. It sees only about 10\u00a0×\u00a010 pixels of the picture, so it finds small bends, not whole circles. Deeper layers see more.",
@@ -169,8 +169,8 @@ window.AICompass.addTranslations({
         "lab.vision.ch2Why": "When the filter's numbers add up to more than 1, every flat area comes out brighter: 9 pixels of 100, times numbers that add up to 1.5, give 150. Above 255 the screen can only show white, but the map keeps the real number.",
         "lab.vision.ch3": "<strong>Blur 3 times.</strong> Pick “Letters AI” and a blur filter, then press “Apply again” 3 times in a row.",
         "lab.vision.ch3Why": "Each blur mixes every pixel with its neighbours and throws a little detail away. Sharpen can make the edges crisper again, but it can't bring back what was lost: those numbers are gone.",
-        "lab.vision.ch4": "<strong>The roof.</strong> In “What a CNN sees”, with the House picture, find the layer-1 map that lights up the roof, and click it.",
-        "lab.vision.ch4Why": "The roof's slopes are slanted edges, so the two diagonal filters answer there, each on its own side of the roof. Deeper layers put maps like these together: two slopes that meet at the top make a roof."
+        "lab.vision.ch4": "<strong>The roof.</strong> In “What a CNN sees”, with the House picture, find a layer-1 map where a slope of the roof shines brightest, and click it.",
+        "lab.vision.ch4Why": "The roof's slopes are slanted edges, so the two diagonal filters answer there most strongly, each on its own side of the roof. “Horizontal edges” sees both slopes too, but more weakly: a slanted edge is only partly horizontal. Deeper layers put maps like these together: two slopes that meet at the top make a roof."
     },
     ru: {
         // The lab catalogue
@@ -300,7 +300,7 @@ window.AICompass.addTranslations({
         "lab.vision.aboutHorizontal": "Ищет края, где картинка становится светлее вниз. Обратные края дают отрицательные числа, и ReLU превращает их в нули.",
         "lab.vision.aboutRising": "Ищет наклонные края вроде /, где картинка светлеет вниз и вправо.",
         "lab.vision.aboutFalling": "Ищет наклонные края вроде \\, где картинка светлеет вниз и влево.",
-        "lab.vision.aboutCorners": "Ищет углы ┌: вертикальный край уходит отсюда вниз, а горизонтальный — вправо. У концов толстых линий тоже есть углы, поэтому он отвечает и там.",
+        "lab.vision.aboutCorners": "Ищет углы ┌: вертикальный край уходит отсюда вниз, а горизонтальный — вправо. Светится и вдоль наклонных краёв вроде /: там картинка в каждой точке светлеет и вправо, и вниз, как лесенка из крошечных углов ┌. У концов толстых линий тоже есть углы.",
         "lab.vision.aboutEnds": "Ищет места, где край обрывается: концы линий и углы фигур, где один край кончается, а другой начинается.",
         "lab.vision.aboutCurves": "Ищет края, которые сворачивают с прямой. Отвечает и на углах (это самые резкие изгибы), и немного на наклонных линиях: фильтры, заданные вручную, неуклюжие.",
         "lab.vision.aboutLayer2": "У фильтра второго слоя 3\u00a0×\u00a03\u00a0×\u00a04 числа: своя сетка 3\u00a0×\u00a03 для каждой карты первого слоя. Он видит всего около 10\u00a0×\u00a010 пикселей картинки, поэтому находит маленькие изгибы, а не целые круги. Более глубокие слои видят больше.",
@@ -333,8 +333,8 @@ window.AICompass.addTranslations({
         "lab.vision.ch2Why": "Если числа фильтра в сумме больше 1, каждый ровный участок становится светлее: 9 пикселей по 100, умноженные на числа с суммой 1,5, дают 150. Выше 255 экран может показать только белый, но в карте остаётся настоящее число.",
         "lab.vision.ch3": "<strong>Размой 3 раза.</strong> Выбери «Буквы AI» и фильтр размытия, а потом нажми «Применить ещё раз» 3 раза подряд.",
         "lab.vision.ch3Why": "Каждое размытие смешивает пиксель с соседями и выбрасывает немного деталей. Резкость сделает края чётче, но потерянное не вернёт: этих чисел больше нет.",
-        "lab.vision.ch4": "<strong>Крыша.</strong> В режиме «Что видит нейросеть» с картинкой «Дом» найди карту первого слоя, на которой светится крыша, и нажми на неё.",
-        "lab.vision.ch4Why": "Скаты крыши — наклонные края, поэтому на них отвечают два диагональных фильтра, каждый на своём скате. Более глубокие слои складывают такие карты вместе: два ската, которые сходятся наверху, — это крыша."
+        "lab.vision.ch4": "<strong>Крыша.</strong> В режиме «Что видит нейросеть» с картинкой «Дом» найди карту первого слоя, на которой ярче всего светится скат крыши, и нажми на неё.",
+        "lab.vision.ch4Why": "Скаты крыши — наклонные края, поэтому сильнее всего на них отвечают два диагональных фильтра, каждый на своём скате. «Горизонтальные края» тоже видят оба ската, но слабее: наклонный край горизонтален лишь отчасти. Более глубокие слои складывают такие карты вместе: два ската, которые сходятся наверху, — это крыша."
     }
 });
 
