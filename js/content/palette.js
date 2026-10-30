@@ -24,7 +24,11 @@ window.AICompass.addTranslations({
         "palette.hintMove": "to navigate",
         "palette.hintOpen": "to open",
         "palette.hintClose": "to close",
-        "palette.count": "{n} result|{n} results"
+        "palette.count": "{n} result|{n} results",
+        "palette.siteGroup": "Found on the site",
+        "palette.shortHint": "Type one more letter to search the lessons, glossary and history too.",
+        "palette.onlySite": "No commands match “{query}”, but the site’s texts do.",
+        "palette.emptyAsk": "Nothing on the site either. Try other words, or ask Compass Bot below."
     },
     ru: {
         "palette.title": "Палитра команд",
@@ -44,6 +48,10 @@ window.AICompass.addTranslations({
         "palette.hintMove": "выбрать",
         "palette.hintOpen": "открыть",
         "palette.hintClose": "закрыть",
-        "palette.count": "{n} результат|{n} результата|{n} результатов"
+        "palette.count": "{n} результат|{n} результата|{n} результатов",
+        "palette.siteGroup": "Найдено на сайте",
+        "palette.shortHint": "Введи ещё одну букву, чтобы искать и по урокам, словарю и истории.",
+        "palette.onlySite": "Команд для «{query}» нет, зато нашлось в текстах сайта.",
+        "palette.emptyAsk": "На сайте тоже ничего. Попробуй другие слова или спроси Compass Bot ниже."
     }
 });

@@ -11,13 +11,19 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
 
     <!-- Before the page is drawn, this script applies the saved settings, so nothing flashes:
-         - the theme (data-theme), and the colour of the phone's address bar to match;
+         - the theme (data-theme), and the colour of the phone's address bar to match; with
+           "Like my device" chosen in the settings, the device's light or dark mode;
          - calm mode: the classes fx-calm and fx-motion-off (fx-motion-off also when the device
            asks for reduced motion), so the hero doesn't start its entrance animation;
+         - the settings of js/settings.js: the text size (--text-scale) and the classes
+           st-large-text, st-relaxed, st-font, st-underline, st-contrast and st-solid
+           (css/settings.css),
+           and the easy-to-read font's stylesheet when that setting is on;
          - the class "js": the page runs JavaScript (the CSS can style the page without it).
-         core.js sets the same things again, so nothing depends on this script running first.
-         The settings are where A.storage keeps them: "aic:" is PREFIX in js/core.js, and each
-         value is saved as JSON ("dark" with its quotes). Keep the names the same as there. -->
+         core.js and js/settings.js set the same things again, so nothing depends on this
+         script running first. The settings are where A.storage keeps them: "aic:" is PREFIX
+         in js/core.js, and each value is saved as JSON ("dark" with its quotes). Keep the
+         names and the allowed values the same as there. -->
     <script>
         (function () {
             var root = document.documentElement;
@@ -31,7 +37,14 @@
 
             root.classList.add("js");
 
+            // js/settings.js keeps its settings in one object: { v: 1, textSize: 1.25, ... }
+            var settings = saved("settings");
+            if (!settings || settings.v !== 1) settings = {};
+
             var theme = saved("theme");
+            if (settings.followSystem === true) {
+                theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+            }
             if (theme === "light" || theme === "dark") {
                 root.setAttribute("data-theme", theme);
                 var themeColor = document.querySelector('meta[name="theme-color"]');
@@ -43,6 +56,28 @@
             calm = calm === true;
             root.classList.toggle("fx-calm", calm);
             root.classList.toggle("fx-motion-off", calm || window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+            // Text size: 1 is the normal size, so only the bigger steps are written
+            var largeText = settings.textSize === 1.125 || settings.textSize === 1.25 || settings.textSize === 1.5;
+            if (largeText) root.style.setProperty("--text-scale", String(settings.textSize));
+            root.classList.toggle("st-large-text", largeText);
+            root.classList.toggle("st-relaxed", settings.lineSpacing === "relaxed");
+            root.classList.toggle("st-font", settings.easyFont === true);
+            root.classList.toggle("st-underline", settings.underlineLinks === true);
+            root.classList.toggle("st-contrast", settings.contrast === true);
+            root.classList.toggle("st-solid", settings.reduceTransparency === true);
+
+            // The easy-to-read font starts loading now, so it can be there when the page is
+            // first drawn. js/settings.js uses this link (the same address is FONT_URL there).
+            if (settings.easyFont === true) {
+                var font = document.createElement("link");
+                font.id = "st-font-css";
+                font.rel = "stylesheet";
+                font.href = "https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Andika:wght@400;700&display=swap";
+                font.onload = function () { font.setAttribute("data-state", "ready"); };
+                font.onerror = function () { font.setAttribute("data-state", "failed"); };
+                document.head.appendChild(font);
+            }
         })();
     </script>
 
@@ -65,6 +100,8 @@
     <link rel="stylesheet" href="./css/timeline.css">
     <link rel="stylesheet" href="./css/assistant.css">
     <link rel="stylesheet" href="./css/palette.css">
+    <link rel="stylesheet" href="./css/journey.css">
+    <link rel="stylesheet" href="./css/settings.css">
 
     <!-- core.js loads first: the toolkit every other script uses (texts, theme, settings, pop-up windows...) -->
     <script src="./js/core.js" defer></script>
@@ -78,8 +115,11 @@
     <script src="./js/content/quiz.js" defer></script>
     <script src="./js/content/glossary.js" defer></script>
     <script src="./js/content/timeline.js" defer></script>
+    <script src="./js/content/search.js" defer></script>
     <script src="./js/content/assistant.js" defer></script>
     <script src="./js/content/palette.js" defer></script>
+    <script src="./js/content/journey.js" defer></script>
+    <script src="./js/content/settings.js" defer></script>
 
     <!-- The features -->
     <script src="./js/effects.js" defer></script>
@@ -89,8 +129,11 @@
     <script src="./js/quiz.js" defer></script>
     <script src="./js/glossary.js" defer></script>
     <script src="./js/timeline.js" defer></script>
+    <script src="./js/search.js" defer></script>
     <script src="./js/assistant.js" defer></script>
     <script src="./js/palette.js" defer></script>
+    <script src="./js/journey.js" defer></script>
+    <script src="./js/settings.js" defer></script>
 </head>
 
 <body>
@@ -117,6 +160,20 @@
             <a href="#glossary" data-i18n="nav.glossary">Glossary</a>
             <a href="#timeline" data-i18n="nav.timeline">History</a>
             <a href="#about" data-i18n="nav.about">About</a>
+
+            <!-- On narrow phones the theme and language buttons are here, under the links:
+                 the menu bar has no room for them (style.css, 11. RESPONSIVE) -->
+            <div class="nav-quick">
+                <button class="nav-quick-button" type="button" data-theme-toggle>
+                    <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg>
+                    <span data-i18n="core.themeQuick">Light / dark theme</span>
+                </button>
+                <button class="nav-quick-button" type="button" data-language-toggle>
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.4 2.6 3.6 5.6 3.6 9s-1.2 6.4-3.6 9c-2.4-2.6-3.6-5.6-3.6-9S9.6 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                    <span lang="ru" data-i18n="core.langQuick" data-i18n-attr="lang:core.langQuickCode">Русский</span>
+                </button>
+            </div>
         </nav>
 
         <div class="nav-actions">
@@ -126,7 +183,18 @@
                 <kbd class="palette-kbd">Ctrl K</kbd>
             </button>
 
-            <button class="icon-button" id="theme-toggle" type="button"
+            <!-- "My Compass" (js/journey.js) and Settings (js/settings.js) show these two buttons once they are ready -->
+            <button class="icon-button journey-toggle" id="journey-toggle" type="button" hidden
+                    data-i18n-attr="aria-label:core.journeyLabel,title:core.journeyLabel">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor"/></svg>
+            </button>
+
+            <button class="icon-button settings-toggle" id="settings-toggle" type="button" hidden
+                    data-i18n-attr="aria-label:core.settingsLabel,title:core.settingsLabel">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9.56 4.49L9.84 1.83A10.4 10.4 0 0 1 14.16 1.83L14.44 4.49A7.9 7.9 0 0 1 17.29 6.13L19.73 5.04A10.4 10.4 0 0 1 21.89 8.79L19.73 10.36A7.9 7.9 0 0 1 19.73 13.64L21.89 15.21A10.4 10.4 0 0 1 19.73 18.96L17.29 17.87A7.9 7.9 0 0 1 14.44 19.51L14.16 22.17A10.4 10.4 0 0 1 9.84 22.17L9.56 19.51A7.9 7.9 0 0 1 6.71 17.87L4.27 18.96A10.4 10.4 0 0 1 2.11 15.21L4.27 13.64A7.9 7.9 0 0 1 4.27 10.36L2.11 8.79A10.4 10.4 0 0 1 4.27 5.04L6.71 6.13A7.9 7.9 0 0 1 9.56 4.49Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+            </button>
+
+            <button class="icon-button theme-button" id="theme-toggle" type="button"
                     data-i18n-attr="aria-label:core.themeLabel,title:core.themeLabel">
                 <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>
                 <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg>
@@ -176,7 +244,7 @@
                     <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">interactive lessons</span>
                 </li>
                 <li class="stat">
-                    <strong data-count="2" data-count-name="labExperimentCount">2</strong>
+                    <strong data-count="5" data-count-name="labExperimentCount">5</strong>
                     <span data-i18n="hero.statDemos" data-i18n-plural="labExperimentCount">live AI experiments</span>
                 </li>
                 <li class="stat">
@@ -213,7 +281,7 @@
             <div class="section-head" data-reveal>
                 <p class="section-label" data-i18n="lab.label">HANDS-ON EXPERIMENTS</p>
                 <h2 data-i18n="lab.title">The AI Lab</h2>
-                <p class="section-sub" data-i18n="lab.subtitle">Real machine learning, running right here in your browser. Teach a model, test it, and watch it think.</p>
+                <p class="section-sub" data-i18n="lab.subtitle" data-i18n-plural="labExperimentCount">5 real machine-learning experiments, running right here in your browser. Teach a model, test it, and watch it think.</p>
             </div>
             <div data-feature="lab"></div>
         </div>
@@ -252,6 +320,13 @@
                 <p class="section-sub" data-i18n="timeline.subtitle">From a single question in 1950 to the AI in your pocket today.</p>
             </div>
             <div data-feature="timeline"></div>
+        </div>
+    </section>
+
+    <!-- ===== FOR TEACHERS (js/teachers.js shows it once it is ready) ===== -->
+    <section class="section" id="teachers" hidden>
+        <div class="container">
+            <div data-feature="teachers"></div>
         </div>
     </section>
 
@@ -310,9 +385,12 @@
     </div>
 </footer>
 
-<!-- Floating AI assistant (js/assistant.js) and command palette (js/palette.js) -->
+<!-- Floating AI assistant (js/assistant.js), command palette (js/palette.js),
+     "My Compass" (js/journey.js) and Settings (js/settings.js) -->
 <div data-feature="assistant"></div>
 <div data-feature="palette"></div>
+<div data-feature="journey"></div>
+<div data-feature="settings"></div>
 
 <!-- Small pop-up messages, e.g. "Lesson completed!" (AICompass.toast in js/core.js) -->
 <div class="toast-stack" id="toast-stack" aria-live="polite" data-overlay-keep></div>
