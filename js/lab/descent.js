@@ -1298,6 +1298,7 @@
             keys.append(legend.element, marks);
             const warning = kit.hint({ tone: "warn" });
             const tip = kit.hint({ tone: "tip" });
+            let warnedBall = -1;            // the ball the warning is about (-1: no warning)
             warning.hide();
             tip.hide();
             ui.main.append(keys, warning.element, tip.element);
@@ -1433,7 +1434,7 @@
                 loop.stop();
                 racers = configs.map(function (config, index) { return newRacer(index, config, start, land); });
                 bursts = [];
-                warning.hide();
+                warnAbout(-1);
                 tip.hide();
                 setState("ready");
                 chart.set({
@@ -1480,12 +1481,24 @@
                 ctx.announce(messages.join(" "));
                 news.forEach(function (racer) {
                     if (racer.state !== "exploded") return;
-                    warning.set("lab.descent.explodedNote", { ball: ballName(racer.index) });
+                    warnAbout(racer.index);
                     if (A.motion.ok()) {
                         const at = exitPoint(racer);
                         bursts.push({ racer: racer, x: at[0], y: at[1], born: performance.now() });
                     }
                 });
+            }
+
+            // The warning names a ball: it is said again when the language changes, and a hidden
+            // warning keeps no old name (TODO(kit): hint values that follow the language, hint.clear())
+            function warnAbout(index) {
+                warnedBall = index;
+                if (index >= 0) {
+                    warning.set("lab.descent.explodedNote", { ball: ballName(index) });
+                    return;
+                }
+                warning.set("");
+                warning.hide();
             }
 
             // ----- What the controls do -----
@@ -1921,9 +1934,10 @@
                     chart.draw();
                     chartSteps = steps;
                 }
+                // every card, also a switched-off one: its hidden words follow the language too
                 cards.forEach(function (card) {
                     const racer = racers[card.index];
-                    if (!racer || !racer.on) return;
+                    if (!racer) return;
                     const g = land.grad(racer.p[0], racer.p[1]);
                     card.stats.steps.set(racer.steps);
                     card.stats.loss.set(racer.losses[racer.losses.length - 1]);
@@ -1999,6 +2013,7 @@
                 language: function () {
                     kit.relabel(stage);
                     cards.forEach(function (card) { card.element.setAttribute("aria-label", ballName(card.index)); });
+                    if (warnedBall >= 0) warnAbout(warnedBall);
                     showLandscape();
                     writeIdea();
                     chartSteps = -1;
