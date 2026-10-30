@@ -217,7 +217,11 @@
     });
 
     if (installButton) {
-        if (showsHelp) installButton.setAttribute("aria-controls", INSTALL_HELP_ID);
+        // On iPhones the button opens the help: it says so, and whether the help is open
+        if (showsHelp) {
+            installButton.setAttribute("aria-controls", INSTALL_HELP_ID);
+            installButton.setAttribute("aria-expanded", "false");
+        }
         installButton.addEventListener("click", function () {
             // On iPhones the button opens and closes the help
             if (showsHelp && installHelp && !installHelp.hidden) showHelp(false);
