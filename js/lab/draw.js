@@ -872,6 +872,16 @@
         return result;
     }
 
+    // The test drawings changed while a run was checking them: the guesses it has made so far
+    // belong to the old list (after a deletion they would be paired with the wrong drawings),
+    // so the check guesses the new list from its start
+    function recheckTests(run, exampleCount) {
+        if (run.phase === "check" && run.next > exampleCount) {
+            run.next = exampleCount;
+            run.guesses = [];
+        }
+    }
+
     // A whole run at once (the tests; and the Step button, for one epoch) -> the epochs' results
     function trainRun(net, examples, settings) {
         const run = newRun(settings);
@@ -1272,7 +1282,7 @@
             squaredDistance: squaredDistance, rankExamples: rankExamples, knnVote: knnVote, knnPredict: knnPredict, leaveOneOut: leaveOneOut,
             createNetwork: createNetwork, countWeights: countWeights, weightCount: weightCount, softmax: softmax, forward: forward,
             netPredict: netPredict, backward: backward, batchLoss: batchLoss, batchGradient: batchGradient, stepAdam: stepAdam,
-            wiggleWith: wiggleWith, wiggle: wiggle, newRun: newRun, trainChunk: trainChunk, trainRun: trainRun,
+            wiggleWith: wiggleWith, wiggle: wiggle, newRun: newRun, trainChunk: trainChunk, recheckTests: recheckTests, trainRun: trainRun,
             saliency: saliency, netAccuracy: netAccuracy,
             encodeData: encodeData, decodeData: decodeData, isSettings: isSettings
         },
@@ -1989,6 +1999,7 @@
 
             function testsChanged() {
                 testRanks = null;
+                if (run) recheckTests(run, train.length);     // training goes on, with the new list
                 saveData();
                 fillTests();
                 clearAllButton.setDisabled(!train.length && !test.length);
