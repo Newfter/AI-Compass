@@ -80,7 +80,8 @@
     const HUGE = 1e6;                        // from here on, numbers are written as powers of ten
 
     // ----- The 3-D view -----
-    const MESH = 48;                         // the surface: 48 x 48 tiles
+    const MESH = 48;                         // the surface: 48 x 48 tiles...
+    const MESH_TURNING = 32;                 // ...and 32 x 32 while it is being dragged round (smooth on slow computers)
     const VIEW_3D = {
         yaw: -32,                            // degrees: how far it is turned around the vertical axis
         tilt: 38,                            // degrees: how steeply the camera looks down (90 = from above)
@@ -96,6 +97,7 @@
     const LIGHT = [-0.45, 0.55, 0.7];        // where the light comes from (across, up the map, up)
     const AMBIENT = 0.42;                    // a tile facing away from the light still gets this much
     const TRAIL_POINTS_3D = 600;             // a long trail is drawn through at most this many points in 3-D
+    const SEAM_PX = 0.6;                     // each tile is drawn this much bigger, so no seam shows between tiles
 
     /* =========================================================
        2. SMALL HELPERS
@@ -943,7 +945,8 @@
        The surface lives in a box: u across the map (−1 ... 1), v up the
        map (−1 ... 1) and w the height. The camera turns around the
        vertical axis ("yaw") and looks down at "tilt" degrees (90 = from
-       straight above, like the map). It is made of MESH x MESH tiles,
+       straight above, like the map). It is made of MESH x MESH tiles
+       (fewer while a drag turns it),
        drawn from the farthest to the nearest, so near tiles cover far
        ones (the "painter's algorithm"). Each tile is lit by one light:
        the more it faces the light, the brighter (Lambert's law).
@@ -990,63 +993,100 @@
         ];
     }
 
-    // The surface's corners and, for each tile, its height (for the colour) and its light
+    // The surface: its corners' places in the box (u, v and the height w), and for each tile its
+    // height (for the colour) and its light. Kept in typed arrays (lists of numbers), because a
+    // picture reads them thousands of times; sx, sy, depth and order are room for each picture.
     const meshCache = {};
 
-    function buildMesh(land) {
-        if (meshCache[land.id]) return meshCache[land.id];
-        const n = MESH;
+    function buildMesh(land, n) {
+        const cacheKey = land.id + "|" + n;
+        if (meshCache[cacheKey]) return meshCache[cacheKey];
         const size = n + 1;
         const d = land.domain;
-        const corners = [];
+        const mesh = {
+            n: n,
+            size: size,
+            u: new Float64Array(size * size),
+            v: new Float64Array(size * size),
+            w: new Float64Array(size * size),
+            height: new Float64Array(n * n),
+            light: new Float64Array(n * n),
+            corners: new Uint16Array(4 * n * n),
+            sx: new Float64Array(size * size),
+            sy: new Float64Array(size * size),
+            depth: new Float64Array(n * n),
+            order: new Uint16Array(n * n)
+        };
         for (let j = 0; j <= n; j++) {
             for (let i = 0; i <= n; i++) {
-                corners.push(boxPoint(land, d.x[0] + ((d.x[1] - d.x[0]) * i) / n, d.y[0] + ((d.y[1] - d.y[0]) * j) / n));
+                const p = boxPoint(land, d.x[0] + ((d.x[1] - d.x[0]) * i) / n, d.y[0] + ((d.y[1] - d.y[0]) * j) / n);
+                mesh.u[j * size + i] = p[0];
+                mesh.v[j * size + i] = p[1];
+                mesh.w[j * size + i] = p[2];
             }
         }
         const lightLength = Math.hypot(LIGHT[0], LIGHT[1], LIGHT[2]);
-        const light = LIGHT.map(function (value) { return value / lightLength; });
-        const tiles = [];
         for (let j = 0; j < n; j++) {
             for (let i = 0; i < n; i++) {
-                const k = j * size + i;
-                const a = corners[k];
-                const b = corners[k + 1];
-                const c = corners[k + size + 1];
-                const e = corners[k + size];
-                // the tile's normal: the cross product of its two diagonals (it points up)
-                const d1 = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-                const d2 = [e[0] - b[0], e[1] - b[1], e[2] - b[2]];
+                // the tile's 4 corners, going round: (i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1)
+                const tile = j * n + i;
+                const a = j * size + i;
+                const b = a + 1;
+                const c = a + size + 1;
+                const e = a + size;
+                mesh.corners.set([a, b, c, e], 4 * tile);
+                // the tile's normal: the cross product of its two diagonals, a→c and b→e (it points up)
+                const d1 = [mesh.u[c] - mesh.u[a], mesh.v[c] - mesh.v[a], mesh.w[c] - mesh.w[a]];
+                const d2 = [mesh.u[e] - mesh.u[b], mesh.v[e] - mesh.v[b], mesh.w[e] - mesh.w[b]];
                 const normal = [d1[1] * d2[2] - d1[2] * d2[1], d1[2] * d2[0] - d1[0] * d2[2], d1[0] * d2[1] - d1[1] * d2[0]];
-                const length = Math.hypot(normal[0], normal[1], normal[2]) || 1;
-                const facing = (normal[0] * light[0] + normal[1] * light[1] + normal[2] * light[2]) / length;
-                tiles.push({
-                    corners: [k, k + 1, k + size + 1, k + size],
-                    height: (a[2] + b[2] + c[2] + e[2]) / (4 * VIEW_3D.height) + 0.5,
-                    light: AMBIENT + (1 - AMBIENT) * Math.max(0, facing)
-                });
+                const length = (Math.hypot(normal[0], normal[1], normal[2]) || 1) * lightLength;
+                const facing = (normal[0] * LIGHT[0] + normal[1] * LIGHT[1] + normal[2] * LIGHT[2]) / length;
+                mesh.height[tile] = (mesh.w[a] + mesh.w[b] + mesh.w[c] + mesh.w[e]) / (4 * VIEW_3D.height) + 0.5;
+                mesh.light[tile] = AMBIENT + (1 - AMBIENT) * Math.max(0, facing);
             }
         }
-        meshCache[land.id] = { corners: corners, tiles: tiles };
-        return meshCache[land.id];
+        meshCache[cacheKey] = mesh;
+        return mesh;
     }
 
-    // The tiles' colours in the current theme: the map's colour for their height, lit
-    function meshColours(mesh) {
-        return mesh.tiles.map(function (tile) {
-            const rgb = kit.scale.rgb(tile.height);
-            return "rgb(" + Math.round(rgb[0] * tile.light) + ", " + Math.round(rgb[1] * tile.light) + ", " + Math.round(rgb[2] * tile.light) + ")";
-        });
+    // A tile's corner on the screen, pushed SEAM_PX away from the tile's middle (see below)
+    function cornerTo(g, x, y, midX, midY, first) {
+        const dx = x - midX;
+        const dy = y - midY;
+        const push = SEAM_PX / (Math.sqrt(dx * dx + dy * dy) || 1);
+        if (first) g.moveTo(x + dx * push, y + dy * push);
+        else g.lineTo(x + dx * push, y + dy * push);
     }
 
-    // The still picture of the 3-D view: the floor, the surface, the dips and the axes' names
-    function buildSurfacePicture(view, land, cam, colours) {
+    // The tiles' colours in a theme ("dark" or "light"): the map's colour for their height, lit.
+    // Kept with the mesh until the theme changes.
+    function meshColours(mesh, theme) {
+        if (mesh.colours && mesh.coloursTheme === theme) return mesh.colours;
+        const colours = [];
+        for (let tile = 0; tile < mesh.height.length; tile++) {
+            const rgb = kit.scale.rgb(mesh.height[tile]);
+            const light = mesh.light[tile];
+            colours.push("rgb(" + Math.round(rgb[0] * light) + ", " + Math.round(rgb[1] * light) + ", " + Math.round(rgb[2] * light) + ")");
+        }
+        mesh.colours = colours;
+        mesh.coloursTheme = theme;
+        return colours;
+    }
+
+    // The still picture of the 3-D view, drawn into "picture" (a hidden canvas, kept between pictures):
+    // the floor, the surface, the dips and the axes' names
+    function buildSurfacePicture(view, land, cam, mesh, picture) {
         const c = kit.colors();
-        const mesh = buildMesh(land);
-        const picture = document.createElement("canvas");
-        picture.width = Math.max(1, Math.round(view.width * view.dpr));
-        picture.height = Math.max(1, Math.round(view.height * view.dpr));
+        const colours = meshColours(mesh, c.theme);
+        const width = Math.max(1, Math.round(view.width * view.dpr));
+        const height = Math.max(1, Math.round(view.height * view.dpr));
+        if (picture.width !== width || picture.height !== height) {
+            picture.width = width;
+            picture.height = height;
+        }
         const g = picture.getContext("2d");
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.clearRect(0, 0, width, height);
         g.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
 
         // the floor: a faint square under the surface
@@ -1064,28 +1104,42 @@
         g.strokeStyle = kit.alpha(c.text, 0.18);
         g.stroke();
 
-        // the surface, tile by tile from the farthest
-        const points = mesh.corners.map(function (p) { return project(cam, p[0], p[1], p[2]); });
-        const order = mesh.tiles.map(function (tile, index) {
-            const k = tile.corners;
-            return { index: index, depth: points[k[0]][2] + points[k[1]][2] + points[k[2]][2] + points[k[3]][2] };
-        });
-        order.sort(function (a, b) { return b.depth - a.depth; });
-        g.lineJoin = "round";
-        g.lineWidth = 0.8;
-        order.forEach(function (item) {
-            const k = mesh.tiles[item.index].corners;
+        // where each corner lands on the screen, and how far away each tile is (its corners' depths added up)
+        const depthOf = new Float64Array(mesh.u.length);
+        for (let k = 0; k < mesh.u.length; k++) {
+            const p = project(cam, mesh.u[k], mesh.v[k], mesh.w[k]);
+            mesh.sx[k] = p[0];
+            mesh.sy[k] = p[1];
+            depthOf[k] = p[2];
+        }
+        const corners = mesh.corners;
+        for (let tile = 0; tile < mesh.order.length; tile++) {
+            const k = 4 * tile;
+            mesh.order[tile] = tile;
+            mesh.depth[tile] = depthOf[corners[k]] + depthOf[corners[k + 1]] + depthOf[corners[k + 2]] + depthOf[corners[k + 3]];
+        }
+        mesh.order.sort(function (a, b) { return mesh.depth[b] - mesh.depth[a]; });
+
+        // the surface, tile by tile from the farthest. Each corner is pushed SEAM_PX away from the
+        // tile's middle, so neighbouring tiles overlap a little and no hairline seam shows between them.
+        const sx = mesh.sx;
+        const sy = mesh.sy;
+        for (let i = 0; i < mesh.order.length; i++) {
+            const tile = mesh.order[i];
+            const a = corners[4 * tile];
+            const b = corners[4 * tile + 1];
+            const c = corners[4 * tile + 2];
+            const e = corners[4 * tile + 3];
+            const midX = (sx[a] + sx[b] + sx[c] + sx[e]) / 4;
+            const midY = (sy[a] + sy[b] + sy[c] + sy[e]) / 4;
             g.beginPath();
-            g.moveTo(points[k[0]][0], points[k[0]][1]);
-            g.lineTo(points[k[1]][0], points[k[1]][1]);
-            g.lineTo(points[k[2]][0], points[k[2]][1]);
-            g.lineTo(points[k[3]][0], points[k[3]][1]);
-            g.closePath();
-            g.fillStyle = colours[item.index];
+            cornerTo(g, sx[a], sy[a], midX, midY, true);
+            cornerTo(g, sx[b], sy[b], midX, midY, false);
+            cornerTo(g, sx[c], sy[c], midX, midY, false);
+            cornerTo(g, sx[e], sy[e], midX, midY, false);
+            g.fillStyle = colours[tile];
             g.fill();
-            g.strokeStyle = colours[item.index];      // the same colour hides the hairline seams
-            g.stroke();
-        });
+        }
 
         // the dips, on the surface
         land.minima.forEach(function (point) {
@@ -1187,8 +1241,6 @@
             let mapKey = "";
             let surfacePicture = null;
             let surfaceKey = "";
-            let surfaceColours = null;
-            let coloursKey = "";
 
             // ----- The page: only kit parts, plus a few texts of our own -----
             const ui = kit.layout(stage, { side: true });
@@ -1533,8 +1585,10 @@
             });
             ["pointerup", "pointercancel", "lostpointercapture"].forEach(function (type) {
                 scene.canvas.addEventListener(type, function () {
-                    if (dragging && dragging.mode === "start") save();
+                    if (!dragging) return;
+                    if (dragging.mode === "start") save();
                     dragging = null;
+                    if (viewName === "3d") drawSoon();         // the whole surface again, with all its tiles
                 });
             });
 
@@ -1682,14 +1736,10 @@
                 const g = scene.ctx;
                 const c = kit.colors();
                 const cam = camera(scene, yaw, tilt);
-                const colourKey = land.id + "|" + c.theme;
-                if (!surfaceColours || coloursKey !== colourKey) {
-                    surfaceColours = meshColours(buildMesh(land));
-                    coloursKey = colourKey;
-                }
-                const key = [colourKey, scene.width, scene.height, scene.dpr, yaw, tilt].join("|");
+                const mesh = buildMesh(land, dragging && dragging.mode === "turn" ? MESH_TURNING : MESH);
+                const key = [land.id, mesh.n, c.theme, scene.width, scene.height, scene.dpr, yaw, tilt].join("|");
                 if (!surfacePicture || surfaceKey !== key) {
-                    surfacePicture = buildSurfacePicture(scene, land, cam, surfaceColours);
+                    surfacePicture = buildSurfacePicture(scene, land, cam, mesh, surfacePicture || document.createElement("canvas"));
                     surfaceKey = key;
                 }
                 g.clearRect(0, 0, scene.width, scene.height);
@@ -1955,9 +2005,8 @@
                 },
                 theme: function () {
                     kit.colors.invalidate();
-                    mapPicture = null;
-                    surfacePicture = null;
-                    surfaceColours = null;
+                    mapKey = "";                    // both pictures are drawn again in the new colours
+                    surfaceKey = "";
                     chartSteps = -1;
                     render(1);
                 },
