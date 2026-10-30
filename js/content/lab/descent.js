@@ -112,7 +112,7 @@ window.AICompass.addTranslations({
         "lab.descent.ch3": "On “Two valleys”, find a start from which plain descent ends up in the shallower valley. Drag the start on the map.",
         "lab.descent.ch3Why": "Gradient descent only feels the slope right under it. It rolls into the nearest dip and stays there, even when a deeper one is close by: a local minimum. Another start, noise or momentum can help, but nothing guarantees the deepest point.",
         "lab.descent.ch4": "On “Saddle”, start on the ridge and watch plain descent stop at the flat spot. Then switch on noisy gradients and watch it escape.",
-        "lab.descent.ch4Why": "On the ridge the slope has no sideways part, so plain descent slides to the flat middle and stops there, although the ground goes down on both sides. A little noise pushes it off the ridge, and then it rolls down. Training on small random batches of data gives exactly this kind of noise, and it helps real networks get past flat spots."
+        "lab.descent.ch4Why": "On the ridge the slope has no sideways part, so plain descent slides to the flat middle and stops there, although the ground goes down on both sides. A little noise pushes it off the ridge, and then it rolls down. Training on small random batches of data makes the slope a little noisy in much the same way, and that helps real networks get past flat spots."
     },
     ru: {
         // ----- The lab's catalogue -----
@@ -218,7 +218,7 @@ window.AICompass.addTranslations({
         "lab.descent.ch3": "На «Двух долинах» найди старт, с которого обычный спуск скатывается в мелкую долину. Перетащи старт по карте.",
         "lab.descent.ch3Why": "Градиентный спуск чувствует только наклон прямо под собой. Он скатывается в ближайшую ямку и остаётся в ней, даже если рядом есть глубже: это локальный минимум. Другой старт, шум или инерция могут помочь, но найти самую глубокую точку не гарантирует ничто.",
         "lab.descent.ch4": "На «Седле» начни с гребня и посмотри, как обычный спуск застревает в плоской точке. Потом включи шумные градиенты и посмотри, как он вырывается.",
-        "lab.descent.ch4Why": "На гребне у наклона нет поперечной части, поэтому обычный спуск съезжает в плоскую середину и останавливается, хотя по обе стороны земля уходит вниз. Немного шума сталкивает его с гребня, и он скатывается. Обучение на маленьких случайных пачках данных даёт как раз такой шум, и он помогает настоящим нейросетям проходить плоские места."
+        "lab.descent.ch4Why": "На гребне у наклона нет поперечной части, поэтому обычный спуск съезжает в плоскую середину и останавливается, хотя по обе стороны земля уходит вниз. Немного шума сталкивает его с гребня, и он скатывается. При обучении на маленьких случайных пачках данных наклон тоже немного «шумит», и это помогает настоящим нейросетям проходить плоские места."
     }
 });
 
