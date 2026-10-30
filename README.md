@@ -220,7 +220,7 @@ A.share({ text: A.t("quiz.shareResult", { score: 10 }), url: A.platform.link("qu
 - `404.html`: `SITE_FOLDER` and the `<base>` tag (both are the folder, `/AI-Compass/`);
 - `css/print.css`: the address printed at the bottom of every page.
 
-**The pictures** in `images/` are PNG files of fixed sizes: `icon-192.png` and `icon-512.png` (the app), `icon-maskable-512.png` (the app on Android, which cuts it into a circle: keep the drawing inside the middle 80 %), `apple-touch-icon.png` (180 × 180, iPhones), `favicon-32.png` (the browser tab) and `og-image.png` (1200 × 630, shared links). To change one, replace it with a picture of the same size and name.
+**The pictures** in `images/` are PNG files of fixed sizes: `icon-192.png` and `icon-512.png` (the app), `icon-maskable-512.png` (the app on Android, which cuts it into a circle: keep the drawing inside the middle 80 %), `apple-touch-icon.png` (180 × 180, iPhones), `favicon-32.png` (the browser tab) and `og-image.png` (1200 × 630, shared links). To change one, replace it with a picture of the same size and name. The pictures are saved with 256 colours, which looks the same here and takes less than half the space: do the same with a new one, with a free tool such as pngquant or tinypng.com (but not for `favicon-32.png`, which is tiny anyway).
 
 
 ## Recipes
