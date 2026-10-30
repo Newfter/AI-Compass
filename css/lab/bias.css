@@ -146,7 +146,9 @@
 }
 
 /* ===== 4. THE SCORECARD TABLE AND ITS SENTENCES ===== */
+/* position: the screen-reader words in the cells ("a big gap") stay inside it too */
 .bd-table-wrap {
+    position: relative;
     max-width: 100%;
     overflow-x: auto;
 }
@@ -233,6 +235,33 @@
 .bd-gap-icon .lk-icon {
     width: 14px;
     height: 14px;
+}
+
+/* A phone: the four columns share about 260 px, and the Russian names are long.
+   The warning sign goes; the warning colour and the wash stay. */
+@container (max-width: 480px) {
+    .bd-table {
+        font-size: 12px;
+    }
+
+    .bd-table th,
+    .bd-table td {
+        padding: 6px 3px;
+    }
+
+    .bd-table thead th {
+        font-size: 11px;
+    }
+
+    .bd-group-head .bd-dot {
+        width: 8px;
+        height: 8px;
+        margin-right: 3px;
+    }
+
+    .bd-gap.is-big .bd-gap-icon {
+        display: none;
+    }
 }
 
 /* The gaps in words */
