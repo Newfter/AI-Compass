@@ -1728,7 +1728,8 @@
                 eqGrids.append(labelled("lab.vision.eqPixels", miniGrid(at.pixels, "pixels")), sign("×"),
                     labelled("lab.vision.eqFilter", miniGrid(state.numbers, "filter")), sign("="),
                     labelled("lab.vision.eqProducts", miniGrid(at.products, "products")));
-                const terms = at.pixels.map(function (p, k) { return "(" + num(state.numbers[k]) + " × " + num(p) + ")"; });
+                // a term never breaks across lines: "(−1 × 20)" (non-breaking spaces inside)
+                const terms = at.pixels.map(function (p, k) { return "(" + num(state.numbers[k]) + "\u00a0×\u00a0" + num(p) + ")"; });
                 A.dom.setText(eqLine, terms.join(" + ") + " = " + num(at.total));
                 let result = "";
                 if (state.divisor !== 1) result += num(at.total) + " ÷ " + num(state.divisor) + " = " + num(at.value);

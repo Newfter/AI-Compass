@@ -439,10 +439,12 @@
     }
 }
 
-/* A map is a kit button with its picture on top of its name */
+/* A map is a kit button with its picture on top of its name (pictures in a row line up
+   at the top, whatever the length of the names) */
 .lk-btn.cv-map {
     flex-direction: column;
     align-items: stretch;
+    justify-content: flex-start;
     gap: 6px;
     min-width: 0;
     padding: 6px 6px 8px;
