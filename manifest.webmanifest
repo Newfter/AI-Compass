@@ -2,7 +2,6 @@
     "name": "AI Compass",
     "short_name": "AI Compass",
     "description": "A free, interactive guide to Artificial Intelligence for teenagers: short lessons, live AI experiments, a quiz, a glossary and the history of AI, in English and Russian.",
-    "id": "./",
     "start_url": "./",
     "scope": "./",
     "display": "standalone",

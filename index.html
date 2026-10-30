@@ -3,18 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI Compass — a free bilingual platform for learning about Artificial Intelligence: lessons, live AI experiments, a quiz, a glossary and more.">
-    <!-- The colour of the phone's address bar, for the dark and the light theme
-         (the same as --bg in style.css). core.js and the script below read them from here. -->
-    <meta name="theme-color" content="#060812" data-dark="#060812" data-light="#f4f6fd">
     <title>AI Compass | Explore Artificial Intelligence</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+    <meta name="description" content="AI Compass — a free bilingual platform for learning about Artificial Intelligence: lessons, live AI experiments, a quiz, a glossary and more.">
+
+    <!-- ===== Search engines, sharing and the app (see "The app, offline and search engines" in README.md) =====
+         The full addresses below are where the site lives on GitHub Pages. If it ever moves,
+         change them here (also in the JSON-LD at the end of <head>), in robots.txt and in sitemap.xml.
+         The site is one page in two languages: ?lang=en / ?lang=ru open it in English / Russian,
+         the plain address in the visitor's own language (the script below handles ?lang=). -->
+    <link rel="canonical" href="https://newfter.github.io/AI-Compass/">
+    <link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/?lang=en">
+    <link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/?lang=ru">
+    <link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/">
+
+    <!-- The colour of the browser's bar (phones, the installed app): one tag for a device in dark
+         mode, one for light mode (--bg of each theme in style.css). The script below and core.js
+         give both the colour of the theme that is really on (data-dark / data-light), so the bar
+         always matches the page; "media" only matters before the scripts run. -->
+    <meta name="theme-color" content="#060812" media="(prefers-color-scheme: dark)" data-dark="#060812" data-light="#f4f6fd">
+    <meta name="theme-color" content="#f4f6fd" media="(prefers-color-scheme: light)" data-dark="#060812" data-light="#f4f6fd">
+
+    <!-- The app you can install (manifest.webmanifest), and the icons of the browser tab and of a
+         phone's home screen (images/, drawn as a compass rose) -->
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./images/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="./images/icon-192.png" sizes="192x192" type="image/png">
+    <link rel="apple-touch-icon" href="./images/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-title" content="AI Compass">
+
+    <!-- How a shared link looks in chats and social networks: Open Graph (Telegram, WhatsApp,
+         VK, Facebook...) and the Twitter / X card. The picture is images/og-image.png (1200 x 630).
+         These apps read the page without running its scripts, so they can't pick a language:
+         the description says it in both. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AI Compass">
+    <meta property="og:title" content="AI Compass | Explore Artificial Intelligence">
+    <meta property="og:description" content="A free, interactive guide to Artificial Intelligence for teenagers, in English and Russian. Бесплатный интерактивный путеводитель по искусственному интеллекту для подростков — на русском и английском.">
+    <meta property="og:url" content="https://newfter.github.io/AI-Compass/">
+    <meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="A glowing compass rose next to the words AI Compass: Navigate the World of AI.">
+    <meta property="og:locale" content="en_GB">
+    <meta property="og:locale:alternate" content="ru_RU">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image:alt" content="A glowing compass rose next to the words AI Compass: Navigate the World of AI.">
 
     <!-- Before the page is drawn, this script applies the saved settings, so nothing flashes:
          - the theme (data-theme), and the colour of the phone's address bar to match;
          - calm mode: the classes fx-calm and fx-motion-off (fx-motion-off also when the device
            asks for reduced motion), so the hero doesn't start its entrance animation;
-         - the class "js": the page runs JavaScript (the CSS can style the page without it).
+         - the class "js": the page runs JavaScript (the CSS can style the page without it);
+         - a language asked for in the address (?lang=ru or ?lang=en, used by shared links and
+           search engines): it is saved like a normal language switch, so core.js starts in it.
          core.js sets the same things again, so nothing depends on this script running first.
          The settings are where A.storage keeps them: "aic:" is PREFIX in js/core.js, and each
          value is saved as JSON ("dark" with its quotes). Keep the names the same as there. -->
@@ -32,17 +74,38 @@
             root.classList.add("js");
 
             var theme = saved("theme");
-            if (theme === "light" || theme === "dark") {
-                root.setAttribute("data-theme", theme);
-                var themeColor = document.querySelector('meta[name="theme-color"]');
-                themeColor.setAttribute("content", themeColor.getAttribute("data-" + theme));
-            }
+            if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
+            // Both theme-color tags (see above) get the colour of the theme that is on
+            var shownTheme = root.getAttribute("data-theme") === "light" ? "light" : "dark";
+            document.querySelectorAll('meta[name="theme-color"]').forEach(function (meta) {
+                meta.setAttribute("content", meta.getAttribute("data-" + shownTheme));
+            });
 
             var calm = saved("motion.calm");
             if (calm === null) calm = saved("effects.calm");     // the setting's old name
             calm = calm === true;
             root.classList.toggle("fx-calm", calm);
             root.classList.toggle("fx-motion-off", calm || window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+            // ?lang=ru or ?lang=en in the address: saved as the language ("aic:language", like
+            // core.js does), then taken out of the address, so that a later reload follows the
+            // visitor's own choice. The canonical link names this language's address.
+            // If the browser can't save, ?lang stays in the address and js/platform.js switches.
+            var params = new URLSearchParams(window.location.search);
+            var lang = String(params.get("lang") || "").toLowerCase();
+            if (lang === "en" || lang === "ru") {
+                root.setAttribute("lang", lang);
+                var canonical = document.querySelector('link[rel="canonical"]');
+                if (canonical) canonical.setAttribute("href", canonical.getAttribute("href").split("?")[0] + "?lang=" + lang);
+                try {
+                    localStorage.setItem("aic:language", JSON.stringify(lang));
+                    params.delete("lang");
+                    var rest = params.toString();
+                    history.replaceState(history.state, "", window.location.pathname + (rest ? "?" + rest : "") + window.location.hash);
+                } catch (error) {
+                    // no storage: the address keeps the language
+                }
+            }
         })();
     </script>
 
@@ -91,6 +154,64 @@
     <script src="./js/timeline.js" defer></script>
     <script src="./js/assistant.js" defer></script>
     <script src="./js/palette.js" defer></script>
+
+    <!-- What search engines read about the site (JSON-LD, schema.org): the website, who makes
+         it, and the lessons as a free online course. Browsers ignore it.
+         When you add, rename or re-time a lesson, change its entry in "syllabusSections" too
+         (in English, as on the lesson cards) and the total "courseWorkload" (the minutes of
+         all lessons: "PT30M" is 30 minutes). Check it at https://validator.schema.org -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Organization",
+                "@id": "https://newfter.github.io/AI-Compass/#organization",
+                "name": "AI Compass",
+                "url": "https://newfter.github.io/AI-Compass/",
+                "logo": "https://newfter.github.io/AI-Compass/images/icon-512.png",
+                "description": "A student CAS project that explains Artificial Intelligence to teenagers."
+            },
+            {
+                "@type": "WebSite",
+                "@id": "https://newfter.github.io/AI-Compass/#website",
+                "name": "AI Compass",
+                "url": "https://newfter.github.io/AI-Compass/",
+                "description": "A free, interactive guide to Artificial Intelligence for teenagers: short lessons, live AI experiments, a quiz and a glossary, in English and Russian.",
+                "inLanguage": ["en", "ru"],
+                "isAccessibleForFree": true,
+                "publisher": { "@id": "https://newfter.github.io/AI-Compass/#organization" }
+            },
+            {
+                "@type": "Course",
+                "@id": "https://newfter.github.io/AI-Compass/#course",
+                "name": "Explore the Basics of AI",
+                "alternateName": "Изучаем основы ИИ",
+                "description": "Short interactive lessons about Artificial Intelligence for teenagers, each with a mini-lab and a question to check yourself. Free, in English and Russian.",
+                "url": "https://newfter.github.io/AI-Compass/#lessons",
+                "image": "https://newfter.github.io/AI-Compass/images/og-image.png",
+                "provider": { "@id": "https://newfter.github.io/AI-Compass/#organization" },
+                "about": { "@type": "Thing", "name": "Artificial intelligence", "sameAs": "https://en.wikipedia.org/wiki/Artificial_intelligence" },
+                "inLanguage": ["en", "ru"],
+                "availableLanguage": ["en", "ru"],
+                "isAccessibleForFree": true,
+                "educationalLevel": "Beginner",
+                "typicalAgeRange": "13-18",
+                "audience": { "@type": "EducationalAudience", "educationalRole": "student" },
+                "offers": { "@type": "Offer", "category": "Free", "price": 0, "priceCurrency": "USD" },
+                "hasCourseInstance": { "@type": "CourseInstance", "courseMode": "Online", "courseWorkload": "PT30M" },
+                "syllabusSections": [
+                    { "@type": "Syllabus", "position": 1, "name": "What is AI?", "description": "What artificial intelligence really is — and what it isn't.", "educationalLevel": "Beginner", "timeRequired": "PT4M" },
+                    { "@type": "Syllabus", "position": 2, "name": "Machine Learning", "description": "How computers learn from examples instead of instructions.", "educationalLevel": "Beginner", "timeRequired": "PT5M" },
+                    { "@type": "Syllabus", "position": 3, "name": "Neural Networks", "description": "The brain-inspired idea behind modern AI, explained simply.", "educationalLevel": "Intermediate", "timeRequired": "PT6M" },
+                    { "@type": "Syllabus", "position": 4, "name": "Generative AI & Chatbots", "description": "How chatbots and image generators create brand-new content.", "educationalLevel": "Intermediate", "timeRequired": "PT6M" },
+                    { "@type": "Syllabus", "position": 5, "name": "AI in Everyday Life", "description": "The hidden AI you use every day — probably without noticing.", "educationalLevel": "Beginner", "timeRequired": "PT4M" },
+                    { "@type": "Syllabus", "position": 6, "name": "AI Ethics & Safety", "description": "Bias, deepfakes and privacy — and how to use AI responsibly.", "educationalLevel": "Intermediate", "timeRequired": "PT5M" }
+                ]
+            }
+        ]
+    }
+    </script>
 </head>
 
 <body>
