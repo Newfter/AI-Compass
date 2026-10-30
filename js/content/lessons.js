@@ -110,6 +110,8 @@ window.AICompass.addTranslations({
         "lessons.reader.keyIdeas": "Key ideas",
         "lessons.reader.tryIt": "Try it on this site",
         "lessons.reader.check": "Check yourself",
+        // {questions}: "5 questions" (quiz.questionCount in js/content/quiz.js)
+        "lessons.reader.quizReview": "Test yourself on this lesson: {questions} in the quiz",
         "lessons.note.fact": "Fun fact",
         "lessons.note.example": "Example",
         "lessons.note.tip": "Good to know",
@@ -254,6 +256,7 @@ window.AICompass.addTranslations({
         "lessons.reader.keyIdeas": "Главное",
         "lessons.reader.tryIt": "Попробуй на сайте",
         "lessons.reader.check": "Проверь себя",
+        "lessons.reader.quizReview": "Проверь себя по этому уроку: {questions} в тесте",
         "lessons.note.fact": "Интересный факт",
         "lessons.note.example": "Пример",
         "lessons.note.tip": "Полезно знать",

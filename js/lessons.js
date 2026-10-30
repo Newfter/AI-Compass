@@ -2190,9 +2190,27 @@
                 <h3 class="lsn-part-title" id="lsn-check-title" tabindex="-1" data-fid="part-check"><span class="lsn-part-num mono" aria-hidden="true">?</span><span>${t("lessons.reader.check")}</span></h3>
                 <p class="lsn-check-question" id="lsn-check-question">${t(lessonKey(n, "q"))}</p>
                 <div class="lsn-options" role="group" aria-labelledby="lsn-check-question" data-ref="options"></div>
-                <div class="lsn-feedback" aria-live="polite" data-ref="feedback"></div>
+                <div class="lsn-feedback" aria-live="polite" data-ref="feedback"></div>${quizReviewHTML(n)}
             </section>`;
         return html;
+    }
+
+    // "Test yourself on this lesson": the quiz's questions about it (its "Lesson review"
+    // mode), if the quiz has some
+    function quizReviewCount(n) {
+        if (!A.quiz || typeof A.quiz.bank !== "function" || typeof A.quiz.start !== "function") return 0;
+        return A.util.attempt(function () {
+            return A.quiz.bank().filter(function (question) { return question.lesson === n; }).length;
+        }, 0);
+    }
+
+    function quizReviewHTML(n) {
+        const count = quizReviewCount(n);
+        if (!count) return "";
+        return `
+                <p class="lsn-quiz-review">
+                    <button type="button" class="btn btn-ghost btn-small" data-action="quiz-review" data-fid="quiz-review"><span aria-hidden="true">🏆</span> ${t("lessons.reader.quizReview", { questions: A.plural("quiz.questionCount", count) })} <span class="lsn-arrow" aria-hidden="true">→</span></button>
+                </p>`;
     }
 
     // The "In this lesson" list on the left
@@ -2582,6 +2600,16 @@
         });
     }
 
+    // "Test yourself on this lesson": close the reader and start the quiz's Lesson review
+    function runQuizReview() {
+        const n = reader.lesson;
+        closeReader({ restoreFocus: false });
+        requestAnimationFrame(function () {
+            A.dom.focusHeading("quiz");   // the focus waits there if the quiz moves it nowhere
+            A.quiz.start("lesson", { lesson: n });
+        });
+    }
+
     function setHash(hash) {
         try {
             history.replaceState(history.state, "", hash || window.location.pathname + window.location.search);
@@ -2729,6 +2757,7 @@
                 break;
             case "size": cycleTextSize(); break;
             case "try": runTryIt(); break;
+            case "quiz-review": runQuizReview(); break;
             case "retry": retryCheck(); break;
             case "peek-close": closePeek(true); break;
             case "glossary":

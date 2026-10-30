@@ -1696,6 +1696,21 @@
     display: none;
 }
 
+/* "Test yourself on this lesson": the quiz's Lesson review */
+.lsn-quiz-review {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.lsn-quiz-review .btn {
+    min-height: 44px;
+}
+
+.lsn-quiz-review .btn:hover .lsn-arrow {
+    transform: translateX(4px);
+}
+
 .lsn-feedback-box {
     display: grid;
     gap: 8px;
