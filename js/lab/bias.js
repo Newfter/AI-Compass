@@ -1545,24 +1545,33 @@
                 A.dom.setHidden(weightsBox, items.length === 0);
                 A.dom.setText(learnedEmpty, t(model ? "lab.bias.noWeights" : "lab.bias.notTrained"));
                 A.dom.setHidden(learnedEmpty, items.length > 0);
+                // The proxy warning: the group column is off, yet the neighbourhood still pushes
+                // towards rejection. Only the biased deciders' labels ("Unfair decisions", the past)
+                // hold that pattern. Elsewhere the labels say nothing about the group once the
+                // test score is known, so a South weight there is only chance, not a proxy.
                 const south = model ? weightOf(model, "south") : null;
-                const proxy = south !== null && south <= -SMALL_WEIGHT && weightOf(model, "orange") === null;
+                const proxy = preset === "decisions" && !betterLabels && south !== null &&
+                    south <= -SMALL_WEIGHT && weightOf(model, "orange") === null;
                 A.dom.setHidden(proxyLine, !proxy);
             }
 
             function paintExplain(gap) {
                 const orange = model ? weightOf(model, "orange") : null;
                 const south = model ? weightOf(model, "south") : null;
+                // "Unfair test", trained on the past: the people who decided were fair, so once the
+                // test score is known, the group and the neighbourhood tell the model nothing more.
+                // Their weights are only chance (300 applicants are a small sample).
+                const fairDeciders = preset === "test" && !betterLabels;
                 explain.setValues(0, { n: people.length, what: t(betterLabels ? "lab.bias.whatTruth" : "lab.bias.whatPast") });
 
                 let learned = t("lab.bias.learnedLater");
                 if (model && orange === null) learned = t("lab.bias.learnedHidden");
-                else if (model) learned = t(preset === "test" ? "lab.bias.learnedTest" : "lab.bias.learnedOrange", { w: weightText(orange) });
+                else if (model) learned = t(fairDeciders ? "lab.bias.learnedTest" : "lab.bias.learnedOrange", { w: weightText(orange) });
                 explain.setValues(1, { learned: learned });
 
                 let southNow = "";
                 if (model && south === null) southNow = t("lab.bias.southHidden");
-                else if (model) southNow = t("lab.bias.southNow", { w: weightText(south) });
+                else if (model) southNow = t(fairDeciders ? "lab.bias.southChance" : "lab.bias.southNow", { w: weightText(south) });
                 explain.setValues(2, { south: southNow });
 
                 explain.setValues(3, {
