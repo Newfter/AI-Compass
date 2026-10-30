@@ -126,7 +126,7 @@ window.AICompass.addTranslations({
 
         "lab.chatbot.title": "Inside a chatbot",
         "lab.chatbot.hook": "See what a chatbot does with your words: tokens, meanings, attention and weighted dice.",
-        "lab.chatbot.idea": "How a chatbot writes"
+        "lab.chatbot.idea": "Large language models"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -147,7 +147,7 @@ window.AICompass.addTranslations({
 
         "lab.chatbot.title": "Внутри чат-бота",
         "lab.chatbot.hook": "Посмотри, что чат-бот делает с твоими словами: токены, смыслы, внимание и взвешенные кубики.",
-        "lab.chatbot.idea": "Как чат-бот пишет текст"
+        "lab.chatbot.idea": "Большие языковые модели"
     }
 });
 
