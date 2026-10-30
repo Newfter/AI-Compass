@@ -1343,7 +1343,6 @@
                     if (state.applied > 0) setPicture("draw", drawing);
                     paintLine(drawing, point, point);
                     stroke.drew = true;
-                    drawHint.hide();
                     inputVersion++;
                 }
                 moveLoupe(point.x, point.y);
@@ -1836,8 +1835,9 @@
                 mapPanel.hidden = state.view !== "cnn";
                 const drawMode = drawingNow();
                 clearButton.element.hidden = !drawMode;
-                if (!drawMode) drawHint.hide();
-                else if (!stroke) drawHint.show();
+                // the tip stays while drawing: hiding it would move the pad under the pen
+                if (drawMode) drawHint.show();
+                else drawHint.hide();
                 if (all === true || state.view === "filter") paintFilterView();
                 if (all === true || state.view === "step") paintStep();
                 if (all === true || state.view === "cnn") paintNetwork();
