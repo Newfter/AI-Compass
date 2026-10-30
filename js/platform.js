@@ -102,16 +102,24 @@
     }
 
     function startWorker() {
-        if (!canUseWorker()) return;
+        // Firefox throws an error as soon as navigator.serviceWorker is read when the
+        // site may not save anything (cookies blocked): then there is simply no worker
+        let workers = null;
+        try {
+            if (canUseWorker()) workers = navigator.serviceWorker;
+        } catch (error) {
+            workers = null;
+        }
+        if (!workers) return;
         // Without a worker in charge, this page was loaded straight from the internet
         // (the first visit, or a "hard" reload)
-        const loadedWithoutWorker = !navigator.serviceWorker.controller;
-        navigator.serviceWorker.register(WORKER_FILE).then(function () {
+        const loadedWithoutWorker = !workers.controller;
+        workers.register(WORKER_FILE).then(function () {
             if (!loadedWithoutWorker) return null;
             // The worker saved the app shell when it started. It also saves what this
             // page has loaded since (the fonts, a part opened already), so a first visit
             // without a connection looks exactly like this one.
-            return navigator.serviceWorker.ready.then(function (registration) {
+            return workers.ready.then(function (registration) {
                 if (registration.active) registration.active.postMessage({ type: SAVE_MESSAGE, files: loadedFiles() });
             });
         }).catch(function () { /* no offline copy, nothing else changes */ });
