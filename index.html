@@ -133,8 +133,11 @@
     <link rel="stylesheet" href="./css/timeline.css">
     <link rel="stylesheet" href="./css/assistant.css">
     <link rel="stylesheet" href="./css/palette.css">
-    <!-- Printing: only used when the page is printed (keep it after the other stylesheets) -->
-    <link rel="stylesheet" href="./css/print.css" media="print">
+    <!-- Printing: only used when the page is printed (keep it after the other stylesheets).
+         fetchpriority="high": a print-only file is otherwise downloaded after everything else, and
+         the browser waits for it before it says the page has loaded, which is when the site starts
+         its "when idle" work. It is small and never holds up drawing the page. -->
+    <link rel="stylesheet" href="./css/print.css" media="print" fetchpriority="high">
 
     <!-- core.js loads first: the toolkit every other script uses (texts, theme, settings, pop-up windows...) -->
     <script src="./js/core.js" defer></script>
