@@ -164,10 +164,11 @@
             }
         }
 
+        // "You got 1 star." / "You got 16 stars, the robot got 18." (plural forms for your stars)
         function scoresText() {
             const you = sum(state.game.you.stars);
-            if (!state.robotOn) return api.text("you", { you: you });
-            return api.text("youRobot", { you: you, robot: sum(state.game.robot.stars) });
+            if (!state.robotOn) return api.plural("you", you, { you: you });
+            return api.plural("youRobot", you, { you: you, robot: sum(state.game.robot.stars) });
         }
 
         // ---------- 5. Pulls, the robot and a new game ----------
