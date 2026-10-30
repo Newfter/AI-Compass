@@ -201,6 +201,24 @@
             sections: 4, notes: { 1: "fact", 3: "fact", 4: "tip" }, lab: "temperature", correct: 1,
             tryIt: "chatbot", tryIcon: "💬",
             keywords: "how chatbots write tokens next token attention transformer temperature gpt как чат-боты пишут токены внимание трансформер температура"
+        },
+        {
+            number: 10, track: "deep", icon: "🎨", level: "intermediate", minutes: 7, rgb: "--accent-2-rgb",
+            sections: 4, notes: { 2: "fact", 3: "tip", 4: "example" }, lab: "noise", correct: 1,
+            tryIt: "draw", tryIcon: "✏️",
+            keywords: "creative ai generative art images music diffusion noise gan deepfake watermark copyright творческий ии генеративный искусство картинки музыка диффузия шум дипфейк водяной знак авторское право"
+        },
+        {
+            number: 11, track: "deep", icon: "🛡️", level: "intermediate", minutes: 8, rgb: "--accent-3-rgb",
+            sections: 4, notes: { 2: "fact", 3: "tip", 4: "fact" }, lab: "fairness", correct: 2,
+            tryIt: "bias", tryIcon: "🕵️",
+            keywords: "trust bias fairness testing red teaming privacy data eu ai act alignment safety доверие предвзятость справедливость тестирование ред-тиминг приватность данные закон об ии согласование безопасность"
+        },
+        {
+            number: 12, track: "deep", icon: "🧰", level: "intermediate", minutes: 7, rgb: "--accent-rgb",
+            sections: 4, notes: { 2: "tip", 3: "example", 4: "fact" }, lab: "prompt", correct: 0,
+            tryIt: "lab", tryIcon: "🧪",
+            keywords: "ai toolkit prompt prompting check answers sources homework school honest tutor future skills jobs набор инструментов промпт запрос проверка ответов источники домашнее задание школа честно репетитор будущее навыки профессии"
         }
     ];
 
