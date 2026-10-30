@@ -2004,12 +2004,14 @@
                 return info.landscape === "bowl" && info.racers.some(function (racer) { return racer.opt === "gd" && racer.state === "exploded"; });
             }
 
+            // With the same learning rate, as the challenge says: with a bigger rate of its own,
+            // momentum would win because of the rate, not because of its speed
             function checkMomentum(info) {
                 if (info.landscape !== "valley") return false;
                 const plain = info.racers.filter(function (racer) { return racer.opt === "gd" && racer.state === "arrived"; });
                 const heavy = info.racers.filter(function (racer) { return racer.opt === "momentum" && racer.state === "arrived"; });
                 return plain.some(function (a) {
-                    return heavy.some(function (b) { return b.steps <= 0.5 * a.steps; });
+                    return heavy.some(function (b) { return b.rate === a.rate && b.steps <= 0.5 * a.steps; });
                 });
             }
 
