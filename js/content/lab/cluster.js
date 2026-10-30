@@ -276,7 +276,8 @@ window.AICompass.addTranslations({
    Every preset is made from its seed, so it is the same every time. Points
    live in a square from 0 to 1 (y goes up).
      seed     makes the points
-     start    the seed of the first run's starting centres
+     start    the seed of the first run's starting centres: one with which both kinds
+              of start find the best answer, at k and at lessonK (checked by the test)
      k        the k the preset starts with. "Five groups" starts with 3 on purpose:
               finding 5 with the elbow chart is challenge 1
      lessonK  the k its lesson (lab.cluster.lesson.<id>) is about
@@ -298,7 +299,7 @@ window.AICompass.content.set("lab.cluster", {
             ]
         },
         {
-            id: "five", seed: 5, start: 1, k: 3, lessonK: 5,
+            id: "five", seed: 5, start: 6, k: 3, lessonK: 5,
             blobs: [
                 { x: 0.2, y: 0.76, sd: 0.055, n: 36 },
                 { x: 0.52, y: 0.84, sd: 0.055, n: 36 },
@@ -316,7 +317,7 @@ window.AICompass.content.set("lab.cluster", {
             ]
         },
         {
-            id: "stretched", seed: 9, start: 1, k: 3, lessonK: 3,
+            id: "stretched", seed: 9, start: 2, k: 3, lessonK: 3,
             blobs: [
                 { x: 0.5, y: 0.3, sd: 0.25, sd2: 0.022, n: 50 },
                 { x: 0.5, y: 0.5, sd: 0.25, sd2: 0.022, n: 50 },
