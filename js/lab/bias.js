@@ -121,6 +121,7 @@
         radius: { min: 3, max: 4.6, per: 150 },     // a dot's radius: the canvas width / 150, within these limits
         dotGap: 1,          // px between two dots of a pile
         hit: 14,            // px: the pointer this close to a dot points at it
+        labelGap: 14,       // px between the twin pair and its label
         dim: 0.22,          // how strongly the other dots show while a twin pair is shown
         waitingFade: 0.45,  // ...and while the model trains again ("Training…")
         tick: 10,           // a grid line every 10 points of the test score...
@@ -683,18 +684,47 @@
         }
     }
 
-    // A small box of text lines (the twin pair's label), kept inside the canvas.
-    // x: where the twins are (the box goes to its side: 1 right, -1 left); bottom: the box's lower edge
-    function drawLabel(context, lines, x, bottom, side, layout, c) {
-        context.font = kit.font(12, 600, "body");
+    // Where the twin pair's label box goes: { left, top }. twins: the two twins' places ({ x, y });
+    // reach: how far from a twin's centre the box must stay (its ring). The box goes beside the
+    // pair, past the outer twin on the side with more room, low in the Blue row: just above the
+    // line between the rows, where few dots are, so it never covers the Orange row's name.
+    // A narrow canvas has no room beside the pair; if the box would then cover a twin, it tries
+    // the top of the Blue row, then just above or just below the Blue twin.
+    function labelPlace(layout, twins, boxWidth, boxHeight, reach) {
+        const lowest = Math.min(twins[0].x, twins[1].x);
+        const highest = Math.max(twins[0].x, twins[1].x);
+        let left = layout.width - highest >= lowest ? highest + DRAW.labelGap : lowest - DRAW.labelGap - boxWidth;
+        left = A.util.clamp(left, 4, layout.width - boxWidth - 4);
+        function coversTwin(top) {
+            return twins.some(function (place) {
+                return place.x + reach > left && place.x - reach < left + boxWidth &&
+                    place.y + reach > top && place.y - reach < top + boxHeight;
+            });
+        }
+        const blue = twins[0].y < twins[1].y ? twins[0] : twins[1];       // the twin in the upper row
+        const tries = [
+            layout.lanes[1].bottom - 2 - boxHeight,     // low in the Blue row (the usual place)
+            layout.lanes[0].top + 2,                    // the top of the Blue row
+            blue.y - reach - boxHeight,                 // just above the Blue twin...
+            blue.y + reach                              // ...or just below it
+        ].map(function (top) { return A.util.clamp(top, 4, layout.height - boxHeight - 4); });
+        const free = tries.filter(function (top) { return !coversTwin(top); });
+        return { left: left, top: free.length > 0 ? free[0] : tries[0] };
+    }
+
+    // The twin pair's label: a small box of text lines, put where labelPlace() says
+    function drawLabel(context, lines, twins, reach, layout, c) {
         let width = 0;
-        lines.forEach(function (line) { width = Math.max(width, context.measureText(line).width); });
+        lines.forEach(function (line, i) {
+            context.font = kit.font(12, i === 0 ? 700 : 600, "body");       // the first line is bold
+            width = Math.max(width, context.measureText(line).width);
+        });
         const lineHeight = 17;
         const boxWidth = width + 18;
         const boxHeight = lines.length * lineHeight + 10;
-        let left = side > 0 ? x + 14 : x - 14 - boxWidth;
-        left = A.util.clamp(left, 4, layout.width - boxWidth - 4);
-        const top = A.util.clamp(bottom - boxHeight, 4, layout.height - boxHeight - 4);
+        const place = labelPlace(layout, twins, boxWidth, boxHeight, reach);
+        const left = place.left;
+        const top = place.top;
         context.fillStyle = kit.alpha(c.surface, 0.94);
         context.strokeStyle = kit.alpha(c.text, 0.35);
         context.lineWidth = 1;
@@ -806,6 +836,7 @@
             context.moveTo(a.x, a.y);
             context.lineTo(b.x, b.y);
             context.stroke();
+            const ring = radius + 5;
             pair.forEach(function (i) {
                 const place = scene.places[i];
                 const person = scene.people[i];
@@ -813,13 +844,11 @@
                 context.strokeStyle = c.text;
                 context.lineWidth = 2;
                 context.beginPath();
-                context.arc(place.x, place.y, radius + 5, 0, Math.PI * 2);
+                context.arc(place.x, place.y, ring, 0, Math.PI * 2);
                 context.stroke();
             });
-            // The label sits just above the line between the rows (in the Blue South lane,
-            // where few dots are), beside the twins, so it never covers the Orange row's name
-            const middle = (a.x + b.x) / 2;
-            drawLabel(context, scene.texts.pair, middle, layout.lanes[1].bottom - 2, middle < layout.width / 2 ? 1 : -1, layout, c);
+            // The label goes beside the twins, never over them (labelPlace)
+            drawLabel(context, scene.texts.pair, [a, b], ring + 2, layout, c);
         }
 
         // 6. The score axis: a number every 20 points, and its name
@@ -890,7 +919,8 @@
             swarm: swarm,
             sceneLayout: sceneLayout,
             laneCounts: laneCounts,
-            placeDots: placeDots
+            placeDots: placeDots,
+            labelPlace: labelPlace
         },
 
         create: function (stage, ctx) {
