@@ -1,0 +1,418 @@
+/* =========================================================
+   AI COMPASS — LAB: DRAW AND TEACH (js/lab/draw.js)
+   Prefix: dw-. Every control and panel comes from the kit
+   (css/lab/kit.css); this file styles only the experiment's own parts.
+   Colours, fonts and sizes are the site's and the kit's tokens.
+   Sections:
+    1. Titles and notes
+    2. The board: the pad and what the computer sees
+    3. The guesses
+    4. Small pictures (the gallery, the nearest examples, the mistakes)
+    5. The gallery
+    6. Measuring
+    7. Calm mode
+   ========================================================= */
+
+/* ===== 1. TITLES AND NOTES ===== */
+
+/* A panel's title (h4) looks like the kit's group labels */
+.dw-title {
+    margin: 0;
+    color: var(--text-accent-2);
+    font-family: var(--font-mono);
+    font-size: var(--lk-mini);
+    font-weight: 600;
+    letter-spacing: 2px;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+/* A part inside a panel (h5) */
+.dw-subtitle {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--lk-label);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.dw-note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.dw-note.is-warn {
+    color: var(--text-warning);
+}
+
+.dw-real {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ===== 2. THE BOARD =====
+   The pad and "What the computer sees" side by side once there is room,
+   one under the other on a phone. The board follows its own width. */
+
+.dw-board-box {
+    container-type: inline-size;
+}
+
+.dw-board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--lk-gap);
+    align-items: start;
+}
+
+@container (min-width: 560px) {
+    .dw-board {
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    }
+}
+
+.dw-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+/* The pad: a square. Only here does a finger draw instead of scrolling the page. */
+.dw-pad-box {
+    max-width: 460px;
+    touch-action: none;
+}
+
+.dw-pad {
+    touch-action: none;
+    cursor: crosshair;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* The box clips anything outside it, so the focus ring goes inside the pad */
+.dw-pad:focus-visible {
+    outline-offset: -4px;
+    border-radius: 14px;
+}
+
+.dw-seen-box {
+    max-width: 280px;
+}
+
+.dw-caption {
+    margin: 0;
+}
+
+/* ===== 3. THE GUESSES ===== */
+
+.dw-guesses {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+    gap: var(--lk-gap);
+    align-items: start;
+}
+
+.dw-verdict {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.dw-verdict strong {
+    color: var(--text);
+}
+
+.dw-near {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dw-near-title {
+    margin: 0;
+    color: var(--text-label);
+    font-size: var(--lk-small);
+}
+
+.dw-near-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* ===== 4. SMALL PICTURES =====
+   Each is a 28 x 28 canvas, enlarged with sharp square pixels.
+   --dw-color is the colour of its class (set by js/lab/draw.js). */
+
+.dw-ink {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+
+.dw-near-item,
+.dw-mistake-ink {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--dw-color);
+    border-radius: 8px;
+    background: var(--surface-solid);
+}
+
+.dw-thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.dw-thumb {
+    position: relative;
+    display: block;
+    width: 44px;
+    height: 44px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--dw-color);
+    border-radius: 8px;
+    background: var(--surface-solid);
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+@media (hover: hover) {
+    .dw-thumb:hover {
+        border-color: var(--dw-color);
+        transform: translateY(-1px);
+    }
+}
+
+/* Pressed once: "press again to delete" */
+.dw-thumb-cross {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--danger) 82%, transparent);
+    color: var(--on-accent);
+}
+
+.dw-thumb.is-armed {
+    border-color: var(--danger);
+}
+
+.dw-thumb.is-armed .dw-thumb-cross {
+    display: flex;
+}
+
+/* A class's colour, next to its name */
+.dw-dot {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--dw-color);
+}
+
+/* ===== 5. THE GALLERY ===== */
+
+.dw-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.dw-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.dw-row:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.dw-row-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+/* The class's name: a text field you can type a new name into.
+   TODO(kit): kit.textInput would draw this field (it looks like the kit's select). */
+.dw-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 240px;
+    min-height: var(--lk-control-sm);
+    padding: 0 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-solid);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 700;
+    transition: border-color 0.2s ease;
+}
+
+.dw-name::placeholder {
+    color: var(--text);
+    opacity: 0.8;
+}
+
+@media (hover: hover) {
+    .dw-name:hover {
+        border-color: var(--accent-2);
+    }
+}
+
+.dw-count {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--lk-small);
+    white-space: nowrap;
+}
+
+.dw-row-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.dw-average {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+}
+
+.dw-average .dw-ink {
+    width: 64px;
+    height: 64px;
+    padding: 4px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface-solid);
+    opacity: 0.9;
+}
+
+.dw-average.is-empty .dw-ink {
+    opacity: 0.5;
+}
+
+.dw-empty {
+    align-self: center;
+    margin: 0;
+}
+
+.dw-average-caption {
+    color: var(--text-label);
+    font-size: var(--lk-mini);
+    line-height: 1.3;
+}
+
+/* ===== 6. MEASURING ===== */
+
+.dw-scores {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.dw-scores th,
+.dw-scores td {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+    vertical-align: bottom;
+}
+
+.dw-scores thead th {
+    color: var(--text-label);
+    font-size: var(--lk-small);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.dw-scores tbody th {
+    color: var(--text);
+    font-weight: 600;
+    text-align: left;
+}
+
+.dw-scores td {
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* A test score far below the training score */
+.dw-scores td.is-low {
+    color: var(--text-warning);
+}
+
+.dw-mistakes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.dw-mistake {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dw-mistake-text {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--lk-small);
+    line-height: 1.5;
+}
+
+.dw-mistake-text strong {
+    color: var(--text);
+}
+
+/* ===== 7. CALM MODE ===== */
+
+html.fx-motion-off .dw-thumb,
+html.fx-motion-off .dw-name {
+    transition: none;
+}
+
+html.fx-motion-off .dw-thumb:hover {
+    transform: none;
+}
