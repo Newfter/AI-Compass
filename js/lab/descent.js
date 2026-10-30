@@ -1568,8 +1568,10 @@
                     // a stuck ball can move again: the race can go on
                     if (state === "done") setState("paused");
                     tip.set("lab.descent.shaken");
-                } else {
+                } else if (anyOn()) {
                     tip.hide();
+                } else {
+                    tip.set("lab.descent.noBalls");      // with every ball off, that tip stays
                 }
                 render(1);
             }
