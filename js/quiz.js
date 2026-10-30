@@ -639,6 +639,7 @@
         bestStreak: 0,
         boxes: [],                    // My mistakes: the box of each question when the game started
         moves: null,                  // My mistakes: { cleared, up, back } in this game
+        dailyCounted: false,          // the daily challenge: is this game today's one try? (from its first answer)
         startedAt: 0,                 // when the current game started (Date.now())
         askedAt: 0,                   // when the current question appeared (Date.now())
         result: null,                 // filled in when the game ends
@@ -1336,7 +1337,9 @@
             enabled: () => state.screen === "question" && !busy,
             onArm: () => {
                 paintQuit();
-                A.announce(t("quiz.q.quitHint"), { region: live });
+                // A daily challenge that has started counts anyway (see countDailyTry)
+                const hint = state.mode === "daily" && state.dailyCounted ? "quiz.q.quitHintDaily" : "quiz.q.quitHint";
+                A.announce(t(hint), { region: live });
             },
             onDisarm: paintQuit,
             onConfirm: () => backToStart(),
@@ -1533,6 +1536,7 @@
         const oldPoints = state.points;
         state.points += record.points;
         state.answers[state.index] = record;
+        if (state.mode === "daily") countDailyTry();
 
         // Where is the focus? Keyboard users get moved on to the "Next" button.
         const active = document.activeElement;
@@ -1781,6 +1785,7 @@
         state.bestStreak = 0;
         state.boxes = questions.map((question) => (mode === "mistakes" ? saved.mistakes[question.key].box : 0));
         state.moves = { cleared: 0, up: 0, back: 0 };
+        state.dailyCounted = false;
         state.result = null;
         state.startedAt = Date.now();
         state.reviewFilter = "all";
@@ -1835,7 +1840,9 @@
                 saveBests();
             }
         } else if (mode === "daily") {
-            isNewDay = recordDaily(result);
+            // Today's try was counted at its first answer (see countDailyTry)
+            result.streak = saved.daily.streak;
+            isNewDay = state.dailyCounted;
         } else if (mode === "mistakes") {
             result.left = mistakesInfo().count;
         }
@@ -1868,26 +1875,28 @@
         });
     }
 
-    // The daily challenge counts once a day: the streak grows if it was played
-    // yesterday too, and simply starts again at 1 after a missed day.
-    // Returns false if this day was already counted (in another tab).
-    function recordDaily(result) {
-        const daily = saved.daily;
-        if (daily.last === state.day) {
-            result.streak = daily.streak;
-            return false;
+    // The daily challenge is one try a day, and the try starts with its FIRST answer, not
+    // at the end: every answer shows the right one, so quitting (or reloading the page)
+    // must not give a second go at the same questions. The streak grows if the challenge
+    // was played yesterday too, and simply starts again at 1 after a missed day.
+    // After that, each answer updates today's marks. ("daily.complete" is sent at the end.)
+    function countDailyTry() {
+        if (!state.dailyCounted) {
+            readSaved();                // another tab may have played today meanwhile
+            const daily = saved.daily;
+            if (daily.last === state.day) return;      // then that try is the one that counts
+            const gap = daily.last ? daysBetween(daily.last, state.day) : 0;
+            daily.streak = gap === 1 ? daily.streak + 1 : 1;
+            daily.best = Math.max(daily.best, daily.streak);
+            daily.days += 1;
+            daily.last = state.day;
+            state.dailyCounted = true;
         }
-        const gap = daily.last ? daysBetween(daily.last, state.day) : 0;
-        daily.streak = gap === 1 ? daily.streak + 1 : 1;
-        daily.best = Math.max(daily.best, daily.streak);
-        daily.days += 1;
-        daily.last = state.day;
-        daily.correct = result.correct;
-        daily.total = result.total;
-        daily.marks = result.marks;
+        const daily = saved.daily;
+        daily.correct = state.answers.filter((record) => record && record.correct).length;
+        daily.total = state.questions.length;
+        daily.marks = state.answers.map((record) => (record && record.correct ? "1" : "0")).join("");
         saveDaily();
-        result.streak = daily.streak;
-        return true;
     }
 
     // settings: { notice (a message under the modes), focusMode (the card to focus), forceFocus, reveal }
