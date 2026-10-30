@@ -152,7 +152,7 @@ window.AICompass.addTranslations({
         "quiz.q18.explain": "Подписей нет, поэтому модель сама ищет группы — это обучение без учителя. Обучению с учителем нужен правильный ответ (метка) для каждого примера, а обучение с подкреплением учится на наградах за свои действия.",
 
         "quiz.q19.text": "На всех фото волков, на которых училась модель, был снег. Теперь она называет волком хаски на снегу. Почему?",
-        "quiz.q19.o1": "Она решила, что снег означает «волк», а не что волк так выглядит",
+        "quiz.q19.o1": "Она запомнила, что снег — это «волк», а не то, как выглядит волк",
         "quiz.q19.o2": "Её камера не различает цвета, поэтому путает всех собак",
         "quiz.q19.o3": "Фото волков было слишком много, и она всегда отвечает «волк»",
         "quiz.q19.o4": "Снег скрывает детали, и никакая модель их не различит",
@@ -780,7 +780,7 @@ window.AICompass.addTranslations({
         "quiz.q58.o2": "Its first chatbot, ELIZA",
         "quiz.q58.o3": "Its first robot that could walk",
         "quiz.q58.o4": "Its first program to beat a chess champion",
-        "quiz.q58.explain": "John McCarthy and his colleagues used the term “artificial intelligence” in their 1955 proposal for the workshop, and the name stuck. ELIZA came ten years later, in 1966, and a computer beat the world chess champion only in 1997.",
+        "quiz.q58.explain": "John McCarthy and his colleagues used the term “artificial intelligence” in their 1955 proposal for the workshop, and the name stuck. ELIZA came ten years later, in 1966, and it was only in 1997 that a computer won a match against the world chess champion.",
 
         "quiz.q59.text": "In 2012, a neural network called AlexNet won a big photo-recognition contest by a wide margin. Why was that a turning point?",
         "quiz.q59.o1": "It helped start the deep learning boom",
@@ -808,7 +808,7 @@ window.AICompass.addTranslations({
         "quiz.q58.o2": "Первого чат-бота, ELIZA",
         "quiz.q58.o3": "Первого шагающего робота",
         "quiz.q58.o4": "Первую программу, обыгравшую чемпиона по шахматам",
-        "quiz.q58.explain": "Джон Маккарти и его коллеги использовали слова «искусственный интеллект» в заявке на семинар в 1955 году, и название прижилось. ELIZA появилась через десять лет, в 1966 году, а чемпиона мира по шахматам компьютер обыграл только в 1997-м.",
+        "quiz.q58.explain": "Джон Маккарти и его коллеги использовали слова «искусственный интеллект» в заявке на семинар в 1955 году, и название прижилось. ELIZA появилась через десять лет, в 1966 году, а выиграть матч у чемпиона мира по шахматам компьютер впервые смог только в 1997-м.",
 
         "quiz.q59.text": "В 2012 году нейросеть AlexNet с большим отрывом выиграла крупный конкурс по распознаванию фотографий. Почему это стало поворотным моментом?",
         "quiz.q59.o1": "Она помогла начать бум глубокого обучения",
