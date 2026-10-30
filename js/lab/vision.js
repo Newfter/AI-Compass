@@ -1811,7 +1811,9 @@
                 });
             }
 
-            function render() {
+            // Everything on screen follows the numbers. all: true paints the hidden views too
+            // (after a language switch, so that no text is left in the other language).
+            function render(all) {
                 if (destroyed) return;
                 cancelRender();
                 computeOutput();
@@ -1825,9 +1827,9 @@
                 clearButton.element.hidden = !drawMode;
                 if (!drawMode) drawHint.hide();
                 else if (!stroke) drawHint.show();
-                if (state.view === "filter") paintFilterView();
-                else if (state.view === "step") paintStep();
-                else paintNetwork();
+                if (all === true || state.view === "filter") paintFilterView();
+                if (all === true || state.view === "step") paintStep();
+                if (all === true || state.view === "cnn") paintNetwork();
                 paintPanel();
                 paintExplain();
                 checkChallenges();
@@ -1857,7 +1859,7 @@
                 language: function () {
                     kit.relabel(stage);
                     fillSentence(ideaLine, "lab.vision.ideaLine", terms);
-                    render();
+                    render(true);
                 },
                 theme: function () {
                     kit.colors.invalidate();
