@@ -47,7 +47,7 @@
     const DEFAULTS = { picture: "shapes", filter: "outline", edges: "same", relu: false, pool: false, view: "filter" };
     const DIVERGE_RANGE = 255;        // without ReLU, colours go from −255 (full red) to 255 (full cyan)
     const MAP_FLOOR = 0.1;            // a network map stays dark until it reaches 10% of its biggest possible answer
-    const STEP_LAYOUT = { gap: 34, caption: 24, margin: 12, most: 30, numbers: 22, uneven: 26, least: 8 };
+    const STEP_LAYOUT = { gap: 34, caption: 24, margin: 12, most: 30, numbers: 22, uneven: 26, least: 8, side: 10 };
     // The "Try this" goals
     const CHECK = {
         edgeRatio: 4,                 // 1: vertical edges answer more than 4 times the horizontal ones...
@@ -647,14 +647,35 @@
     }
 
     // Where everything goes in the step-by-step canvas, for a canvas `width` px wide: two grids
-    // with numbers in the cells if they fit, else the picture with numbers and a smaller map,
-    // else (a phone) two small grids and the numbers only in the equation below. The picture
-    // has a ring of one empty cell around it, for the window where it sticks out at the border.
+    // side by side with numbers in the cells if they fit, else the picture with numbers and a
+    // smaller map; on a phone (cells under 10 px side by side) the map goes under the picture,
+    // both bigger, and the numbers are only in the equation below. The picture has a ring of
+    // one empty cell around it, for the window where it sticks out at the border.
     function stepLayout(width) {
         const S = STEP_LAYOUT;
         const ringed = COARSE + 2;
         const room = width - S.gap - 2 * S.margin;
         let cellIn = Math.floor(room / (ringed + COARSE));
+        if (cellIn < S.side) {
+            const cell = Math.max(4, Math.min(S.most, Math.floor((width - 2 * S.margin) / ringed)));
+            const top = S.caption + cell;
+            const outTop = top + (COARSE + 1) * cell + S.gap + S.caption;
+            const x = Math.max(S.margin, Math.floor((width - ringed * cell) / 2)) + cell;
+            return {
+                stacked: true,
+                cellIn: cell,
+                cellOut: cell,
+                inX: x,
+                outX: x,
+                top: top,
+                outTop: outTop,
+                inCaptionY: S.caption / 2 + 2,
+                outCaptionY: outTop - S.caption / 2,
+                height: outTop + COARSE * cell + S.margin,
+                numbersIn: cell >= S.numbers,
+                numbersOut: cell >= S.uneven
+            };
+        }
         let cellOut = cellIn;
         if (cellIn < S.numbers) {
             const big = Math.min(S.uneven, Math.floor((room - COARSE * S.least) / ringed));
@@ -663,17 +684,21 @@
                 cellOut = Math.floor((room - ringed * big) / COARSE);
             }
         }
-        cellIn = Math.max(4, Math.min(S.most, cellIn));
+        cellIn = Math.min(S.most, cellIn);
         cellOut = Math.max(4, Math.min(S.most, cellOut));
         const used = ringed * cellIn + S.gap + COARSE * cellOut;
         const left = Math.max(S.margin, Math.floor((width - used) / 2));
         const top = S.caption + cellIn;
         return {
+            stacked: false,
             cellIn: cellIn,
             cellOut: cellOut,
             inX: left + cellIn,
             outX: left + ringed * cellIn + S.gap,
             top: top,
+            outTop: top,
+            inCaptionY: S.caption / 2 + 2,
+            outCaptionY: S.caption / 2 + 2,
             height: top + Math.max((COARSE + 1) * cellIn, COARSE * cellOut) + S.margin,
             numbersIn: cellIn >= S.numbers,
             numbersOut: cellOut >= S.uneven
@@ -697,8 +722,8 @@
         context.textBaseline = "middle";
         const outCaption = [t("lab.vision.stepOut", { w: map.w, h: map.h }), t("lab.vision.stepOutShort", { w: map.w, h: map.h })]
             .filter(function (text, i) { return i === 1 || context.measureText(text).width <= view.width - L.outX; })[0];
-        context.fillText(t("lab.vision.stepIn"), L.inX, STEP_LAYOUT.caption / 2 + 2);
-        context.fillText(outCaption, L.outX, STEP_LAYOUT.caption / 2 + 2);
+        context.fillText(t("lab.vision.stepIn"), L.inX, L.inCaptionY);
+        context.fillText(outCaption, L.outX, L.outCaptionY);
 
         // The picture's cells, with their numbers when they fit
         const small = kit.font(11, 600);
@@ -719,7 +744,7 @@
         // The map's frame (16 x 16: a "valid" map sits one cell in from each side), then its cells
         // up to the current one
         context.fillStyle = kit.alpha(c.text, 0.05);
-        context.fillRect(L.outX, L.top, COARSE * L.cellOut, COARSE * L.cellOut);
+        context.fillRect(L.outX, L.outTop, COARSE * L.cellOut, COARSE * L.cellOut);
         const diverging = !s.relu;
         let showOut = L.numbersOut;
         if (showOut) {
@@ -732,10 +757,10 @@
             const y = Math.floor(i / map.w) + shift;
             const value = s.shown[i];
             context.fillStyle = cellColor(value, diverging);
-            context.fillRect(L.outX + x * L.cellOut, L.top + y * L.cellOut, L.cellOut, L.cellOut);
+            context.fillRect(L.outX + x * L.cellOut, L.outTop + y * L.cellOut, L.cellOut, L.cellOut);
             if (showOut) {
                 context.fillStyle = inkFor(value, diverging);
-                context.fillText(num(Math.round(value)), L.outX + (x + 0.5) * L.cellOut, L.top + (y + 0.5) * L.cellOut + 0.5);
+                context.fillText(num(Math.round(value)), L.outX + (x + 0.5) * L.cellOut, L.outTop + (y + 0.5) * L.cellOut + 0.5);
             }
         }
 
@@ -748,24 +773,35 @@
             context.lineTo(L.inX + k * L.cellIn + 0.5, L.top + COARSE * L.cellIn);
             context.moveTo(L.inX, L.top + k * L.cellIn + 0.5);
             context.lineTo(L.inX + COARSE * L.cellIn, L.top + k * L.cellIn + 0.5);
-            context.moveTo(L.outX + k * L.cellOut + 0.5, L.top);
-            context.lineTo(L.outX + k * L.cellOut + 0.5, L.top + COARSE * L.cellOut);
-            context.moveTo(L.outX, L.top + k * L.cellOut + 0.5);
-            context.lineTo(L.outX + COARSE * L.cellOut, L.top + k * L.cellOut + 0.5);
+            context.moveTo(L.outX + k * L.cellOut + 0.5, L.outTop);
+            context.lineTo(L.outX + k * L.cellOut + 0.5, L.outTop + COARSE * L.cellOut);
+            context.moveTo(L.outX, L.outTop + k * L.cellOut + 0.5);
+            context.lineTo(L.outX + COARSE * L.cellOut, L.outTop + k * L.cellOut + 0.5);
         }
         context.stroke();
 
-        // The arrow from the picture (and its ring) to the map
-        const arrowY = L.top + (COARSE * Math.min(L.cellIn, L.cellOut)) / 2;
-        const arrowX = L.inX + (COARSE + 1) * L.cellIn + 8;
+        // The arrow from the picture (and its ring) to the map: across, or down on a phone
+        const reach = STEP_LAYOUT.gap - 16;
         context.strokeStyle = c.muted;
         context.lineWidth = 2;
         context.beginPath();
-        context.moveTo(arrowX, arrowY);
-        context.lineTo(arrowX + STEP_LAYOUT.gap - 16, arrowY);
-        context.moveTo(arrowX + STEP_LAYOUT.gap - 22, arrowY - 5);
-        context.lineTo(arrowX + STEP_LAYOUT.gap - 16, arrowY);
-        context.lineTo(arrowX + STEP_LAYOUT.gap - 22, arrowY + 5);
+        if (L.stacked) {
+            const ax = L.inX + (COARSE * L.cellIn) / 2;
+            const ay = L.top + (COARSE + 1) * L.cellIn + 8;
+            context.moveTo(ax, ay);
+            context.lineTo(ax, ay + reach);
+            context.moveTo(ax - 5, ay + reach - 6);
+            context.lineTo(ax, ay + reach);
+            context.lineTo(ax + 5, ay + reach - 6);
+        } else {
+            const ax = L.inX + (COARSE + 1) * L.cellIn + 8;
+            const ay = L.top + (COARSE * Math.min(L.cellIn, L.cellOut)) / 2;
+            context.moveTo(ax, ay);
+            context.lineTo(ax + reach, ay);
+            context.moveTo(ax + reach - 6, ay - 5);
+            context.lineTo(ax + reach, ay);
+            context.lineTo(ax + reach - 6, ay + 5);
+        }
         context.stroke();
 
         // The window on the picture and the pixel of the map it makes. At the border the window
@@ -803,7 +839,7 @@
         context.strokeStyle = c.accent;
         context.lineWidth = 3;
         context.strokeRect(L.inX + (cx - 1) * L.cellIn, L.top + (cy - 1) * L.cellIn, 3 * L.cellIn, 3 * L.cellIn);
-        context.strokeRect(L.outX + cx * L.cellOut - 1, L.top + cy * L.cellOut - 1, L.cellOut + 2, L.cellOut + 2);
+        context.strokeRect(L.outX + cx * L.cellOut - 1, L.outTop + cy * L.cellOut - 1, L.cellOut + 2, L.cellOut + 2);
         context.restore();
         return L;
     }
@@ -1548,9 +1584,9 @@
                 if (x >= L.inX && x < L.inX + COARSE * L.cellIn && y >= L.top && y < L.top + COARSE * L.cellIn) {
                     cx = Math.floor((x - L.inX) / L.cellIn);
                     cy = Math.floor((y - L.top) / L.cellIn);
-                } else if (x >= L.outX && x < L.outX + COARSE * L.cellOut && y >= L.top && y < L.top + COARSE * L.cellOut) {
+                } else if (x >= L.outX && x < L.outX + COARSE * L.cellOut && y >= L.outTop && y < L.outTop + COARSE * L.cellOut) {
                     cx = Math.floor((x - L.outX) / L.cellOut);
-                    cy = Math.floor((y - L.top) / L.cellOut);
+                    cy = Math.floor((y - L.outTop) / L.cellOut);
                 }
                 if (cx < 0) return;
                 const size = stepSize();
