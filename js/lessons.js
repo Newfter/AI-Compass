@@ -80,6 +80,8 @@
    data-fid="..." (after a language change the focus comes back to
    the button with the same data-fid); a lab that uses the arrow keys
    calls event.preventDefault() (then ← → don't change the lesson).
+   A focused box that scrolls sideways (overflow-x: auto, like the
+   wide table of lesson 9 on a phone) keeps ← → for its scrolling.
 
    HOW TO ADD A LESSON (the same recipe is in README.md, "Add a lesson")
    1. Section 2: add an entry at the end of LESSONS with the next
@@ -2736,17 +2738,27 @@
         }
     });
 
+    // Is the focus in a box of the lesson that scrolls sideways (a wide table on a phone)?
+    // There ← and → scroll that box, as browsers do, instead of changing the lesson.
+    // (The reader's own scrolling area, which scrolls up and down, is not such a box.)
+    function inSidewaysScroll(element) {
+        for (let box = element; box && box !== parts.scroll && box !== readerEl && readerEl.contains(box); box = box.parentElement) {
+            if (box.scrollWidth > box.clientWidth + 1 && /auto|scroll/.test(getComputedStyle(box).overflowX)) return true;
+        }
+        return false;
+    }
+
     // ← and → go to the previous / next lesson. (Esc and Tab are handled by core.)
     document.addEventListener("keydown", function (event) {
         if (!reader.open || A.overlays.top() !== READER_ID) return;
         if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
         if (event.defaultPrevented) return;   // a mini-lab moved around its own grid with them
-        // Only when the focus is in the reader (or lost on the page body),
-        // and never while typing or moving a slider
+        // Only when the focus is in the reader (or lost on the page body), and never
+        // while typing, moving a slider or scrolling a wide box sideways
         const target = event.target;
         if (!readerEl.contains(target) && target !== document.body && target !== document.documentElement) return;
-        if (A.dom.isTyping(target)) return;
+        if (A.dom.isTyping(target) || inSidewaysScroll(target)) return;
         event.preventDefault();
         goRelative(event.key === "ArrowLeft" ? -1 : 1);
     });
