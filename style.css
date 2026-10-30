@@ -1371,6 +1371,13 @@ html.fx-motion-off *::after {
     transition-duration: 0s !important;
 }
 
+/* No lift on hover. With the transitions off, a button lifted from under a pointer
+   that rests on its bottom edge drops back at once, lifts again, and flickers. */
+html.fx-motion-off .btn-primary:hover,
+html.fx-motion-off .btn-ghost:hover {
+    transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
     html {
         scroll-behavior: auto;
