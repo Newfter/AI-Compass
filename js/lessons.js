@@ -1948,7 +1948,6 @@
                 showError();   // the file ran but didn't define this lab
                 return;
             }
-            const focusWasHere = shell.view.contains(document.activeElement);
             shell.view.innerHTML = "";
             try {
                 lab.build(shell.view, labAPI(n, shell.live));
@@ -1960,11 +1959,6 @@
             shown = lab;
             shownFileLab = { lab: lab, host: shell.view };
             setState("ready");
-            // After "Try again" the focus was on that button, which is gone now
-            if (focusWasHere) {
-                const title = parts.article.querySelector("#lsn-lab-title");
-                if (title) title.focus({ preventScroll: true });
-            }
         }
 
         function load() {
@@ -1981,8 +1975,14 @@
             });
         }
 
+        // "Try again": the button is about to go away, so the focus waits on the lab's
+        // title (screen readers hear the loading message, then the lab is there).
+        // A tap doesn't always focus the button, so the title gets the focus either way.
         box.onclick = function (event) {
-            if (event.target.closest("[data-lab-retry]")) load();
+            if (!event.target.closest("[data-lab-retry]")) return;
+            const title = parts.article.querySelector("#lsn-lab-title");
+            if (title) title.focus({ preventScroll: true });
+            load();
         };
 
         if (fileLabs[name]) build();
