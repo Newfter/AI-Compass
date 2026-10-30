@@ -165,7 +165,7 @@ window.AICompass.addTranslations({
         // What's happening?
         "lab.draw.step1": "Your drawing becomes a 28 × 28 grid: <strong>{pixels}</strong> numbers between 0 and 1. Right now <strong>{ink}</strong> of them have ink.",
         "lab.draw.step2": "Nearest neighbours compares those numbers with every example (there are <strong>{examples}</strong>) and finds the <strong>{k}</strong> most similar ones. They vote.",
-        "lab.draw.step3": "The neural network multiplies the numbers by its weights (<strong>{weights}</strong> of them) and adds them up, layer by layer, to get a score for each class. Softmax turns the scores into percentages that add up to 100%.",
+        "lab.draw.step3": "The neural network multiplies the numbers by its weights (<strong>{weights}</strong> of them) and adds them up, layer by layer, to get a score for each class. Softmax turns the scores into percentages that add up to 100% (before rounding).",
         "lab.draw.step4": "Training nudges the weights after every 16 examples, so that the right scores grow. Loss now: <strong>{loss}</strong>.",
         "lab.draw.step5": "A model can only learn what its examples show. If every sun you teach has rays, a sun without rays may fool it.",
         "lab.draw.realWorld": "Real world: handwriting keyboards on phones, apps that recognise plants and machines that read postcodes on letters all learn this way. It is called {supervised}: {training} on a {dataset} of examples that people have labelled. Real models see far more examples (the MNIST set of handwritten digits alone has 70,000) and use a much bigger {network}.",
@@ -340,7 +340,7 @@ window.AICompass.addTranslations({
         // Что здесь происходит?
         "lab.draw.step1": "Твой рисунок превращается в сетку 28 × 28: это <strong>{pixels}</strong> числа от 0 до 1. Сейчас чернила есть в <strong>{ink}</strong> из них.",
         "lab.draw.step2": "Ближайшие соседи сравнивают эти числа с каждым примером (всего примеров: <strong>{examples}</strong>) и находят самые похожие (их <strong>{k}</strong>). Они и голосуют.",
-        "lab.draw.step3": "Нейросеть умножает числа на свои веса (их <strong>{weights}</strong>) и складывает — слой за слоем, — чтобы получить оценку для каждого класса. Softmax превращает оценки в проценты, которые в сумме дают 100%.",
+        "lab.draw.step3": "Нейросеть умножает числа на свои веса (их <strong>{weights}</strong>) и складывает — слой за слоем, — чтобы получить оценку для каждого класса. Softmax превращает оценки в проценты, которые в сумме дают 100% (до округления).",
         "lab.draw.step4": "Обучение подправляет веса после каждых 16 примеров, чтобы правильные оценки росли. Ошибка сейчас: <strong>{loss}</strong>.",
         "lab.draw.step5": "Модель может выучить только то, что есть в её примерах. Если у всех твоих солнц есть лучи, солнце без лучей может её обмануть.",
         "lab.draw.realWorld": "В жизни: так учатся клавиатуры телефонов, которые понимают рукописный ввод, приложения, которые узнают растения, и машины, которые читают индексы на конвертах. Это называется {supervised}: {training} идёт на {dataset} — примерах, которые подписали люди. Настоящие модели видят куда больше примеров (в одном только наборе рукописных цифр MNIST их 70 000) и используют гораздо более крупную {network}.",
