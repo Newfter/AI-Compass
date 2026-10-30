@@ -76,6 +76,9 @@
         l2: 0.003           // a small penalty on big weights ("L2"): they stay finite and comparable
     };
     const WATCH_RATE = 60;              // steps per second with "Show training" on (300 steps in 5 s)
+    const PANEL_EVERY = 125;            // ms: while a training is watched, the picture and the loss change
+                                        // every frame, but the table, the weights and the explanation only
+                                        // 8 times a second (as fast as anyone reads; it spares slow phones)
     const TRAINING_FLASH = 350;         // ms of the short "Training…" state after a change
 
     // ----- The decision and the scorecard -----
@@ -902,6 +905,7 @@
             let places = [];                    // each applicant's place on the canvas
             let layout = null;
             let saysText = "";                  // the scorecard's sentences, as last written
+            let panelsAt = 0;                   // when the panels were last written during a watched training
 
             // ----- The page: kit parts, plus the scorecard table and texts -----
             const ui = kit.layout(stage, { side: true });
@@ -1030,7 +1034,7 @@
             realPanel.appendChild(realList);
             ui.bottom.append(explain.element, challenges.element, realPanel);
 
-            const loop = kit.loop({ rate: WATCH_RATE, update: watchStep, draw: render });
+            const loop = kit.loop({ rate: WATCH_RATE, update: watchStep, draw: renderTraining });
             scene.onResize(function () {
                 layout = null;              // the dots are placed again for the new size
                 render();
@@ -1129,6 +1133,7 @@
                 if (phase === "running") {
                     loop.stop();
                     setPhase("paused");
+                    render();                       // the panels catch up with the picture
                 } else if (phase === "paused") {
                     setPhase("running");
                     loop.start();
@@ -1196,7 +1201,8 @@
                 }
                 loop.stop();
                 setPhase("paused");
-                loop.step();                 // one watchStep() and one render()
+                watchStep();
+                if (phase === "paused") render();      // (the last step finishes, and finish() renders)
             }
 
             function setWatching(on) {
@@ -1401,6 +1407,19 @@
                     challenges.check({ trained: true, preset: preset, columns: columns, betterLabels: betterLabels, card: card, gaps: gap });
                 }
                 chart.draw();
+            }
+
+            // A frame of the watched training: the picture and the loss every time, the rest a
+            // few times a second
+            function renderTraining() {
+                const now = performance.now();
+                if (now - panelsAt >= PANEL_EVERY) {
+                    panelsAt = now;
+                    render();
+                } else {
+                    renderPicture();
+                    chart.draw();
+                }
             }
 
             // Only the picture and the pair in words (the pointer moved to another applicant)
