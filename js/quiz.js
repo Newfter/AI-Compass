@@ -283,37 +283,6 @@
         return A.format.date(dayDate(day).getTime(), { day: "numeric", month: "long" });
     }
 
-    // ----- A random that repeats -----
-    // The same text always gives the same "random" numbers, on every computer. The daily
-    // challenge uses the date as its text, so everyone gets the same questions that day.
-    // (A hash of the text starts the small "mulberry32" generator; numbers from 0 to 1.)
-    // TODO(core): A.util.seeded(text) would let other features use it too
-    function seededRandom(seedText) {
-        let seed = 2166136261;
-        for (let i = 0; i < seedText.length; i++) {
-            seed = Math.imul(seed ^ seedText.charCodeAt(i), 16777619);
-        }
-        return function () {
-            seed = (seed + 0x6D2B79F5) | 0;
-            let x = seed;
-            x = Math.imul(x ^ (x >>> 15), x | 1);
-            x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
-            return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-        };
-    }
-
-    // A shuffled copy of a list, with a given random (A.util.shuffle always uses Math.random)
-    function shuffleWith(list, random) {
-        const copy = list.slice();
-        for (let i = copy.length - 1; i > 0; i--) {
-            const j = Math.floor(random() * (i + 1));
-            const temp = copy[i];
-            copy[i] = copy[j];
-            copy[j] = temp;
-        }
-        return copy;
-    }
-
     // ----- The texts of the questions -----
     // They are in a file of their own, loaded the first time the quiz is needed.
     function textsLoaded() {
@@ -558,7 +527,7 @@
         const need = Object.assign({}, mix);
         const perGroup = {};
         const chosen = [];
-        let pool = shuffleWith(QUESTIONS, random);
+        let pool = A.util.shuffle(QUESTIONS, random);
 
         while (chosen.length < size && pool.length) {
             // The difficulty that is needed most now (on a tie, the easier one)
@@ -594,7 +563,7 @@
     // Myth or fact: statements that weren't in the last game first, and about as many
     // myths as facts (so that one answer can't win the game)
     function pickMyths(random, avoid) {
-        const ordered = shuffleWith(MYTHS, random).sort((a, b) =>
+        const ordered = A.util.shuffle(MYTHS, random).sort((a, b) =>
             (avoid.indexOf(a.key) === -1 ? 0 : 1) - (avoid.indexOf(b.key) === -1 ? 0 : 1));
         const size = Math.min(MYTH_SIZE, MYTHS.length);
         const most = Math.ceil(size / 2);
@@ -615,13 +584,13 @@
 
     // Lesson review: every question of the lesson, from easy to hard
     function pickLesson(lesson, random) {
-        return easyFirst(shuffleWith(QUESTIONS.filter((question) => question.lesson === lesson), random));
+        return easyFirst(A.util.shuffle(QUESTIONS.filter((question) => question.lesson === lesson), random));
     }
 
     // My mistakes: the questions due today, those in the lowest box first (they need it most)
     function pickMistakes(random) {
         const today = dayKey();
-        return shuffleWith(Object.keys(saved.mistakes), random)
+        return A.util.shuffle(Object.keys(saved.mistakes), random)
             .filter((key) => saved.mistakes[key].due <= today)
             .sort((a, b) => saved.mistakes[a].box - saved.mistakes[b].box)
             .slice(0, MISTAKES_SIZE)
@@ -1763,7 +1732,7 @@
 
         const today = dayKey();
         // The daily challenge: a random that repeats, started from the date
-        const random = mode === "daily" ? seededRandom("daily " + today) : Math.random;
+        const random = mode === "daily" ? A.util.seeded("daily " + today) : Math.random;
         const recent = lastGame[mode === "timed" ? "classic" : mode] || [];
         let questions;
         if (mode === "daily") questions = pickBalanced(DAILY_SIZE, DAILY_MIX, random, []);
@@ -1780,7 +1749,7 @@
         state.questions = questions;
         state.optionOrders = questions.map((question) =>
             question.type === "choice"
-                ? shuffleWith(Array.from({ length: CHOICE_OPTIONS }, (value, option) => option), random)
+                ? A.util.shuffle(Array.from({ length: CHOICE_OPTIONS }, (value, option) => option), random)
                 : [0, 1]
         );
         state.index = 0;

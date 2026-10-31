@@ -58,8 +58,6 @@
        and aria-activedescendant tells screen readers which result
        is selected in the "listbox".
        ========================================================= */
-    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || "");
-
     mount.innerHTML =
         '<div class="cp-overlay" hidden>' +
             '<div class="cp-dialog" role="dialog" aria-modal="true" aria-labelledby="cp-title">' +
@@ -978,7 +976,7 @@
         button.setAttribute("aria-expanded", "false");
         // Show the Mac shortcut on Macs
         const key = button.querySelector(".palette-kbd");
-        if (key && isMac) key.textContent = "⌘ K";
+        if (key && A.isMac) key.textContent = "⌘ K";
     });
 
     // New language: redraw the results in place, keeping the search text and selection

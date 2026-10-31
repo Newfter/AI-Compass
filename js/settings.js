@@ -140,9 +140,8 @@
         return typeof value === "string" && value.length <= VOICE_NAME_MAX;
     }
 
-    // Macs (and iPhones, iPads) write ⌘ where other computers write Ctrl.
-    // js/palette.js asks the same question.  TODO(core): share it as A.platform.isMac
-    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || "");
+    // Macs (and iPhones, iPads) write ⌘ where other computers write Ctrl (A.isMac)
+    const isMac = A.isMac;
 
     // 1.125 -> "112.5%" (Russian: "112,5%")
     function percentText(scale) {

@@ -44,15 +44,15 @@
     5  A.motion.ok() / reduced / calm / setCalm(on) / toggleCalm() / onChange(callback) / ease
        A.reducedMotion (the device setting only)
        A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value, running }
-    6  A.util.clamp / lerp / easeOut / random / randomInt / pick / shuffle /
-              sampleWeighted / debounce / frameThrottle / attempt(fn, fallback)
+    6  A.util.clamp / lerp / easeOut / random / randomInt / pick / shuffle(list, random) /
+              seeded(text) / sampleWeighted / debounce / frameThrottle / attempt(fn, fallback)
        A.dom.focusable / focusHeading / pauseScrollAnchoring / replay / fromHTML /
              setText / setAttr / setHidden (write only what changed) / isTyping(element)
        A.confirmPress(button, { onArm, onDisarm, onConfirm, enabled, timeout })
            -> { armed, disarm() }: a button that needs a second press
        A.colors.parse / rgb(cssName) / rgba(color, alpha) / mix(a, b, amount)
        A.canvas.pixelRatio / fit / roundRect   A.cssVar(name)   A.escapeHTML(text)
-    7  A.breakpoints   A.queries   A.media(query)   A.onMedia(query, callback)
+    7  A.breakpoints   A.queries   A.isMac   A.media(query)   A.onMedia(query, callback)
        A.whenVisible(element, callback, options)   A.onResize(callback, options)
        A.onPixelRatioChange(callback)   A.layout.px / navHeight
     8  A.announce(text, options)
@@ -698,16 +698,36 @@
             return list[Math.floor(Math.random() * list.length)];
         },
 
-        // A shuffled copy of a list (the Fisher–Yates shuffle)
-        shuffle: function (list) {
+        // A shuffled copy of a list (the Fisher–Yates shuffle). random: where the
+        // random numbers come from (Math.random, or a seeded() one)
+        shuffle: function (list, random) {
+            const next = random || Math.random;
             const copy = list.slice();
             for (let i = copy.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
+                const j = Math.floor(next() * (i + 1));
                 const temp = copy[i];
                 copy[i] = copy[j];
                 copy[j] = temp;
             }
             return copy;
+        },
+
+        // A random that repeats: the same text always gives the same numbers (0 to 1),
+        // on every computer. The daily challenge uses the date as its text, so everyone
+        // gets the same questions that day; a worksheet and its answer key agree.
+        // (A hash of the text, FNV-1a, starts the small "mulberry32" generator.)
+        seeded: function (text) {
+            let seed = 2166136261;
+            for (let i = 0; i < text.length; i++) {
+                seed = Math.imul(seed ^ text.charCodeAt(i), 16777619);
+            }
+            return function () {
+                seed = (seed + 0x6D2B79F5) | 0;
+                let x = seed;
+                x = Math.imul(x ^ (x >>> 15), x | 1);
+                x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+                return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+            };
         },
 
         // A random position in a list of weights: [1, 3] returns 1 three times as often as 0
@@ -973,6 +993,9 @@
         phone: "(max-width: " + breakpoints.phone + "px)",
         wideMenu: "(min-width: " + (breakpoints.menu + 1) + "px)"
     };
+
+    // Macs (and iPhones, iPads) write ⌘ where other computers write Ctrl
+    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || "");
 
     const mediaLists = {};
 
@@ -2268,6 +2291,7 @@
         // 7. screen
         breakpoints: breakpoints,
         queries: queries,
+        isMac: isMac,
         media: media,
         onMedia: onMedia,
         whenVisible: whenVisible,

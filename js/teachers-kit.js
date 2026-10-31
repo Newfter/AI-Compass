@@ -112,38 +112,12 @@
         return list.slice().sort(function (a, b) { return a.localeCompare(b, A.lang); });
     }
 
-    // A number from a text, always the same for the same text (FNV-1a)
-    function hashOf(text) {
-        let hash = 2166136261;
-        for (let i = 0; i < text.length; i++) {
-            hash ^= text.charCodeAt(i);
-            hash = Math.imul(hash, 16777619);
-        }
-        return hash >>> 0;
-    }
-
     // 0, 1, ... count-1 in a mixed order that is always the same for the same
     // seed text (so a printed worksheet and its answer key always agree)
-    // TODO(core): js/quiz.js has the same generator (seededRandom); an
-    // A.util.seeded(text) in core would serve both
     function seededOrder(count, seedText) {
-        let seed = hashOf(seedText) || 1;
-        function random() {                  // "mulberry32": a tiny random number generator
-            seed = (seed + 0x6D2B79F5) >>> 0;
-            let x = seed;
-            x = Math.imul(x ^ (x >>> 15), x | 1);
-            x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
-            return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-        }
         const order = [];
         for (let i = 0; i < count; i++) order.push(i);
-        for (let i = count - 1; i > 0; i--) {
-            const j = Math.floor(random() * (i + 1));
-            const keep = order[i];
-            order[i] = order[j];
-            order[j] = keep;
-        }
-        return order;
+        return A.util.shuffle(order, A.util.seeded(seedText));
     }
 
     // The options of a quiz question on paper: a multiple-choice question gets
