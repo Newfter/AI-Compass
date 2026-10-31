@@ -99,8 +99,8 @@ window.AICompass.content.set("teachers-plans", {
                     items: [
                         ["A photo app that finds every picture of your dog", 0],
                         ["A traffic light that changes every 60 seconds", 1],
-                        ["A keyboard that suggests your next word", 0],
                         ["A washing machine that runs a 40-minute programme", 1],
+                        ["A keyboard that suggests your next word", 0],
                         ["A map app that predicts how long your trip will take in traffic", 0],
                         ["A spreadsheet that adds up a column of numbers", 1]
                     ]
@@ -186,8 +186,8 @@ window.AICompass.content.set("teachers-plans", {
                     items: [
                         ["Фотоприложение находит все снимки твоей собаки", 0],
                         ["Светофор переключается каждые 60 секунд", 1],
-                        ["Клавиатура подсказывает следующее слово", 0],
                         ["Стиральная машина выполняет программу на 40 минут", 1],
+                        ["Клавиатура подсказывает следующее слово", 0],
                         ["Навигатор предсказывает, сколько времени займёт дорога с учётом пробок", 0],
                         ["Электронная таблица складывает столбец чисел", 1]
                     ]
@@ -689,8 +689,8 @@ window.AICompass.content.set("teachers-plans", {
                     type: "sort",
                     groups: ["A good use", "A bad idea"],
                     items: [
-                        ["Brainstorming ideas for a story", 0],
                         ["Copying its answer into your homework", 1],
+                        ["Brainstorming ideas for a story", 0],
                         ["Asking it to explain a hard topic in a new way", 0],
                         ["Trusting a fact without checking it", 1],
                         ["Practising a foreign language", 0],
@@ -783,8 +783,8 @@ window.AICompass.content.set("teachers-plans", {
                     type: "sort",
                     groups: ["Хорошая идея", "Плохая идея"],
                     items: [
-                        ["Придумать идеи для рассказа", 0],
                         ["Скопировать ответ в домашнее задание", 1],
+                        ["Придумать идеи для рассказа", 0],
                         ["Попросить объяснить сложную тему по-новому", 0],
                         ["Поверить факту без проверки", 1],
                         ["Потренировать иностранный язык", 0],
@@ -1054,8 +1054,8 @@ window.AICompass.content.set("teachers-plans", {
                     groups: ["Fine to ask a chatbot", "Keep it private"],
                     items: [
                         ["“How do volcanoes work?”", 0],
-                        ["Your password", 1],
                         ["“Can you explain fractions with an example?”", 0],
+                        ["Your password", 1],
                         ["Your home address", 1],
                         ["Ideas for a birthday party", 0],
                         ["A private photo of a friend", 1]
@@ -1142,8 +1142,8 @@ window.AICompass.content.set("teachers-plans", {
                     groups: ["Можно спросить у чат-бота", "Это личное"],
                     items: [
                         ["«Как устроены вулканы?»", 0],
-                        ["Твой пароль", 1],
                         ["«Объясни дроби на примере»", 0],
+                        ["Твой пароль", 1],
                         ["Твой домашний адрес", 1],
                         ["Идеи для дня рождения", 0],
                         ["Личное фото друга", 1]

@@ -270,8 +270,8 @@ window.AICompass.content.set("teachers-plans", {
                     items: [
                         ["Ordering your favourite pizza again", 1],
                         ["Trying a café that just opened", 0],
-                        ["Listening to a playlist of songs you already love", 1],
                         ["Taking a new route to school to see if it is faster", 0],
+                        ["Listening to a playlist of songs you already love", 1],
                         ["Playing the game level you always win", 1],
                         ["Going to a taster session for a new sport", 0]
                     ]
@@ -366,8 +366,8 @@ window.AICompass.content.set("teachers-plans", {
                     items: [
                         ["Снова заказать любимую пиццу", 1],
                         ["Сходить в только что открывшееся кафе", 0],
-                        ["Слушать плейлист из любимых песен", 1],
                         ["Поехать в школу новой дорогой: вдруг она быстрее", 0],
+                        ["Слушать плейлист из любимых песен", 1],
                         ["Играть уровень, который всегда проходишь", 1],
                         ["Сходить на пробное занятие в новую секцию", 0]
                     ]
@@ -1056,8 +1056,8 @@ window.AICompass.content.set("teachers-plans", {
                         ["“Give me a hint for the next step, then check my answer.”", 0],
                         ["“Write my history essay for tomorrow.”", 1],
                         ["“Quiz me on these words before my test.”", 0],
-                        ["“Solve all my maths homework and show only the answers.”", 1],
                         ["“Here is my draft: what could I explain more clearly?”", 0],
+                        ["“Solve all my maths homework and show only the answers.”", 1],
                         ["“Rewrite this article so that nobody notices it's copied.”", 1]
                     ]
                 },
@@ -1153,8 +1153,8 @@ window.AICompass.content.set("teachers-plans", {
                         ["«Дай подсказку к следующему шагу, а потом проверь мой ответ»", 0],
                         ["«Напиши за меня сочинение по истории на завтра»", 1],
                         ["«Погоняй меня по этим словам перед контрольной»", 0],
-                        ["«Реши всю домашку по математике и покажи только ответы»", 1],
                         ["«Вот мой черновик: что можно объяснить понятнее?»", 0],
+                        ["«Реши всю домашку по математике и покажи только ответы»", 1],
                         ["«Перепиши эту статью, чтобы никто не заметил, что она списана»", 1]
                     ]
                 },
