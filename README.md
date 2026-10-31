@@ -55,7 +55,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/lessons.js` | The lessons: progress panel, lesson cards, the lesson reader, the mini-labs, reading aloud and the certificate. |
 | `js/lab.js` | The AI Lab: "Teach the machine" (a tiny neural network) and the "Next-word predictor" (a tiny language model). |
 | `js/quiz.js` | The AI Challenge: questions, the timer, points, streaks, ranks and the best score. |
-| `js/glossary.js` | The glossary: search with "did you mean?", categories, the A–Z strip, term cards and a random term. |
+| `js/glossary.js` | The glossary: the term of the day, search with "did you mean?", categories, the A–Z strip, term cards, a random term, and the flashcard boxes ("{n} cards to study today"). |
+| `js/glossary-cards.js` | The flashcards window. It is loaded the first time someone studies. |
 | `js/timeline.js` | "A Short History of AI": the era chips and the line that fills as you scroll. |
 | `js/assistant.js` | Compass Bot, the chat helper in the corner. |
 | `js/palette.js` | The Ctrl+K search window. |
@@ -169,6 +170,8 @@ Nothing leaves the browser: these events are only for features on the same page 
 | AI Lab | `lab.use` | `{ exp }` | a tab is chosen, training starts, or auto-write starts |
 | | `lab.milestone` | `{ exp, kind, ... }` | the classifier has learned (`kind: "learned"`, `epochs`) or the predictor was taught (`kind: "taught"`, `sentences`) |
 | Glossary | `glossary.explore` | `{ id }` | a term is opened |
+| | `flashcard.review` | `{ id, box, correct }` | a flashcard is answered (`box` is the box the card is in now, 1–5) |
+| | `flashcard.finish` | `{ deck, cards, correct }` | a study session ends (`deck` is `"all"`, a category like `"vision"` or a lesson like `"lesson-7"`; `cards` were answered, `correct` of them known) |
 | Timeline | `timeline.era` | `{ era }` | the timeline's line reaches an era for the first time |
 | Compass Bot | `bot.ask` | `{ typed: true }` or `{ intent }` | a typed question, or a chip |
 | Ctrl+K | `palette.run` | `{ id }` | a command is run |
@@ -348,32 +351,38 @@ Below `questions` are the `ranks`: the number of right answers (`min`) you need 
 
 ### Add a glossary term
 
-**File:** `js/content/glossary-terms.js`. Put the term in the block of its category (`basics`, `learning`, `generative` or `ethics`); the glossary sorts the cards A–Z by itself, in each language.
+**File:** `js/content/glossary-terms.js`. Put the term in the block of its category: `basics`, `learning`, `vision` (computer vision), `trial` (trial and error), `language` (language models), `generative` or `ethics`. The glossary sorts the cards A–Z by itself, in each language, and every count follows by itself (the subtitle, the chips, the flashcards).
 
 ```js
         {
-            id: "synthetic-data", cat: "learning", icon: "🧪", related: ["data", "dataset", "training", "privacy"],
+            id: "synthetic-data", cat: "learning", icon: "🧪", lessons: [2], lab: "",
+            related: ["data", "dataset", "training", "privacy"],
             en: {
                 name: "Synthetic data",
                 aliases: ["generated data"],
+                short: "Data that a computer program makes up instead of collecting it from the real world.",
                 def: "Data that a computer program makes up instead of collecting it from the real world. It is used to train AI when real data is rare, expensive or private.",
                 ex: "A self-driving car company can create millions of computer-made street scenes, even rare dangers like a deer on the road at night, to train its AI safely."
             },
             ru: {
                 name: "Синтетические данные",
                 aliases: ["сгенерированные данные"],
+                short: "Данные, которые придумала компьютерная программа, а не собрали в реальном мире.",
                 def: "Данные, которые придумала компьютерная программа, а не собрали в реальном мире. На них обучают ИИ, когда настоящих данных мало, они дорогие или личные.",
                 ex: "Компания, которая делает беспилотные автомобили, может создать миллионы компьютерных уличных сцен — даже редкие опасности вроде оленя на ночной дороге, — чтобы безопасно обучать свой ИИ."
             }
         },
 ```
 
-- `id`: a short name in small letters with dashes. It is used in links (`#term-synthetic-data`) and in saved data, so don't change it later.
-- `related`: the ids of other terms (they become buttons on the card).
-- `aliases`: other ways to write the term; they are only used by the search.
-- `def`: the definition. `ex`: an everyday example.
+- `id`: a short name in small letters with dashes. It is used in links (`#term-synthetic-data`), in the flashcards and in saved data, so don't change it later.
+- `icon`: an emoji that no other term uses.
+- `lessons`: the numbers of the lessons that teach it, and `lab`: the AI Lab experiment that shows it (`"classifier"`, `"maze"`, ...) or `""`. The opened card links to them, and the flashcards have a deck for each lesson.
+- `related`: the ids of other terms (they become buttons on the card). A relation goes both ways: add `"synthetic-data"` to the `related` of `data`, `dataset`, `training` and `privacy` too.
+- `aliases`: other ways to write the term; they are only used by the search. An alias that ends in `*` finds every word that starts like it.
+- `short`: the definition in one plain sentence. It is on the card, on the back of a flashcard and in Compass Bot. `def`: the full explanation, shown when the card is opened. `ex`: an everyday example.
+- A link may also use a second id for a narrower word: `sameAs` at the top of the file sends it to the term that explains it (`"k-means": "clustering"`).
 
-**Check:** the card is there and the count on the "Learning" chip went up by one; the search finds it by its name and by its alias; open it and click a related term; `http://localhost:8000/#term-synthetic-data` opens it; ask Compass Bot "what is synthetic data?". Do it again in Russian.
+**Check:** the card is there, and the counts in the subtitle and on the "Learning" chip went up by one; the search finds it by its name and by its alias; open it, follow its lesson link, and click a related term (that card lists it back); `http://localhost:8000/#term-synthetic-data` opens it; ask Compass Bot "what is synthetic data?". Do it again in Russian.
 
 ### Add a timeline milestone
 
@@ -439,7 +448,7 @@ Don't skip a number: the bot stops counting at the first missing one. Only add f
 
 Each feature adds its own commands in its last section. A command has an `id` (unique), a `group` (the text key of its heading in the palette), an `icon`, a `title` (a function, so it follows the language), `keywords` for the search (both languages) and `run`.
 
-Example: "Glossary: a random term". In `js/glossary.js`, section 17, after the loop that adds one command per term:
+Example: "Glossary: a random term". In `js/glossary.js`, section 19, after the loop that adds one command per term:
 
 ```js
     // Ctrl+K palette: a random term
