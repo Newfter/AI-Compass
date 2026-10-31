@@ -372,10 +372,13 @@
             }
         });
 
-        // The slider: its value text (aria-valuetext) tells screen readers each step
+        // The slider: its value text (aria-valuetext) tells screen readers each step.
+        // Read its new value first: stopping "Play all steps" redraws the lab, which
+        // puts the slider back on the step Play had reached.
         slider.addEventListener("input", function () {
+            const step = Number(slider.value);
             stopPlaying();
-            setStep(Number(slider.value), true);
+            setStep(step, true);
         });
 
         stopShownLab = function () {
