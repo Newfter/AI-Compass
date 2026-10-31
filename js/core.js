@@ -28,6 +28,7 @@
 
    THE TOOLKIT AT A GLANCE (each one is explained where it is written)
     1  A.storage.get(key, fallback) / set(key, value) / remove(key) / migrate(old, new)
+       A.storage.available(): does the browser keep what is saved?
        A.storage.session: the same, forgotten when the tab closes
     2  A.on(name, callback) -> stop()      A.emit(name, detail)
        names: language, theme, motion, overlay, section, feature, activity (sent as "aic:" + name)
@@ -102,29 +103,58 @@
        1. STORAGE
        Some browsers block storage (private mode, strict settings),
        so every call is wrapped. Values are saved as JSON under "aic:<key>".
+       When a save fails, the value is kept in memory instead, for this
+       visit: the site works the same until the tab is closed, it only
+       forgets afterwards. set() still says false, so a feature can tell
+       the visitor; available() says it before anything is saved.
        ========================================================= */
     function makeStore(area) {
+        const unsaved = new Map();     // key -> the JSON text the browser refused to keep
+        let works = null;              // did the last save work? null: nothing saved yet
+
         return {
             get: function (key, fallback) {
                 try {
-                    const value = window[area].getItem(PREFIX + key);
+                    const value = unsaved.has(key) ? unsaved.get(key) : window[area].getItem(PREFIX + key);
                     return value === null ? fallback : JSON.parse(value);
                 } catch (error) {
                     return fallback;
                 }
             },
             set: function (key, value) {
+                let text;
                 try {
-                    window[area].setItem(PREFIX + key, JSON.stringify(value));
-                    return true;
+                    text = JSON.stringify(value);
+                    window[area].setItem(PREFIX + key, text);
                 } catch (error) {
+                    if (typeof text !== "string") return false;     // a value that can't be saved at all
+                    unsaved.set(key, text);
+                    works = false;
                     return false;
                 }
+                unsaved.delete(key);
+                works = true;
+                return true;
             },
             remove: function (key) {
+                unsaved.delete(key);
                 try {
                     window[area].removeItem(PREFIX + key);
                 } catch (error) {}
+            },
+            // Does the browser keep what the site saves? Tried once with a test value
+            // (removed at once); after that, the answer of the last save.
+            available: function () {
+                if (works === null) {
+                    try {
+                        window[area].setItem(PREFIX + "probe", "1");
+                        window[area].removeItem(PREFIX + "probe");
+                        works = true;
+                    } catch (error) {
+                        works = false;
+                    }
+                }
+                return works;
             }
         };
     }

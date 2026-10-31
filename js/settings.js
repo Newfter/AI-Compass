@@ -57,7 +57,6 @@
     // Saved as "aic:settings" = { v: 1, ... }. The script in the <head> of index.html
     // reads the same object before the page is drawn: keep the names the same there.
     const STORAGE_KEY = "settings";
-    const TEST_KEY = "settings.test";     // only to find out whether the browser can save
     const VERSION = 1;
 
     // The text size steps: --text-scale on <html> (style.css). 1 is the normal size.
@@ -202,13 +201,9 @@
         canSave = A.storage.set(STORAGE_KEY, Object.assign({ v: VERSION }, prefs));
     }
 
-    // Can this browser save? Known after the first save; before that, the window
-    // asks once with a small test value (written and removed at once)
+    // Can this browser save? Known after the first save; before that, core knows
     function storageWorks() {
-        if (canSave === null) {
-            canSave = A.storage.set(TEST_KEY, true);
-            A.storage.remove(TEST_KEY);
-        }
+        if (canSave === null) canSave = A.storage.available();
         return canSave;
     }
 

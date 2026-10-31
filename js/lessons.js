@@ -314,10 +314,9 @@
 
     const checkAnswers = {};   // lesson number -> chosen option (this visit only)
     const labState = {};       // lesson number -> state of its mini-lab
-    // Can this browser keep the progress? A test write, removed at once, so the panel
-    // says the truth from the start (it changes again if a later save fails)
-    let canSave = A.storage.set("lessons.probe", 1);
-    A.storage.remove("lessons.probe");
+    // Can this browser keep the progress? Known from the start, so the panel says the
+    // truth at once (it changes again if a later save fails)
+    let canSave = A.storage.available();
 
     function saveCompleted() {
         canSave = A.storage.set("lessons.completed", Array.from(completed).sort(function (a, b) { return a - b; }));

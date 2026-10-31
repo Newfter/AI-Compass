@@ -441,16 +441,13 @@
         if (!A.storage.set(CARDS_KEY, progress)) cardsUnsaved = true;
     }
 
-    // Does this browser let the site save? Checked once, with a value that is saved
-    // and removed at once, so the note under the study button is right from the start
-    // (not only after the first answer).
-    // TODO(core): A.storage could tell this itself
+    // Does this browser let the site save? Checked once (A.storage.available), so the
+    // note under the study button is right from the start (not only after the first answer)
     let savingChecked = false;
     function checkSaving() {
         if (savingChecked) return;
         savingChecked = true;
-        if (!A.storage.set(CARDS_KEY + ".check", true)) cardsUnsaved = true;
-        A.storage.remove(CARDS_KEY + ".check");
+        if (!A.storage.available()) cardsUnsaved = true;
     }
 
     // A deck of cards: "all", a category ("vision") or the terms of a lesson ("lesson-7")

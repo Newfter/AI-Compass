@@ -373,7 +373,9 @@
         daily: noDaily(),
         mistakes: {},
         read: false,            // read from the browser at least once?
-        failed: false           // a save did not work: from then on, memory is the only copy
+        // a save did not work (or the browser keeps nothing): from then on, memory is the
+        // only copy, and the start screen says the results are not saved
+        failed: !A.storage.available()
     };
 
     function noDaily() {
