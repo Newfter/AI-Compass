@@ -120,6 +120,7 @@ window.AICompass.addTranslations({
         "teachers.track": "Курс {n}",
         "teachers.lessonN": "Урок {n}",
         "teachers.minutes.one": "{n} мин",
+        "teachers.minutes.few": "{n} мин",
         "teachers.minutes.many": "{n} мин",
         "teachers.plan": "План урока",
         "teachers.worksheet": "Рабочий лист",
