@@ -220,11 +220,13 @@
         return Boolean(A.quiz && typeof A.quiz.ready === "function" && typeof A.quiz.question === "function");
     }
 
-    // The quiz bank's texts (the documents work without them: only the quiz
-    // questions are left out)
+    // The quiz bank's texts: true once they are in; false on a site without
+    // the quiz (the documents then leave the quiz questions out). A bank that
+    // can't load (no network) rejects, so the window offers "Try again"
+    // instead of a sheet with its quiz questions silently missing.
     function questionsReady() {
         if (!hasQuiz()) return Promise.resolve(false);
-        return A.quiz.ready().then(function () { return true; }, function () { return false; });
+        return A.quiz.ready().then(function () { return true; });
     }
 
     function bankQuestion(id) {
@@ -948,6 +950,7 @@
     // Printing: only the sheet (css/teachers-kit.css hides the rest of the
     // page while <html> has "tk-printing"). Ctrl+P works the same way.
     function printDocument() {
+        if (!doc.shown) return;       // nothing to print while the sheet loads or can't load
         preparePrint();
         window.print();
     }
@@ -1171,7 +1174,7 @@
     function loadQuestions(startNow) {
         quiz.screen = "loading";
         renderQuiz();
-        return questionsReady().then(function (ready) {
+        return questionsReady().catch(function () { return false; }).then(function (ready) {
             if (!quiz.open) return true;
             if (!ready) {
                 quiz.screen = "error";
