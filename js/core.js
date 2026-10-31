@@ -1547,6 +1547,7 @@
         { id: "quiz", key: "nav.quiz", icon: "🏆" },
         { id: "glossary", key: "nav.glossary", icon: "📖" },
         { id: "timeline", key: "nav.timeline", icon: "🕰️" },
+        { id: "teachers", key: "nav.teachers", icon: "🍎" },
         { id: "about", key: "nav.about", icon: "💡" }
     ].map(Object.freeze);
     Object.freeze(SECTIONS);
