@@ -110,7 +110,6 @@
        ========================================================= */
     function makeStore(area) {
         const unsaved = new Map();     // key -> the JSON text the browser refused to keep
-        let works = null;              // did the last save work? null: nothing saved yet
 
         return {
             get: function (key, fallback) {
@@ -129,11 +128,9 @@
                 } catch (error) {
                     if (typeof text !== "string") return false;     // a value that can't be saved at all
                     unsaved.set(key, text);
-                    works = false;
                     return false;
                 }
                 unsaved.delete(key);
-                works = true;
                 return true;
             },
             remove: function (key) {
@@ -142,19 +139,17 @@
                     window[area].removeItem(PREFIX + key);
                 } catch (error) {}
             },
-            // Does the browser keep what the site saves? Tried once with a test value
-            // (removed at once); after that, the answer of the last save.
+            // Can the browser keep a new value? Asked each time with a small test value,
+            // removed at once (a browser whose storage is full can still overwrite an
+            // old value with a shorter one, so the answer of the last save would not do)
             available: function () {
-                if (works === null) {
-                    try {
-                        window[area].setItem(PREFIX + "probe", "1");
-                        window[area].removeItem(PREFIX + "probe");
-                        works = true;
-                    } catch (error) {
-                        works = false;
-                    }
+                try {
+                    window[area].setItem(PREFIX + "probe", "1");
+                    window[area].removeItem(PREFIX + "probe");
+                    return true;
+                } catch (error) {
+                    return false;
                 }
-                return works;
             }
         };
     }
@@ -1960,6 +1955,7 @@
         const wide = media(queries.wideMenu);
         let kept = links.length;           // how many links are in the bar
         let last = "";                     // what the last fitting was done for
+        let refitWaiting = false;          // asked to measure again while the list was open
 
         function isOpen() {
             return button.getAttribute("aria-expanded") === "true";
@@ -1978,6 +1974,10 @@
             const focusWasInside = list.contains(document.activeElement);
             setOpen(false);
             if (focusBack !== false && focusWasInside) button.focus({ preventScroll: true });
+            if (refitWaiting) {
+                refitWaiting = false;
+                requestAnimationFrame(refit);
+            }
         }
 
         const overlay = overlays.register("nav-more", {
@@ -2006,6 +2006,7 @@
             const key = [inner.clientWidth, Math.round(width(actions)), state.lang, root.className, wide.matches].join(" ");
             if (key === last && !force) return;
             last = key;
+            refitWaiting = false;
             close();
             links.slice(kept).forEach(function (link) { navLinks.insertBefore(link, more); });
             more.hidden = false;
@@ -2032,7 +2033,15 @@
             markActive();
         }
 
-        const refit = function () { fit(true); };
+        // The fonts, the language or a setting changed the widths of the names. Measuring
+        // closes the list, so while it is open this waits until it is closed.
+        function refit() {
+            if (isOpen()) {
+                refitWaiting = true;
+                return;
+            }
+            fit(true);
+        }
 
         button.addEventListener("click", function (event) {
             if (isOpen()) {

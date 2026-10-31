@@ -342,9 +342,10 @@
         daily: noDaily(),
         mistakes: {},
         read: false,            // read from the browser at least once?
-        // a save did not work (or the browser keeps nothing): from then on, memory is the
-        // only copy, and the start screen says the results are not saved
-        failed: !A.storage.available()
+        failed: false,          // a save did not work: from then on, memory is the only copy
+        // the browser can't keep a new value (blocked or full): the start screen says the
+        // results are not saved from the start. What is saved is still read and shown.
+        unsaved: !A.storage.available()
     };
 
     function noDaily() {
@@ -425,7 +426,10 @@
 
     // Saves one key. If the browser refuses, the quiz remembers that (see "failed").
     function store(key, value) {
-        if (A.storage.set(key, value)) return true;
+        if (A.storage.set(key, value)) {
+            saved.unsaved = false;      // it was kept after all (a full browser can overwrite)
+            return true;
+        }
         saved.failed = true;
         return false;
     }
@@ -836,8 +840,9 @@
         });
 
         paintNotice();
-        ui.privacy.textContent = t(saved.failed ? "quiz.start.noSave" : "quiz.start.privacy");
-        ui.privacy.classList.toggle("is-warning", saved.failed);
+        const noSave = saved.failed || saved.unsaved;
+        ui.privacy.textContent = t(noSave ? "quiz.start.noSave" : "quiz.start.privacy");
+        ui.privacy.classList.toggle("is-warning", noSave);
     }
 
     // What a mode is ("12 questions from every lesson...")
