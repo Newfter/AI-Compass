@@ -1,0 +1,522 @@
+/* =========================================================
+   AI COMPASS — LAB: INSIDE A CHATBOT (js/lab/chatbot.js)
+   Prefix: ch-. Controls, bars and panels come from the kit
+   (css/lab/kit.css); this file styles the experiment's own parts.
+
+   Sections:
+    1. The pipeline strip
+    2. Shared parts
+    3. View 1: tokens
+    4. View 2: meaning
+    5. View 3: context
+    6. View 4: next word
+   ========================================================= */
+
+/* ===== 1. THE PIPELINE STRIP =====
+   "Text" and the four views (a kit.segmented), with arrows between them.
+   On a narrow stage the views make a 2 x 2 grid and the arrows go. */
+
+.ch-pipe {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.ch-pipe > .lk-field {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ch-pipe-start {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 4px 12px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.78125rem;
+    font-weight: 700;
+}
+
+.ch-pipe-start .lk-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.ch-pipe .lk-seg {
+    gap: 22px;
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+.ch-pipe .lk-seg-option {
+    position: relative;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-solid);
+}
+
+/* The arrows: small chevrons in the gaps (they never catch a click) */
+.ch-pipe-start::after,
+.ch-pipe .lk-seg-option + .lk-seg-option::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-top: 2px solid var(--text-dim);
+    border-right: 2px solid var(--text-dim);
+    transform: translateY(-50%) rotate(45deg);
+    pointer-events: none;
+}
+
+.ch-pipe-start::after {
+    right: -16px;
+}
+
+.ch-pipe .lk-seg-option + .lk-seg-option::before {
+    left: -15px;
+}
+
+@container (max-width: 600px) {
+    .ch-pipe-start {
+        display: none;
+    }
+
+    .ch-pipe .lk-seg {
+        gap: 6px;
+    }
+
+    .ch-pipe .lk-seg-option {
+        flex: 1 1 calc(50% - 6px);
+    }
+
+    .ch-pipe .lk-seg-option + .lk-seg-option::before {
+        display: none;
+    }
+}
+
+/* What the chosen step does in a real chatbot */
+.ch-stage-line {
+    margin: 0;
+    padding-left: 12px;
+    border-left: 3px solid var(--accent-2);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+/* ===== 2. SHARED PARTS ===== */
+
+.ch-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+/* The same, without the box (inside the side column) */
+.ch-plain {
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+.ch-title {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.ch-small {
+    margin: 0;
+    color: var(--text-label);
+    font-size: var(--lk-small);
+    line-height: 1.45;
+}
+
+/* "Real chatbots …. This is called a [term]." */
+.ch-idea {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.ch-idea a {
+    color: var(--text-accent-2);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* A token inside a sentence: ▁th */
+.ch-q {
+    padding: 0 5px;
+    border-radius: 5px;
+    background: rgba(var(--accent-2-rgb), 0.14);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.95em;
+    white-space: pre;
+}
+
+/* A text box (TODO(kit): kit.textInput) */
+.ch-input {
+    display: block;
+    width: 100%;
+    min-height: 64px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-solid);
+    color: var(--text);
+    font: 500 15px/1.5 var(--font-body);
+    resize: vertical;
+}
+
+/* A progress bar (TODO(kit): kit.progress) */
+.ch-progress {
+    display: grid;
+    gap: 6px;
+    color: var(--text-label);
+    font-size: var(--lk-small);
+}
+
+.ch-progress-track {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--border);
+}
+
+.ch-progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+/* ===== 3. VIEW 1: TOKENS =====
+   Each token is a chip; neighbours take turns with six series colours. */
+
+.ch-tokens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 52px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+}
+
+.ch-tok {
+    --ch-color: var(--lk-series-1);
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--ch-color) 20%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ch-color) 55%, transparent);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.3;
+    white-space: pre;
+    cursor: default;
+}
+
+.ch-c1 { --ch-color: var(--lk-series-2); }
+.ch-c2 { --ch-color: var(--lk-series-3); }
+.ch-c3 { --ch-color: var(--lk-series-4); }
+.ch-c4 { --ch-color: var(--lk-series-5); }
+.ch-c5 { --ch-color: var(--lk-series-6); }
+
+/* The ▁ of a word start (and ↵): there, but quiet */
+.ch-mark {
+    color: var(--text-dim);
+}
+
+/* A character the tokenizer never saw: no number, a dashed chip */
+.ch-tok-unknown {
+    background: none;
+    box-shadow: inset 0 0 0 1px var(--danger);
+    border-radius: 6px;
+    outline: 1px dashed var(--danger);
+    outline-offset: -1px;
+}
+
+.ch-tok[aria-selected="true"] {
+    box-shadow: inset 0 0 0 2px var(--text);
+}
+
+/* The token a merge has just made lights up */
+.ch-tok-new {
+    animation: ch-flash 0.9s var(--ease);
+}
+
+@keyframes ch-flash {
+    from {
+        background: color-mix(in srgb, var(--ch-color) 75%, transparent);
+        transform: scale(1.08);
+    }
+}
+
+.ch-tok-mini {
+    min-height: 22px;
+    padding: 1px 4px;
+    font-size: 0.75rem;
+}
+
+.ch-tok-info {
+    min-height: 2.9em;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+}
+
+.ch-merge-line {
+    min-height: 2.9em;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.55;
+}
+
+.ch-fair-tokens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.ch-verdict {
+    margin: 0;
+    color: var(--text);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.ch-corpus {
+    max-height: 280px;
+    overflow: auto;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+.ch-corpus-text {
+    margin-top: 10px;
+}
+
+.ch-corpus-text p {
+    margin: 0 0 8px;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+}
+
+/* ===== 4. VIEW 2: MEANING ===== */
+
+.ch-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+/* "≈ queen": the answer of word maths */
+.ch-answer {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.ch-answer + .ch-small {
+    margin-top: -10px;
+}
+
+/* The ten sliders of your own word: two columns when there is room */
+.ch-sliders {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
+    gap: 10px 18px;
+}
+
+/* ===== 5. VIEW 3: CONTEXT ===== */
+
+.ch-summary {
+    margin: 0;
+    color: var(--text);
+    font-size: 0.90625rem;
+    line-height: 1.5;
+}
+
+.ch-line {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.55;
+}
+
+/* "Show the maths": a box that measures its own width (the table drops two columns
+   when it is narrow) */
+.ch-maths {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+.ch-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.ch-table caption {
+    margin-bottom: 8px;
+    color: var(--text);
+    font-weight: 700;
+    text-align: left;
+}
+
+.ch-table th,
+.ch-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.ch-table th:first-child {
+    font-family: var(--font-body);
+    text-align: left;
+}
+
+.ch-table thead th {
+    color: var(--text-label);
+    font-size: 0.75rem;
+}
+
+.ch-table .is-top {
+    background: rgba(var(--accent-rgb), 0.14);
+}
+
+@container (max-width: 440px) {
+    .ch-wide {
+        display: none;
+    }
+}
+
+/* ===== 6. VIEW 4: NEXT WORD ===== */
+
+.ch-prompt {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 1.1875rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.ch-prompt-next {
+    color: var(--text-accent-2);
+    border-bottom: 2px solid var(--accent-2);
+}
+
+.ch-prompt-gap {
+    color: var(--text-dim);
+}
+
+/* The dice: the final chances side by side in one bar, and the needle where it landed */
+.ch-dice {
+    position: relative;
+    display: flex;
+    height: 44px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--border);
+}
+
+.ch-dice-part {
+    flex: none;
+    overflow: hidden;
+    color: var(--bg);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 44px;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: width 0.45s var(--ease);
+}
+
+.ch-dice-part + .ch-dice-part {
+    box-shadow: inset 1px 0 0 var(--surface-solid);
+}
+
+.ch-dice-part.is-picked {
+    box-shadow: inset 0 0 0 3px var(--text);
+}
+
+.ch-needle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    margin-left: -2px;
+    border-radius: 2px;
+    background: var(--text);
+    box-shadow: 0 0 0 2px var(--surface-solid);
+}
+
+.ch-dice-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -6px;
+    color: var(--text-dim);
+    font: 600 11px var(--font-mono);
+}
+
+/* The three steps of the chances, side by side when there is room */
+.ch-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+    gap: var(--lk-gap);
+}
+
+.ch-score {
+    color: var(--text-dim);
+    font-size: 0.71875rem;
+    white-space: nowrap;
+}
+
+.ch-sum {
+    font-family: var(--font-mono);
+    text-align: right;
+}

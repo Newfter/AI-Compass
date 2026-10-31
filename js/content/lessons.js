@@ -1,32 +1,32 @@
 /* =========================================================
    AI COMPASS — TEXTS: LESSONS
    Every word in English and in Russian (informal "ты").
-   The lessons, their mini-labs and the lesson reader.
+   The tracks, lessons 1-6 (the Basics), their mini-labs and the
+   lesson reader. Lessons 7 and on (the Deep dive) and their
+   mini-labs are in js/content/lessons-deep.js.
    Used by js/lessons.js (and the lessons section of index.html).
    To change a text, change it here (in both languages).
    ========================================================= */
 
 // The section's title and subtitle on the page (index.html).
-// The subtitle follows the number of lessons: ".6" spells out the number the site
-// has today; any other number uses the plural forms ("7 short lessons..."). The plain
-// key is the subtitle while the number is not known.
+// The subtitle follows the number of lessons (the plural forms: "9 short lessons...").
+// To spell a number out, add a key with that number, like "lessons.subtitle.12".
+// The plain key is the subtitle while the number is not known.
 window.AICompass.addTranslations({
     en: {
         "lessons.label": "LEARN SOMETHING NEW",
-        "lessons.title": "Explore the Basics",
-        "lessons.subtitle": "Short lessons. Open one, read it, check yourself, and track your progress.",
-        "lessons.subtitle.6": "Six short lessons. Open one, read it, check yourself, and track your progress.",
-        "lessons.subtitle.one": "{n} short lesson. Open it, read it, check yourself, and track your progress.",
-        "lessons.subtitle.many": "{n} short lessons. Open one, read it, check yourself, and track your progress."
+        "lessons.title": "Learn AI Step by Step",
+        "lessons.subtitle": "Short lessons: start with the Basics, then take the Deep dive. Read, try the mini-lab and check yourself.",
+        "lessons.subtitle.one": "{n} short lesson. Open it, read it, try the mini-lab and check yourself.",
+        "lessons.subtitle.many": "{n} short lessons: start with the Basics, then take the Deep dive. Read, try the mini-labs and check yourself."
     },
     ru: {
         "lessons.label": "УЗНАЙ ЧТО-ТО НОВОЕ",
-        "lessons.title": "Изучаем основы",
-        "lessons.subtitle": "Короткие уроки. Открой урок, прочитай, проверь себя и следи за своим прогрессом.",
-        "lessons.subtitle.6": "Шесть коротких уроков. Открой урок, прочитай, проверь себя и следи за своим прогрессом.",
-        "lessons.subtitle.one": "{n} короткий урок. Открой его, прочитай, проверь себя и следи за своим прогрессом.",
-        "lessons.subtitle.few": "{n} коротких урока. Открой урок, прочитай, проверь себя и следи за своим прогрессом.",
-        "lessons.subtitle.many": "{n} коротких уроков. Открой урок, прочитай, проверь себя и следи за своим прогрессом."
+        "lessons.title": "Изучай ИИ шаг за шагом",
+        "lessons.subtitle": "Короткие уроки: начни с «Основ», а потом отправляйся в «Погружение». Читай, пробуй мини-лаборатории и проверяй себя.",
+        "lessons.subtitle.one": "{n} короткий урок. Открой его, прочитай, попробуй мини-лабораторию и проверь себя.",
+        "lessons.subtitle.few": "{n} коротких урока: начни с «Основ», а потом отправляйся в «Погружение». Читай, пробуй мини-лаборатории и проверяй себя.",
+        "lessons.subtitle.many": "{n} коротких уроков: начни с «Основ», а потом отправляйся в «Погружение». Читай, пробуй мини-лаборатории и проверяй себя."
     }
 });
 
@@ -48,6 +48,24 @@ window.AICompass.addTranslations({
         "lessons.hud.pathLabel": "Lesson map",
         "lessons.hud.nodeTodo": "Lesson {n}: {title}",
         "lessons.hud.nodeDone": "Lesson {n}: {title} (completed)",
+        // One row of the lesson map per track: "Basics: 2 of 6 done"
+        "lessons.hud.mapRow": "{track}: {done}",
+        "lessons.hud.privacy": "Your progress is saved only in this browser. Nothing is sent anywhere.",
+        "lessons.hud.noSave": "This browser doesn't let the site save anything, so your progress will be gone when you close the page.",
+
+        // The tracks: a group of cards each, with a header ("TRACK 1 · 6 LESSONS")
+        "lessons.track.basics.title": "Basics",
+        "lessons.track.basics.desc": "What AI is, how machines learn, and how to use AI wisely and safely.",
+        "lessons.track.deep.title": "Deep dive",
+        "lessons.track.deep.desc": "How AI works inside, with a mini-lab in every lesson and an experiment to try in the AI Lab.",
+        "lessons.track.label": "Track {n}",
+        "lessons.track.lessons.one": "{n} lesson",
+        "lessons.track.lessons.many": "{n} lessons",
+        "lessons.track.done.one": "{n} of {total} done",
+        "lessons.track.done.many": "{n} of {total} done",
+        "lessons.track.hint": "Best after the {before} track, but every lesson is open.",
+        "lessons.track.show": "Show the {track} lessons",
+        "lessons.track.hide": "Hide the {track} lessons",
 
         "lessons.card.open": "Open lesson",
         "lessons.card.review": "Review lesson",
@@ -66,6 +84,11 @@ window.AICompass.addTranslations({
         "lessons.reader.prevLabel": "Previous lesson: {title}",
         "lessons.reader.nextLabel": "Next lesson: {title}",
         "lessons.reader.firstLesson": "This is the first lesson",
+        // Previous / next when the other lesson is in another track
+        "lessons.reader.prevTrack": "Previous · {track}",
+        "lessons.reader.nextTrack": "Next · {track}",
+        "lessons.reader.prevTrackLabel": "Previous lesson, in the {track} track: {title}",
+        "lessons.reader.nextTrackLabel": "Next lesson, in the {track} track: {title}",
         "lessons.reader.finish": "Finish",
         "lessons.reader.finishTitle": "All lessons",
         "lessons.reader.finishLabel": "Finish and go back to all lessons",
@@ -87,9 +110,23 @@ window.AICompass.addTranslations({
         "lessons.reader.keyIdeas": "Key ideas",
         "lessons.reader.tryIt": "Try it on this site",
         "lessons.reader.check": "Check yourself",
+        // {questions}: "5 questions" (quiz.questionCount in js/content/quiz.js)
+        "lessons.reader.quizReview": "Test yourself on this lesson: {questions} in the quiz",
         "lessons.note.fact": "Fun fact",
         "lessons.note.example": "Example",
         "lessons.note.tip": "Good to know",
+
+        // Mini-labs that load from their own file (js/lessons/)
+        "lessons.lab.loading": "Loading the mini-lab…",
+        "lessons.lab.error": "The mini-lab didn't load. Check your internet connection and try again.",
+        "lessons.lab.retry": "Try again",
+
+        // Words from the glossary inside a lesson: a button that explains the word
+        "lessons.term.hint": "Shows what this word means",
+        "lessons.term.label": "From the glossary",
+        "lessons.term.open": "Open in the glossary",
+        "lessons.term.close": "Close",
+        "lessons.term.closeLabel": "Close the explanation of “{term}”",
 
         "lessons.check.letters": "A|B|C",
         "lessons.check.correct": "Correct!",
@@ -103,21 +140,34 @@ window.AICompass.addTranslations({
         // {n} is the number of lessons
         "lessons.toast.all.one": "All lessons completed! You're an AI explorer now.",
         "lessons.toast.all.many": "All {n} lessons completed! You're an AI explorer now.",
+        "lessons.toast.track": "{track} track complete! Your certificate is ready.",
         "lessons.toast.reset": "Lesson progress reset",
         "lessons.toast.cert": "Certificate downloaded!",
 
         "lessons.cert.button": "Get your certificate",
-        "lessons.cert.title": "Your AI Compass certificate",
-        "lessons.cert.intro": "Every lesson is done! Type your name and download your personal certificate.",
+        "lessons.cert.title": "Your AI Compass certificates",
+        "lessons.cert.intro": "One certificate for each track you finish, and one for the full course. Pick one, type your name and download it.",
+        "lessons.cert.pick": "Certificate",
+        "lessons.cert.all": "Full course",
+        "lessons.cert.earned": "Earned",
+        "lessons.cert.toGo.one": "{n} lesson to go",
+        "lessons.cert.toGo.many": "{n} lessons to go",
         "lessons.cert.nameLabel": "Name on the certificate",
         "lessons.cert.placeholder": "Your name",
+        "lessons.cert.privacy": "Your name is saved only in this browser.",
         "lessons.cert.download": "Download PNG",
-        "lessons.cert.preview": "Certificate preview for {name}",
+        "lessons.cert.preview": "{cert} certificate preview for {name}",
         "lessons.cert.heading": "Certificate of completion",
-        // {n} is the number of lessons: as a word when "lessons.cert.count.<number>" has one, otherwise in digits
+        // {n} is the number of lessons: as a word when "lessons.cert.count.<number>" has one, otherwise in digits.
+        // "for" is the full course; "forTrack" a track ({track} is its name).
         "lessons.cert.for.one": "for successfully completing the AI Compass lesson",
         "lessons.cert.for.many": "for successfully completing all {n} AI Compass lessons",
+        "lessons.cert.forTrack.one": "for successfully completing the lesson of the {track} track",
+        "lessons.cert.forTrack.many": "for successfully completing all {n} lessons of the {track} track",
+        "lessons.cert.count.3": "three",
         "lessons.cert.count.6": "six",
+        "lessons.cert.count.9": "nine",
+        "lessons.cert.count.12": "twelve",
         "lessons.cert.defaultName": "AI Explorer",
         "lessons.cert.date": "Issued on {date}",
         "lessons.cert.lessons.one": "lesson",
@@ -145,6 +195,24 @@ window.AICompass.addTranslations({
         "lessons.hud.pathLabel": "Карта уроков",
         "lessons.hud.nodeTodo": "Урок {n}: {title}",
         "lessons.hud.nodeDone": "Урок {n}: {title} (пройден)",
+        "lessons.hud.mapRow": "{track}: {done}",
+        "lessons.hud.privacy": "Прогресс хранится только в этом браузере и никуда не отправляется.",
+        "lessons.hud.noSave": "Этот браузер не разрешает сайту ничего сохранять, поэтому прогресс пропадёт, когда ты закроешь страницу.",
+
+        "lessons.track.basics.title": "Основы",
+        "lessons.track.basics.desc": "Что такое ИИ, как учатся машины и как пользоваться ИИ с умом и безопасно.",
+        "lessons.track.deep.title": "Погружение",
+        "lessons.track.deep.desc": "Как ИИ устроен внутри: в каждом уроке мини-лаборатория, а в лаборатории ИИ — эксперимент, чтобы попробовать самому.",
+        "lessons.track.label": "Курс {n}",
+        "lessons.track.lessons.one": "{n} урок",
+        "lessons.track.lessons.few": "{n} урока",
+        "lessons.track.lessons.many": "{n} уроков",
+        "lessons.track.done.one": "Пройден {n} из {total}",
+        "lessons.track.done.few": "Пройдено {n} из {total}",
+        "lessons.track.done.many": "Пройдено {n} из {total}",
+        "lessons.track.hint": "Лучше начать с курса «{before}», но открыты все уроки.",
+        "lessons.track.show": "Показать уроки курса «{track}»",
+        "lessons.track.hide": "Скрыть уроки курса «{track}»",
 
         "lessons.card.open": "Открыть урок",
         "lessons.card.review": "Повторить урок",
@@ -163,6 +231,10 @@ window.AICompass.addTranslations({
         "lessons.reader.prevLabel": "Предыдущий урок: {title}",
         "lessons.reader.nextLabel": "Следующий урок: {title}",
         "lessons.reader.firstLesson": "Это первый урок",
+        "lessons.reader.prevTrack": "Назад · {track}",
+        "lessons.reader.nextTrack": "Дальше · {track}",
+        "lessons.reader.prevTrackLabel": "Предыдущий урок, курс «{track}»: {title}",
+        "lessons.reader.nextTrackLabel": "Следующий урок, курс «{track}»: {title}",
         "lessons.reader.finish": "Готово",
         "lessons.reader.finishTitle": "Все уроки",
         "lessons.reader.finishLabel": "Закончить и вернуться ко всем урокам",
@@ -184,9 +256,20 @@ window.AICompass.addTranslations({
         "lessons.reader.keyIdeas": "Главное",
         "lessons.reader.tryIt": "Попробуй на сайте",
         "lessons.reader.check": "Проверь себя",
+        "lessons.reader.quizReview": "Проверь себя по этому уроку: {questions} в тесте",
         "lessons.note.fact": "Интересный факт",
         "lessons.note.example": "Пример",
         "lessons.note.tip": "Полезно знать",
+
+        "lessons.lab.loading": "Загружаем мини-лабораторию…",
+        "lessons.lab.error": "Мини-лаборатория не загрузилась. Проверь подключение к интернету и попробуй ещё раз.",
+        "lessons.lab.retry": "Попробовать ещё раз",
+
+        "lessons.term.hint": "Показывает, что значит это слово",
+        "lessons.term.label": "Из глоссария",
+        "lessons.term.open": "Открыть в глоссарии",
+        "lessons.term.close": "Закрыть",
+        "lessons.term.closeLabel": "Закрыть объяснение слова «{term}»",
 
         "lessons.check.letters": "А|Б|В",
         "lessons.check.correct": "Верно!",
@@ -200,21 +283,35 @@ window.AICompass.addTranslations({
         "lessons.toast.all.one": "Пройден {n} урок из {n}! Теперь ты настоящий исследователь ИИ.",
         "lessons.toast.all.few": "Все {n} урока пройдены! Теперь ты настоящий исследователь ИИ.",
         "lessons.toast.all.many": "Все {n} уроков пройдены! Теперь ты настоящий исследователь ИИ.",
+        "lessons.toast.track": "Курс «{track}» пройден! Твой сертификат готов.",
         "lessons.toast.reset": "Прогресс уроков сброшен",
         "lessons.toast.cert": "Сертификат скачан!",
 
         "lessons.cert.button": "Получить сертификат",
-        "lessons.cert.title": "Твой сертификат AI Compass",
-        "lessons.cert.intro": "Все уроки пройдены! Введи своё имя и скачай личный сертификат.",
+        "lessons.cert.title": "Твои сертификаты AI Compass",
+        "lessons.cert.intro": "По сертификату за каждый пройденный курс и ещё один — за полный курс. Выбери сертификат, введи своё имя и скачай его.",
+        "lessons.cert.pick": "Сертификат",
+        "lessons.cert.all": "Полный курс",
+        "lessons.cert.earned": "Получен",
+        "lessons.cert.toGo.one": "Остался {n} урок",
+        "lessons.cert.toGo.few": "Осталось {n} урока",
+        "lessons.cert.toGo.many": "Осталось {n} уроков",
         "lessons.cert.nameLabel": "Имя на сертификате",
         "lessons.cert.placeholder": "Твоё имя",
+        "lessons.cert.privacy": "Имя хранится только в этом браузере.",
         "lessons.cert.download": "Скачать PNG",
-        "lessons.cert.preview": "Предпросмотр сертификата: {name}",
+        "lessons.cert.preview": "Предпросмотр сертификата «{cert}»: {name}",
         "lessons.cert.heading": "Сертификат о прохождении",
         "lessons.cert.for.one": "за успешное прохождение {n} урока AI Compass",
         "lessons.cert.for.few": "за успешное прохождение всех {n} уроков AI Compass",
         "lessons.cert.for.many": "за успешное прохождение всех {n} уроков AI Compass",
+        "lessons.cert.forTrack.one": "за успешное прохождение урока курса «{track}»",
+        "lessons.cert.forTrack.few": "за успешное прохождение всех {n} уроков курса «{track}»",
+        "lessons.cert.forTrack.many": "за успешное прохождение всех {n} уроков курса «{track}»",
+        "lessons.cert.count.3": "трёх",
         "lessons.cert.count.6": "шести",
+        "lessons.cert.count.9": "девяти",
+        "lessons.cert.count.12": "двенадцати",
         "lessons.cert.defaultName": "Исследователь ИИ",
         "lessons.cert.date": "Дата выдачи: {date}",
         "lessons.cert.lessons.one": "урок",

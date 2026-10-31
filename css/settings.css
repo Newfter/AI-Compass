@@ -1,0 +1,1136 @@
+/* =========================================================
+   AI COMPASS — SETTINGS
+   Styles for js/settings.js.
+
+   Part 1 changes the WHOLE SITE. Each setting is a class on <html>,
+   put there before the page is drawn by the small script in the
+   <head> of index.html (and again by js/settings.js):
+       html.st-large-text  a text size above 100%
+       html.st-relaxed     line spacing: relaxed
+       html.st-font        the easy-to-read font
+       html.st-underline   underlined links
+       html.st-contrast    high contrast
+       html.st-solid       reduce transparency
+   The text size is --text-scale on <html> (style.css, 2. BASICS).
+   Calm motion is core's: html.fx-motion-off (style.css, 13).
+
+   Part 2 is the two windows: Settings, and Keyboard shortcuts.
+
+    1. Bigger text
+    2. Line spacing
+    3. The easy-to-read font
+    4. Underlined links
+    5. High contrast
+    6. Reduce transparency
+    7. The windows: the layer over the page
+    8. The settings window: preview card and groups
+    9. Rows: options, switches, voices
+   10. The bottom of the settings window
+   11. The keyboard shortcuts window
+   12. Phones, small screens and touch screens
+   13. High contrast in the windows
+
+   Layer: the windows sit above the lesson reader (--z-reader), Compass
+   Bot (--z-sheet) and confetti (--z-confetti), and below the command
+   palette (--z-palette) and toasts (--z-toast): --z-dialog in style.css.
+   ========================================================= */
+
+/* ===== 1. BIGGER TEXT =====
+   The text size itself is --text-scale (style.css): every font size is
+   in rem. A few labels of the site stay on one line and end with "…"
+   when they are too long. With bigger text they would be cut short much
+   more often, so they wrap onto a second line instead. */
+
+html.st-large-text :is(.cp-title, .cp-sub, .cb-title, .cb-status-text) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* A word longer than its line (Russian has many: "искусственного") breaks
+   instead of sticking out of its card. Only such a word: the rest of the
+   text wraps between words as usual. */
+html.st-large-text body {
+    overflow-wrap: break-word;
+}
+
+/* In these narrow labels a long Russian word does not fit its line on a phone
+   ("Предсказатель", "Медленно", "интерактивных", "Конфиденциальность",
+   "приспособленностью", "Горизонтальные"). Cut without a hyphen it reads as a
+   mistake, so the browser hyphenates it ("Предсказа-тель"), using the page's
+   language (lang on <html>). Browsers without a dictionary for it still break
+   it as above. Long texts are not hyphenated: words cut at the end of every
+   other line are harder to read (a lab challenge is one short sentence). */
+html.st-large-text :is(.stat span, .gl-rel,
+    .lab-pick-title, .lab-seg button, .lab-lm-stat span,       /* the AI Lab: the picker, Teach the machine, the predictor */
+    .lk-explain-text strong, .lk-challenge-text,               /* the experiments' "How it works" and challenges (css/lab/kit.css) */
+    .cv-map .lk-btn-text,                                      /* the names of the maps in How computers see (css/lab/vision.css) */
+    .bd-table th) {                                            /* the headings of Bias detective's scorecard (css/lab/bias.css) */
+    -webkit-hyphens: auto;
+    hyphens: auto;
+}
+
+/* The AI Lab's sliders (css/lab.css): the value goes under its label when
+   the two don't fit side by side. At the normal size the label wraps
+   instead, as it always did. */
+html.st-large-text .lab-range-head {
+    flex-wrap: wrap;
+    row-gap: 6px;
+}
+
+/* Section titles (style.css, 7): on a phone a long word ("ИИ-лаборатория")
+   must still fit in its line, so a title is at most 10vw (a tenth of the
+   screen's width). On a 390px phone that only changes 150%. */
+html.st-large-text :is(.section-head h2, .about-card h2) {
+    font-size: min(clamp(1.75rem, 4.4vw, 3rem), 10vw);
+}
+
+/* The big title at the top of the page (style.css, 6) likewise: "Исследуй"
+   must stay inside the page's side margins, so it is at most 14vw (50px on a
+   360px phone). Computers keep its usual size. */
+html.st-large-text .hero-title {
+    font-size: min(clamp(2.375rem, 7.2vw, 5.5rem), 14vw);
+}
+
+/* ===== 2. LINE SPACING =====
+   Relaxed: 1.9 for every block of text you read (WCAG asks that a site
+   still works at 1.5). Headings, buttons and labels keep their own spacing.
+   The two text boxes of the site that are not <p> or <li> are named here:
+   Compass Bot's chat bubbles and the lessons' answer feedback. */
+
+html.st-relaxed body,
+html.st-relaxed :is(p, li, dd, blockquote, figcaption, .cb-bubble, .lsn-feedback-box) {
+    line-height: 1.9;
+}
+
+/* ===== 3. THE EASY-TO-READ FONT =====
+   For the text and the controls (everything that uses --font-body).
+   Headings keep Unbounded, and labels keep the monospace font.
+   Atkinson Hyperlegible has no Russian letters: Russian pages use Andika.
+   Until the font has arrived (js/settings.js loads it), the page keeps
+   Manrope, the next font in the list. */
+
+html.st-font {
+    --font-body: "Atkinson Hyperlegible", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+}
+
+html.st-font[lang="ru"] {
+    --font-body: "Andika", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+}
+
+/* ===== 4. UNDERLINED LINKS =====
+   Every link in or near the text. Not the links that look like buttons,
+   the logo, the menu bar, the section map on the right and the
+   "Skip to content" / "scroll down" links. */
+
+html.st-underline a:not(.btn, .logo, .skip-link, .scroll-hint, .fx-rail-link, .nav-links a) {
+    text-decoration: underline;
+    text-decoration-thickness: max(1px, 0.08em);
+    text-underline-offset: 0.2em;
+}
+
+/* ===== 5. HIGH CONTRAST =====
+   Stronger colours for the text and the borders, solid backgrounds and a
+   solid, thicker focus frame. The text colours were measured: at least
+   7:1 on the page and its cards in both themes (the report of this
+   feature lists the numbers). */
+
+/* Solid backgrounds (also used by "Reduce transparency", section 6).
+   Each colour is the see-through one of style.css, as it looks on the page. */
+html.st-contrast[data-theme="dark"],
+html.st-solid[data-theme="dark"] {
+    --surface: var(--surface-solid);
+    --glass: var(--surface-solid);
+    --surface-2: #181f39;
+    --surface-hover: #21284c;
+    --nav-bg: var(--bg);
+}
+
+html.st-contrast[data-theme="light"],
+html.st-solid[data-theme="light"] {
+    --surface: var(--surface-solid);
+    --glass: var(--surface-solid);
+    --surface-2: #eef1fc;
+    --surface-hover: #ffffff;
+    --nav-bg: var(--bg);
+}
+
+/* Text and borders. --st-ring is the colour of the focus frame. */
+html.st-contrast[data-theme="dark"] {
+    --text: #ffffff;
+    --text-muted: #e6eaf8;
+    --text-dim: #cfd6ee;
+    --text-accent: #cdb6ff;
+    --text-accent-2: #8cefff;
+    --text-accent-3: #ffb3e8;
+    --text-success: #7cf2c2;
+    --text-warning: #ffd88a;
+    --text-danger: #ffb0bf;
+    --border: #77729f;
+    --border-strong: #aaa4e6;
+    /* Gradient text (headings, numbers) in lighter colours */
+    --gradient: linear-gradient(110deg, #d9c9ff 10%, #a8f3ff 90%);
+    --st-ring: #8cefff;
+}
+
+html.st-contrast[data-theme="light"] {
+    --text: #05070f;
+    --text-muted: #1d2440;
+    --text-dim: #283050;
+    --text-accent: #4520b8;
+    --text-accent-2: #004a5f;
+    --text-accent-3: #7f1163;
+    --text-success: #005432;
+    --text-warning: #5c3800;
+    --text-danger: #9a0f2c;
+    /* In the light theme the accent colours are also used for text: darker */
+    --accent: #4a22c4;
+    --accent-2: #004a5f;
+    --accent-3: #8e1470;
+    --border: #767a99;
+    --border-strong: #3f4466;
+    --gradient: linear-gradient(110deg, #4520b8 10%, #004a5f 90%);
+    --st-ring: #003f52;
+}
+
+/* Both themes: the main buttons are darker under their white text (7.8:1),
+   and the page has no coloured glow behind the text */
+html.st-contrast {
+    --gradient-button: linear-gradient(115deg, #5229d6, #2c43c2);
+}
+
+html.st-contrast body {
+    background: var(--bg);
+}
+
+/* The focus frame: solid and 3px wide on everything you can reach with Tab.
+   (Headings that only take the focus for screen readers, tabindex="-1",
+   stay without one.) Each part keeps its own outline-offset. */
+html.st-contrast :focus-visible:not([tabindex="-1"]) {
+    outline: 3px solid var(--st-ring);
+}
+
+/* No coloured text on a tinted box: the text is the normal text colour,
+   and the box keeps its tint and its border. Found by searching the CSS
+   files for a tinted background and an accent text colour in one rule,
+   and by measuring the page with high contrast on. */
+html.st-contrast :is(
+    .hero-label,                                    /* style.css */
+    .chip.active, .chip[aria-pressed="true"], button.chip:hover,
+    .ui-chip[aria-pressed="true"] .ui-chip-count,  /* components.css */
+    .cb-action, .cb-chip:hover,                    /* assistant.css */
+    .gl-letter[aria-pressed="true"],               /* glossary.css */
+    .lab-range-value, .lab-seg button[aria-pressed="true"],    /* lab.css */
+    .lsn-badge, .lsn-tool-listen.is-on, .lsn-lab-label,         /* lessons.css */
+    .lsn-pill[aria-pressed="true"], .lsn-blank.is-filled,
+    .lsn-toc-link[aria-current="true"] .lsn-toc-num,
+    .cp-note, .cp-title mark, .cp-enter,            /* palette.css */
+    .qz-streak.is-hot, .qz-key,                     /* quiz.css */
+    .tl-year                                        /* timeline.css */
+) {
+    color: var(--text);
+}
+
+/* The moving network behind the page is fainter, so no bright dot sits
+   behind a letter */
+html.st-contrast .neural-bg {
+    opacity: 0.35;
+}
+
+/* ===== 6. REDUCE TRANSPARENCY =====
+   Solid backgrounds (the colours are in section 5), a solid page behind the
+   windows, and no blur behind anything. It is for comfort: see-through
+   surfaces make text harder to read for some people. It is not a speed-up
+   on this site today (measured: the frame rate stays the same, because
+   nothing here blurs what is behind it); it would become one if a blur
+   (backdrop-filter) is ever added, since the rule below switches it off. */
+
+html.st-solid[data-theme="dark"],
+html.st-solid[data-theme="light"] {
+    --backdrop: var(--bg);
+}
+
+/* Nothing on the site blurs what is behind it today (style.css, 1); this
+   rule keeps it so for anything added later */
+html.st-solid *,
+html.st-solid *::before,
+html.st-solid *::after {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+/* ===== 7. THE WINDOWS: THE LAYER OVER THE PAGE =====
+   .st-layer covers the page; js/settings.js adds .is-open to show it and
+   .is-closing while it goes away (220ms, CLOSE_MS in js/settings.js).
+   The settings window dims the page only a little, even with "Reduce
+   transparency" on: every change shows on the page behind it at once.
+   (The shortcuts window uses --backdrop, like the other windows.) */
+
+.st-layer {
+    --st-scrim: rgba(3, 4, 10, 0.58);
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-dialog);
+    display: flex;
+    justify-content: flex-end;
+    background: var(--st-scrim);
+    opacity: 0;
+    transition: opacity 0.22s ease;
+}
+
+[data-theme="light"] .st-layer {
+    --st-scrim: rgba(18, 22, 43, 0.34);
+}
+
+.st-layer.is-open {
+    opacity: 1;
+}
+
+/* The window itself (both windows) */
+.st-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-height: 100%;
+    border: 1px solid var(--border-strong);
+    background:
+        radial-gradient(ellipse at 10% -10%, rgba(var(--accent-rgb), 0.18), transparent 50%),
+        radial-gradient(ellipse at 100% 0%, rgba(var(--accent-2-rgb), 0.08), transparent 45%),
+        var(--surface-solid);
+    box-shadow:
+        var(--shadow),
+        0 0 90px rgba(var(--accent-rgb), 0.2);
+    color: var(--text);
+}
+
+/* A thin line of light along the top edge */
+.st-panel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-2), var(--accent), transparent);
+    pointer-events: none;
+}
+
+/* The settings window: a tall panel on the right that slides in */
+.st-settings-panel {
+    width: min(30rem, 100%);
+    height: 100%;
+    border-width: 0 0 0 1px;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: transform 0.36s var(--ease), opacity 0.22s ease;
+}
+
+.st-layer.is-open .st-settings-panel {
+    opacity: 1;
+    transform: none;
+}
+
+.st-layer.is-closing .st-settings-panel {
+    transform: translateX(24px);
+}
+
+/* The header of both windows: icon, title, close button */
+.st-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: none;
+    padding: 18px 16px 16px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.st-head-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background:
+        linear-gradient(135deg, rgba(var(--accent-rgb), 0.28), rgba(var(--accent-2-rgb), 0.12)),
+        var(--surface-2);
+    color: var(--text-accent-2);
+    box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.25);
+}
+
+.st-head-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.st-kicker {
+    color: var(--text-accent-2);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    line-height: 1.4;
+}
+
+.st-title {
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+/* The title takes the focus when the window opens, for screen readers */
+.st-title:focus {
+    outline: none;
+}
+
+.st-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: none;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 10px;
+    border-radius: 12px;
+    color: var(--text-muted);
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.st-close:hover {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.st-close:focus-visible {
+    outline-offset: 0;
+}
+
+/* "Esc" on the close button: only for a keyboard and a mouse (section 12) */
+.st-close-key,
+.st-keys-button kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.9em;
+    height: 1.9em;
+    padding: 0 0.45em;
+    border: 1px solid var(--border-strong);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* ===== 8. THE SETTINGS WINDOW: PREVIEW CARD AND GROUPS ===== */
+
+/* The part that scrolls */
+.st-body {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    flex: 1;
+    min-height: 0;
+    padding: 18px 24px 28px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+}
+
+/* Each part keeps its full height: the window scrolls instead */
+.st-body > * {
+    flex-shrink: 0;
+}
+
+.st-intro {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+}
+
+/* The sample card: a heading, a paragraph, a link and a button, drawn with
+   the current settings (it is only for looking at: aria-hidden and inert) */
+.st-preview {
+    position: relative;
+    padding: 16px 18px 18px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--glass);
+    box-shadow: var(--shadow-card), var(--shadow-card-glow);
+}
+
+.st-preview-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+}
+
+/* A small light that says "this is live" */
+.st-preview-label::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+    animation: st-live 2.4s ease-in-out infinite;
+}
+
+.st-preview-title {
+    margin: 8px 0 6px;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.st-preview-text {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+}
+
+.st-preview-text a {
+    color: var(--text-accent-2);
+    font-weight: 600;
+}
+
+.st-preview-button {
+    margin-top: 14px;
+    pointer-events: none;
+}
+
+/* A group of settings: a title, then a card with one row per setting */
+.st-group {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--glass);
+    overflow: hidden;
+}
+
+.st-group-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px 4px;
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.st-group-title::before {
+    content: "";
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 8px var(--accent-2);
+}
+
+.st-group-hint {
+    padding: 0 18px 12px;
+}
+
+/* ===== 9. ROWS: OPTIONS, SWITCHES, VOICES ===== */
+
+.st-row {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 14px 18px;
+    text-align: left;
+}
+
+/* A line between the rows of a group */
+.st-row + .st-row {
+    border-top: 1px solid var(--border);
+}
+
+.st-row-name {
+    display: block;
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.st-hint {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+.st-seg .st-hint {
+    margin-top: 8px;
+}
+
+/* Notes that only appear sometimes: the font is loading, the device asks
+   for less motion, the device's theme... */
+.st-note {
+    display: block;
+    margin-top: 6px;
+    color: var(--text-accent-2);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.st-note.is-problem {
+    color: var(--text-warning);
+}
+
+.st-theme-note {
+    margin: -6px 18px 14px;
+}
+
+/* ----- A row of options (segmented buttons) -----
+   Real radio buttons: each one is invisible but covers its option, so
+   a click, a tap and the arrow keys all work as usual. The visible part
+   is .st-seg-face next to it. (css/components.css has no segmented
+   buttons yet. When another feature needs them, these rules can move
+   there as .ui-seg; the switches already are .ui-switch from there.) */
+.st-seg-options {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-2);
+}
+
+.st-seg-option {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.st-seg-option input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* With big letters, the icon goes above the word rather than breaking it */
+.st-seg-face {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px 8px;
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    overflow-wrap: break-word;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease;
+}
+
+.st-seg-face svg {
+    flex: none;
+}
+
+.st-seg-option:hover .st-seg-face {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+/* The chosen option: a raised button with a gradient edge */
+.st-seg-option input:checked + .st-seg-face {
+    border-color: transparent;
+    background:
+        linear-gradient(var(--surface-solid), var(--surface-solid)) padding-box,
+        var(--gradient) border-box;
+    color: var(--text);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22), 0 0 18px rgba(var(--accent-rgb), 0.22);
+}
+
+.st-seg-option input:focus-visible + .st-seg-face {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+}
+
+/* Options that may not fit in one line ("Like my device") go on to the next */
+.st-seg-wrap .st-seg-options {
+    flex-wrap: wrap;
+}
+
+.st-seg-wrap .st-seg-option {
+    flex: 1 1 auto;
+}
+
+/* Text sizes and reading speeds: four in a row, or two rows of two when
+   the letters are big */
+.st-seg-grid .st-seg-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(4.25rem, 1fr));
+}
+
+/* Text sizes: a letter A that grows, and the size under it */
+
+.st-seg-sizes .st-seg-face {
+    flex-direction: column;
+    gap: 4px;
+    min-height: 64px;
+}
+
+.st-size-letter {
+    font-family: var(--font-display);
+    font-size: calc(0.875rem + var(--st-step) * 0.1875rem);
+    font-weight: 600;
+    line-height: 1;
+}
+
+.st-size-value,
+.st-speed-value {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.st-size-value {
+    color: var(--text-label);
+}
+
+.st-seg-option input:checked + .st-seg-face .st-size-value {
+    color: var(--text-accent-2);
+}
+
+/* ----- An on / off row: the whole row is the switch ----- */
+.st-toggle {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 64px;
+    transition: background 0.2s ease;
+}
+
+.st-toggle:hover {
+    background: var(--surface-hover);
+}
+
+/* The frame goes inside the row: the group's rounded corners would cut it */
+.st-toggle:focus-visible {
+    outline-offset: -3px;
+    border-radius: 0;
+}
+
+.st-toggle-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.st-toggle .st-note {
+    margin-top: 3px;
+}
+
+/* ----- A voice: a drop-down list and a "Listen" button ----- */
+.st-voice-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.st-select {
+    position: relative;
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+/* The arrow of the drop-down list */
+.st-select::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted);
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+}
+
+.st-select select {
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 40px 8px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface-solid);
+    color: var(--text);
+    font-size: 0.875rem;
+    text-overflow: ellipsis;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.st-select select:hover {
+    border-color: var(--accent-2);
+}
+
+.st-listen {
+    flex: none;
+    min-height: 44px;
+}
+
+.st-listen svg {
+    flex: none;
+}
+
+.st-sound-none {
+    padding: 0 18px 16px;
+}
+
+/* ===== 10. THE BOTTOM OF THE SETTINGS WINDOW ===== */
+
+.st-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.st-privacy {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+.st-privacy svg {
+    flex: none;
+    margin-top: 0.1em;
+    color: var(--text-success);
+}
+
+.st-foot-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.st-foot-buttons .btn {
+    flex: 1 1 auto;
+}
+
+.st-keys-button svg {
+    flex: none;
+}
+
+/* "Sure? Press again": the reset button waits for a second press */
+.st-reset.is-armed {
+    border-color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 14%, var(--surface-solid));
+    color: var(--text-danger);
+}
+
+/* ===== 11. THE KEYBOARD SHORTCUTS WINDOW =====
+   A window in the middle of the page, over the page and over the
+   settings window. The groups sit in two columns when there is room. */
+
+.st-keys-layer {
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8vh 16px 16px;
+    padding: 8dvh 16px 16px;
+    background: var(--backdrop);
+}
+
+.st-keys-panel {
+    width: min(50rem, 100%);
+    border-radius: 22px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+    transition: transform 0.3s var(--ease), opacity 0.2s ease;
+}
+
+.st-layer.is-open .st-keys-panel {
+    opacity: 1;
+    transform: none;
+}
+
+.st-layer.is-closing .st-keys-panel {
+    transform: translateY(-6px) scale(0.98);
+}
+
+/* The first line scrolls with the list, so the header stays small on a phone */
+.st-keys-body .st-intro {
+    margin-top: 12px;
+    font-size: 0.875rem;
+}
+
+.st-keys-body {
+    flex: 1;
+    min-height: 0;
+    padding: 6px 24px 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+}
+
+/* The list takes the focus (so the arrow keys scroll it): the frame goes inside */
+.st-keys-body:focus-visible {
+    outline-offset: -3px;
+    border-radius: 0 0 22px 22px;
+}
+
+.st-keys-groups {
+    columns: 2 21rem;
+    column-gap: 32px;
+}
+
+.st-keys-group {
+    break-inside: avoid;
+    padding-top: 18px;
+}
+
+.st-keys-group-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.st-keys-group-title::before {
+    content: "";
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 8px var(--accent-2);
+}
+
+.st-keys-row {
+    display: grid;
+    grid-template-columns: minmax(0, 10.5rem) minmax(0, 1fr);
+    gap: 14px;
+    align-items: baseline;
+    padding: 9px 0;
+    border-top: 1px solid var(--border);
+}
+
+.st-keys-row dt {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.st-keys-row dd {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
+.st-keys-combo {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px;
+}
+
+.st-keys-combo.is-sequence {
+    gap: 2px;
+}
+
+.st-keys-row kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2em;
+    height: 2em;
+    padding: 0 0.5em;
+    border: 1px solid var(--border-strong);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.st-keys-plus,
+.st-keys-or,
+.st-keys-more {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+}
+
+.st-keys-or {
+    margin: 0 2px;
+}
+
+/* ===== 12. PHONES, SMALL SCREENS AND TOUCH SCREENS ===== */
+
+/* "Esc" is only shown where there is a keyboard and a mouse */
+@media (hover: none), (pointer: coarse) {
+    .st-close-key,
+    .st-keys-button kbd {
+        display: none;
+    }
+
+    /* Big enough for a finger, like the window's other controls (44px) */
+    .st-foot-buttons .btn {
+        min-height: 44px;
+    }
+}
+
+/* Phones: the settings window comes up from the bottom, almost the
+   whole height of the screen */
+@media (max-width: 640px) {
+    .st-layer {
+        align-items: flex-end;
+    }
+
+    .st-settings-panel {
+        width: 100%;
+        height: auto;
+        max-height: calc(100% - 24px);
+        border-width: 1px 0 0;
+        border-radius: 22px 22px 0 0;
+        transform: translateY(48px);
+    }
+
+    .st-layer.is-closing .st-settings-panel {
+        transform: translateY(32px);
+    }
+
+    .st-head {
+        padding: 14px 10px 12px 16px;
+        gap: 12px;
+    }
+
+    .st-head-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+
+    .st-title {
+        font-size: 1.1875rem;
+    }
+
+    .st-body {
+        gap: 18px;
+        padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .st-row {
+        padding: 14px;
+    }
+
+    .st-group-title {
+        padding: 14px 14px 4px;
+    }
+
+    .st-group-hint,
+    .st-sound-none {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .st-theme-note {
+        margin-left: 14px;
+        margin-right: 14px;
+    }
+
+    /* The shortcuts window: from the top, the whole width */
+    .st-keys-layer {
+        padding: 12px 8px 8px;
+    }
+
+    .st-keys-body {
+        padding: 0 16px 20px;
+    }
+
+    /* The keys above what they do */
+    .st-keys-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+    }
+}
+
+/* A phone held sideways (520px high or less, as in style.css): the settings
+   window keeps to the right and uses the whole height */
+@media (max-height: 520px) and (min-width: 641px) {
+    .st-head {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .st-keys-layer {
+        padding-top: 12px;
+    }
+}
+
+/* ===== 13. HIGH CONTRAST IN THE WINDOWS ===== */
+
+/* High contrast: the chosen option has a plain, thick frame (not only a
+   gradient edge), and the hints use the stronger text colour */
+html.st-contrast .st-seg-option input:checked + .st-seg-face {
+    border-color: var(--text);
+    background: var(--surface-solid);
+    box-shadow: 0 0 0 1px var(--text);
+}
+
+html.st-contrast .st-seg-option input:focus-visible + .st-seg-face {
+    outline: 3px solid var(--st-ring);
+}
+
+html.st-contrast .st-seg-options {
+    border-color: var(--border-strong);
+}
+
+@keyframes st-live {
+    50% { opacity: 0.35; }
+}

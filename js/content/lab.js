@@ -1,581 +1,411 @@
 /* =========================================================
-   AI COMPASS — TEXTS: AI LAB
-   Every word in English and in Russian (informal "ты").
+   AI COMPASS — TEXTS: THE AI LAB (the section and its hub)
+   Every word of the lab's section and hub in English and in Russian
+   (informal "ты"), the catalogue of experiments and their icons.
    Used by js/lab.js (and the lab section of index.html).
+   Each experiment has its own texts in js/content/lab/<id>.js, loaded
+   with it; only what the picker and the Ctrl+K palette show before an
+   experiment opens (its title, hook and big idea) lives here.
    To change a text, change it here (in both languages).
-   At the end: the sentences the next-word predictor learns from.
+   Sections:
+    1. The section on the page
+    2. The hub: picker, header, loading, errors, commands
+    3. The experiments' names in the picker
+    4. The icons (an SVG sprite)
+    5. The catalogue: which experiments, in which order
    ========================================================= */
 
-// The section's title and subtitle on the page (index.html)
+/* ===== 1. THE SECTION ON THE PAGE (index.html) =====
+   The subtitle says how many experiments there are: {n} comes from the
+   catalogue below (js/lab.js registers it as the text value "labExperimentCount").
+   "lab.subtitle" alone is the fallback without a number. */
 window.AICompass.addTranslations({
     en: {
         "lab.label": "HANDS-ON EXPERIMENTS",
         "lab.title": "The AI Lab",
-        "lab.subtitle": "Real machine learning, running right here in your browser. Teach a model, test it, and watch it think."
+        "lab.subtitle": "Real machine learning, running right here in your browser. Teach a model, test it, and watch it think.",
+        "lab.subtitle.one": "{n} real machine-learning experiment, running right here in your browser. Teach a model, test it, and watch it think.",
+        "lab.subtitle.many": "{n} real machine-learning experiments, running right here in your browser. Teach a model, test it, and watch it think."
     },
     ru: {
         "lab.label": "ЭКСПЕРИМЕНТЫ СВОИМИ РУКАМИ",
         "lab.title": "ИИ-лаборатория",
-        "lab.subtitle": "Настоящее машинное обучение прямо в твоём браузере. Обучи модель, проверь её и посмотри, как она «думает»."
+        "lab.subtitle": "Настоящее машинное обучение прямо в твоём браузере. Обучи модель, проверь её и посмотри, как она «думает».",
+        "lab.subtitle.one": "{n} настоящий эксперимент с машинным обучением прямо в твоём браузере. Обучи модель, проверь её и посмотри, как она «думает».",
+        "lab.subtitle.few": "{n} настоящих эксперимента с машинным обучением прямо в твоём браузере. Обучи модель, проверь её и посмотри, как она «думает».",
+        "lab.subtitle.many": "{n} настоящих экспериментов с машинным обучением прямо в твоём браузере. Обучи модель, проверь её и посмотри, как она «думает»."
     }
 });
 
+/* ===== 2. THE HUB: PICKER, HEADER, LOADING, ERRORS, COMMANDS ===== */
 window.AICompass.addTranslations({
     en: {
-        // Card and tabs
-        "lab.tablistLabel": "AI Lab experiments",
-        "lab.tabNN": "Teach the machine",
-        "lab.tabNNSub": "NEURAL NETWORK",
-        "lab.tabLM": "Next-word predictor",
-        "lab.tabLMSub": "LANGUAGE MODEL",
+        // The picker: a grid of experiment cards (a rail while one is open)
+        "lab.hub.pickerLabel": "Choose an experiment",
         "lab.live": "RUNS 100% IN YOUR BROWSER",
+        "lab.hub.levelWord": "Level",
+        "lab.hub.level1": "Level 1 of 3",
+        "lab.hub.level2": "Level 2 of 3",
+        "lab.hub.level3": "Level 3 of 3",
+        "lab.hub.stateNew": "New",
+        "lab.hub.stateTried": "Tried",
+        // {done} of {total} "Try this" challenges done; {challenges} is the word that suits {total}
+        "lab.hub.stateChallenges": "{done} / {total} {challenges}",
+        "lab.hub.pluralChallenges": "challenge|challenges",
 
-        // Board
-        "lab.classGroup": "Class of the next dot",
-        "lab.classA": "Class A",
-        "lab.classB": "Class B",
-        "lab.undo": "Undo",
-        "lab.clear": "Clear",
-        "lab.undoLabel": "Undo the last change to the dots",
-        "lab.clearLabel": "Remove all dots",
-        "lab.boardLabel": "Training board. Arrow keys move the cursor, Enter adds a dot, A or B picks the class, Backspace undoes.",
-        "lab.emptyTitle": "The board is empty",
-        "lab.emptyText": "Click to add dots, or pick an example below",
-        "lab.emptyTextTouch": "Tap to add dots, or pick an example below",
-        "lab.presetsLabel": "EXAMPLES",
-        "lab.presetClusters": "Two clusters",
-        "lab.presetCircle": "Circle",
-        "lab.presetXor": "XOR",
-        "lab.presetSpiral": "Spiral",
-        "lab.hintMouse": "<strong>Click</strong> to add a dot of the chosen class. <strong>Shift + click</strong> or <strong>right-click</strong> adds the other class. Hold and drag to paint.",
-        "lab.hintTouch": "<strong>Tap</strong> the board to add a dot of the chosen class.",
-        "lab.legendBoundary": "Boundary (50 / 50)",
-        "lab.legendWrong": "Wrong guess",
-        "lab.readout": "x {x}  y {y}  →  {cls} {pct}%",
+        // The header above an open experiment
+        "lab.hub.all": "All experiments",
+        "lab.hub.prev": "Previous experiment: {title}",
+        "lab.hub.next": "Next experiment: {title}",
+        "lab.hub.prevNone": "This is the first experiment",
+        "lab.hub.nextNone": "This is the last experiment",
 
-        // Run buttons and status
-        "lab.train": "Train",
-        "lab.pause": "Pause",
-        "lab.step": "Step",
-        "lab.stepLabel": "Train for one epoch",
-        "lab.reset": "Reset",
-        "lab.resetLabel": "Reset the network to random weights",
-        "lab.statsTitle": "LIVE STATS",
-        "lab.statusReady": "READY",
-        "lab.statusTraining": "TRAINING",
-        "lab.statusPaused": "PAUSED",
-        "lab.statusDone": "LEARNED",
-        "lab.statEpoch": "EPOCH",
-        "lab.statLoss": "LOSS",
-        "lab.statAccuracy": "ACCURACY",
-        "lab.statPoints": "DOTS",
-        "lab.pointsSplit": "A {a} · B {b}",
-        "lab.chartTitle": "LOSS OVER TIME",
-        "lab.chartEmpty": "Press Train and watch the loss fall",
-        "lab.chartLabel": "Loss chart. Loss right now: {loss}.",
-        "lab.chartLabelEmpty": "Loss chart. No training yet.",
+        // Loading, errors, links
+        "lab.hub.loading": "Loading the experiment…",
+        "lab.hub.errorTitle": "This experiment didn't load",
+        "lab.hub.errorText": "Check your internet connection, then try again.",
+        "lab.hub.retry": "Try again",
+        "lab.hub.opened": "Opened: {title}",
+        // A link like #lab/something names no experiment: {id} is that name
+        "lab.hub.unknown": "There's no experiment called “{id}”. Here are all of them.",
 
-        // Settings
-        "lab.settings": "SETTINGS",
-        "lab.lr": "Learning rate",
-        "lab.lrHint": "How big each learning step is",
-        "lab.optimizer": "Optimizer",
-        "lab.optHint": "The rule for changing the weights",
-        "lab.optAdam": "Adam",
-        "lab.optSgd": "SGD + momentum",
-        "lab.speed": "Speed",
-        "lab.speedSlow": "Slow",
-        "lab.speedNormal": "Normal",
-        "lab.speedFast": "Fast",
-        "lab.neurons": "Hidden neurons",
-        "lab.neuronsHint": "More neurons can draw more complex shapes",
-        "lab.layer2": "Second hidden layer",
-        "lab.layer2Hint": "Combines simple shapes into new ones",
-
-        // Network diagram
-        "lab.diagramTitle": "THE NETWORK, LIVE",
-        "lab.params": "{n} {params}",
-        "lab.pluralParams": "parameter|parameters",
-        "lab.diagramHow": "Each square is a <strong>neuron</strong>. The tiny picture inside shows how it reacts to every spot of the board: purple means negative, cyan means positive. The lines are the <strong>weights</strong> that connect them. Watch them change while it learns!",
-        "lab.diagramPointMouse": "Point at the board, and a dot marks that spot inside every neuron.",
-        "lab.diagramPointTouch": "Tap the board, and a dot marks that spot inside every neuron.",
-        "lab.legendPos": "positive weight",
-        "lab.legendNeg": "negative weight",
-        "lab.nnInput": "INPUT",
-        "lab.nnHidden": "LAYER {n}",
-        "lab.nnOutput": "OUTPUT",
-        "lab.nnOutputHint": "P(B)",
-        "lab.pluralHidden": "hidden neuron|hidden neurons",
-        "lab.diagramLabel": "Network diagram: 2 inputs → {hidden} → 1 output; {params} in total. Cyan lines are positive weights, purple lines are negative, thicker lines are stronger.",
-
-        // Messages
-        "lab.toastEmpty": "Add some dots first, or pick an example",
-        "lab.toastLearned": "Learned it! 100% accuracy after {n} {epochs}",
-        "lab.pluralEpochs": "epoch|epochs",
-        "lab.toastOneClass": "Add dots of both classes, so there is something to tell apart",
-        "lab.toastMax": "That's plenty of dots! (maximum {n})",
-        "lab.toastStuck": "The network seems stuck. Try more neurons, the second layer or another learning rate.",
-        "lab.srStatus": "Epoch {epoch}. Loss {loss}. Accuracy {acc}%.",
-        "lab.srAdded": "Added a dot: {cls}. {n} {points} in total.",
-        "lab.pluralPoints": "dot|dots",
-        "lab.srPreset": "Loaded the example {name}: {n} {points}.",
-        "lab.srCleared": "All dots removed.",
-        "lab.srUndo": "Undone. {n} {points} left.",
-        "lab.srTraining": "Training started.",
-        "lab.srPaused": "Training paused.",
-
-        // Explanation
-        "lab.explainTitle": "What's happening?",
-        "lab.explain1Title": "You give examples",
-        "lab.explain1Text": "Every dot is an example with an answer: purple (A) or cyan (B). Together they are the <strong>training data</strong>.",
-        "lab.explain2Title": "The network guesses",
-        "lab.explain2Text": "For every spot on the board it calculates a guess. The background shows it: the stronger the colour, the surer it is. The glowing line is where it's 50 / 50.",
-        "lab.explain3Title": "It measures the mistake",
-        "lab.explain3Text": "The <strong>loss</strong> is a score for how wrong the guesses are. Lower is better: 0 would mean perfect and completely sure.",
-        "lab.explain4Title": "It adjusts and repeats",
-        "lab.explain4Text": "It nudges every <strong>weight</strong> (the lines in the diagram) a tiny bit to make the loss smaller. One pass over all the dots is one <strong>epoch</strong>. Thousands of tiny nudges = learning!",
-        "lab.tipsTitle": "TRY THIS",
-        "lab.tip1": "Load <strong>XOR</strong>, set 2 neurons and train. Then try 8. What changes?",
-        "lab.tip2": "The <strong>spiral</strong> is tricky. Turn on the second layer and watch the boundary curl.",
-        "lab.tip3": "Load the <strong>Circle</strong> and set the learning rate to <strong>10</strong>: the steps are so big that the network overshoots. The loss jumps up instead of going down, and it may never learn. With <strong>0.001</strong> it just crawls.",
-        "lab.tip4": "Put a purple dot deep inside the cyan area. Does the network bend just to fit it? That's called <strong>overfitting</strong>.",
-        "lab.underHood": "Under the hood: 2 inputs (x and y) → hidden neurons with <em>tanh</em> → 1 output with a <em>sigmoid</em> (a probability from 0 to 1). It learns with binary cross-entropy loss and the Adam or SGD optimizer: the same ideas big AI uses, just tiny.",
-
-        // Next-word predictor
-        "lab.lmPromptLabel": "Start a sentence, and the model will guess the next word",
-        "lab.lmPlaceholder": "Type here… for example “My friends and I”",
-        "lab.lmClear": "Clear the text",
-        "lab.lmStarters": "TRY:",
-        "lab.lmStarter1": "Artificial intelligence can",
-        "lab.lmStarter2": "My friends and I",
-        "lab.lmStarter3": "At school we",
-        "lab.lmStarter4": "I like to",
-        "lab.lmStarter5": "The robot",
-        "lab.lmNext": "NEXT WORD",
-        "lab.lmComplete": "FINISHING THE WORD",
-        "lab.q": "“{w}”",
-        "lab.pluralTimes": "time|times",
-        "lab.lmCtxStart": "Start of a sentence: words that usually come first",
-        "lab.lmCtxFirst": "{word} at the start of a sentence: seen {n} {times}",
-        "lab.lmCtxTri": "Looking at the last two words {words}: seen {n} {times}",
-        "lab.lmCtxOne": "Looking at the last word {word}: seen {n} {times}",
-        "lab.lmCtxBi": "Never saw {pair} together, so I back off to just {word} (seen {n} {times})",
-        "lab.lmCtxUni": "I've never seen {word}, so I suggest common words",
-        "lab.lmCtxComplete": "Words that start with {prefix}",
-        "lab.lmEnd": "end of sentence",
-        "lab.lmPickLabel": "Add {word}: {pct} likely",
-        "lab.lmPickEndLabel": "End the sentence: {pct} likely",
-        "lab.lmLegend": "The bar shows how likely the model thinks each word is. The pink line shows its chance to be picked at the current creativity.",
-        "lab.lmAuto": "Auto-write",
-        "lab.lmStop": "Stop",
-        // {n}: how many words auto-write adds at most (AUTO_WORDS in js/lab.js)
-        "lab.lmAutoLabel": "Let the model write up to {n} words",
-        "lab.lmTemp": "Creativity (temperature)",
-        "lab.lmTemp0": "always the top word",
-        "lab.lmTemp1": "predictable",
-        "lab.lmTemp2": "balanced",
-        "lab.lmTemp3": "creative",
-        "lab.lmTemp4": "chaotic!",
-        "lab.lmTokensTitle": "HOW EXPECTED WAS EACH WORD?",
-        "lab.lmTokensHint": "Bright = the model expected it. Dim = a surprise. Dashed = a word it has never seen.",
-        "lab.lmTokensEmpty": "Start typing to see your text through the model's eyes.",
-        "lab.lmTokenNew": "new",
-        "lab.lmStatsTitle": "WHAT IT KNOWS",
-        "lab.pluralSentences": "sentence|sentences",
-        "lab.pluralWords": "different word|different words",
-        "lab.pluralPairs": "word pair|word pairs",
-        "lab.pluralTriples": "three-word chain|three-word chains",
-        "lab.lmTeachTitle": "TEACH IT A SENTENCE",
-        "lab.lmTeachLabel": "Your sentence",
-        "lab.lmTeachPlaceholder": "e.g. My cat likes to sleep on the keyboard",
-        "lab.lmTeachButton": "Teach",
-        "lab.lmTeachCount": "Your sentences in the model: {n}",
-        "lab.lmTeachNone": "The model only knows what it has read. Add a sentence and it learns it instantly.",
-        "lab.lmTeachForget": "Forget mine",
-        "lab.lmTeachError": "Write at least two words.",
-        "lab.lmTeachToast": "Learned it! Now type the start of your sentence.",
-        "lab.lmTeachForgot": "Your sentences are forgotten",
-        "lab.lmTeachFull": "Memory is full: forget your sentences first",
-        "lab.lmUnknown": "I don't know most of these words, so I can only suggest common ones. Try a starter!",
-        "lab.lmSrTop": "Top guess: {word}, {pct}.",
-        "lab.lmSrDone": "Finished writing.",
-        "lab.lmExplainTitle": "How does it work?",
-        "lab.lmExplain1Title": "It counts",
-        "lab.lmExplain1Text": "The model read a small collection of simple sentences and counted which word came after each word and each <strong>pair</strong> of words.",
-        "lab.lmExplain2Title": "It looks back",
-        "lab.lmExplain2Text": "To make a guess, it looks at your last two words. If it never saw that pair, it <strong>backs off</strong> and looks at just the last word.",
-        "lab.lmExplain3Title": "It picks a word",
-        "lab.lmExplain3Text": "Every possible word gets a probability. Low creativity always takes the top word; high creativity rolls a weighted dice, so unlikely words get a chance too.",
-        "lab.lmRealTitle": "Just like ChatGPT… only much, much smaller",
-        "lab.lmRealText": "Real chatbots work on the same idea: predict the next word (more precisely, the next <strong>token</strong>, a word or a piece of a word) again and again. But they use huge neural networks trained on billions of sentences, and they can look at thousands — sometimes hundreds of thousands — of previous words, not just two. Ours is tiny, so it often says silly things, and it only knows the sentences it was given.",
-
-        // Command palette
+        // Command palette: one command per experiment
         "lab.cmdGroup": "AI Lab",
-        "lab.cmdNN": "Teach the machine: train a neural network",
-        "lab.cmdLM": "Next-word predictor: a mini language model"
+        "lab.cmdOpen": "Open lab: {title}"
     },
     ru: {
-        "lab.tablistLabel": "Эксперименты ИИ-лаборатории",
-        "lab.tabNN": "Обучи машину",
-        "lab.tabNNSub": "НЕЙРОСЕТЬ",
-        "lab.tabLM": "Предсказатель слов",
-        "lab.tabLMSub": "ЯЗЫКОВАЯ МОДЕЛЬ",
+        "lab.hub.pickerLabel": "Выбери эксперимент",
         "lab.live": "РАБОТАЕТ ПРЯМО В ТВОЁМ БРАУЗЕРЕ",
+        "lab.hub.levelWord": "Уровень",
+        "lab.hub.level1": "Уровень 1 из 3",
+        "lab.hub.level2": "Уровень 2 из 3",
+        "lab.hub.level3": "Уровень 3 из 3",
+        "lab.hub.stateNew": "Новый",
+        "lab.hub.stateTried": "Знакомый",
+        "lab.hub.stateChallenges": "{done} / {total} {challenges}",
+        "lab.hub.pluralChallenges": "задание|задания|заданий",
 
-        "lab.classGroup": "Класс следующей точки",
-        "lab.classA": "Класс A",
-        "lab.classB": "Класс B",
-        "lab.undo": "Отменить",
-        "lab.clear": "Очистить",
-        "lab.undoLabel": "Отменить последнее изменение точек",
-        "lab.clearLabel": "Удалить все точки",
-        "lab.boardLabel": "Поле для обучения. Стрелки двигают курсор, Enter ставит точку, A или B выбирают класс, Backspace отменяет.",
-        "lab.emptyTitle": "Поле пока пустое",
-        "lab.emptyText": "Нажми, чтобы поставить точки, или выбери пример ниже",
-        "lab.emptyTextTouch": "Коснись, чтобы поставить точки, или выбери пример ниже",
-        "lab.presetsLabel": "ПРИМЕРЫ",
-        "lab.presetClusters": "Две группы",
-        "lab.presetCircle": "Круг",
-        "lab.presetXor": "XOR",
-        "lab.presetSpiral": "Спираль",
-        "lab.hintMouse": "<strong>Нажми</strong>, чтобы поставить точку выбранного класса. <strong>Shift + клик</strong> или <strong>правая кнопка</strong> ставят точку другого класса. Зажми и веди, чтобы рисовать.",
-        "lab.hintTouch": "<strong>Коснись</strong> поля, чтобы поставить точку выбранного класса.",
-        "lab.legendBoundary": "Граница (50 / 50)",
-        "lab.legendWrong": "Ошибка сети",
-        "lab.readout": "x {x}  y {y}  →  {cls} {pct}%",
+        "lab.hub.all": "Все эксперименты",
+        "lab.hub.prev": "Предыдущий эксперимент: {title}",
+        "lab.hub.next": "Следующий эксперимент: {title}",
+        "lab.hub.prevNone": "Это первый эксперимент",
+        "lab.hub.nextNone": "Это последний эксперимент",
 
-        "lab.train": "Обучать",
-        "lab.pause": "Пауза",
-        "lab.step": "Шаг",
-        "lab.stepLabel": "Обучить на одну эпоху",
-        "lab.reset": "Сброс",
-        "lab.resetLabel": "Сбросить сеть к случайным весам",
-        "lab.statsTitle": "ПОКАЗАТЕЛИ",
-        "lab.statusReady": "ГОТОВА",
-        "lab.statusTraining": "ОБУЧАЕТСЯ",
-        "lab.statusPaused": "ПАУЗА",
-        "lab.statusDone": "ОБУЧЕНА",
-        "lab.statEpoch": "ЭПОХА",
-        "lab.statLoss": "ОШИБКА",
-        "lab.statAccuracy": "ТОЧНОСТЬ",
-        "lab.statPoints": "ТОЧКИ",
-        "lab.pointsSplit": "A {a} · B {b}",
-        "lab.chartTitle": "ОШИБКА СО ВРЕМЕНЕМ",
-        "lab.chartEmpty": "Нажми «Обучать» и смотри, как падает ошибка",
-        "lab.chartLabel": "График ошибки. Сейчас ошибка: {loss}.",
-        "lab.chartLabelEmpty": "График ошибки. Обучение ещё не начиналось.",
-
-        "lab.settings": "НАСТРОЙКИ",
-        "lab.lr": "Скорость обучения",
-        "lab.lrHint": "Насколько большой каждый шаг обучения",
-        "lab.optimizer": "Оптимизатор",
-        "lab.optHint": "Правило, по которому меняются веса",
-        "lab.optAdam": "Adam",
-        "lab.optSgd": "SGD с моментом",
-        "lab.speed": "Скорость показа",
-        "lab.speedSlow": "Медленно",
-        "lab.speedNormal": "Обычно",
-        "lab.speedFast": "Быстро",
-        "lab.neurons": "Скрытые нейроны",
-        "lab.neuronsHint": "Чем больше нейронов, тем сложнее формы",
-        "lab.layer2": "Второй скрытый слой",
-        "lab.layer2Hint": "Собирает из простых форм новые",
-
-        "lab.diagramTitle": "СЕТЬ В РЕАЛЬНОМ ВРЕМЕНИ",
-        "lab.params": "{n} {params}",
-        "lab.pluralParams": "параметр|параметра|параметров",
-        "lab.diagramHow": "Каждый квадратик — это <strong>нейрон</strong>. Картинка внутри показывает, как он реагирует на каждое место поля: фиолетовый — отрицательно, голубой — положительно. Линии — это <strong>веса</strong>, которые их соединяют. Посмотри, как они меняются во время обучения!",
-        "lab.diagramPointMouse": "Наведи курсор на поле — точка покажет это место внутри каждого нейрона.",
-        "lab.diagramPointTouch": "Коснись поля — точка покажет это место внутри каждого нейрона.",
-        "lab.legendPos": "положительный вес",
-        "lab.legendNeg": "отрицательный вес",
-        "lab.nnInput": "ВХОД",
-        "lab.nnHidden": "СЛОЙ {n}",
-        "lab.nnOutput": "ВЫХОД",
-        "lab.nnOutputHint": "P(B)",
-        "lab.pluralHidden": "скрытый нейрон|скрытых нейрона|скрытых нейронов",
-        "lab.diagramLabel": "Схема сети: 2 входа → {hidden} → 1 выход; всего {params}. Голубые линии — положительные веса, фиолетовые — отрицательные, чем толще линия, тем сильнее вес.",
-
-        "lab.toastEmpty": "Сначала добавь точки или выбери пример",
-        "lab.toastLearned": "Получилось! 100% точности за {n} {epochs}",
-        "lab.pluralEpochs": "эпоху|эпохи|эпох",
-        "lab.toastOneClass": "Добавь точки обоих классов, чтобы сети было что различать",
-        "lab.toastMax": "Точек уже очень много! (максимум {n})",
-        "lab.toastStuck": "Сеть, похоже, застряла. Попробуй больше нейронов, второй слой или другую скорость обучения.",
-        "lab.srStatus": "Эпоха {epoch}. Ошибка {loss}. Точность {acc}%.",
-        "lab.srAdded": "Добавлена точка: {cls}. Всего {n} {points}.",
-        "lab.pluralPoints": "точка|точки|точек",
-        "lab.srPreset": "Загружен пример «{name}»: {n} {points}.",
-        "lab.srCleared": "Все точки удалены.",
-        "lab.srUndo": "Отменено. Осталось точек: {n}.",
-        "lab.srTraining": "Обучение началось.",
-        "lab.srPaused": "Обучение на паузе.",
-
-        "lab.explainTitle": "Что здесь происходит?",
-        "lab.explain1Title": "Ты даёшь примеры",
-        "lab.explain1Text": "Каждая точка — это пример с ответом: фиолетовый (A) или голубой (B). Все вместе они — <strong>обучающие данные</strong>.",
-        "lab.explain2Title": "Сеть угадывает",
-        "lab.explain2Text": "Для каждого места на поле сеть вычисляет свой ответ. Его показывает цвет фона: чем ярче, тем увереннее сеть. Светящаяся линия — там, где 50 на 50.",
-        "lab.explain3Title": "Она измеряет ошибку",
-        "lab.explain3Text": "<strong>Ошибка</strong> (по-английски loss) — число, которое показывает, насколько ответы неверны. Чем меньше, тем лучше: 0 означал бы идеальные и полностью уверенные ответы.",
-        "lab.explain4Title": "Подстраивается и повторяет",
-        "lab.explain4Text": "Сеть чуть-чуть меняет каждый <strong>вес</strong> (линии на схеме), чтобы ошибка стала меньше. Один проход по всем точкам — это одна <strong>эпоха</strong>. Тысячи маленьких шагов — это и есть обучение!",
-        "lab.tipsTitle": "ПОПРОБУЙ",
-        "lab.tip1": "Загрузи <strong>XOR</strong>, поставь 2 нейрона и обучи сеть. Потом попробуй 8. Что изменилось?",
-        "lab.tip2": "<strong>Спираль</strong> — сложная задача. Включи второй слой и посмотри, как закручивается граница.",
-        "lab.tip3": "Загрузи <strong>Круг</strong> и поставь скорость обучения <strong>10</strong>: шаги станут такими большими, что сеть будет «перепрыгивать» цель. Ошибка будет скакать вверх, а не падать, и сеть может так и не научиться. А с <strong>0,001</strong> обучение еле ползёт.",
-        "lab.tip4": "Поставь фиолетовую точку глубоко в голубой зоне. Станет ли сеть изгибаться ради одной точки? Это называется <strong>переобучение</strong>.",
-        "lab.underHood": "Под капотом: 2 входа (x и y) → скрытые нейроны с функцией <em>tanh</em> → 1 выход с <em>сигмоидой</em> (вероятность от 0 до 1). Сеть учится с функцией потерь «бинарная кросс-энтропия» и оптимизатором Adam или SGD — это те же идеи, что и в больших ИИ, только в миниатюре.",
-
-        "lab.lmPromptLabel": "Начни предложение, а модель угадает следующее слово",
-        "lab.lmPlaceholder": "Пиши здесь… например, «Мы с друзьями»",
-        "lab.lmClear": "Очистить текст",
-        "lab.lmStarters": "ПОПРОБУЙ:",
-        "lab.lmStarter1": "Искусственный интеллект может",
-        "lab.lmStarter2": "Мы с друзьями",
-        "lab.lmStarter3": "В школе мы",
-        "lab.lmStarter4": "Я люблю",
-        "lab.lmStarter5": "Робот",
-        "lab.lmNext": "СЛЕДУЮЩЕЕ СЛОВО",
-        "lab.lmComplete": "ДОПИСЫВАЕМ СЛОВО",
-        "lab.q": "«{w}»",
-        "lab.pluralTimes": "раз|раза|раз",
-        "lab.lmCtxStart": "Начало предложения: слова, с которых обычно начинают",
-        "lab.lmCtxFirst": "{word} в начале предложения: встречалось {n} {times}",
-        "lab.lmCtxTri": "Смотрю на два последних слова {words}: встречались {n} {times}",
-        "lab.lmCtxOne": "Смотрю на последнее слово {word}: встречалось {n} {times}",
-        "lab.lmCtxBi": "Сочетание {pair} мне не встречалось, поэтому смотрю только на {word} (встречалось {n} {times})",
-        "lab.lmCtxUni": "Слово {word} мне незнакомо, поэтому предлагаю частые слова",
-        "lab.lmCtxComplete": "Слова, которые начинаются на {prefix}",
-        "lab.lmEnd": "конец предложения",
-        "lab.lmPickLabel": "Добавить {word}: вероятность {pct}",
-        "lab.lmPickEndLabel": "Закончить предложение: вероятность {pct}",
-        "lab.lmLegend": "Полоска показывает, насколько вероятно слово по мнению модели. Розовая линия — шанс, что его выберут при текущей креативности.",
-        "lab.lmAuto": "Дописать",
-        "lab.lmStop": "Стоп",
-        "lab.lmAutoLabel": "Пусть модель допишет до {n} слов",
-        "lab.lmTemp": "Креативность (температура)",
-        "lab.lmTemp0": "всегда самое вероятное слово",
-        "lab.lmTemp1": "предсказуемо",
-        "lab.lmTemp2": "сбалансированно",
-        "lab.lmTemp3": "творчески",
-        "lab.lmTemp4": "хаотично!",
-        "lab.lmTokensTitle": "НАСКОЛЬКО ОЖИДАЕМО КАЖДОЕ СЛОВО?",
-        "lab.lmTokensHint": "Ярко — модель ожидала это слово. Тускло — сюрприз. Пунктир — слово, которого она никогда не видела.",
-        "lab.lmTokensEmpty": "Начни печатать — и увидишь свой текст глазами модели.",
-        "lab.lmTokenNew": "новое",
-        "lab.lmStatsTitle": "ЧТО ОНА ЗНАЕТ",
-        "lab.pluralSentences": "предложение|предложения|предложений",
-        "lab.pluralWords": "разное слово|разных слова|разных слов",
-        "lab.pluralPairs": "пара слов|пары слов|пар слов",
-        "lab.pluralTriples": "тройка слов|тройки слов|троек слов",
-        "lab.lmTeachTitle": "НАУЧИ НОВОЙ ФРАЗЕ",
-        "lab.lmTeachLabel": "Твоё предложение",
-        "lab.lmTeachPlaceholder": "например: Мой кот любит спать на клавиатуре",
-        "lab.lmTeachButton": "Научить",
-        "lab.lmTeachCount": "Твоих предложений в модели: {n}",
-        "lab.lmTeachNone": "Модель знает только то, что прочитала. Добавь предложение — и она сразу его выучит.",
-        "lab.lmTeachForget": "Забыть мои",
-        "lab.lmTeachError": "Напиши хотя бы два слова.",
-        "lab.lmTeachToast": "Запомнила! Теперь напечатай начало своей фразы.",
-        "lab.lmTeachForgot": "Твои предложения забыты",
-        "lab.lmTeachFull": "Память заполнена: сначала забудь свои предложения",
-        "lab.lmUnknown": "Я не знаю большинства этих слов, поэтому могу предложить только частые. Попробуй готовое начало!",
-        "lab.lmSrTop": "Лучший вариант: {word}, {pct}.",
-        "lab.lmSrDone": "Текст дописан.",
-        "lab.lmExplainTitle": "Как это работает?",
-        "lab.lmExplain1Title": "Считает",
-        "lab.lmExplain1Text": "Модель прочитала небольшой набор простых предложений и посчитала, какое слово шло после каждого слова и каждой <strong>пары</strong> слов.",
-        "lab.lmExplain2Title": "Смотрит назад",
-        "lab.lmExplain2Text": "Чтобы угадать, она смотрит на два последних слова. Если такая пара ей не встречалась, она <strong>отступает</strong> и смотрит только на последнее слово.",
-        "lab.lmExplain3Title": "Выбирает слово",
-        "lab.lmExplain3Text": "Каждое возможное слово получает вероятность. При низкой креативности модель всегда берёт самое вероятное слово, а при высокой бросает «взвешенный кубик» — и шанс получают даже редкие слова.",
-        "lab.lmRealTitle": "Как ChatGPT… только намного меньше",
-        "lab.lmRealText": "Настоящие чат-боты работают по той же идее: снова и снова предсказывают следующее слово (точнее, следующий <strong>токен</strong> — слово или кусочек слова). Но они используют огромные нейросети, обученные на миллиардах предложений, и учитывают тысячи, а иногда и сотни тысяч предыдущих слов, а не два. Наша модель крошечная, поэтому часто говорит глупости и знает только те предложения, которые ей дали.",
+        "lab.hub.loading": "Загружаю эксперимент…",
+        "lab.hub.errorTitle": "Эксперимент не загрузился",
+        "lab.hub.errorText": "Проверь подключение к интернету и попробуй ещё раз.",
+        "lab.hub.retry": "Попробовать ещё раз",
+        "lab.hub.opened": "Открыт эксперимент: {title}",
+        "lab.hub.unknown": "Эксперимента «{id}» не нашлось. Вот все эксперименты лаборатории.",
 
         "lab.cmdGroup": "ИИ-лаборатория",
-        "lab.cmdNN": "Обучи машину: тренируй нейросеть",
-        "lab.cmdLM": "Предсказатель слов: маленькая языковая модель"
+        "lab.cmdOpen": "Открыть в лаборатории: {title}"
     }
 });
 
-// The sentences the next-word predictor learns from (js/lab.js reads them with
-// AICompass.content.get("lab")). The model only knows the words it has seen here,
-// so short, simple sentences about school, friends, food, nature and AI work best.
-// The two lists don't have to match: each language has its own model.
-window.AICompass.content.set("lab", {
-    corpus: {
-        en: [
-            "Artificial intelligence can help doctors find diseases early.",
-            "Artificial intelligence can learn from examples.",
-            "Artificial intelligence can write stories and poems.",
-            "Artificial intelligence can make mistakes too.",
-            "Artificial intelligence can translate text into many languages.",
-            "Artificial intelligence is a tool made by people.",
-            "A chatbot predicts the next word in a sentence.",
-            "A chatbot can answer questions about history.",
-            "A chatbot does not really understand feelings.",
-            "Machine learning helps computers learn from data.",
-            "Machine learning needs a lot of good data.",
-            "A neural network learns by changing its weights.",
-            "A neural network is inspired by the human brain.",
-            "The robot can clean the floor by itself.",
-            "The robot helps people in the factory.",
-            "The robot is learning to walk.",
-            "The robot can answer questions in many languages.",
-            "We should always check what AI tells us.",
-            "AI can be wrong, so we check the facts.",
-            "AI helps scientists study the weather.",
-            "AI can recognise faces in photos.",
-            "AI can help us learn new things.",
-            "At school we learn maths and science.",
-            "At school we have lunch with our friends.",
-            "At school we use computers in the lab.",
-            "At school we talk about how AI works.",
-            "My teacher explains new ideas very clearly.",
-            "My teacher gives us interesting homework.",
-            "I do my homework after school.",
-            "I like science because it is full of surprises.",
-            "I like to read books about space.",
-            "I like to walk in the forest.",
-            "I like to eat pizza with my friends.",
-            "I like to eat apples and bananas.",
-            "I like to learn new things with my friends.",
-            "The students are working on a project about robots.",
-            "Our class is learning about artificial intelligence.",
-            "We have a test on Friday.",
-            "The library is a quiet place to study.",
-            "My friends and I play football after school.",
-            "My friends and I like to watch funny videos.",
-            "My friends and I build robots at the weekend.",
-            "My friends and I want to learn about AI.",
-            "My best friend is very good at drawing.",
-            "My best friend lives next to the park.",
-            "We go to the park with our friends.",
-            "We like to play games together.",
-            "Friends help each other with homework.",
-            "I send messages to my friends every day.",
-            "My phone has a very good camera.",
-            "My phone can recognise my voice.",
-            "The computer is very fast.",
-            "The internet connects people all over the world.",
-            "I use my laptop to make videos.",
-            "We use apps to learn new languages.",
-            "Video games can be very creative.",
-            "Smart speakers can play music and answer questions.",
-            "Programming is like giving a computer a recipe.",
-            "I want to learn how to code.",
-            "I want to build a robot that can talk.",
-            "The sun is shining in the sky.",
-            "The sun gives energy to plants.",
-            "The trees in the park are green.",
-            "The birds sing in the morning.",
-            "The river flows to the sea.",
-            "In winter the trees are covered with snow.",
-            "In spring the flowers grow in the garden.",
-            "The sky is blue and the weather is nice.",
-            "Bees help flowers make seeds.",
-            "For breakfast I eat eggs and toast.",
-            "For lunch we eat soup and bread.",
-            "My mum makes the best pancakes.",
-            "We cook dinner together on Sunday.",
-            "Pizza is my favourite food.",
-            "Fruit and vegetables are good for you.",
-            "I drink a glass of water every morning.",
-            "The future of artificial intelligence is very exciting.",
-            "The future will have many smart robots.",
-            "Smart robots can help people at home.",
-            "It is important to use AI wisely.",
-            "Self-driving cars use cameras to see the road.",
-            "We can use AI to learn new languages.",
-            "The computer learns from the data we give it.",
-            "Learning new things is fun."
-        ],
-        ru: [
-            "Искусственный интеллект может помогать врачам находить болезни.",
-            "Искусственный интеллект может учиться на примерах.",
-            "Искусственный интеллект может писать стихи и рассказы.",
-            "Искусственный интеллект может ошибаться.",
-            "Искусственный интеллект может переводить тексты на разные языки.",
-            "Искусственный интеллект — это инструмент, который создали люди.",
-            "Чат-бот предсказывает следующее слово в предложении.",
-            "Чат-бот может отвечать на вопросы по истории.",
-            "Чат-бот на самом деле не понимает чувств.",
-            "Машинное обучение помогает компьютерам учиться на данных.",
-            "Машинному обучению нужно много хороших данных.",
-            "Нейросеть учится, меняя свои веса.",
-            "Нейросеть немного похожа на человеческий мозг.",
-            "Робот умеет сам мыть пол.",
-            "Робот помогает людям на заводе.",
-            "Робот учится ходить.",
-            "Робот может отвечать на вопросы на разных языках.",
-            "Нужно всегда проверять, что говорит ИИ.",
-            "ИИ может ошибаться, поэтому мы проверяем факты.",
-            "ИИ помогает учёным изучать погоду.",
-            "ИИ умеет узнавать лица на фотографиях.",
-            "ИИ может помочь нам узнавать новое.",
-            "В школе мы изучаем математику и физику.",
-            "В школе мы обедаем в столовой.",
-            "В школе мы работаем на компьютерах.",
-            "В школе мы обсуждаем, как работает ИИ.",
-            "Мой учитель очень понятно объясняет новые темы.",
-            "Мой учитель задаёт нам интересные домашние задания.",
-            "Я делаю домашнее задание после школы.",
-            "Я люблю биологию, потому что это очень интересно.",
-            "Я люблю читать книги о космосе.",
-            "Я люблю гулять в лесу.",
-            "Я люблю есть пиццу с сыром.",
-            "Я люблю есть яблоки и бананы.",
-            "Я люблю узнавать что-то новое.",
-            "Ученики делают проект о роботах.",
-            "Наш класс изучает искусственный интеллект.",
-            "В пятницу у нас контрольная.",
-            "В библиотеке тихо и можно спокойно заниматься.",
-            "Мы с друзьями играем в футбол после школы.",
-            "Мы с друзьями любим смотреть смешные видео.",
-            "Мы с друзьями собираем роботов по выходным.",
-            "Мы с друзьями хотим узнать больше об ИИ.",
-            "Мой лучший друг отлично рисует.",
-            "Мой лучший друг живёт рядом с парком.",
-            "Мы с друзьями гуляем в парке.",
-            "Мы любим играть в игры вместе.",
-            "Друзья помогают друг другу с домашним заданием.",
-            "Я каждый день пишу сообщения друзьям.",
-            "У моего телефона очень хорошая камера.",
-            "Мой телефон узнаёт мой голос.",
-            "Этот компьютер работает очень быстро.",
-            "Интернет соединяет людей по всему миру.",
-            "Я делаю видео на ноутбуке.",
-            "Мы учим новые языки с помощью приложений.",
-            "Видеоигры бывают очень творческими.",
-            "Умная колонка может включать музыку и отвечать на вопросы.",
-            "Программирование похоже на рецепт для компьютера.",
-            "Я хочу научиться программировать.",
-            "Я хочу построить робота, который умеет говорить.",
-            "Солнце ярко светит на небе.",
-            "Солнце даёт энергию растениям.",
-            "Деревья в парке зелёные.",
-            "Птицы поют по утрам.",
-            "Река течёт к морю.",
-            "Зимой деревья покрыты снегом.",
-            "Весной в саду растут цветы.",
-            "Небо голубое, и погода хорошая.",
-            "Пчёлы опыляют цветы.",
-            "На завтрак я ем яйца и тосты.",
-            "На обед мы едим суп и хлеб.",
-            "Моя мама печёт самые вкусные блины.",
-            "По воскресеньям мы вместе готовим ужин.",
-            "Пицца — моя любимая еда.",
-            "Фрукты и овощи полезны для здоровья.",
-            "Каждое утро я выпиваю стакан воды.",
-            "У искусственного интеллекта большое будущее.",
-            "В будущем будет много умных роботов.",
-            "Умные роботы могут помогать людям дома.",
-            "Важно пользоваться ИИ с умом.",
-            "Беспилотные машины видят дорогу с помощью камер.",
-            "Мы можем использовать ИИ, чтобы учить языки.",
-            "Компьютер учится на данных, которые мы ему даём.",
-            "Узнавать новое очень интересно."
-        ]
+/* ===== 3. THE EXPERIMENTS' NAMES IN THE PICKER =====
+   For each experiment of the catalogue: its title, a one-line hook that makes
+   you want to try it, and its big idea (the tag on its card). */
+window.AICompass.addTranslations({
+    en: {
+        "lab.classifier.title": "Teach the machine",
+        "lab.classifier.hook": "Place dots, press Train, and watch a neural network learn to tell them apart.",
+        "lab.classifier.idea": "Neural networks",
+
+        "lab.predictor.title": "Next-word predictor",
+        "lab.predictor.hook": "Type a few words and see how a tiny language model guesses what comes next.",
+        "lab.predictor.idea": "Language models",
+
+        "lab.maze.title": "Robot in a maze",
+        "lab.maze.hook": "Nobody shows the robot the way. Watch it learn from rewards and penalties.",
+        "lab.maze.idea": "Reinforcement learning",
+
+        "lab.evolve.title": "Evolution garage",
+        "lab.evolve.hook": "These cars start out crashing. Watch good driving evolve, generation after generation.",
+        "lab.evolve.idea": "Learning by evolution",
+
+        "lab.chatbot.title": "Inside a chatbot",
+        "lab.chatbot.hook": "See what a chatbot does with your words: tokens, meanings, attention and weighted dice.",
+        "lab.chatbot.idea": "Large language models",
+
+        "lab.draw.title": "Draw and teach",
+        "lab.draw.hook": "Teach the computer your own drawings, then test it on new ones.",
+        "lab.draw.idea": "Training data and generalisation",
+
+        "lab.descent.title": "Down the hill: gradient descent",
+        "lab.descent.hook": "Race three balls down a hill of error, and see why the size of each step decides everything.",
+        "lab.descent.idea": "Gradient descent: how models learn",
+
+        "lab.vision.title": "How computers see",
+        "lab.vision.hook": "Slide a 3\u00a0×\u00a03 filter over a picture: it finds edges, blurs and sharpens. Then look through the eyes of a tiny neural network.",
+        "lab.vision.idea": "Convolution: how computers find edges and shapes",
+
+        "lab.bias.title": "Bias detective",
+        "lab.bias.hook": "Twins with the same skill: one gets in, the other doesn't. Find out how an AI learned to be unfair.",
+        "lab.bias.idea": "Bias and fairness",
+
+        "lab.cluster.title": "Finding groups",
+        "lab.cluster.hook": "Nobody tells the computer the answers. Watch k-means find the groups in a cloud of points by itself.",
+        "lab.cluster.idea": "Unsupervised learning: finding groups"
+    },
+    ru: {
+        "lab.classifier.title": "Обучи машину",
+        "lab.classifier.hook": "Расставь точки, нажми «Обучать» и смотри, как нейросеть учится их различать.",
+        "lab.classifier.idea": "Нейросети",
+
+        "lab.predictor.title": "Предсказатель слов",
+        "lab.predictor.hook": "Напиши пару слов и посмотри, как крошечная языковая модель угадывает следующее.",
+        "lab.predictor.idea": "Языковые модели",
+
+        "lab.maze.title": "Робот в лабиринте",
+        "lab.maze.hook": "Никто не показывает роботу дорогу. Смотри, как он учится на наградах и штрафах.",
+        "lab.maze.idea": "Обучение с подкреплением",
+
+        "lab.evolve.title": "Гараж эволюции",
+        "lab.evolve.hook": "Сначала машинки врезаются в стены. Смотри, как вождение улучшается с каждым поколением.",
+        "lab.evolve.idea": "Обучение эволюцией",
+
+        "lab.chatbot.title": "Внутри чат-бота",
+        "lab.chatbot.hook": "Посмотри, что чат-бот делает с твоими словами: токены, смыслы, внимание и взвешенные кубики.",
+        "lab.chatbot.idea": "Большие языковые модели",
+
+        "lab.draw.title": "Нарисуй и научи",
+        "lab.draw.hook": "Научи компьютер узнавать твои рисунки — а потом проверь его на новых.",
+        "lab.draw.idea": "Обучающие данные и обобщение",
+
+        "lab.descent.title": "Вниз с горы: градиентный спуск",
+        "lab.descent.hook": "Устрой гонку трёх шариков вниз по склону ошибки и узнай, почему всё решает размер шага.",
+        "lab.descent.idea": "Градиентный спуск: как учатся модели",
+
+        "lab.vision.title": "Как видит компьютер",
+        "lab.vision.hook": "Проведи фильтром 3\u00a0×\u00a03 по картинке: он находит края, размывает и добавляет резкость. А потом посмотри глазами маленькой нейросети.",
+        "lab.vision.idea": "Свёртка: как компьютер находит края и формы",
+
+        "lab.bias.title": "Детектив предвзятости",
+        "lab.bias.hook": "Близнецы с одинаковым навыком: одного принимают, другого нет. Разберись, как ИИ научился несправедливости.",
+        "lab.bias.idea": "Предвзятость и справедливость",
+
+        "lab.cluster.title": "Поиск групп",
+        "lab.cluster.hook": "Компьютеру никто не подсказывает ответы. Посмотри, как k-means сам находит группы в облаке точек.",
+        "lab.cluster.idea": "Обучение без учителя: поиск групп"
     }
 });
+
+/* ===== 4. THE ICONS (an SVG sprite) =====
+   One <symbol> per experiment, drawn like the site's other line icons:
+   24 x 24, strokes of 1.75 px in currentColor (the card gives the colour).
+   js/lab.js puts the sprite in the lab's card once; a catalogue entry names
+   its symbol in "icon". */
+window.AICompass.content.set("lab.icons", {
+    sprite:
+        // A tiny neural network: 2 inputs, 2 hidden neurons, 1 output
+        '<symbol id="lab-icon-network" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<circle cx="4.5" cy="7" r="2"/><circle cx="4.5" cy="17" r="2"/>' +
+                '<circle cx="12" cy="7" r="2"/><circle cx="12" cy="17" r="2"/>' +
+                '<circle cx="19.5" cy="12" r="2"/>' +
+                '<path d="M6.5 7H10M6.5 17H10M5.7 8.6l5.1 6.8M5.7 15.4l5.1-6.8M13.7 8.1l4.1 2.8M13.7 15.9l4.1-2.8"/>' +
+            '</g>' +
+        '</symbol>' +
+        // A speech bubble with a sentence that goes on: the next word is a cursor
+        '<symbol id="lab-icon-words" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M6 4h12a3 3 0 0 1 3 3v6.5a3 3 0 0 1-3 3h-6.5L7 20v-3.5H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"/>' +
+                '<path d="M7.5 8.75h5.5M7.5 12.25h3"/>' +
+                '<path d="M14 11v2.75"/>' +
+            '</g>' +
+        '</symbol>' +
+        // A 3 x 3 maze: the robot (a dot) bottom left, the battery (a ring) top right
+        '<symbol id="lab-icon-maze" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<rect x="3" y="3" width="18" height="18" rx="3"/>' +
+                '<path d="M9 3v6h6M3 15h6M15 15v6"/>' +
+                '<circle cx="18" cy="6" r="1.5"/>' +
+            '</g>' +
+            '<circle cx="6" cy="18" r="1.6" fill="currentColor"/>' +
+        '</symbol>' +
+        // A strand of DNA: two lines that twist around each other, with rungs between them
+        '<symbol id="lab-icon-evolve" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M7 3c0 4.5 10 4.5 10 9s-10 4.5-10 9"/>' +
+                '<path d="M17 3c0 4.5-10 4.5-10 9s10 4.5 10 9"/>' +
+                '<path d="M8.5 5h7M8.5 19h7M8 12h8"/>' +
+            '</g>' +
+        '</symbol>' +
+        // A speech bubble with three token chips in a row inside it
+        '<symbol id="lab-icon-chatbot" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-4.5 3.5V17H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>' +
+                '<rect x="6" y="9" width="3.4" height="3" rx="1"/>' +
+                '<rect x="10.3" y="9" width="3.4" height="3" rx="1"/>' +
+                '<rect x="14.6" y="9" width="3.4" height="3" rx="1"/>' +
+            '</g>' +
+        '</symbol>' +
+        // A pencil, and the pixels its line becomes
+        '<symbol id="lab-icon-draw" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M9.6 14.4l.6-3.4 8.1-8.1a1.9 1.9 0 0 1 2.8 2.8L13 13.8z"/>' +
+                '<path d="M10.2 11l2.8 2.8"/>' +
+            '</g>' +
+            '<rect x="6.2" y="15.3" width="3" height="3" rx=".6" fill="currentColor"/>' +
+            '<rect x="3" y="15.3" width="3" height="3" rx=".6" fill="currentColor"/>' +
+            '<rect x="3" y="18.5" width="3" height="3" rx=".6" fill="currentColor" opacity=".5"/>' +
+        '</symbol>' +
+        // A valley, a ball on its left wall, and an arrow down the slope
+        '<symbol id="lab-icon-descent" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M3 4c1.6 9.5 4.6 15 9 15s7.4-5.5 9-15"/>' +
+                '<path d="M12 9.4c.9 1.7 1.6 3.5 1.9 5.5M12.3 13.4l1.6 1.5 1.3-1.8"/>' +
+            '</g>' +
+            '<circle cx="7.75" cy="10.4" r="2.2" fill="currentColor"/>' +
+        '</symbol>' +
+        // An eye inside a camera's frame; its pupil is one square pixel
+        '<symbol id="lab-icon-vision" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M3 7.5V5a2 2 0 0 1 2-2h2.5M16.5 3H19a2 2 0 0 1 2 2v2.5M21 16.5V19a2 2 0 0 1-2 2h-2.5M7.5 21H5a2 2 0 0 1-2-2v-2.5"/>' +
+                '<path d="M6 12c1.5-2.8 3.7-4.3 6-4.3s4.5 1.5 6 4.3c-1.5 2.8-3.7 4.3-6 4.3S7.5 14.8 6 12z"/>' +
+            '</g>' +
+            '<rect x="10.25" y="10.25" width="3.5" height="3.5" rx=".6" fill="currentColor"/>' +
+        '</symbol>' +
+        // Scales that tip to one side
+        '<symbol id="lab-icon-bias" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+                '<path d="M12 4v16M8.5 20h7"/>' +
+                '<path d="M5 9.5 19 6.5"/>' +
+                '<path d="M5 9.5 2.8 14.5h4.4zM19 6.5l-2.2 5h4.4z"/>' +
+            '</g>' +
+            '<circle cx="12" cy="4" r="1.3" fill="currentColor"/>' +
+        '</symbol>' +
+        // Three groups of points, each group with its own shape (dots, rings, squares), as on the board
+        '<symbol id="lab-icon-cluster" viewBox="0 0 24 24">' +
+            '<circle cx="9.3" cy="4.6" r="1.75" fill="currentColor"/>' +
+            '<circle cx="14.7" cy="4.6" r="1.75" fill="currentColor"/>' +
+            '<circle cx="12" cy="9.2" r="1.75" fill="currentColor"/>' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.5">' +
+                '<circle cx="4.6" cy="14.6" r="1.6"/>' +
+                '<circle cx="8.6" cy="19.4" r="1.6"/>' +
+                '<circle cx="3.8" cy="20.2" r="1.6"/>' +
+            '</g>' +
+            '<rect x="17.6" y="12.9" width="3.4" height="3.4" rx=".5" fill="currentColor"/>' +
+            '<rect x="13.8" y="17.7" width="3.4" height="3.4" rx=".5" fill="currentColor"/>' +
+            '<rect x="18.4" y="18.5" width="3.4" height="3.4" rx=".5" fill="currentColor"/>' +
+        '</symbol>'
+});
+
+/* ===== 5. THE CATALOGUE: WHICH EXPERIMENTS, IN WHICH ORDER =====
+   The order is a learning path: first steps, then networks, language, vision,
+   learning by reward, evolution, and ethics. The picker, the hero's number,
+   the section's subtitle, the Ctrl+K commands, Compass Bot and links like
+   #lab/predictor all come from this one list.
+   ADDING AN EXPERIMENT: put its files in place (js/lab/<id>.js, css/lab/<id>.css,
+   js/content/lab/<id>.js), add its title, hook and idea in section 3 above, and
+   add ONE entry to this list, at its place on the path. Each entry:
+     id          its name in its files and in links (#lab/<id>): small letters, digits, "-"
+     icon        a symbol of the sprite in section 4
+     titleKey    its name;  hookKey: one line that makes you want to try it;
+     ideaKey     its big idea (the tag on its card)
+     level       1 (first steps), 2 or 3 (advanced): the dots on its card
+     emoji       its icon in the Ctrl+K palette
+     keywords    more words the palette finds it by (both languages) */
+window.AICompass.content.set("lab.catalogue", [
+    {
+        id: "draw",
+        icon: "lab-icon-draw",
+        titleKey: "lab.draw.title",
+        hookKey: "lab.draw.hook",
+        ideaKey: "lab.draw.idea",
+        level: 1,
+        emoji: "✏️",
+        keywords: "lab draw and teach drawing doodle sketch picture image recognition classifier classes training data examples test generalisation generalization overfitting mnist pixels nearest neighbours k-nn neural network focus лаборатория нарисуй и научи рисунок рисовать картинка изображение распознавание классификатор классы обучающие данные примеры тест обобщение переобучение пиксели ближайшие соседи нейросеть"
+    },
+    {
+        id: "cluster",
+        icon: "lab-icon-cluster",
+        titleKey: "lab.cluster.title",
+        hookKey: "lab.cluster.hook",
+        ideaKey: "lab.cluster.idea",
+        level: 2,
+        emoji: "🍇",
+        keywords: "lab finding groups clustering cluster clusters k-means kmeans unsupervised learning groups centres centroids elbow chart customers shop segments data points лаборатория поиск групп кластеризация кластер кластеры k-средних обучение без учителя группы центры центроиды метод локтя покупатели магазин сегменты данные точки"
+    },
+    {
+        id: "classifier",
+        icon: "lab-icon-network",
+        titleKey: "lab.classifier.title",
+        hookKey: "lab.classifier.hook",
+        ideaKey: "lab.classifier.idea",
+        level: 2,
+        emoji: "🧠",
+        keywords: "lab neural network train teach classifier dots points machine learning лаборатория нейросеть нейронная сеть обучить обучение машина точки классификатор"
+    },
+    {
+        id: "descent",
+        icon: "lab-icon-descent",
+        titleKey: "lab.descent.title",
+        hookKey: "lab.descent.hook",
+        ideaKey: "lab.descent.idea",
+        level: 3,
+        emoji: "⛰️",
+        keywords: "lab down the hill gradient descent loss error slope gradient learning rate step size optimizer momentum adam local minimum saddle point landscape valley ball training parameters лаборатория вниз с горы градиентный спуск ошибка функция потерь склон градиент скорость обучения размер шага оптимизатор импульс адам локальный минимум седловая точка ландшафт долина шарик обучение параметры"
+    },
+    {
+        id: "predictor",
+        icon: "lab-icon-words",
+        titleKey: "lab.predictor.title",
+        hookKey: "lab.predictor.hook",
+        ideaKey: "lab.predictor.idea",
+        level: 1,
+        emoji: "💬",
+        keywords: "lab next word predictor language model chatbot text autocomplete gpt лаборатория следующее слово предсказатель языковая модель чат-бот текст автодополнение"
+    },
+    {
+        id: "chatbot",
+        icon: "lab-icon-chatbot",
+        titleKey: "lab.chatbot.title",
+        hookKey: "lab.chatbot.hook",
+        ideaKey: "lab.chatbot.idea",
+        level: 3,
+        emoji: "🔍",
+        keywords: "lab inside a chatbot chatgpt chat bot language model llm gpt transformer token tokens tokenizer bpe byte pair encoding embedding embeddings word vectors meaning attention context next word temperature top-k top-p sampling probability лаборатория внутри чат-бота чат-бот языковая модель трансформер токен токены токенизатор эмбеддинг векторы смысл внимание контекст следующее слово температура вероятность"
+    },
+    {
+        id: "vision",
+        icon: "lab-icon-vision",
+        titleKey: "lab.vision.title",
+        hookKey: "lab.vision.hook",
+        ideaKey: "lab.vision.idea",
+        level: 2,
+        emoji: "👁️",
+        keywords: "lab how computers see computer vision convolution filter kernel edges edge detection blur sharpen emboss sobel pixels picture image photo relu max pooling cnn convolutional neural network feature map лаборатория как видит компьютер компьютерное зрение свёртка фильтр ядро края границы размытие резкость тиснение пиксели картинка изображение фото пулинг свёрточная нейросеть карта признаков"
+    },
+    {
+        id: "maze",
+        icon: "lab-icon-maze",
+        titleKey: "lab.maze.title",
+        hookKey: "lab.maze.hook",
+        ideaKey: "lab.maze.idea",
+        level: 2,
+        emoji: "🤖",
+        keywords: "lab maze robot reinforcement learning q-learning reward penalty trial and error agent лаборатория лабиринт робот обучение с подкреплением q-обучение награда штраф пробы ошибки агент"
+    },
+    {
+        id: "evolve",
+        icon: "lab-icon-evolve",
+        titleKey: "lab.evolve.title",
+        hookKey: "lab.evolve.hook",
+        ideaKey: "lab.evolve.idea",
+        level: 2,
+        emoji: "🧬",
+        keywords: "lab evolution evolve garage cars driving neuroevolution genetic algorithm mutation crossover generation fitness natural selection neural network лаборатория эволюция гараж машинки вождение нейроэволюция генетический алгоритм мутация скрещивание поколение приспособленность естественный отбор нейросеть"
+    },
+    {
+        id: "bias",
+        icon: "lab-icon-bias",
+        titleKey: "lab.bias.title",
+        hookKey: "lab.bias.hook",
+        ideaKey: "lab.bias.idea",
+        level: 2,
+        emoji: "⚖️",
+        keywords: "lab bias detective fairness fair unfair discrimination proxy twins threshold admission camp group data labels decisions model ethics лаборатория детектив предвзятости предвзятость справедливость несправедливость дискриминация прокси близнецы порог приём лагерь группа данные метки решения модель этика"
+    }
+]);

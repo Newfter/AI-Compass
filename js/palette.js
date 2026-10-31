@@ -4,6 +4,9 @@
    Open it with Ctrl+K (Cmd+K on a Mac), the "/" key, or the
    search button in the menu. Type a few letters, pick a result
    with the arrow keys and press Enter.
+   Under the commands, "Found on the site" lists lesson sections,
+   glossary terms, milestones and quiz questions that match
+   (AICompass.search, js/search.js), from the 2nd letter you type.
 
    Sections of this file:
     1. Settings
@@ -18,6 +21,8 @@
    The list of commands lives in AICompass.commands: every
    feature adds its own with AICompass.registerCommand().
    Other features use AICompass.palette (see the last section).
+   Events: A.track("palette.run", { id }) when a command runs; a result
+   from the site reports A.track("search.open", { type, id, from: "palette" }).
    Every text (English and Russian) is in js/content/palette.js
    ========================================================= */
 
@@ -43,6 +48,9 @@
     const RUN_DELAY_MS = 10;              // the command runs just after the window has closed
     const PAGE_STEP = 5;                  // Page Up / Page Down move the selection this far
     const ASK_MAX = 80;                   // letters of your search shown in "Ask Compass Bot: «...»"
+    const SITE_MIN_LETTERS = 2;           // the site's texts are searched from the 2nd letter you type
+    const SITE_MAX = 6;                   // at most 6 results from the site...
+    const SITE_MIN_MATCH = 0.5;           // ...that cover at least half of what you typed
 
     /* =========================================================
        2. BUILDING THE WINDOW
@@ -50,8 +58,6 @@
        and aria-activedescendant tells screen readers which result
        is selected in the "listbox".
        ========================================================= */
-    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || "");
-
     mount.innerHTML =
         '<div class="cp-overlay" hidden>' +
             '<div class="cp-dialog" role="dialog" aria-modal="true" aria-labelledby="cp-title">' +
@@ -73,11 +79,12 @@
                     "</button>" +
                 "</div>" +
                 '<p class="cp-note" hidden></p>' +
+                '<p class="cp-tip" hidden></p>' +
                 '<div class="cp-body">' +
                     '<div class="cp-empty" hidden>' +
                         '<span class="cp-empty-icon" aria-hidden="true">🔭</span>' +
                         '<p class="cp-empty-title"></p>' +
-                        '<p class="cp-empty-hint" data-i18n="palette.emptyHint">' + t("palette.emptyHint") + "</p>" +
+                        '<p class="cp-empty-hint"></p>' +
                     "</div>" +
                     '<div class="cp-list" id="cp-list" role="listbox" data-i18n-attr="aria-label:palette.listLabel" ' +
                         'aria-label="' + esc(t("palette.listLabel")) + '"></div>' +
@@ -98,8 +105,10 @@
         input: mount.querySelector(".cp-input"),
         close: mount.querySelector(".cp-close"),
         note: mount.querySelector(".cp-note"),
+        tip: mount.querySelector(".cp-tip"),
         empty: mount.querySelector(".cp-empty"),
         emptyTitle: mount.querySelector(".cp-empty-title"),
+        emptyHint: mount.querySelector(".cp-empty-hint"),
         list: mount.querySelector(".cp-list"),
         count: mount.querySelector(".cp-count"),
         status: mount.querySelector('[aria-live="polite"]')
@@ -418,11 +427,54 @@
         return found.filter(function (item) { return item.score >= top * SCORE.keep; });
     }
 
-    // Everything the palette shows for a search: { groups, note, nothing }
+    // How many letters and digits a text has
+    function letterCount(text) {
+        return (String(text).match(/[\p{L}\p{N}]/gu) || []).length;
+    }
+
+    // Lesson sections, glossary terms, milestones... that match (AICompass.search).
+    // Not what is already in the list as a command (a term, a section of the page).
+    function searchSite(rawQuery, shown) {
+        const none = { items: [], switched: "" };
+        if (!A.search) return none;
+        const letters = letterCount(rawQuery);
+        if (letters < SITE_MIN_LETTERS) {
+            // One letter: the index is built in idle moments, so the next letter is instant
+            if (letters) A.search.ready();
+            return none;
+        }
+        const results = A.util.attempt(function () { return A.search.query(rawQuery, { limit: SITE_MAX * 2 }); }, null);
+        if (!results) return none;
+        const listed = {};
+        shown.forEach(function (item) { listed[item.id] = true; });
+        const items = results.filter(function (result) {
+            if (result.match < SITE_MIN_MATCH) return false;
+            if (result.type === "glossary") return !listed["glossary-" + result.id] && !listed["glossary-term-" + result.id];
+            if (result.type === "pages") return !listed["go-" + result.id];
+            return true;
+        }).slice(0, SITE_MAX).map(function (result, order) {
+            return {
+                id: "site-" + result.type + "-" + result.id,
+                icon: result.icon,
+                title: result.title,
+                titleHTML: result.titleHTML,      // safe HTML from js/search.js
+                source: result.section,
+                snippet: result.snippet,          // safe HTML from js/search.js
+                result: result,
+                score: result.score,
+                order: order,
+                remember: false
+            };
+        });
+        return { items: items, switched: results.switched || "" };
+    }
+
+    // Everything the palette shows for a search:
+    // { groups, note, nothing, onlySite, short } (see render())
     function search(rawQuery) {
         const commands = commandList();
         const query = fold(rawQuery).replace(/\s+/g, " ").trim();
-        if (!query) return { groups: browseGroups(commands), note: "", nothing: false };
+        if (!query) return { groups: browseGroups(commands), note: "", nothing: false, onlySite: false, short: false };
 
         let found = rank(commands, query);
         let note = "";
@@ -469,7 +521,10 @@
             }
         }
 
-        const nothing = !found.length;
+        const site = searchSite(rawQuery, found);
+        if (site.switched && !note) note = t("palette.layout", { query: site.switched });
+        const nothing = !found.length && !site.items.length;
+        const onlySite = !found.length && site.items.length > 0;
 
         // Always offer to ask Compass Bot. It joins the bot's own group
         // (so there is only one "Compass Bot" heading) and is always its last item.
@@ -492,7 +547,22 @@
             });
         }
 
-        return { groups: groupItems(found, false), note: note, nothing: nothing };
+        // Under the commands: "Found on the site". "Ask Compass Bot" stays the very
+        // last row when it is alone in its group (End reaches it).
+        const groups = groupItems(found, false);
+        if (site.items.length) {
+            const last = groups[groups.length - 1];
+            const askAlone = last && last.items.length === 1 && last.items[0].id === "ask-bot";
+            groups.splice(askAlone ? groups.length - 1 : groups.length, 0,
+                { key: "palette.siteGroup", label: t("palette.siteGroup"), items: site.items, more: 0 });
+        }
+        return {
+            groups: groups,
+            note: note,
+            nothing: nothing,
+            onlySite: onlySite,
+            short: Boolean(A.search) && letterCount(rawQuery) === 1
+        };
     }
 
     /* =========================================================
@@ -519,6 +589,12 @@
         return html + (open ? "</mark>" : "");
     }
 
+    // The second line of a result from the site: where it is, then its best sentence
+    function siteLine(item) {
+        return '<span class="cp-sub"><span class="cp-source">' + esc(item.source) + "</span>" +
+            (item.snippet ? '<span class="cp-snippet"> — ' + item.snippet + "</span>" : "") + "</span>";
+    }
+
     function render() {
         const query = ui.input.value;
         const result = search(query);
@@ -540,12 +616,12 @@
             rows.forEach(function (item) {
                 const index = items.length;
                 items.push(item);
-                html += '<div class="cp-item' + (item.more ? " cp-more" : "") + '" role="option" id="cp-option-' + index +
-                    '" data-index="' + index + '" aria-selected="false">' +
+                html += '<div class="cp-item' + (item.more ? " cp-more" : "") + (item.result ? " cp-site" : "") +
+                    '" role="option" id="cp-option-' + index + '" data-index="' + index + '" aria-selected="false">' +
                     '<span class="cp-icon" aria-hidden="true"></span>' +
                     '<span class="cp-text">' +
-                        '<span class="cp-title">' + highlight(item.title, item.positions) + "</span>" +
-                        (item.sub ? '<span class="cp-sub">' + esc(item.sub) + "</span>" : "") +
+                        '<span class="cp-title">' + (item.result ? item.titleHTML : highlight(item.title, item.positions)) + "</span>" +
+                        (item.result ? siteLine(item) : item.sub ? '<span class="cp-sub">' + esc(item.sub) + "</span>" : "") +
                     "</span>" +
                     '<span class="cp-enter" aria-hidden="true">↵</span>' +
                     "</div>";
@@ -561,21 +637,31 @@
 
         state.items = items;
 
-        // Empty state and the "other keyboard layout" note
+        // Empty state (nothing anywhere: Compass Bot may still help), the
+        // "other keyboard layout" note, and a tip: one more letter is needed
+        // to search the site, or only the site had something
+        const asking = items.some(function (item) { return item.id === "ask-bot"; });
         ui.empty.hidden = !result.nothing;
         if (result.nothing) ui.emptyTitle.textContent = t("palette.empty", { query: query.trim() });
+        ui.emptyHint.textContent = t(asking && !result.short ? "palette.emptyAsk" : "palette.emptyHint");
         ui.note.hidden = !result.note;
         ui.note.textContent = result.note;
+        let tip = "";
+        if (result.short) tip = t("palette.shortHint");
+        else if (result.onlySite) tip = t("palette.onlySite", { query: query.trim() });
+        ui.tip.hidden = !tip;
+        ui.tip.textContent = tip;
         ui.list.hidden = !items.length;
 
         // How many results you can choose ("Ask Compass Bot" too, but not the
         // "Show N more" rows). Shown in the footer, and read out by screen
-        // readers once you stop typing (with "No results" first if no command matched).
+        // readers once you stop typing (with "No results" or the tip first).
         const count = items.filter(function (item) { return !item.more; }).length;
         const countText = A.plural("palette.count", count);
         ui.count.textContent = countText;
         let message = countText;
         if (result.nothing) message = ui.emptyTitle.textContent + (count ? ". " + countText : "");
+        else if (tip) message = tip + " " + countText;
         A.announce(message, { region: ui.status, delay: STATUS_DELAY });
 
         setActive(items.length ? 0 : -1, false);
@@ -835,7 +921,18 @@
             expandGroup(item);
             return;
         }
+        if (item.result) {
+            // A result from the site opens it there (and reports "search.open")
+            close();
+            setTimeout(function () {
+                A.util.attempt(function () {
+                    A.runCommand({ run: function () { item.result.open("palette"); }, keepOverlays: item.result.keepOverlays });
+                });
+            }, RUN_DELAY_MS);
+            return;
+        }
         if (item.remember) remember(item.id);
+        A.track("palette.run", { id: item.id });
         close();
         setTimeout(function () {
             // Core closes the windows that are in the way, then runs it.
@@ -879,7 +976,7 @@
         button.setAttribute("aria-expanded", "false");
         // Show the Mac shortcut on Macs
         const key = button.querySelector(".palette-kbd");
-        if (key && isMac) key.textContent = "⌘ K";
+        if (key && A.isMac) key.textContent = "⌘ K";
     });
 
     // New language: redraw the results in place, keeping the search text and selection
