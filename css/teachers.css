@@ -416,7 +416,8 @@ html:not(.js) .tk-nav-link {
    When the whole page is printed, the buttons are of no use on paper. */
 @media print {
     .tk-lesson-actions,
-    .tk-quiz-button {
+    .tk-quiz-button,
+    .tk-honest-link {
         display: none !important;
     }
 }
