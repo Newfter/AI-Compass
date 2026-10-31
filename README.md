@@ -65,7 +65,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/lessons.js` | The lesson texts, the mini-lab texts and the reader's buttons. |
 | `js/content/lab.js` | The AI Lab texts, and the sentences the next-word predictor learns from. |
 | `js/content/quiz.js` | The quiz texts, the list of questions and the ranks. |
-| `js/content/glossary.js` | The glossary texts, the categories and every term. |
+| `js/content/glossary.js` | The glossary texts. |
+| `js/content/glossary-terms.js` | The glossary's categories and every term. |
 | `js/content/timeline.js` | The timeline texts, the eras and every milestone. |
 | `js/content/assistant.js` | Compass Bot's texts, fun facts and jokes, and its "brain" (the words it listens for and its answers). |
 | `js/content/palette.js` | The texts of the Ctrl+K palette. |
@@ -347,7 +348,7 @@ Below `questions` are the `ranks`: the number of right answers (`min`) you need 
 
 ### Add a glossary term
 
-**File:** `js/content/glossary.js`, at the bottom. Put the term in the block of its category (`basics`, `learning`, `generative` or `ethics`); the glossary sorts the cards A–Z by itself, in each language.
+**File:** `js/content/glossary-terms.js`. Put the term in the block of its category (`basics`, `learning`, `generative` or `ethics`); the glossary sorts the cards A–Z by itself, in each language.
 
 ```js
         {
