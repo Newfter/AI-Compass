@@ -123,6 +123,8 @@
 
     // 0, 1, ... count-1 in a mixed order that is always the same for the same
     // seed text (so a printed worksheet and its answer key always agree)
+    // TODO(core): js/quiz.js has the same generator (seededRandom); an
+    // A.util.seeded(text) in core would serve both
     function seededOrder(count, seedText) {
         let seed = hashOf(seedText) || 1;
         function random() {                  // "mulberry32": a tiny random number generator
