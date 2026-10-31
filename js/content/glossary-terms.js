@@ -628,14 +628,14 @@ window.AICompass.content.set("glossary", {
                 aliases: ["augmentation", "augmented data"],
                 short: "Making more training examples from the ones you have, for example by flipping, turning or shifting pictures.",
                 def: "Making extra training examples from the ones you already have, by changing them in ways that don't change their meaning: flipping, turning, shifting or zooming a picture, or adding a little noise. It helps a model generalise instead of memorising.",
-                ex: "If you have 20 drawings of cats, you can turn each one a little to the left and to the right and shift it up and down. Now the model sees hundreds of cat drawings."
+                ex: "If you have 20 drawings of cats, you can turn each one a little to the left and to the right and shift it up and down. Now the model has 100 cat drawings to learn from instead of 20."
             },
             ru: {
                 name: "Аугментация данных",
                 aliases: ["аугментация", "расширение данных"],
                 short: "Создание новых обучающих примеров из уже имеющихся, например отражением, поворотом или сдвигом картинок.",
                 def: "Создание дополнительных обучающих примеров из тех, что уже есть: их меняют так, чтобы смысл остался прежним, — отражают, поворачивают, сдвигают или увеличивают картинку, добавляют немного шума. Это помогает модели обобщать, а не зазубривать.",
-                ex: "Если у тебя 20 рисунков кошек, каждый можно немного повернуть влево и вправо и сдвинуть вверх и вниз. И вот модель видит уже сотни рисунков кошек."
+                ex: "Если у тебя 20 рисунков кошек, каждый можно немного повернуть влево и вправо и сдвинуть вверх и вниз. И вот у модели уже 100 рисунков кошек вместо 20."
             }
         },
 
@@ -859,7 +859,7 @@ window.AICompass.content.set("glossary", {
             }
         },
         {
-            id: "temperature", cat: "language", icon: "🌡️", lessons: [4, 9], lab: "chatbot",
+            id: "temperature", cat: "language", icon: "🌡️", lessons: [9], lab: "chatbot",
             related: ["next-token", "hallucination"],
             en: {
                 name: "Temperature",
