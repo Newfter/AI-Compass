@@ -802,7 +802,7 @@ window.AICompass.content.set("teachers-plans", {
                 "protect their own data, and describe how laws such as the EU AI Act sort AI uses by risk."
             ],
             warmup: "A face-unlock system is right 95% of the time. Would you trust it? What else would you want to know?",
-            warmupNote: "Most students will say yes. Leave the question open: the exit ticket asks it again at the end.",
+            warmupNote: "Most students will say yes. Leave the question open: the exit ticket comes back to it at the end.",
             reading: "Students look for the three ways AI goes wrong, what the Gender Shades study found, and what “social scoring” is.",
             activity: {
                 title: "Mini-lab “Fair or not?”",
@@ -897,7 +897,7 @@ window.AICompass.content.set("teachers-plans", {
                 "защищать свои данные и описать, как законы вроде Закона ЕС об ИИ делят применения ИИ по уровню риска."
             ],
             warmup: "Разблокировка по лицу права в 95% случаев. Можно ли ей доверять? Что ещё хотелось бы узнать?",
-            warmupNote: "Большинство ответит «да». Оставить вопрос открытым: билет на выход в конце урока задаёт его снова.",
+            warmupNote: "Большинство ответит «да». Оставить вопрос открытым: в конце урока к нему вернётся билет на выход.",
             reading: "Ученики ищут три вида ошибок ИИ, что обнаружило исследование Gender Shades и что такое «социальный рейтинг».",
             activity: {
                 title: "Мини-лаборатория «Честно или нет?»",
