@@ -902,7 +902,7 @@
             });
             sortFound(found);
         }
-        found.marks = marksOf(plan);
+        found.marks = marksOf(index, plan);
         found.words = plan.concepts.length;
         return found;
     }
@@ -931,12 +931,30 @@
         return together / pairs.length;
     }
 
-    // Every stem the query looks for, to mark them in titles and snippets
-    function marksOf(plan) {
+    // Every stem the query looks for, to mark them in titles and snippets.
+    // marks.forms: for each stem, the forms of the query's concepts it is in
+    // ({ concept, form, part }), so that valueOf counts each concept once
+    function marksOf(index, plan) {
         const marks = new Set();
-        plan.concepts.forEach(function (concept) {
+        marks.forms = new Map();
+        let form = 0;
+        plan.concepts.forEach(function (concept, number) {
+            // a concept is worth the idf of its rarest form, whichever form a text uses
+            let idf = 0;
             concept.alternatives.forEach(function (alternative) {
-                alternative.stems.forEach(function (s) { marks.add(s); });
+                alternative.stems.forEach(function (s) {
+                    const posting = index.postings.get(s);
+                    if (posting) idf = Math.max(idf, posting.idf);
+                });
+            });
+            concept.alternatives.forEach(function (alternative) {
+                const part = idf * alternative.weight / alternative.stems.length;
+                alternative.stems.forEach(function (s) {
+                    marks.add(s);
+                    if (!marks.forms.has(s)) marks.forms.set(s, []);
+                    marks.forms.get(s).push({ concept: number, form: form, part: part });
+                });
+                form++;
             });
         });
         return marks;
@@ -971,17 +989,27 @@
         return html + esc(text.slice(last));
     }
 
-    // How well a piece of text answers the query: the idf of the different marked words in it
-    function valueOf(index, text, marks) {
+    // How well a piece of text answers the query. Each concept of the query counts
+    // once, by the best of its forms in the text: the word typed counts more than a
+    // synonym ("перцептрон" more than the "Perceptron" of "Mark I Perceptron"), and a
+    // phrase by the share of its words.
+    function valueOf(text, marks) {
+        if (!marks.forms) return 0;
         const seen = new Set();
-        let value = 0;
+        const sums = new Map();              // form → the part of it found
+        const best = new Map();              // concept → its best form
         split(text, false).forEach(function (word) {
             const s = stem(word);
             if (STOP.has(word) || !marks.has(s) || seen.has(s)) return;
             seen.add(s);
-            const posting = index.postings.get(s);
-            value += posting ? posting.idf : 0;
+            marks.forms.get(s).forEach(function (form) {
+                const sum = (sums.get(form.form) || 0) + form.part;
+                sums.set(form.form, sum);
+                best.set(form.concept, Math.max(best.get(form.concept) || 0, sum));
+            });
         });
+        let value = 0;
+        best.forEach(function (part) { value += part; });
         return value;
     }
 
@@ -991,10 +1019,10 @@
         if (!sentences.length) return "";
         // The sentence with the most (and rarest) query words. For a term whose name
         // already shows them, the first sentence (its definition) gets that much extra.
-        const lead = doc.named ? valueOf(index, doc.title, marks) : 0;
+        const lead = doc.named ? valueOf(doc.title, marks) : 0;
         let best = 0, bestValue = -1;
         sentences.forEach(function (sentence, i) {
-            const value = valueOf(index, sentence, marks) + (i === 0 ? lead : 0);
+            const value = valueOf(sentence, marks) + (i === 0 ? lead : 0);
             if (value > bestValue) { best = i; bestValue = value; }
         });
         let text = sentences[best];
@@ -1050,7 +1078,7 @@
             // at the beginning.
             const marks = options.query ? rank(index, String(options.query), { prefix: false }).marks || new Set() : new Set();
             to = grow(0);
-            if (!doc.named || valueOf(index, doc.title, marks) === 0) {
+            if (!doc.named || valueOf(doc.title, marks) === 0) {
                 let bestValue = -1;
                 for (let start = 0; start < count; start++) {
                     // "This is called bias." never starts a passage: the student would
@@ -1059,9 +1087,9 @@
                     // of the query words.
                     if (start > 0 && leansBack(sentences[start])) continue;
                     let end = grow(start);
-                    let value = valueOf(index, sentences.slice(start, end).join(" "), marks);
+                    let value = valueOf(sentences.slice(start, end).join(" "), marks);
                     if (end < count && end - start < PASSAGE_SENTENCES && leansBack(sentences[end])) {
-                        const longer = valueOf(index, sentences.slice(start, end + 1).join(" "), marks);
+                        const longer = valueOf(sentences.slice(start, end + 1).join(" "), marks);
                         if (longer > value) { end++; value = longer; }
                     }
                     if (value > bestValue) { bestValue = value; from = start; to = end; }
