@@ -109,7 +109,7 @@
 
     /* Gradients (headings, the main button), a soft glow and the shadow of big panels */
     --gradient: linear-gradient(110deg, #b69aff 10%, #70edff 90%);
-    --gradient-button: linear-gradient(115deg, #8758ee, #536cf0);
+    --gradient-button: linear-gradient(115deg, #8454ec, #4e67ee);
     --glow: 0 0 40px rgba(155, 109, 255, 0.25);
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     /* Cards in a list (glossary, timeline): a soft shadow, a deeper one on hover,
