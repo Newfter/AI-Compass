@@ -622,18 +622,26 @@
     transform: rotate(180deg);
 }
 
-/* Closed content takes no space and can't be reached with Tab */
+/* Closed content takes no space, can't be reached with Tab and isn't even laid out
+   (with about 60 cards, that keeps typing in the search fast). It still opens and
+   closes smoothly: "display" waits for the end of the closing (allow-discrete), and an
+   opening starts from 0fr (@starting-style). Older browsers open and close at once. */
 .gl-more {
-    display: grid;
+    display: none;
     grid-template-rows: 0fr;
-    visibility: hidden;
-    transition: grid-template-rows 0.42s var(--ease), visibility 0s linear 0.42s;
+    transition: grid-template-rows 0.42s var(--ease);
+    transition: grid-template-rows 0.42s var(--ease), display 0.42s allow-discrete;
 }
 
 .gl-card.is-open .gl-more {
+    display: grid;
     grid-template-rows: 1fr;
-    visibility: visible;
-    transition: grid-template-rows 0.42s var(--ease), visibility 0s linear 0s;
+}
+
+@starting-style {
+    .gl-card.is-open .gl-more {
+        grid-template-rows: 0fr;
+    }
 }
 
 .gl-more-inner {

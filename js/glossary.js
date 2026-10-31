@@ -845,10 +845,21 @@
     // ---------- 8. Searching: one matching function ----------
     // The text a term can be found by: its name, other names, short definition and
     // full explanation in the current language, plus its names in the other language.
+    // Each one is made once per language (every key press searches every term).
+    let haystackLang = "";
+    let haystacks = Object.create(null);
+
     function haystack(term) {
-        const here = term[A.lang];
-        const there = term[otherLang()];
-        return normalize([termName(term)].concat(here.aliases, termShort(term), termDef(term), there.name, there.aliases).map(plainAlias).join(" \n "));
+        if (haystackLang !== A.lang) {
+            haystackLang = A.lang;
+            haystacks = Object.create(null);
+        }
+        if (!haystacks[term.id]) {
+            const here = term[A.lang];
+            const there = term[otherLang()];
+            haystacks[term.id] = normalize([termName(term)].concat(here.aliases, termShort(term), termDef(term), there.name, there.aliases).map(plainAlias).join(" \n "));
+        }
+        return haystacks[term.id];
     }
 
     function matchesQuery(term, words) {
