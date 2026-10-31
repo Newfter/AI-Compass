@@ -155,7 +155,8 @@ window.AICompass.addTranslations({
 // A little data for the section and the kit
 // (js/teachers.js and js/teachers-kit.js read it with AICompass.content.get("teachers")).
 window.AICompass.content.set("teachers", {
-    // The address printed at the bottom of every plan and worksheet
+    // The name and the address printed at the bottom of every plan and worksheet
+    siteName: "AI Compass",
     siteUrl: "https://newfter.github.io/AI-Compass/",
 
     // The ages the course is written for
