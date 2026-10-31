@@ -22,7 +22,9 @@
    where the card is now), flashcard.finish {deck, cards, correct}
    (the end of a study session).
    Saved in this browser (A.storage): glossary.explored (the ids of the
-   terms opened) and glossary.cards (the flashcard boxes, section 6).
+   terms opened) and glossary.cards (the flashcard boxes, section 6;
+   glossary.cards.check is saved and removed at once, to see if saving
+   works).
    Sections of this file:
     1. Settings
     2. The terms
@@ -428,6 +430,18 @@
     function saveCards(progress) {
         savedCards = progress;
         if (!A.storage.set(CARDS_KEY, progress)) cardsUnsaved = true;
+    }
+
+    // Does this browser let the site save? Checked once, with a value that is saved
+    // and removed at once, so the note under the study button is right from the start
+    // (not only after the first answer).
+    // TODO(core): A.storage could tell this itself
+    let savingChecked = false;
+    function checkSaving() {
+        if (savingChecked) return;
+        savingChecked = true;
+        if (!A.storage.set(CARDS_KEY + ".check", true)) cardsUnsaved = true;
+        A.storage.remove(CARDS_KEY + ".check");
     }
 
     // A deck of cards: "all", a category ("vision") or the terms of a lesson ("lesson-7")
@@ -1363,6 +1377,7 @@
     // Called after every answer, at midnight and when the tab comes back.
     function updateStudy() {
         if (!ui) return;             // the glossary isn't built yet
+        checkSaving();
         const plan = deckPlan("all");
         const studied = TERMS.length - plan.unseen.length;
         A.dom.setText(ui.studyTitle, plan.total ? A.plural("glossary.cardsDue", plan.total) : t("glossary.cardsNone"));
@@ -1471,7 +1486,10 @@
             const card = readCards().cards[id];
             return card ? card.box : 0;
         },
-        canSave: function () { return !cardsUnsaved; },
+        canSave: function () {
+            checkSaving();
+            return !cardsUnsaved;
+        },
         dayText: dayText,
         // The end of a study session (cards: how many were answered, correct: how many you knew)
         finished: function (deck, cards, correct) {

@@ -891,6 +891,7 @@
 
 .gl-today .gl-kicker {
     color: var(--gl-ink);
+    color: color-mix(in srgb, var(--gl-ink) 70%, var(--text));    /* on the card's tint, see .gl-fc-tag */
 }
 
 .gl-today .gl-kicker-dot {
@@ -1333,6 +1334,8 @@
 
 .gl-fc-tag {
     color: var(--gl-ink);
+    /* small letters on a tinted card: a little closer to the text colour, for contrast */
+    color: color-mix(in srgb, var(--gl-ink) 70%, var(--text));
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 1.5px;

@@ -184,6 +184,7 @@
             name: find(".gl-fc-name"),
             backName: find(".gl-fc-back-name"),
             short: find(".gl-fc-short"),
+            answers: find(".gl-fc-answers"),
             no: find(".gl-fc-no"),
             yes: find(".gl-fc-yes"),
             moved: find(".gl-fc-moved"),
@@ -309,7 +310,10 @@
         parts.card.classList.remove("is-flipped");
         parts.front.setAttribute("aria-hidden", "false");
         parts.back.setAttribute("aria-hidden", "true");
+        // The answer buttons wait, out of sight (they keep their place) and out of the
+        // way of Tab, until the back has been seen
         root.classList.remove("is-seen");
+        parts.answers.inert = true;
         fillCard();
         if (!direction || !parts.card.animate) return;
         if (A.motion.ok()) {
@@ -332,6 +336,7 @@
         if (session.flipped && !session.seen) {
             session.seen = true;
             root.classList.add("is-seen");      // the answer buttons appear
+            parts.answers.inert = false;
         }
         fillCard();
         turn(session.flipped);
