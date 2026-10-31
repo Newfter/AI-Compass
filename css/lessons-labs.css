@@ -9,9 +9,12 @@
    1. Pixel detective (lesson 7, js/lessons/pixels.js): .px-
    2. Three slot machines (lesson 8, js/lessons/slots.js): .slot-
    3. Temperature dial (lesson 9, js/lessons/temperature.js): .tmp-
-   4. Switches of the mini-labs
-   5. Responsive
-   6. Calm mode and reduced motion
+   4. From noise to picture (lesson 10, js/lessons/noise.js): .noise-
+   5. Fair or not? (lesson 11, js/lessons/fairness.js): .fair-
+   6. Prompt makeover (lesson 12, js/lessons/prompt.js): .prompt-
+   7. Switches of the mini-labs
+   8. Responsive
+   9. Calm mode and reduced motion
    ========================================================= */
 
 /* ===== 1. PIXEL DETECTIVE =====
@@ -656,11 +659,628 @@
     font-weight: 700;
 }
 
-/* ===== 4. SWITCHES OF THE MINI-LABS =====
+/* ===== 4. FROM NOISE TO PICTURE =====
+   The picture is a 16 × 16 canvas, scaled up without smoothing, so every
+   pixel stays a crisp square. Its colours are the picture's own: the same
+   in both themes. The slider, the noise meter and the buttons sit beside it
+   when the lab is 560px wide or more, otherwise under it. Under both, the
+   film strip: one small canvas per step, filled in as the steps are done. */
+
+.noise-lab {
+    container-type: inline-size;   /* for the @container rule below */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+}
+
+.noise-prompts {
+    display: grid;
+    gap: 8px;
+}
+
+.noise-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.noise-pill {
+    white-space: normal;   /* a long prompt may wrap on a small phone */
+    text-align: left;
+}
+
+.noise-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+}
+
+@container (min-width: 560px) {
+    .noise-stage {
+        grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+        gap: 24px;
+    }
+}
+
+.noise-picture {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+}
+
+.noise-canvas {
+    display: block;
+    width: min(100%, 240px);
+    height: auto;
+    aspect-ratio: 1;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(var(--accent-2-rgb), 0.16);
+    image-rendering: crisp-edges;   /* older Firefox */
+    image-rendering: pixelated;
+}
+
+.noise-caption {
+    min-height: 3em;   /* two lines: the text below doesn't jump when the caption gets longer */
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.noise-controls {
+    display: grid;
+    gap: 14px;
+}
+
+.noise-left {
+    display: grid;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+/* The share of noise left: a "noisy" striped bar that shrinks step by step */
+.noise-meter {
+    display: block;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.14);
+}
+
+.noise-meter span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: repeating-linear-gradient(90deg, var(--accent-3) 0 5px, var(--accent-2) 5px 10px, var(--accent) 10px 15px);
+    transition: width 0.3s var(--ease);
+}
+
+.noise-film {
+    display: grid;
+    gap: 8px;
+}
+
+.noise-strip {
+    display: flex;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.noise-frame {
+    flex: 1 1 0;
+    min-width: 0;
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+}
+
+.noise-frame canvas {
+    display: block;
+    width: 100%;
+    max-width: 44px;
+    height: auto;
+    aspect-ratio: 1;
+    border: 1px dashed var(--border-strong);
+    border-radius: 6px;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+
+.noise-frame.is-done canvas {
+    border-style: solid;
+    border-color: var(--border);
+}
+
+.noise-frame.is-now canvas {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 2px rgba(var(--accent-2-rgb), 0.35);
+}
+
+.noise-frame span {
+    color: var(--text-muted);
+    font-size: 0.65625rem;
+}
+
+.noise-frame.is-now span {
+    color: var(--text-accent-2);
+    font-weight: 700;
+}
+
+.noise-honest {
+    padding: 10px 14px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.55;
+}
+
+/* ===== 5. FAIR OR NOT? =====
+   One case at a time, in a card. Above it, a round numbered button per case
+   (with a green tick once the problem is spotted, an amber cross if missed)
+   and the score. The answers are .ui-option buttons (css/components.css)
+   with the letters of the "check yourself" question (.lsn-option-mark,
+   css/lessons.css). In the face-unlock case, a result below the overall
+   one is amber, so the gap stands out. */
+
+.fair-lab {
+    container-type: inline-size;   /* for the @container rule below */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+.fair-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+}
+
+.fair-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fair-dot {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: var(--surface-solid);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;     /* px: a glyph in a tile of fixed size */
+    font-weight: 700;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fair-dot:hover {
+    border-color: var(--accent-2);
+}
+
+.fair-dot.is-now {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.28);
+}
+
+/* The status, as a small badge on the corner of the button */
+.fair-dot.is-spotted::after,
+.fair-dot.is-missed::after {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: grid;
+    place-items: center;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    color: var(--surface-solid);
+    font-size: 11px;     /* px: a glyph in a tile of fixed size */
+    line-height: 1;
+}
+
+.fair-dot.is-spotted::after {
+    content: "✓";
+    background: var(--success);
+}
+
+.fair-dot.is-missed::after {
+    content: "✗";
+    background: var(--warning);
+}
+
+.fair-case {
+    display: grid;
+    gap: 12px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface-solid);
+}
+
+.fair-tag {
+    color: var(--text-muted);
+    font-size: 0.71875rem;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.fair-title {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.fair-title:focus {
+    outline: none;   /* it gets the focus from the script only, so screen readers read the new case */
+}
+
+.fair-story {
+    font-size: var(--lsn-text);
+    line-height: 1.65;
+}
+
+.fair-question {
+    margin-top: 4px;
+    font-weight: 700;
+}
+
+.fair-options {
+    margin-top: 0;
+}
+
+.fair-option {
+    --option-height: 52px;
+    --option-pad: 10px 14px;
+    font-size: calc(var(--lsn-text) - 0.0625rem);
+}
+
+.fair-feedback {
+    margin-top: 4px;
+}
+
+/* The face-unlock test: one bar per row of results */
+.fair-test {
+    display: grid;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 14px;
+}
+
+.fair-bars {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fair-bar-row {
+    display: grid;
+    grid-template-columns: minmax(7.5em, auto) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 12px;
+    font-size: 0.875rem;
+}
+
+.fair-bar-name {
+    font-weight: 700;
+}
+
+.fair-bar {
+    display: block;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(var(--accent-2-rgb), 0.14);
+}
+
+.fair-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent-2);
+}
+
+.fair-bar-row.is-low .fair-bar span {
+    background: var(--warning);
+}
+
+.fair-bar-value {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.fair-bar-row.is-low .fair-bar-value {
+    color: var(--text-warning);
+    font-weight: 700;
+}
+
+.fair-share {
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+}
+
+/* A narrow lab: the name and the numbers on one line, the bar under them */
+@container (max-width: 520px) {
+    .fair-bar-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 4px 10px;
+    }
+
+    .fair-bar {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .fair-case {
+        padding: 16px;
+    }
+}
+
+.fair-done {
+    margin-top: 0;
+}
+
+/* ===== 6. PROMPT MAKEOVER =====
+   Each ingredient has a colour (--prompt-kind, chosen by data-kind): its
+   button, its piece of the prompt and its part of the answer share it. The
+   colour is only on borders, dots and light backgrounds, so the text keeps
+   the theme's colour and stays easy to read in both themes. The prompt is
+   a message you send (its corner at the bottom left), the answer one you
+   get back (its corner at the bottom right). */
+
+.prompt-lab {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+}
+
+.prompt-lab [data-kind="role"] {
+    --prompt-kind: var(--accent);
+    --prompt-kind-text: var(--text-accent);
+}
+
+.prompt-lab [data-kind="context"] {
+    --prompt-kind: var(--accent-2);
+    --prompt-kind-text: var(--text-accent-2);
+}
+
+.prompt-lab [data-kind="task"] {
+    --prompt-kind: var(--accent-3);
+    --prompt-kind-text: var(--text-accent-3);
+}
+
+.prompt-lab [data-kind="example"] {
+    --prompt-kind: var(--warning);
+    --prompt-kind-text: var(--text-warning);
+}
+
+.prompt-lab [data-kind="format"] {
+    --prompt-kind: var(--success);
+    --prompt-kind-text: var(--text-success);
+}
+
+.prompt-box {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 18px 18px 18px 4px;
+    background: var(--surface-solid);
+}
+
+.prompt-text {
+    font-size: var(--lsn-text);
+    line-height: 1.75;
+}
+
+/* A piece of the prompt: underlined in its ingredient's colour (the colour
+   continues on the next line when a piece wraps) */
+.prompt-piece {
+    padding: 1px 3px;
+    border-radius: 5px;
+    background: transparent;
+    background: color-mix(in srgb, var(--prompt-kind) 15%, transparent);
+    box-shadow: inset 0 -2px 0 var(--prompt-kind);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+.prompt-piece.is-vague {
+    background: none;
+    box-shadow: none;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.prompt-ingredients {
+    display: grid;
+    gap: 10px;
+}
+
+.prompt-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.prompt-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 6px 14px 6px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--surface-solid);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.prompt-chip:hover {
+    border-color: var(--prompt-kind);
+}
+
+.prompt-chip-icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: transparent;
+    background: color-mix(in srgb, var(--prompt-kind) 20%, transparent);
+    font-size: 14px;     /* px: a glyph in a tile of fixed size */
+}
+
+.prompt-chip-mark::before {
+    content: "+";
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+.prompt-chip[aria-pressed="true"] {
+    border-color: var(--prompt-kind);
+    background: var(--surface-solid);
+    background: color-mix(in srgb, var(--prompt-kind) 14%, var(--surface-solid));
+}
+
+.prompt-chip[aria-pressed="true"] .prompt-chip-mark::before {
+    content: "✓";
+    color: var(--prompt-kind-text);
+}
+
+.prompt-status {
+    margin-top: 0;
+}
+
+.prompt-meter {
+    display: grid;
+    gap: 8px;
+}
+
+.prompt-meter-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+}
+
+.prompt-level {
+    font-family: var(--font-display);
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.prompt-count {
+    color: var(--text-muted);
+    font-size: 0.78125rem;
+}
+
+/* One segment per ingredient switched on */
+.prompt-bar {
+    display: flex;
+    gap: 6px;
+}
+
+.prompt-bar i {
+    flex: 1 1 0;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.14);
+    transition: background 0.3s ease;
+}
+
+.prompt-bar i.is-on {
+    background: var(--gradient);
+}
+
+.prompt-answer {
+    display: grid;
+    gap: 8px;
+}
+
+.prompt-bubble {
+    display: grid;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.35);
+    border-radius: 18px 18px 4px 18px;
+    background: linear-gradient(180deg, rgba(var(--accent-2-rgb), 0.08), transparent 60%), var(--surface-solid);
+    font-size: calc(var(--lsn-text) - 0.0625rem);
+    line-height: 1.65;
+}
+
+.prompt-bubble.is-new {
+    animation: prompt-in 0.35s var(--ease);
+}
+
+@keyframes prompt-in {
+    from {
+        opacity: 0.4;
+        transform: translateY(4px);
+    }
+}
+
+/* The parts of the answer that an ingredient added: a line in its colour */
+.prompt-bubble [data-kind] {
+    padding-left: 10px;
+    border-left: 3px solid var(--prompt-kind);
+}
+
+.prompt-list {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-right: 0;
+    list-style: none;
+}
+
+.prompt-list li {
+    position: relative;
+    padding-left: 16px;
+}
+
+.prompt-list li::before {
+    content: "•";
+    position: absolute;
+    left: 2px;
+    color: var(--text-success);
+    font-weight: 800;
+}
+
+.prompt-honest {
+    flex: 1 1 260px;
+    margin-top: 0;
+}
+
+/* ===== 7. SWITCHES OF THE MINI-LABS =====
    The track and the knob are .ui-switch (css/components.css). */
 
 .px-switch,
-.slot-switch {
+.slot-switch,
+.fair-switch {
     display: inline-flex;
     align-items: center;
     gap: 11px;
@@ -677,7 +1297,7 @@
     cursor: pointer;
 }
 
-/* ===== 5. RESPONSIVE ===== */
+/* ===== 8. RESPONSIVE ===== */
 
 @media (max-width: 640px) {
     /* 12 squares across the width of a phone (the reader and the lab take 62px of it) */
@@ -748,7 +1368,7 @@
     }
 }
 
-/* ===== 6. CALM MODE AND REDUCED MOTION =====
+/* ===== 9. CALM MODE AND REDUCED MOTION =====
    core.js puts "fx-motion-off" on <html>, and style.css then stops every
    animation and transition. The labs also skip the reel's spin and the
    word's pop (api.motion.ok() in their files). Nothing else to do here. */
