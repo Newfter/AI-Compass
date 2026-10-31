@@ -1681,6 +1681,9 @@
     }
 
     // --- Clicks, the settings' controls and the keys ---
+    // The tools of the top bar that leave the question on the screen
+    const TOP_TOOLS = ["pause", "fullscreen", "language"];
+
     function onQuizClick(event) {
         const point = event.target.closest("[data-cq-point]");
         if (point) {
@@ -1714,6 +1717,9 @@
         else if (name === "fullscreen") toggleFullscreen();
         else if (name === "language") A.toggleLanguage();
         else if (name === "retry") loadQuestions(false);
+        // After a click with the mouse on one of these tools, Space goes on with
+        // the quiz again (otherwise it would press the same tool a second time)
+        if (TOP_TOOLS.indexOf(name) !== -1 && event.detail > 0) focusMain();
     }
 
     function focusMain() {
