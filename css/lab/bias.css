@@ -1,0 +1,360 @@
+/* =========================================================
+   AI COMPASS — LAB: BIAS DETECTIVE (js/lab/bias.js)
+   Prefix: bd-. Every control comes from the kit (css/lab/kit.css);
+   this file styles only the experiment's own parts:
+    1. The story and the data
+    2. The picture and the twin pair
+    3. Panels (the scorecard, what the model learned, real cases)
+    4. The scorecard table and its sentences
+    5. What the model learned
+    6. The real cases
+   The group colours are the kit's series colours 6 (blue) and 7
+   (orange), the same ones the canvas uses, in both themes.
+   ========================================================= */
+
+/* ===== 1. THE STORY AND THE DATA ===== */
+.bd-lead {
+    color: var(--text);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+}
+
+/* The sentence with the glossary links */
+.bd-idea {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+/* The story select keeps a sensible width next to its button */
+.bd-data > .lk-field {
+    flex: 0 1 300px;
+}
+
+/* What went wrong in the chosen story */
+.bd-preset-note {
+    padding-left: 12px;
+    border-left: 2px solid var(--border-strong);
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.5;
+}
+
+/* ===== 2. THE PICTURE AND THE TWIN PAIR ===== */
+/* "The dots show" on the left, the Train button and its status on the right */
+.bd-view {
+    justify-content: space-between;
+}
+
+.bd-view > .lk-field {
+    flex: 0 1 340px;
+}
+
+/* The canvas box clips its content, so the focus ring is drawn inside the canvas */
+.bd-scene .lk-canvas:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: -4px;
+    border-radius: 14px;
+}
+
+/* The twin pair in words (or how to meet one). Its height stays put, so the page
+   under it doesn't jump while the pointer moves over the dots. */
+.bd-pair {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    min-height: 104px;
+    padding: 10px 14px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.45;
+}
+
+.bd-pair-head {
+    color: var(--text);
+    font-weight: 700;
+}
+
+.bd-pair-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+}
+
+.bd-pair-note {
+    color: var(--text-label);
+    font-size: var(--lk-small);
+}
+
+/* A small dot in a group's colour (the pair, the table's header) */
+.bd-dot {
+    display: inline-block;
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--bd-dot-color);
+}
+
+.bd-dot-0 {
+    --bd-dot-color: var(--lk-series-6);
+}
+
+.bd-dot-1 {
+    --bd-dot-color: var(--lk-series-7);
+}
+
+/* ===== 3. PANELS =====
+   The same glass box as the kit's groups, with a title in small capitals
+   (an h4: in the lab, the experiment's title is an h3) */
+.bd-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+.bd-title {
+    margin: 0;
+    color: var(--text-accent-2);
+    font-family: var(--font-mono);
+    font-size: var(--lk-mini);
+    font-weight: 600;
+    letter-spacing: 2px;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.bd-help {
+    color: var(--text-label);
+    font-size: var(--lk-small);
+    line-height: 1.45;
+}
+
+/* While the model trains again, its numbers are the old model's: they fade a little */
+.is-waiting > .bd-panel {
+    opacity: 0.55;
+    transition: opacity 0.2s ease;
+}
+
+/* ===== 4. THE SCORECARD TABLE AND ITS SENTENCES ===== */
+/* position: the screen-reader words in the cells ("a big gap") stay inside it too */
+.bd-table-wrap {
+    position: relative;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.bd-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    font-variant-numeric: tabular-nums;
+}
+
+.bd-table th,
+.bd-table td {
+    padding: 7px 5px;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+    vertical-align: middle;
+}
+
+.bd-table th:first-child {
+    padding-left: 0;
+    text-align: left;
+}
+
+.bd-table td {
+    color: var(--text);
+    font-family: var(--font-mono);
+    white-space: nowrap;
+}
+
+.bd-table thead th {
+    color: var(--text-label);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.bd-table tbody th {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.bd-group-head {
+    white-space: nowrap;
+}
+
+.bd-group-head .bd-dot {
+    margin-right: 5px;
+}
+
+/* The past is the reference: quieter, with a stronger line under it */
+.bd-row-past th,
+.bd-row-past td {
+    border-bottom-color: var(--border-strong);
+    color: var(--text-muted);
+}
+
+.bd-table tbody .bd-row-past th {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.bd-table .bd-gap {
+    font-weight: 700;
+}
+
+/* A gap above 5 points: a warning sign, the warning colour and a light wash */
+.bd-gap-icon {
+    display: none;
+}
+
+.bd-table .bd-gap.is-big {
+    background: color-mix(in srgb, var(--warning) 13%, transparent);
+    color: var(--text-warning);
+}
+
+.bd-gap.is-big .bd-gap-icon {
+    display: inline-flex;
+    margin-right: 4px;
+    color: var(--warning);
+    vertical-align: -2px;
+}
+
+.bd-gap-icon .lk-icon {
+    width: 14px;
+    height: 14px;
+}
+
+/* A phone: the four columns share about 260 px, and the Russian names are long.
+   The warning sign goes; the warning colour and the wash stay. */
+@container (max-width: 480px) {
+    .bd-table {
+        font-size: 0.75rem;
+    }
+
+    .bd-table th,
+    .bd-table td {
+        padding: 6px 3px;
+    }
+
+    .bd-table thead th {
+        font-size: 0.6875rem;
+    }
+
+    .bd-group-head .bd-dot {
+        width: 8px;
+        height: 8px;
+        margin-right: 3px;
+    }
+
+    .bd-gap.is-big .bd-gap-icon {
+        display: none;
+    }
+
+    /* Bigger text (Settings): the dot goes above the group's name and the cells get
+       narrower, and long words in the headings may hyphenate (css/settings.css), so
+       the four columns still fit. Where they can't, the table scrolls in its box. */
+    html.st-large-text .bd-group-head {
+        white-space: normal;
+    }
+
+    html.st-large-text .bd-group-head .bd-dot {
+        display: block;
+        margin: 0 0 3px auto;
+    }
+
+    html.st-large-text .bd-table th,
+    html.st-large-text .bd-table td {
+        padding: 6px 2px;
+    }
+}
+
+/* The gaps in words */
+.bd-says {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.bd-say {
+    position: relative;
+    padding-left: 16px;
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.45;
+}
+
+.bd-say::before {
+    content: "";
+    position: absolute;
+    top: 0.5em;
+    left: 2px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--border-strong);
+}
+
+.bd-say.is-gap {
+    color: var(--text);
+}
+
+.bd-say.is-gap::before {
+    background: var(--warning);
+}
+
+/* ===== 5. WHAT THE MODEL LEARNED ===== */
+/* Under each column's name: which way its weight pushes */
+.bd-push {
+    display: block;
+    color: var(--text-label);
+    font-size: var(--lk-small);
+}
+
+.bd-empty {
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.5;
+}
+
+/* "The neighbourhood stands in for the group" */
+.bd-proxy {
+    padding: 10px 12px;
+    border-left: 3px solid var(--warning);
+    border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
+    background: color-mix(in srgb, var(--warning) 10%, transparent);
+    color: var(--text);
+    font-size: 0.84375rem;
+    line-height: 1.5;
+}
+
+/* ===== 6. THE REAL CASES ===== */
+.bd-cases {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.bd-case {
+    padding-left: 14px;
+    border-left: 2px solid var(--border-strong);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}

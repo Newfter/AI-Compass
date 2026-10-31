@@ -43,6 +43,14 @@
    with, or a finger as the main pointer (the opposite of A.queries.finePointer
    in js/core.js). Every file uses this one query: for 44px buttons, and to
    hide keyboard and mouse hints.
+
+   Font sizes are written in rem, in every CSS file (1rem = 16px at the normal
+   text size, so 14px is 0.875rem: divide by 16). The "Text size" setting
+   (js/settings.js) makes 1rem bigger, and all the text grows with it. Boxes,
+   gaps and lines stay in px. Two things keep px font sizes, because bigger
+   letters would not fit in them: the menu bar (see 5. NAVIGATION), and a
+   glyph in a tile of fixed size, like an emoji icon, a letter or number
+   badge or a tick (marked "px: a glyph in a tile of fixed size").
    ========================================================= */
 
 /* ===== 1. DESIGN TOKENS (colours and sizes used everywhere) =====
@@ -101,7 +109,7 @@
 
     /* Gradients (headings, the main button), a soft glow and the shadow of big panels */
     --gradient: linear-gradient(110deg, #b69aff 10%, #70edff 90%);
-    --gradient-button: linear-gradient(115deg, #8758ee, #536cf0);
+    --gradient-button: linear-gradient(115deg, #8454ec, #4e67ee);
     --glow: 0 0 40px rgba(155, 109, 255, 0.25);
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     /* Cards in a list (glossary, timeline): a soft shadow, a deeper one on hover,
@@ -205,6 +213,7 @@
     --z-reader: 500;      /* the lesson reader */
     --z-sheet: 520;       /* the assistant's window: over the reader, so Compass Bot can help while a lesson is open */
     --z-confetti: 560;    /* confetti, above the reader and the assistant */
+    --z-dialog: 580;      /* the Settings and keyboard shortcuts windows */
     --z-palette: 600;     /* the command palette */
     --z-toast: 700;       /* small pop-up messages */
     --z-skip: 1000;       /* the "Skip to content" link */
@@ -231,6 +240,11 @@
 }
 
 html {
+    /* The text size of the whole site. Every font size is in rem (1rem = this size),
+       so all the text grows together when the "Text size" setting (js/settings.js)
+       puts --text-scale on <html>: 1 (normal), 1.125, 1.25 or 1.5. 100% is the
+       browser's own text size (16px unless the visitor changed it). */
+    font-size: calc(100% * var(--text-scale, 1));
     scroll-behavior: smooth;
     scroll-padding-top: calc(var(--nav-height) + 16px);
     -webkit-text-size-adjust: 100%;
@@ -245,7 +259,7 @@ body {
     background-attachment: fixed;
     color: var(--text);
     font-family: var(--font-body);
-    font-size: 16px;
+    font-size: 1rem;
     line-height: 1.65;
     overflow-x: hidden;
     /* Room for the fixed menu bar at the top */
@@ -407,7 +421,7 @@ textarea:focus-visible,
     border: 1px solid transparent;
     border-radius: 14px;
     font-weight: 700;
-    font-size: 15px;
+    font-size: 0.9375rem;
     line-height: 1.2;
     text-align: center;
     transition: transform 0.25s var(--ease), box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
@@ -441,7 +455,7 @@ textarea:focus-visible,
     min-height: 38px;
     padding: 8px 16px;
     border-radius: 11px;
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
 .btn:disabled,
@@ -461,7 +475,7 @@ textarea:focus-visible,
     border-radius: 999px;
     background: var(--surface-2);
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 600;
     transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
@@ -486,7 +500,11 @@ button.chip:hover,
     font-family: var(--font-mono);
 }
 
-/* ===== 5. NAVIGATION ===== */
+/* ===== 5. NAVIGATION =====
+   The bar's font sizes (logo, links, buttons) stay in px on purpose: the bar
+   has a fixed height and no room for bigger letters, so the "Text size" setting
+   leaves it as it is. The menu that drops down on phones (11. RESPONSIVE) does
+   grow, like the rest of the page. */
 
 .navbar {
     /* Fixed (not sticky): the browser never scrolls the page to "show"
@@ -606,6 +624,11 @@ button.chip:hover,
     gap: 8px;
 }
 
+/* A squeezed button would be too small to tap: the bar's widths below are set so they fit */
+.nav-actions > * {
+    flex-shrink: 0;
+}
+
 .icon-button {
     display: inline-flex;
     align-items: center;
@@ -675,6 +698,38 @@ button.chip:hover,
     transform: translateY(-6px) rotate(-45deg);
 }
 
+/* The theme and language buttons at the bottom of the phone menu
+   (shown on narrow phones only, see 11. RESPONSIVE) */
+.nav-quick {
+    display: none;
+}
+
+.nav-quick-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-quick-button:hover {
+    border-color: var(--accent-2);
+    color: var(--accent-2);
+}
+
+.nav-quick-button svg {
+    flex-shrink: 0;
+}
+
 /* ===== 6. HERO ===== */
 
 .hero {
@@ -706,7 +761,7 @@ button.chip:hover,
     background: rgba(var(--accent-2-rgb), 0.07);
     color: var(--accent-2);
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 2px;
     box-shadow: 0 0 30px rgba(var(--accent-2-rgb), 0.08);
@@ -733,7 +788,7 @@ button.chip:hover,
 .hero-title {
     max-width: 980px;
     font-family: var(--font-display);
-    font-size: clamp(38px, 7.2vw, 88px);
+    font-size: clamp(2.375rem, 7.2vw, 5.5rem);
     font-weight: 700;
     line-height: 1.06;
     letter-spacing: -0.03em;
@@ -749,7 +804,7 @@ button.chip:hover,
     max-width: 680px;
     margin-top: 26px;
     color: var(--text-muted);
-    font-size: clamp(16px, 2vw, 19px);
+    font-size: clamp(1rem, 2vw, 1.1875rem);
     line-height: 1.75;
 }
 
@@ -794,7 +849,7 @@ button.chip:hover,
 .stat strong {
     display: block;
     font-family: var(--font-display);
-    font-size: clamp(26px, 3.4vw, 36px);
+    font-size: clamp(1.625rem, 3.4vw, 2.25rem);
     line-height: 1.1;
     background: var(--gradient);
     background-clip: text;
@@ -806,7 +861,7 @@ button.chip:hover,
     display: block;
     margin-top: 6px;
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 1.4;
 }
 
@@ -856,7 +911,7 @@ button.chip:hover,
     margin-bottom: 14px;
     color: var(--accent-2);
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 2.5px;
     text-shadow: 0 0 18px rgba(var(--accent-2-rgb), 0.25);
@@ -865,7 +920,7 @@ button.chip:hover,
 .section-head h2,
 .about-card h2 {
     font-family: var(--font-display);
-    font-size: clamp(28px, 4.4vw, 48px);
+    font-size: clamp(1.75rem, 4.4vw, 3rem);
     font-weight: 700;
     letter-spacing: -0.02em;
 }
@@ -873,7 +928,7 @@ button.chip:hover,
 .section-sub {
     margin-top: 16px;
     color: var(--text-muted);
-    font-size: 17px;
+    font-size: 1.0625rem;
 }
 
 /* ===== 8. ABOUT ===== */
@@ -895,7 +950,7 @@ button.chip:hover,
     max-width: 680px;
     margin: 20px auto 0;
     color: var(--text-muted);
-    font-size: 17px;
+    font-size: 1.0625rem;
     line-height: 1.85;
 }
 
@@ -923,17 +978,17 @@ button.chip:hover,
     border: 1px solid var(--border-strong);
     border-radius: 13px;
     background: rgba(var(--accent-rgb), 0.12);
-    font-size: 22px;
+    font-size: 22px;     /* px: a glyph in a tile of fixed size */
 }
 
 .value-card h3 {
-    font-size: 18px;
+    font-size: 1.125rem;
 }
 
 .value-card p {
     margin-top: 8px;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
 /* ===== 9. FOOTER ===== */
@@ -954,7 +1009,7 @@ button.chip:hover,
 .footer-brand p {
     margin-top: 12px;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
 .footer-links {
@@ -966,7 +1021,7 @@ button.chip:hover,
 
 .footer-links a {
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 600;
     transition: color 0.2s ease;
 }
@@ -985,7 +1040,7 @@ button.chip:hover,
     padding-top: 24px;
     border-top: 1px solid var(--border);
     color: var(--text-dim);
-    font-size: 13px;
+    font-size: 0.8125rem;
 }
 
 .back-to-top {
@@ -1021,7 +1076,7 @@ button.chip:hover,
     border-radius: 14px;
     background: var(--surface-solid);
     color: var(--text);
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 600;
     /* A very long word (a web address, say) breaks instead of running off the screen */
     overflow-wrap: anywhere;
@@ -1110,7 +1165,7 @@ button.chip:hover,
 
     .nav-links a {
         padding: 12px 14px;
-        font-size: 16px;
+        font-size: 1rem;
     }
 
     .nav-links a.active::after {
@@ -1154,10 +1209,11 @@ button.chip:hover,
         gap: 6px;
     }
 
+    /* 40 px: the smallest button that is easy to tap */
     .icon-button {
-        min-width: 38px;
-        height: 38px;
-        padding: 0 9px;
+        min-width: 40px;
+        height: 40px;
+        padding: 0 10px;
     }
 
     .nav-links {
@@ -1174,7 +1230,7 @@ button.chip:hover,
     }
 
     .hero-label {
-        font-size: 10px;
+        font-size: 0.625rem;
         letter-spacing: 1.4px;
         padding: 7px 12px;
     }
@@ -1203,7 +1259,7 @@ button.chip:hover,
     }
 
     .section-sub {
-        font-size: 15px;
+        font-size: 0.9375rem;
     }
 
     .about-card {
@@ -1212,7 +1268,7 @@ button.chip:hover,
     }
 
     .about-text {
-        font-size: 15px;
+        font-size: 0.9375rem;
     }
 
     .footer-inner {
@@ -1225,8 +1281,38 @@ button.chip:hover,
     }
 }
 
+/* Narrow phones: the menu bar keeps search, My Compass, Settings and the menu
+   button. Theme and language move into the menu (the Settings window has them too). */
+@media (max-width: 520px) {
+    .nav-actions .theme-button,
+    .nav-actions .lang-button {
+        display: none;
+    }
+
+    .nav-quick {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(8.75rem, 1fr));
+        gap: 8px;
+        margin-top: 8px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+    }
+}
+
 @media (max-width: 400px) {
     .navbar .logo-mark {
+        display: none;
+    }
+}
+
+/* The smallest phones (320 px): the compass alone stands for the name
+   (the link keeps its name, "AI Compass", for screen readers) */
+@media (max-width: 340px) {
+    .navbar .logo-mark {
+        display: grid;
+    }
+
+    .navbar .logo-text {
         display: none;
     }
 }
@@ -1285,6 +1371,13 @@ html.fx-motion-off *::after {
     transition-duration: 0s !important;
 }
 
+/* No lift on hover. With the transitions off, a button lifted from under a pointer
+   that rests on its bottom edge drops back at once, lifts again, and flickers. */
+html.fx-motion-off .btn-primary:hover,
+html.fx-motion-off .btn-ghost:hover {
+    transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
     html {
         scroll-behavior: auto;
@@ -1306,7 +1399,8 @@ html.fx-motion-off *::after {
    button) are hidden, and on smaller screens the menu links stay in the bar,
    in one row that scrolls sideways. Everything else can be read by scrolling. */
 
-html:not(.js) .nav-actions {
+html:not(.js) .nav-actions,
+html:not(.js) .nav-quick {
     display: none;
 }
 
@@ -1327,7 +1421,7 @@ html:not(.js) .nav-actions {
 
     html:not(.js) .nav-links a {
         padding: 8px 9px;
-        font-size: 13px;
+        font-size: 0.8125rem;
         white-space: nowrap;
     }
 }

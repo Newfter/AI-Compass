@@ -10,8 +10,13 @@ window.AICompass.addTranslations({
     en: {
         "core.skip": "Skip to content",
         "core.searchLabel": "Search the site (Ctrl + K)",
+        "core.journeyLabel": "My Compass: your progress",
+        "core.settingsLabel": "Settings",
         "core.themeLabel": "Switch light / dark theme",
         "core.langLabel": "RU — switch to Russian",
+        "core.themeQuick": "Light / dark theme",        // the same two buttons in the phone menu
+        "core.langQuick": "Русский",                    // written in the language it switches to
+        "core.langQuickCode": "ru",
         "core.menuLabel": "Open menu",
         "core.menuClose": "Close menu",
         "core.navMain": "Main menu",
@@ -76,8 +81,13 @@ window.AICompass.addTranslations({
     ru: {
         "core.skip": "Перейти к содержанию",
         "core.searchLabel": "Поиск по сайту (Ctrl + K)",
+        "core.journeyLabel": "Мой компас: твой прогресс",
+        "core.settingsLabel": "Настройки",
         "core.themeLabel": "Сменить светлую / тёмную тему",
         "core.langLabel": "EN — переключить на английский",
+        "core.themeQuick": "Сменить тему",
+        "core.langQuick": "English",
+        "core.langQuickCode": "en",
         "core.menuLabel": "Открыть меню",
         "core.menuClose": "Закрыть меню",
         "core.navMain": "Главное меню",

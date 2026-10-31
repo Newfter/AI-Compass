@@ -1,0 +1,222 @@
+/* =========================================================
+   AI COMPASS — LAB: DOWN THE HILL (js/lab/descent.js)
+   Prefix: gd-. Every control and panel comes from the kit
+   (css/lab/kit.css); this file only styles the experiment's extras.
+    1. The landscape line and the options
+    2. The map / 3-D canvas and the keys under it
+    3. The balls' cards
+    4. The chart and the idea
+   ========================================================= */
+
+/* ===== 1. THE LANDSCAPE LINE AND THE OPTIONS ===== */
+/* The landscape list and its one-line description side by side (one under
+   the other on a phone) */
+.gd-land {
+    align-items: center;
+}
+
+.gd-land > .lk-field {
+    flex: 0 1 220px;
+}
+
+.gd-about {
+    flex: 1 1 260px;
+    min-width: 0;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+.gd-about em {
+    color: var(--text);
+    font-style: normal;
+    font-weight: 600;
+}
+
+/* Speed, view and noise: their labels line up at the top */
+.gd-options {
+    align-items: flex-start;
+}
+
+.gd-options > .lk-field {
+    flex: 0 1 auto;
+}
+
+.gd-options > .lk-toggle {
+    flex: 1 1 220px;
+}
+
+/* ===== 2. THE MAP / 3-D CANVAS AND THE KEYS UNDER IT ===== */
+/* A finger on the canvas moves the start (or turns the surface): it doesn't scroll the page */
+.gd-scene .lk-canvas {
+    touch-action: none;
+    cursor: crosshair;
+}
+
+.gd-scene[data-view="3d"] .lk-canvas {
+    cursor: grab;
+}
+
+.gd-scene[data-view="3d"] .lk-canvas:active {
+    cursor: grabbing;
+}
+
+.gd-scene .lk-canvas:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: -3px;
+}
+
+/* The balls' legend and the map's marks, in one row that wraps */
+.gd-keys {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 22px;
+}
+
+.gd-marks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.78125rem;
+    line-height: 1.4;
+}
+
+.gd-marks-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gd-marks-item svg {
+    flex: none;
+    color: var(--text);
+}
+
+/* ===== 3. THE BALLS' CARDS ===== */
+/* The small capitals above a panel, like the kit's group labels */
+.gd-title {
+    margin: 0;
+    color: var(--text-accent-2);
+    font-family: var(--font-mono);
+    font-size: var(--lk-mini);
+    font-weight: 600;
+    letter-spacing: 2px;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+/* One card per ball, with a stripe in the ball's colour (--gd-ball, set by the JS).
+   The card measures its own width: its number tiles tighten up when it is narrow. */
+.gd-card {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 12px 14px 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+    box-shadow: inset 4px 0 0 var(--gd-ball);
+}
+
+.gd-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gd-mark {
+    display: inline-flex;
+    flex: none;
+    color: var(--gd-ball);
+}
+
+.gd-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* The optimizer and the learning rate, one under the other */
+.gd-card-settings {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.gd-card-settings > .lk-field {
+    flex: none;
+}
+
+/* Three small number tiles in a row */
+.gd-card-numbers {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.gd-card-numbers .lk-stat {
+    padding: 8px 9px 9px;
+}
+
+.gd-card-numbers .lk-stat-label {
+    letter-spacing: 0.6px;
+}
+
+.gd-card-numbers .lk-stat-value {
+    font-size: 0.875rem;
+}
+
+/* A narrow card (a phone, or the side column of a small window): a number as long as
+   "4.6×10⁻¹⁰" still fits in its tile */
+@container (max-width: 300px) {
+    .gd-card-numbers .lk-stat {
+        padding-inline: 7px;
+    }
+
+    .gd-card-numbers .lk-stat-value {
+        font-size: 0.8125rem;
+    }
+}
+
+/* The ball's state in words; the colour only repeats what the words say */
+.gd-state {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+}
+
+.gd-state[data-state="arrived"],
+.gd-state[data-state="jiggleLowest"] {
+    color: var(--text-success);
+}
+
+.gd-state[data-state="local"],
+.gd-state[data-state="jiggleLocal"],
+.gd-state[data-state="saddle"],
+.gd-state[data-state="limit"] {
+    color: var(--text-warning);
+}
+
+.gd-state[data-state="exploded"] {
+    color: var(--text-danger);
+}
+
+/* ===== 4. THE CHART AND THE IDEA ===== */
+.gd-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* The sentence that names the idea, with its glossary links */
+.gd-idea {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
