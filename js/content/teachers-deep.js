@@ -1064,7 +1064,7 @@ window.AICompass.content.set("teachers-plans", {
                 {
                     type: "match",
                     pairs: [
-                        ["role", "“You are a friendly maths tutor.”"],
+                        ["role", "“You are a friendly geography tutor.”"],
                         ["context", "“I'm 14 and I have a test next week.”"],
                         ["clear task", "“Explain why some volcanoes explode.”"],
                         ["example", "“Like this: an earthquake is like a ruler you bend until it snaps.”"],
@@ -1161,7 +1161,7 @@ window.AICompass.content.set("teachers-plans", {
                 {
                     type: "match",
                     pairs: [
-                        ["роль", "«Ты — дружелюбный репетитор по математике»"],
+                        ["роль", "«Ты — дружелюбный репетитор по географии»"],
                         ["пример", "«Как здесь: землетрясение — как линейка, которую гнут, пока она не сломается»"],
                         ["формат", "«Ответь коротким списком»"],
                         ["контекст", "«Мне 14, и на следующей неделе у меня контрольная»"],
