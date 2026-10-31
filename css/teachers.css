@@ -17,18 +17,10 @@
 
 /* ===== 1. THE MENU LINK =====
    Without JavaScript the section stays hidden, so its links do too.
-   On desktops narrower than 1280px the menu bar has no room for a
-   seventh link (in Russian it would push the buttons off the bar):
-   there the section is in the footer, the section map and the
-   "Go to" commands (Ctrl+K). The phone menu (960px and less) has room. */
+   When the menu bar has no room for every link, this one moves into
+   "More" with the others that don't fit (js/core.js, style.css). */
 html:not(.js) .tk-nav-link {
     display: none;
-}
-
-@media (min-width: 961px) and (max-width: 1279px) {
-    .nav-links .tk-nav-link {
-        display: none;
-    }
 }
 
 /* ===== 2. THE SPACE KEPT FOR THE SECTION =====

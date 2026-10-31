@@ -324,6 +324,16 @@
             <a href="#teachers" class="tk-nav-link" data-i18n="nav.teachers">Teachers</a>
             <a href="#about" data-i18n="nav.about">About</a>
 
+            <!-- When the bar has no room for every link, the last ones move into this list
+                 (js/core.js, "More": the links that don't fit) -->
+            <div class="nav-more" hidden>
+                <button class="nav-more-button" id="nav-more-button" type="button" aria-expanded="false" aria-controls="nav-more-list">
+                    <span data-i18n="core.navMore">More</span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="nav-more-list" id="nav-more-list" hidden></div>
+            </div>
+
             <!-- On narrow phones the theme and language buttons are here, under the links:
                  the menu bar has no room for them (style.css, 11. RESPONSIVE) -->
             <div class="nav-quick">

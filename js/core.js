@@ -1886,6 +1886,138 @@
         }, { immediate: false });
     }
 
+    // ----- "More": the links that don't fit in the menu bar -----
+    // On a laptop screen the bar may have no room for every link (the Russian names
+    // are longer, the easy-to-read font is wider). Then the last links move into the
+    // "More" list at the end of the bar: no link is left out, and none breaks onto
+    // a second line. On phones every link is back in the menu.
+    function setUpMoreLinks() {
+        const navLinks = document.getElementById("nav-links");
+        const more = navLinks && navLinks.querySelector(".nav-more");
+        const inner = more && more.closest(".navbar-inner");
+        const logo = inner && inner.querySelector(".logo");
+        const actions = inner && inner.querySelector(".nav-actions");
+        if (!logo || !actions) return;
+        const button = more.querySelector(".nav-more-button");
+        const list = more.querySelector(".nav-more-list");
+        const links = Array.prototype.slice.call(navLinks.children).filter(function (child) {
+            return child.tagName === "A";
+        });
+        const wide = media(queries.wideMenu);
+        let kept = links.length;           // how many links are in the bar
+        let last = "";                     // what the last fitting was done for
+
+        function isOpen() {
+            return button.getAttribute("aria-expanded") === "true";
+        }
+
+        function setOpen(open) {
+            button.setAttribute("aria-expanded", String(open));
+            list.hidden = !open;
+            if (open) overlay.opened();
+            else overlay.closed();
+        }
+
+        // focusBack: false when the focus is about to move anyway (a link was chosen)
+        function close(focusBack) {
+            if (!isOpen()) return;
+            const focusWasInside = list.contains(document.activeElement);
+            setOpen(false);
+            if (focusBack !== false && focusWasInside) button.focus({ preventScroll: true });
+        }
+
+        const overlay = overlays.register("nav-more", {
+            element: list,
+            scope: [more],
+            modal: false,
+            closeOnNavigate: true,
+            escape: "anywhere",
+            close: function () { close(); }
+        });
+
+        // The section on screen is in the list: "More" is marked like the link would be
+        function markActive() {
+            more.classList.toggle("has-active", links.slice(kept).some(function (link) {
+                return link.classList.contains("active");
+            }));
+        }
+
+        function width(element) {
+            return element.getBoundingClientRect().width;
+        }
+
+        // Puts every link in the bar, measures them and moves the last ones that
+        // don't fit into the list. Only when something that changes the widths changed.
+        function fit(force) {
+            const key = [inner.clientWidth, Math.round(width(actions)), state.lang, root.className, wide.matches].join(" ");
+            if (key === last && !force) return;
+            last = key;
+            close();
+            links.slice(kept).forEach(function (link) { navLinks.insertBefore(link, more); });
+            more.hidden = false;
+
+            let keep = links.length;
+            if (wide.matches) {
+                const gap = parseFloat(getComputedStyle(navLinks).columnGap) || 0;
+                const room = width(inner) - width(logo) - width(actions) - 2 * (parseFloat(getComputedStyle(inner).columnGap) || 0);
+                const widths = links.map(width);
+                const all = widths.reduce(function (sum, value) { return sum + value + gap; }, 0) - gap;
+                if (all > room + 0.5) {
+                    let used = width(more);
+                    keep = 0;
+                    while (keep < links.length && used + gap + widths[keep] <= room + 0.5) {
+                        used += gap + widths[keep];
+                        keep++;
+                    }
+                }
+            }
+
+            kept = keep;
+            links.slice(keep).forEach(function (link) { list.appendChild(link); });
+            more.hidden = keep === links.length;
+            markActive();
+        }
+
+        const refit = function () { fit(true); };
+
+        button.addEventListener("click", function (event) {
+            if (isOpen()) {
+                close();
+                return;
+            }
+            setOpen(true);
+            // Opened with the keyboard (Enter / Space): go straight to the first link
+            if (event.detail === 0 && list.firstElementChild) list.firstElementChild.focus();
+        });
+
+        // A chosen link scrolls the page there, and the focus goes with it
+        list.addEventListener("click", function (event) {
+            if (event.target.closest("a")) close(false);
+        });
+
+        // A click outside the list or moving the focus out of it closes it
+        document.addEventListener("pointerdown", function (event) {
+            if (isOpen() && !more.contains(event.target)) close(false);
+        }, true);
+        more.addEventListener("focusout", function (event) {
+            if (isOpen() && event.relatedTarget && !more.contains(event.relatedTarget)) close(false);
+        });
+
+        on("section", markActive);
+        on("language", refit);
+        on("settings", refit);
+        if (document.fonts && document.fonts.addEventListener) {
+            // The site's fonts, or the easy-to-read font, have arrived: the names got wider or narrower
+            document.fonts.addEventListener("loadingdone", refit);
+            document.fonts.ready.then(refit);
+        }
+        resizeCallbacks.add(function () { fit(false); });
+        onMedia(wide, refit, { immediate: false });
+        // "My Compass" and Settings show their buttons once they are ready
+        if ("ResizeObserver" in window) new ResizeObserver(function () { fit(false); }).observe(actions);
+        fit(true);
+    }
+
     /* =========================================================
        11. COMMANDS (used by the Ctrl+K command palette)
        A command: { id, group, icon, title: function () { return "text"; }, keywords, run }
@@ -2193,6 +2325,7 @@
         });
 
         setUpMenu();
+        setUpMoreLinks();
         startScrolling();
 
         pageReady = true;

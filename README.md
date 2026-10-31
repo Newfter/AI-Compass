@@ -172,7 +172,7 @@ Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `
 
 **Features talk to each other through their API.** The last section of each feature file shares a few functions with `A.feature(...)`: `A.lessons.open(3)`, `A.glossary.show("bias")`, `A.quiz.start()`, `A.lab.open("predictor")`, `A.timeline.show("e3")`, `A.assistant.open()`, `A.palette.open()`. For example, the timeline's "In the glossary" buttons call `A.glossary.show(id, { focus: true })`. The quiz shares the most: `A.quiz.start(mode, options)`, `A.quiz.question(id)`, `A.quiz.bank()`, `A.quiz.stats()` and `A.quiz.ready()`, described at the end of `js/quiz.js`.
 
-**Pop-up windows** (the lesson reader, Compass Bot, the Ctrl+K palette, the phone menu) register with `A.overlays`. Core then treats them all the same way: a window that covers the page locks the page behind it, Esc closes the window on top, and the focus goes back to where it was.
+**Pop-up windows** (the lesson reader, Compass Bot, the Ctrl+K palette, the phone menu, the menu bar's "More" list) register with `A.overlays`. Core then treats them all the same way: a window that covers the page locks the page behind it, Esc closes the window on top, and the focus goes back to where it was.
 
 **Design tokens.** The colours, fonts, sizes, shadows and layers are CSS variables in section 1 of `style.css`, with one set for the dark theme and one for the light theme (`data-theme="light"` on `<html>`). Use them instead of writing a colour again: `color: var(--text-muted);`, `background: rgba(var(--accent-rgb), 0.12);`.
 
