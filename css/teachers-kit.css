@@ -185,7 +185,11 @@
     color: var(--text);
 }
 
+/* (position: relative keeps the sheet's texts for screen readers inside the
+   part that scrolls: otherwise they would stretch the window, and scrolling
+   to one of them would push the top bar out of sight) */
 .tk-window-body {
+    position: relative;
     flex: 1;
     min-height: 0;
     padding: 28px;
