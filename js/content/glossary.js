@@ -7,17 +7,23 @@
    To change a text, change it here (in both languages).
    ========================================================= */
 
-// The section's title and subtitle on the page (index.html)
+// The section's title and subtitle on the page (index.html). The subtitle names the
+// number of terms: {n} comes from js/glossary.js (the text value "glossaryTermCount").
 window.AICompass.addTranslations({
     en: {
         "glossary.label": "SPEAK THE LANGUAGE",
         "glossary.title": "AI Glossary",
-        "glossary.subtitle": "The key words of Artificial Intelligence, explained simply."
+        "glossary.subtitle": "The key words of Artificial Intelligence, explained simply.",
+        "glossary.subtitle.one": "{n} key word of Artificial Intelligence, explained simply. Search it, open it, learn it with flashcards.",
+        "glossary.subtitle.many": "{n} key words of Artificial Intelligence, explained simply. Search them, open them, learn them with flashcards."
     },
     ru: {
         "glossary.label": "ГОВОРИ НА ЯЗЫКЕ ИИ",
         "glossary.title": "Словарь ИИ",
-        "glossary.subtitle": "Главные слова искусственного интеллекта простыми словами."
+        "glossary.subtitle": "Главные слова искусственного интеллекта простыми словами.",
+        "glossary.subtitle.one": "{n} главное понятие искусственного интеллекта простыми словами. Ищи, открывай, учи по карточкам.",
+        "glossary.subtitle.few": "{n} главных понятия искусственного интеллекта простыми словами. Ищи, открывай, учи по карточкам.",
+        "glossary.subtitle.many": "{n} главных понятий искусственного интеллекта простыми словами. Ищи, открывай, учи по карточкам."
     }
 });
 
@@ -63,10 +69,13 @@ window.AICompass.addTranslations({
 
         // The term cards
         "glossary.gridLabel": "Glossary terms",
-        "glossary.more": "Example & related",
-        "glossary.moreLabel": "Example & related: {term}",
+        "glossary.more": "Read more",
+        "glossary.moreLabel": "Read more: {term}",
         "glossary.example": "Everyday example",
         "glossary.related": "Related terms",
+        "glossary.learn": "Learn it on this site",
+        "glossary.lessonLink": "Lesson {n}: {title}",
+        "glossary.labLink": "AI Lab: {title}",
         "glossary.altCode": "RU",
         "glossary.altLabel": "In Russian:",
 
@@ -126,10 +135,13 @@ window.AICompass.addTranslations({
 
         // The term cards
         "glossary.gridLabel": "Термины словаря",
-        "glossary.more": "Пример и связанные термины",
-        "glossary.moreLabel": "Пример и связанные термины: {term}",
+        "glossary.more": "Подробнее",
+        "glossary.moreLabel": "Подробнее: {term}",
         "glossary.example": "Пример из жизни",
         "glossary.related": "Связанные термины",
+        "glossary.learn": "Где изучить на сайте",
+        "glossary.lessonLink": "Урок {n}. {title}",
+        "glossary.labLink": "ИИ-лаборатория: {title}",
         "glossary.altCode": "EN",
         "glossary.altLabel": "По-английски:",
 

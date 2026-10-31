@@ -67,7 +67,7 @@
     const ANIMATE_MARGIN = 200;     // px: only cards this close to the screen are animated
     const DICE_MS = 550;            // ms: the dice of the "Random" button spins this long
 
-    // ---------- 2. The terms (from js/content/glossary.js) ----------
+    // ---------- 2. The terms (from js/content/glossary-terms.js) ----------
     // categories: the category ids, in the order of their chips.
     // terms: every term with its words in both languages (see the content file).
     const CATEGORIES = data.categories;
@@ -78,13 +78,30 @@
     const BY_ID = Object.create(null);
     TERMS.forEach(function (term) { BY_ID[term.id] = term; });
 
+    // Other ids that lead to a term ("genetic-algorithm" -> "evolutionary-algorithm")
+    const SAME_AS = Object.assign(Object.create(null), data.sameAs);
+
+    // The section's subtitle says how many terms there are ("68 key words of ...")
+    A.setTextValue("glossaryTermCount", TERMS.length);
+
+    // The term an id names (its own id or one of SAME_AS), or undefined
+    function termById(id) {
+        return BY_ID[id] || BY_ID[SAME_AS[id]];
+    }
+
     // A term's words in the current language
     function termName(term) {
         return term[A.lang].name;
     }
 
+    // The full explanation (on an opened card)
     function termDef(term) {
         return term[A.lang].def;
+    }
+
+    // The definition in one plain sentence (on a closed card and on a flashcard)
+    function termShort(term) {
+        return term[A.lang].short;
     }
 
     // Aliases are written without their "*" wherever people can see or type them
@@ -93,15 +110,23 @@
         return alias.replace(/\*$/, "");
     }
 
-    // A short public description of a term, in the current language
+    // A term as the public API gives it, in the current language (copies, so
+    // nobody can change the glossary's own lists by accident)
     function info(term) {
+        const words = term[A.lang];
         return {
             id: term.id,
-            term: termName(term),
-            definition: termDef(term),
-            example: term[A.lang].ex,
+            term: words.name,
+            short: words.short,
+            definition: words.def,
+            example: words.ex,
+            aliases: words.aliases.map(plainAlias),
             category: t("glossary.cat." + term.cat),
-            icon: term.icon
+            categoryId: term.cat,
+            icon: term.icon,
+            lessons: term.lessons.slice(),
+            lab: term.lab,
+            related: term.related.slice()
         };
     }
 
@@ -314,6 +339,49 @@
         "</button>";
     }
 
+    // The lessons and AI Lab experiments this site has, asked from their features when
+    // the glossary is built: { lessons: { 3: { icon } }, labs: { vision: { icon, titleKey } } }.
+    // A card links only to those (a lesson or an experiment the site doesn't have yet is left out).
+    let site = { lessons: {}, labs: {} };
+
+    function findSiteLinks() {
+        const found = { lessons: {}, labs: {} };
+        if (A.lessons && typeof A.lessons.list === "function") {
+            A.lessons.list().forEach(function (lesson) {
+                found.lessons[lesson.number] = { icon: lesson.icon };
+            });
+        }
+        if (A.lab && typeof A.lab.list === "function") {
+            A.lab.list().forEach(function (experiment) {
+                found.labs[experiment.id] = { icon: experiment.icon, titleKey: experiment.titleKey };
+            });
+        }
+        return found;
+    }
+
+    // "Learn it on this site": links to the term's lessons and lab experiment
+    // (their texts are written by translateCard)
+    function learnHTML(term) {
+        const lessons = term.lessons.filter(function (n) { return site.lessons[n]; });
+        const lab = term.lab && site.labs[term.lab] ? term.lab : "";
+        if (!lessons.length && !lab) return "";
+        const link = function (href, data, icon) {
+            return '<li><a class="gl-learn-link" href="' + href + '" ' + data + ">" +
+                '<span class="gl-learn-icon" aria-hidden="true">' + esc(icon) + "</span>" +
+                '<span class="gl-learn-text"></span>' +
+            "</a></li>";
+        };
+        return '<div class="gl-learn">' +
+            '<p class="gl-label mono">' + text("glossary.learn") + "</p>" +
+            '<ul class="gl-learn-list">' +
+                lessons.map(function (n) {
+                    return link("#lesson-" + n, 'data-lesson="' + n + '"', site.lessons[n].icon || "📘");
+                }).join("") +
+                (lab ? link("#lab/" + lab, 'data-lab="' + lab + '"', site.labs[lab].icon || "🧪") : "") +
+            "</ul>" +
+        "</div>";
+    }
+
     function cardHTML(term) {
         const id = term.id;
         return '<li class="gl-card card' + (state.explored.has(id) ? " is-explored" : "") + '" id="term-' + id + '" data-id="' + id + '" data-cat="' + term.cat + '" data-reveal>' +
@@ -330,8 +398,9 @@
                 text("glossary.altLabel", "sr-only") + " " +
                 '<span class="gl-alt-text"></span>' +
             "</p>" +
-            '<p class="gl-def"></p>' +
-            '<button class="gl-toggle" type="button" aria-expanded="false" aria-controls="gl-more-' + id + '">' +
+            // The short definition, or the full explanation while the card is open
+            '<p class="gl-def" id="gl-def-' + id + '"></p>' +
+            '<button class="gl-toggle" type="button" aria-expanded="false" aria-controls="gl-def-' + id + " gl-more-" + id + '">' +
                 text("glossary.more") + ICON_CHEVRON +
             "</button>" +
             '<div class="gl-more" id="gl-more-' + id + '">' +
@@ -340,6 +409,7 @@
                         '<p class="gl-label mono"><span aria-hidden="true">💡</span> ' + text("glossary.example") + "</p>" +
                         '<p class="gl-ex-text"></p>' +
                     "</div>" +
+                    learnHTML(term) +
                     '<div class="gl-related">' +
                         '<p class="gl-label mono">' + text("glossary.related") + "</p>" +
                         '<ul class="gl-rel-list">' +
@@ -364,6 +434,7 @@
 
     // Builds the whole glossary (once: see section 16, "Start")
     function build() {
+        site = findSiteLinks();
         mount.innerHTML =
             '<div class="gl">' +
                 '<div class="gl-console card ui-scan" data-reveal>' +
@@ -482,6 +553,7 @@
                 ex: card.querySelector(".gl-ex-text"),
                 toggle: card.querySelector(".gl-toggle"),
                 rels: Array.prototype.slice.call(card.querySelectorAll(".gl-rel")),
+                learn: Array.prototype.slice.call(card.querySelectorAll(".gl-learn-link")),
                 html: { name: "", def: "", alt: "" },   // what markCard() wrote last
                 spotTimer: 0
             };
@@ -497,12 +569,12 @@
     }
 
     // ---------- 8. Searching: one matching function ----------
-    // The text a term can be found by: its name, other names and definition
-    // in the current language, plus its name in the other language.
+    // The text a term can be found by: its name, other names, short definition and
+    // full explanation in the current language, plus its names in the other language.
     function haystack(term) {
         const here = term[A.lang];
         const there = term[otherLang()];
-        return normalize([termName(term)].concat(here.aliases, termDef(term), there.name, there.aliases).map(plainAlias).join(" \n "));
+        return normalize([termName(term)].concat(here.aliases, termShort(term), termDef(term), there.name, there.aliases).map(plainAlias).join(" \n "));
     }
 
     function matchesQuery(term, words) {
@@ -513,7 +585,7 @@
 
     // How well a found term fits the search (smaller is better):
     // 0 = its name starts with the search, 1 = the name contains it,
-    // 2 = another name contains it, 3 = only the definition does
+    // 2 = another name contains it, 3 = only the definitions do
     function relevance(term, words) {
         const name = normalize(termName(term));
         const has = function (text) {
@@ -612,20 +684,28 @@
         const term = card.term;
         card.alt.setAttribute("lang", otherLang());
         card.ex.textContent = term[A.lang].ex;
-        // Screen readers hear which term the button belongs to: "Example & related: Data"
+        // Screen readers hear which term the button belongs to: "Read more: Data"
         card.toggle.setAttribute("aria-label", t("glossary.moreLabel", { term: termName(term) }));
         card.rels.forEach(function (button) {
             button.querySelector(".gl-rel-name").textContent = termName(BY_ID[button.getAttribute("data-target")]);
         });
+        // "Lesson 3: Neural Networks", "AI Lab: How computers see" (names from the lessons and the lab)
+        card.learn.forEach(function (link) {
+            const lesson = Number(link.getAttribute("data-lesson"));
+            const lab = link.getAttribute("data-lab");
+            link.querySelector(".gl-learn-text").textContent = lesson
+                ? t("glossary.lessonLink", { n: A.format.number(lesson), title: A.lessons.title(lesson) })
+                : t("glossary.labLink", { title: t(site.labs[lab].titleKey) });
+        });
     }
 
-    // The term's name, its name in the other language and its definition, with the
-    // search words marked. A part is only written when it changed: while you type,
-    // most of them stay the same.
+    // The term's name, its name in the other language and its definition (the short one,
+    // or the full explanation while the card is open), with the search words marked.
+    // A part is only written when it changed: while you type, most of them stay the same.
     function markCard(card, words) {
         const term = card.term;
         setHTML(card, "name", highlight(termName(term), words));
-        setHTML(card, "def", highlight(termDef(term), words));
+        setHTML(card, "def", highlight(state.open.has(term.id) ? termDef(term) : termShort(term), words));
         setHTML(card, "alt", highlight(term[otherLang()].name, words));
     }
 
@@ -687,6 +767,7 @@
     const running = new WeakMap();      // the glide animation of each card
     let pageOrder = "";                 // the order of the cards on the page
     let shownIdeas = "";                // the "did you mean" suggestions on the page
+    let markedWords = [];               // the search words marked in the cards now
 
     // Puts the cards in this order on the page (only if it changed)
     function placeCards(list) {
@@ -714,6 +795,7 @@
         const found = search(state.query);
         const words = found.words;
         const byQuery = found.terms;
+        markedWords = words;
         const active = filtersActive();
 
         // Counts on the category chips (search + letter, any category)
@@ -903,8 +985,10 @@
         if (!card) return;
         card.el.classList.toggle("is-open", open);
         card.toggle.setAttribute("aria-expanded", String(open));
+        if (open) state.open.add(id);
+        else state.open.delete(id);
+        markCard(card, markedWords);      // the short definition becomes the full one (and back)
         if (open) {
-            state.open.add(id);
             A.track("glossary.explore", { id: id });
             if (!state.explored.has(id)) {
                 state.explored.add(id);
@@ -913,8 +997,6 @@
                 updateExplored();
                 if (state.explored.size === TERMS.length) A.toast(t("glossary.allExplored"), "🏆");
             }
-        } else {
-            state.open.delete(id);
         }
         markLooseRows();
     }
@@ -941,8 +1023,11 @@
 
     // Scrolls to a term, opens it and makes it glow.
     // options.focus moves keyboard focus to it as well.
-    function show(id, options) {
-        if (!BY_ID[id]) return false;
+    // An id of SAME_AS shows its term ("k-means" shows "Clustering").
+    function show(name, options) {
+        const term = termById(name);
+        if (!term) return false;
+        const id = term.id;
         options = options || {};
 
         // Build the glossary first, and the parts of the page above it, so the card's
@@ -1101,7 +1186,23 @@
                 return;
             }
             const related = event.target.closest(".gl-rel");
-            if (related) show(related.getAttribute("data-target"), { focus: true });
+            if (related) {
+                show(related.getAttribute("data-target"), { focus: true });
+                return;
+            }
+            // "Learn it on this site": the lesson or the experiment opens through its feature
+            // (the link's own address, #lesson-3 or #lab/vision, works too, but the lesson
+            // reader then can't give the focus back to the link when it closes)
+            const learn = event.target.closest(".gl-learn-link");
+            if (!learn || event.ctrlKey || event.metaKey || event.shiftKey || event.button) return;
+            const lesson = Number(learn.getAttribute("data-lesson"));
+            if (lesson && A.lessons && typeof A.lessons.open === "function") {
+                event.preventDefault();
+                A.lessons.open(lesson, learn);
+            } else if (learn.getAttribute("data-lab") && A.lab && typeof A.lab.open === "function") {
+                event.preventDefault();
+                A.lab.open(learn.getAttribute("data-lab"), { focus: true });
+            }
         });
 
         ui.suggestList.addEventListener("click", function (event) {
@@ -1128,9 +1229,10 @@
     const ensure = A.whenNeeded(mount, build);
 
     // A link like index.html#term-neural-network opens that term
+    // (an id of SAME_AS too: #term-k-means opens "Clustering")
     function openFromHash() {
-        const match = /^#term-([a-z-]+)$/.exec(window.location.hash);
-        if (match && BY_ID[match[1]]) show(match[1]);
+        const match = /^#term-([a-z0-9-]+)$/.exec(window.location.hash);
+        if (match && termById(match[1])) show(match[1]);
     }
     window.addEventListener("hashchange", openFromHash);
     if (document.readyState === "loading") {
@@ -1158,19 +1260,28 @@
         });
     });
 
-    // AICompass.glossary: the assistant, the palette, the timeline and the lessons
-    // use it. find, random, term and ids work from the data alone (before the
-    // glossary is built); show(id, { focus }) builds it if needed, scrolls to the
-    // term and opens it.
+    // AICompass.glossary: the assistant, the palette, the timeline, the lessons, the
+    // lab, site search and My Compass use it. Everything works from the data alone
+    // (before the glossary is built); show(id, { focus }) builds it if needed, scrolls
+    // to the term and opens it.
+    // A term is given as { id, term, short, definition, example, aliases, category,
+    // categoryId, icon, lessons, lab, related }, in the current language.
     A.feature("glossary", {
-        // find("What is a neural network?") -> { id, term, definition, ... } or null
+        // find("What is a neural network?") -> a term, or null
         find: find,
-        // A random term: { id, term, definition, ... }
+        // A random term
         random: function () { return info(randomTerm()); },
-        // A term by its id: { id, term, definition, ... } or null
-        term: function (id) { return BY_ID[id] ? info(BY_ID[id]) : null; },
+        // A term by its id (or by an id of SAME_AS: "k-means" gives "clustering"), or null
+        term: function (id) {
+            const term = termById(id);
+            return term ? info(term) : null;
+        },
         // All term ids, in the order they are defined
         ids: TERMS.map(function (term) { return term.id; }),
+        // Every term, in the order they are defined (for site search)
+        terms: function () { return TERMS.map(info); },
+        // The ids of the terms this visitor has opened (on any visit)
+        explored: function () { return Array.from(state.explored); },
         // Scrolls to a term, opens it and makes it glow ({ focus: true } also focuses it)
         show: show
     });

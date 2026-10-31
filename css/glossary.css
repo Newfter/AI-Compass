@@ -669,6 +669,61 @@
     line-height: 1.6;
 }
 
+/* "Learn it on this site": the term's lessons and its lab experiment */
+.gl-learn {
+    margin-top: 14px;
+}
+
+.gl-learn-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.gl-learn-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-decoration: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.gl-learn-link:hover {
+    border-color: var(--gl-c);
+    background: var(--surface-hover);
+}
+
+.gl-learn-icon {
+    flex: none;
+    font-size: 16px;
+}
+
+.gl-learn-text {
+    flex: 1;
+    min-width: 0;
+}
+
+/* An arrow at the end says "this takes you somewhere" */
+.gl-learn-link::after {
+    content: "→";
+    flex: none;
+    color: var(--text-dim);
+    transition: transform 0.2s ease;
+}
+
+.gl-learn-link:hover::after {
+    transform: translateX(3px);
+}
+
 .gl-related {
     margin-top: 14px;
     padding-bottom: 8px;
