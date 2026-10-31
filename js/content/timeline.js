@@ -149,7 +149,7 @@ window.AICompass.addTranslations({
 
         "timeline.e8.year": "2012",
         "timeline.e8.title": "AlexNet starts the deep-learning boom",
-        "timeline.e8.text": "A deep neural network called AlexNet, built by Alex Krizhevsky, Ilya Sutskever and Geoffrey Hinton, won the ImageNet image-recognition contest by a huge margin: about 15% errors, against 26% for the next best entry. It was trained on graphics cards (GPUs) — chips first made for video games.",
+        "timeline.e8.text": "A deep neural network called AlexNet, built by Alex Krizhevsky, Ilya Sutskever and Geoffrey Hinton, won the ImageNet image-recognition contest by a huge margin. Allowed five guesses per photo, it missed the right answer only about 15% of the time, against 26% for the next best entry. It was trained on graphics cards (GPUs) — chips first made for video games.",
         "timeline.e8.why": "It proved that big neural networks, lots of data and fast chips really work together, and within a few years deep learning was everywhere: in photos, speech and translation.",
 
         "timeline.e23.year": "2013",
@@ -205,7 +205,7 @@ window.AICompass.addTranslations({
         "timeline.e28.year": "2024",
         "timeline.e28.title": "The EU adopts the first broad law on AI",
         "timeline.e28.text": "The European Union adopted the AI Act, the first broad law on artificial intelligence. It sorts AI by risk: a few uses are banned, such as scoring people for their behaviour; high-risk uses, like AI that helps decide who gets a job or a loan, must meet strict rules; and people must be told when they are talking to a chatbot.",
-        "timeline.e28.why": "For the first time, a large group of countries set binding rules for AI, which come into force step by step over several years.",
+        "timeline.e28.why": "For the first time, a large group of countries set binding rules for AI, which apply step by step over several years.",
 
         "timeline.e14.year": "2024",
         "timeline.e14.title": "Nobel Prizes for AI pioneers",
@@ -348,7 +348,7 @@ window.AICompass.addTranslations({
 
         "timeline.e8.year": "2012",
         "timeline.e8.title": "AlexNet запускает бум глубокого обучения",
-        "timeline.e8.text": "Глубокая нейросеть AlexNet, которую создали Алекс Крижевский, Илья Суцкевер и Джеффри Хинтон, с огромным отрывом выиграла конкурс ImageNet по распознаванию изображений: около 15% ошибок против 26% у ближайшего соперника. Её обучали на видеокартах (GPU) — чипах, которые изначально делали для видеоигр.",
+        "timeline.e8.text": "Глубокая нейросеть AlexNet, которую создали Алекс Крижевский, Илья Суцкевер и Джеффри Хинтон, с огромным отрывом выиграла конкурс ImageNet по распознаванию изображений. Для каждого фото можно было назвать пять вариантов, и у AlexNet верного ответа среди них не оказалось лишь примерно в 15% случаев — против 26% у ближайшего соперника. Её обучали на видеокартах (GPU) — чипах, которые изначально делали для видеоигр.",
         "timeline.e8.why": "Она доказала, что большие нейросети, много данных и быстрые чипы вместе действительно работают, и уже через несколько лет глубокое обучение было повсюду: в фото, распознавании речи и переводе.",
 
         "timeline.e23.year": "2013",
@@ -402,9 +402,9 @@ window.AICompass.addTranslations({
         "timeline.e27.why": "ИИ-помощники теперь могли помочь с тем, что ты видишь, а не только с тем, что печатаешь, — но они всё так же ошибаются, и их ответы нужно проверять.",
 
         "timeline.e28.year": "2024",
-        "timeline.e28.title": "ЕС принимает первый большой закон об ИИ",
-        "timeline.e28.text": "Европейский союз принял Закон об ИИ (AI Act) — первый широкий закон об искусственном интеллекте. Он делит ИИ по уровню риска: некоторые применения запрещены, например «социальный рейтинг» людей за их поведение; применения с высоким риском, вроде ИИ, который помогает решать, кого взять на работу или кому дать кредит, должны соответствовать строгим правилам; а людям обязаны сообщать, что они общаются с чат-ботом.",
-        "timeline.e28.why": "Впервые большая группа стран ввела обязательные правила для ИИ — они вступают в силу постепенно, в течение нескольких лет.",
+        "timeline.e28.title": "ЕС принимает первый всеобъемлющий закон об ИИ",
+        "timeline.e28.text": "Европейский союз принял Закон об ИИ (AI Act) — первый всеобъемлющий закон об искусственном интеллекте. Он делит ИИ по уровню риска: некоторые применения запрещены, например «социальный рейтинг» людей за их поведение; применения с высоким риском, вроде ИИ, который помогает решать, кого взять на работу или кому дать кредит, должны соответствовать строгим правилам; а людям обязаны сообщать, что они общаются с чат-ботом.",
+        "timeline.e28.why": "Впервые большая группа стран ввела обязательные правила для ИИ — они начинают действовать поэтапно, в течение нескольких лет.",
 
         "timeline.e14.year": "2024",
         "timeline.e14.title": "Нобелевские премии пионерам ИИ",
