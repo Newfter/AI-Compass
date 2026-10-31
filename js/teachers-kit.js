@@ -1046,10 +1046,13 @@
         return { lessons: LESSON_CHOICES.slice(), count: COUNT.start, timer: 0, teams: 0, myths: true };
     }
 
-    // Reads the saved settings; anything that doesn't fit is replaced by the default
+    // Reads the saved settings; anything that doesn't fit is replaced by the default.
+    // Nothing saved (or a browser that blocks storage): the choices made
+    // earlier in this visit, if any.
     function readSettings() {
-        const settings = defaultSettings();
         const saved = A.storage.get(STORE_KEY, null);
+        if (saved === null && quiz.settings) return copySettings(quiz.settings);
+        const settings = defaultSettings();
         if (!saved || typeof saved !== "object" || saved.v !== 1) return settings;
         if (Array.isArray(saved.lessons)) {
             const lessons = LESSON_CHOICES.filter(function (choice) { return saved.lessons.indexOf(choice) !== -1; });
@@ -1060,6 +1063,10 @@
         if (TEAMS.indexOf(saved.teams) !== -1) settings.teams = saved.teams;
         if (typeof saved.myths === "boolean") settings.myths = saved.myths;
         return settings;
+    }
+
+    function copySettings(s) {
+        return { lessons: s.lessons.slice(), count: s.count, timer: s.timer, teams: s.teams, myths: s.myths };
     }
 
     function saveSettings() {
