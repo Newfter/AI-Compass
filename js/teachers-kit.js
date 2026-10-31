@@ -79,6 +79,8 @@
     const HISTORY = "timeline";                     // the "lesson" of the quiz bank's history questions
     const TICK = 200;                               // ms between two looks at the timer
     const STORE_KEY = "teachers.quiz";              // its settings, kept only in this browser
+    const OVERLAY_DOC = "teacher-plan";             // the windows' names for A.overlays
+    const OVERLAY_QUIZ = "classroom-quiz";
 
     // ---------- 2. Small helpers ----------
     const LESSONS = A.lessons.list();
@@ -396,7 +398,7 @@
         const whole = cell.match(/^\[([^\[\]]+)\]$/);
         if (whole && withAnswers) return answerHTML(whole[1]);
         if (whole || !cell) {
-            const lines = whole ? Math.max(1, Math.min(4, Math.ceil(whole[1].length / 32))) : 1;
+            const lines = whole ? Math.max(1, Math.min(3, Math.ceil(whole[1].length / 32))) : 1;
             return `<span class="tk-cell-blank" style="--tk-lines: ${lines}"></span>`;
         }
         return gapsHTML(cell, withAnswers);
@@ -768,7 +770,7 @@
         element.addEventListener("click", onDocClick);
         doc.panel.addEventListener("keydown", onDocKey);
 
-        doc.overlay = A.overlays.register("teacher-plan", {
+        doc.overlay = A.overlays.register(OVERLAY_DOC, {
             element: doc.panel,
             root: element,
             close: function () { closeDocWindow(); }
@@ -950,8 +952,10 @@
         window.print();
     }
 
+    // Ctrl+P prints the sheet only while this window is on top (a lesson
+    // opened from the plan covers it, and then the lesson is what prints)
     function onBeforePrint() {
-        if (doc.open) preparePrint();
+        if (doc.open && A.overlays.top() === OVERLAY_DOC) preparePrint();
     }
 
     function preparePrint() {
@@ -959,10 +963,12 @@
         root.classList.add("tk-printing");
     }
 
-    // The site's name and address at the bottom of every printed page: a
-    // "page margin box" of the tk-sheet pages (css/teachers-kit.css), with the
-    // text in the current language. Browsers that don't know page margin boxes
-    // print the sheet's own footer instead, once, at the end.
+    // The site's name and address at the bottom of every printed page, and
+    // the page's number on the right: "page margin boxes" of the tk-sheet
+    // pages (css/teachers-kit.css), with the text in the current language.
+    // The left box stays empty, whatever the rest of the site prints there.
+    // Browsers that don't know page margin boxes print the sheet's own footer
+    // instead, once, at the end.
     function printFooter() {
         let style = document.getElementById("tk-print-footer");
         if (!style) {
@@ -971,7 +977,11 @@
             document.head.appendChild(style);
         }
         const text = '"' + footerText().replace(/[\\"]/g, "\\$&").replace(/\s+/g, " ") + '"';
-        style.textContent = "@page tk-sheet { @bottom-center { content: " + text + "; color: #333; font-family: sans-serif; font-size: 8.5pt; } }";
+        const look = "color: #333333; font: 8.5pt \"Manrope\", system-ui, sans-serif;";
+        style.textContent = "@page tk-sheet { " +
+            "@bottom-left { content: none; } " +
+            "@bottom-center { content: " + text + "; " + look + " } " +
+            "@bottom-right { content: counter(page) \" / \" counter(pages); " + look + " } }";
         const rule = style.sheet && style.sheet.cssRules[0];
         root.classList.toggle("tk-page-footer", Boolean(rule && rule.cssRules && rule.cssRules.length));
     }
@@ -1133,7 +1143,7 @@
         element.addEventListener("change", onQuizInput);
         quiz.panel.addEventListener("keydown", onQuizKey);
 
-        quiz.overlay = A.overlays.register("classroom-quiz", {
+        quiz.overlay = A.overlays.register(OVERLAY_QUIZ, {
             element: quiz.panel,
             root: element,
             close: function () { closeQuiz(); }

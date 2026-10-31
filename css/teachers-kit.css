@@ -404,7 +404,6 @@ ol.tk-list {
     padding: 14px 16px 16px;
     border: 1px solid var(--tk-rule-soft);
     border-radius: 10px;
-    break-inside: avoid;
 }
 
 .tk-step-head {
@@ -488,7 +487,6 @@ ol.tk-list {
 
 .tk-task {
     margin-top: 22px;
-    break-inside: avoid;
 }
 
 .tk-doc .tk-task-head {
@@ -801,14 +799,23 @@ ul.tk-boxes,
     html.tk-printing .tk-doc h2 {
         margin-top: 16pt;
         font-size: 12.5pt;
+    }
+
+    /* Paper counts when a sheet is copied for a whole class: a long task or
+       step goes on over the next page, but only between two rows or items,
+       and a heading always stays with what follows it */
+    html.tk-printing .tk-doc :is(h2, h3, .tk-task-lead, .tk-step-head) {
         break-after: avoid;
     }
 
-    html.tk-printing .tk-step,
-    html.tk-printing .tk-task,
-    html.tk-printing .tk-table tr,
-    html.tk-printing .tk-bank {
+    html.tk-printing .tk-doc :is(li, tr, .tk-bank, .tk-match, .tk-wordbox, .tk-lines, .tk-quote, .tk-field) {
         break-inside: avoid;
+    }
+
+    /* A step that goes on over the next page gets its frame on both pages */
+    html.tk-printing .tk-step {
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
     }
 
     /* The footer of every page is in the page margin: the sheet's own one isn't needed */
