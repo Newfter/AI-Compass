@@ -90,6 +90,8 @@
                                     // terms: day after day, every term comes once before any comes back
     const MIDNIGHT_SLACK = 1000;    // ms: the new day's term shows this long after local midnight
     const TODAY_SWAP_MS = 420;      // ms: the new term slides in (no animation in calm mode)
+    const LONG_NAME_WORD = 14;      // letters: a name with a longer word ("Конфиденциальность") gets a smaller
+                                    // font where its box is narrow, so the word never breaks in the middle
 
     // Flashcards: the Leitner system (section 6 and the window in js/glossary-cards.js).
     // A card you know moves up a box, a card you miss goes back to box 1. A card comes
@@ -191,6 +193,13 @@
 
     function otherLang() {
         return A.lang === "ru" ? "en" : "ru";
+    }
+
+    // Does a name have a word too long for a narrow box? ("Конфиденциальность (приватность)": yes)
+    // The term of the day and the flashcards then give it the class is-long-word
+    // (css/glossary.css: a smaller font where the box is narrow).
+    function hasLongWord(name) {
+        return name.split(/[\s-]+/).some(function (word) { return word.length > LONG_NAME_WORD; });
     }
 
     // Days are numbers: the days since 1 January 1970, counted by this computer's
@@ -1369,6 +1378,7 @@
         A.dom.setAttr(ui.today, "data-cat", term.cat);
         A.dom.setText(ui.todayIcon, term.icon);
         A.dom.setText(ui.todayName, termName(term));
+        ui.todayName.classList.toggle("is-long-word", hasLongWord(termName(term)));
         A.dom.setText(ui.todayAlt, term[otherLang()].name);
         A.dom.setAttr(ui.todayAlt, "lang", otherLang());
         A.dom.setText(ui.todayShort, termShort(term));
@@ -1491,6 +1501,8 @@
         term: function (id) { return BY_ID[id]; },
         name: termName,
         short: termShort,
+        // true for a name with a very long word (the card's name gets the class is-long-word)
+        longWord: hasLongWord,
         plan: deckPlan,
         answer: answerCard,
         boxOf: function (id) {

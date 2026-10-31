@@ -928,8 +928,12 @@
     font-size: 26px;
 }
 
+/* The words take the room next to the icon. They are a size container,
+   so the name below can be sized by the room it has (the "cqi" unit). */
 .gl-today-words {
+    flex: 1;
     min-width: 0;
+    container-type: inline-size;
 }
 
 .gl-today-name,
@@ -940,7 +944,15 @@
     line-height: 1.3;
     letter-spacing: -0.01em;
     overflow-wrap: anywhere;
+    -webkit-hyphens: auto;
     hyphens: auto;
+}
+
+/* A name with a very long word ("Конфиденциальность": js/glossary.js adds is-long-word)
+   gets smaller where its box is narrow (a phone, or a tablet with the two cards side by
+   side), so the word never breaks in the middle: 6.8% of the box's width fits it */
+.gl-today-name.is-long-word {
+    font-size: min(20px, 6.8cqi);
 }
 
 .gl-today-short,
@@ -1362,6 +1374,7 @@
     font-weight: 600;
     line-height: 1.25;
     overflow-wrap: anywhere;
+    -webkit-hyphens: auto;
     hyphens: auto;
 }
 
@@ -1656,6 +1669,11 @@
 
     .gl-fc-name {
         font-size: 22px;
+    }
+
+    /* A very long word ("Конфиденциальность", js: is-long-word) fits on one line */
+    .gl-fc-name.is-long-word {
+        font-size: 18px;
     }
 
     .gl-fc-short {

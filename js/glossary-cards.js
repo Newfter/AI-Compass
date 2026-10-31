@@ -288,6 +288,8 @@
         A.dom.setText(parts.tag, box ? t("glossary.fc.inBox", { n: box }) : t("glossary.fc.new"));
         A.dom.setText(parts.icon, term.icon);
         A.dom.setText(parts.name, name);
+        // A very long word ("Конфиденциальность") gets a smaller font on phones (css: is-long-word)
+        parts.name.classList.toggle("is-long-word", host.longWord(name));
         A.dom.setText(parts.backName, name);
         A.dom.setText(parts.short, host.short(term));
         // The card is a button: screen readers hear its front, or its back once flipped
