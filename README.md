@@ -55,6 +55,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `css/journey.css` | My Compass: the button in the menu, the badge picture in a toast, and the dashboard window. |
 | `css/settings.css` | The Settings window and the keyboard shortcuts window, and what the settings change on the whole page: bigger text, relaxed lines, the easy-to-read font, underlined links, high contrast and solid surfaces. It comes after the other styles. |
 | `css/print.css` | The page on paper (used only when printing): black on white, an open lesson as a handout, the certificate on one A4 page. |
+| `css/teachers.css` | The "For teachers" section. |
+| `css/teachers-kit.css` | The teacher kit: the window with the lesson plan, the worksheet and the answer key, how they look on paper, and the classroom quiz. It loads with the kit, not with the page. |
 | `js/core.js` | The toolkit that every other script uses (`window.AICompass`, called `A`): saved settings, texts and languages, the theme, calm mode, pop-up windows, scrolling to sections, Ctrl+K commands and toasts. It is loaded first. |
 | `js/effects.js` | Small touches: the scroll progress bar, cards that rise in, numbers that count up, typewriter words, tilting cards, the mouse spotlight, magnetic buttons, ripples, the section mini-map and confetti. |
 | `js/neural-bg.js` | The animated "brain" drawn behind the page. |
@@ -72,6 +74,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/journey-panel.js` | The My Compass window (the dashboard). It is loaded the first time the window opens. |
 | `js/settings.js` | The Settings window (the gear in the menu, Ctrl+K or `#settings`): language, theme, text size, line spacing, font, underlined links, contrast, transparency, calm motion and the read-aloud voice and speed, saved in this browser (`A.settings`). Also the keyboard shortcuts window (press `?`). |
 | `js/platform.js` | The app around the site: starts the offline copy (`sw.js`), the "Install the app" button, the offline / back online messages, `?lang=` in the address, sharing (`A.share`) and the Share and Print commands. |
+| `js/teachers.js` | The "For teachers" section: the course at a glance, three buttons for each lesson (plan, worksheet, answer key) and the classroom quiz button. It stays small: it loads the teacher kit the first time one of them is opened. |
+| `js/teachers-kit.js` | The teacher kit: the window that shows a lesson plan, a worksheet or an answer key (with Print and Copy as text), and the classroom quiz for the projector (teams, a timer, big type). Not in `index.html`: `js/teachers.js` loads it when it is needed. |
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
@@ -89,6 +93,10 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/journey.js` | My Compass: its texts, the XP table, the levels and the badges. |
 | `js/content/settings.js` | The texts of the Settings and keyboard shortcuts windows, and the list of every keyboard shortcut of the site. |
 | `js/content/platform.js` | The texts of installing, the offline messages and sharing. |
+| `js/content/teachers.js` | The texts of the "For teachers" section. |
+| `js/content/teachers-kit.js` | The texts of the teacher kit's window and of the classroom quiz. Loaded with the kit. |
+| `js/content/teachers-basics.js` | The lesson plans and worksheets of lessons 1-6, in both languages. Its header explains every part of a plan and every kind of task. Loaded the first time a teacher opens one of them. |
+| `js/content/teachers-deep.js` | The same for the "Deep dive" lessons (7 and on). |
 | `sw.js` | The service worker: the copy of the site that works without a connection. You never need to change it when you edit the site. |
 | `manifest.webmanifest` | The app's name, colours and icons, used when the site is installed as an app. |
 | `404.html` | The page GitHub Pages shows for an address that doesn't exist, however deep, in both languages. |
@@ -206,6 +214,7 @@ Nothing leaves the browser: these events are only for features on the same page 
 | Settings | `settings.change` | `{ name, value }` | a setting really changes, wherever it was changed (the settings window, Ctrl+K, the buttons in the menu bar). `name` is `language` (`"en"`, `"ru"`), `theme` (`"dark"`, `"light"` or `"system"`), `textSize` (1, 1.125, 1.25 or 1.5), `lineSpacing` (`"normal"`, `"relaxed"`), `easyFont`, `underlineLinks`, `contrast` or `reduceTransparency` (true, false), `voiceEn` or `voiceRu` (a voice, `""` for automatic) or `speechRate` (0.75, 1, 1.25 or 1.5) |
 | Platform | `app.install` | `{}` | the site was installed as an app |
 | | `app.share` | `{ via }` | something was shared: `via` is `"share"` (the device's share window) or `"copy"` (the link was copied) |
+| For teachers | `teacher.open` | `{ what, n }` | a lesson plan, a worksheet, an answer key or the classroom quiz is opened (`what`: `"plan"`, `"worksheet"`, `"answers"` or `"quiz"`; `n`: the lesson, not sent for the quiz) |
 | Core | `language.change` | `{ lang }` | the language changes |
 | | `theme.change` | `{ theme }` | the theme changes |
 | | `settings.change` | `{ name: "calm", value }` | calm mode is switched on (`true`) or off (`false`) |
@@ -399,6 +408,8 @@ The whole contract (what `api` has, and the rules: listeners only inside `host`,
 
 **4. Search engines.** In `index.html`, add the lesson to `"syllabusSections"` in the JSON-LD at the end of `<head>` (its number, its English title and description, and its reading time, `"PT3M"` for 3 minutes), and add its minutes to `"courseWorkload"`. This is the only list of lessons that doesn't count itself: search engines read it without running any script.
 
+**5. Its lesson plan and worksheet.** The "For teachers" section gives every lesson a lesson plan, a worksheet and an answer key. In `js/content/teachers-deep.js`, copy the block of lesson 7 (`7: { ... }`) to the end of the list, change `7` to `13`, and write the plan and the tasks of the new lesson in both parts, `en` and `ru` (see [Change a lesson plan or a worksheet](#change-a-lesson-plan-or-a-worksheet)). Its `exit` and `quiz` name questions of the quiz by their id: add the lesson's quiz questions first. Without a plan, the lesson's buttons in "For teachers" open a window that says the lesson plans didn't load.
+
 That's all: the track's cards, the lesson map, the counts ("0 of 7 done"), the hero number, the section subtitle, the certificates, the Ctrl+K command and the site search follow the list by themselves. (Numbers in texts come from the data: the subtitle says "13 short lessons"; to spell a number out, add an exact key such as `"lessons.subtitle.13"`, in both languages.)
 
 **Check:** there are 13 cards (7 in "Deep dive") and the hero says 13; open the lesson (click its card, or go to `http://localhost:8000/#lesson-13`) and look at every part, the box, the glossary word, the mini-lab, the three key ideas and the three answers; pick the right answer (it says "Correct!" and the panel counts 1 more); try the "Try it" button; press Ctrl+K and type the lesson's title. Do it again in Russian, and once on a phone (the "Deep dive" cards fold away there until you open one).
@@ -451,6 +462,17 @@ The `ranks` at the bottom are shares of right answers (`0.65` = 65 %), so they w
 **A "Myth or fact" statement** works the same way: its texts go in the last block of `js/content/quiz-bank.js` (`"quiz.m21.text"`, and a one-sentence `"quiz.m21.explain"` without "True" or "False"), and its entry in `myths`: `{ key: "m21", lesson: 6, fact: false }` (`fact: false` for a myth, `true` for a fact). Keep about as many myths as facts.
 
 **Check:** the quiz subtitle and the hero say 61; open Lesson review, pick the lesson, and play it to the end: the new question shows its four options and its explanation. Do it again in Russian. Answer the new question wrong once: "My mistakes" then offers it for review.
+
+### Change a lesson plan or a worksheet
+
+**Files:** `js/content/teachers-basics.js` (lessons 1-6) and `js/content/teachers-deep.js` (7 and on). Each lesson has one block, with an English part (`en`) and a Russian part (`ru`). The header of `js/content/teachers-basics.js` explains every part of a plan and every kind of task.
+
+Change the text in both parts. They must keep the same shape: the same tasks in the same order, and the same number of items in each list, of pairs in a "match" task, of rows in a table and of gaps in [brackets]. A gap's answer goes between the brackets: the worksheet shows an empty line there, and the answer key shows the answer.
+
+The worksheet's last task, the quick quiz (`quiz: ["q14", "q16", "m1"]`), and the plan's exit ticket question (`exit: "q13"`) are only named by their id: their texts are the quiz's, in `js/content/quiz-bank.js`, so a change there shows up in the worksheets too.
+
+**Check:** in "For teachers", open the lesson's plan, worksheet and answer key, in both languages. Press Print and look at the preview: only the sheet, in black on white, with the site's name and the page numbers at the bottom. A worksheet is copied for a whole class, so try to keep it on two pages (one sheet of paper, both sides).
+
 
 ### Add a glossary term
 
@@ -698,6 +720,7 @@ Open the site on a local server and go through this list for the parts you chang
 - [ ] **Keyboard only.** Put the mouse away. Tab reaches every button and you can see where the focus is; Enter and Space work; Esc closes the lesson reader, Compass Bot and the palette; Ctrl+K opens the palette.
 - [ ] **Bigger text.** Open Settings (the gear in the menu) and choose the biggest text size. At 360 px, nothing sticks out to the side and no word is cut.
 - [ ] **Calm mode.** Press Ctrl+K and run "Calm mode: pause animations". Nothing big moves any more, and everything still works. Run it again to turn the animations back on.
+- [ ] **Printing** (the teacher kit). Open a lesson plan or a worksheet from "For teachers" and press Print: the preview shows only the sheet, in black on white, in both themes.
 - [ ] **The console.** Press F12, open Console and reload: no red errors.
 - [ ] **Links into the page.** `#lesson-4`, `#term-bias` and `#quiz` at the end of the address open the right place.
 - [ ] **Saved progress.** Finish a lesson, change the language and the theme, reload: everything is remembered.
