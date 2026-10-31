@@ -937,6 +937,25 @@ ul.tk-boxes,
     color: var(--text-danger);
 }
 
+/* The pause sign (two bars) and the play sign (a triangle), drawn with borders */
+.tk-cq-pause-icon {
+    display: block;
+    width: 14px;
+    height: 16px;
+    border-right: 5px solid currentColor;
+    border-left: 5px solid currentColor;
+}
+
+.tk-cq-pause-icon.is-play {
+    width: 0;
+    height: 0;
+    margin-left: 4px;
+    border-top: 9px solid transparent;
+    border-right: 0;
+    border-bottom: 9px solid transparent;
+    border-left: 15px solid currentColor;
+}
+
 .tk-cq-clock.is-low .tk-cq-clock-bar span {
     background: var(--danger);
 }
@@ -1302,30 +1321,46 @@ ul.tk-boxes,
     display: none;
 }
 
+/* A team: its key and name on top, its points between - and + below (on
+   one line, four teams with longer names, like "Команда 2", did not fit) */
 .tk-cq-team {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        "head head head"
+        "minus score plus";
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
+    gap: 4px 10px;
+    padding: 8px 12px 10px;
     border: 2px solid var(--border-strong);
     border-radius: 16px;
     background: var(--bg);
 }
 
+.tk-cq-team-head {
+    display: flex;
+    grid-area: head;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+}
+
 .tk-cq-team-key {
     display: grid;
+    flex: none;
     place-items: center;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     border: 1px solid var(--border-strong);
     border-radius: 7px;
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
 }
 
 .tk-cq-team-name {
+    min-width: 0;
     overflow: hidden;
     font-size: clamp(15px, 1.1vw, 20px);
     font-weight: 800;
@@ -1333,11 +1368,19 @@ ul.tk-boxes,
     white-space: nowrap;
 }
 
+.tk-cq-minus {
+    grid-area: minus;
+}
+
 .tk-cq-score {
-    min-width: 1.6em;
+    grid-area: score;
     font-size: clamp(26px, 2.2vw, 42px);
     font-weight: 800;
     text-align: center;
+}
+
+.tk-cq-plus {
+    grid-area: plus;
 }
 
 .tk-cq-point {
@@ -1514,37 +1557,13 @@ ul.tk-boxes,
         padding: 8px 12px;
     }
 
-    /* A phone has no room for the name and the buttons on one line: the name goes on top */
     .tk-cq-team {
-        grid-template-columns: auto minmax(0, 1fr) auto;
-        grid-template-areas:
-            "name name name"
-            "minus score plus";
-        justify-items: center;
         gap: 2px 6px;
         padding: 6px 8px;
     }
 
     .tk-cq-team-name {
-        grid-area: name;
-        max-width: 100%;
         font-size: 14px;
-    }
-
-    .tk-cq-minus {
-        grid-area: minus;
-    }
-
-    .tk-cq-score {
-        grid-area: score;
-    }
-
-    .tk-cq-plus {
-        grid-area: plus;
-    }
-
-    .tk-cq-team-key {
-        display: none;
     }
 
     .tk-cq-keys {
@@ -1604,15 +1623,27 @@ ul.tk-boxes,
     }
 }
 
-/* A phone held sideways: all the teams on one row */
+/* A phone held sideways: the top bar on one line (the window's name stays
+   for screen readers only) and all the teams on one row */
 @media (max-width: 760px) and (max-height: 520px) {
+    .tk-cq-title {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
     .tk-cq-teams {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     }
 }
 
 @media (hover: none), (pointer: coarse) {
-    .tk-cq-keys {
+    /* No keyboard to press: no key hints */
+    .tk-cq-keys,
+    .tk-cq-team-key {
         display: none;
     }
 

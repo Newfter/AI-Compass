@@ -1126,7 +1126,7 @@
                         <span class="tk-cq-clock-bar" aria-hidden="true"><span data-cq-clock-bar></span></span>
                         <span class="tk-cq-seconds mono" role="timer" data-cq-seconds></span>
                         <button class="tk-tool tk-tool-icon-only" type="button" data-cq-action="pause">
-                            <span aria-hidden="true" data-cq-pause-icon>⏸</span><span class="sr-only" data-cq-pause-label></span>
+                            <span class="tk-cq-pause-icon" aria-hidden="true" data-cq-pause-icon></span><span class="sr-only" data-cq-pause-label></span>
                         </button>
                     </div>
                     <div class="tk-cq-tools">
@@ -1490,8 +1490,10 @@
                 const name = teamName(i);
                 return `
                     <div class="tk-cq-team" data-cq-team="${i}">
-                        <span class="tk-cq-team-key mono" aria-hidden="true">${i + 1}</span>
-                        <span class="tk-cq-team-name">${esc(name)}</span>
+                        <span class="tk-cq-team-head">
+                            <span class="tk-cq-team-key mono" aria-hidden="true">${i + 1}</span>
+                            <span class="tk-cq-team-name">${esc(name)}</span>
+                        </span>
                         <button class="tk-cq-point tk-cq-minus" type="button" data-cq-point="-1" data-cq-for="${i}" aria-label="${esc(t("teachers.cq.minus", { team: name }))}">−</button>
                         <span class="tk-cq-score mono" data-cq-score="${i}"></span>
                         <button class="tk-cq-point tk-cq-plus" type="button" data-cq-point="1" data-cq-for="${i}" aria-label="${esc(t("teachers.cq.plus", { team: name }))}">+</button>
@@ -1639,7 +1641,8 @@
         clock.classList.toggle("is-low", seconds <= 5 && !game.revealed);
         const pause = quiz.element.querySelector('[data-cq-action="pause"]');
         A.dom.setHidden(pause, game.revealed || game.timeUp);
-        A.dom.setText(quiz.element.querySelector("[data-cq-pause-icon]"), game.paused ? "▶" : "⏸");
+        // Drawn with CSS (css/teachers-kit.css): the ⏸ sign looks different in every font
+        quiz.element.querySelector("[data-cq-pause-icon]").classList.toggle("is-play", game.paused);
         A.dom.setText(quiz.element.querySelector("[data-cq-pause-label]"), t(game.paused ? "teachers.cq.resume" : "teachers.cq.pause"));
     }
 
