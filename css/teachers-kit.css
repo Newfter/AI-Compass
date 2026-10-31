@@ -300,11 +300,11 @@ ol.tk-list {
     list-style: decimal;
 }
 
-.tk-list li::marker {
+.tk-list > li::marker {
     font-weight: 700;
 }
 
-.tk-list li + li {
+.tk-list > li + li {
     margin-top: 4px;
 }
 
@@ -371,6 +371,21 @@ ol.tk-list {
 .tk-option {
     display: flex;
     gap: 8px;
+}
+
+/* A true-or-false or myth-or-fact question: its two answers follow the
+   question on its own line when there is room (on paper that saves a
+   line). The question stays a list item, so it keeps its number. */
+.tk-bank.is-two .tk-bank-text {
+    display: inline;
+    margin-right: 20px;
+}
+
+.tk-bank.is-two .tk-options {
+    display: inline-flex;
+    gap: 20px;
+    margin-top: 0;
+    vertical-align: baseline;
 }
 
 .tk-option-letter,
@@ -512,7 +527,7 @@ ol.tk-list {
     font-weight: 600;
 }
 
-.tk-numbered li {
+.tk-numbered > li {
     padding-left: 2px;
 }
 
@@ -674,8 +689,9 @@ ul.tk-boxes,
     margin-top: 10px;
 }
 
-.tk-questions li + li,
-.tk-quiz-list li + li {
+/* (Only the questions: the answers inside a question are lists too) */
+.tk-questions > li + li,
+.tk-quiz-list > li + li {
     margin-top: 10px;
 }
 
@@ -694,7 +710,7 @@ ul.tk-boxes,
    footer is printed once, at the end. */
 @page tk-sheet {
     size: A4;
-    margin: 14mm 15mm 15mm;
+    margin: 12mm 14mm 14mm;
 }
 
 @media print {
@@ -758,8 +774,41 @@ ul.tk-boxes,
         background: #fff;
         box-shadow: none;
         color: #000;
-        font-size: 10.5pt;
-        line-height: 1.45;
+        font-size: 10pt;
+        line-height: 1.38;
+    }
+
+    /* Tighter on paper than on screen, so that a worksheet fits on two pages
+       (one sheet, both sides) more often: it is copied for a whole class */
+    html.tk-printing .tk-task {
+        margin-top: 12pt;
+    }
+
+    html.tk-printing .tk-task-lead {
+        margin-bottom: 4pt;
+    }
+
+    html.tk-printing .tk-fields {
+        margin-bottom: 8pt;
+    }
+
+    html.tk-printing .tk-wordbox {
+        margin-bottom: 6pt;
+        padding: 4pt 10pt;
+    }
+
+    html.tk-printing .tk-table th,
+    html.tk-printing .tk-table td {
+        padding: 3pt 6pt;
+    }
+
+    html.tk-printing .tk-quiz-list > li + li {
+        margin-top: 6pt;
+    }
+
+    /* Room for handwriting */
+    html.tk-printing .tk-line {
+        height: 7.5mm;
     }
 
     /* Black on white: the colours of the screen become black */
@@ -797,8 +846,8 @@ ul.tk-boxes,
     }
 
     html.tk-printing .tk-doc h2 {
-        margin-top: 16pt;
-        font-size: 12.5pt;
+        margin-top: 12pt;
+        font-size: 12pt;
     }
 
     /* Paper counts when a sheet is copied for a whole class: a long task or

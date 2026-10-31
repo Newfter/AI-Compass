@@ -271,13 +271,22 @@
         }).join("");
         const answer = withAnswer ? `
             <p class="tk-bank-answer"><strong class="tk-answer">${esc(t("teachers.plan.answer", { answer: marks[rightAt] + ". " + question.options[question.correct] }))}</strong>
-            ${esc(question.explain)}</p>` : "";
+            ${esc(explanationAfterAnswer(question))}</p>` : "";
         return `
-            <${box} class="tk-bank" data-tk-question="${esc(id)}">
+            <${box} class="tk-bank${order.length === 2 ? " is-two" : ""}" data-tk-question="${esc(id)}">
                 <p class="tk-bank-text">${esc(question.text)}</p>
                 <ul class="tk-options">${options}</ul>
                 ${answer}
             </${box}>`;
+    }
+
+    // The explanation after "Answer: B. False": a true-or-false explanation
+    // starts with "False." (or "Неверно.") itself, which is not said twice
+    function explanationAfterAnswer(question) {
+        const right = question.options[question.correct];
+        const text = question.explain;
+        const repeats = text.slice(0, right.length).toLowerCase() === right.toLowerCase() && /^[.!]\s/.test(text.slice(right.length));
+        return repeats ? text.slice(right.length + 1).trim() : text;
     }
 
     // "To go further": the lesson's AI Lab experiment, when the lab can name it
