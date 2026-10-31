@@ -467,8 +467,8 @@ window.AICompass.content.set("timeline", {
         { key: "e17", era: "early", icon: "🤖", datetime: "", themes: ["robots"], terms: ["robot", "agent"] },
 
         { key: "e5", era: "ups", icon: "❄️", datetime: "", major: true, themes: ["society"], terms: [] },
-        { key: "e18", era: "ups", icon: "🩺", datetime: "", themes: ["science"], terms: ["algorithm"], lesson: 1 },
-        { key: "e19", era: "ups", icon: "🔁", datetime: "1986", themes: ["learning"], terms: ["neural-network", "gradient-descent", "loss"], lesson: 3, lab: "descent" },
+        { key: "e18", era: "ups", icon: "🩺", datetime: "", themes: ["science"], terms: ["expert-system", "algorithm"], lesson: 1 },
+        { key: "e19", era: "ups", icon: "🔁", datetime: "1986", themes: ["learning"], terms: ["backpropagation", "neural-network", "gradient-descent", "loss"], lesson: 3, lab: "descent" },
         { key: "e20", era: "ups", icon: "✍️", datetime: "1989", themes: ["learning", "images"], terms: ["cnn", "computer-vision"], lesson: 7, lab: "vision" },
         { key: "e6", era: "ups", icon: "♟️", datetime: "1997", major: true, themes: ["games"], terms: ["algorithm"], lesson: 1 },
         { key: "e21", era: "ups", icon: "🚗", datetime: "2005", themes: ["robots"], terms: ["robot", "computer-vision"], lesson: 5 },
@@ -486,10 +486,10 @@ window.AICompass.content.set("timeline", {
 
         { key: "e26", era: "gen", icon: "🖌️", datetime: "2022", themes: ["images"], terms: ["diffusion", "generative-ai", "prompt"], lesson: 10 },
         { key: "e13", era: "gen", icon: "🚀", datetime: "2022", major: true, themes: ["language", "society"], terms: ["chatbot", "llm", "rlhf"], lesson: 4, lab: "chatbot" },
-        { key: "e27", era: "gen", icon: "📸", datetime: "2023", themes: ["language", "images"], terms: ["llm", "hallucination"], lesson: 9 },
+        { key: "e27", era: "gen", icon: "📸", datetime: "2023", themes: ["language", "images"], terms: ["multimodal", "llm", "hallucination"], lesson: 9 },
         { key: "e28", era: "gen", icon: "📜", datetime: "2024", major: true, themes: ["society"], terms: ["ai-act"], lesson: 11 },
         { key: "e14", era: "gen", icon: "🏅", datetime: "2024", major: true, themes: ["science"], terms: ["neural-network"], lesson: 3 },
-        { key: "e29", era: "gen", icon: "🧠", datetime: "", themes: ["language"], terms: ["agent", "llm"], lesson: 12 },
+        { key: "e29", era: "gen", icon: "🧠", datetime: "", themes: ["language"], terms: ["reasoning-model", "agent", "llm"], lesson: 12 },
         { key: "e15", era: "gen", icon: "📱", datetime: "", major: true, themes: ["society", "science"], terms: ["bias", "privacy"], lesson: 6, today: true }
     ]
 });
