@@ -400,6 +400,7 @@
         if (cardsUnsaved && savedCards) return savedCards;
         const saved = A.storage.get(CARDS_KEY, null);
         const progress = { v: CARDS_VERSION, cards: {}, newToday: { day: 0, count: 0 } };
+        let moved = false;              // a due date had to be brought back
         if (saved && typeof saved === "object" && saved.v === CARDS_VERSION) {
             const day = today();
             const cards = saved.cards && typeof saved.cards === "object" ? saved.cards : {};
@@ -407,14 +408,19 @@
                 const card = cards[id];
                 if (!BY_ID[id] || !card || !Number.isInteger(card.box) || !Number.isInteger(card.due)) return;
                 if (card.box < 1 || card.box > BOX_DAYS.length || card.due < 0) return;
-                // A card is never due later than its box allows (in case the clock was wrong)
-                progress.cards[id] = { box: card.box, due: Math.min(card.due, day + BOX_DAYS[card.box - 1]) };
+                // A card is never due later than its box allows (the clock was wrong when it
+                // was saved): it comes back after its box's days, counted from today
+                const latest = day + BOX_DAYS[card.box - 1];
+                if (card.due > latest) moved = true;
+                progress.cards[id] = { box: card.box, due: Math.min(card.due, latest) };
             });
             const fresh = saved.newToday;
             if (fresh && Number.isInteger(fresh.day) && Number.isInteger(fresh.count) && fresh.count >= 0) {
                 progress.newToday = { day: fresh.day, count: fresh.count };
             }
         }
+        // The corrected dates are saved, or they would move again every day
+        if (moved) saveCards(progress);
         savedCards = progress;
         return progress;
     }
