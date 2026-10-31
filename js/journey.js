@@ -793,6 +793,7 @@
     // from "host" below everything it shows and does. It sends journey.open itself.
     let panel = null;            // the window, once built
     let panelLoading = null;     // the Promise of loading it
+    A.keepOffline(PANEL_SCRIPT); // saved ahead, so the window opens offline too
 
     function open(opener) {
         // The window says when the browser doesn't save: if this visit hasn't saved yet, it tries now

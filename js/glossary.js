@@ -1441,6 +1441,7 @@
     // "cardsHost" below everything it shows and does (this file keeps the boxes).
     let cardsWindow = null;      // the window, once loaded
     let cardsLoading = null;     // the Promise of loading it
+    A.keepOffline(CARDS_SCRIPT); // saved ahead, so the flashcards work offline too
 
     // Opens the flashcards on a deck and starts studying (see deckFrom for the options).
     // -> a Promise: true when the window opened, false when it couldn't

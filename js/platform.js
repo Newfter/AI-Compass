@@ -4,6 +4,8 @@
    - The offline copy. Once the page has loaded, this file starts sw.js, the
      "service worker": a small script that keeps a copy of the site in the
      browser, so it opens and works without a connection (sw.js explains how).
+     It also hands it the parts loaded on demand (A.offlineFiles in core.js),
+     to save ahead: after one visit, the whole site works offline.
    - "Install the app". When the browser offers to install the site as an app,
      a button appears in the footer and a command in Ctrl+K. iPhones and iPads
      never offer it: there the button shows how to do it with Share.
@@ -101,6 +103,13 @@
         return files;
     }
 
+    // The visitor asked the browser to use less data, or the connection is very slow:
+    // then the parts loaded on demand are not saved ahead (only once they are used)
+    function savingData() {
+        const connection = navigator.connection;
+        return Boolean(connection && (connection.saveData || /2g$/.test(connection.effectiveType || "")));
+    }
+
     function startWorker() {
         // Firefox throws an error as soon as navigator.serviceWorker is read when the
         // site may not save anything (cookies blocked): then there is simply no worker
@@ -115,13 +124,18 @@
         // (the first visit, or a "hard" reload)
         const loadedWithoutWorker = !workers.controller;
         workers.register(WORKER_FILE).then(function () {
-            if (!loadedWithoutWorker) return null;
+            return workers.ready;
+        }).then(function (registration) {
+            const worker = registration.active;
+            if (!worker) return;
             // The worker saved the app shell when it started. It also saves what this
             // page has loaded since (the fonts, a part opened already), so a first visit
-            // without a connection looks exactly like this one.
-            return workers.ready.then(function (registration) {
-                if (registration.active) registration.active.postMessage({ type: SAVE_MESSAGE, files: loadedFiles() });
-            });
+            // without a connection looks exactly like this one. And on every visit, the
+            // parts loaded on demand (the quiz questions, the lab experiments, the teacher
+            // kit...), so the whole site works offline: only the ones not saved yet, or
+            // saved before the site was last published, are fetched.
+            const files = (loadedWithoutWorker ? loadedFiles() : []).concat(savingData() ? [] : A.offlineFiles());
+            if (files.length) worker.postMessage({ type: SAVE_MESSAGE, files: files, update: true });
         }).catch(function () { /* no offline copy, nothing else changes */ });
     }
 

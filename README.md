@@ -229,12 +229,12 @@ My Compass also sends its own event, `"journey"`, after a new level (`{ type: "l
 
 **Adding an event:** call `A.track("part.something", { ... })` where it happens, list it in your file's header, and add a row here. Listeners must not count the same thing twice: the same event can come many times (for example `lesson.open`).
 
-**Loading files on demand:** `A.loadScript(src)` and `A.loadStyle(href)` load a file the first time it is needed and return a Promise; asking again for the same file reuses the first load, and a failed load can be tried again.
+**Loading files on demand:** `A.loadScript(src)` and `A.loadStyle(href)` load a file the first time it is needed and return a Promise; asking again for the same file reuses the first load, and a failed load can be tried again. Also list every such file with `A.keepOffline(files)` when your feature starts (a path or a list of paths): the offline copy saves them ahead, so they work without a connection even if they were never opened.
 
 
 ## The app, offline use, sharing, printing and search engines
 
-**The offline copy (`sw.js`).** Once the page has loaded, `js/platform.js` starts a *service worker*: a small script the browser keeps for the site, which sees every file the page asks for. Online it always asks the server first, so everyone gets what you published on their next visit (and you see your change on a normal reload). Every answer is saved, and without a connection (or when the server takes more than about 4 seconds) the saved copy answers instead. The first visit saves the page and every file `index.html` loads; files loaded later are saved the first time they are used. A page that was never saved shows a small "You're offline" page.
+**The offline copy (`sw.js`).** Once the page has loaded, `js/platform.js` starts a *service worker*: a small script the browser keeps for the site, which sees every file the page asks for. Online it always asks the server first, so everyone gets what you published on their next visit (and you see your change on a normal reload). Every answer is saved, and without a connection (or when the server takes more than about 4 seconds) the saved copy answers instead. The first visit saves the page and every file `index.html` loads. Then, at a quiet moment, it also saves the files loaded only when they are needed (the quiz questions, the lab experiments, the lesson mini-labs, the flashcards, the teacher kit: each feature lists them with `A.keepOffline`), so after one visit the whole site works offline. On later visits, only the copies made before the site was last published are fetched again. When the browser is set to save data, those files are saved only once they are used. A page that was never saved shows a small "You're offline" page.
 
 - **You never need to change `sw.js` when you edit the site.** It reads its list of files from `index.html`. Only a change to the way `sw.js` itself works needs a higher `CACHE_VERSION` at its top (the old copies are then deleted).
 - **To try it:** open the site on a local server, then F12 → Application → Service workers: it should say "activated and is running". Tick "Offline" (there, or in the Network tab) and reload: the site still works. "Unregister" and "Clear site data" (Application → Storage) remove the worker and the copy.
@@ -734,7 +734,7 @@ Open the site on a local server and go through this list for the parts you chang
 - [ ] **The console.** Press F12, open Console and reload: no red errors.
 - [ ] **Links into the page.** `#lesson-4`, `#term-bias` and `#quiz` at the end of the address open the right place.
 - [ ] **Saved progress.** Finish a lesson, change the language and the theme, reload: everything is remembered.
-- [ ] **Offline** (if you added a file to `index.html`). Load the page, then in F12 → Network tick "Offline" and reload: everything still works.
+- [ ] **Offline** (if you added a file to `index.html`, or a file loaded on demand: list that one with `A.keepOffline`). Load the page, wait a few seconds, then in F12 → Network tick "Offline" and reload: everything still works, also the parts you didn't open.
 - [ ] **Printing** (if you changed a layout). Ctrl+P: the preview is black on white, and an open lesson prints as a handout.
 
 

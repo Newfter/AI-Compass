@@ -1926,6 +1926,13 @@
     const fileLabs = Object.create(null);   // name -> the lab, once its file has run
     let shownFileLab = null;                // { lab, host } while such a lab is on screen
 
+    // Their files are saved ahead, so every lesson works offline (A.keepOffline)
+    A.keepOffline([LAB_STYLES].concat(LESSONS.filter(function (lesson) {
+        return !LAB_TYPES[lesson.lab];
+    }).map(function (lesson) {
+        return LAB_FOLDER + lesson.lab + ".js";
+    })));
+
     function defineLab(name, lab) {
         if (!/^[a-z0-9-]+$/.test(String(name)) || !lab || typeof lab.build !== "function") {
             throw new Error("A.lessons.defineLab(name, { build(host, api) }): the name uses a-z, 0-9 and -");

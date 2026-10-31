@@ -327,6 +327,9 @@
         return A.loadScript(BANK_FILE);
     }
 
+    // Saved ahead, so the quiz works offline even if it was never opened (A.keepOffline)
+    A.keepOffline(BANK_FILE);
+
     // Numbers that count up on screen (A.countUp in core.js): the score and the
     // result in %. A.countUp writes the end value at once when animations are off,
     // and finishes by itself when calm mode is switched on meanwhile.

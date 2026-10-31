@@ -65,6 +65,7 @@
    12  A.feature(name, api)   A.whenFeature(name) -> Promise   A.ready(callback)
        A.content.set(name, data) / get(name)
        A.loadScript(src) / A.loadStyle(href) -> Promise: a file loaded on demand, once
+       A.keepOffline(files)   A.offlineFiles(): the files loaded on demand, saved ahead for offline use
    13  A.toast(text, icon)
    ========================================================= */
 
@@ -2122,6 +2123,20 @@
         return loadFile("link", href);
     }
 
+    // ----- Files saved ahead for offline use -----
+    // Each feature lists every file it may load on demand, even the ones most visitors
+    // never open (a lab experiment, the teacher kit):
+    //     A.keepOffline(["js/lab/maze.js", "css/lab/maze.css"]);
+    // The offline copy (js/platform.js, sw.js) saves them at a quiet moment, so after
+    // one visit the whole site works without a connection.
+    const offlineFiles = new Set();
+
+    function keepOffline(files) {
+        [].concat(files).forEach(function (file) {
+            offlineFiles.add(new URL(file, document.baseURI).href);
+        });
+    }
+
     const contentStore = {};
 
     const content = {
@@ -2258,6 +2273,9 @@
         content: content,
         loadScript: loadScript,
         loadStyle: loadStyle,
+        keepOffline: keepOffline,
+        // Their full addresses
+        offlineFiles: function () { return Array.from(offlineFiles); },
 
         // 13. toasts
         toast: toast

@@ -56,7 +56,8 @@
     const root = document.documentElement;
 
     // ---------- 1. Settings ----------
-    // The plans and worksheets of each track (each file is big: it loads when needed)
+    // The plans and worksheets of each track (each file is big: it loads when needed).
+    // js/teachers.js lists them too (KIT_PLANS), to save them ahead for offline use.
     const PLAN_FILES = {
         basics: "js/content/teachers-basics.js",
         deep: "js/content/teachers-deep.js"

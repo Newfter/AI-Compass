@@ -19,8 +19,10 @@
    - When it starts for the first time ("install"), it saves the app shell:
      the page and every style, script and icon that index.html loads, so the
      very first visit without a connection already works. Parts that are
-     loaded later, only when they are needed, are saved the first time they
-     are used.
+     loaded later, only when they are needed (a lab experiment, the quiz
+     questions), are saved at a quiet moment after that: js/platform.js sends
+     their list. Then the whole site works offline. (When the browser is set
+     to save data, they are saved only once they are used.)
    - A page that was never saved, without a connection: a small "You're
      offline" page, in English or Russian.
 
@@ -35,7 +37,7 @@
     2. Small helpers
     3. Install: saving the app shell
     4. Activate: old copies out, open pages taken over
-    5. Saving what the first page loaded
+    5. Saving what the first page loaded, and the parts loaded later
     6. Answering the page's requests
     7. The offline page (its texts, in both languages)
    ========================================================= */
@@ -49,6 +51,8 @@ const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
 const LINKS_TO_SAVE = ["stylesheet", "icon", "apple-touch-icon", "manifest"];
 // js/platform.js sends this message with the files the first page loaded (section 5)
 const SAVE_MESSAGE = "save-files";
+// How many files section 5 fetches at the same time
+const SAVE_AT_ONCE = 4;
 
 // The folder the site lives in, e.g. https://newfter.github.io/AI-Compass/
 const SCOPE = self.registration.scope;
@@ -191,22 +195,60 @@ self.addEventListener("activate", function (event) {
     }));
 });
 
-// ---------- 5. Saving what the first page loaded ----------
+// ---------- 5. Saving what the first page loaded, and the parts loaded later ----------
 // On the very first visit the page loads before this worker exists, so its fonts (and
 // any part opened quickly) never pass through it. js/platform.js then sends the list
 // of files the page has loaded, and the ones of this site or of Google Fonts that are
 // not saved yet are saved now.
+// On every visit the list also has the parts the site loads only when they are needed
+// (a lab experiment, the quiz questions...): they are saved ahead, so the whole site
+// works offline. With "update", a copy saved before the site was last published is
+// fetched again: the page it goes with may have changed.
 self.addEventListener("message", function (event) {
     const message = event.data || {};
     if (message.type !== SAVE_MESSAGE || !Array.isArray(message.files)) return;
-    event.waitUntil(Promise.all(message.files.map(function (address) {
-        if (typeof address !== "string" || !/^https?:/.test(address)) return null;
-        if (!isSiteAddress(address) && !isFontAddress(address)) return null;
-        return savedCopy(address).then(function (saved) {
-            return saved ? null : fetchAndSave(address).catch(function () {});
+    const addresses = message.files.filter(function (address, index, all) {
+        return typeof address === "string" && /^https?:/.test(address) && all.indexOf(address) === index &&
+            (isSiteAddress(address) || isFontAddress(address));
+    });
+    event.waitUntil(publishedAt().then(function (published) {
+        return fewAtATime(addresses, SAVE_AT_ONCE, function (address) {
+            return savedCopy(address).then(function (saved) {
+                if (saved && !(message.update && savedBefore(saved, published))) return null;
+                return fetchAndSave(address).catch(function () {});
+            });
         });
-    })));
+    }));
 });
+
+// When the site was last published: the date of the saved page (0 if unknown)
+function publishedAt() {
+    return savedCopy(pageKey(SCOPE)).then(function (page) {
+        const time = page ? Date.parse(page.headers.get("last-modified") || "") : NaN;
+        return isNaN(time) ? 0 : time;
+    });
+}
+
+// Was this copy saved before that? (Its "date" is when the server sent it.)
+function savedBefore(copy, published) {
+    const saved = Date.parse(copy.headers.get("date") || "");
+    return published > 0 && !isNaN(saved) && saved < published;
+}
+
+// Runs task(item) for every item, at most "limit" at the same time, so saving many
+// files never crowds out what the page itself is loading
+function fewAtATime(items, limit, task) {
+    let next = 0;
+    // Each line takes the next item when its last one is done
+    function line() {
+        if (next >= items.length) return Promise.resolve();
+        const item = items[next++];
+        return Promise.resolve(task(item)).catch(function () {}).then(line);
+    }
+    const lines = [];
+    for (let i = 0; i < Math.min(limit, items.length); i++) lines.push(line());
+    return Promise.all(lines);
+}
 
 // ---------- 6. Answering the page's requests ----------
 self.addEventListener("fetch", function (event) {

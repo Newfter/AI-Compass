@@ -421,6 +421,14 @@
         ]);
     }
 
+    // The kit and every experiment are saved ahead, so the whole lab works offline (A.keepOffline)
+    A.keepOffline([KIT_FILES.style, KIT_FILES.content, KIT_FILES.script]);
+    CATALOGUE.forEach(function (entry) {
+        A.keepOffline([EXPERIMENT_FILES.style, EXPERIMENT_FILES.content, EXPERIMENT_FILES.script].map(function (pattern) {
+            return fileOf(pattern, entry.id);
+        }));
+    });
+
     // Resolves with the experiment's spec once all its files are in
     function loadExperiment(id) {
         const kit = loadKit();

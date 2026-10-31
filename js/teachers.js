@@ -54,6 +54,9 @@
     // The teacher kit: its texts and its code (loaded in this order), and its styles
     const KIT_SCRIPTS = ["js/content/teachers-kit.js", "js/teachers-kit.js"];
     const KIT_STYLE = "css/teachers-kit.css";
+    // The plans and worksheets that the kit loads in turn (PLAN_FILES in js/teachers-kit.js):
+    // with the kit, they are saved ahead so that it works offline (A.keepOffline)
+    const KIT_PLANS = ["js/content/teachers-basics.js", "js/content/teachers-deep.js"];
     const KIT_FEATURE = "teachersKit";      // the name js/teachers-kit.js shares its API under
 
     // The three documents of every lesson, in the order of their buttons
@@ -287,6 +290,7 @@
 
     // ---------- 5. Loading the teacher kit ----------
     let kitLoading = null;
+    A.keepOffline([KIT_STYLE].concat(KIT_SCRIPTS, KIT_PLANS));
 
     // Loads the kit once (its texts, its code and its styles). A failed load
     // is forgotten, so the next click tries again.
