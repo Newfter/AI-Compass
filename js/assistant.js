@@ -196,7 +196,7 @@
         const term = cleanTerm(found);
         if (!term) return null;
         term.example = plainText(found.example);
-        term.short = plainText(found.short);       // a short definition: TODO(glossary), the terms have none yet
+        term.short = plainText(found.short);       // its definition in one plain sentence ("in simple words")
         return term;
     }
 
