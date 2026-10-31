@@ -4,10 +4,10 @@
    Sections of this file:
     1. The card (glass panel, corner brackets, scanning light)
     2. Screen changes (fade + smooth height)
-    3. Shared parts (labels, tiles, arrows)
-    4. Start screen (orb, rules, timed-mode switch)
-    5. Question screen: top bar (counter, score, streak, timer)
-    6. Question screen: progress, question, answer buttons
+    3. Shared parts (labels, tiles, arrows, "back" button, messages)
+    4. Start screen (orb, the modes, rules), Lesson review and daily challenge screens
+    5. Question screen: top bar (counter, score, streak, timer, tags)
+    6. Question screen: progress, question, answer buttons (and Myth or fact)
     7. Question screen: feedback after an answer
     8. Results screen (ring, rank, tiles, buttons)
     9. Results screen: review list
@@ -30,7 +30,7 @@
    empty mount keeps about the height of the start screen, so the page doesn't jump
    (the other sizes are in "Responsive"). */
 .js [data-feature="quiz"]:empty {
-    min-height: 760px;
+    min-height: 790px;
 }
 
 .qz-card {
@@ -138,7 +138,9 @@
 /* Parts that come in one after another (--i is set in the HTML) */
 .qz-enter .qz-option,
 .qz-enter .qz-rule,
-.qz-enter .qz-tile {
+.qz-enter .qz-tile,
+.qz-enter .qz-mode-item,
+.qz-enter .qz-lesson-item {
     animation: qz-rise 0.55s var(--ease) both;
     animation-delay: calc(120ms + var(--i, 0) * 70ms);
 }
@@ -200,9 +202,75 @@
 
 /* Headings that receive focus from the script don't need a ring */
 .qz-start-title:focus,
+.qz-lessons-title:focus,
+.qz-daily-title:focus,
 .qz-question-text:focus,
 .qz-res-title:focus {
     outline: none;
+}
+
+/* "← All modes" above the Lesson review and daily challenge screens */
+.qz-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    margin: -6px 0 14px -10px;
+    padding: 6px 12px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 600;
+    transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease;
+}
+
+.qz-back:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.qz-back-arrow {
+    transition: transform 0.3s var(--ease);
+}
+
+.qz-back:hover .qz-back-arrow,
+.qz-back:focus-visible .qz-back-arrow {
+    transform: translateX(-3px);
+}
+
+/* A message under the modes or the lessons ("Loading the questions…",
+   "Nothing to review right now…") */
+.qz-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.45);
+    border-radius: 14px;
+    background: rgba(var(--accent-2-rgb), 0.08);
+    color: var(--text);
+    font-size: 14.5px;
+    line-height: 1.5;
+}
+
+.qz-notice::before {
+    content: "i";
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    color: var(--bg);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .qz-tiles {
@@ -350,29 +418,148 @@
     }
 }
 
-.qz-start-tiles {
-    margin-bottom: 24px;
+/* The modes: a grid of big buttons, 3 in a row on a computer, 2 on a tablet
+   and 1 on a phone (see "Responsive"). Each says what the mode is and shows
+   your best result in it. */
+.qz-modes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
 }
 
-.qz-tile-best .qz-tile-value {
-    background: linear-gradient(110deg, var(--text-warning), var(--accent-3));
-    background-clip: text;
-    -webkit-background-clip: text;
+/* The buttons of one row are as tall as the tallest one */
+.qz-mode-item {
+    display: flex;
+    min-width: 0;
 }
 
-.qz-tile-best.is-empty .qz-tile-value {
-    background: none;
-    -webkit-text-fill-color: currentColor;
+.qz-mode {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    width: 100%;
+    min-height: 128px;
+    padding: 18px 18px 16px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface-2);
+    color: var(--text);
+    text-align: left;
+    transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, transform 0.25s var(--ease);
+}
+
+.qz-mode:hover {
+    border-color: rgba(var(--accent-2-rgb), 0.55);
+    background: var(--surface-hover);
+    box-shadow: 0 12px 32px rgba(var(--accent-2-rgb), 0.12);
+    transform: translateY(-2px);
+}
+
+.qz-mode:active {
+    transform: scale(0.985);
+}
+
+.qz-mode-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: rgba(var(--accent-rgb), 0.1);
+    font-size: 22px;
+    transition: transform 0.35s var(--ease);
+}
+
+.qz-mode:hover .qz-mode-icon {
+    transform: scale(1.08) rotate(-4deg);
+}
+
+.qz-mode-body {
+    flex: 1;
+    min-width: 0;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 14px;
+}
+
+.qz-mode-name {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.qz-mode-text {
+    color: var(--text-muted);
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+/* Your best result, at the bottom of the button */
+.qz-mode-stat {
+    margin-top: auto;
+    padding-top: 8px;
+    color: var(--text-accent-2);
+    font-size: 11.5px;
+    line-height: 1.45;
+    letter-spacing: 0.3px;
+}
+
+.qz-mode-go {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: var(--text-label);
+    transition: transform 0.3s var(--ease), color 0.3s ease;
+}
+
+.qz-mode:hover .qz-mode-go,
+.qz-mode:focus-visible .qz-mode-go {
+    color: var(--text-accent-2);
+    transform: translateX(3px);
+}
+
+/* Today's daily challenge is done */
+.qz-mode.is-done .qz-mode-stat {
+    color: var(--text-success);
+}
+
+/* "My mistakes" with nothing to review: quieter, but every word stays readable,
+   and a press still says when the next review is */
+.qz-mode[aria-disabled="true"] {
+    border-style: dashed;
+    background: transparent;
+}
+
+.qz-mode[aria-disabled="true"]:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-2);
+    box-shadow: none;
+    transform: none;
+}
+
+.qz-mode[aria-disabled="true"] .qz-mode-icon {
+    background: transparent;
+    filter: grayscale(1);
+}
+
+.qz-mode[aria-disabled="true"] .qz-mode-stat {
     color: var(--text-label);
 }
 
 .qz-rules-box {
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 
 .qz-rules {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
 }
 
@@ -385,7 +572,7 @@
     border-radius: 14px;
     background: rgba(var(--accent-rgb), 0.05);
     color: var(--text-muted);
-    font-size: 14.5px;
+    font-size: 14px;
     line-height: 1.5;
 }
 
@@ -433,88 +620,171 @@
     text-align: center;
 }
 
-/* Timed-mode switch: the whole row is one big button. The track and the knob
-   are .ui-switch-track and .ui-switch-knob (css/components.css), a little bigger
-   here, and cyan when on. */
-.qz-switch {
-    --switch-width: 50px;
-    --switch-height: 28px;
-    --knob: 20px;
-    --switch-on: rgba(var(--accent-2-rgb), 0.2);
-    --switch-on-border: var(--accent-2);
-    --switch-on-glow: none;
-    --knob-on: var(--accent-2);
-    --knob-on-glow: 0 0 12px var(--accent-2);
+/* "Saved only in this browser" (or: this browser doesn't save) */
+.qz-privacy {
     display: flex;
     align-items: center;
-    gap: 14px;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-label);
+    font-size: 13px;
+    text-align: center;
+}
+
+.qz-privacy::before {
+    content: "🔒";
+    font-size: 12px;
+}
+
+.qz-privacy.is-warning {
+    color: var(--text-warning);
+}
+
+.qz-privacy.is-warning::before {
+    content: "⚠️";
+}
+
+/* Lesson review: the list of lessons */
+.qz-lessons-head {
+    margin-bottom: 20px;
+}
+
+.qz-lessons-title,
+.qz-daily-title {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 30px);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+}
+
+.qz-lessons-text,
+.qz-daily-text {
+    max-width: 600px;
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 16px;
+}
+
+.qz-lesson-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.qz-lesson-item {
+    display: flex;
+    min-width: 0;
+}
+
+.qz-lesson {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     width: 100%;
-    min-height: 64px;
-    padding: 14px 18px;
+    min-height: 68px;
+    padding: 12px 14px;
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 14px;
     background: var(--surface-2);
     color: var(--text);
     text-align: left;
-    transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+    transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s var(--ease);
 }
 
-.qz-switch:hover {
-    border-color: var(--border-strong);
+.qz-lesson:hover {
+    border-color: rgba(var(--accent-2-rgb), 0.55);
     background: var(--surface-hover);
+    transform: translateY(-2px);
 }
 
-.qz-switch[aria-checked="true"] {
-    border-color: rgba(var(--accent-2-rgb), 0.6);
-    background: rgba(var(--accent-2-rgb), 0.08);
-    box-shadow: 0 0 30px rgba(var(--accent-2-rgb), 0.1);
-}
-
-.qz-switch-icon {
+.qz-lesson-num {
     flex: none;
-    font-size: 22px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: rgba(var(--accent-2-rgb), 0.1);
+    color: var(--text-accent-2);
+    font-size: 14px;
+    font-weight: 700;
 }
 
-.qz-switch-text {
-    flex: 1;
+.qz-lesson-body {
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-.qz-switch-text strong {
-    font-size: 15.5px;
+.qz-lesson-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    line-height: 1.35;
 }
 
-.qz-switch-text small {
-    color: var(--text-muted);
-    font-size: 13.5px;
-    line-height: 1.45;
-}
-
-.qz-switch-state {
-    flex: none;
+.qz-lesson-meta {
     color: var(--text-label);
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
+    font-size: 11.5px;
 }
 
-.qz-switch[aria-checked="true"] .qz-switch-state {
-    color: var(--text-accent-2);
-}
-
-.qz-start-actions {
+/* The daily challenge is done for today */
+.qz-daily-head {
     display: flex;
-    justify-content: center;
-    margin-top: 28px;
+    align-items: center;
+    gap: 22px;
+    margin-bottom: 22px;
 }
 
-.qz-start-button {
-    min-width: 260px;
-    min-height: 56px;
-    font-size: 16px;
+.qz-daily-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border: 1px solid var(--border-strong);
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 35% 30%, rgba(var(--accent-2-rgb), 0.3), rgba(var(--accent-rgb), 0.2) 65%, transparent 80%),
+        var(--surface-solid);
+    box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.3);
+    font-size: 38px;
+}
+
+.qz-daily-intro {
+    min-width: 0;
+}
+
+/* Today's answers: a green or red square each, like the shared result */
+.qz-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.qz-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    background: var(--text-success);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--text-success) 35%, transparent);
+}
+
+.qz-dot.is-wrong {
+    background: var(--text-danger);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--text-danger) 35%, transparent);
+}
+
+.qz-daily-tiles {
+    margin-bottom: 16px;
+}
+
+.qz-daily-gentle {
+    color: var(--text-label);
+    font-size: 14px;
 }
 
 /* ===== 5. QUESTION SCREEN: TOP BAR ===== */
@@ -567,6 +837,22 @@
     border-radius: 50%;
     background: var(--accent);
     box-shadow: 0 0 8px var(--accent);
+}
+
+/* The mode of the game, next to the topic: "📅 Daily challenge", "📚 Lesson 3",
+   "🔁 Step 2 of 3" (My mistakes) */
+.qz-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.45);
+    border-radius: 999px;
+    background: rgba(var(--accent-2-rgb), 0.08);
+    color: var(--text-accent-2);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.3;
 }
 
 .qz-score {
@@ -779,10 +1065,47 @@
 }
 
 .qz-type {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
     color: var(--text-label);
     font-size: 11.5px;
     letter-spacing: 1.6px;
     text-transform: uppercase;
+}
+
+/* How hard the question is: 1, 2 or 3 lit bars of three */
+.qz-level {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 14px;
+}
+
+.qz-level-bar {
+    width: 5px;
+    border-radius: 2px;
+    background: var(--border-strong);
+}
+
+.qz-level-bar:nth-child(1) {
+    height: 6px;
+}
+
+.qz-level-bar:nth-child(2) {
+    height: 10px;
+}
+
+.qz-level-bar:nth-child(3) {
+    height: 14px;
+}
+
+.qz-level[data-level="1"] .qz-level-bar:nth-child(-n + 1),
+.qz-level[data-level="2"] .qz-level-bar:nth-child(-n + 2),
+.qz-level[data-level="3"] .qz-level-bar {
+    background: var(--text-accent-2);
+    box-shadow: 0 0 6px rgba(var(--accent-2-rgb), 0.5);
 }
 
 .qz-quit {
@@ -992,6 +1315,11 @@
     margin-top: -14px;
 }
 
+/* Myth or fact: the keys are the arrows ← and → */
+.is-myth .qz-key {
+    font-size: 16px;
+}
+
 /* ===== 7. FEEDBACK AFTER AN ANSWER ===== */
 
 .qz-feedback {
@@ -1105,6 +1433,15 @@
     line-height: 1.65;
 }
 
+/* Myth or fact: "It's a myth." / "It's a fact." (the explanations come at the end) */
+.qz-fb-verdict {
+    margin-top: 10px;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+}
+
 .qz-fb-bonus {
     display: flex;
     flex-wrap: wrap;
@@ -1139,6 +1476,32 @@
 
 .qz-bonus-lost {
     color: var(--text-label);
+}
+
+/* What happened in "My mistakes": saved, a step up, cleared, back to step 1 */
+.qz-bonus-box {
+    border-color: rgba(var(--accent-2-rgb), 0.45);
+    color: var(--text-accent-2);
+}
+
+/* Myth or fact: a thin bar fills up, then the next statement comes by itself
+   (not in calm mode: there you press the button) */
+.qz-auto {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(var(--accent-2-rgb), 0.12);
+}
+
+.qz-auto-bar {
+    display: block;
+    height: 100%;
+    background: var(--accent-2);
+    box-shadow: 0 0 10px var(--accent-2);
+    transform: scaleX(0);
+    transform-origin: left center;
 }
 
 .qz-fb-actions {
@@ -1550,6 +1913,28 @@ details[open] .qz-ri-chevron {
     font-weight: 700;
 }
 
+.qz-ri-verdict {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 1px 8px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    vertical-align: 2px;
+}
+
+.qz-ri-verdict.is-myth {
+    color: var(--text-warning);
+}
+
+.qz-ri-verdict.is-fact {
+    color: var(--text-success);
+}
+
 .qz-ri-explain {
     margin-top: 10px;
     color: var(--text-muted);
@@ -1577,7 +1962,7 @@ details[open] .qz-ri-chevron {
 
 @media (max-width: 900px) {
     .js [data-feature="quiz"]:empty {
-        min-height: 800px;
+        min-height: 900px;
     }
 
     .qz-card {
@@ -1587,11 +1972,16 @@ details[open] .qz-ri-chevron {
     .qz-res-tiles {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .qz-modes,
+    .qz-lesson-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 720px) {
     .js [data-feature="quiz"]:empty {
-        min-height: 1040px;
+        min-height: 1130px;
     }
 
     .qz-options {
@@ -1626,8 +2016,29 @@ details[open] .qz-ri-chevron {
         min-width: 0;
     }
 
+    /* The rules become a short list without boxes */
     .qz-rules {
         grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .qz-rule {
+        gap: 10px;
+        padding: 0;
+        border: 0;
+        background: none;
+        font-size: 13px;
+    }
+
+    .qz-rule-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .qz-rule-text {
+        padding-top: 3px;
     }
 
     .qz-start-head {
@@ -1670,7 +2081,7 @@ details[open] .qz-ri-chevron {
 
 @media (max-width: 480px) {
     .js [data-feature="quiz"]:empty {
-        min-height: 1250px;
+        min-height: 1450px;
     }
 
     .qz-card {
@@ -1682,7 +2093,7 @@ details[open] .qz-ri-chevron {
         --corners-inset: 8px;
     }
 
-    .qz-start-tiles {
+    .qz-daily-tiles {
         gap: 8px;
     }
 
@@ -1701,29 +2112,71 @@ details[open] .qz-ri-chevron {
         font-size: 14px;
     }
 
+    /* A long mode name ("Myth or fact") wraps before the icon in the corner */
     .qz-tile-mode .qz-tile-value {
-        padding-right: 0;
+        padding-right: 18px;
         font-size: 15px;
     }
 
-    .qz-start-text {
+    .qz-start-text,
+    .qz-lessons-text,
+    .qz-daily-text {
         font-size: 15px;
     }
 
-    .qz-switch {
-        flex-wrap: wrap;
-        padding: 14px;
+    /* The modes become compact rows, one under the other */
+    .qz-modes,
+    .qz-lesson-list {
+        grid-template-columns: 1fr;
+        gap: 8px;
     }
 
-    .qz-switch-text {
-        flex-basis: calc(100% - 50px);
+    .qz-mode {
+        gap: 12px;
+        min-height: 0;
+        padding: 14px 14px 12px;
+        border-radius: 16px;
     }
 
-    .qz-switch-state {
-        margin-left: 36px;
+    .qz-mode-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 19px;
     }
 
-    .qz-start-button,
+    .qz-mode-name {
+        font-size: 15px;
+    }
+
+    .qz-mode-text {
+        font-size: 13px;
+    }
+
+    .qz-mode-stat {
+        padding-top: 4px;
+    }
+
+    .qz-mode-go {
+        top: 14px;
+        right: 14px;
+    }
+
+    .qz-lesson {
+        min-height: 60px;
+    }
+
+    .qz-daily-head {
+        gap: 16px;
+    }
+
+    .qz-daily-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        font-size: 30px;
+    }
+
     .qz-next,
     .qz-res-actions .btn {
         width: 100%;
@@ -1782,13 +2235,8 @@ details[open] .qz-ri-chevron {
         font-size: 13px;
     }
 
-    /* The best-score tile gets a whole row: its label is longer */
-    .qz-start-tiles {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .qz-start-tiles .qz-tile-best {
-        grid-column: 1 / -1;
+    .qz-daily-tiles .qz-tile-label {
+        letter-spacing: 0.3px;
     }
 
     .qz-feedback {
@@ -1864,4 +2312,19 @@ details[open] .qz-ri-chevron {
 /* "New best score!" waits 1.2 s for its entrance: without the animation it is there at once */
 html.fx-motion-off .qz-best.is-new {
     animation: none;
+}
+
+/* Myth or fact moves on by itself only with animations on: no bar in calm mode */
+html.fx-motion-off .qz-auto {
+    display: none;
+}
+
+/* No lift on hover. With the transitions off, a button lifted from under a pointer
+   that rests on its bottom edge drops back at once, lifts again, and flickers.
+   (The glossary and the timeline do the same for their cards.) */
+html.fx-motion-off .qz-mode:hover,
+html.fx-motion-off .qz-lesson:hover,
+html.fx-motion-off .qz-option:not(.is-locked):hover,
+html.fx-motion-off .qz-card .btn:hover {
+    transform: none;
 }
