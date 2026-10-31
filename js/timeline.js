@@ -530,10 +530,11 @@
         if (!frame) frame = requestAnimationFrame(nextStep);
     }
 
-    // Is a dot on the screen now? (From the saved numbers: nothing is read.)
-    function onScreen(node) {
-        const y = layout.wrapTop + node.y;
-        return y >= scroll.y && y <= scroll.y + scroll.viewport;
+    // Is a point of the line on the screen now? y: px from the top of the eras, like
+    // a dot's node.y. (From the saved numbers: nothing is read.)
+    function onScreen(y) {
+        const top = layout.wrapTop + y;
+        return top >= scroll.y && top <= scroll.y + scroll.viewport;
     }
 
     // Draws the line, the dots, the era chips and the read-out (only what changed)
@@ -556,6 +557,9 @@
             head.classList.toggle("is-end", atEnd);
         }
 
+        // The reader is at the timeline when the lit end of the line is on the screen
+        const atLine = onScreen(layout.lineTop + shown);
+
         // Light up every dot the line has reached
         let reached = 0;
         let lastReached = null;
@@ -568,11 +572,12 @@
                 item.on = on;
                 item.el.classList.toggle("is-reached", on);
             }
-            // An era counts as visited once the reader really got there: one of its lit
-            // dots is on the screen. (The first dot is lit before anyone scrolled to it,
-            // and a jump past the timeline, to "About" for example, lights every dot
-            // without showing any: neither counts.)
-            if (on && !visitedEras.has(era) && onScreen(node)) trackEra(era);
+            // An era counts as visited once the reader really got there: the line has lit
+            // one of its dots while the reader is at the line, or a lit dot is on the screen.
+            // (The first dot is lit before anyone scrolled to it, and a jump past the
+            // timeline, to "About" for example, lights every dot far above the screen:
+            // neither counts.)
+            if (on && !visitedEras.has(era) && (atLine || onScreen(node.y))) trackEra(era);
             const count = perEra[era] || (perEra[era] = { reached: 0, total: 0 });
             count.total++;
             if (on) {
