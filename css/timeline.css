@@ -178,6 +178,13 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* While a theme is chosen, its tag takes the read-out's place. In Russian the
+   chips, the tag and the read-out don't fit in one row, and a bar with two rows
+   stops sticking (see .is-stacked above). timeline.js sets "has-theme". */
+.tl.has-theme .tl-hud {
+    display: none;
+}
+
 /* ===== 2. THEME CHIPS AND "NOTHING FOUND" ===== */
 
 .tl-themes {

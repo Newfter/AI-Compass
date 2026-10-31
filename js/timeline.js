@@ -669,6 +669,9 @@
     function updateThemeTag() {
         const theme = THEMES.filter(function (entry) { return entry.id === filter.theme; })[0];
         themeTag.hidden = !theme;
+        // The tag takes the place of the read-out, so the bar keeps one row (and keeps
+        // sticking) in both languages (css/timeline.css, "has-theme")
+        root.classList.toggle("has-theme", Boolean(theme));
         if (!theme) return;
         const name = t("timeline.theme." + theme.id);
         themeTag.querySelector(".tl-theme-tag-icon").textContent = theme.icon;
