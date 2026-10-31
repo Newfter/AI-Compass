@@ -3,7 +3,7 @@
    The "For teachers" section, just above "About":
    - the course at a glance (lessons, tracks, ages, reading time...),
      counted from the lessons themselves;
-   - the 12 lessons, each with three buttons: "Lesson plan",
+   - every lesson, with three buttons: "Lesson plan",
      "Worksheet" and "Answer key";
    - "Run a classroom quiz" (a quiz in big type for the projector);
    - a short note on using AI honestly, with a link to lesson 12.

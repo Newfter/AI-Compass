@@ -70,6 +70,12 @@
     ];
 
     const CLOSE_TIME = 300;          // ms: the closing animation of both windows (css/teachers-kit.css)
+
+    // Room to write on a worksheet, from the length of the answer
+    const GAP_WIDTH = { min: 4, max: 20, perLetter: 0.6 };   // em: a gap inside a sentence
+    const ANSWER_LINES = { max: 3, letters: 55 };            // lines under a question: one for every 55 letters
+    const CELL_LINES = { max: 3, letters: 32 };              // lines in an empty box of a table: one for every 32 letters
+    const TEXT_LINE = 60;            // "Copy as text": the length of an answer line, and of the longest line under a title
     const QUIZ_ICON = "📽️";
 
     // The classroom quiz
@@ -78,6 +84,7 @@
     const TEAMS = [0, 2, 3, 4];                     // how many teams (0: no team scores)
     const HISTORY = "timeline";                     // the "lesson" of the quiz bank's history questions
     const TICK = 200;                               // ms between two looks at the timer
+    const SCROLL_ROOM = 12;                         // px left under the "Next" button when the question scrolls to it
     const STORE_KEY = "teachers.quiz";              // its settings, kept only in this browser
     const OVERLAY_DOC = "teacher-plan";             // the windows' names for A.overlays
     const OVERLAY_QUIZ = "classroom-quiz";
@@ -161,9 +168,14 @@
         return parts;
     }
 
+    // How many lines to leave for an answer (room: ANSWER_LINES or CELL_LINES)
+    function linesFor(answer, room) {
+        return Math.max(1, Math.min(room.max, Math.ceil(answer.length / room.letters)));
+    }
+
     // A gap on the worksheet: an empty line about as long as its answer
     function blankHTML(answer) {
-        const width = Math.max(4, Math.min(20, Math.round(answer.length * 0.6)));
+        const width = Math.max(GAP_WIDTH.min, Math.min(GAP_WIDTH.max, Math.round(answer.length * GAP_WIDTH.perLetter)));
         return `<span class="tk-gap" style="--tk-gap: ${width}em"><span class="sr-only">${esc(t("teachers.sheet.gap"))}</span></span>`;
     }
 
@@ -400,7 +412,7 @@
         if (!match) return gapsHTML(text, withAnswers);
         const answer = match[2];
         return `<p>${esc(match[1].trim())}</p>` +
-            (withAnswers ? `<p>${answerHTML(answer)}</p>` : linesHTML(Math.max(1, Math.min(3, Math.ceil(answer.length / 55)))));
+            (withAnswers ? `<p>${answerHTML(answer)}</p>` : linesHTML(linesFor(answer, ANSWER_LINES)));
     }
 
     // A cell of a lab table: "[32]" is an empty box to fill in (as tall as its
@@ -409,7 +421,7 @@
         const whole = cell.match(/^\[([^\[\]]+)\]$/);
         if (whole && withAnswers) return answerHTML(whole[1]);
         if (whole || !cell) {
-            const lines = whole ? Math.max(1, Math.min(3, Math.ceil(whole[1].length / 32))) : 1;
+            const lines = whole ? linesFor(whole[1], CELL_LINES) : 1;
             return `<span class="tk-cell-blank" style="--tk-lines: ${lines}"></span>`;
         }
         return gapsHTML(cell, withAnswers);
@@ -619,7 +631,7 @@
             if (tag === "H1" || tag === "H2") {
                 space();
                 const text = add(inlineText(node), indent);
-                lines.push(indent + (tag === "H1" ? "=" : "-").repeat(Math.min(70, text.length)));
+                lines.push(indent + (tag === "H1" ? "=" : "-").repeat(Math.min(TEXT_LINE, text.length)));
                 return;
             }
             if (tag === "H3" || tag === "DT") {
@@ -639,7 +651,7 @@
             }
             if (node.classList.contains("tk-lines")) {
                 const count = Number(node.getAttribute("data-tk-lines")) || 1;
-                for (let i = 0; i < count; i++) lines.push(indent + "_".repeat(60));
+                for (let i = 0; i < count; i++) lines.push(indent + "_".repeat(TEXT_LINE));
                 return;
             }
             if (node.hasAttribute("data-tk-inline")) {
@@ -1558,7 +1570,7 @@
         // The explanation appears above the button: on a small screen, scroll until the button shows
         const stageBox = quiz.stage.getBoundingClientRect();
         const mainBox = main.getBoundingClientRect();
-        if (mainBox.bottom > stageBox.bottom) quiz.stage.scrollTop += mainBox.bottom - stageBox.bottom + 12;
+        if (mainBox.bottom > stageBox.bottom) quiz.stage.scrollTop += mainBox.bottom - stageBox.bottom + SCROLL_ROOM;
         const question = currentQuestion();
         if (question) {
             const at = game.orders[question.id].indexOf(question.correct);
