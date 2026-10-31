@@ -992,15 +992,12 @@ ul.tk-boxes,
     font-weight: 600;
 }
 
+/* The heading takes the focus on every new screen (so a screen reader reads
+   it, and the keys go on working). It is not a control: on a projector a
+   frame around every question would only distract the class. */
 .tk-cq-heading:focus,
 .tk-cq-text:focus {
     outline: none;
-}
-
-.tk-cq-heading:focus-visible,
-.tk-cq-text:focus-visible {
-    outline: 3px solid var(--accent-2);
-    outline-offset: 6px;
 }
 
 .tk-cq-lead {

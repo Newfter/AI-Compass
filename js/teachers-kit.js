@@ -844,7 +844,7 @@
         const focusTitle = doc.page.contains(document.activeElement) && document.activeElement.id === "tk-doc-title";
 
         doc.page.innerHTML = documentHTML(view, n, plan);
-        doc.page.setAttribute("data-tk-view", view);
+        doc.page.setAttribute("data-tk-sheet", view);
         doc.shown = shown;
         doc.body.scrollTop = Math.round(scrollShare * doc.body.scrollHeight);
 
