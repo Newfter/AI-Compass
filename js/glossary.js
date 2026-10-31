@@ -1,22 +1,35 @@
 /* =========================================================
    AI COMPASS — GLOSSARY
    A bilingual A–Z dictionary of the key words of AI:
+   - the term of the day (the same for everyone, a new one at local
+     midnight) and the flashcards: "{n} cards to study today";
    - a search box that filters the cards as you type, marks the
-     matching words and offers "did you mean?" after a typo;
+     matching words and offers "did you mean?" after a typo (and tries
+     the other keyboard layout: "ntcn" finds "тест");
    - category chips with counts, and an alphabet strip;
-   - term cards that open to show an everyday example and related
-     terms (a term you opened counts as "explored");
-   - one Ctrl+K palette command per term, and links like
-     index.html#term-bias that open a term.
+   - term cards with a one-sentence definition, that open to show the
+     full explanation, an everyday example, the lessons and the lab
+     experiment that teach it, and related terms (a term you opened
+     counts as "explored");
+   - one Ctrl+K palette command per term, "Study flashcards" and
+     "Term of the day", and links like index.html#term-bias.
+   The flashcards (Leitner boxes) are kept here; their window is in
+   js/glossary-cards.js, loaded the first time someone studies.
    The glossary sits far down the page, so it is only built when it
    comes near the screen (or when the browser has a quiet moment).
+   Progress events (A.track): glossary.explore {id} (a term opened),
+   flashcard.review {id, box, correct} (each flashcard answer: box is
+   where the card is now), flashcard.finish {deck, cards, correct}
+   (the end of a study session).
+   Saved in this browser (A.storage): glossary.explored (the ids of the
+   terms opened) and glossary.cards (the flashcard boxes, section 6).
    Sections of this file:
     1. Settings
     2. The terms
-    3. Small helpers
+    3. Small helpers (and days)
     4. Finding a term inside any text
     5. "Did you mean...?"
-    6. State
+    6. State (and the flashcard boxes)
     7. Building the glossary
     8. Searching
     9. Filling the cards
@@ -24,13 +37,15 @@
    11. Sorting
    12. Showing the cards that match
    13. Opening cards
-   14. Events
-   15. Language changes
-   16. Start
-   17. Palette commands and the public API
+   14. The term of the day and the flashcards card
+   15. The flashcards window (js/glossary-cards.js)
+   16. Events
+   17. Language changes
+   18. Start
+   19. Palette commands and the public API
    Other features use AICompass.glossary (see the last section).
-   Every term and every text (English and Russian) is in
-   js/content/glossary.js
+   The terms are in js/content/glossary-terms.js, every other text
+   (English and Russian) in js/content/glossary.js.
    ========================================================= */
 
 (function () {
@@ -66,6 +81,24 @@
     const GROW_STAGGER_MAX = 8;     // but never more than 8 steps later
     const ANIMATE_MARGIN = 200;     // px: only cards this close to the screen are animated
     const DICE_MS = 550;            // ms: the dice of the "Random" button spins this long
+
+    // The term of the day (section 14)
+    const TODAY_STEP = 7919;        // each day the term of the day is this many places further in the list.
+                                    // 7919 is a prime number, so it shares no factor with the number of
+                                    // terms: day after day, every term comes once before any comes back
+    const MIDNIGHT_SLACK = 1000;    // ms: the new day's term shows this long after local midnight
+    const TODAY_SWAP_MS = 420;      // ms: the new term slides in (no animation in calm mode)
+
+    // Flashcards: the Leitner system (section 6 and the window in js/glossary-cards.js).
+    // A card you know moves up a box, a card you miss goes back to box 1. A card comes
+    // back this many days after you answered it, by its box:
+    //   box 1: the next session (0 days), box 2: 1 day, box 3: 3 days, box 4: 7 days, box 5: 14 days
+    const BOX_DAYS = [0, 1, 3, 7, 14];
+    const NEW_PER_DAY = 10;         // new cards (never studied) that join the cards to study each day
+    const SESSION_MAX = 20;         // one study session shows at most this many cards
+    const CARDS_KEY = "glossary.cards";            // where the boxes are saved...
+    const CARDS_VERSION = 1;                       // ...in this format (see section 6)
+    const CARDS_SCRIPT = "js/glossary-cards.js";   // the flashcards window, loaded the first time it opens
 
     // ---------- 2. The terms (from js/content/glossary-terms.js) ----------
     // categories: the category ids, in the order of their chips.
@@ -156,6 +189,32 @@
 
     function otherLang() {
         return A.lang === "ru" ? "en" : "ru";
+    }
+
+    // Days are numbers: the days since 1 January 1970, counted by this computer's
+    // calendar. So "today" changes at local midnight, wherever you are.
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    function dayNumber(date) {
+        return Math.round(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / DAY_MS);
+    }
+
+    function today() {
+        return dayNumber(new Date());
+    }
+
+    // The date of a day number (at noon, so no time zone can move it to another day)
+    function dateOfDay(day) {
+        const utc = new Date(day * DAY_MS);
+        return new Date(utc.getUTCFullYear(), utc.getUTCMonth(), utc.getUTCDate(), 12);
+    }
+
+    // "today", "tomorrow" or "Tuesday, 3 November"
+    function dayText(day) {
+        const now = today();
+        if (day <= now) return t("glossary.whenToday");
+        if (day === now + 1) return t("glossary.whenTomorrow");
+        return A.format.date(dateOfDay(day), { weekday: "long", day: "numeric", month: "long" });
     }
 
     // ---------- 4. Finding a term inside any text ----------
@@ -325,6 +384,127 @@
         explored: new Set(loadExplored())
     };
 
+    // ----- The flashcard boxes -----
+    // Saved under CARDS_KEY as
+    //     { v: 1, cards: { "pixel": { box: 2, due: 20394 }, ... }, newToday: { day: 20393, count: 4 } }
+    // cards: the box (1-5) of every card studied so far, and the day it is due again
+    // (a day number, see section 3). A term that is not in "cards" is a new card.
+    // newToday: how many new cards were started on that day (NEW_PER_DAY a day).
+    // Everything is checked when it is read: a broken card is dropped, a broken
+    // value starts again. When this browser doesn't let the site save (private mode,
+    // storage switched off), the boxes live on in memory until the page closes.
+    let savedCards = null;          // the boxes as last read or saved
+    let cardsUnsaved = false;       // true once saving failed
+
+    function readCards() {
+        if (cardsUnsaved && savedCards) return savedCards;
+        const saved = A.storage.get(CARDS_KEY, null);
+        const progress = { v: CARDS_VERSION, cards: {}, newToday: { day: 0, count: 0 } };
+        if (saved && typeof saved === "object" && saved.v === CARDS_VERSION) {
+            const day = today();
+            const cards = saved.cards && typeof saved.cards === "object" ? saved.cards : {};
+            Object.keys(cards).forEach(function (id) {
+                const card = cards[id];
+                if (!BY_ID[id] || !card || !Number.isInteger(card.box) || !Number.isInteger(card.due)) return;
+                if (card.box < 1 || card.box > BOX_DAYS.length || card.due < 0) return;
+                // A card is never due later than its box allows (in case the clock was wrong)
+                progress.cards[id] = { box: card.box, due: Math.min(card.due, day + BOX_DAYS[card.box - 1]) };
+            });
+            const fresh = saved.newToday;
+            if (fresh && Number.isInteger(fresh.day) && Number.isInteger(fresh.count) && fresh.count >= 0) {
+                progress.newToday = { day: fresh.day, count: fresh.count };
+            }
+        }
+        savedCards = progress;
+        return progress;
+    }
+
+    function saveCards(progress) {
+        savedCards = progress;
+        if (!A.storage.set(CARDS_KEY, progress)) cardsUnsaved = true;
+    }
+
+    // A deck of cards: "all", a category ("vision") or the terms of a lesson ("lesson-7")
+    function deckTerms(deck) {
+        const lesson = /^lesson-(\d+)$/.exec(deck);
+        if (lesson) {
+            return TERMS.filter(function (term) { return term.lessons.indexOf(Number(lesson[1])) !== -1; });
+        }
+        if (CATEGORIES.indexOf(deck) !== -1) {
+            return TERMS.filter(function (term) { return term.cat === deck; });
+        }
+        return TERMS;
+    }
+
+    // The deck that study(options) and due(options) ask for: { category: "vision" },
+    // { lesson: 7 }, { deck: "lesson-7" }, or nothing for all the terms.
+    // A deck that doesn't exist or has no cards means all the terms.
+    function deckFrom(options) {
+        const asked = options || {};
+        let deck = "all";
+        if (typeof asked.deck === "string") deck = asked.deck;
+        else if (typeof asked.category === "string") deck = asked.category;
+        else if (Number.isInteger(asked.lesson)) deck = "lesson-" + asked.lesson;
+        const known = CATEGORIES.indexOf(deck) !== -1 || /^lesson-\d+$/.test(deck);
+        return known && deckTerms(deck).length ? deck : "all";
+    }
+
+    // What a deck has for today:
+    //   review   the cards that are due again, lowest box first (then the longest waiting)
+    //   fresh    new cards for today: up to NEW_PER_DAY a day, in the glossary's order
+    //   unseen   every new card of the deck
+    //   total    review + fresh: the cards to study today
+    //   boxes    how many cards are new and in each box: [new, box 1, ..., box 5]
+    //   next     the first later day when a card is due again (0: none)
+    function deckPlan(deck) {
+        const progress = readCards();
+        const day = today();
+        const startedToday = progress.newToday.day === day ? progress.newToday.count : 0;
+        const plan = { review: [], fresh: [], unseen: [], total: 0, boxes: [0], next: 0 };
+        BOX_DAYS.forEach(function () { plan.boxes.push(0); });
+
+        deckTerms(deck).forEach(function (term) {
+            const card = progress.cards[term.id];
+            if (!card) {
+                plan.unseen.push(term.id);
+                plan.boxes[0]++;
+                return;
+            }
+            plan.boxes[card.box]++;
+            if (card.due <= day) plan.review.push(term.id);
+            else if (!plan.next || card.due < plan.next) plan.next = card.due;
+        });
+        plan.review.sort(function (a, b) {
+            return progress.cards[a].box - progress.cards[b].box || progress.cards[a].due - progress.cards[b].due;
+        });
+        plan.fresh = plan.unseen.slice(0, Math.max(0, NEW_PER_DAY - startedToday));
+        plan.total = plan.review.length + plan.fresh.length;
+        // New cards left for later come tomorrow
+        if (plan.unseen.length > plan.fresh.length && (!plan.next || plan.next > day + 1)) plan.next = day + 1;
+        return plan;
+    }
+
+    // An answer to a flashcard. A card you knew moves up a box (box 5 is the last one),
+    // a card you missed goes back to box 1. It is due again BOX_DAYS of its box later.
+    // A new card starts in box 1, and counts as one of today's new cards.
+    // -> { box, due }: where the card is now
+    function answerCard(id, knew) {
+        const progress = readCards();         // read again: another tab may have studied too
+        const day = today();
+        const card = progress.cards[id];
+        if (!card) {
+            if (progress.newToday.day !== day) progress.newToday = { day: day, count: 0 };
+            progress.newToday.count++;
+        }
+        const box = knew ? Math.min((card ? card.box : 1) + 1, BOX_DAYS.length) : 1;
+        const result = { box: box, due: day + BOX_DAYS[box - 1] };
+        progress.cards[id] = result;
+        saveCards(progress);
+        A.track("flashcard.review", { id: id, box: box, correct: knew });
+        updateStudy();
+        return { box: result.box, due: result.due };
+    }
+
     // ---------- 7. Building the glossary ----------
     const ICON_SEARCH = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
     const ICON_CLOSE = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
@@ -426,17 +606,72 @@
         "</li>";
     }
 
+    // The two cards above the search: the term of the day and the flashcards
+    // (filled in by updateToday() and updateStudy(), section 14)
+    function topHTML() {
+        // The boxes: how many cards are new and in each box
+        const boxes = ["new"].concat(BOX_DAYS.map(function (days, i) { return i + 1; })).map(function (box) {
+            return '<li class="gl-box" data-box="' + box + '">' +
+                '<span class="gl-box-num mono" aria-hidden="true">0</span>' +
+                '<span class="gl-box-name" aria-hidden="true">' + (box === "new" ? text("glossary.boxNew") : box) + "</span>" +
+                '<span class="gl-box-say sr-only"></span>' +
+            "</li>";
+        }).join("");
+
+        return '<div class="gl-top">' +
+            '<div class="gl-today card" data-reveal>' +
+                '<div class="gl-top-head">' +
+                    '<p class="gl-kicker mono"><span class="gl-kicker-dot" aria-hidden="true"></span>' + text("glossary.today") + "</p>" +
+                    '<time class="gl-today-date mono"></time>' +
+                "</div>" +
+                '<div class="gl-today-body">' +
+                    '<span class="gl-icon gl-today-icon" aria-hidden="true"></span>' +
+                    '<div class="gl-today-words">' +
+                        '<h3 class="gl-today-name"></h3>' +
+                        '<p class="gl-alt">' +
+                            '<span class="gl-alt-code mono" aria-hidden="true" data-i18n="glossary.altCode">' + t("glossary.altCode") + "</span>" +
+                            text("glossary.altLabel", "sr-only") + " " +
+                            '<span class="gl-today-alt"></span>' +
+                        "</p>" +
+                        '<p class="gl-today-short"></p>' +
+                        '<p class="gl-today-ex"><span aria-hidden="true">💡 </span><span class="gl-today-ex-text"></span></p>' +
+                    "</div>" +
+                "</div>" +
+                '<button class="btn btn-ghost btn-small gl-today-more" type="button">' +
+                    text("glossary.todayMore") + '<span class="gl-today-arrow" aria-hidden="true">→</span>' +
+                "</button>" +
+            "</div>" +
+
+            '<div class="gl-study card" data-reveal>' +
+                '<div class="gl-top-head">' +
+                    '<p class="gl-kicker mono"><span class="gl-kicker-dot" aria-hidden="true"></span>' + text("glossary.cards") + "</p>" +
+                "</div>" +
+                '<h3 class="gl-study-title"></h3>' +
+                '<p class="gl-study-line"></p>' +
+                '<p class="gl-label gl-boxes-label mono" aria-hidden="true">' + text("glossary.boxesLabel") + "</p>" +
+                '<ol class="gl-boxes" data-i18n-attr="aria-label:glossary.boxesLabel" aria-label="' + esc(t("glossary.boxesLabel")) + '">' + boxes + "</ol>" +
+                '<div class="gl-study-foot">' +
+                    '<button class="btn btn-primary gl-study-btn" type="button" aria-haspopup="dialog">' +
+                        '<span aria-hidden="true">🃏</span>' + text("glossary.cardsStudy") +
+                    "</button>" +
+                    '<p class="gl-study-note"></p>' +
+                "</div>" +
+            "</div>" +
+        "</div>";
+    }
+
     // The glossary's outer element, handy references to its parts, and every
     // card with the parts inside it (by term id). They are filled in by build().
     let root = null;
     let ui = null;
     const cards = Object.create(null);
 
-    // Builds the whole glossary (once: see section 16, "Start")
+    // Builds the whole glossary (once: see section 18, "Start")
     function build() {
         site = findSiteLinks();
         mount.innerHTML =
             '<div class="gl">' +
+                topHTML() +
                 '<div class="gl-console card ui-scan" data-reveal>' +
                     '<span class="gl-corner gl-corner-tl ui-corners" aria-hidden="true"></span>' +
                     '<span class="gl-corner gl-corner-br ui-corners" aria-hidden="true"></span>' +
@@ -538,7 +773,23 @@
             moreText: root.querySelector(".gl-more-text"),
             explored: root.querySelector(".gl-explored"),
             exploredBar: root.querySelector(".gl-explored-bar span"),
-            exploredNum: root.querySelector(".gl-explored-num")
+            exploredNum: root.querySelector(".gl-explored-num"),
+            // The term of the day
+            today: root.querySelector(".gl-today"),
+            todayDate: root.querySelector(".gl-today-date"),
+            todayBody: root.querySelector(".gl-today-body"),
+            todayIcon: root.querySelector(".gl-today-icon"),
+            todayName: root.querySelector(".gl-today-name"),
+            todayAlt: root.querySelector(".gl-today-alt"),
+            todayShort: root.querySelector(".gl-today-short"),
+            todayExample: root.querySelector(".gl-today-ex-text"),
+            todayMore: root.querySelector(".gl-today-more"),
+            // The flashcards
+            studyTitle: root.querySelector(".gl-study-title"),
+            studyLine: root.querySelector(".gl-study-line"),
+            boxes: Array.prototype.slice.call(root.querySelectorAll(".gl-box")),
+            studyButton: root.querySelector(".gl-study-btn"),
+            studyNote: root.querySelector(".gl-study-note")
         };
 
         // Every card and the parts inside it, by term id
@@ -566,6 +817,9 @@
         sortCards();
         render({ everyCard: true });
         updateExplored();
+        updateToday();
+        updateStudy();
+        watchTheDay();
     }
 
     // ---------- 8. Searching: one matching function ----------
@@ -1060,7 +1314,168 @@
         return true;
     }
 
-    // ---------- 14. Events ----------
+    // ---------- 14. The term of the day and the flashcards card ----------
+    // The term of the day is chosen by the date, so everyone sees the same term all day
+    function termOfDay(day) {
+        return TERMS[(day * TODAY_STEP) % TERMS.length];
+    }
+
+    let shownDay = 0;       // the day the top cards were last filled for
+    let dayTimer = 0;
+
+    // "2026-10-31", the machine-readable date of a <time> element
+    function isoDate(date) {
+        const two = function (n) { return (n < 10 ? "0" : "") + n; };
+        return date.getFullYear() + "-" + two(date.getMonth() + 1) + "-" + two(date.getDate());
+    }
+
+    // options.animate: the new term slides in (the day changed while you were looking)
+    function updateToday(options) {
+        const day = today();
+        const term = termOfDay(day);
+        const date = dateOfDay(day);
+        shownDay = day;
+        A.dom.setAttr(ui.today, "data-cat", term.cat);
+        A.dom.setText(ui.todayIcon, term.icon);
+        A.dom.setText(ui.todayName, termName(term));
+        A.dom.setText(ui.todayAlt, term[otherLang()].name);
+        A.dom.setAttr(ui.todayAlt, "lang", otherLang());
+        A.dom.setText(ui.todayShort, termShort(term));
+        A.dom.setText(ui.todayExample, term[A.lang].ex);
+        A.dom.setText(ui.todayDate, A.format.date(date, { weekday: "short", day: "numeric", month: "short" }));
+        A.dom.setAttr(ui.todayDate, "datetime", isoDate(date));
+        A.dom.setAttr(ui.todayMore, "aria-label", t("glossary.todayMoreLabel", { term: termName(term) }));
+        if (options && options.animate && A.motion.ok() && ui.todayBody.animate) {
+            ui.todayBody.animate(
+                [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+                { duration: TODAY_SWAP_MS, easing: A.motion.ease }
+            );
+        }
+    }
+
+    // "10 cards to study today", the boxes and the note about saving.
+    // Called after every answer, at midnight and when the tab comes back.
+    function updateStudy() {
+        if (!ui) return;             // the glossary isn't built yet
+        const plan = deckPlan("all");
+        const studied = TERMS.length - plan.unseen.length;
+        A.dom.setText(ui.studyTitle, plan.total ? A.plural("glossary.cardsDue", plan.total) : t("glossary.cardsNone"));
+        let line;
+        if (!plan.total) line = plan.next ? t("glossary.cardsNext", { when: dayText(plan.next) }) : "";
+        else if (!studied) line = t("glossary.cardsFirst");
+        else line = t("glossary.cardsSplit", { review: A.format.number(plan.review.length), fresh: A.format.number(plan.fresh.length) });
+        A.dom.setText(ui.studyLine, line);
+        ui.boxes.forEach(function (item, i) {
+            const n = plan.boxes[i];
+            A.dom.setText(item.querySelector(".gl-box-num"), A.format.number(n));
+            A.dom.setText(item.querySelector(".gl-box-say"), (i ? t("glossary.box", { n: i }) : t("glossary.boxNew")) + ": " + A.plural("glossary.boxCards", n));
+            item.classList.toggle("is-empty", n === 0);
+        });
+        A.dom.setText(ui.studyNote, t(cardsUnsaved ? "glossary.cardsNotSaved" : "glossary.cardsSaved"));
+    }
+
+    // At local midnight a new term of the day comes, and more cards are due. A timer
+    // waits for midnight; a tab in the background (or a computer asleep) may delay it,
+    // so the day is checked again whenever the page is shown.
+    function watchTheDay() {
+        clearTimeout(dayTimer);
+        const now = new Date();
+        const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        dayTimer = setTimeout(newDay, midnight - now + MIDNIGHT_SLACK);
+    }
+
+    function newDay() {
+        if (today() !== shownDay) {
+            updateToday({ animate: true });
+            updateStudy();
+            refreshTodayCommand();
+        }
+        watchTheDay();
+    }
+
+    // ---------- 15. The flashcards window (js/glossary-cards.js) ----------
+    // The window is a file of its own that most visits never need: it loads the first
+    // time someone studies. It publishes A.glossaryCards = { create(host) } and gets from
+    // "cardsHost" below everything it shows and does (this file keeps the boxes).
+    let cardsWindow = null;      // the window, once loaded
+    let cardsLoading = null;     // the Promise of loading it
+
+    // Opens the flashcards on a deck and starts studying (see deckFrom for the options).
+    // -> a Promise: true when the window opened, false when it couldn't
+    function study(options) {
+        const deck = deckFrom(options);
+        const opener = document.activeElement;
+        const topBefore = A.overlays.top();
+        if (!cardsLoading) {
+            setStudyBusy(true);
+            cardsLoading = A.loadScript(CARDS_SCRIPT)
+                .then(function () { return A.whenFeature("glossaryCards"); })
+                .then(function (factory) {
+                    cardsWindow = factory.create(cardsHost);
+                    return cardsWindow;
+                });
+            cardsLoading.catch(function () { cardsLoading = null; });   // the next try loads it again
+        }
+        return cardsLoading.then(function () {
+            setStudyBusy(false);
+            // Another window opened while the file was loading: that one stays on top
+            if (A.overlays.top() !== topBefore) return false;
+            cardsWindow.open(deck, opener);
+            return true;
+        }, function () {
+            setStudyBusy(false);
+            A.toast(t("glossary.cardsLoadFailed"), "⚠️");
+            return false;
+        });
+    }
+
+    // The study button says when the window is on its way
+    function setStudyBusy(busy) {
+        if (!ui) return;
+        ui.studyButton.classList.toggle("is-loading", busy);
+        A.dom.setAttr(ui.studyButton, "aria-busy", String(busy));
+    }
+
+    // The lessons that have flashcards: [{ n, title }] ("" when this site doesn't have it yet)
+    function lessonDecks() {
+        const numbers = [];
+        TERMS.forEach(function (term) {
+            term.lessons.forEach(function (n) {
+                if (numbers.indexOf(n) === -1) numbers.push(n);
+            });
+        });
+        numbers.sort(function (a, b) { return a - b; });
+        return numbers.map(function (n) {
+            const title = A.lessons && typeof A.lessons.title === "function" ? A.lessons.title(n) : "";
+            return { n: n, title: title || "" };
+        });
+    }
+
+    // What the window gets from this file
+    const cardsHost = {
+        settings: { boxDays: BOX_DAYS.slice(), sessionMax: SESSION_MAX, newPerDay: NEW_PER_DAY },
+        categories: CATEGORIES.slice(),
+        lessonDecks: lessonDecks,
+        term: function (id) { return BY_ID[id]; },
+        name: termName,
+        short: termShort,
+        plan: deckPlan,
+        answer: answerCard,
+        boxOf: function (id) {
+            const card = readCards().cards[id];
+            return card ? card.box : 0;
+        },
+        canSave: function () { return !cardsUnsaved; },
+        dayText: dayText,
+        // The end of a study session (cards: how many were answered, correct: how many you knew)
+        finished: function (deck, cards, correct) {
+            A.track("flashcard.finish", { deck: deck, cards: cards, correct: correct });
+        },
+        // Where the focus goes after the window closes when the button that opened it is gone
+        fallbackFocus: function () { return ui ? ui.studyButton : null; }
+    };
+
+    // ---------- 16. Events ----------
     // After something the user did: cards glide, and screen readers hear the count
     function update() {
         render({ animate: true, announce: true });
@@ -1209,9 +1624,25 @@
             const button = event.target.closest(".gl-suggestion");
             if (button) show(button.getAttribute("data-target"), { focus: true });
         });
+
+        // The term of the day's "Learn more" opens its card in the glossary
+        ui.todayMore.addEventListener("click", function () {
+            show(termOfDay(shownDay).id, { focus: true });
+        });
+
+        ui.studyButton.addEventListener("click", function () {
+            study();
+        });
+
+        // Back to this tab: maybe it is a new day, maybe another tab studied some cards
+        document.addEventListener("visibilitychange", function () {
+            if (document.hidden) return;
+            newDay();
+            updateStudy();
+        });
     }
 
-    // ---------- 15. Language changes: same search, same open cards ----------
+    // ---------- 17. Language changes: same search, same open cards ----------
     function onLanguageChange() {
         // Quietly forget the announcement still waiting (it is in the old language)
         A.announce("", { region: ui.live, delay: 0 });
@@ -1220,9 +1651,11 @@
         TERMS.forEach(function (term) { translateCard(cards[term.id]); });
         render({ everyCard: true });
         updateExplored();
+        updateToday();
+        updateStudy();
     }
 
-    // ---------- 16. Start ----------
+    // ---------- 18. Start ----------
     // The glossary is far down the page, so it is built only when it comes near the
     // screen, when the browser has a quiet moment after loading, or as soon as
     // something needs it (ensure(): a palette command, a link to a term...).
@@ -1241,7 +1674,7 @@
         openFromHash();
     }
 
-    // ---------- 17. Palette commands and the public API ----------
+    // ---------- 19. Palette commands and the public API ----------
     // Ctrl+K palette: one command per term ("Glossary: Neural network")
     TERMS.forEach(function (term) {
         const words = ["glossary", "словарь", "term", "термин", term.id];
@@ -1259,6 +1692,35 @@
             run: function () { show(term.id, { focus: true }); }
         });
     });
+
+    // "Study flashcards" and "Term of the day: Pixel"
+    A.registerCommand({
+        id: "flashcards-study",
+        group: "glossary.cmdGroup",
+        icon: "🃏",
+        title: function () { return t("glossary.cmdStudy"); },
+        keywords: "glossary flashcards cards study learn repeat leitner словарь карточки учить повторить",
+        run: function () { study(); }
+    });
+
+    const todayCommand = {
+        id: "term-of-day",
+        group: "glossary.cmdGroup",
+        icon: "📅",
+        title: function () { return t("glossary.cmdToday", { term: termName(termOfDay(today())) }); },
+        keywords: "",
+        run: function () { show(termOfDay(today()).id, { focus: true }); }
+    };
+
+    // The command finds the day's term by its names too (the palette reads the
+    // keywords again each time it opens, so they can change at midnight)
+    function refreshTodayCommand() {
+        const term = termOfDay(today());
+        todayCommand.keywords = "glossary term of the day today word словарь термин дня сегодня слово " +
+            term.en.name + " " + term.ru.name;
+    }
+    refreshTodayCommand();
+    A.registerCommand(todayCommand);
 
     // AICompass.glossary: the assistant, the palette, the timeline, the lessons, the
     // lab, site search and My Compass use it. Everything works from the data alone
@@ -1283,6 +1745,13 @@
         // The ids of the terms this visitor has opened (on any visit)
         explored: function () { return Array.from(state.explored); },
         // Scrolls to a term, opens it and makes it glow ({ focus: true } also focuses it)
-        show: show
+        show: show,
+        // Today's term (the same for everyone all day; a new one at local midnight)
+        termOfDay: function () { return info(termOfDay(today())); },
+        // How many flashcards there are to study today (in a deck: the options of study())
+        due: function (options) { return deckPlan(deckFrom(options)).total; },
+        // Opens the flashcards: study(), study({ category: "vision" }), study({ lesson: 7 })
+        // -> a Promise: true when the window opened
+        study: study
     });
 })();
