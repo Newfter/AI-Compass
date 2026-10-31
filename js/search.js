@@ -1168,11 +1168,11 @@
         return listOf((A.content.get("timeline") || {}).events);
     }
 
-    // TODO(timeline): A.timeline.show(key, { focus: true }) should scroll to the milestone and
-    // focus it. Until the timeline has an API, this goes to the history section and then to
-    // the milestone's heading (js/timeline.js gives it the id "tl-title-<key>").
+    // A.timeline.show(key, { focus: true }) scrolls to the milestone and focuses it. Without
+    // the timeline's API (or for a key it doesn't have), this goes to the history section and
+    // then to the milestone's heading (js/timeline.js gives it the id "tl-title-<key>").
     function openMilestone(key) {
-        if (A.timeline && A.timeline.show) return A.timeline.show(key, { focus: true });
+        if (A.timeline && A.timeline.show && A.timeline.show(key, { focus: true })) return true;
         A.navigate("timeline", { focus: false });            // closes windows, builds the timeline
         const heading = document.getElementById("tl-title-" + key);
         if (!heading || !heading.getClientRects().length) return A.dom.focusHeading("timeline");

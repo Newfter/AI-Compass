@@ -64,7 +64,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/lab/` | The experiments, one file each, loaded when they open: `draw.js` ("Draw and teach": your drawings teach two models, nearest neighbours and a small neural network), `cluster.js` ("Finding groups": k-means finds groups in a cloud of points with no answers given, and the elbow chart helps choose how many), `classifier.js` ("Teach the machine", a tiny neural network), `descent.js` ("Down the hill": three balls race down a hill of error, the way a model learns by gradient descent), `predictor.js` (the next-word predictor, a tiny language model), `chatbot.js` ("Inside a chatbot": tokens, word meanings, attention and the dice that pick the next word), `vision.js` ("How computers see": 3 × 3 filters slide over a picture to find edges, then a tiny convolutional network shows what it sees), `maze.js` (a robot that learns from rewards), `evolve.js` (cars that learn to drive by evolution), `bias.js` ("Bias detective": a model trained on unfair past decisions learns to be unfair, and twins with the same skill show it). `kit.js` is the lab kit (`A.labKit`) they are all built from: buttons, sliders, charts, canvases, a frame loop, seeded random numbers, saved settings and "Try this" challenges. `sample.js` ("Guess the line") is a small, complete experiment to copy; it is not in the lab. |
 | `js/quiz.js` | The AI Challenge: the six modes (Classic, Timed, Daily challenge, Myth or fact, Lesson review, My mistakes), points, streaks, ranks, the saved results and the quiz's API. |
 | `js/glossary.js` | The glossary: search with "did you mean?", categories, the A–Z strip, term cards and a random term. |
-| `js/timeline.js` | "A Short History of AI": the era chips and the line that fills as you scroll. |
+| `js/timeline.js` | "A Short History of AI": the era and theme chips, the folded milestones, and the line that fills as you scroll. |
 | `js/assistant.js` | Compass Bot, the chat helper in the corner: its prepared answers, answers looked up in the site, follow-ups ("tell me more") and "quiz me". |
 | `js/palette.js` | The Ctrl+K search window. |
 | `js/search.js` | The site search (`A.search`): finds things in the lessons, glossary, timeline, quiz, AI Lab and page texts, in the current language, with typos, synonyms and the wrong keyboard layout. The Ctrl+K palette and Compass Bot use it. |
@@ -82,7 +82,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/quiz.js` | The quiz's buttons and messages, the list of questions with their tags, the "Myth or fact" statements and the ranks. |
 | `js/content/quiz-bank.js` | The texts of the 60 questions and 20 "Myth or fact" statements, one block per lesson. Not in `index.html`: the quiz loads it when it is needed. |
 | `js/content/glossary.js` | The glossary texts, the categories and every term. |
-| `js/content/timeline.js` | The timeline texts, the eras and every milestone. |
+| `js/content/timeline.js` | The timeline texts, the eras, the themes and every milestone (with its lesson and lab experiment). |
 | `js/content/assistant.js` | Compass Bot's texts, fun facts and jokes, and its "brain" (the words it listens for and its answers). |
 | `js/content/palette.js` | The texts of the Ctrl+K palette. |
 | `js/content/search.js` | The search's texts and word lists: little words it skips (also words that only judge, like "good" or "лучше"), words that mean the same thing ("нейросеть" = "neural network"), words that point back to the sentence before ("This is called..."), and the parts of the page it searches. |
@@ -160,7 +160,7 @@ A text for one exact number can be added too: `"quiz.subtitle.60"` would be used
 
 Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `.many` (5–20, 25...).
 
-**Features talk to each other through their API.** The last section of each feature file shares a few functions with `A.feature(...)`: `A.lessons.open(3)`, `A.glossary.show("bias")`, `A.quiz.start()`, `A.lab.open("predictor")`, `A.assistant.open()`, `A.palette.open()`. For example, the timeline's "In the glossary" buttons call `A.glossary.show(id, { focus: true })`. The quiz shares the most: `A.quiz.start(mode, options)`, `A.quiz.question(id)`, `A.quiz.bank()`, `A.quiz.stats()` and `A.quiz.ready()`, described at the end of `js/quiz.js`.
+**Features talk to each other through their API.** The last section of each feature file shares a few functions with `A.feature(...)`: `A.lessons.open(3)`, `A.glossary.show("bias")`, `A.quiz.start()`, `A.lab.open("predictor")`, `A.timeline.show("e3")`, `A.assistant.open()`, `A.palette.open()`. For example, the timeline's "In the glossary" buttons call `A.glossary.show(id, { focus: true })`. The quiz shares the most: `A.quiz.start(mode, options)`, `A.quiz.question(id)`, `A.quiz.bank()`, `A.quiz.stats()` and `A.quiz.ready()`, described at the end of `js/quiz.js`.
 
 **Pop-up windows** (the lesson reader, Compass Bot, the Ctrl+K palette, the phone menu) register with `A.overlays`. Core then treats them all the same way: a window that covers the page locks the page behind it, Esc closes the window on top, and the focus goes back to where it was.
 
@@ -197,7 +197,7 @@ Nothing leaves the browser: these events are only for features on the same page 
 | | `lab.milestone` | `{ exp, kind, ... }` | the classifier has learned (`kind: "learned"`, `epochs`) or the predictor was taught (`kind: "taught"`, `sentences`) |
 | | `lab.challenge` | `{ exp, n, done, total }` | a "Try this" challenge is reached (`n` counts from 1; `done` of the `total` are reached now). It can come again for the same `n` after the experiment resets its challenges. |
 | Glossary | `glossary.explore` | `{ id }` | a term is opened |
-| Timeline | `timeline.era` | `{ era }` | the timeline's line reaches an era for the first time |
+| Timeline | `timeline.era` | `{ era }` | the reader reaches an era for the first time: the line has lit one of its milestones while the end of the lit line, or that milestone, is on screen (never just because the page loaded, or because the page jumped past the timeline) |
 | Compass Bot | `bot.ask` | `{ typed: true }` or `{ intent }` | a typed question, or a chip |
 | | `bot.quiz` | `{ correct }` | a "quiz me" question in the chat is answered |
 | | `bot.feedback` | `{ helpful }` | 👍 (`true`) or 👎 (`false`) under an answer from the site |
@@ -483,37 +483,40 @@ The `ranks` at the bottom are shares of right answers (`0.65` = 65 %), so they w
 
 ### Add a timeline milestone
 
-**File:** `js/content/timeline.js`.
+**File:** `js/content/timeline.js`. Every date, name and number must be checked in two good sources: the timeline is a history lesson.
 
-**1. The texts**, in both parts (`.year`, `.title`, `.text` and `.why`). Use the next free number in the key:
+**1. The texts**, in both parts (`.year`, `.title`, `.text` and `.why`). Use the next free number in the key. "Why it mattered" is one sentence:
 
 ```js
-        "timeline.e16.year": "1986",
-        "timeline.e16.title": "Neural networks learn from their mistakes",
-        "timeline.e16.text": "David Rumelhart, Geoffrey Hinton and Ronald Williams showed how a neural network with several layers can learn: after each wrong answer, a method called backpropagation adjusts every connection a little. The idea was older, but their paper made it famous.",
-        "timeline.e16.why": "Backpropagation is still how almost every neural network is trained today.",
+        "timeline.e30.year": "1997",
+        "timeline.e30.title": "Neural networks get a longer memory",
+        "timeline.e30.text": "Sepp Hochreiter and Jürgen Schmidhuber described LSTM (long short-term memory), a neural network that can keep information over many steps of a sequence. About twenty years later, LSTMs helped phones recognise speech and translate text.",
+        "timeline.e30.why": "It made neural networks much better at sequences such as speech and text, long before the Transformer.",
 ```
 
 ```js
-        "timeline.e16.year": "1986",
-        "timeline.e16.title": "Нейросети учатся на своих ошибках",
-        "timeline.e16.text": "Дэвид Румельхарт, Джеффри Хинтон и Рональд Уильямс показали, как учится нейросеть из нескольких слоёв: после каждого неверного ответа метод обратного распространения ошибки немного подправляет каждую связь. Сама идея появилась раньше, но знаменитой её сделала их статья.",
-        "timeline.e16.why": "Почти все нейросети и сегодня обучаются методом обратного распространения ошибки.",
+        "timeline.e30.year": "1997",
+        "timeline.e30.title": "У нейросетей появляется долгая память",
+        "timeline.e30.text": "Зепп Хохрайтер и Юрген Шмидхубер описали LSTM («долгая краткосрочная память») — нейросеть, которая удерживает информацию на протяжении многих шагов последовательности. Примерно через двадцать лет LSTM помогали телефонам распознавать речь и переводить тексты.",
+        "timeline.e30.why": "Нейросети стали гораздо лучше работать с последовательностями, например с речью и текстом, — задолго до трансформера.",
 ```
 
-**2. The entry.** At the bottom, in `events`, add a line **where it belongs in time**: the order of the list is the order on the page (the number in the key doesn't matter). This one goes between the "AI winters" (`e5`) and Deep Blue (`e6`):
+**2. The entry.** At the bottom, in `events`, add a line **where it belongs in time**: the order of the list is the order on the page (the number in the key doesn't matter). This one goes after Deep Blue (`e6`, 1997) and before the robot car race (`e21`, 2005):
 
 ```js
-        { key: "e5", era: "ups", icon: "❄️", datetime: "", terms: [] },
-        { key: "e16", era: "ups", icon: "🔁", datetime: "1986", terms: ["neural-network", "training"] },
-        { key: "e6", era: "ups", icon: "♟️", datetime: "1997", terms: ["algorithm"] },
+        { key: "e6", era: "ups", icon: "♟️", datetime: "1997", major: true, themes: ["games"], terms: ["algorithm"], lesson: 1 },
+        { key: "e30", era: "ups", icon: "🧵", datetime: "1997", themes: ["learning", "language"], terms: ["neural-network"], lesson: 3 },
+        { key: "e21", era: "ups", icon: "🚗", datetime: "2005", themes: ["robots"], terms: ["robot", "computer-vision"], lesson: 5 },
 ```
 
 - `era`: `"early"`, `"ups"`, `"deep"` or `"gen"`.
 - `datetime`: the year, or `""` when the milestone is not one year (like "1970s–80s").
-- `terms`: glossary ids; each becomes an "In the glossary" button.
+- `major: true`: shown in full. Leave it out and the milestone starts folded (its year and title; a click opens it). Keep about 3 main ones per era, so the page stays short on a phone.
+- `themes`: the theme chips that show it (`learning`, `games`, `language`, `images`, `robots`, `science`, `society`).
+- `terms`: glossary ids; each becomes an "In the glossary" button (an id the glossary doesn't have yet is left out).
+- `lesson`, `lab`: the lesson number and the AI Lab experiment that teach the idea (left out when there is none). The link appears once the site has that lesson or experiment.
 
-**Check:** the milestone sits between 1970s–80s and 1997; the "Ups & downs" chip shows it; its glossary buttons open the right terms. Do it again in Russian.
+**Check:** the milestone sits between 1997 and 2005, folded; "Open all" in "Ups & downs" counts one more; the "Ups & downs", "Learning" and "Language" chips count it; open it: its lesson link and its glossary button work. Do it again in Russian.
 
 ### Add a fun fact or a joke to Compass Bot
 

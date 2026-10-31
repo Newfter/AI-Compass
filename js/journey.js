@@ -167,8 +167,9 @@
         terms: function () {
             return A.glossary && Array.isArray(A.glossary.ids) ? A.glossary.ids : [];
         },
-        // TODO(timeline): an A.timeline API with the eras would be cleaner than its content data
+        // The timeline's eras (A.timeline.eras), or its content data without the timeline
         eras: function () {
+            if (A.timeline && typeof A.timeline.eras === "function") return A.util.attempt(A.timeline.eras, []);
             const timeline = A.content.get("timeline");
             return timeline && Array.isArray(timeline.eras) ? timeline.eras : [];
         },
