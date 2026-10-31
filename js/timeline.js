@@ -568,10 +568,11 @@
                 item.on = on;
                 item.el.classList.toggle("is-reached", on);
             }
-            // An era counts as visited once the reader really got there: the line has
-            // moved into the timeline, or the dot is on the screen. (The first dot is
-            // lit at the top of the line before anyone scrolled to it.)
-            if (on && !visitedEras.has(era) && (shown > 0 || onScreen(node))) trackEra(era);
+            // An era counts as visited once the reader really got there: one of its lit
+            // dots is on the screen. (The first dot is lit before anyone scrolled to it,
+            // and a jump past the timeline, to "About" for example, lights every dot
+            // without showing any: neither counts.)
+            if (on && !visitedEras.has(era) && onScreen(node)) trackEra(era);
             const count = perEra[era] || (perEra[era] = { reached: 0, total: 0 });
             count.total++;
             if (on) {

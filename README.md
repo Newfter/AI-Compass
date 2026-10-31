@@ -168,7 +168,7 @@ Nothing leaves the browser: these events are only for features on the same page 
 | AI Lab | `lab.use` | `{ exp }` | a tab is chosen, training starts, or auto-write starts |
 | | `lab.milestone` | `{ exp, kind, ... }` | the classifier has learned (`kind: "learned"`, `epochs`) or the predictor was taught (`kind: "taught"`, `sentences`) |
 | Glossary | `glossary.explore` | `{ id }` | a term is opened |
-| Timeline | `timeline.era` | `{ era }` | the reader reaches an era for the first time: the line has moved into it, or its first milestone is on screen (never just because the page loaded) |
+| Timeline | `timeline.era` | `{ era }` | the reader reaches an era for the first time: one of its milestones is on screen with the line lit up to it (never just because the page loaded, or because the page jumped past the timeline) |
 | Compass Bot | `bot.ask` | `{ typed: true }` or `{ intent }` | a typed question, or a chip |
 | Ctrl+K | `palette.run` | `{ id }` | a command is run |
 | Core | `language.change` | `{ lang }` | the language changes |
