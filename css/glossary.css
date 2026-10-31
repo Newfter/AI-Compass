@@ -9,18 +9,21 @@
    7. Opening a card (example + related terms)
    8. Glowing "spotlight" when a term is shown
    9. Empty state and "show all"
-  10. Responsive (and bigger touch targets)
-  11. Less motion (reduced motion or calm mode)
+  10. The term of the day and the flashcards card (above the search)
+  11. The flashcards window (js/glossary-cards.js)
+  12. Responsive (and bigger touch targets)
+  13. Less motion (reduced motion or calm mode)
    All colours come from the variables in style.css, so both the
    dark and the light theme look right. Coloured text uses the
    --text-* versions, which are darker in the light theme.
    ========================================================= */
 
 /* Until js/glossary.js builds the glossary (when it comes near the screen), its
-   place keeps about the height it will have (the first 12 cards, measured), so the
-   page below doesn't jump. Smaller screens: see 10. Responsive. */
+   place keeps about the height it will have (the term of the day, the flashcards
+   and the first 12 cards, measured), so the page below doesn't jump.
+   Smaller screens: see 12. Responsive. */
 .js [data-feature="glossary"]:empty {
-    min-height: 1800px;
+    min-height: 2000px;
 }
 
 /* ===== 1. CATEGORY COLOURS ===== */
@@ -40,6 +43,24 @@
 [data-cat="learning"] {
     --gl-c: var(--accent);
     --gl-ink: var(--text-accent);
+}
+
+[data-cat="vision"] {
+    --gl-c: var(--success);
+    --gl-ink: var(--text-success);
+}
+
+[data-cat="trial"] {
+    --gl-c: var(--danger);
+    --gl-ink: var(--text-danger);
+}
+
+/* The site has no blue of its own: language models get the blue between its
+   violet and its cyan, and their text the same mix of the two text colours
+   (readable in both themes: see the contrast check in the glossary report) */
+[data-cat="language"] {
+    --gl-c: color-mix(in srgb, var(--accent) 40%, var(--accent-2));
+    --gl-ink: color-mix(in srgb, var(--text-accent) 40%, var(--text-accent-2));
 }
 
 [data-cat="generative"] {
@@ -601,18 +622,26 @@
     transform: rotate(180deg);
 }
 
-/* Closed content takes no space and can't be reached with Tab */
+/* Closed content takes no space, can't be reached with Tab and isn't even laid out
+   (with about 60 cards, that keeps typing in the search fast). It still opens and
+   closes smoothly: "display" waits for the end of the closing (allow-discrete), and an
+   opening starts from 0fr (@starting-style). Older browsers open and close at once. */
 .gl-more {
-    display: grid;
+    display: none;
     grid-template-rows: 0fr;
-    visibility: hidden;
-    transition: grid-template-rows 0.42s var(--ease), visibility 0s linear 0.42s;
+    transition: grid-template-rows 0.42s var(--ease);
+    transition: grid-template-rows 0.42s var(--ease), display 0.42s allow-discrete;
 }
 
 .gl-card.is-open .gl-more {
+    display: grid;
     grid-template-rows: 1fr;
-    visibility: visible;
-    transition: grid-template-rows 0.42s var(--ease), visibility 0s linear 0s;
+}
+
+@starting-style {
+    .gl-card.is-open .gl-more {
+        grid-template-rows: 0fr;
+    }
 }
 
 .gl-more-inner {
@@ -649,6 +678,61 @@
     color: var(--text);
     font-size: 0.875rem;
     line-height: 1.6;
+}
+
+/* "Learn it on this site": the term's lessons and its lab experiment */
+.gl-learn {
+    margin-top: 14px;
+}
+
+.gl-learn-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.gl-learn-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.84375rem;
+    font-weight: 600;
+    line-height: 1.35;
+    text-decoration: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.gl-learn-link:hover {
+    border-color: var(--gl-c);
+    background: var(--surface-hover);
+}
+
+.gl-learn-icon {
+    flex: none;
+    font-size: 1rem;
+}
+
+.gl-learn-text {
+    flex: 1;
+    min-width: 0;
+}
+
+/* An arrow at the end says "this takes you somewhere" */
+.gl-learn-link::after {
+    content: "→";
+    flex: none;
+    color: var(--text-dim);
+    transition: transform 0.2s ease;
+}
+
+.gl-learn-link:hover::after {
+    transform: translateX(3px);
 }
 
 .gl-related {
@@ -774,18 +858,685 @@
     transform: rotate(180deg);
 }
 
-/* ===== 10. RESPONSIVE ===== */
+/* ===== 10. THE TERM OF THE DAY AND THE FLASHCARDS CARD ===== */
+
+.gl-top {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.gl-today,
+.gl-study {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 22px 24px 20px;
+    overflow: hidden;
+}
+
+/* The term of the day wears the colour of its category */
+.gl-today {
+    background:
+        radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--gl-c) 16%, transparent), transparent 60%),
+        var(--glass);
+}
+
+.gl-study {
+    background:
+        radial-gradient(ellipse at 100% 0%, rgba(var(--accent-rgb), 0.14), transparent 60%),
+        var(--glass);
+}
+
+.gl-top-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.gl-today .gl-kicker {
+    color: var(--gl-ink);
+    color: color-mix(in srgb, var(--gl-ink) 70%, var(--text));    /* on the card's tint, see .gl-fc-tag */
+}
+
+.gl-today .gl-kicker-dot {
+    background: var(--gl-c);
+    box-shadow: 0 0 10px var(--gl-c);
+}
+
+.gl-today-date {
+    color: var(--text-dim);
+    font-size: 0.6875rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.gl-today-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.gl-today-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    font-size: 26px;     /* px: a glyph in a tile of fixed size */
+}
+
+/* The words take the room next to the icon. They are a size container,
+   so the name below can be sized by the room it has (the "cqi" unit). */
+.gl-today-words {
+    flex: 1;
+    min-width: 0;
+    container-type: inline-size;
+}
+
+.gl-today-name,
+.gl-study-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+}
+
+/* A name with a very long word ("Конфиденциальность": js/glossary.js adds is-long-word)
+   gets smaller where its box is narrow (a phone, or a tablet with the two cards side by
+   side), so the word never breaks in the middle: 6.8% of the box's width fits it */
+.gl-today-name.is-long-word {
+    font-size: min(1.25rem, 6.8cqi);
+}
+
+.gl-today-short,
+.gl-study-line {
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 0.90625rem;
+    line-height: 1.6;
+}
+
+.gl-study-line:empty {
+    display: none;
+}
+
+/* The everyday example, smaller */
+.gl-today-ex {
+    margin-top: 10px;
+    color: var(--text-dim);
+    font-size: 0.84375rem;
+    line-height: 1.55;
+}
+
+/* The buttons sit at the bottom of their card, so the two cards line up */
+.gl-today-more {
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+.gl-today-body {
+    margin-bottom: 16px;
+}
+
+.gl-today-arrow {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.gl-today-more:hover .gl-today-arrow {
+    transform: translateX(3px);
+}
+
+/* The boxes: new cards, then box 1 to box 5 (here and in the window). The higher
+   the box, the brighter its top line: those are the words you know well. */
+.gl-boxes,
+.gl-fc-box-list {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.gl-boxes-label {
+    margin-top: 14px;
+}
+
+.gl-boxes {
+    margin-top: 8px;
+}
+
+.gl-box,
+.gl-fc-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    padding: 9px 4px 7px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-2);
+    text-align: center;
+}
+
+.gl-box::before,
+.gl-fc-box::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient);
+    opacity: var(--box-light, 0);
+}
+
+[data-box="1"] { --box-light: 0.2; }
+[data-box="2"] { --box-light: 0.4; }
+[data-box="3"] { --box-light: 0.6; }
+[data-box="4"] { --box-light: 0.8; }
+[data-box="5"] { --box-light: 1; }
+
+.gl-box-num,
+.gl-fc-box-num {
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.gl-box.is-empty .gl-box-num,
+.gl-fc-box.is-empty .gl-fc-box-num {
+    color: var(--text-dim);
+}
+
+.gl-box-name,
+.gl-fc-box-name {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--text-dim);
+    font-size: 0.6875rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gl-study-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin-top: auto;
+    padding-top: 16px;
+}
+
+.gl-study-btn.is-loading {
+    cursor: progress;
+    opacity: 0.75;
+}
+
+.gl-study-note {
+    flex: 1 1 180px;
+    color: var(--text-dim);
+    font-size: 0.78125rem;
+    line-height: 1.45;
+}
+
+/* ===== 11. THE FLASHCARDS WINDOW (js/glossary-cards.js) ===== */
+
+/* The window is outside the glossary (at the end of the page), so it sets its own
+   colours. Its layer: the lesson reader's (style.css has no layer of its own for
+   it), so a lesson can open the cards above itself; the assistant, the palette and
+   the toasts stay above. */
+.gl-fc {
+    --gl-c: var(--accent);
+    --gl-ink: var(--text-accent);
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-reader);
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.gl-fc-backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--backdrop);
+    animation: gl-fade-in 0.3s ease both;
+}
+
+.gl-fc-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: min(560px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 22px 24px 18px;
+    border: 1px solid var(--border-strong);
+    border-radius: 24px;
+    background:
+        radial-gradient(ellipse at 0% 0%, rgba(var(--accent-rgb), 0.16), transparent 55%),
+        radial-gradient(ellipse at 100% 100%, rgba(var(--accent-2-rgb), 0.08), transparent 50%),
+        var(--surface-solid);
+    box-shadow: var(--shadow), 0 0 80px rgba(var(--accent-rgb), 0.2);
+    animation: gl-fc-in 0.42s var(--ease) both;
+}
+
+.gl-fc.is-closing {
+    pointer-events: none;
+}
+
+.gl-fc.is-closing .gl-fc-backdrop {
+    animation: gl-fade-out 0.22s ease both;
+}
+
+.gl-fc.is-closing .gl-fc-panel {
+    animation: gl-fc-out 0.22s ease both;
+}
+
+@keyframes gl-fc-in {
+    from { opacity: 0; transform: translateY(22px) scale(0.97); }
+}
+
+@keyframes gl-fc-out {
+    to { opacity: 0; transform: translateY(14px) scale(0.98); }
+}
+
+@keyframes gl-fade-in {
+    from { opacity: 0; }
+}
+
+@keyframes gl-fade-out {
+    to { opacity: 0; }
+}
+
+/* The title and the close button, and under them the deck menu */
+.gl-fc-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px 14px;
+}
+
+.gl-fc-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.gl-fc-deck {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.gl-fc-deck-label {
+    color: var(--text-dim);
+    font-size: 0.6875rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+/* The deck menu: a plain <select> with the arrow of the lab's menus */
+.gl-fc-select-box {
+    position: relative;
+    display: block;
+    flex: 1;
+    min-width: 0;
+}
+
+.gl-fc-select-box::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted);
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+}
+
+.gl-fc-select {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    min-height: 40px;
+    padding: 0 36px 0 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    border-radius: 11px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.gl-fc-select:hover {
+    border-color: var(--accent-2);
+}
+
+.gl-fc-close {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    color: var(--text-muted);
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.gl-fc-close:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+/* Studying: the progress line */
+.gl-fc-study {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.gl-fc-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.gl-fc-count {
+    flex: none;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    font-variant-numeric: tabular-nums;
+}
+
+.gl-fc-bar {
+    position: relative;
+    flex: 1;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: var(--border);
+}
+
+.gl-fc-bar span {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--gradient);
+    box-shadow: 0 0 8px rgba(var(--accent-2-rgb), 0.6);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s var(--ease);
+}
+
+/* The card: a button with two sides on top of each other. The back is turned
+   around, and the whole card turns over (js/glossary-cards.js plays the turn;
+   the class is-flipped holds where it ends). */
+.gl-fc-card {
+    display: block;
+    width: 100%;
+    border-radius: 20px;
+    color: inherit;
+    text-align: center;
+    perspective: 1400px;
+    cursor: pointer;
+}
+
+.gl-fc-inner {
+    display: grid;
+    min-height: clamp(200px, 36vh, 290px);
+    transform-style: preserve-3d;
+}
+
+.gl-fc-card.is-flipped .gl-fc-inner {
+    transform: rotateY(180deg);
+}
+
+.gl-fc-face {
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 26px 24px;
+    border: 1px solid var(--border-strong);
+    border-color: color-mix(in srgb, var(--gl-c) 45%, transparent);
+    border-radius: 20px;
+    background:
+        radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--gl-c) 18%, transparent), transparent 65%),
+        var(--surface-2);
+    box-shadow: var(--shadow-card);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.gl-fc-back {
+    transform: rotateY(180deg);
+    background:
+        radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--gl-c) 16%, transparent), transparent 65%),
+        var(--surface-2);
+}
+
+.gl-fc-card:hover .gl-fc-face {
+    border-color: var(--gl-c);
+}
+
+.gl-fc-tag {
+    color: var(--gl-ink);
+    /* small letters on a tinted card: a little closer to the text colour, for contrast */
+    color: color-mix(in srgb, var(--gl-ink) 70%, var(--text));
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.gl-fc-icon {
+    font-size: 2.625rem;
+    line-height: 1;
+}
+
+.gl-fc-name {
+    max-width: 100%;
+    font-family: var(--font-display);
+    font-size: 1.625rem;
+    font-weight: 600;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+}
+
+.gl-fc-think {
+    color: var(--text-dim);
+    font-size: 0.84375rem;
+    line-height: 1.5;
+}
+
+.gl-fc-short {
+    color: var(--text);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+}
+
+/* "Not yet" and "I knew it" appear once the back has been seen */
+.gl-fc-answers {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    visibility: hidden;
+}
+
+.gl-fc.is-seen .gl-fc-answers {
+    visibility: visible;
+    animation: aic-drop 0.3s var(--ease) both;
+}
+
+.gl-fc-key {
+    display: inline-grid;
+    place-items: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 5px;
+    border: 1px solid currentColor;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;     /* px: a glyph in a tile of fixed size */
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+/* What happened to the last card, and the keys */
+.gl-fc-moved {
+    min-height: 1.5em;
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.gl-fc-keys {
+    color: var(--text-dim);
+    font-size: 0.71875rem;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+/* The end of a session */
+.gl-fc-end {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+}
+
+.gl-fc-end-icon {
+    font-size: 2.75rem;
+    line-height: 1.1;
+}
+
+.gl-fc-end-title {
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* The title takes the focus only so that screen readers read it out: it is not
+   a control, so it shows no focus ring */
+.gl-fc-end-title:focus {
+    outline: none;
+}
+
+.gl-fc-end-text,
+.gl-fc-end-missed,
+.gl-fc-next {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+}
+
+.gl-fc-boxes {
+    width: 100%;
+    margin-top: 6px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--glass);
+    text-align: left;
+}
+
+.gl-fc-box-list {
+    margin-top: 10px;
+}
+
+.gl-fc-box-when {
+    color: var(--text-dim);
+    font-size: 0.625rem;
+    line-height: 1.3;
+}
+
+.gl-fc-how {
+    margin-top: 10px;
+    color: var(--text-dim);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+.gl-fc-end-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.gl-fc-note {
+    margin-top: auto;      /* at the bottom of a full-screen window (phones) */
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    line-height: 1.45;
+    text-align: center;
+}
+
+/* No arrow keys on touch screens: no key hints either */
+@media (hover: none), (pointer: coarse) {
+    .gl-fc-key,
+    .gl-fc-keys {
+        display: none;
+    }
+}
+
+/* ===== 12. RESPONSIVE ===== */
 
 /* Below about 980px the cards stand in two columns instead of three */
 @media (max-width: 960px) {
     .js [data-feature="glossary"]:empty {
-        min-height: 2400px;
+        min-height: 2600px;
     }
 }
 
 @media (max-width: 720px) {
     .js [data-feature="glossary"]:empty {
-        min-height: 2600px;
+        min-height: 3000px;
+    }
+
+    /* The term of the day above the flashcards */
+    .gl-top {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
     }
 
     .gl-console {
@@ -812,7 +1563,7 @@
 
 @media (max-width: 640px) {
     .js [data-feature="glossary"]:empty {
-        min-height: 4000px;
+        min-height: 4300px;
     }
 
     .gl-console {
@@ -872,6 +1623,135 @@
     .gl-foot .btn {
         width: 100%;
     }
+
+    .gl-today,
+    .gl-study {
+        padding: 20px 18px 18px;
+        border-radius: 20px;
+    }
+
+    .gl-today-name,
+    .gl-study-title {
+        font-size: 1.125rem;
+    }
+
+    .gl-boxes {
+        gap: 4px;
+    }
+
+    /* The window's boxes have longer names: two rows of three */
+    .gl-fc-box-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .gl-study-btn {
+        width: 100%;
+    }
+
+    /* The flashcards fill the screen */
+    .gl-fc {
+        padding: 0;
+        place-items: stretch;
+    }
+
+    .gl-fc-panel {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+        border: 0;
+        border-radius: 0;
+    }
+
+    .gl-fc-title {
+        font-size: 1.125rem;
+    }
+
+    .gl-fc-name {
+        font-size: 1.375rem;
+    }
+
+    /* A very long word ("Конфиденциальность", js: is-long-word) fits on one line */
+    .gl-fc-name.is-long-word {
+        font-size: 1.125rem;
+    }
+
+    .gl-fc-short {
+        font-size: 1rem;
+    }
+}
+
+/* A phone held sideways: the card on the left, the answers on the right */
+@media (max-height: 520px) and (orientation: landscape) {
+    .gl-fc {
+        padding: 0;
+        place-items: stretch;
+    }
+
+    .gl-fc-panel {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        gap: 10px;
+        padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left));
+        border: 0;
+        border-radius: 0;
+    }
+
+    .gl-fc-title {
+        font-size: 1rem;
+    }
+
+    /* One row: title, deck menu, close button */
+    .gl-fc-head {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .gl-fc-deck {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .gl-fc-study {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(160px, 34%);
+        align-items: start;
+        gap: 10px 16px;
+    }
+
+    .gl-fc-progress {
+        grid-column: 1 / -1;
+    }
+
+    .gl-fc-stage {
+        grid-row: span 3;
+    }
+
+    .gl-fc-inner {
+        min-height: 170px;
+    }
+
+    .gl-fc-face {
+        gap: 8px;
+        padding: 16px;
+    }
+
+    .gl-fc-icon {
+        font-size: 2rem;
+    }
+
+    .gl-fc-answers {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .gl-fc-moved {
+        text-align: left;
+    }
+
+    .gl-fc-keys {
+        display: none;
+    }
 }
 
 /* Bigger touch targets on phones and on touch screens */
@@ -880,8 +1760,16 @@
     .gl-rel,
     .gl-reset,
     .gl-empty-reset,
-    .gl-suggestion {
+    .gl-suggestion,
+    .gl-learn-link,
+    .gl-today-more,
+    .gl-fc-select {
         min-height: 44px;
+    }
+
+    .gl-fc-close {
+        width: 44px;
+        height: 44px;
     }
 
     .gl-letter {
@@ -890,7 +1778,7 @@
     }
 }
 
-/* ===== 11. LESS MOTION (reduced motion or calm mode) =====
+/* ===== 13. LESS MOTION (reduced motion or calm mode) =====
    style.css already stops every animation and transition under
    html.fx-motion-off; these rules only do what it can't. */
 
@@ -907,4 +1795,16 @@ html.fx-motion-off .gl-card.is-spotlight {
 
 html.fx-motion-off .gl-card:hover {
     transform: none;
+}
+
+/* The flashcard doesn't turn over: only the side that shows is there
+   (js/glossary-cards.js cross-fades the two sides instead) */
+html.fx-motion-off .gl-fc-card .gl-fc-inner,
+html.fx-motion-off .gl-fc-back {
+    transform: none;
+}
+
+html.fx-motion-off .gl-fc-card:not(.is-flipped) .gl-fc-back,
+html.fx-motion-off .gl-fc-card.is-flipped .gl-fc-front {
+    visibility: hidden;
 }
