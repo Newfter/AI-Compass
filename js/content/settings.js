@@ -120,7 +120,9 @@ window.AICompass.addTranslations({
         "settings.keysMaze": "AI Lab: Robot in a maze",
         "settings.keysBias": "AI Lab: Bias detective",
         "settings.keysGlossary": "Glossary search",
+        "settings.keysCards": "Glossary: flashcards",
         "settings.keysTimeline": "History",
+        "settings.keysClassroom": "For teachers: the classroom quiz",
         "settings.keysJourney": "My Compass: the activity calendar",
         "settings.keysPalette": "Site search ({shortcut})",       // {shortcut}: Ctrl+K, or ⌘K on a Mac
         "settings.keysBot": "Compass Bot",
@@ -159,8 +161,17 @@ window.AICompass.addTranslations({
         "settings.do.biasLetGo": "Let go of the applicant",
         "settings.do.glossaryOpen": "Open the first term found",
         "settings.do.glossaryClear": "Clear the search",
+        "settings.do.cardFlip": "Turn the card over",
+        "settings.do.cardAnswer": "“Not yet” or “I knew it” (once the back has been shown)",
+        "settings.do.cardClose": "Close the flashcards",
         "settings.do.timelineMove": "Go through the eras and the “In the glossary” buttons",
         "settings.do.timelinePick": "Show one era, or open the term in the glossary",
+        "settings.do.classNext": "Show the answer, then the next question (a presentation clicker works too)",
+        "settings.do.classPoint": "A point for team 1, 2, 3 or 4",
+        "settings.do.classMinus": "Take a point away from team 1, 2, 3 or 4",
+        "settings.do.classPause": "Pause or resume the timer",
+        "settings.do.classFull": "Full screen",
+        "settings.do.classClose": "Close the quiz",
         "settings.do.journeyDay": "The day before or after",
         "settings.do.journeyWeek": "The same day a week before or after",
         "settings.do.journeyEnds": "The first day shown, or today",
@@ -289,7 +300,9 @@ window.AICompass.addTranslations({
         "settings.keysMaze": "ИИ-лаборатория: «Робот в лабиринте»",
         "settings.keysBias": "ИИ-лаборатория: «Детектив предвзятости»",
         "settings.keysGlossary": "Поиск в словаре",
+        "settings.keysCards": "Словарь: карточки",
         "settings.keysTimeline": "История",
+        "settings.keysClassroom": "Учителям: викторина для класса",
         "settings.keysJourney": "«Мой компас»: календарь активности",
         "settings.keysPalette": "Поиск по сайту ({shortcut})",
         "settings.keysBot": "Compass Bot",
@@ -327,8 +340,17 @@ window.AICompass.addTranslations({
         "settings.do.biasLetGo": "Снять выбор с участника",
         "settings.do.glossaryOpen": "Открыть первый найденный термин",
         "settings.do.glossaryClear": "Очистить поиск",
+        "settings.do.cardFlip": "Перевернуть карточку",
+        "settings.do.cardAnswer": "«Пока нет» или «Знаю» (когда оборот уже показан)",
+        "settings.do.cardClose": "Закрыть карточки",
         "settings.do.timelineMove": "Переходить по эпохам и кнопкам «В словаре»",
         "settings.do.timelinePick": "Показать одну эпоху или открыть термин в словаре",
+        "settings.do.classNext": "Показать ответ, потом следующий вопрос (подойдёт и пульт для презентаций)",
+        "settings.do.classPoint": "Очко команде 1, 2, 3 или 4",
+        "settings.do.classMinus": "Снять очко у команды 1, 2, 3 или 4",
+        "settings.do.classPause": "Поставить таймер на паузу или продолжить отсчёт",
+        "settings.do.classFull": "Во весь экран",
+        "settings.do.classClose": "Закрыть викторину",
         "settings.do.journeyDay": "День раньше или позже",
         "settings.do.journeyWeek": "Тот же день неделей раньше или позже",
         "settings.do.journeyEnds": "Первый показанный день или сегодня",
@@ -499,12 +521,38 @@ window.AICompass.content.set("settings", {
             ]
         },
         {
+            title: "settings.keysCards",
+            items: [
+                // js/glossary-cards.js, 9 (Keys and buttons): the card is a button
+                { keys: [["enter"], ["space"]], does: "settings.do.cardFlip" },
+                // js/glossary-cards.js, 9: ← "Not yet" and → "I knew it", once the back was seen
+                { keys: [["←"], ["→"]], does: "settings.do.cardAnswer" },
+                // js/core.js, 9 (Overlays): Esc closes the cards window
+                { keys: [["esc"]], does: "settings.do.cardClose" }
+            ]
+        },
+        {
             title: "settings.keysTimeline",
             items: [
                 // js/timeline.js has no keys of its own: the era chips and the term
                 // buttons are normal buttons (5. Era filter, 6. Glossary buttons)
                 { keys: [["tab"], ["shift", "tab"]], does: "settings.do.timelineMove" },
                 { keys: [["enter"], ["space"]], does: "settings.do.timelinePick" }
+            ]
+        },
+        {
+            title: "settings.keysClassroom",
+            items: [
+                // js/teachers-kit.js, onQuizKey: NEXT_KEYS (Space, Page Down, →, N) and Enter
+                { keys: [["space"], ["enter"], ["pageDown"], ["→"], ["N"]], does: "settings.do.classNext" },
+                // js/teachers-kit.js, onQuizKey: TEAM_KEYS (1-4), Shift takes a point away
+                { keys: [["1"], ["2"], ["3"], ["4"]], does: "settings.do.classPoint" },
+                { keys: [["shift", "1"], ["shift", "2"], ["shift", "3"], ["shift", "4"]], does: "settings.do.classMinus" },
+                // js/teachers-kit.js, onQuizKey: P and F (by their place on the keyboard, in any layout)
+                { keys: [["P"]], does: "settings.do.classPause" },
+                { keys: [["F"]], does: "settings.do.classFull" },
+                // js/core.js, 9 (Overlays): Esc closes the quiz
+                { keys: [["esc"]], does: "settings.do.classClose" }
             ]
         },
         {
