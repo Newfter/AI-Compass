@@ -42,6 +42,24 @@
     --gl-ink: var(--text-accent);
 }
 
+[data-cat="vision"] {
+    --gl-c: var(--success);
+    --gl-ink: var(--text-success);
+}
+
+[data-cat="trial"] {
+    --gl-c: var(--danger);
+    --gl-ink: var(--text-danger);
+}
+
+/* The site has no blue of its own: language models get the blue between its
+   violet and its cyan, and their text the same mix of the two text colours
+   (readable in both themes: see the contrast check in the glossary report) */
+[data-cat="language"] {
+    --gl-c: color-mix(in srgb, var(--accent) 40%, var(--accent-2));
+    --gl-ink: color-mix(in srgb, var(--text-accent) 40%, var(--text-accent-2));
+}
+
 [data-cat="generative"] {
     --gl-c: var(--accent-3);
     --gl-ink: var(--text-accent-3);
