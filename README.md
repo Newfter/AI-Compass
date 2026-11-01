@@ -72,7 +72,12 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/palette.js` | The Ctrl+K search window. |
 | `js/search.js` | The site search (`A.search`): finds things in the lessons, glossary, timeline, quiz, AI Lab and page texts, in the current language, with typos, synonyms and the wrong keyboard layout. The Ctrl+K palette and Compass Bot use it. |
 | `js/journey.js` | My Compass: counts XP from the progress events, and keeps the level, the badges and the streak in this browser. It also draws the button in the menu. |
-| `js/journey-panel.js` | The My Compass window (the dashboard). It is loaded the first time the window opens. |
+| `js/journey-panel.js` | The My Compass window (the dashboard). It is loaded the first time the window opens. With accounts switched on, its "Your account" card shows the Knowledge Challenge results and the diary of saved results. |
+| `js/config.js` | The two public values that switch the account features on (the Supabase project address and its public key). Empty = accounts off. See `docs/ACCOUNTS-SETUP.md`. Never a secret key. |
+| `js/account.js` | Accounts: the Sign in with Google button, the account window (nickname, "Save now", sign out, delete), the progress saved online and merged across devices, and the diary of results. Off, with no trace, while `js/config.js` is empty. |
+| `js/challenge.js` | The Knowledge Challenge: 20 random questions from the lessons for signed-in players, a calm clock, results with explanations, and the leaderboard (all time and this week). The questions, the scoring and the ranking live in the database. |
+| `js/vendor/supabase.js` | The Supabase client library (supabase-js, one file from npm, loaded only when accounts are on). The one library the site uses. |
+| `supabase/schema.sql` | The database: tables, privacy rules and scoring functions. Run it in the Supabase SQL editor (`docs/ACCOUNTS-SETUP.md`, step 5). |
 | `js/settings.js` | The Settings window (the gear in the menu, Ctrl+K or `#settings`): language, theme, text size, line spacing, font, underlined links, contrast, transparency, calm motion and the read-aloud voice and speed, saved in this browser (`A.settings`). Also the keyboard shortcuts window (press `?`). |
 | `js/platform.js` | The app around the site: starts the offline copy (`sw.js`), the "Install the app" button, the offline / back online messages, `?lang=` in the address, sharing (`A.share`) and the Share and Print commands. |
 | `js/teachers.js` | The "For teachers" section: the course at a glance, three buttons for each lesson (plan, worksheet, answer key) and the classroom quiz button. It stays small: it loads the teacher kit the first time one of them is opened. |
@@ -93,6 +98,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/palette.js` | The texts of the Ctrl+K palette. |
 | `js/content/search.js` | The search's texts and word lists: little words it skips (also words that only judge, like "good" or "лучше"), words that mean the same thing ("нейросеть" = "neural network"), words that point back to the sentence before ("This is called..."), and the parts of the page it searches. |
 | `js/content/journey.js` | My Compass: its texts, the XP table, the levels and the badges. |
+| `js/content/account.js` | The texts of signing in, the account window and the account card in My Compass. At its end, the few texts of other features that change when accounts are on. |
+| `js/content/challenge.js` | The texts of the Knowledge Challenge and the leaderboard. The questions are not here: they are in the database only. |
 | `js/content/settings.js` | The texts of the Settings and keyboard shortcuts windows, and the list of every keyboard shortcut of the site. |
 | `js/content/platform.js` | The texts of installing, the offline messages and sharing. |
 | `js/content/teachers.js` | The texts of the "For teachers" section. |
@@ -104,6 +111,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `404.html` | The page GitHub Pages shows for an address that doesn't exist, however deep, in both languages. |
 | `robots.txt`, `sitemap.xml` | For search engines: everything may be read, and the site's three addresses (plain, `?lang=en`, `?lang=ru`). |
 | `images/` | The app icons, the browser tab's icon, and the picture shown when a link is shared (`og-image.png`, 1200 × 630). |
+| `docs/ACCOUNTS-SETUP.md` | How to create the free Supabase project and the Google sign-in key, what to put in `js/config.js`, and what must stay secret. |
+| `.github/workflows/keep-awake.yml` | A daily job on GitHub that calls the database once, so the free Supabase project is never paused for inactivity. It does nothing while `js/config.js` is empty. |
 | `README.md` | This guide. |
 
 
@@ -172,6 +181,8 @@ Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `
 
 **Features talk to each other through their API.** The last section of each feature file shares a few functions with `A.feature(...)`: `A.lessons.open(3)`, `A.glossary.show("bias")`, `A.quiz.start()`, `A.lab.open("predictor")`, `A.timeline.show("e3")`, `A.assistant.open()`, `A.palette.open()`. For example, the timeline's "In the glossary" buttons call `A.glossary.show(id, { focus: true })`. The quiz shares the most: `A.quiz.start(mode, options)`, `A.quiz.question(id)`, `A.quiz.bank()`, `A.quiz.stats()` and `A.quiz.ready()`, described at the end of `js/quiz.js`.
 
+**Accounts are optional, and off by default.** `js/account.js` offers `A.account` (`enabled`, `user()`: `{ id, nickname }` and never the e-mail, `signedIn()`, `signIn()`, `open()`, `rpc(name, args)` for the database functions of `supabase/schema.sql`, `history()`) and sends the `"account"` event (`{ type: "signin" | "signout" | "nickname" | "saved", user }`). A feature that needs it checks `A.account && A.account.enabled` first and keeps working without it. The progress itself needs no change: `js/account.js` watches the saved keys and the progress events, saves them online, and merges what other devices saved (a lesson finished on the phone and another on the laptop both count).
+
 **Pop-up windows** (the lesson reader, Compass Bot, the Ctrl+K palette, the phone menu, the menu bar's "More" list) register with `A.overlays`. Core then treats them all the same way: a window that covers the page locks the page behind it, Esc closes the window on top, and the focus goes back to where it was.
 
 **Design tokens.** The colours, fonts, sizes, shadows and layers are CSS variables in section 1 of `style.css`, with one set for the dark theme and one for the light theme (`data-theme="light"` on `<html>`). Use them instead of writing a colour again: `color: var(--text-muted);`, `background: rgba(var(--accent-rgb), 0.12);`.
@@ -191,25 +202,25 @@ A.on("activity", function (activity) {
 });
 ```
 
-Nothing leaves the browser: these events are only for features on the same page (for example "My Compass", which turns them into XP with the table in `js/content/journey.js`).
+These events are for features on the same page (for example "My Compass", which turns them into XP with the table in `js/content/journey.js`). Nothing leaves the browser, with one exception: for a signed-in person, `js/account.js` writes the results marked with ☁ below into their own diary online (`events` in `supabase/schema.sql`), which My Compass shows as "Your saved results".
 
 | Part | Event | Detail | When |
 | --- | --- | --- | --- |
 | Lessons | `lesson.open` | `{ n }` | every time a lesson is shown |
-| | `lesson.complete` | `{ n }` | the first time a lesson is marked as done |
-| | `lesson.check` | `{ n, correct }` | a "check yourself" question is answered |
+| | `lesson.complete` ☁ | `{ n }` | the first time a lesson is marked as done |
+| | `lesson.check` ☁ | `{ n, correct }` | a "check yourself" question is answered |
 | | `track.complete` | `{ track }` | the last lesson of a track is done (`"basics"` or `"deep"`) |
-| | `certificate.make` | `{ track }` | a certificate is downloaded (`"basics"`, `"deep"` or `"all"`: the full course) |
+| | `certificate.make` ☁ | `{ track }` | a certificate is downloaded (`"basics"`, `"deep"` or `"all"`: the full course) |
 | Quiz | `quiz.answer` | `{ id, correct, mode }` | a question is answered (`id` is a question, `"q7"`, or a "Myth or fact" statement, `"m3"`) |
-| | `quiz.finish` | `{ mode, score, total, points, timed, seconds, answerSeconds, lesson }` | a game ends. `mode`: `"classic"`, `"timed"`, `"daily"`, `"myth"`, `"lesson"` or `"mistakes"`; `score`: right answers; `seconds`: from the first question to the end; `answerSeconds`: only the time spent answering; `lesson`: only in Lesson review |
-| | `daily.complete` | `{ date, score, total, streak }` | the daily challenge is finished (once a day; `date` is `"2026-01-15"`, `streak` the days in a row) |
-| AI Lab | `lab.use` | `{ exp }` | an experiment is opened; also when training starts (Teach the machine) or auto-write starts (the predictor) |
+| | `quiz.finish` ☁ | `{ mode, score, total, points, timed, seconds, answerSeconds, lesson }` | a game ends. `mode`: `"classic"`, `"timed"`, `"daily"`, `"myth"`, `"lesson"` or `"mistakes"`; `score`: right answers; `seconds`: from the first question to the end; `answerSeconds`: only the time spent answering; `lesson`: only in Lesson review |
+| | `daily.complete` ☁ | `{ date, score, total, streak }` | the daily challenge is finished (once a day; `date` is `"2026-01-15"`, `streak` the days in a row) |
+| AI Lab | `lab.use` ☁ | `{ exp }` | an experiment is opened; also when training starts (Teach the machine) or auto-write starts (the predictor) |
 | | `lab.milestone` | `{ exp, kind, ... }` | the classifier has learned (`kind: "learned"`, `epochs`) or the predictor was taught (`kind: "taught"`, `sentences`) |
-| | `lab.challenge` | `{ exp, n, done, total }` | a "Try this" challenge is reached (`n` counts from 1; `done` of the `total` are reached now). It can come again for the same `n` after the experiment resets its challenges. |
+| | `lab.challenge` ☁ | `{ exp, n, done, total }` | a "Try this" challenge is reached (`n` counts from 1; `done` of the `total` are reached now). It can come again for the same `n` after the experiment resets its challenges. |
 | Glossary | `glossary.explore` | `{ id }` | a term is opened |
 | | `flashcard.review` | `{ id, box, correct }` | a flashcard is answered (`box` is the box the card is in now, 1–5) |
-| | `flashcard.finish` | `{ deck, cards, correct }` | a study session ends (`deck` is `"all"`, a category like `"vision"` or a lesson like `"lesson-7"`; `cards` were answered, `correct` of them known) |
-| Timeline | `timeline.era` | `{ era }` | the reader reaches an era for the first time: the line has lit one of its milestones while the end of the lit line, or that milestone, is on screen (never just because the page loaded, or because the page jumped past the timeline) |
+| | `flashcard.finish` ☁ | `{ deck, cards, correct }` | a study session ends (`deck` is `"all"`, a category like `"vision"` or a lesson like `"lesson-7"`; `cards` were answered, `correct` of them known) |
+| Timeline | `timeline.era` ☁ | `{ era }` | the reader reaches an era for the first time: the line has lit one of its milestones while the end of the lit line, or that milestone, is on screen (never just because the page loaded, or because the page jumped past the timeline) |
 | Compass Bot | `bot.ask` | `{ typed: true }` or `{ intent }` | a typed question, or a chip |
 | | `bot.quiz` | `{ correct }` | a "quiz me" question in the chat is answered |
 | | `bot.feedback` | `{ helpful }` | 👍 (`true`) or 👎 (`false`) under an answer from the site |
@@ -224,6 +235,8 @@ Nothing leaves the browser: these events are only for features on the same page 
 | | `settings.change` | `{ name: "calm", value }` | calm mode is switched on (`true`) or off (`false`) |
 | My Compass | `journey.open` | `{}` | the window opens |
 | | `journey.export` | `{ how }` | the progress is saved to a file (`how: "file"`) or copied as text (`how: "text"`) |
+| Knowledge Challenge | `challenge.start` | `{ attempt }` | a signed-in player starts a round of 20 questions |
+| | `challenge.finish` | `{ attempt, correct, total, seconds, eligible, newBest }` | the round is marked (on the server). `eligible`: it counts for the leaderboard (finished in time, not faster than the minimum); `newBest`: it is the player's new personal best |
 
 My Compass also sends its own event, `"journey"`, after a new level (`{ type: "level", level, name }`) or a new badge (`{ type: "badge", id, name }`), and offers `A.journey`: `xp()`, `level()`, `badges()`, `streak()`, `open()`, `export()` and `import(data)`.
 
@@ -717,7 +730,9 @@ These keep the code easy to read, as if one person wrote it all.
 - **Respect calm mode.** Before an animation, check `A.motion.ok()`.
 - **Font sizes in rem** (px ÷ 16: `0.875rem` is 14 px), so the text size setting reaches them. Only a letter or an emoji in a box of fixed size keeps px, with the comment `/* px: a glyph in a tile of fixed size */`.
 - **A new keyboard shortcut** goes into the list at the end of `js/content/settings.js`, so the `?` window shows it.
-- **No libraries, no build step, no `import` / `export`.** Every script is a plain `<script defer>` in `index.html`.
+- **No libraries, no build step, no `import` / `export`.** Every script is a plain `<script defer>` in `index.html`. (The one exception is the Supabase client in `js/vendor/`, loaded on demand and only when accounts are on.)
+- **Nothing secret in the repository.** `js/config.js` holds only the two public values; the service key, the Google secret and the database password never go into a file here. The challenge questions with their answers live only in the database (`docs/ACCOUNTS-SETUP.md`): never add them to the code, or the leaderboard could be cheated.
+- **Everything works without an account.** A feature may use `A.account` only after checking `A.account && A.account.enabled`, and must keep working, with the same texts in both languages, when it is off.
 
 
 ## Before you merge: a test checklist
@@ -736,6 +751,8 @@ Open the site on a local server and go through this list for the parts you chang
 - [ ] **Saved progress.** Finish a lesson, change the language and the theme, reload: everything is remembered.
 - [ ] **Offline** (if you added a file to `index.html`, or a file loaded on demand: list that one with `A.keepOffline`). Load the page, wait a few seconds, then in F12 → Network tick "Offline" and reload: everything still works, also the parts you didn't open.
 - [ ] **Printing** (if you changed a layout). Ctrl+P: the preview is black on white, and an open lesson prints as a handout.
+- [ ] **Accounts off.** With an empty `js/config.js`, the page shows no sign-in button and no Challenge section, and nothing you changed waits for an account.
+- [ ] **Accounts on** (if you touched `js/account.js`, `js/challenge.js` or the database). Sign in, pick a nickname, play one round, see it on the leaderboard and in My Compass, sign out, sign in on another browser: the progress is merged. The e-mail address appears nowhere but in your own account window.
 
 
 ## Credits
