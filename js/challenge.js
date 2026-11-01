@@ -131,7 +131,8 @@
     const ui = {};
     let screen = "lobby";        // lobby | question | sending | result
     let result = null;           // the marked attempt, from the server
-    let lobbyError = "";         // "start", "bank", "signedOut"
+    let lobbyError = "";         // "start", "bank", "signedOut", "tooSoon"
+    let lobbyWait = 0;           // seconds to wait when the error is "tooSoon"
     let starting = false;
     let sendError = false;
     let stats = { data: null, at: 0, loading: false, failed: false };
@@ -188,7 +189,7 @@
 
     /* ---------- 5. The lobby ---------- */
     function rulesList(rules) {
-        const r = rules || (attempt && attempt.rules) || (board.data.all && board.data.all.rules) || { questions: 20, limit_minutes: 60, min_seconds: 40 };
+        const r = rules || (attempt && attempt.rules) || (board.data.all && board.data.all.rules) || { questions: 20, limit_minutes: 60, min_seconds: 60 };
         return '<ul class="ch-rules">' +
             "<li>" + esc(A.plural("challenge.rules.1", r.questions)) + "</li>" +
             "<li>" + esc(t("challenge.rules.2")) + "</li>" +
@@ -221,7 +222,8 @@
             }
             if (expiredNote) html += '<p class="ch-note">' + esc(t("challenge.expiredNote")) + "</p>";
             if (lobbyError) {
-                html += '<p class="ch-problem" role="alert">' + esc(t("challenge.error." + lobbyError)) + "</p>";
+                html += '<p class="ch-problem" role="alert">' +
+                    esc(lobbyError === "tooSoon" ? A.plural("challenge.error.tooSoon", lobbyWait) : t("challenge.error." + lobbyError)) + "</p>";
             }
             html += "</div>";
             html += '<div class="ch-best">' +
@@ -298,8 +300,11 @@
         }, function (error) {
             starting = false;
             const code = error && error.message;
-            lobbyError = code === "bank_too_small" ? "bank" : code === "not_signed_in" ? "signedOut" : "start";
-            render();
+            lobbyError = code === "bank_too_small" ? "bank" : code === "not_signed_in" ? "signedOut" : code === "too_soon" ? "tooSoon" : "start";
+            // the server says how long to wait (its hint); without it, the rule itself
+            const rulesKnown = (board.data.all && board.data.all.rules) || {};
+            lobbyWait = parseInt(error && error.raw && error.raw.hint, 10) || rulesKnown.cooldown_seconds || 60;
+            if (screen === "lobby") render(); else show("lobby");    // the problem is explained in the lobby
             return false;
         });
     }
@@ -493,7 +498,7 @@
                 '<p class="ch-score-big"><strong>' + esc(t("challenge.res.score", { correct: r.correct, total: r.total })) + "</strong></p>" +
                 '<p class="ch-score-line">' + esc(t("challenge.res.accuracy", { percent: A.format.percent(share) })) + " · " + esc(t("challenge.res.time", { time: timeText(r.duration_ms) })) + "</p>" +
                 (r.new_best ? '<p class="ch-newbest">' + esc(t("challenge.res.newBest")) + "</p>" : "") +
-                (r.eligible === false ? '<p class="ch-note">' + esc(t("challenge.res.tooFast", { n: rules.min_seconds || 40 })) + "</p>" : "") +
+                (r.eligible === false ? '<p class="ch-note">' + esc(t("challenge.res.tooFast", { n: rules.min_seconds || 60 })) + "</p>" : "") +
                 (r.eligible && r.standing && r.standing.all ? '<p class="ch-muted">' + esc(t("challenge.res.standingAll", r.standing.all)) +
                     (r.standing.week ? " · " + esc(t("challenge.res.standingWeek", r.standing.week)) : "") + "</p>" : "") +
             "</div>";

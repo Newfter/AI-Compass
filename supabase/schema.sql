@@ -19,10 +19,19 @@
 -- the profiles are not readable directly at all; the website reaches them only through the
 -- functions below, which run as the database owner ("security definer"), check who is
 -- calling with auth.uid(), and give back only what that person may see. Scores and times
--- are computed here, from the server clock, never trusted from the browser.
+-- are computed here, from the server clock, never trusted from the browser. The right answers
+-- are shown only after a round that counts, a new round can start once a minute, and a diary
+-- cannot grow faster than a person learns.
 
 create schema if not exists private;
 revoke all on schema private from public;
+
+-- Supabase gives every new table and function in "public" to the browser roles by default.
+-- From here on, anything created in this schema starts out unreachable instead, and only the
+-- grants at the end of this file open what the website needs.
+alter default privileges in schema public revoke all on tables from anon, authenticated;
+alter default privileges in schema public revoke all on sequences from anon, authenticated;
+alter default privileges in schema public revoke all on functions from anon, authenticated;
 
 -- ---------------------------------------------------------------------------------
 -- The rules of the challenge, in one place. The website reads them from the server.
@@ -33,7 +42,8 @@ language sql immutable as $$
     'questions', 20,        -- questions per attempt
     'per_lesson', 2,        -- at most this many from one lesson (when the bank allows)
     'limit_minutes', 60,    -- an attempt not finished in time is over and does not count
-    'min_seconds', 40,      -- faster than this cannot be an honest read of 20 questions
+    'min_seconds', 60,      -- faster than this cannot be an honest read of 20 questions
+    'cooldown_seconds', 60, -- a new attempt may start this long after the previous one began
     'board_size', 100       -- rows shown on a leaderboard
   )
 $$;
@@ -48,9 +58,28 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create unique index if not exists profiles_nickname_lower on public.profiles (lower(nickname));
 alter table public.profiles enable row level security;
 revoke all on public.profiles from anon, authenticated;
+
+-- Letters that look like Latin ones (a Cyrillic "а", a Greek "ο") become that Latin letter,
+-- so that "Аlex" cannot pose as "Alex". Lower case, in the plain (NFKC) Unicode form.
+create or replace function private.fold_lookalikes(name text) returns text
+language sql immutable as $$
+  select translate(lower(normalize(coalesce(name, ''), nfkc)),
+    'аеорсухіјѕԁԛѡһӏкмнвтгзαβεζηικμνορτυχγω',
+    'aeopcyxijsdqwhlkmhbtr3abeznikmvoptyxyw')
+$$;
+
+-- Two nicknames are the same name when they look the same: case, look-alike letters, a capital
+-- I for an l, a 0 for an o, a 1 for an l and the separators (space _ . -) make no difference.
+create or replace function private.nickname_key(name text) returns text
+language sql immutable as $$
+  select regexp_replace(
+    translate(private.fold_lookalikes(translate(normalize(coalesce(name, ''), nfkc), 'I', 'l')), '01', 'ol'),
+    '[ _.-]', '', 'g')
+$$;
+drop index if exists public.profiles_nickname_lower;
+create unique index if not exists profiles_nickname_key on public.profiles (private.nickname_key(nickname));
 
 -- A neutral starting nickname ("Explorer 4821"), never built from the e-mail or the name.
 create or replace function private.new_nickname() returns text
@@ -61,7 +90,7 @@ declare
 begin
   loop
     n := 'Explorer ' || (1000 + floor(random() * 9000))::int;
-    exit when not exists (select 1 from public.profiles where lower(nickname) = lower(n));
+    exit when not exists (select 1 from public.profiles where private.nickname_key(nickname) = private.nickname_key(n));
     tries := tries + 1;
     if tries > 40 then
       n := 'Explorer ' || (100000 + floor(random() * 900000))::int;
@@ -75,11 +104,39 @@ end $$;
 create or replace function private.clean_nickname(raw text) returns text
 language plpgsql immutable as $$
 declare
-  n text := btrim(regexp_replace(coalesce(raw, ''), '\s+', ' ', 'g'));
+  -- the alphabets a nickname may use (one of them, not a mix: mixing is how look-alike names are made)
+  latin     constant text := 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F';
+  cyrillic  constant text := '\u0400-\u0481\u048A-\u04FF';
+  greek     constant text := '\u0370-\u03FF';
+  armenian  constant text := '\u0531-\u0556\u0561-\u0587';
+  hebrew    constant text := '\u05D0-\u05EA';
+  arabic    constant text := '\u0620-\u064A\u0671-\u06D3';
+  georgian  constant text := '\u10A0-\u10FF';
+  indic     constant text := '\u0900-\u097F';
+  thai      constant text := '\u0E00-\u0E7F';
+  east_asia constant text := '\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF\uAC00-\uD7AF';
+  letters   constant text := latin || cyrillic || greek || armenian || hebrew || arabic || georgian || indic || thai || east_asia;
+  alphabet  text;
+  alphabets int := 0;
+  n text := normalize(coalesce(raw, ''), nfkc);   -- full-width and decorated letters become plain ones
+  low text;
 begin
-  -- letters of any alphabet, digits, spaces, _ . -   (3 to 20 characters, starting with a letter or digit)
-  if n !~ '^[[:alnum:]][[:alnum:] _.-]{2,19}$' then return null; end if;
-  if lower(n) in ('admin', 'administrator', 'moderator', 'support', 'ai compass', 'aicompass', 'ai-compass', 'teacher', 'system') then
+  -- invisible characters (zero-width spaces, direction marks, fillers) are removed
+  n := regexp_replace(n, '[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180B-\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\u3164\uFE00-\uFE0F\uFEFF\uFFA0\uFFF0-\uFFF8]', '', 'g');
+  n := btrim(regexp_replace(n, '\s+', ' ', 'g'));
+  -- letters, digits, spaces, _ . -   (3 to 20 characters, starting with a letter or digit)
+  if n !~ ('^[' || letters || '0-9][' || letters || '0-9 _.-]{2,19}$') then return null; end if;
+  foreach alphabet in array array[latin, cyrillic, greek, armenian, hebrew, arabic, georgian, indic, thai, east_asia] loop
+    if n ~ ('[' || alphabet || ']') then alphabets := alphabets + 1; end if;
+  end loop;
+  if alphabets > 1 then return null; end if;
+  -- nothing that sounds official: also with look-alike letters, digits for letters (Supp0rt),
+  -- separators (Admin., A d m i n) or endings (admin1, Moderater) added
+  low := regexp_replace(lower(n), '[ _.-]+', ' ', 'g');
+  if low ~ '\m(админ|модер|поддержк|владел|систем|официал)' then return null; end if;
+  low := translate(private.fold_lookalikes(low), '013457', 'oieast');
+  if low ~ '(\m(admin|moder|support|staff|official|owner|system|ai ?compass)|\mroot\M)'
+     or regexp_replace(low, ' ', '', 'g') ~ '^(admin|moder|support|staff|official|owner|system|aicompass|root$)' then
     return null;
   end if;
   return n;
@@ -177,6 +234,21 @@ create trigger user_progress_touch
   before insert or update on public.user_progress
   for each row execute function private.touch_updated_at();
 
+-- The website saves a few dozen keys per person; a hundred is already not the website.
+create or replace function private.cap_progress_keys() returns trigger
+language plpgsql as $$
+begin
+  if not exists (select 1 from public.user_progress where user_id = new.user_id and key = new.key)
+     and (select count(*) from public.user_progress where user_id = new.user_id) >= 100 then
+    raise exception 'too_many_keys';
+  end if;
+  return new;
+end $$;
+drop trigger if exists user_progress_cap on public.user_progress;
+create trigger user_progress_cap
+  before insert on public.user_progress
+  for each row execute function private.cap_progress_keys();
+
 -- ---------------------------------------------------------------------------------
 -- 5. Events: the diary of learning results shown in My Compass
 -- ---------------------------------------------------------------------------------
@@ -199,11 +271,12 @@ create policy "events: read own" on public.events for select to authenticated us
 drop policy if exists "events: add own" on public.events;
 create policy "events: add own" on public.events for insert to authenticated with check (user_id = auth.uid());
 
--- An event may carry the time it happened (offline, for example), but never a time in the future.
+-- An event may carry the time it happened (offline, for example), but never a time in the
+-- future, and nothing from before the website existed.
 create or replace function private.clamp_event_time() returns trigger
 language plpgsql as $$
 begin
-  new.at := least(coalesce(new.at, now()), now());
+  new.at := greatest(least(coalesce(new.at, now()), now()), timestamptz '2025-01-01');
   new.recorded_at := now();
   return new;
 end $$;
@@ -211,6 +284,25 @@ drop trigger if exists events_clamp_time on public.events;
 create trigger events_clamp_time
   before insert on public.events
   for each row execute function private.clamp_event_time();
+
+-- A diary grows at the pace of learning: more than this per minute or per day is a script.
+create index if not exists events_user_recorded on public.events (user_id, recorded_at desc);
+create or replace function private.cap_events() returns trigger
+language plpgsql as $$
+declare
+  last_minute int;
+  last_day int;
+begin
+  select count(*) filter (where recorded_at > now() - interval '1 minute'), count(*)
+    into last_minute, last_day
+    from public.events where user_id = new.user_id and recorded_at > now() - interval '1 day';
+  if last_minute >= 150 or last_day >= 2000 then raise exception 'too_many_events'; end if;
+  return new;
+end $$;
+drop trigger if exists events_cap on public.events;
+create trigger events_cap
+  before insert on public.events
+  for each row execute function private.cap_events();
 
 -- ---------------------------------------------------------------------------------
 -- 6. Helpers (private schema: not reachable from outside)
@@ -252,6 +344,21 @@ language sql immutable as $$
     'correct', a.correct, 'total', a.total, 'duration_ms', a.duration_ms, 'eligible', a.eligible)
 $$;
 
+-- The option (0-3) a player chose for question idx, or null for no answer or anything odd
+-- (a fraction, a huge number, a text ...).
+create or replace function private.answer_at(answers jsonb, idx int) returns int
+language plpgsql immutable as $$
+declare
+  v numeric;
+begin
+  if answers is null or jsonb_typeof(answers -> idx) <> 'number' then return null; end if;
+  v := (answers ->> idx)::numeric;
+  if v <> floor(v) or v < 0 or v > 3 then return null; end if;
+  return v::int;
+exception when others then
+  return null;
+end $$;
+
 -- The marked attempt, question by question, in the order and option order the player saw.
 create or replace function private.review(a public.challenge_attempts, lang text) returns jsonb
 language plpgsql stable as $$
@@ -268,8 +375,7 @@ begin
     if not found then continue; end if;
     select array_agg(x::int order by ord) into perm
       from jsonb_array_elements_text(a.shuffles -> (i - 1)) with ordinality as t(x, ord);
-    picked := case when a.answers is not null and jsonb_typeof(a.answers -> (i - 1)) = 'number'
-                   then (a.answers ->> (i - 1))::int else null end;
+    picked := private.answer_at(a.answers, i - 1);
     items := items || jsonb_build_object(
       'id', q.id,
       'lesson', q.lesson,
@@ -283,10 +389,13 @@ begin
   return items;
 end $$;
 
+-- The result of a finished attempt. The review (right answers and explanations) is part of it
+-- only when the attempt counts: a round rushed through in seconds does not reveal the answers.
 create or replace function private.result(a public.challenge_attempts, lang text) returns jsonb
 language sql stable as $$
   select private.attempt_summary(a)
-    || jsonb_build_object('review', private.review(a, lang), 'rules', private.rules())
+    || jsonb_build_object('rules', private.rules())
+    || case when a.eligible then jsonb_build_object('review', private.review(a, lang)) else '{}'::jsonb end
 $$;
 
 revoke all on all functions in schema private from public, anon, authenticated;
@@ -339,6 +448,7 @@ end $$;
 
 -- Starts an attempt: picks the questions, shuffles them and their options, starts the clock.
 -- Any earlier unfinished attempt of the caller is marked abandoned. The answers stay here.
+-- Errors: not_signed_in, bank_too_small, too_soon (the hint says how many seconds to wait).
 create or replace function public.begin_attempt(lang text default 'en') returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare
@@ -354,8 +464,16 @@ declare
   shuffles jsonb := '[]'::jsonb;
   questions jsonb := '[]'::jsonb;
   a public.challenge_attempts;
+  last_start timestamptz;
+  wait int;
 begin
   if uid is null then raise exception 'not_signed_in'; end if;
+
+  -- one new round per minute, counted from the start of the previous one: a real player never
+  -- notices (a round takes longer), a script that starts rounds non-stop to copy the bank does
+  select max(started_at) into last_start from public.challenge_attempts where user_id = uid;
+  wait := ceil(extract(epoch from (last_start + make_interval(secs => (rules ->> 'cooldown_seconds')::int) - now())));
+  if wait > 0 then raise exception 'too_soon' using hint = wait::text; end if;
 
   update public.challenge_attempts set status = 'abandoned', finished_at = now()
    where user_id = uid and status = 'started';
@@ -393,10 +511,11 @@ begin
     'rules', rules);
 end $$;
 
--- Finishes an attempt: marks it on the server clock, saves it, and returns the full review
--- with the right answers and explanations. Sending the same attempt again returns the same
--- result (so a lost connection cannot double-count). Errors: not_signed_in,
--- attempt_not_found, bad_answers. An attempt over the time limit comes back with status 'expired'.
+-- Finishes an attempt: marks it on the server clock, saves it, and returns the result. The
+-- full review with the right answers and explanations is included only when the attempt counts
+-- (finished in time, not rushed). Sending the same attempt again returns the same result (so a
+-- lost connection cannot double-count). Errors: not_signed_in, attempt_not_found, bad_answers.
+-- An attempt over the time limit comes back with status 'expired'.
 create or replace function public.submit_attempt(attempt_id uuid, answers jsonb, lang text default null)
 returns jsonb
 language plpgsql security definer set search_path = '' as $$
@@ -439,8 +558,7 @@ begin
   end if;
 
   for i in 1 .. a.total loop
-    pos := case when jsonb_typeof(answers -> (i - 1)) = 'number' then (answers ->> (i - 1))::int else null end;
-    if pos is not null and (pos < 0 or pos > 3) then pos := null; end if;
+    pos := private.answer_at(answers, i - 1);
     clean := clean || coalesce(to_jsonb(pos), 'null'::jsonb);
     if pos is not null then
       select array_agg(x::int order by ord) into shown_order
@@ -563,6 +681,8 @@ begin
 end $$;
 
 -- Who may call what. Everything else in public is not callable from outside.
+revoke all on all sequences in schema public from anon, authenticated;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
 revoke execute on function public.my_profile(), public.set_nickname(text), public.begin_attempt(text),
   public.submit_attempt(uuid, jsonb, text), public.my_stats(), public.delete_my_account()
   from public, anon;
