@@ -1,0 +1,12 @@
+/* =========================================================
+   AI COMPASS — LAB: GUESS THE LINE (js/lab/sample.js)
+   Prefix: smp-. Every control and panel comes from the kit
+   (css/lab/kit.css); an experiment only styles its own extras.
+   ========================================================= */
+
+/* The sentence that names the idea, with its glossary link */
+.smp-idea {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}

@@ -1,0 +1,9 @@
+# AI Compass: search engines may read every page.
+# (Search engines look for this file at the root of the address, so on
+# newfter.github.io/AI-Compass/ it mainly helps if the site ever moves to its
+# own domain. The sitemap below also works when you add it to Google Search
+# Console or Bing Webmaster Tools.)
+User-agent: *
+Allow: /
+
+Sitemap: https://newfter.github.io/AI-Compass/sitemap.xml

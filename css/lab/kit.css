@@ -1,0 +1,1138 @@
+/* =========================================================
+   AI COMPASS — THE LAB KIT (styles)
+   The look of every part that js/lab/kit.js builds. Experiments never
+   write the markup of a control themselves, so changing a rule here
+   changes it in every experiment at once. Every class starts with "lk-".
+   The parts look like the AI Lab's own (css/lab.css): glass boxes,
+   cyan for "chosen", the button gradient for the main action, small
+   mono labels in capitals.
+
+    1. Kit colours and sizes (the custom properties below)
+    2. Layout: the frame, toolbars, rows, groups
+    3. Buttons
+    4. Fields: labels, hints, sliders, switches, selects
+    5. Segmented controls and chips
+    6. Stat tiles, status, legends
+    7. Bar lists
+    8. "What's happening?"
+    9. "Try this" challenges
+   10. Hints and glossary links
+   11. Canvas
+   12. Touch screens
+   13. Calm mode and reduced motion
+
+   Colours come from the tokens in style.css, so both themes work. The
+   one exception is the series colours of charts (section 1): style.css
+   has no such set yet.
+   ========================================================= */
+
+/* ===== 1. KIT COLOURS AND SIZES ===== */
+
+/* Series colours: one colour per group in a chart or a drawing ("class 1,
+   class 2..."), used in this order. kit.colors().series reads them for the
+   canvas; kit.legend, chips and bars use them by number (colorIndex 0 = 1).
+   They were checked with a colour-blindness simulation (Machado 2009,
+   distances in OKLab, every pair) on each theme's surface colour:
+   - any two of the first six stay apart for normal vision and for red-green
+     colour blindness (protanopia, deuteranopia), as far apart as the site's
+     own three accents (1, 2 and 4) are from each other;
+   - every colour stands out against the background (contrast 3:1 or more).
+   7 and 8 are extras: with more than six groups at once, give each group a
+   second clue too (a marker shape or a label); it helps everyone anyway.
+   The light theme has its own, darker set, checked against white. */
+:root,
+[data-theme="dark"] {
+    --lk-series-1: var(--accent-2);   /* cyan */
+    --lk-series-2: var(--accent);     /* violet */
+    --lk-series-3: #2bd489;           /* mint green */
+    --lk-series-4: var(--accent-3);   /* pink */
+    --lk-series-5: #ccba14;           /* gold */
+    --lk-series-6: #34aef9;           /* blue */
+    --lk-series-7: #e05f00;           /* orange */
+    --lk-series-8: #d88093;           /* rose */
+}
+
+[data-theme="light"] {
+    --lk-series-1: var(--accent-2);   /* teal */
+    --lk-series-2: var(--accent);     /* violet */
+    --lk-series-3: #37893a;           /* green */
+    --lk-series-4: var(--accent-3);   /* magenta */
+    --lk-series-5: #6f6104;           /* olive gold */
+    --lk-series-6: #4675c9;           /* blue */
+    --lk-series-7: #d15741;           /* orange red */
+    --lk-series-8: #932033;           /* wine */
+}
+
+:root {
+    --lk-gap: 18px;            /* between the big parts of an experiment (canvas, controls, panels) */
+    --lk-gap-sm: 10px;         /* between controls in a row */
+    --lk-control: 44px;        /* height of buttons, selects and segmented controls: a fingertip */
+    --lk-control-sm: 36px;     /* small buttons (40px on touch screens, section 12) */
+    --lk-radius-box: 18px;     /* corners of boxes (like the lab's .lab-box); controls use --radius-sm */
+    --lk-label: 13.5px;        /* the label above a control */
+    --lk-small: 12px;          /* hints and notes under controls */
+    --lk-mini: 11px;           /* the small capitals of group labels, stat labels and the status */
+}
+
+/* ===== 2. LAYOUT: THE FRAME, TOOLBARS, ROWS, GROUPS =====
+   kit.layout() builds .lk-root > .lk-layout > top, main, side, bottom.
+   .lk-root measures its own width (a container), so the layout follows the
+   card, not the window: with a side column, canvas and controls stand next
+   to each other from 820px of stage width, one under the other below. */
+
+.lk-root {
+    container-type: inline-size;
+    min-width: 0;
+    color: var(--text);
+}
+
+.lk-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--lk-gap);
+}
+
+.lk-top,
+.lk-main,
+.lk-side,
+.lk-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+/* Parts that an experiment leaves empty take no room */
+.lk-top:empty,
+.lk-main:empty,
+.lk-side:empty,
+.lk-bottom:empty {
+    display: none;
+}
+
+@container (min-width: 820px) {
+    .lk-layout-side {
+        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+        align-items: start;
+    }
+
+    .lk-layout-side > .lk-top,
+    .lk-layout-side > .lk-bottom {
+        grid-column: 1 / -1;
+    }
+}
+
+/* kit.toolbar(): buttons in a row that wraps. A status pill goes to the end. */
+.lk-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.lk-toolbar > .lk-status {
+    margin-left: auto;
+}
+
+/* kit.row(): anything in a row that wraps; fields share the room */
+.lk-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 16px;
+}
+
+.lk-row > .lk-field {
+    flex: 1 1 180px;
+}
+
+/* kit.row(children, { grid: true }): equal tiles that wrap (stat tiles) */
+.lk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 124px), 1fr));
+    gap: 8px;
+}
+
+/* kit.group(): a labelled box, like the lab's "Settings" box */
+.lk-group {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+.lk-group-plain {
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+.lk-group-label,
+.lk-challenges-title {
+    color: var(--text-accent-2);
+    font-family: var(--font-mono);
+    font-size: var(--lk-mini);
+    font-weight: 600;
+    letter-spacing: 2px;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+/* ===== 3. BUTTONS =====
+   .lk-btn plus a variant (primary, ghost, subtle, danger) and a size (md, sm).
+   The site's focus ring (style.css) applies as it is. */
+
+.lk-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: var(--lk-control);
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.2s var(--ease), box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.lk-btn-sm {
+    gap: 6px;
+    min-height: var(--lk-control-sm);
+    padding: 0 12px;
+    border-radius: 10px;
+    font-size: 0.8125rem;
+}
+
+/* An icon-only button is square; its name is in a hidden label and its tooltip */
+.lk-btn-square {
+    width: var(--lk-control);
+    padding: 0;
+}
+
+.lk-btn-sm.lk-btn-square {
+    width: var(--lk-control-sm);
+}
+
+.lk-btn-icon {
+    display: inline-flex;
+}
+
+.lk-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+}
+
+.lk-btn-sm .lk-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* The main action of an experiment (Play, Train): the site's button gradient */
+.lk-btn-primary {
+    border-color: var(--button-rim);
+    background: var(--gradient-button);
+    color: var(--on-accent);
+    box-shadow: 0 8px 24px rgba(var(--accent-rgb), 0.28), inset 0 1px 0 var(--button-shine);
+}
+
+/* Most buttons (Step, Reset): glass with a clear edge */
+.lk-btn-ghost {
+    border-color: var(--border-strong);
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+/* Quiet buttons (close a note, small extras) */
+.lk-btn-subtle {
+    background: transparent;
+    color: var(--text-muted);
+}
+
+/* Something that removes or erases (Clear the drawing) */
+.lk-btn-danger {
+    border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+    background: color-mix(in srgb, var(--danger) 9%, transparent);
+    color: var(--text-danger);
+}
+
+/* An on/off button (kit.button(..., { pressed })) while it is on */
+.lk-btn[aria-pressed="true"] {
+    border-color: rgba(var(--accent-2-rgb), 0.55);
+    background: rgba(var(--accent-2-rgb), 0.14);
+    color: var(--text-accent-2);
+    box-shadow: inset 0 0 0 1px rgba(var(--accent-2-rgb), 0.3);
+}
+
+.lk-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* setBusy(true): a turning ring in place of the icon */
+.lk-btn.is-busy {
+    cursor: progress;
+}
+
+.lk-btn.is-busy .lk-btn-icon {
+    display: none;
+}
+
+.lk-btn.is-busy::before {
+    content: "";
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: lk-spin 0.8s linear infinite;
+}
+
+@keyframes lk-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (hover: hover) {
+    .lk-btn-primary:not(:disabled):not(.is-busy):hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 30px rgba(var(--accent-rgb), 0.42), 0 0 22px rgba(var(--accent-2-rgb), 0.16), inset 0 1px 0 var(--button-shine);
+    }
+
+    .lk-btn-ghost:not(:disabled):not(.is-busy):hover {
+        border-color: var(--accent-2);
+        color: var(--text-accent-2);
+    }
+
+    .lk-btn-subtle:not(:disabled):hover {
+        background: var(--surface-hover);
+        color: var(--text);
+    }
+
+    .lk-btn-danger:not(:disabled):hover {
+        border-color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 15%, transparent);
+    }
+}
+
+/* ===== 4. FIELDS: LABELS, HINTS, SLIDERS, SWITCHES, SELECTS =====
+   .lk-field holds a label, the control and an optional hint under it. */
+
+.lk-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.lk-label {
+    color: var(--text);
+    font-size: var(--lk-label);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.lk-help {
+    color: var(--text-label);
+    font-size: var(--lk-small);
+    line-height: 1.45;
+}
+
+/* Sliders: the label and the value in one row, then the .ui-range line
+   (css/components.css; kit.js sets its --fill from the value) */
+.lk-slider {
+    gap: 2px;
+}
+
+.lk-slider-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.lk-slider-value {
+    flex: none;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: rgba(var(--accent-2-rgb), 0.12);
+    color: var(--text-accent-2);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.lk-slider.is-disabled {
+    opacity: 0.5;
+}
+
+.lk-range:disabled {
+    cursor: not-allowed;
+}
+
+/* On / off switches: the whole row is the button (the track and knob are
+   .ui-switch-track and .ui-switch-knob from css/components.css) */
+.lk-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    min-height: var(--lk-control);
+    color: var(--text);
+    font-size: var(--lk-label);
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: left;
+}
+
+.lk-switch:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Drop-down lists, with the lab's arrow */
+.lk-select {
+    position: relative;
+    display: block;
+}
+
+.lk-select::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted);
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+}
+
+.lk-select-input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    min-height: var(--lk-control);
+    padding: 0 38px 0 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-solid);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.lk-select-input:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+@media (hover: hover) {
+    .lk-switch:not(:disabled):hover .ui-switch-track,
+    .lk-select-input:not(:disabled):hover {
+        border-color: var(--accent-2);
+    }
+}
+
+/* ===== 5. SEGMENTED CONTROLS AND CHIPS ===== */
+
+/* Connected options, one chosen (role="radiogroup"). The options share the width
+   equally; an option whose word needs more gets it (a word is never cut in the
+   middle), and on a narrow phone the options move to a second row instead. */
+.lk-seg {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-solid);
+}
+
+.lk-seg-option {
+    display: inline-flex;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    max-width: 100%;            /* so a word wider than the whole control may still wrap */
+    min-height: 38px;
+    padding: 4px 6px;
+    border-radius: 9px;
+    color: var(--text-muted);
+    font-size: 0.78125rem;
+    font-weight: 700;
+    line-height: 1.15;
+    text-align: center;
+    overflow-wrap: break-word;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lk-seg-option .lk-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.lk-seg-option[aria-checked="true"] {
+    background: rgba(var(--accent-2-rgb), 0.14);
+    color: var(--text-accent-2);
+    box-shadow: inset 0 0 0 1px rgba(var(--accent-2-rgb), 0.45);
+}
+
+.lk-seg-option:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Chips: small pill buttons that wrap (presets, filters, classes) */
+.lk-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.lk-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: left;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.lk-chip .lk-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* The colour of a group (colorIndex), with a thin ring so it shows on any background */
+.lk-chip-dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--lk-chip-color);
+    box-shadow: 0 0 0 2px var(--surface-solid);
+}
+
+.lk-chip[aria-pressed="true"] {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.1);
+    color: var(--text-accent-2);
+}
+
+.lk-chip:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+@media (hover: hover) {
+    .lk-seg-option:not(:disabled):not([aria-checked="true"]):hover {
+        color: var(--text);
+    }
+
+    .lk-chip:not(:disabled):not([aria-pressed="true"]):hover {
+        border-color: var(--border-strong);
+        color: var(--text);
+    }
+}
+
+/* ===== 6. STAT TILES, STATUS, LEGENDS ===== */
+
+/* A number with its label; the arrow says which way it went (green = the good way) */
+.lk-stat {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 1fr auto;            /* the values line up in a row of tiles */
+    grid-template-areas:
+        "label label"
+        "value trend";
+    align-items: center;
+    column-gap: 6px;
+    min-width: 0;
+    padding: 10px 12px 11px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+}
+
+.lk-stat-label {
+    grid-area: label;
+    align-self: start;
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: var(--lk-mini);
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    line-height: 1.35;
+    text-transform: uppercase;
+}
+
+.lk-stat-value {
+    grid-area: value;
+    min-width: 0;
+    margin-top: 3px;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+}
+
+.lk-stat-trend {
+    grid-area: trend;
+    display: inline-flex;
+    margin-top: 3px;
+    color: var(--text-dim);
+}
+
+.lk-stat-trend .lk-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.lk-stat-trend[data-good="true"] {
+    color: var(--text-success);
+}
+
+.lk-stat-trend[data-good="false"] {
+    color: var(--text-danger);
+}
+
+/* The status pill: ready, running, paused, done */
+.lk-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--lk-mini);
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    line-height: 1.4;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.lk-status-dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-dim);
+}
+
+.lk-status[data-status="running"] {
+    border-color: color-mix(in srgb, var(--success) 45%, transparent);
+    color: var(--text-success);
+}
+
+.lk-status[data-status="running"] .lk-status-dot {
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+    animation: lk-blink 1s ease-in-out infinite;
+}
+
+.lk-status[data-status="paused"] .lk-status-dot {
+    background: var(--warning);
+}
+
+.lk-status[data-status="done"] {
+    border-color: rgba(var(--accent-2-rgb), 0.5);
+    color: var(--text-accent-2);
+}
+
+.lk-status[data-status="done"] .lk-status-dot {
+    background: var(--accent-2);
+    box-shadow: 0 0 10px var(--accent-2);
+}
+
+@keyframes lk-blink {
+    50% { opacity: 0.3; }
+}
+
+/* Legends: a small shape in the group's colour, then the words (in text colours) */
+.lk-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    color: var(--text-muted);
+    font-size: 0.78125rem;
+    line-height: 1.4;
+}
+
+.lk-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lk-swatch {
+    flex: none;
+    display: inline-flex;
+    color: var(--lk-swatch-color);
+}
+
+/* ===== 7. BAR LISTS =====
+   Each row: the label, the bar, the number. The fill is as wide as its share
+   (kit.js sets the width). A signed list has zero in the middle: bars above
+   zero grow to the right, bars below zero to the left. */
+
+.lk-bars {
+    display: grid;
+    gap: 8px;
+}
+
+.lk-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 9em) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8125rem;
+    line-height: 1.3;
+}
+
+.lk-bar-label {
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.lk-bar-track {
+    position: relative;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--border);
+}
+
+.lk-bar-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    border-radius: 999px;
+    background: var(--lk-bar-color, linear-gradient(90deg, var(--accent), var(--accent-2)));
+    transition: width 0.45s var(--ease);
+}
+
+.lk-bar-value {
+    min-width: 3.2em;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.78125rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Signed lists: a line at zero, cool colour above zero, warm below (like kit.diverge) */
+.lk-bars.is-signed .lk-bar-track::after {
+    content: "";
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    left: 50%;
+    width: 1px;
+    background: var(--border-strong);
+}
+
+.lk-bars.is-signed .lk-bar-fill {
+    left: 50%;
+    background: var(--lk-bar-color, var(--accent-2));
+}
+
+.lk-bars.is-signed .is-negative .lk-bar-fill {
+    left: auto;
+    right: 50%;
+    background: var(--lk-bar-color, var(--danger));
+}
+
+/* ===== 8. "WHAT'S HAPPENING?" =====
+   A <details> panel: the title row opens and closes it. Its numbered steps
+   follow the experiment; the current one is lit up in cyan. */
+
+.lk-explain {
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background:
+        radial-gradient(ellipse at 0% 0%, rgba(var(--accent-rgb), 0.12), transparent 60%),
+        var(--surface-2);
+}
+
+.lk-explain-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    padding: 11px 16px;
+    border-radius: var(--lk-radius-box);
+    cursor: pointer;
+    list-style: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.lk-explain-summary::-webkit-details-marker {
+    display: none;
+}
+
+/* style.css gives links and buttons the focus ring; <summary> needs its own */
+.lk-explain-summary:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 3px;
+}
+
+.lk-explain-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--gradient-button);
+    color: var(--on-accent);
+    font-family: var(--font-mono);
+    font-size: 15px;     /* px: a glyph in a tile of fixed size */
+    font-weight: 700;
+    box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.35);
+}
+
+.lk-explain-title {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.lk-explain-chevron {
+    flex: none;
+    display: inline-flex;
+    color: var(--text-muted);
+    transition: transform 0.25s var(--ease);
+}
+
+.lk-explain[open] .lk-explain-chevron {
+    transform: rotate(180deg);
+}
+
+.lk-explain-body {
+    padding: 0 16px 16px;
+}
+
+.lk-explain-steps {
+    display: grid;
+    gap: 6px;
+}
+
+.lk-explain-step {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 12px;
+    padding: 9px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.lk-explain-num {
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+}
+
+.lk-explain-text,
+.lk-explain-note {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.lk-explain-step.is-current {
+    border-color: rgba(var(--accent-2-rgb), 0.4);
+    background: rgba(var(--accent-2-rgb), 0.08);
+}
+
+.lk-explain-step.is-current .lk-explain-num {
+    color: var(--text-accent-2);
+}
+
+.lk-explain-step.is-current .lk-explain-text {
+    color: var(--text);
+}
+
+/* Live numbers inside the texts keep their width while they change */
+.lk-explain strong,
+.lk-hint-text strong,
+.lk-challenge strong {
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.lk-explain-note {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 12px 12px 0;
+    background: rgba(var(--accent-rgb), 0.08);
+}
+
+@media (hover: hover) {
+    .lk-explain-summary:hover .lk-explain-chevron {
+        color: var(--text-accent-2);
+    }
+}
+
+/* ===== 9. "TRY THIS" CHALLENGES =====
+   A list of goals; a reached goal turns green and shows its insight. */
+
+.lk-challenges {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--lk-radius-box);
+    background: var(--surface-2);
+}
+
+.lk-challenges-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    margin-bottom: 12px;
+}
+
+.lk-challenges-count {
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--surface-hover);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--lk-mini);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.lk-challenge-list {
+    display: grid;
+    gap: 8px;
+}
+
+.lk-challenge {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+/* The round box that gets the tick */
+.lk-challenge-mark {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    margin-top: 1px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 50%;
+    color: transparent;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.lk-challenge-mark .lk-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.lk-challenge-text {
+    color: var(--text);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.lk-challenge-insight {
+    display: none;
+    margin-top: 6px;
+    padding-left: 10px;
+    border-left: 2px solid var(--success);
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.55;
+}
+
+.lk-challenge.is-done {
+    border-color: color-mix(in srgb, var(--success) 45%, transparent);
+    background: color-mix(in srgb, var(--success) 7%, var(--surface));
+}
+
+.lk-challenge.is-done .lk-challenge-mark {
+    border-color: var(--success);
+    background: var(--success);
+    color: var(--surface-solid);
+}
+
+.lk-challenge.is-done .lk-challenge-insight {
+    display: block;
+}
+
+/* ===== 10. HINTS AND GLOSSARY LINKS ===== */
+
+/* A note in a tinted box: info (cyan), tip (violet), warn (amber) */
+.lk-hint {
+    --lk-hint-color: var(--accent-2);
+    --lk-hint-text: var(--text-accent-2);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid color-mix(in srgb, var(--lk-hint-color) 40%, transparent);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--lk-hint-color) 8%, transparent);
+}
+
+.lk-hint-tip {
+    --lk-hint-color: var(--accent);
+    --lk-hint-text: var(--text-accent);
+}
+
+.lk-hint-warn {
+    --lk-hint-color: var(--warning);
+    --lk-hint-text: var(--text-warning);
+}
+
+.lk-hint-icon {
+    flex: none;
+    display: inline-flex;
+    margin-top: 1px;
+    color: var(--lk-hint-text);
+}
+
+.lk-hint-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.lk-hint-label {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--lk-hint-text);
+    font-family: var(--font-mono);
+    font-size: var(--lk-mini);
+    font-weight: 600;
+    letter-spacing: 1.6px;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.lk-hint-text {
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.55;
+}
+
+.lk-hint-close {
+    flex: none;
+    margin: -6px -8px -6px 0;
+}
+
+/* A word that opens its glossary card (plain text while the glossary lacks it) */
+.lk-term-link {
+    color: var(--text-accent-2);
+    text-decoration: underline dotted;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+}
+
+@media (hover: hover) {
+    .lk-term-link:hover {
+        text-decoration-style: solid;
+    }
+}
+
+/* ===== 11. CANVAS =====
+   The box has the size (kit.js sets aspect-ratio or a height); the canvas
+   fills it. Experiments with drawing set touch-action on their canvas. */
+
+.lk-canvas-box {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background: var(--surface-solid);
+    box-shadow: 0 0 40px rgba(var(--accent-rgb), 0.1);
+}
+
+.lk-canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* ===== 12. TOUCH SCREENS =====
+   Fingers need targets of 40px or more */
+
+@media (pointer: coarse) {
+    :root {
+        --lk-control-sm: 40px;
+    }
+
+    .lk-chip {
+        min-height: 40px;
+    }
+
+    .lk-seg-option {
+        min-height: 40px;
+    }
+}
+
+/* ===== 13. CALM MODE AND REDUCED MOTION =====
+   style.css already stops every animation and transition under
+   html.fx-motion-off (core.js sets it for reduced motion and calm mode).
+   The kit only adds: */
+
+/* buttons don't lift under the mouse */
+html.fx-motion-off .lk-btn:hover {
+    transform: none;
+}
+
+/* the running dot doesn't glow (it can't blink either) */
+html.fx-motion-off .lk-status-dot {
+    box-shadow: none;
+}

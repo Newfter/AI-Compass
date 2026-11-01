@@ -1,0 +1,181 @@
+/* =========================================================
+   AI COMPASS — LAB: ROBOT IN A MAZE (js/lab/maze.js)
+   Prefix: mz-. Every control and panel comes from the kit
+   (css/lab/kit.css); this file styles the experiment's own extras:
+   the board, the inspector's small grid of scores, the charts' row
+   and the sentences about the idea.
+   ========================================================= */
+
+/* ----- The preset's sentence under the preset menu ----- */
+.mz-about {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+/* ----- Edit mode: the tile picker and its tip ----- */
+.mz-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ----- The board: as wide as its maze needs, in the middle ----- */
+.mz-board {
+    margin-inline: auto;
+}
+
+.mz-board .lk-canvas {
+    cursor: pointer;
+}
+
+.mz-board.mz-editing .lk-canvas {
+    cursor: crosshair;
+}
+
+/* The canvas box hides what sticks out, so the focus ring goes inside */
+.mz-board .lk-canvas:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: -3px;
+}
+
+/* ----- The inspector: four scores around a small square ----- */
+.mz-inspector {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mz-cell-name,
+.mz-note,
+.mz-update {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.5;
+}
+
+.mz-cell-name {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.mz-qgrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas:
+        ". up ."
+        "left center right"
+        ". down .";
+    align-items: center;
+    gap: 6px 8px;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+.mz-q {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 30px;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.mz-q-up { grid-area: up; justify-self: center; }
+.mz-q-down { grid-area: down; justify-self: center; }
+.mz-q-left { grid-area: left; justify-self: end; }
+.mz-q-right { grid-area: right; justify-self: start; }
+
+.mz-q-arrow {
+    display: inline-flex;
+}
+
+.mz-q-arrow .lk-icon,
+.mz-q-center .lk-icon {
+    width: 14px;
+    height: 14px;
+}
+
+/* One arrow icon (pointing up), turned for the other three moves */
+.mz-q-right .lk-icon { transform: rotate(90deg); }
+.mz-q-down .lk-icon { transform: rotate(180deg); }
+.mz-q-left .lk-icon { transform: rotate(270deg); }
+
+.mz-q.is-best {
+    border-color: var(--accent-2);
+    color: var(--text);
+    font-weight: 700;
+}
+
+.mz-q.is-low .mz-q-value {
+    color: var(--text-danger);
+}
+
+/* The score that the last step changed */
+.mz-q.is-updated {
+    box-shadow: 0 0 0 2px var(--accent-3);
+}
+
+.mz-q-center {
+    grid-area: center;
+    justify-self: center;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.mz-q-center .lk-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.mz-q-center[data-best=""] .lk-icon { visibility: hidden; }
+.mz-q-center[data-best="1"] .lk-icon { transform: rotate(90deg); }
+.mz-q-center[data-best="2"] .lk-icon { transform: rotate(180deg); }
+.mz-q-center[data-best="3"] .lk-icon { transform: rotate(270deg); }
+
+.mz-formula {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+/* ----- The two charts: side by side when there is room ----- */
+.mz-charts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+}
+
+@container (min-width: 640px) {
+    .mz-charts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ----- The sentences about the idea, with their glossary links ----- */
+.mz-idea {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}

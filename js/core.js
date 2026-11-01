@@ -20,16 +20,19 @@
    10. navigation    the page sections, A.navigate, one scroll pipeline, parts
                      built when needed, the menu bar
    11. commands      the command list of the Ctrl+K palette
-   12. features      how feature files share their API and content
+   12. features      how feature files share their API and content, and files
+                     loaded on demand
    13. toasts        small pop-up messages
        the toolkit   window.AICompass itself, and the built-in commands
    14. start-up      translating the page, the theme and language buttons
 
    THE TOOLKIT AT A GLANCE (each one is explained where it is written)
     1  A.storage.get(key, fallback) / set(key, value) / remove(key) / migrate(old, new)
+       A.storage.available(): does the browser keep what is saved?
        A.storage.session: the same, forgotten when the tab closes
     2  A.on(name, callback) -> stop()      A.emit(name, detail)
-       names: language, theme, motion, overlay, section, feature (sent as "aic:" + name)
+       names: language, theme, motion, overlay, section, feature, activity (sent as "aic:" + name)
+       A.track(type, detail): "the learner just did this" (the "activity" event)
     3  A.t(key, values)   A.has(key)   A.plural(key, n, values)   A.pluralForm(n)
        A.addTranslations({ en, ru })   A.applyTranslations(element)   A.i18nHTML(key, className, tag)
        A.setTextValue(name, value)   A.textValue(name): a {name} that any text can show
@@ -41,15 +44,15 @@
     5  A.motion.ok() / reduced / calm / setCalm(on) / toggleCalm() / onChange(callback) / ease
        A.reducedMotion (the device setting only)
        A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value, running }
-    6  A.util.clamp / lerp / easeOut / random / randomInt / pick / shuffle /
-              sampleWeighted / debounce / frameThrottle / attempt(fn, fallback)
+    6  A.util.clamp / lerp / easeOut / random / randomInt / pick / shuffle(list, random) /
+              seeded(text) / sampleWeighted / debounce / frameThrottle / attempt(fn, fallback)
        A.dom.focusable / focusHeading / pauseScrollAnchoring / replay / fromHTML /
              setText / setAttr / setHidden (write only what changed) / isTyping(element)
        A.confirmPress(button, { onArm, onDisarm, onConfirm, enabled, timeout })
            -> { armed, disarm() }: a button that needs a second press
        A.colors.parse / rgb(cssName) / rgba(color, alpha) / mix(a, b, amount)
        A.canvas.pixelRatio / fit / roundRect   A.cssVar(name)   A.escapeHTML(text)
-    7  A.breakpoints   A.queries   A.media(query)   A.onMedia(query, callback)
+    7  A.breakpoints   A.queries   A.isMac   A.media(query)   A.onMedia(query, callback)
        A.whenVisible(element, callback, options)   A.onResize(callback, options)
        A.onPixelRatioChange(callback)   A.layout.px / navHeight
     8  A.announce(text, options)
@@ -62,6 +65,8 @@
    11  A.registerCommand(command)   A.runCommand(id or command)   A.commands
    12  A.feature(name, api)   A.whenFeature(name) -> Promise   A.ready(callback)
        A.content.set(name, data) / get(name)
+       A.loadScript(src) / A.loadStyle(href) -> Promise: a file loaded on demand, once
+       A.keepOffline(files)   A.offlineFiles(): the files loaded on demand, saved ahead for offline use
    13  A.toast(text, icon)
    ========================================================= */
 
@@ -98,29 +103,53 @@
        1. STORAGE
        Some browsers block storage (private mode, strict settings),
        so every call is wrapped. Values are saved as JSON under "aic:<key>".
+       When a save fails, the value is kept in memory instead, for this
+       visit: the site works the same until the tab is closed, it only
+       forgets afterwards. set() still says false, so a feature can tell
+       the visitor; available() says it before anything is saved.
        ========================================================= */
     function makeStore(area) {
+        const unsaved = new Map();     // key -> the JSON text the browser refused to keep
+
         return {
             get: function (key, fallback) {
                 try {
-                    const value = window[area].getItem(PREFIX + key);
+                    const value = unsaved.has(key) ? unsaved.get(key) : window[area].getItem(PREFIX + key);
                     return value === null ? fallback : JSON.parse(value);
                 } catch (error) {
                     return fallback;
                 }
             },
             set: function (key, value) {
+                let text;
                 try {
-                    window[area].setItem(PREFIX + key, JSON.stringify(value));
+                    text = JSON.stringify(value);
+                    window[area].setItem(PREFIX + key, text);
+                } catch (error) {
+                    if (typeof text !== "string") return false;     // a value that can't be saved at all
+                    unsaved.set(key, text);
+                    return false;
+                }
+                unsaved.delete(key);
+                return true;
+            },
+            remove: function (key) {
+                unsaved.delete(key);
+                try {
+                    window[area].removeItem(PREFIX + key);
+                } catch (error) {}
+            },
+            // Can the browser keep a new value? Asked each time with a small test value,
+            // removed at once (a browser whose storage is full can still overwrite an
+            // old value with a shorter one, so the answer of the last save would not do)
+            available: function () {
+                try {
+                    window[area].setItem(PREFIX + "probe", "1");
+                    window[area].removeItem(PREFIX + "probe");
                     return true;
                 } catch (error) {
                     return false;
                 }
-            },
-            remove: function (key) {
-                try {
-                    window[area].removeItem(PREFIX + key);
-                } catch (error) {}
             }
         };
     }
@@ -141,7 +170,7 @@
     /* =========================================================
        2. EVENTS
        Every event of the site is "aic:" + a name, sent on document:
-       language, theme, motion, overlay, section, feature.
+       language, theme, motion, overlay, section, feature, activity.
        ========================================================= */
     function emit(name, detail) {
         document.dispatchEvent(new CustomEvent(PREFIX + name, { detail: detail }));
@@ -152,6 +181,15 @@
         const listener = function (event) { callback(event.detail); };
         document.addEventListener(PREFIX + name, listener);
         return function () { document.removeEventListener(PREFIX + name, listener); };
+    }
+
+    // Progress events. A feature reports what the learner just did:
+    //     A.track("lesson.complete", { n: 3 });
+    // and anything that wants to know (for example "My Compass") listens:
+    //     A.on("activity", function (activity) { ... activity.type, activity.detail, activity.time ... });
+    // The types in use are listed in README.md ("Progress events").
+    function track(type, detail) {
+        emit("activity", { type: type, detail: detail || {}, time: Date.now() });
     }
 
     /* =========================================================
@@ -450,18 +488,23 @@
 
         // Features redraw their texts. At start-up nothing changed, so nothing is sent:
         // every feature already drew itself in the saved language.
-        if (changed) emit("language", { lang: lang });
+        if (changed) {
+            emit("language", { lang: lang });
+            track("language.change", { lang: lang });
+        }
     }
 
     /* =========================================================
        4. THEME
        ========================================================= */
-    // The colour of the browser's address bar on phones. Both colours are
-    // written once, on <meta name="theme-color" data-dark data-light> in index.html.
+    // The colour of the browser's address bar on phones. Both colours are written
+    // on each <meta name="theme-color" data-dark data-light> in index.html (there is
+    // one for a device in dark mode and one for light mode: both follow the theme).
     function updateThemeMeta() {
-        const meta = document.querySelector('meta[name="theme-color"]');
-        const color = meta && meta.getAttribute("data-" + state.theme);
-        if (color) meta.setAttribute("content", color);
+        document.querySelectorAll('meta[name="theme-color"]').forEach(function (meta) {
+            const color = meta.getAttribute("data-" + state.theme);
+            if (color) meta.setAttribute("content", color);
+        });
     }
 
     function setTheme(theme) {
@@ -481,7 +524,10 @@
             root.setAttribute("data-theme", theme);
         }
         updateThemeMeta();
-        if (changed) emit("theme", { theme: theme });
+        if (changed) {
+            emit("theme", { theme: theme });
+            track("theme.change", { theme: theme });
+        }
     }
 
     /* =========================================================
@@ -517,6 +563,7 @@
         calm = value;
         storage.set("motion.calm", calm);
         motionChanged();
+        track("settings.change", { name: "calm", value: calm });
     }
 
     const motion = {
@@ -646,16 +693,36 @@
             return list[Math.floor(Math.random() * list.length)];
         },
 
-        // A shuffled copy of a list (the Fisher–Yates shuffle)
-        shuffle: function (list) {
+        // A shuffled copy of a list (the Fisher–Yates shuffle). random: where the
+        // random numbers come from (Math.random, or a seeded() one)
+        shuffle: function (list, random) {
+            const next = random || Math.random;
             const copy = list.slice();
             for (let i = copy.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
+                const j = Math.floor(next() * (i + 1));
                 const temp = copy[i];
                 copy[i] = copy[j];
                 copy[j] = temp;
             }
             return copy;
+        },
+
+        // A random that repeats: the same text always gives the same numbers (0 to 1),
+        // on every computer. The daily challenge uses the date as its text, so everyone
+        // gets the same questions that day; a worksheet and its answer key agree.
+        // (A hash of the text, FNV-1a, starts the small "mulberry32" generator.)
+        seeded: function (text) {
+            let seed = 2166136261;
+            for (let i = 0; i < text.length; i++) {
+                seed = Math.imul(seed ^ text.charCodeAt(i), 16777619);
+            }
+            return function () {
+                seed = (seed + 0x6D2B79F5) | 0;
+                let x = seed;
+                x = Math.imul(x ^ (x >>> 15), x | 1);
+                x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+                return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+            };
         },
 
         // A random position in a list of weights: [1, 3] returns 1 three times as often as 0
@@ -921,6 +988,9 @@
         phone: "(max-width: " + breakpoints.phone + "px)",
         wideMenu: "(min-width: " + (breakpoints.menu + 1) + "px)"
     };
+
+    // Macs (and iPhones, iPads) write ⌘ where other computers write Ctrl
+    const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || "");
 
     const mediaLists = {};
 
@@ -1528,6 +1598,7 @@
         { id: "quiz", key: "nav.quiz", icon: "🏆" },
         { id: "glossary", key: "nav.glossary", icon: "📖" },
         { id: "timeline", key: "nav.timeline", icon: "🕰️" },
+        { id: "teachers", key: "nav.teachers", icon: "🍎" },
         { id: "about", key: "nav.about", icon: "💡" }
     ].map(Object.freeze);
     Object.freeze(SECTIONS);
@@ -1864,6 +1935,152 @@
         }, { immediate: false });
     }
 
+    // ----- "More": the links that don't fit in the menu bar -----
+    // On a laptop screen the bar may have no room for every link (the Russian names
+    // are longer, the easy-to-read font is wider). Then the last links move into the
+    // "More" list at the end of the bar: no link is left out, and none breaks onto
+    // a second line. On phones every link is back in the menu.
+    function setUpMoreLinks() {
+        const navLinks = document.getElementById("nav-links");
+        const more = navLinks && navLinks.querySelector(".nav-more");
+        const inner = more && more.closest(".navbar-inner");
+        const logo = inner && inner.querySelector(".logo");
+        const actions = inner && inner.querySelector(".nav-actions");
+        if (!logo || !actions) return;
+        const button = more.querySelector(".nav-more-button");
+        const list = more.querySelector(".nav-more-list");
+        const links = Array.prototype.slice.call(navLinks.children).filter(function (child) {
+            return child.tagName === "A";
+        });
+        const wide = media(queries.wideMenu);
+        let kept = links.length;           // how many links are in the bar
+        let last = "";                     // what the last fitting was done for
+        let refitWaiting = false;          // asked to measure again while the list was open
+
+        function isOpen() {
+            return button.getAttribute("aria-expanded") === "true";
+        }
+
+        function setOpen(open) {
+            button.setAttribute("aria-expanded", String(open));
+            list.hidden = !open;
+            if (open) overlay.opened();
+            else overlay.closed();
+        }
+
+        // focusBack: false when the focus is about to move anyway (a link was chosen)
+        function close(focusBack) {
+            if (!isOpen()) return;
+            const focusWasInside = list.contains(document.activeElement);
+            setOpen(false);
+            if (focusBack !== false && focusWasInside) button.focus({ preventScroll: true });
+            if (refitWaiting) {
+                refitWaiting = false;
+                requestAnimationFrame(refit);
+            }
+        }
+
+        const overlay = overlays.register("nav-more", {
+            element: list,
+            scope: [more],
+            modal: false,
+            closeOnNavigate: true,
+            escape: "anywhere",
+            close: function () { close(); }
+        });
+
+        // The section on screen is in the list: "More" is marked like the link would be
+        function markActive() {
+            more.classList.toggle("has-active", links.slice(kept).some(function (link) {
+                return link.classList.contains("active");
+            }));
+        }
+
+        function width(element) {
+            return element.getBoundingClientRect().width;
+        }
+
+        // Puts every link in the bar, measures them and moves the last ones that
+        // don't fit into the list. Only when something that changes the widths changed.
+        function fit(force) {
+            const key = [inner.clientWidth, Math.round(width(actions)), state.lang, root.className, wide.matches].join(" ");
+            if (key === last && !force) return;
+            last = key;
+            refitWaiting = false;
+            close();
+            links.slice(kept).forEach(function (link) { navLinks.insertBefore(link, more); });
+            more.hidden = false;
+
+            let keep = links.length;
+            if (wide.matches) {
+                const gap = parseFloat(getComputedStyle(navLinks).columnGap) || 0;
+                const room = width(inner) - width(logo) - width(actions) - 2 * (parseFloat(getComputedStyle(inner).columnGap) || 0);
+                const widths = links.map(width);
+                const all = widths.reduce(function (sum, value) { return sum + value + gap; }, 0) - gap;
+                if (all > room + 0.5) {
+                    let used = width(more);
+                    keep = 0;
+                    while (keep < links.length && used + gap + widths[keep] <= room + 0.5) {
+                        used += gap + widths[keep];
+                        keep++;
+                    }
+                }
+            }
+
+            kept = keep;
+            links.slice(keep).forEach(function (link) { list.appendChild(link); });
+            more.hidden = keep === links.length;
+            markActive();
+        }
+
+        // The fonts, the language or a setting changed the widths of the names. Measuring
+        // closes the list, so while it is open this waits until it is closed.
+        function refit() {
+            if (isOpen()) {
+                refitWaiting = true;
+                return;
+            }
+            fit(true);
+        }
+
+        button.addEventListener("click", function (event) {
+            if (isOpen()) {
+                close();
+                return;
+            }
+            setOpen(true);
+            // Opened with the keyboard (Enter / Space): go straight to the first link
+            if (event.detail === 0 && list.firstElementChild) list.firstElementChild.focus();
+        });
+
+        // A chosen link scrolls the page there, and the focus goes with it
+        list.addEventListener("click", function (event) {
+            if (event.target.closest("a")) close(false);
+        });
+
+        // A click outside the list or moving the focus out of it closes it
+        document.addEventListener("pointerdown", function (event) {
+            if (isOpen() && !more.contains(event.target)) close(false);
+        }, true);
+        more.addEventListener("focusout", function (event) {
+            if (isOpen() && event.relatedTarget && !more.contains(event.relatedTarget)) close(false);
+        });
+
+        on("section", markActive);
+        on("language", refit);
+        on("settings", refit);
+        if (document.fonts && document.fonts.addEventListener) {
+            // The site's fonts, or the easy-to-read font, have arrived: the names got wider or narrower
+            document.fonts.addEventListener("loadingdone", refit);
+            document.fonts.ready.then(refit);
+        }
+        resizeCallbacks.add(function () { fit(false); });
+        onMedia(wide, refit, { immediate: false });
+        // "My Compass" and Settings show their buttons once they are ready
+        if ("ResizeObserver" in window) new ResizeObserver(function () { fit(false); }).observe(actions);
+        fit(true);
+    }
+
     /* =========================================================
        11. COMMANDS (used by the Ctrl+K command palette)
        A command: { id, group, icon, title: function () { return "text"; }, keywords, run }
@@ -1896,6 +2113,7 @@
        A.glossary, and A.whenFeature("glossary") (a Promise) resolves with it.
        A.ready(callback) runs once every script has run and the page is ready.
        Content files (js/content/) keep data with A.content.set("quiz", {...}).
+       A.loadScript / A.loadStyle load a file only when it is needed.
        ========================================================= */
     const featureAPIs = {};
     const featureWaiting = {};
@@ -1922,6 +2140,63 @@
     function ready(callback) {
         if (pageReady) setTimeout(function () { safeCall(callback); }, 0);
         else readyCallbacks.push(callback);
+    }
+
+    // ----- Files loaded on demand -----
+    // Big parts that most visitors never open (a lab experiment, the teacher kit)
+    // are not in index.html. Their feature loads them when they are needed:
+    //     A.loadScript("js/lab/maze.js").then(function () { ... it has run ... });
+    // Asking for the same file again returns the same Promise, so it loads once.
+    // If it fails (no network), the Promise rejects, and the next call tries again.
+    // Only for files that index.html does not load itself.
+    const loadingFiles = {};
+
+    function loadFile(tag, url) {
+        const key = tag + " " + url;
+        if (loadingFiles[key]) return loadingFiles[key];
+        loadingFiles[key] = new Promise(function (resolve, reject) {
+            const element = document.createElement(tag);
+            if (tag === "script") {
+                element.async = false;      // scripts asked for one after another run in that order
+                element.src = url;
+            } else {
+                element.rel = "stylesheet";
+                // A stylesheet from another site (the easy-to-read font) in CORS mode, so the
+                // offline copy (sw.js) gets an answer it can check
+                if (new URL(url, document.baseURI).origin !== window.location.origin) element.crossOrigin = "anonymous";
+                element.href = url;
+            }
+            element.addEventListener("load", function () { resolve(); });
+            element.addEventListener("error", function () {
+                delete loadingFiles[key];   // so that the next call tries again
+                element.remove();
+                reject(new Error("Could not load " + url));
+            });
+            document.head.appendChild(element);
+        });
+        return loadingFiles[key];
+    }
+
+    function loadScript(src) {
+        return loadFile("script", src);
+    }
+
+    function loadStyle(href) {
+        return loadFile("link", href);
+    }
+
+    // ----- Files saved ahead for offline use -----
+    // Each feature lists every file it may load on demand, even the ones most visitors
+    // never open (a lab experiment, the teacher kit):
+    //     A.keepOffline(["js/lab/maze.js", "css/lab/maze.css"]);
+    // The offline copy (js/platform.js, sw.js) saves them at a quiet moment, so after
+    // one visit the whole site works without a connection.
+    const offlineFiles = new Set();
+
+    function keepOffline(files) {
+        [].concat(files).forEach(function (file) {
+            offlineFiles.add(new URL(file, document.baseURI).href);
+        });
     }
 
     const contentStore = {};
@@ -1978,6 +2253,7 @@
         storage: storage,
         on: on,
         emit: emit,
+        track: track,
 
         // 3. texts
         addTranslations: addTranslations,
@@ -2024,6 +2300,7 @@
         // 7. screen
         breakpoints: breakpoints,
         queries: queries,
+        isMac: isMac,
         media: media,
         onMedia: onMedia,
         whenVisible: whenVisible,
@@ -2057,6 +2334,11 @@
         whenFeature: whenFeature,
         ready: ready,
         content: content,
+        loadScript: loadScript,
+        loadStyle: loadStyle,
+        keepOffline: keepOffline,
+        // Their full addresses
+        offlineFiles: function () { return Array.from(offlineFiles); },
 
         // 13. toasts
         toast: toast
@@ -2107,25 +2389,24 @@
         setLanguage(state.lang);
         updateThemeMeta();
 
-        // Language and theme buttons
-        const languageButton = document.getElementById("language-toggle");
-        if (languageButton) {
-            languageButton.addEventListener("click", function () {
+        // Language and theme buttons: in the menu bar, and on narrow phones in the menu
+        document.querySelectorAll("#language-toggle, [data-language-toggle]").forEach(function (button) {
+            button.addEventListener("click", function () {
                 window.AICompass.toggleLanguage();
                 toast(t("core.toastLang"), "🌐");
             });
-        }
+        });
 
-        const themeButton = document.getElementById("theme-toggle");
-        if (themeButton) {
-            themeButton.addEventListener("click", function () {
+        document.querySelectorAll("#theme-toggle, [data-theme-toggle]").forEach(function (button) {
+            button.addEventListener("click", function () {
                 window.AICompass.toggleTheme();
                 const light = state.theme === "light";
                 toast(t(light ? "core.toastLight" : "core.toastDark"), light ? "☀️" : "🌙");
             });
-        }
+        });
 
         setUpMenu();
+        setUpMoreLinks();
         startScrolling();
 
         pageReady = true;

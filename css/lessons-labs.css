@@ -1,0 +1,1374 @@
+/* =========================================================
+   AI COMPASS — MINI-LABS IN THEIR OWN FILES
+   The styles of the mini-labs in js/lessons/. js/lessons.js loads this
+   file together with the first of them, so the page doesn't load it at
+   start-up. Shared parts (.lsn-lab, .lsn-lab-sub, .lsn-pill,
+   .lsn-lab-actions, .lsn-slider, .lsn-sentence...) are in
+   css/lessons.css; switches and sliders (.ui-switch, .ui-range) in
+   css/components.css.
+   1. Pixel detective (lesson 7, js/lessons/pixels.js): .px-
+   2. Three slot machines (lesson 8, js/lessons/slots.js): .slot-
+   3. Temperature dial (lesson 9, js/lessons/temperature.js): .tmp-
+   4. From noise to picture (lesson 10, js/lessons/noise.js): .noise-
+   5. Fair or not? (lesson 11, js/lessons/fairness.js): .fair-
+   6. Prompt makeover (lesson 12, js/lessons/prompt.js): .prompt-
+   7. Switches of the mini-labs
+   8. Responsive
+   9. Calm mode and reduced motion
+   ========================================================= */
+
+/* ===== 1. PIXEL DETECTIVE =====
+   --px-cell   one square of the picture and of the result: 24px, so a finger
+               can tap one (the minimum target size of WCAG 2.2). Only phones
+               narrower than 352px get smaller squares (section 5).
+   The two grids sit side by side when the lab is 640px wide or more (a
+   container query: the reader's width depends on the screen and on its
+   contents list), otherwise one under the other.
+   The picture is a photo: its black and white are the same in both themes.
+   The result is coloured with the theme: cyan for a positive number
+   (dark → white), pink for a negative one (white → dark). */
+
+.px-lab {
+    --px-cell: 24px;
+    --px-black: #05070d;
+    --px-white: #ffffff;
+    container-type: inline-size;   /* for the @container rule below */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);   /* never wider than the reader */
+    gap: 18px;
+}
+
+.px-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+}
+
+.px-group .lsn-lab-sub {
+    margin-bottom: 8px;
+}
+
+.px-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.px-pill {
+    padding: 8px 14px;
+    font-size: 0.84375rem;
+}
+
+/* One grid under the other, the arrow pointing down... */
+.px-boards {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px 20px;
+}
+
+.px-board {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.px-caption {
+    color: var(--text-muted);
+    font-size: 0.78125rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.px-arrow {
+    align-self: center;
+    color: var(--text-muted);
+    font-size: 1.375rem;
+    transform: rotate(90deg);
+}
+
+/* ... or side by side, when both fit: 290 + 21 + 288px and two gaps */
+@container (min-width: 640px) {
+    .px-boards {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    .px-arrow {
+        transform: none;
+    }
+}
+
+/* The two grids: buttons without gaps (the thin lines are inset shadows), so the
+   window around 3 × 3 pixels lines up with them exactly */
+.px-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--px-n), var(--px-cell));
+    grid-auto-rows: var(--px-cell);
+    border: 1px solid var(--border-strong);
+    background: var(--surface-solid);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.px-cell {
+    display: grid;
+    place-items: center;
+    width: var(--px-cell);
+    height: var(--px-cell);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: inset 0 0 0 0.5px rgba(128, 128, 128, 0.35);
+    color: var(--text);
+    font: 600 10px/1 var(--font-mono);
+    cursor: pointer;
+}
+
+/* A focus ring that shows on black, on white and on every colour of the result */
+.px-cell:focus-visible {
+    position: relative;
+    z-index: 2;
+    outline: 3px solid var(--accent-2);
+    outline-offset: 0;
+    box-shadow: 0 0 0 5px var(--px-black), 0 0 0 7px var(--px-white);
+}
+
+.px-picture .px-cell {
+    background: var(--px-black);
+    color: var(--px-white);
+}
+
+.px-picture .px-cell.is-white {
+    background: var(--px-white);
+    color: var(--px-black);
+}
+
+/* The 3 × 3 window that makes the explained square of the result */
+.px-window {
+    position: absolute;
+    top: calc(var(--px-row, 0) * var(--px-cell));
+    left: calc(var(--px-col, 0) * var(--px-cell));
+    z-index: 1;
+    width: calc(3 * var(--px-cell));
+    height: calc(3 * var(--px-cell));
+    border: 3px solid var(--accent-2);
+    box-shadow: 0 0 0 1.5px var(--px-black), inset 0 0 0 1.5px var(--px-black);
+    pointer-events: none;
+    transition: top 0.15s ease, left 0.15s ease;
+}
+
+/* The result. --px-alpha: how strong the colour is (1, 2 or 3 of a 3 × 3 column
+   or row found the edge). The text colours keep a contrast of 4.5:1 or more. */
+.px-lab:not(.is-blur) .px-result .px-cell[data-sign="pos"] {
+    background: rgba(var(--accent-2-rgb), var(--px-alpha));
+}
+
+.px-lab:not(.is-blur) .px-result .px-cell[data-sign="neg"] {
+    background: rgba(var(--accent-3-rgb), var(--px-alpha));
+}
+
+.px-result .px-cell[data-level="1"] {
+    --px-alpha: 0.3;
+}
+
+.px-result .px-cell[data-level="2"] {
+    --px-alpha: 0.75;
+    color: var(--px-black);
+}
+
+.px-result .px-cell[data-level="3"] {
+    --px-alpha: 1;
+    color: var(--px-black);
+}
+
+[data-theme="light"] .px-result .px-cell[data-level="2"] {
+    color: var(--text);
+}
+
+[data-theme="light"] .px-result .px-cell[data-level="3"] {
+    color: var(--px-white);
+}
+
+/* A blur: shades of grey (js/lessons/pixels.js sets each one) */
+.px-result .px-cell[data-level="dark"] {
+    color: var(--px-white);
+}
+
+.px-result .px-cell[data-level="light"] {
+    color: var(--px-black);
+}
+
+.px-result .px-cell.is-spot {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid var(--text);
+    outline-offset: -2px;
+    box-shadow: inset 0 0 0 3.5px var(--surface-solid);
+}
+
+.px-result .px-cell.is-spot:focus-visible {
+    outline: 3px solid var(--accent-2);
+    outline-offset: 0;
+    box-shadow: 0 0 0 5px var(--px-black), 0 0 0 7px var(--px-white);
+}
+
+.px-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 4px 14px;
+    max-width: calc(12 * var(--px-cell));
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.px-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.px-lab.is-blur .px-for-edges,
+.px-lab:not(.is-blur) .px-for-blur {
+    display: none;
+}
+
+.px-key {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    background: var(--px-black);
+}
+
+.px-key.is-white {
+    background: var(--px-white);
+}
+
+.px-key.is-pos {
+    background: rgb(var(--accent-2-rgb));
+}
+
+.px-key.is-neg {
+    background: rgb(var(--accent-3-rgb));
+}
+
+.px-key.is-grey {
+    width: 30px;
+    background: linear-gradient(90deg, #000, #fff);
+}
+
+/* How the explained square's number was made */
+.px-explain {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-solid);
+}
+
+.px-explain-title {
+    font-weight: 700;
+}
+
+.px-explain-lead {
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.px-sum {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.px-mini {
+    display: grid;
+    grid-template-columns: repeat(3, 30px);
+    grid-auto-rows: 24px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.px-mini span {
+    display: grid;
+    place-items: center;
+    box-shadow: inset 0 0 0 0.5px var(--border);
+    font: 600 12px/1 var(--font-mono);
+}
+
+.px-mini.is-filter span {
+    color: var(--text-accent-2);
+}
+
+.px-op {
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.px-total {
+    color: var(--text-accent-2);
+    font: 700 18px/1.2 var(--font-mono);
+}
+
+.px-status {
+    font-weight: 600;
+}
+
+/* ===== 2. THREE SLOT MACHINES ===== */
+
+.slot-lab {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+.slot-note {
+    padding: 10px 14px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.55;
+}
+
+.slot-machines {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.slot-machine {
+    display: grid;
+    justify-items: center;
+    align-content: start;
+    gap: 6px;
+    padding: 14px 12px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface-solid);
+    text-align: center;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.slot-machine.is-last {
+    border-color: rgba(var(--accent-2-rgb), 0.6);
+}
+
+.slot-machine.is-best {
+    border-color: var(--success);
+    box-shadow: 0 0 0 1px var(--success), 0 0 24px color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.slot-name {
+    font-family: var(--font-display);
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.slot-reel {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: var(--surface-2);
+    box-shadow: inset 0 6px 14px rgba(0, 0, 0, 0.25);
+    font-size: 30px;     /* px: a glyph in a tile of fixed size */
+    line-height: 1;
+    overflow: hidden;
+}
+
+.slot-reel span {
+    display: inline-block;
+}
+
+.slot-reel.is-spin span {
+    animation: slot-spin 0.45s var(--ease);
+}
+
+@keyframes slot-spin {
+    0% { transform: translateY(-130%); filter: blur(3px); }
+    60% { transform: translateY(10%); filter: none; }
+    100% { transform: none; }
+}
+
+.slot-stats {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.slot-estimate {
+    font-size: 0.84375rem;
+}
+
+.slot-estimate-label {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.slot-bar {
+    width: 100%;
+    height: 6px;
+    border-radius: 6px;
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 1px var(--border);
+    overflow: hidden;
+}
+
+.slot-bar span {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: var(--gradient);
+    transition: width 0.35s var(--ease);
+}
+
+/* The hidden chance, shown when the game is over */
+.slot-chance {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(var(--accent-3-rgb), 0.14);
+    color: var(--text-accent-3);
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.slot-machine.is-best .slot-chance {
+    background: color-mix(in srgb, var(--success) 14%, transparent);
+    color: var(--text-success);
+}
+
+.slot-pull {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 4px;
+}
+
+.slot-robot {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.slot-score {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-2);
+    font-size: 0.90625rem;
+    font-weight: 700;
+}
+
+.slot-score [data-slot="left"] {
+    color: var(--text-muted);
+}
+
+.slot-end {
+    display: grid;
+    gap: 8px;
+    padding: 16px 18px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.45);
+    border-radius: 16px;
+    background:
+        linear-gradient(135deg, rgba(var(--accent-2-rgb), 0.1), transparent 60%),
+        var(--surface-solid);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+}
+
+.slot-end-title {
+    font-weight: 700;
+}
+
+/* ===== 3. TEMPERATURE DIAL ===== */
+
+.tmp-lab {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+}
+
+.tmp-bars {
+    display: grid;
+    gap: 6px;
+}
+
+.tmp-bar {
+    display: grid;
+    grid-template-columns: minmax(80px, 8.5em) minmax(0, 1fr) 56px 44px;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    transition: background 0.25s ease;
+}
+
+.tmp-bar.is-picked {
+    background: rgba(var(--accent-2-rgb), 0.1);
+}
+
+.tmp-word {
+    overflow: hidden;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tmp-track {
+    height: 12px;
+    border-radius: 12px;
+    background: var(--surface-solid);
+    box-shadow: inset 0 0 0 1px var(--border);
+    overflow: hidden;
+}
+
+.tmp-fill {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: 12px;
+    background: var(--gradient);
+    transition: width 0.35s var(--ease);
+}
+
+.tmp-value {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    text-align: right;
+}
+
+.tmp-count {
+    color: var(--text-accent-2);
+    font-size: 0.78125rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.tmp-tally {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    font-size: 0.90625rem;
+}
+
+.tmp-maths {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-solid);
+}
+
+.tmp-maths summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* The details' own triangle is hidden by style.css: an arrow that turns instead */
+.tmp-maths summary::-webkit-details-marker {
+    display: none;
+}
+
+.tmp-maths summary::after {
+    content: "⌄";
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 1.125rem;
+    line-height: 1;
+    transition: transform 0.3s var(--ease);
+}
+
+.tmp-maths[open] summary::after {
+    transform: rotate(180deg);
+}
+
+.tmp-maths-intro {
+    padding: 0 16px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+/* On a phone the table is wider than the screen: its box scrolls sideways (and
+   can be scrolled with the arrow keys once it has the focus) */
+.tmp-table-box {
+    margin: 8px 10px 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    /* A soft shadow on a side where more of the table is hidden ("local" covers
+       it once that side is scrolled into view) */
+    background:
+        linear-gradient(90deg, var(--surface-solid) 30%, transparent) left / 32px 100% no-repeat local,
+        linear-gradient(270deg, var(--surface-solid) 30%, transparent) right / 32px 100% no-repeat local,
+        radial-gradient(farthest-side at 0 50%, rgba(var(--accent-2-rgb), 0.35), transparent) left / 12px 100% no-repeat scroll,
+        radial-gradient(farthest-side at 100% 50%, rgba(var(--accent-2-rgb), 0.35), transparent) right / 12px 100% no-repeat scroll;
+}
+
+.tmp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.tmp-table th,
+.tmp-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.tmp-table th:first-child {
+    text-align: left;
+}
+
+.tmp-table thead th {
+    color: var(--text-muted);
+    font-size: 0.71875rem;
+    font-weight: 600;
+    white-space: normal;
+    vertical-align: bottom;
+}
+
+.tmp-table tfoot th,
+.tmp-table tfoot td {
+    border-bottom: none;
+    font-weight: 700;
+}
+
+/* ===== 4. FROM NOISE TO PICTURE =====
+   The picture is a 16 × 16 canvas, scaled up without smoothing, so every
+   pixel stays a crisp square. Its colours are the picture's own: the same
+   in both themes. The slider, the noise meter and the buttons sit beside it
+   when the lab is 560px wide or more, otherwise under it. Under both, the
+   film strip: one small canvas per step, filled in as the steps are done. */
+
+.noise-lab {
+    container-type: inline-size;   /* for the @container rule below */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+}
+
+.noise-prompts {
+    display: grid;
+    gap: 8px;
+}
+
+.noise-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.noise-pill {
+    white-space: normal;   /* a long prompt may wrap on a small phone */
+    text-align: left;
+}
+
+.noise-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+}
+
+@container (min-width: 560px) {
+    .noise-stage {
+        grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+        gap: 24px;
+    }
+}
+
+.noise-picture {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+}
+
+.noise-canvas {
+    display: block;
+    width: min(100%, 240px);
+    height: auto;
+    aspect-ratio: 1;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(var(--accent-2-rgb), 0.16);
+    image-rendering: crisp-edges;   /* older Firefox */
+    image-rendering: pixelated;
+}
+
+.noise-caption {
+    min-height: 3em;   /* two lines: the text below doesn't jump when the caption gets longer */
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.noise-controls {
+    display: grid;
+    gap: 14px;
+}
+
+.noise-left {
+    display: grid;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+/* The share of noise left: a "noisy" striped bar that shrinks step by step */
+.noise-meter {
+    display: block;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.14);
+}
+
+.noise-meter span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: repeating-linear-gradient(90deg, var(--accent-3) 0 5px, var(--accent-2) 5px 10px, var(--accent) 10px 15px);
+    transition: width 0.3s var(--ease);
+}
+
+.noise-film {
+    display: grid;
+    gap: 8px;
+}
+
+.noise-strip {
+    display: flex;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.noise-frame {
+    flex: 1 1 0;
+    min-width: 0;
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+}
+
+.noise-frame canvas {
+    display: block;
+    width: 100%;
+    max-width: 44px;
+    height: auto;
+    aspect-ratio: 1;
+    border: 1px dashed var(--border-strong);
+    border-radius: 6px;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+
+.noise-frame.is-done canvas {
+    border-style: solid;
+    border-color: var(--border);
+}
+
+.noise-frame.is-now canvas {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 2px rgba(var(--accent-2-rgb), 0.35);
+}
+
+.noise-frame span {
+    color: var(--text-muted);
+    font-size: 0.65625rem;
+}
+
+.noise-frame.is-now span {
+    color: var(--text-accent-2);
+    font-weight: 700;
+}
+
+.noise-honest {
+    padding: 10px 14px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+    line-height: 1.55;
+}
+
+/* ===== 5. FAIR OR NOT? =====
+   One case at a time, in a card. Above it, a round numbered button per case
+   (with a green tick once the problem is spotted, an amber cross if missed)
+   and the score. The answers are .ui-option buttons (css/components.css)
+   with the letters of the "check yourself" question (.lsn-option-mark,
+   css/lessons.css). In the face-unlock case, a result below the overall
+   one is amber, so the gap stands out. */
+
+.fair-lab {
+    container-type: inline-size;   /* for the @container rule below */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+.fair-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+}
+
+.fair-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fair-dot {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: var(--surface-solid);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 14px;     /* px: a glyph in a tile of fixed size */
+    font-weight: 700;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fair-dot:hover {
+    border-color: var(--accent-2);
+}
+
+.fair-dot.is-now {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 0 3px rgba(var(--accent-2-rgb), 0.28);
+}
+
+/* The status, as a small badge on the corner of the button */
+.fair-dot.is-spotted::after,
+.fair-dot.is-missed::after {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: grid;
+    place-items: center;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    color: var(--surface-solid);
+    font-size: 11px;     /* px: a glyph in a tile of fixed size */
+    line-height: 1;
+}
+
+.fair-dot.is-spotted::after {
+    content: "✓";
+    background: var(--success);
+}
+
+.fair-dot.is-missed::after {
+    content: "✗";
+    background: var(--warning);
+}
+
+.fair-case {
+    display: grid;
+    gap: 12px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface-solid);
+}
+
+.fair-tag {
+    color: var(--text-muted);
+    font-size: 0.71875rem;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.fair-title {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.fair-title:focus {
+    outline: none;   /* it gets the focus from the script only, so screen readers read the new case */
+}
+
+.fair-story {
+    font-size: var(--lsn-text);
+    line-height: 1.65;
+}
+
+.fair-question {
+    margin-top: 4px;
+    font-weight: 700;
+}
+
+.fair-options {
+    margin-top: 0;
+}
+
+.fair-option {
+    --option-height: 52px;
+    --option-pad: 10px 14px;
+    font-size: calc(var(--lsn-text) - 0.0625rem);
+}
+
+.fair-feedback {
+    margin-top: 4px;
+}
+
+/* The face-unlock test: one bar per row of results */
+.fair-test {
+    display: grid;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 14px;
+}
+
+.fair-bars {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.fair-bar-row {
+    display: grid;
+    grid-template-columns: minmax(7.5em, auto) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 12px;
+    font-size: 0.875rem;
+}
+
+.fair-bar-name {
+    font-weight: 700;
+}
+
+.fair-bar {
+    display: block;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(var(--accent-2-rgb), 0.14);
+}
+
+.fair-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent-2);
+}
+
+.fair-bar-row.is-low .fair-bar span {
+    background: var(--warning);
+}
+
+.fair-bar-value {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.fair-bar-row.is-low .fair-bar-value {
+    color: var(--text-warning);
+    font-weight: 700;
+}
+
+.fair-share {
+    color: var(--text-muted);
+    font-size: 0.84375rem;
+}
+
+/* A narrow lab: the name and the numbers on one line, the bar under them */
+@container (max-width: 520px) {
+    .fair-bar-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 4px 10px;
+    }
+
+    .fair-bar {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .fair-case {
+        padding: 16px;
+    }
+}
+
+.fair-done {
+    margin-top: 0;
+}
+
+/* ===== 6. PROMPT MAKEOVER =====
+   Each ingredient has a colour (--prompt-kind, chosen by data-kind): its
+   button, its piece of the prompt and its part of the answer share it. The
+   colour is only on borders, dots and light backgrounds, so the text keeps
+   the theme's colour and stays easy to read in both themes. The prompt is
+   a message you send (its corner at the bottom left), the answer one you
+   get back (its corner at the bottom right). */
+
+.prompt-lab {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+}
+
+.prompt-lab [data-kind="role"] {
+    --prompt-kind: var(--accent);
+    --prompt-kind-text: var(--text-accent);
+}
+
+.prompt-lab [data-kind="context"] {
+    --prompt-kind: var(--accent-2);
+    --prompt-kind-text: var(--text-accent-2);
+}
+
+.prompt-lab [data-kind="task"] {
+    --prompt-kind: var(--accent-3);
+    --prompt-kind-text: var(--text-accent-3);
+}
+
+.prompt-lab [data-kind="example"] {
+    --prompt-kind: var(--warning);
+    --prompt-kind-text: var(--text-warning);
+}
+
+.prompt-lab [data-kind="format"] {
+    --prompt-kind: var(--success);
+    --prompt-kind-text: var(--text-success);
+}
+
+.prompt-box {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 18px 18px 18px 4px;
+    background: var(--surface-solid);
+}
+
+.prompt-text {
+    font-size: var(--lsn-text);
+    line-height: 1.75;
+}
+
+/* A piece of the prompt: underlined in its ingredient's colour (the colour
+   continues on the next line when a piece wraps) */
+.prompt-piece {
+    padding: 1px 3px;
+    border-radius: 5px;
+    background: transparent;
+    background: color-mix(in srgb, var(--prompt-kind) 15%, transparent);
+    box-shadow: inset 0 -2px 0 var(--prompt-kind);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+.prompt-piece.is-vague {
+    background: none;
+    box-shadow: none;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.prompt-ingredients {
+    display: grid;
+    gap: 10px;
+}
+
+.prompt-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.prompt-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 6px 14px 6px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--surface-solid);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.prompt-chip:hover {
+    border-color: var(--prompt-kind);
+}
+
+.prompt-chip-icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: transparent;
+    background: color-mix(in srgb, var(--prompt-kind) 20%, transparent);
+    font-size: 14px;     /* px: a glyph in a tile of fixed size */
+}
+
+.prompt-chip-mark::before {
+    content: "+";
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+.prompt-chip[aria-pressed="true"] {
+    border-color: var(--prompt-kind);
+    background: var(--surface-solid);
+    background: color-mix(in srgb, var(--prompt-kind) 14%, var(--surface-solid));
+}
+
+.prompt-chip[aria-pressed="true"] .prompt-chip-mark::before {
+    content: "✓";
+    color: var(--prompt-kind-text);
+}
+
+.prompt-status {
+    margin-top: 0;
+}
+
+.prompt-meter {
+    display: grid;
+    gap: 8px;
+}
+
+.prompt-meter-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+}
+
+.prompt-level {
+    font-family: var(--font-display);
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.prompt-count {
+    color: var(--text-muted);
+    font-size: 0.78125rem;
+}
+
+/* One segment per ingredient switched on */
+.prompt-bar {
+    display: flex;
+    gap: 6px;
+}
+
+.prompt-bar i {
+    flex: 1 1 0;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.14);
+    transition: background 0.3s ease;
+}
+
+.prompt-bar i.is-on {
+    background: var(--gradient);
+}
+
+.prompt-answer {
+    display: grid;
+    gap: 8px;
+}
+
+.prompt-bubble {
+    display: grid;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.35);
+    border-radius: 18px 18px 4px 18px;
+    background: linear-gradient(180deg, rgba(var(--accent-2-rgb), 0.08), transparent 60%), var(--surface-solid);
+    font-size: calc(var(--lsn-text) - 0.0625rem);
+    line-height: 1.65;
+}
+
+.prompt-bubble.is-new {
+    animation: prompt-in 0.35s var(--ease);
+}
+
+@keyframes prompt-in {
+    from {
+        opacity: 0.4;
+        transform: translateY(4px);
+    }
+}
+
+/* The parts of the answer that an ingredient added: a line in its colour */
+.prompt-bubble [data-kind] {
+    padding-left: 10px;
+    border-left: 3px solid var(--prompt-kind);
+}
+
+.prompt-list {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-right: 0;
+    list-style: none;
+}
+
+.prompt-list li {
+    position: relative;
+    padding-left: 16px;
+}
+
+.prompt-list li::before {
+    content: "•";
+    position: absolute;
+    left: 2px;
+    color: var(--text-success);
+    font-weight: 800;
+}
+
+.prompt-honest {
+    flex: 1 1 260px;
+    margin-top: 0;
+}
+
+/* ===== 7. SWITCHES OF THE MINI-LABS =====
+   The track and the knob are .ui-switch (css/components.css). */
+
+.px-switch,
+.slot-switch,
+.fair-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    justify-self: start;
+    min-height: 44px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+
+/* ===== 8. RESPONSIVE ===== */
+
+@media (max-width: 640px) {
+    /* 12 squares across the width of a phone (the reader and the lab take 62px of it) */
+    .px-lab {
+        --px-cell: max(20px, min(24px, calc((100vw - 64px) / 12)));
+    }
+
+    .px-mini {
+        grid-template-columns: repeat(3, 26px);
+        grid-auto-rows: 22px;
+    }
+
+    .px-mini span {
+        font-size: 0.6875rem;
+    }
+
+    /* The machines one under the other: the reel beside the numbers, the button under them */
+    .slot-machines {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .slot-machine {
+        grid-template-columns: auto minmax(0, 1fr);
+        justify-items: start;
+        align-items: center;
+        gap: 2px 14px;
+        padding: 12px 14px;
+        text-align: left;
+    }
+
+    .slot-machine > * {
+        grid-column: 2;
+    }
+
+    .slot-reel {
+        grid-column: 1;
+        grid-row: 1 / span 5;
+        width: 56px;
+        height: 56px;
+        font-size: 26px;     /* px: a glyph in a tile of fixed size */
+    }
+
+    .slot-machine > .slot-pull,
+    .slot-machine > .slot-robot {
+        grid-column: 1 / -1;
+    }
+
+    .slot-pull {
+        margin-top: 8px;
+    }
+
+    /* Word and numbers on one line, the bar under them */
+    .tmp-bar {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 4px 10px;
+        padding: 6px 8px;
+    }
+
+    .tmp-track {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .tmp-table th,
+    .tmp-table td {
+        padding: 5px 5px;
+        font-size: 0.78125rem;
+    }
+}
+
+/* ===== 9. CALM MODE AND REDUCED MOTION =====
+   core.js puts "fx-motion-off" on <html>, and style.css then stops every
+   animation and transition. The labs also skip the reel's spin and the
+   word's pop (api.motion.ok() in their files). Nothing else to do here. */

@@ -1,0 +1,415 @@
+/* =========================================================
+   AI COMPASS — FOR TEACHERS (the section)
+   Styles of the "For teachers" section (js/teachers.js). Every class
+   starts with tk-. The windows of the teacher kit (plans, worksheets,
+   the classroom quiz, printing) are in css/teachers-kit.css, which
+   loads with the kit, the first time a teacher opens something.
+   1. The menu link
+   2. The space kept for the section before it is built
+   3. The course at a glance
+   4. The lessons and their buttons
+   5. The classroom quiz and the note on using AI honestly
+   6. Phones and touch screens
+   7. Printing the page
+   Colours come from the variables in style.css; calm mode needs
+   nothing here (the only movement is the colour of hovered buttons).
+   ========================================================= */
+
+/* ===== 1. THE MENU LINK =====
+   Without JavaScript the section stays hidden, so its links do too.
+   When the menu bar has no room for every link, this one moves into
+   "More" with the others that don't fit (js/core.js, style.css). */
+html:not(.js) .tk-nav-link {
+    display: none;
+}
+
+/* ===== 2. THE SPACE KEPT FOR THE SECTION =====
+   The section is built when it comes near the screen. Until then its
+   mount keeps about the height it will have, so the page below doesn't jump. */
+#teachers [data-feature="teachers"]:empty {
+    min-height: 1580px;
+}
+
+@media (max-width: 1099px) {
+    #teachers [data-feature="teachers"]:empty {
+        min-height: 1850px;
+    }
+}
+
+@media (max-width: 899px) {
+    #teachers [data-feature="teachers"]:empty {
+        min-height: 2800px;
+    }
+}
+
+/* ===== 3. THE COURSE AT A GLANCE ===== */
+.tk-overview {
+    padding: 34px 36px 36px;
+    border-color: var(--border-strong);
+}
+
+.tk-overview-title,
+.tk-kit-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.tk-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px 28px;
+    margin-top: 22px;
+    list-style: none;
+}
+
+.tk-fact {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.tk-fact-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-2);
+    font-size: 22px;     /* px: a glyph in a tile of fixed size */
+}
+
+.tk-fact-text {
+    color: var(--text-muted);
+    font-size: 0.90625rem;
+    line-height: 1.5;
+}
+
+.tk-fact-value {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+}
+
+/* ===== 4. THE LESSONS AND THEIR BUTTONS ===== */
+.tk-kit {
+    margin-top: 56px;
+}
+
+.tk-kit-head {
+    max-width: 760px;
+    margin-bottom: 22px;
+}
+
+.tk-kit-text {
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 0.96875rem;
+}
+
+.tk-tracks {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+}
+
+@media (min-width: 1100px) {
+    .tk-tracks {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.tk-track {
+    padding: 22px 24px 10px;
+}
+
+.tk-track-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.tk-track-icon {
+    font-size: 1.25rem;
+}
+
+.tk-track-label {
+    padding: 4px 10px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.35);
+    border-radius: 999px;
+    color: var(--text-accent-2);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.tk-lessons {
+    list-style: none;
+}
+
+/* One lesson: number, icon, title (with its reading time), and its three
+   buttons under the title (or next to it, when the row is wide: below) */
+.tk-lesson {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.tk-lesson + .tk-lesson {
+    border-top: 1px solid var(--border);
+}
+
+.tk-lesson-number {
+    color: var(--text-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.tk-lesson-icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: var(--surface-2);
+    font-size: 18px;     /* px: a glyph in a tile of fixed size */
+}
+
+.tk-lesson-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.tk-lesson-title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.tk-lesson-meta {
+    color: var(--text-label);
+    font-size: 0.71875rem;
+}
+
+.tk-lesson-actions {
+    display: flex;
+    flex-wrap: wrap;
+    grid-column: 3;
+    gap: 6px;
+}
+
+.tk-doc-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 11px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.tk-doc-button:hover {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.1);
+    color: var(--text-accent-2);
+}
+
+.tk-doc-icon {
+    font-size: 0.875rem;
+}
+
+/* While the teacher kit loads (the first time) */
+.tk-doc-button[aria-busy="true"],
+.tk-quiz-button[aria-busy="true"] {
+    cursor: progress;
+    opacity: 0.7;
+}
+
+/* One wide track under the other: the buttons fit next to the title */
+@media (min-width: 900px) and (max-width: 1099px) {
+    .tk-lesson {
+        grid-template-columns: auto auto minmax(0, 1fr) auto;
+    }
+
+    .tk-lesson-actions {
+        grid-column: auto;
+    }
+}
+
+/* ===== 5. THE CLASSROOM QUIZ AND THE NOTE ON USING AI HONESTLY ===== */
+.tk-extras {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    margin-top: 24px;
+}
+
+@media (min-width: 900px) {
+    .tk-extras {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.tk-extra {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 28px 30px 30px;
+    overflow: hidden;
+}
+
+.tk-extra-quiz {
+    border-color: rgba(var(--accent-rgb), 0.45);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(var(--accent-rgb), 0.16), transparent 55%),
+        var(--glass);
+}
+
+.tk-extra-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background: var(--surface-2);
+    font-size: 26px;     /* px: a glyph in a tile of fixed size */
+}
+
+.tk-extra-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.tk-extra-text {
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+}
+
+.tk-extra-meta {
+    margin-top: 12px;
+    color: var(--text-label);
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+.tk-extra-meta:empty {
+    display: none;
+}
+
+.tk-quiz-button,
+.tk-honest-link {
+    margin-top: auto;
+}
+
+/* The space above the buttons (margin-top: auto keeps them at the bottom) */
+.tk-extra-text + .tk-honest-link,
+.tk-extra-meta + .tk-quiz-button,
+.tk-extra-meta:empty + .tk-quiz-button {
+    margin-top: 22px;
+}
+
+.tk-honest-link {
+    max-width: 100%;
+    white-space: normal;
+}
+
+/* ===== 6. PHONES AND TOUCH SCREENS ===== */
+@media (max-width: 960px) {
+    .tk-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    #teachers [data-feature="teachers"]:empty {
+        min-height: 3300px;
+    }
+
+    .tk-overview {
+        padding: 26px 20px 28px;
+    }
+
+    .tk-facts {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+
+    .tk-kit {
+        margin-top: 44px;
+    }
+
+    .tk-track {
+        padding: 18px 16px 6px;
+    }
+
+    /* The three buttons get a row of their own, side by side */
+    .tk-lesson {
+        grid-template-columns: auto auto minmax(0, 1fr);
+        gap: 10px 12px;
+    }
+
+    .tk-lesson-actions {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .tk-doc-button {
+        flex-direction: column;
+        gap: 2px;
+        min-height: 52px;
+        padding: 6px 4px;
+        white-space: normal;
+    }
+
+    .tk-extra {
+        padding: 24px 20px 26px;
+    }
+}
+
+@media (hover: none), (pointer: coarse) {
+    .tk-doc-button {
+        min-height: 44px;
+    }
+}
+
+/* ===== 7. PRINTING THE PAGE =====
+   (Printing a plan or a worksheet is in css/teachers-kit.css.)
+   When the whole page is printed, the buttons are of no use on paper. */
+@media print {
+    .tk-lesson-actions,
+    .tk-quiz-button,
+    .tk-honest-link {
+        display: none !important;
+    }
+}

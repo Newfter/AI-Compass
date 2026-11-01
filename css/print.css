@@ -1,0 +1,390 @@
+/* =========================================================
+   AI COMPASS — PRINTING
+   Only used when the page is printed or saved as a PDF: index.html loads it
+   with media="print", so it costs nothing on screen.
+
+   1. Paper: margins, and the site's name, address and page numbers at the
+      bottom of every page
+   2. Black text on white paper: no glass, glows, shadows or animations
+   3. Hidden on paper: what only works on a screen (the menu bar, the
+      background animation, buttons, text fields, pop-up windows, and the
+      AI Lab and the quiz, which need a mouse or a finger)
+   4. The page: less empty space, sensible page breaks (a heading stays with
+      its text, a card stays in one piece), and the web address printed after
+      every link to another site
+   5. An open lesson prints alone, as a handout: "Lesson 01 / 06" and its
+      title on top, then the text, the notes, the key ideas and the
+      "Check yourself" question (the mini-lab needs a screen)
+   6. The certificate prints alone, on one A4 page, while it is shown
+
+   To check a change without paper: press Ctrl+P (Cmd+P on a Mac) and look
+   at the preview, in the dark and in the light theme.
+   This file uses the class names of other parts of the site (lessons.css,
+   effects.css, style.css): if one of them is renamed, rename it here too.
+   ========================================================= */
+
+/* ===== 1. PAPER ===== */
+
+@page {
+    margin: 16mm 15mm 18mm;
+
+    /* If the site moves to another address, change it here too */
+    @bottom-left {
+        content: "AI Compass · newfter.github.io/AI-Compass";
+        font: 8pt "Manrope", system-ui, sans-serif;
+        color: #555555;
+    }
+
+    @bottom-right {
+        content: counter(page) " / " counter(pages);
+        font: 8pt "Manrope", system-ui, sans-serif;
+        color: #555555;
+    }
+}
+
+/* The certificate's page (see 6.): A4 turned sideways, nothing around it */
+@page certificate {
+    size: A4 landscape;
+    margin: 10mm;
+
+    @bottom-left {
+        content: none;
+    }
+
+    @bottom-right {
+        content: none;
+    }
+}
+
+
+/* ===== 2. BLACK TEXT ON WHITE PAPER ===== */
+
+/* The same colours in both themes: what is grey or tinted on screen turns
+   black, and borders turn grey */
+:root,
+:root[data-theme] {
+    color-scheme: light;
+    --border: #c9c9c9;
+    --border-strong: #8a8a8a;
+}
+
+/* !important: these must win over every colour, glow and animation of the site.
+   -webkit-text-fill-color: words painted with a gradient (like "AI" in the
+   big title) are see-through on screen, and paper prints no gradients.
+   The animations end at once, so everything shows in its finished state. */
+*,
+*::before,
+*::after {
+    color: #000000 !important;
+    -webkit-text-fill-color: currentColor !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition: none !important;
+}
+
+html,
+body {
+    background: #ffffff !important;
+}
+
+
+/* ===== 3. HIDDEN ON PAPER ===== */
+
+.skip-link,
+.neural-bg,
+.bg-grid,
+.scroll-progress,
+.navbar,
+.scroll-hint,
+.hero-buttons,
+.hero-stats,
+.rotator-caret,
+.pulse-dot,
+.fx-confetti,
+.footer,
+.toast-stack,
+#lab,
+#quiz,
+[data-feature="assistant"],
+[data-feature="palette"],
+[data-feature="journey"],
+[data-feature="settings"],
+button,
+input,
+select,
+textarea,
+canvas,
+video,
+iframe {
+    display: none !important;
+}
+
+/* The parts of the lessons, the glossary and the history that only work on
+   a screen: progress and its buttons, search and filters, the moving line */
+.lsn-hud,
+.gl-console,
+.tl-bar,
+.tl-line,
+.tl-ghost,
+.tl-term-arrow {
+    display: none !important;
+}
+
+/* A glossary card prints its example and related words only when it is open */
+.gl-card:not(.is-open) .gl-more {
+    display: none !important;
+}
+
+/* These buttons are words that belong to the text (the answers of a lesson's
+   question, a glossary card's related words, the glossary words of an event
+   in the history): they print as plain words in a thin frame */
+.lsn-options .lsn-option,
+.gl-rel,
+.tl-term {
+    display: inline-flex !important;
+    border: 1pt solid #8a8a8a !important;
+}
+
+
+/* ===== 4. THE PAGE ===== */
+
+/* An open window stops the page from scrolling: paper needs all of it */
+body {
+    overflow: visible !important;
+    padding: 0 !important;
+}
+
+.container {
+    width: auto;
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.hero {
+    min-height: 0;
+    padding: 0 0 16pt;
+}
+
+.section {
+    padding: 0 0 16pt;
+}
+
+/* A smaller big title */
+.hero-title {
+    font-size: 30pt;
+}
+
+/* The lesson cards in threes, as on a computer screen (with smaller titles,
+   so that long Russian words fit) */
+.lsn-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10pt;
+}
+
+.lsn-card-title {
+    font-size: 12.5pt;
+}
+
+/* The history, a little closer together */
+.tl-list {
+    gap: 10pt;
+}
+
+.tl-era + .tl-era {
+    margin-top: 16pt;
+}
+
+.tl-card {
+    padding: 12pt 14pt;
+}
+
+/* A heading stays with what follows it */
+h1,
+h2,
+h3,
+h4,
+.section-head,
+.tl-era-head {
+    break-after: avoid;
+}
+
+p,
+li {
+    orphans: 3;
+    widows: 3;
+}
+
+/* Cards, notes, pictures and list items stay in one piece */
+article,
+aside,
+figure,
+blockquote,
+pre,
+table,
+li,
+.card,
+.section-head,
+.about-card,
+.tl-era-head,
+.lsn-check {
+    break-inside: avoid;
+}
+
+img,
+svg {
+    max-width: 100% !important;
+}
+
+/* Paper has no links: the address of another site is printed after its link */
+a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    font-weight: 400;
+    word-break: break-all;
+}
+
+
+/* ===== 5. AN OPEN LESSON: A HANDOUT ===== */
+
+/* Only the lesson reader is printed (js/lessons.js adds it to the end of
+   <body> and gives it "is-open" while a lesson is open) */
+body:has(> .lsn-reader.is-open) > :not(.lsn-reader) {
+    display: none !important;
+}
+
+/* The reader is a window on screen: on paper it is the page itself.
+   (The lesson is one long <article>: it must be allowed to continue on the
+   next page, unlike the small cards of 4.) */
+.lsn-reader.is-open,
+.lsn-reader.is-open .lsn-reader-panel,
+.lsn-reader.is-open .lsn-reader-scroll,
+.lsn-reader.is-open .lsn-reader-layout,
+.lsn-reader.is-open .lsn-article {
+    position: static !important;
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    transform: none !important;
+    opacity: 1 !important;
+    break-inside: auto !important;
+}
+
+/* The window's buttons and bars, the contents list, and the mini-lab */
+.lsn-reader-backdrop,
+.lsn-reader-progress,
+.lsn-reader-pulse,
+.lsn-reader-keys,
+.lsn-reader-tools,
+.lsn-reader-foot,
+.lsn-toc,
+.lsn-article-icon,
+.lsn-lab,
+.lsn-try,
+.lsn-feedback {
+    display: none !important;
+}
+
+/* On top: "LESSON 01 / 06", then the title */
+.lsn-reader-top {
+    position: static !important;
+    display: block !important;
+    margin: 0 0 4pt !important;
+    padding: 0 !important;
+    border: 0 !important;
+}
+
+.lsn-reader-crumb {
+    margin: 0;
+    font-size: 9pt;
+    letter-spacing: 0.1em;
+}
+
+.lsn-article-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6pt;
+    margin-bottom: 14pt;
+    padding-bottom: 10pt;
+    border-bottom: 1.5pt solid #000000;
+}
+
+.lsn-article-title {
+    order: -1;
+    margin: 0;
+    font-size: 22pt;
+    line-height: 1.2;
+}
+
+/* The text size picked in the reader (A / A / A), in print sizes */
+.lsn-reader {
+    --lsn-text: 11.5pt;
+}
+
+.lsn-reader[data-size="s"] {
+    --lsn-text: 10.5pt;
+}
+
+.lsn-reader[data-size="l"] {
+    --lsn-text: 13pt;
+}
+
+/* "Check yourself": the answers are printed one under the other, to tick
+   with a pen (see 3. for why they show at all) */
+.lsn-options .lsn-option {
+    display: flex !important;
+    break-inside: avoid;
+}
+
+
+/* ===== 6. THE CERTIFICATE ON ONE A4 PAGE ===== */
+
+/* While the certificate is shown (and no lesson is open), everything else is
+   hidden: every element that is not the certificate, not inside it, and does
+   not have it inside. js/lessons.js shows and hides #lsn-cert. */
+:root:has(#lsn-cert:not([hidden])):not(:has(.lsn-reader.is-open)) body *:not(:has(#lsn-cert), #lsn-cert, #lsn-cert *) {
+    display: none !important;
+}
+
+/* The certificate's page is A4, sideways (see 1.) */
+:root:has(#lsn-cert:not([hidden])):not(:has(.lsn-reader.is-open)) body {
+    page: certificate;
+}
+
+/* The boxes around the certificate take no space */
+:root:has(#lsn-cert:not([hidden])):not(:has(.lsn-reader.is-open)) :is(body, body *:has(#lsn-cert), #lsn-cert, .lsn-cert-preview) {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+}
+
+.lsn-cert-form {
+    display: none !important;
+}
+
+/* The picture fills the page without changing its shape */
+.lsn-cert-preview canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 186mm !important;
+    object-fit: contain;
+    break-inside: avoid;
+}
