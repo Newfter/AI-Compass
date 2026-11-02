@@ -146,7 +146,13 @@
        ========================================================= */
     // Tilt, magnet and spotlight only make sense with a real mouse
     function fineOK() {
-        return A.motion.ok() && finePointerQuery.matches;
+        return fancy() && A.motion.ok() && finePointerQuery.matches;
+    }
+
+    // "Extra effects" (Settings, off at first): the decorative touches, like the
+    // "decoding" titles and the tilting cards, only run when it is on
+    function fancy() {
+        return root.classList.contains("fx-fancy");
     }
 
     function updateModeClasses() {
@@ -179,6 +185,9 @@
         onMotionChange();
     });
     A.onMedia(finePointerQuery, onMotionChange, { immediate: false });
+    A.on("settings", (detail) => {
+        if (detail && detail.name === "fancy") onMotionChange();
+    });
 
     /* =========================================================
        4. WATCHING THE SCREEN
@@ -580,6 +589,11 @@
         }
     }
 
+    // The home page's numbers just show, unless "Extra effects" is on
+    function plainHome(element) {
+        return !fancy() && Boolean(element.closest(".hero"));
+    }
+
     // Returns true when the number is new and waits to count up
     function registerCounter(element) {
         const raw = element.getAttribute("data-count");
@@ -605,7 +619,7 @@
         counters.set(element, counter);
         writeCounter(element, counter, value);
 
-        if (!A.motion.ok() || !counterObserver) return false;
+        if (!A.motion.ok() || !counterObserver || plainHome(element)) return false;
         counter.waiting = true;                     // counts up when it scrolls into view
         armObserver.observe(element);
         counterObserver.observe(element);
@@ -740,7 +754,7 @@
 
         const from = counter.shown;
         const to = counter.target;
-        if (from === to || !A.motion.ok()) {
+        if (from === to || !A.motion.ok() || plainHome(element)) {
             counter.shown = to;
             writeCounter(element, counter, to);
             return;
@@ -869,7 +883,7 @@
 
     function scramble(element, delay) {
         stopScramble(element);
-        if (!A.motion.ok() || !element.isConnected) return;
+        if (!fancy() || !A.motion.ok() || !element.isConnected) return;
 
         const run = { element: element, timer: 0, raf: 0, visual: null, finalHTML: "", lockedSize: null };
         scrambleRuns.set(element, run);

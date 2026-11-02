@@ -60,6 +60,8 @@ window.AICompass.addTranslations({
         "settings.calm": "Calm motion",
         "settings.calmHint": "Pauses the animations and the moving background.",
         "settings.calmDevice": "Your device already asks for less motion, so the animations stay paused.",
+        "settings.fancy": "Extra effects",
+        "settings.fancyHint": "A moving network in the background, “decoding” titles and cards that tilt under the mouse.",
 
         // Reading aloud
         "settings.soundHint": "The voice and speed for the “Listen” button in the lessons.",
@@ -245,6 +247,8 @@ window.AICompass.addTranslations({
         "settings.calm": "Спокойный режим",
         "settings.calmHint": "Останавливает анимации и движущийся фон.",
         "settings.calmDevice": "Твоё устройство уже просит меньше движения, поэтому анимации и так остановлены.",
+        "settings.fancy": "Дополнительные эффекты",
+        "settings.fancyHint": "Движущаяся сеть на фоне, «расшифровка» заголовков и карточки, которые наклоняются под мышкой.",
 
         "settings.soundHint": "Голос и скорость для кнопки «Слушать» в уроках.",
         "settings.voiceEn": "Голос для английского",

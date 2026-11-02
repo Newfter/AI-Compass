@@ -571,6 +571,8 @@
     // not in a hidden tab, and not behind a full-screen window (unless a storm
     // or a ripple was asked for)
     function shouldMove() {
+        // "Extra effects" is off (Settings): the network is not shown at all (style.css)
+        if (!document.documentElement.classList.contains("fx-fancy")) return false;
         if (!A.motion.ok() || document.hidden) return false;
         return !A.overlays.hasModal() || busy();
     }
@@ -734,6 +736,7 @@
     });
 
     A.motion.onChange(refresh);                                          // calm mode, "reduce motion"
+    A.on("settings", refresh);                                           // "Extra effects" switched on or off
     A.overlays.onChange(refresh);                                        // a full-screen window opened or closed
     A.whenVisible(canvas, refresh);                                      // the browser tab was hidden or shown
 
