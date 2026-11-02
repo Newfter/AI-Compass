@@ -1,0 +1,236 @@
+/* =========================================================
+   AI COMPASS — ACCOUNTS (js/account.js)
+   1. The button in the menu bar (and in the phone menu)
+   2. The account window: it reuses the Settings window's layer, panel,
+      header, groups and notes (css/settings.css, .st-*); only what is
+      special to accounts is here.
+   ========================================================= */
+
+/* ===== 1. THE BUTTON IN THE MENU BAR ===== */
+.account-toggle {
+    position: relative;
+}
+
+/* Signed in: the first letter of the nickname in a small coloured circle */
+.ac-nav-letter {
+    display: none;
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--bg);
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    font-size: 10px;       /* px: a glyph in a tile of fixed size */
+    font-weight: 800;
+    line-height: 14px;
+    text-align: center;
+}
+
+.account-toggle.is-signed-in .ac-nav-letter {
+    display: block;
+}
+
+.account-toggle.is-signed-in {
+    border-color: rgba(var(--accent-2-rgb), 0.55);
+}
+
+/* Narrow phones: the bar has no room for one more button; the phone menu has one instead */
+@media (max-width: 520px) {
+    .nav-actions .account-toggle {
+        display: none;
+    }
+}
+
+@media (min-width: 521px) {
+    #account-quick {
+        display: none;
+    }
+}
+
+/* ===== 2. THE ACCOUNT WINDOW ===== */
+/* A window in the middle of the screen (the Settings window slides in from the right) */
+.ac-layer {
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.ac-panel {
+    width: min(32rem, 100%);
+    max-height: calc(100% - 32px);
+    border-radius: 22px;
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+    transition: transform 0.32s var(--ease), opacity 0.22s ease;
+}
+
+.st-layer.is-open .ac-panel {
+    opacity: 1;
+    transform: none;
+}
+
+.st-layer.is-closing .ac-panel {
+    transform: translateY(10px);
+}
+
+.ac-body {
+    padding-bottom: 24px;
+}
+
+/* "Sign in with Google": a big, easy button */
+.ac-signin {
+    display: grid;
+    gap: 12px;
+}
+
+.ac-google {
+    justify-content: center;
+    gap: 12px;
+    min-height: 56px;
+    font-size: 1.0625rem;
+}
+
+.ac-google svg {
+    flex: none;
+    padding: 2px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.ac-list {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ac-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.ac-list svg {
+    flex: none;
+    margin-top: 0.2em;
+    color: var(--text-success);
+}
+
+.ac-privacy {
+    align-items: flex-start;
+}
+
+.ac-hello {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.ac-hello svg {
+    flex: none;
+    margin-top: 0.2em;
+    color: var(--text-success);
+}
+
+.ac-email {
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.ac-name-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.ac-input {
+    flex: 1 1 12rem;
+    min-width: 0;
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--text);
+    font: inherit;
+    font-size: 1.0625rem;
+}
+
+.ac-input:focus-visible {
+    border-color: var(--accent-2);
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+}
+
+.ac-name-note {
+    margin-top: 10px;
+}
+
+.ac-name-note:not(.is-problem) {
+    color: var(--text-success);
+}
+
+.ac-sync {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.ac-sync svg {
+    flex: none;
+    margin-top: 0.2em;
+    color: var(--text-accent-2);
+}
+
+.ac-sync.is-problem {
+    color: var(--text-warning);
+}
+
+.ac-problem {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.ac-problem svg {
+    flex: none;
+    margin-top: 0.15em;
+}
+
+.ac-buttons {
+    margin-top: 0;
+}
+
+.ac-buttons + .st-hint {
+    margin-top: 10px;
+}
+
+.ac-danger .ac-delete {
+    color: var(--text-danger);
+}
+
+.ac-delete.is-armed {
+    border-color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 14%, var(--surface));
+}
+
+@media (max-width: 520px) {
+    .ac-layer {
+        padding: 0;
+    }
+
+    .ac-panel {
+        max-height: 100%;
+        border-radius: 0;
+    }
+}

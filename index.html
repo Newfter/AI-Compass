@@ -188,6 +188,8 @@
     <link rel="stylesheet" href="./css/palette.css">
     <link rel="stylesheet" href="./css/journey.css">
     <link rel="stylesheet" href="./css/settings.css">
+    <link rel="stylesheet" href="./css/account.css">
+    <link rel="stylesheet" href="./css/challenge.css">
     <!-- Printing: only used when the page is printed (keep it after the other stylesheets).
          fetchpriority="high": a print-only file is otherwise downloaded after everything else, and
          the browser waits for it before it says the page has loaded, which is when the site starts
@@ -196,6 +198,8 @@
 
     <!-- core.js loads first: the toolkit every other script uses (texts, theme, settings, pop-up windows...) -->
     <script src="./js/core.js" defer></script>
+    <!-- The settings of this copy of the site (the account service): see docs/ACCOUNTS-SETUP.md -->
+    <script src="./js/config.js" defer></script>
 
     <!-- All the texts, in English and Russian (one file per part of the site) -->
     <script src="./js/content/page.js" defer></script>
@@ -214,6 +218,8 @@
     <script src="./js/content/palette.js" defer></script>
     <script src="./js/content/journey.js" defer></script>
     <script src="./js/content/settings.js" defer></script>
+    <script src="./js/content/account.js" defer></script>
+    <script src="./js/content/challenge.js" defer></script>
     <script src="./js/content/platform.js" defer></script>
 
     <!-- The features. platform.js (the app, offline use, sharing, printing) comes first: a language
@@ -231,6 +237,8 @@
     <script src="./js/assistant.js" defer></script>
     <script src="./js/palette.js" defer></script>
     <script src="./js/journey.js" defer></script>
+    <script src="./js/account.js" defer></script>
+    <script src="./js/challenge.js" defer></script>
     <script src="./js/settings.js" defer></script>
 
     <!-- What search engines read about the site (JSON-LD, schema.org): the website, who makes
@@ -319,6 +327,7 @@
             <a href="#lessons" data-i18n="nav.lessons">Lessons</a>
             <a href="#lab" data-i18n="nav.lab">AI Lab</a>
             <a href="#quiz" data-i18n="nav.quiz">Quiz</a>
+            <a href="#challenge" class="ch-nav-link" data-i18n="nav.challenge">Challenge</a>
             <a href="#glossary" data-i18n="nav.glossary">Glossary</a>
             <a href="#timeline" data-i18n="nav.timeline">History</a>
             <a href="#teachers" class="tk-nav-link" data-i18n="nav.teachers">Teachers</a>
@@ -337,6 +346,11 @@
             <!-- On narrow phones the theme and language buttons are here, under the links:
                  the menu bar has no room for them (style.css, 11. RESPONSIVE) -->
             <div class="nav-quick">
+                <!-- The account (js/account.js) shows this button on narrow phones, where the bar has no room for its own -->
+                <button class="nav-quick-button" id="account-quick" type="button" hidden>
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <span class="ac-quick-text">Sign in</span>
+                </button>
                 <button class="nav-quick-button" type="button" data-theme-toggle>
                     <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>
                     <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg>
@@ -354,6 +368,12 @@
                     data-i18n-attr="aria-label:core.searchLabel,title:core.searchLabel">
                 <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                 <kbd class="palette-kbd">Ctrl K</kbd>
+            </button>
+
+            <!-- The account (js/account.js) shows this button when accounts are switched on (js/config.js) -->
+            <button class="icon-button account-toggle" id="account-toggle" type="button" hidden>
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <span class="ac-nav-letter" aria-hidden="true"></span>
             </button>
 
             <!-- "My Compass" (js/journey.js) and Settings (js/settings.js) show these two buttons once they are ready -->
@@ -469,6 +489,18 @@
                 <p class="section-sub" data-i18n="quiz.subtitle" data-i18n-plural="quizQuestionCount">60 questions. Take the daily challenge, race the clock or bust a few myths.</p>
             </div>
             <div data-feature="quiz"></div>
+        </div>
+    </section>
+
+    <!-- ===== KNOWLEDGE CHALLENGE (js/challenge.js): shown once that file runs ===== -->
+    <section class="section" id="challenge" hidden>
+        <div class="container">
+            <div class="section-head" data-reveal>
+                <p class="section-label" data-i18n="challenge.label">THE LEADERBOARD</p>
+                <h2 data-i18n="challenge.title">Knowledge Challenge</h2>
+                <p class="section-sub" data-i18n="challenge.subtitle">20 random questions from every lesson, against the clock. Your best result goes on the leaderboard.</p>
+            </div>
+            <div data-feature="challenge"></div>
         </div>
     </section>
 

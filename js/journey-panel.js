@@ -8,8 +8,10 @@
      - the progress in each part of the site, and a skill radar;
      - the activity of the last 6 weeks, one square per day;
      - the badges, and how to earn XP;
+     - "Your account" (when this copy of the site has accounts): the Knowledge
+       Challenge results and the diary of saved results, read through js/account.js;
      - "Your data": save to a file, copy as text, load, start over.
-   Everything it knows comes from js/journey.js through "host" (its section 10).
+   Everything else it knows comes from js/journey.js through "host" (its section 10).
 
    Sections of this file:
     1. Settings
@@ -21,9 +23,11 @@
     7. Drawing: progress and the skill radar
     8. Drawing: the activity calendar (and its arrow keys)
     9. Drawing: badges and how to earn XP
-   10. Your data: save, copy, load, start over
-   11. Drawing it all, language changes, and A.journeyPanel
-   Every text (English and Russian) is in js/content/journey.js
+   10. Your account: the challenge results and the diary of saved results
+   11. Your data: save, copy, load, start over
+   12. Drawing it all, language changes, and A.journeyPanel
+   Every text (English and Russian) is in js/content/journey.js (the account
+   card's texts: js/content/account.js)
    ========================================================= */
 (function () {
     "use strict";
@@ -45,6 +49,10 @@
     const FILE_NAME = "ai-compass-progress-{day}.json";   // the name of a saved progress file
     const MAX_FILE_BYTES = 400000;        // a bigger file can't be a progress file
     const URL_LIFE = 10000;               // ms: a saved file's temporary address is freed after this
+    const HISTORY_MAX = 200;              // the account card reads this many saved results at most
+    const DIARY_SHOWN = 8;                // ... and shows this many before "Show all"
+    const ATTEMPTS_SHOWN = 5;             // the challenge attempts shown before "Show all"
+    const ACCOUNT_FRESH = 60000;          // ms: the account card's results are read again after this
 
     // The icons of the parts of the site (names of icons in js/content/journey.js)
     const AREA_ICONS = { lessons: "first-lesson", lab: "lab-all", words: "terms-10", history: "eras-all", quiz: "perfect-quiz" };
@@ -106,6 +114,7 @@
                     '<div class="jr-body" data-ref="body">' +
                         '<section class="jr-hero jr-card" data-ref="hero" aria-labelledby="jr-title"></section>' +
                         '<section class="jr-next jr-card" data-ref="next" aria-labelledby="jr-next-title"></section>' +
+                        '<section class="jr-card jr-account" data-ref="account" aria-labelledby="jr-account-title" hidden></section>' +
                         // Two columns on wide screens, each as tall as its own cards
                         '<div class="jr-columns">' +
                             '<div class="jr-column">' +
@@ -176,6 +185,7 @@
         host.opened();               // the "journey.open" event: a badge it brings is drawn below
         isOpen = true;
         render(true);
+        loadAccount(false);
         ui.overlay.hidden = false;
         ui.overlay.classList.remove("is-closing");
         overlay.opened();            // before the focus moves in (core makes the rest inert)
@@ -809,7 +819,247 @@
             "</details>";
     }
 
-    /* ---------- 10. Your data: save, copy, load, start over ---------- */
+    /* ---------- 10. Your account: the challenge results and the diary of saved results ----------
+       Only when this copy of the site has accounts (js/account.js, A.account.enabled).
+       Signed out, the card invites to sign in. Signed in, it shows the nickname, the
+       Knowledge Challenge numbers (my_stats in supabase/schema.sql), the last attempts
+       and the diary of saved results (the events table), read when the window opens
+       and kept for a minute. */
+    const DIARY_TYPES = ["lesson.complete", "quiz.finish", "daily.complete", "certificate.make", "flashcard.finish", "lab.challenge"];
+    let account = emptyAccount();
+
+    function emptyAccount() {
+        return { stats: null, diary: null, at: 0, loading: false, failed: false, showAll: false };
+    }
+
+    function accountOn() {
+        return Boolean(A.account && A.account.enabled);
+    }
+
+    function signedIn() {
+        return accountOn() && A.account.signedIn();
+    }
+
+    // Reads the results (once a minute at most; force: now)
+    function loadAccount(force) {
+        if (!signedIn() || account.loading) return;
+        if (!force && account.stats && Date.now() - account.at < ACCOUNT_FRESH) return;
+        account.loading = true;
+        account.failed = false;
+        if (isOpen) drawAccount();
+        const who = A.account.user().id;
+        Promise.all([A.account.rpc("my_stats"), A.account.history(HISTORY_MAX)]).then(function (results) {
+            if (!signedIn() || A.account.user().id !== who) return;
+            account.stats = results[0] || null;
+            account.diary = Array.isArray(results[1]) ? results[1] : [];
+            account.at = Date.now();
+        }, function () {
+            account.failed = true;
+        }).then(function () {
+            account.loading = false;
+            if (isOpen) drawAccount();
+        });
+    }
+
+    function watchAccount() {
+        if (!accountOn()) return;
+        A.account.onChange(function (detail) {
+            if (detail.type === "signin" || detail.type === "signout") {
+                account = emptyAccount();
+                if (isOpen) {
+                    drawAccount();
+                    loadAccount(true);
+                }
+            } else if (detail.type === "nickname" && isOpen) {
+                drawAccount();
+            }
+        });
+        // A new result: the next opening reads the diary again
+        A.on("activity", function (detail) {
+            if (DIARY_TYPES.indexOf(detail.type) !== -1 || detail.type === "challenge.finish") account.at = 0;
+        });
+    }
+
+    function textOr(key, values, fallback) {
+        const text = t(key, values);
+        return text === key ? fallback : text;
+    }
+
+    // 3 min 42 s (the same words as the challenge page)
+    function timeText(ms) {
+        const seconds = Math.max(0, Math.round(Number(ms) / 1000));
+        const minutes = Math.floor(seconds / 60);
+        return minutes ? t("challenge.time.minSec", { m: minutes, s: seconds % 60 }) : t("challenge.time.sec", { s: seconds });
+    }
+
+    function longDate(iso) {
+        const time = new Date(iso).getTime();
+        return isNaN(time) ? "" : A.format.date(time, { day: "numeric", month: "long", year: "numeric" });
+    }
+
+    function lessonTitle(n) {
+        return attempt(function () {
+            const lesson = A.lessons.list()[Number(n) - 1];
+            return lesson ? lesson.title() : "";
+        }, "");
+    }
+
+    function labName(id) {
+        return attempt(function () {
+            const entry = A.lab.list().filter(function (item) { return item.id === id; })[0];
+            return entry ? t(entry.titleKey) : String(id || "");
+        }, String(id || ""));
+    }
+
+    function certificateName(track) {
+        if (track === "all") return t("lessons.cert.all");
+        return textOr("lessons.track." + track + ".title", {}, String(track || ""));
+    }
+
+    // One saved result as a sentence ("" for a kind the diary doesn't show)
+    function diaryText(row) {
+        const d = row && typeof row.detail === "object" && row.detail ? row.detail : {};
+        const n = function (value) { return A.format.number(Number(value) || 0); };
+        switch (row.type) {
+            case "lesson.complete": {
+                const title = lessonTitle(d.n);
+                return title ? t("account.dash.ev.lesson", { n: n(d.n), title: title }) : t("account.dash.ev.lessonOnly", { n: n(d.n) });
+            }
+            case "quiz.finish":
+                return t("account.dash.ev.quiz", {
+                    mode: textOr("quiz.mode." + String(d.mode), {}, t("quiz.mode.classic")), score: n(d.score), total: n(d.total)
+                });
+            case "daily.complete":
+                return t("account.dash.ev.daily", { score: n(d.score), total: n(d.total) });
+            case "certificate.make":
+                return t("account.dash.ev.certificate", { name: certificateName(d.track) });
+            case "flashcard.finish":
+                return t("account.dash.ev.flashcards", { correct: n(d.correct), cards: n(d.cards) });
+            case "lab.challenge":
+                return t("account.dash.ev.labChallenge", { name: labName(d.exp) });
+        }
+        return "";
+    }
+
+    function accountRow(text, date, extra) {
+        return '<li class="jr-account-row' + (extra && extra.best ? " is-best" : "") + '">' +
+            '<span class="jr-account-what">' + esc(text) +
+                (extra && extra.tag ? ' <span class="jr-account-tag">' + esc(extra.tag) + "</span>" : "") +
+            "</span>" +
+            '<span class="jr-account-date mono">' + esc(date) + "</span>" +
+        "</li>";
+    }
+
+    function accountStat(iconName, value, label, sub) {
+        return '<li class="jr-stat"><span class="jr-stat-icon" aria-hidden="true">' + host.icon(iconName) + "</span>" +
+            '<span class="jr-stat-text"><span class="jr-stat-value">' + esc(value) + "</span>" +
+            '<span class="jr-stat-label">' + esc(label) + (sub ? " · " + esc(sub) : "") + "</span></span></li>";
+    }
+
+    // The four numbers: personal best, place (all time, this week), attempts that count
+    function drawAccountStats(stats) {
+        const best = stats.best;
+        const standing = stats.standing || {};
+        const attempts = stats.attempts || {};
+        const place = function (where, label) {
+            return where && where.position
+                ? accountStat("level", A.format.number(where.position), label, t("account.dash.placeOf", { players: A.format.number(where.players) }))
+                : accountStat("level", "—", label, t("account.dash.placeNone"));
+        };
+        return '<ul class="jr-stats jr-account-stats">' +
+            (best
+                ? accountStat("perfect-quiz", A.format.number(best.correct) + "/" + A.format.number(best.total), t("account.dash.best"),
+                    t("account.dash.bestIn", { time: timeText(best.duration_ms) }))
+                : accountStat("perfect-quiz", "—", t("account.dash.best"), t("account.dash.bestNone"))) +
+            place(standing.all, t("account.dash.place")) +
+            place(standing.week, t("account.dash.placeWeek")) +
+            accountStat("challenges", A.format.number(attempts.eligible || 0), t("account.dash.counted"),
+                t("account.dash.countedOf", { n: A.format.number(attempts.completed || 0) })) +
+        "</ul>";
+    }
+
+    function drawAttempts(stats) {
+        const recent = Array.isArray(stats.recent) ? stats.recent : [];
+        let html = '<h4 class="jr-account-sub">' + esc(t("account.dash.attempts")) + "</h4>";
+        if (!recent.length) return html + '<p class="jr-account-muted">' + esc(t("account.dash.attemptsNone")) + "</p>";
+        const shown = account.showAll ? recent : recent.slice(0, ATTEMPTS_SHOWN);
+        const bestId = stats.best ? stats.best.id : null;
+        return html + '<ul class="jr-account-list">' + shown.map(function (a) {
+            const date = longDate(a.finished_at || a.started_at);
+            if (a.status === "completed") {
+                return accountRow(t("account.dash.attempt", {
+                    correct: A.format.number(a.correct), total: A.format.number(a.total), time: timeText(a.duration_ms)
+                }), date, { best: a.id === bestId, tag: a.eligible ? "" : t("account.dash.tooFast") });
+            }
+            return accountRow(t(a.status === "expired" ? "account.dash.attemptExpired" : "account.dash.attemptAbandoned"), date);
+        }).join("") + "</ul>";
+    }
+
+    function drawDiary(diary) {
+        const rows = diary.filter(function (row) { return DIARY_TYPES.indexOf(row.type) !== -1; });
+        let html = '<h4 class="jr-account-sub">' + esc(t("account.dash.diary")) + "</h4>";
+        if (!rows.length) return html + '<p class="jr-account-muted">' + esc(t("account.dash.diaryNone")) + "</p>";
+        const shown = account.showAll ? rows : rows.slice(0, DIARY_SHOWN);
+        return html + '<ul class="jr-account-list">' + shown.map(function (row) {
+            return accountRow(diaryText(row), longDate(row.at));
+        }).join("") + "</ul>";
+    }
+
+    function drawAccount() {
+        const card = ui.account;
+        if (!accountOn()) {
+            card.hidden = true;
+            return;
+        }
+        const icon = host.icon;
+        card.hidden = false;
+        const head = function (meta) {
+            return '<div class="jr-card-head"><h3 class="jr-h3" id="jr-account-title">' + icon("navigator", "jr-h3-icon") +
+                esc(t("account.dash.title")) + "</h3>" + (meta ? '<span class="jr-card-meta">' + esc(meta) + "</span>" : "") + "</div>";
+        };
+        if (!signedIn()) {
+            card.classList.add("is-out");
+            card.innerHTML = head("") +
+                '<div class="jr-account-invite">' +
+                    "<p>" + esc(t("account.dash.out")) + "</p>" +
+                    '<button type="button" class="btn btn-primary btn-small" data-action="signin" data-focus="signin">' +
+                        esc(t("account.dash.signIn")) + "</button>" +
+                "</div>";
+            return;
+        }
+        card.classList.remove("is-out");
+        const user = A.account.user();
+        let html = head(t("account.dash.in", { name: user.nickname }));
+        if (account.stats) {
+            const attemptsTotal = Array.isArray(account.stats.recent) ? account.stats.recent.length : 0;
+            const diaryTotal = (account.diary || []).filter(function (row) { return DIARY_TYPES.indexOf(row.type) !== -1; }).length;
+            html += drawAccountStats(account.stats) + drawAttempts(account.stats) + drawDiary(account.diary || []);
+            if (attemptsTotal > ATTEMPTS_SHOWN || diaryTotal > DIARY_SHOWN) {
+                html += '<p class="jr-account-more"><button type="button" class="btn btn-ghost btn-small" data-action="more" data-focus="more" aria-expanded="' +
+                    String(account.showAll) + '">' +
+                    esc(account.showAll ? t("account.dash.less") : t("account.dash.more", { n: A.format.number(Math.max(attemptsTotal, diaryTotal)) })) +
+                "</button></p>";
+            }
+        } else if (account.failed) {
+            html += '<p class="jr-warning">' + icon("warning", "jr-note-icon") + "<span>" + esc(t("account.dash.failed")) + "</span></p>" +
+                '<div class="jr-actions"><button type="button" class="btn btn-ghost btn-small jr-action" data-action="retry" data-focus="retry">' +
+                    icon("reset") + "<span>" + esc(t("account.dash.retry")) + "</span></button></div>";
+        } else {
+            html += '<p class="jr-account-muted" aria-live="polite">' + esc(t("account.dash.loading")) + "</p>";
+        }
+        html += '<div class="jr-actions jr-account-actions">' +
+            (A.challenge
+                ? '<button type="button" class="btn btn-ghost btn-small jr-action" data-action="challenge" data-focus="challenge">' +
+                    icon("challenges") + "<span>" + esc(t("account.dash.challenge")) + "</span></button>"
+                : "") +
+            '<button type="button" class="btn btn-ghost btn-small jr-action" data-action="account" data-focus="account">' +
+                icon("navigator") + "<span>" + esc(t("account.dash.manage")) + "</span></button>" +
+        "</div>" +
+        '<p class="jr-privacy">' + icon("lock", "jr-note-icon") + "<span>" + esc(t("account.dash.privacy")) + "</span></p>";
+        card.innerHTML = html;
+    }
+
+    /* ---------- 11. Your data: save, copy, load, start over ---------- */
     // Built once: its texts follow the language by themselves (data-i18n)
     function buildData() {
         const icon = host.icon;
@@ -957,6 +1207,27 @@
         cancel: function () {
             clearChecked();
             ui.importText.focus({ preventScroll: true });
+        },
+
+        // The account card (section 10)
+        signin: function () {
+            if (accountOn()) A.account.signIn("#journey");     // the window opens again after Google
+        },
+        account: function () {
+            close("command", true);
+            if (host.button) host.button.focus({ preventScroll: true });
+            A.account.open();
+        },
+        challenge: function () {
+            close("navigate", true);
+            if (A.challenge) A.challenge.open();
+        },
+        retry: function () {
+            loadAccount(true);
+        },
+        more: function () {
+            account.showAll = !account.showAll;
+            drawAccount();
         }
     };
 
@@ -1028,7 +1299,7 @@
             "</div>";
     }
 
-    /* ---------- 11. Drawing it all, language changes, and A.journeyPanel ---------- */
+    /* ---------- 12. Drawing it all, language changes, and A.journeyPanel ---------- */
     // Draws every part from the progress. The focus stays on the same control
     // (each one that is drawn again has a data-focus name).
     function render(firstTime) {
@@ -1042,6 +1313,7 @@
         drawCalendar();
         drawRules();
         drawBadges();
+        drawAccount();
         drawImportResult();
         A.dom.setHidden(ui.blocked, host.canSave);
 
@@ -1060,6 +1332,7 @@
         if (overlay) return api;
         host = journeyHost;
         build();
+        watchAccount();
         return api;
     }
 

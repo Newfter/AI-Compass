@@ -1596,6 +1596,7 @@
         { id: "lessons", key: "nav.lessons", icon: "📚" },
         { id: "lab", key: "nav.lab", icon: "🧪" },
         { id: "quiz", key: "nav.quiz", icon: "🏆" },
+        { id: "challenge", key: "nav.challenge", icon: "🥇" },
         { id: "glossary", key: "nav.glossary", icon: "📖" },
         { id: "timeline", key: "nav.timeline", icon: "🕰️" },
         { id: "teachers", key: "nav.teachers", icon: "🍎" },

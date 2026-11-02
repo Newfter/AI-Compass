@@ -1128,6 +1128,104 @@
 
 /* ===== 13. SCREENS: TABLETS, PHONES, PHONES HELD SIDEWAYS, TOUCH ===== */
 
+/* ===== YOUR ACCOUNT (only when the site has accounts: js/account.js) =====
+   The nickname, the Knowledge Challenge numbers (the .jr-stat tiles), the last
+   attempts and the diary of saved results, as plain rows with a date. */
+.jr-account-invite {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+}
+
+.jr-account-invite p {
+    flex: 1 1 280px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+.jr-account-muted {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.jr-account-sub {
+    margin: 18px 0 8px;
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.jr-account-list {
+    display: grid;
+    gap: 6px;
+    list-style: none;
+}
+
+.jr-account-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px 16px;
+    flex-wrap: wrap;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
+/* The attempt that is the personal best */
+.jr-account-row.is-best {
+    border-color: rgba(var(--accent-2-rgb), 0.5);
+    background: rgba(var(--accent-2-rgb), 0.08);
+}
+
+.jr-account-row.is-best .jr-account-what {
+    font-weight: 600;
+}
+
+.jr-account-what {
+    flex: 1 1 220px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.jr-account-date {
+    flex: 0 0 auto;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.jr-account-tag {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    vertical-align: middle;
+}
+
+.jr-account-more {
+    margin-top: 10px;
+}
+
+.jr-account-actions {
+    margin-top: 16px;
+}
+
+.jr-account .jr-privacy {
+    margin-top: 12px;
+}
+
 @media (max-width: 900px) {
     .jr-hero {
         grid-template-columns: minmax(0, 1fr);
