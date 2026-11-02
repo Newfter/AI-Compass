@@ -60,6 +60,15 @@ window.AICompass.addTranslations({
         "hero.statLanguages.many": "languages",
         "hero.scrollHint": "Scroll to the lessons",
 
+        "home.subtitle": "Free, short lessons and hands-on experiments that explain Artificial Intelligence simply. For students, teachers, parents and everyone, in English and Russian.",
+        "home.doorsTitle": "What would you like to do?",
+        "home.doorLessons": "Learn how AI works, one short lesson at a time.",
+        "home.doorLab": "Teach a real model in your browser and watch it learn.",
+        "home.doorQuiz": "Check what you know, with an explanation after every answer.",
+        "home.doorGlossary": "The key words of AI, each explained in a sentence or two.",
+        "home.doorHistory": "How AI got here, from 1950 to the phone in your pocket.",
+        "home.doorTeachers": "Lesson plans, worksheets and answer keys to print.",
+
         "about.label": "OUR MISSION",
         "about.title": "About AI Compass",
         "about.text": "AI Compass is your starting point for exploring the world of Artificial Intelligence. It was made by students as a CAS project, to help anyone understand how AI works, how to use it wisely, and how to think about it critically.",
@@ -133,6 +142,15 @@ window.AICompass.addTranslations({
         "hero.statLanguages.few": "языка",
         "hero.statLanguages.many": "языков",
         "hero.scrollHint": "Прокрутить к урокам",
+
+        "home.subtitle": "Бесплатные короткие уроки и опыты, которые просто объясняют искусственный интеллект. Для школьников, учителей, родителей и всех, на русском и английском.",
+        "home.doorsTitle": "С чего начнём?",
+        "home.doorLessons": "Узнай, как работает ИИ, по одному короткому уроку за раз.",
+        "home.doorLab": "Обучи настоящую модель прямо в браузере и посмотри, как она учится.",
+        "home.doorQuiz": "Проверь себя: после каждого ответа есть объяснение.",
+        "home.doorGlossary": "Главные слова об ИИ, каждое объяснено в паре предложений.",
+        "home.doorHistory": "Как ИИ появился: от 1950 года до телефона в твоём кармане.",
+        "home.doorTeachers": "Планы уроков, рабочие листы и ответы для печати.",
 
         "about.label": "НАША МИССИЯ",
         "about.title": "Об AI Compass",

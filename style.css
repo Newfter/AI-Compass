@@ -1505,3 +1505,164 @@ html:not(.js) .nav-quick {
         white-space: nowrap;
     }
 }
+
+/* ===== 15. ONE PAGE AT A TIME, AND A CALMER LOOK =====
+   js/core.js ("Pages") puts the class "paged" on <html> and "page-current" on
+   the section of <main> that is open: only that one is shown, like the pages
+   of a normal website. Without JavaScript every section shows, one after another.
+   The decorative effects (moving network, grid, scroll bar, section dots,
+   "decoding" titles, tilting cards) only show with "Extra effects" on in
+   Settings (class fx-fancy, js/settings.js). */
+
+html.paged main > section:not(.page-current) {
+    display: none !important;
+}
+
+/* The page that opens starts right under the menu bar */
+html.paged main > section.section {
+    min-height: calc(100vh - var(--nav-height) - 160px);
+    padding-top: 56px;
+}
+
+html:not(.fx-fancy) .neural-bg,
+html:not(.fx-fancy) .bg-grid,
+html:not(.fx-fancy) .scroll-progress,
+html:not(.fx-fancy) .fx-rail {
+    display: none !important;
+}
+
+/* The "Ask me about AI!" bubble no longer pops up by itself: the round
+   assistant button stays in the corner */
+html:not(.fx-fancy) .cb-tip {
+    display: none !important;
+}
+
+/* A quieter menu bar: no "Ctrl K" label, lighter buttons */
+.nav-actions .palette-kbd {
+    display: none;
+}
+
+.nav-actions .icon-button {
+    border-color: transparent;
+    background: transparent;
+}
+
+.nav-actions .icon-button:hover,
+.nav-actions .icon-button:focus-visible {
+    border-color: var(--border-strong);
+    box-shadow: none;
+}
+
+/* Calmer section titles: the small coloured label above them reads as plain text */
+html:not(.fx-fancy) .section-label {
+    text-shadow: none;
+}
+
+/* ----- The home page ----- */
+html.paged .hero {
+    min-height: 0;
+    justify-content: flex-start;
+    padding: 72px 0 96px;
+}
+
+html.paged .hero-title {
+    font-size: clamp(2.125rem, 5.6vw, 4rem);
+}
+
+.home-doors-title {
+    margin: 72px 0 22px;
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 2.6vw, 1.625rem);
+    font-weight: 600;
+    text-align: center;
+}
+
+.home-doors {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+}
+
+.home-doors > li[hidden] {
+    display: none;
+}
+
+.home-door {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 100%;
+    padding: 22px 22px 20px;
+    color: var(--text);
+    text-decoration: none;
+    box-shadow: none;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.home-door:hover,
+.home-door:focus-visible {
+    border-color: var(--accent-2);
+    transform: translateY(-2px);
+}
+
+.home-door-icon {
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.home-door-name {
+    margin-top: 8px;
+    font-family: var(--font-display);
+    font-size: 1.1875rem;
+    font-weight: 600;
+}
+
+.home-door-text {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+}
+
+.home-door-meta {
+    margin-top: auto;
+    padding-top: 10px;
+    color: var(--text-accent-2);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+@media (max-width: 860px) {
+    .home-doors {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 560px) {
+    html.paged .hero {
+        padding: 40px 0 64px;
+    }
+
+    .home-doors-title {
+        margin-top: 48px;
+    }
+
+    .home-doors {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .home-door {
+        padding: 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-door:hover,
+    .home-door:focus-visible {
+        transform: none;
+    }
+}

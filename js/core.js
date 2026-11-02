@@ -1622,9 +1622,94 @@
         }
         finishOverlays();     // the page must be reachable now, not one frame later
         buildParts(target);
-        target.scrollIntoView({ behavior: motionOK() ? "smooth" : "auto", block: settings.block || "start" });
+        // Another page: it opens at its top, without a long scroll from where you were
+        if (showPageOf(target)) rememberPage(pageOf(target));
+        if (pageOf(target) === target) {
+            window.scrollTo(0, 0);
+        } else {
+            target.scrollIntoView({ behavior: motionOK() ? "smooth" : "auto", block: settings.block || "start" });
+        }
         if (settings.focus !== false) dom.focusHeading(target);
         return true;
+    }
+
+    // ----- Pages: one section of the site on screen at a time -----
+    // Each <section> of <main> is a "page" (home, lessons, lab, quiz...). Only the
+    // current one is shown (class "page-current"; style.css hides the rest), so the
+    // site feels like a normal website instead of one endless scroll. The address
+    // says which page is open (#lab, #glossary, #term-bias...), so links, the back
+    // button and bookmarks work as usual. A link to something inside a page
+    // (#term-bias) opens that page first, then scrolls to it.
+    let currentPage = null;
+
+    // The page (a section of <main>) that holds an element, or null
+    function pageOf(element) {
+        if (!element || !element.closest) return null;
+        const page = element.closest("main > section");
+        return page && page.id ? page : null;
+    }
+
+    // Shows the page that holds "element". Returns true when the page changed.
+    function showPageOf(element) {
+        const page = pageOf(element);
+        if (!page || page === currentPage) return false;
+        if (currentPage) currentPage.classList.remove("page-current");
+        page.classList.add("page-current");
+        currentPage = page;
+        root.setAttribute("data-page", page.id);
+        layoutChanged();
+        emit("page", { id: page.id });
+        return true;
+    }
+
+    // A page opened by a button (not a link): the address follows, so the
+    // back button returns to the page before
+    function rememberPage(page) {
+        if (!page || window.location.hash === "#" + page.id) return;
+        try {
+            history.pushState(history.state, "", "#" + page.id);
+        } catch (error) {
+            // a page opened from a file may refuse this: nothing else depends on it
+        }
+    }
+
+    // The element the address points to (#lab, #term-bias), or null
+    function addressTarget() {
+        let id = window.location.hash.slice(1);
+        if (!id) return null;
+        try {
+            id = decodeURIComponent(id);
+        } catch (error) {
+            return null;
+        }
+        return document.getElementById(id);
+    }
+
+    function startPages() {
+        root.classList.add("paged");
+        const target = addressTarget();
+        if (!showPageOf(target)) showPageOf(document.getElementById("home"));
+        window.addEventListener("hashchange", function () {
+            const target = addressTarget();
+            if (!target) {
+                // Back to the plain address (no #): the home page
+                if (!window.location.hash) {
+                    showPageOf(document.getElementById("home"));
+                    window.scrollTo(0, 0);
+                }
+                return;
+            }
+            if (!pageOf(target)) return;      // #main, #settings... are not pages
+            closeAll({ reason: "navigate", navigating: true });
+            buildParts(target);
+            const changed = showPageOf(target);
+            if (pageOf(target) === target) {
+                window.scrollTo(0, 0);
+                dom.focusHeading(target);
+            } else if (changed) {
+                target.scrollIntoView({ block: "start" });
+            }
+        });
     }
 
     // ----- Scrolling: one pipeline for the whole page -----
@@ -1676,7 +1761,9 @@
         scrolling.viewport = window.innerHeight;
         scrolling.max = Math.max(0, root.scrollHeight - scrolling.viewport);
         scrolling.sections.forEach(function (section) {
-            section.top = section.element.getBoundingClientRect().top + y;
+            // A page that is not on screen sits "below" everything
+            section.top = section.element.getClientRects().length ?
+                section.element.getBoundingClientRect().top + y : Infinity;
         });
         scrolling.layoutCallbacks.forEach(function (callback) { safeCall(callback); });
     }
@@ -1699,7 +1786,9 @@
                 if (section.top <= line) index = i;
             });
             if (atBottom) {
-                index = sections.length - 1;
+                sections.forEach(function (section, i) {
+                    if (section.top !== Infinity) index = i;
+                });
             } else if (sections.length > 1) {
                 const next = sections[index + 1];
                 const part = next ? util.clamp((line - sections[index].top) / Math.max(1, next.top - sections[index].top), 0, 1) : 0;
@@ -2408,6 +2497,7 @@
 
         setUpMenu();
         setUpMoreLinks();
+        startPages();
         startScrolling();
 
         pageReady = true;

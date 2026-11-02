@@ -75,6 +75,7 @@
         underlineLinks: false,
         contrast: false,
         reduceTransparency: false,
+        fancy: false,               // the decorative effects: moving background, "decoding" titles, tilting cards
         voiceEn: "",                // the voiceURI of the chosen voice; "" = automatic
         voiceRu: "",
         speechRate: 1
@@ -85,7 +86,8 @@
         easyFont: "st-font",
         underlineLinks: "st-underline",
         contrast: "st-contrast",
-        reduceTransparency: "st-solid"
+        reduceTransparency: "st-solid",
+        fancy: "fx-fancy"
     };
     const RELAXED_CLASS = "st-relaxed";      // line spacing: relaxed
     const LARGE_TEXT_CLASS = "st-large-text"; // any text size above 100%
@@ -122,6 +124,7 @@
         underlineLinks: "settings.underline",
         contrast: "settings.contrast",
         reduceTransparency: "settings.solid",
+        fancy: "settings.fancy",
         calm: "settings.calm",
         voiceEn: "settings.voiceEn",
         voiceRu: "settings.voiceRu",
@@ -178,6 +181,7 @@
         underlineLinks: isBoolean,
         contrast: isBoolean,
         reduceTransparency: isBoolean,
+        fancy: isBoolean,
         voiceEn: isVoiceName,
         voiceRu: isVoiceName,
         speechRate: function (value) { return SPEECH_RATES.indexOf(value) !== -1; }
@@ -537,7 +541,8 @@
                         group("settings.groupComfort", "st-group-comfort", [
                             switchRow("contrast", "settings.contrast", "settings.contrastHint"),
                             switchRow("reduceTransparency", "settings.solid", "settings.solidHint"),
-                            switchRow("calm", "settings.calm", "settings.calmHint")
+                            switchRow("calm", "settings.calm", "settings.calmHint"),
+                            switchRow("fancy", "settings.fancy", "settings.fancyHint")
                         ]) +
 
                         group("settings.groupSound", "st-group-sound", [

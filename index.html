@@ -114,6 +114,7 @@
             root.classList.toggle("st-underline", settings.underlineLinks === true);
             root.classList.toggle("st-contrast", settings.contrast === true);
             root.classList.toggle("st-solid", settings.reduceTransparency === true);
+            root.classList.toggle("fx-fancy", settings.fancy === true);
 
             // The easy-to-read font starts loading now, so it can be there when the page is
             // first drawn. js/settings.js uses this link (the same address is FONT_URL there).
@@ -324,14 +325,13 @@
         </a>
 
         <nav class="nav-links" id="nav-links" aria-label="Main menu" data-i18n-attr="aria-label:core.navMain">
+            <a href="#home" data-i18n="cmd.home">Home</a>
             <a href="#lessons" data-i18n="nav.lessons">Lessons</a>
             <a href="#lab" data-i18n="nav.lab">AI Lab</a>
             <a href="#quiz" data-i18n="nav.quiz">Quiz</a>
             <a href="#challenge" class="ch-nav-link" data-i18n="nav.challenge">Challenge</a>
             <a href="#glossary" data-i18n="nav.glossary">Glossary</a>
-            <a href="#timeline" data-i18n="nav.timeline">History</a>
-            <a href="#teachers" class="tk-nav-link" data-i18n="nav.teachers">Teachers</a>
-            <a href="#about" data-i18n="nav.about">About</a>
+            <!-- History, Teachers and About are on the home page and in the footer -->
 
             <!-- When the bar has no room for every link, the last ones move into this list
                  (js/core.js, "More": the links that don't fit) -->
@@ -405,55 +405,76 @@
 </header>
 
 <main id="main">
-    <!-- ===== HERO ===== -->
+    <!-- ===== HOME PAGE =====
+         The site shows one page at a time (js/core.js, "Pages"): this one first,
+         then whichever page a link or the menu opens. -->
     <section class="hero" id="home">
         <div class="hero-content container">
-            <p class="hero-label revealed" data-reveal>
-                <span class="pulse-dot" aria-hidden="true"></span>
-                <span data-i18n="hero.label">YOUR AI JOURNEY STARTS HERE</span>
-            </p>
-
             <h1 class="hero-title revealed" data-reveal>
                 <span data-i18n="hero.titleStart">Navigate the World of</span>
-                <span class="gradient-text" data-scramble data-i18n="hero.titleAccent">AI</span>
+                <span class="gradient-text" data-i18n="hero.titleAccent">AI</span>
             </h1>
 
-            <p class="hero-subtitle revealed" data-reveal>
-                <span data-i18n="hero.subtitle">A free, interactive guide to Artificial Intelligence for</span>
-                <span class="hero-rotator" data-rotator="hero.rotator" aria-live="off">students</span><span class="rotator-caret" aria-hidden="true"></span>
-            </p>
+            <p class="hero-subtitle revealed" data-reveal data-i18n="home.subtitle">Free, short lessons and hands-on experiments that explain Artificial Intelligence simply. For students, teachers, parents and everyone, in English and Russian.</p>
 
             <div class="hero-buttons revealed" data-reveal>
                 <a href="#lessons" class="btn btn-primary" data-i18n="hero.ctaLessons">Start learning</a>
                 <a href="#lab" class="btn btn-ghost" data-i18n="hero.ctaLab">Try the AI Lab</a>
             </div>
+        </div>
 
-            <!-- The numbers count up to the real counts of the lessons, the lab, the quiz and the
-                 languages (data-count-name, js/effects.js). The numbers written here are what the
-                 page shows before that, and without JavaScript. -->
-            <ul class="hero-stats revealed" data-reveal>
-                <li class="stat">
-                    <strong data-count="12" data-count-name="lessonCount">12</strong>
-                    <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">interactive lessons</span>
+        <!-- Everything on the site, one card each. The numbers are the real counts
+             (data-count-name, js/effects.js); the ones written here show before that. -->
+        <div class="container">
+            <h2 class="home-doors-title" data-i18n="home.doorsTitle">What would you like to do?</h2>
+            <ul class="home-doors">
+                <li>
+                    <a class="home-door card" href="#lessons">
+                        <span class="home-door-icon" aria-hidden="true">📚</span>
+                        <span class="home-door-name" data-i18n="nav.lessons">Lessons</span>
+                        <span class="home-door-text" data-i18n="home.doorLessons">Learn how AI works, one short lesson at a time.</span>
+                        <span class="home-door-meta"><strong data-count="12" data-count-name="lessonCount">12</strong> <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">interactive lessons</span></span>
+                    </a>
                 </li>
-                <li class="stat">
-                    <strong data-count="10" data-count-name="labExperimentCount">10</strong>
-                    <span data-i18n="hero.statDemos" data-i18n-plural="labExperimentCount">live AI experiments</span>
+                <li>
+                    <a class="home-door card" href="#lab">
+                        <span class="home-door-icon" aria-hidden="true">🧪</span>
+                        <span class="home-door-name" data-i18n="nav.lab">AI Lab</span>
+                        <span class="home-door-text" data-i18n="home.doorLab">Teach a real model in your browser and watch it learn.</span>
+                        <span class="home-door-meta"><strong data-count="10" data-count-name="labExperimentCount">10</strong> <span data-i18n="hero.statDemos" data-i18n-plural="labExperimentCount">live AI experiments</span></span>
+                    </a>
                 </li>
-                <li class="stat">
-                    <strong data-count="60" data-count-name="quizQuestionCount">60</strong>
-                    <span data-i18n="hero.statQuiz" data-i18n-plural="quizQuestionCount">quiz questions</span>
+                <li>
+                    <a class="home-door card" href="#quiz">
+                        <span class="home-door-icon" aria-hidden="true">🏆</span>
+                        <span class="home-door-name" data-i18n="nav.quiz">Quiz</span>
+                        <span class="home-door-text" data-i18n="home.doorQuiz">Check what you know, with an explanation after every answer.</span>
+                        <span class="home-door-meta"><strong data-count="60" data-count-name="quizQuestionCount">60</strong> <span data-i18n="hero.statQuiz" data-i18n-plural="quizQuestionCount">quiz questions</span></span>
+                    </a>
                 </li>
-                <li class="stat">
-                    <strong data-count="2" data-count-name="languageCount">2</strong>
-                    <span data-i18n="hero.statLanguages" data-i18n-plural="languageCount">languages</span>
+                <li>
+                    <a class="home-door card" href="#glossary">
+                        <span class="home-door-icon" aria-hidden="true">📖</span>
+                        <span class="home-door-name" data-i18n="nav.glossary">Glossary</span>
+                        <span class="home-door-text" data-i18n="home.doorGlossary">The key words of AI, each explained in a sentence or two.</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="home-door card" href="#timeline">
+                        <span class="home-door-icon" aria-hidden="true">🕰️</span>
+                        <span class="home-door-name" data-i18n="nav.timeline">History</span>
+                        <span class="home-door-text" data-i18n="home.doorHistory">How AI got here, from 1950 to the phone in your pocket.</span>
+                    </a>
+                </li>
+                <li class="tk-nav-link">
+                    <a class="home-door card" href="#teachers">
+                        <span class="home-door-icon" aria-hidden="true">🍎</span>
+                        <span class="home-door-name" data-i18n="nav.teachers">Teachers</span>
+                        <span class="home-door-text" data-i18n="home.doorTeachers">Lesson plans, worksheets and answer keys to print.</span>
+                    </a>
                 </li>
             </ul>
         </div>
-
-        <a href="#lessons" class="scroll-hint" data-i18n-attr="aria-label:hero.scrollHint">
-            <span aria-hidden="true"></span>
-        </a>
     </section>
 
     <!-- ===== LESSONS (js/lessons.js) ===== -->
@@ -596,6 +617,8 @@
             <a href="#glossary" data-i18n="nav.glossary">Glossary</a>
             <a href="#timeline" data-i18n="nav.timeline">History</a>
             <a href="#teachers" class="tk-nav-link" data-i18n="nav.teachers">Teachers</a>
+            <a href="#about" data-i18n="nav.about">About</a>
+            <a href="#settings" data-i18n="core.settingsLabel">Settings</a>
         </nav>
 
         <div class="footer-bottom">
