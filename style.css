@@ -62,20 +62,20 @@
 :root,
 [data-theme="dark"] {
     /* The page, and the cards and panels on it (see-through, for the glass look) */
-    --bg: #060812;
-    --bg-2: #0b1020;
-    --surface: rgba(17, 23, 45, 0.72);
-    --surface-solid: #10162a;
+    --bg: #050b14;
+    --bg-2: #0a1424;
+    --surface: rgba(14, 24, 42, 0.72);
+    --surface-solid: #0d1729;
     /* Cards and glass buttons that sit on the moving background: --surface-solid,
        90% opaque. Nothing on this site blurs what is behind it (backdrop-filter):
        the background moves, so the browser would blur it again on every frame,
        and the page dropped from 60 to about 25 frames a second */
-    --glass: rgba(16, 22, 42, 0.9);
-    --surface-2: rgba(29, 37, 68, 0.78);
-    --surface-hover: rgba(36, 44, 82, 0.9);
+    --glass: rgba(13, 23, 40, 0.9);
+    --surface-2: rgba(24, 36, 62, 0.78);
+    --surface-hover: rgba(30, 44, 76, 0.9);
     /* Lines around cards, fields and buttons */
-    --border: rgba(143, 130, 255, 0.18);
-    --border-strong: rgba(143, 130, 255, 0.42);
+    --border: rgba(150, 175, 255, 0.15);
+    --border-strong: rgba(150, 175, 255, 0.36);
 
     /* Text: normal, quieter, quietest */
     --text: #eef1ff;
@@ -87,12 +87,12 @@
 
     /* Accent colours (violet, cyan, pink). The -rgb versions are for see-through
        colours: rgba(var(--accent-rgb), 0.3) */
-    --accent: #9b6dff;
-    --accent-2: #50e3ff;
-    --accent-3: #ff6ad5;
-    --accent-rgb: 155, 109, 255;
-    --accent-2-rgb: 80, 227, 255;
-    --accent-3-rgb: 255, 106, 213;
+    --accent: #8f7bff;
+    --accent-2: #5fe3cf;
+    --accent-3: #ffa94d;
+    --accent-rgb: 143, 123, 255;
+    --accent-2-rgb: 95, 227, 207;
+    --accent-3-rgb: 255, 169, 77;
     /* Right, wrong, careful */
     --success: #3ee6a0;
     --danger: #ff5c7a;
@@ -108,9 +108,9 @@
     --text-danger: var(--danger);
 
     /* Gradients (headings, the main button), a soft glow and the shadow of big panels */
-    --gradient: linear-gradient(110deg, #b69aff 10%, #70edff 90%);
-    --gradient-button: linear-gradient(115deg, #8454ec, #4e67ee);
-    --glow: 0 0 40px rgba(155, 109, 255, 0.25);
+    --gradient: linear-gradient(110deg, #ad9fff 10%, #72f0da 90%);
+    --gradient-button: linear-gradient(115deg, #7154ee, #3d68e0);
+    --glow: 0 0 40px rgba(143, 123, 255, 0.22);
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     /* Cards in a list (glossary, timeline): a soft shadow, a deeper one on hover,
        and a faint cyan glow for a card that is lit up */
@@ -119,9 +119,9 @@
     --shadow-card-glow: 0 0 32px rgba(var(--accent-2-rgb), 0.08);
     /* The menu bar (and the timeline's filter bar), the dimmed page behind an open
        window (lesson reader, palette, Compass Bot on phones), the grid pattern */
-    --nav-bg: rgba(6, 8, 18, 0.9);
-    --backdrop: rgba(6, 8, 18, 0.88);
-    --grid-line: rgba(135, 116, 255, 0.05);
+    --nav-bg: rgba(5, 11, 20, 0.86);
+    --backdrop: rgba(5, 11, 20, 0.88);
+    --grid-line: rgba(140, 160, 255, 0.05);
 
     /* Form fields and scrollbars drawn by the browser follow the theme */
     color-scheme: dark;
@@ -129,27 +129,27 @@
 
 /* --- Colours of the light theme (the same names, in the same order) --- */
 [data-theme="light"] {
-    --bg: #f4f6fd;
-    --bg-2: #e8ecf9;
+    --bg: #f2f5fa;
+    --bg-2: #e5ebf5;
     --surface: rgba(255, 255, 255, 0.78);
     --surface-solid: #ffffff;
     --glass: rgba(255, 255, 255, 0.9);
-    --surface-2: rgba(238, 241, 252, 0.92);
+    --surface-2: rgba(236, 241, 249, 0.92);
     --surface-hover: rgba(255, 255, 255, 0.98);
-    --border: rgba(80, 70, 180, 0.16);
-    --border-strong: rgba(90, 70, 200, 0.4);
+    --border: rgba(40, 70, 140, 0.15);
+    --border-strong: rgba(50, 80, 170, 0.38);
 
     --text: #12162b;
     --text-muted: #4a5470;
     --text-dim: #5d6785;
     --text-label: color-mix(in srgb, var(--text-dim) 82%, var(--text));
 
-    --accent: #6b3fe0;
-    --accent-2: #07728f;
-    --accent-3: #c42f98;
-    --accent-rgb: 107, 63, 224;
-    --accent-2-rgb: 7, 114, 143;
-    --accent-3-rgb: 196, 47, 152;
+    --accent: #5a44de;
+    --accent-2: #08766a;
+    --accent-3: #b3600c;
+    --accent-rgb: 90, 68, 222;
+    --accent-2-rgb: 8, 118, 106;
+    --accent-3-rgb: 179, 96, 12;
     --success: #0f9a62;
     --danger: #d4304f;
     --warning: #a86a12;
@@ -162,16 +162,16 @@
     --text-warning: color-mix(in srgb, var(--warning) 70%, var(--text));
     --text-danger: color-mix(in srgb, var(--danger) 70%, var(--text));
 
-    --gradient: linear-gradient(110deg, #6b3fe0 10%, #0a8fb3 90%);
-    --gradient-button: linear-gradient(115deg, #7446ea, #3d5ee8);
-    --glow: 0 0 40px rgba(107, 63, 224, 0.15);
+    --gradient: linear-gradient(110deg, #5a44de 10%, #0a8a78 90%);
+    --gradient-button: linear-gradient(115deg, #6146e8, #3558d8);
+    --glow: 0 0 40px rgba(90, 68, 222, 0.14);
     --shadow: 0 24px 50px rgba(30, 30, 80, 0.12);
     --shadow-card: 0 10px 28px rgba(30, 30, 80, 0.07);
     --shadow-card-hover: 0 14px 34px rgba(30, 30, 80, 0.1);
     --shadow-card-glow: 0 0 28px rgba(var(--accent-2-rgb), 0.1);
-    --nav-bg: rgba(244, 246, 253, 0.9);
-    --backdrop: rgba(244, 246, 253, 0.88);
-    --grid-line: rgba(90, 70, 200, 0.06);
+    --nav-bg: rgba(242, 245, 250, 0.86);
+    --backdrop: rgba(242, 245, 250, 0.88);
+    --grid-line: rgba(50, 80, 170, 0.06);
 
     color-scheme: light;
 }
@@ -185,7 +185,7 @@
 
     /* Rounded corners, the width of the page content, the height of the menu bar
        (66px on phones, see 11. RESPONSIVE) */
-    --radius: 22px;
+    --radius: 24px;
     --radius-sm: 12px;
     --container: 1180px;
     --nav-height: 76px;
@@ -197,7 +197,7 @@
 
     /* Text and icons on top of an accent colour or the button gradient */
     --on-accent: #ffffff;
-    --accent-strong: #6844c8;
+    --accent-strong: #5a40d0;
     /* The edge of the gradient button: a light rim, and a thin shine along its top */
     --button-rim: rgba(190, 170, 255, 0.35);
     --button-shine: rgba(255, 255, 255, 0.2);
@@ -1665,4 +1665,641 @@ html.paged .hero-title {
     .home-door:focus-visible {
         transform: none;
     }
+}
+
+/* ===== 16. THE LIQUID LOOK =====
+   What makes AI Compass look like itself, and not like a template:
+   - the colours of a compass at night: deep ink blue, a soft violet, sea-mint
+     and a warm amber "north" (the tokens in 1. DESIGN TOKENS);
+   - slow, soft colour pools drifting behind the page (body::before);
+   - glass with a light catching its top edge, pill-shaped buttons;
+   - the liquid compass on the home page, and home cards that each have their
+     own colour.
+   Nothing here blurs what is behind it (see --glass in section 1), and every
+   movement is a slow transform that the browser draws cheaply. Calm mode and
+   "reduce motion" stop all of it (13. REDUCED MOTION AND CALM MODE). */
+
+:root,
+[data-theme="dark"] {
+    /* The light that catches the top edge of glass */
+    --glass-edge: rgba(255, 255, 255, 0.07);
+    --glass-sheen: rgba(255, 255, 255, 0.045);
+    /* The drifting colour pools behind the page: how strong they are */
+    --pool-a: 0.2;
+    --pool-b: 0.12;
+    --pool-c: 0.08;
+}
+
+[data-theme="light"] {
+    --glass-edge: rgba(255, 255, 255, 0.95);
+    --glass-sheen: rgba(255, 255, 255, 0.6);
+    --pool-a: 0.14;
+    --pool-b: 0.14;
+    --pool-c: 0.1;
+}
+
+/* --- The page: the colour pools --- */
+body {
+    background: var(--bg);
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: -15%;
+    z-index: -4;
+    pointer-events: none;
+    background:
+        radial-gradient(38% 34% at 18% 14%, rgba(var(--accent-rgb), var(--pool-a)), transparent 70%),
+        radial-gradient(34% 32% at 86% 38%, rgba(var(--accent-2-rgb), var(--pool-b)), transparent 70%),
+        radial-gradient(30% 28% at 30% 92%, rgba(var(--accent-3-rgb), var(--pool-c)), transparent 70%);
+    animation: aic-pools 38s ease-in-out infinite alternate;
+    will-change: transform;
+}
+
+@keyframes aic-pools {
+    0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+    50% { transform: translate3d(3%, 2%, 0) rotate(6deg) scale(1.06); }
+    100% { transform: translate3d(-2%, 4%, 0) rotate(-4deg) scale(1.02); }
+}
+
+/* --- Glass: a lit top edge on every card --- */
+.card {
+    background-image: linear-gradient(180deg, var(--glass-sheen), transparent 38%);
+    box-shadow: var(--shadow), inset 0 1px 0 var(--glass-edge);
+}
+
+/* --- Buttons: round, like drops, with a soft shine on top --- */
+.btn,
+.btn-small {
+    border-radius: 999px;
+}
+
+.btn-primary {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 55%),
+        var(--gradient-button);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+}
+
+.btn-ghost {
+    background-image: linear-gradient(180deg, var(--glass-sheen), transparent 60%);
+    box-shadow: inset 0 1px 0 var(--glass-edge);
+}
+
+.btn-ghost:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-2);
+    color: var(--text-accent-2);
+}
+
+/* --- The menu bar --- */
+.logo-mark {
+    color: var(--text);
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.22), transparent 55%),
+        rgba(var(--accent-rgb), 0.16);
+    box-shadow: inset 0 1px 0 var(--glass-edge), 0 6px 18px rgba(var(--accent-rgb), 0.25);
+}
+
+.logo-mark svg {
+    width: 22px;
+    height: 22px;
+}
+
+.logo-needle {
+    fill: var(--accent-3);
+}
+
+.logo-pin {
+    fill: var(--bg);
+}
+
+.nav-links a {
+    border-radius: 999px;
+}
+
+.nav-links a.active {
+    background: rgba(var(--accent-rgb), 0.14);
+    box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 0 0 1px rgba(var(--accent-rgb), 0.22);
+}
+
+/* --- Page titles: the small label above them is a little glass pill --- */
+.section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.28);
+    border-radius: 999px;
+    background: rgba(var(--accent-2-rgb), 0.07);
+    color: var(--text-accent-2);
+    font-size: 0.6875rem;
+    letter-spacing: 1.6px;
+    box-shadow: inset 0 1px 0 var(--glass-edge);
+}
+
+.section-label::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-3);
+    box-shadow: 0 0 8px rgba(var(--accent-3-rgb), 0.7);
+}
+
+/* A page opening puts the keyboard focus on its title (core.js, focusHeading),
+   so the next Tab starts there. A title is not a button: no ring around it. */
+h1[tabindex="-1"]:focus,
+h2[tabindex="-1"]:focus {
+    outline: none;
+}
+
+/* --- The home page: the words on the left, the liquid compass on the right --- */
+.hero-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hero-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+    padding: 7px 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--glass);
+    background-image: linear-gradient(180deg, var(--glass-sheen), transparent 70%);
+    box-shadow: inset 0 1px 0 var(--glass-edge);
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.hero-kicker-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+}
+
+/* "Continue where you left off" (js/home.js) */
+.hero-continue {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 100%;
+    margin-top: 22px;
+    padding: 10px 18px 10px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--glass);
+    background-image: linear-gradient(180deg, var(--glass-sheen), transparent 70%);
+    box-shadow: inset 0 1px 0 var(--glass-edge), 0 12px 30px rgba(0, 0, 0, 0.15);
+    color: var(--text);
+    text-align: left;
+    transition: border-color 0.2s ease, transform 0.25s var(--ease);
+}
+
+.hero-continue:hover {
+    border-color: var(--accent-2);
+    transform: translateY(-2px);
+}
+
+.hero-continue-ring {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: conic-gradient(var(--accent-2) calc(var(--done, 0) * 360deg), var(--surface-2) 0);
+}
+
+/* px: a glyph in a tile of fixed size */
+.hero-continue-ring span {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface-solid);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.hero-continue-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.35;
+}
+
+.hero-continue-label {
+    color: var(--text-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.hero-continue-title {
+    overflow: hidden;
+    font-size: 0.9375rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hero-continue-arrow {
+    flex-shrink: 0;
+    color: var(--text-accent-2);
+    transition: transform 0.25s var(--ease);
+}
+
+.hero-continue:hover .hero-continue-arrow {
+    transform: translateX(3px);
+}
+
+/* The liquid compass: a glass dial on a slowly turning drop of colour */
+.hero-orb {
+    position: relative;
+    width: min(380px, 100%);
+    aspect-ratio: 1;
+    margin: 0 auto;
+}
+
+.hero-orb-blob {
+    position: absolute;
+    inset: 3%;
+    border-radius: 42% 58% 63% 37% / 45% 38% 62% 55%;
+    background: linear-gradient(140deg, rgba(var(--accent-rgb), 0.6), rgba(var(--accent-2-rgb), 0.45) 70%, rgba(var(--accent-3-rgb), 0.35));
+    opacity: 0.55;
+    animation: aic-blob-turn 26s linear infinite;
+    will-change: transform;
+}
+
+@keyframes aic-blob-turn {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.05); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.hero-orb-glass {
+    position: absolute;
+    inset: 13%;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0) 36%),
+        radial-gradient(circle at 70% 82%, rgba(var(--accent-2-rgb), 0.22), transparent 55%),
+        var(--glass);
+    box-shadow:
+        inset 0 -20px 44px rgba(var(--accent-rgb), 0.22),
+        inset 0 2px 0 rgba(255, 255, 255, 0.14),
+        0 30px 70px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .hero-orb-glass {
+    border-color: rgba(255, 255, 255, 0.9);
+    box-shadow:
+        inset 0 -20px 44px rgba(var(--accent-rgb), 0.12),
+        inset 0 2px 0 rgba(255, 255, 255, 0.9),
+        0 30px 70px rgba(30, 40, 90, 0.16);
+}
+
+/* The marks around the dial: one every 30 degrees, on a thin ring */
+.hero-orb-ticks {
+    position: absolute;
+    inset: 8%;
+    border-radius: 50%;
+    background: repeating-conic-gradient(from -1.5deg, var(--border-strong) 0deg 3deg, transparent 3deg 30deg);
+    -webkit-mask-image: radial-gradient(circle, transparent 62%, #000 63%, #000 70%, transparent 71%);
+    mask-image: radial-gradient(circle, transparent 62%, #000 63%, #000 70%, transparent 71%);
+}
+
+.hero-orb-letter {
+    position: absolute;
+    top: 14%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--text-accent-3);
+    font-family: var(--font-display);
+    font-size: 0.9375rem;
+    font-weight: 700;
+}
+
+.hero-orb-needle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 9%;
+    height: 56%;
+    transform: translate(-50%, -50%) rotate(24deg);
+    animation: aic-needle 7s ease-in-out infinite alternate;
+}
+
+.hero-orb-needle span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--accent-3) 0 50%, var(--text-dim) 50% 100%);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    filter: drop-shadow(0 4px 10px rgba(var(--accent-3-rgb), 0.35));
+}
+
+@keyframes aic-needle {
+    0% { transform: translate(-50%, -50%) rotate(24deg); }
+    60% { transform: translate(-50%, -50%) rotate(38deg); }
+    100% { transform: translate(-50%, -50%) rotate(30deg); }
+}
+
+.hero-orb-pin {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 7%;
+    height: 7%;
+    border: 3px solid var(--surface-solid);
+    border-radius: 50%;
+    background: var(--text);
+    transform: translate(-50%, -50%);
+}
+
+.hero-orb-drop {
+    position: absolute;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 50%),
+        linear-gradient(160deg, rgba(var(--accent-2-rgb), 0.45), rgba(var(--accent-rgb), 0.25));
+    animation: aic-drop 8s ease-in-out infinite alternate;
+}
+
+.hero-orb-drop-1 {
+    top: 4%;
+    right: 6%;
+    width: 13%;
+    height: 13%;
+}
+
+.hero-orb-drop-2 {
+    bottom: 8%;
+    left: 4%;
+    width: 8%;
+    height: 8%;
+    background:
+        radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 50%),
+        linear-gradient(160deg, rgba(var(--accent-rgb), 0.55), rgba(var(--accent-2-rgb), 0.3));
+    animation-delay: -4s;
+}
+
+@keyframes aic-drop {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-14px); }
+}
+
+/* Wide enough: two columns, the words on the left */
+@media (min-width: 961px) {
+    html.paged .hero {
+        padding-top: 56px;
+        text-align: left;
+    }
+
+    .hero-content {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+        align-items: center;
+        gap: 40px;
+    }
+
+    .hero-text {
+        align-items: flex-start;
+    }
+
+    html.paged .hero-title {
+        font-size: clamp(2.5rem, 4.6vw, 4.25rem);
+    }
+
+    .hero-subtitle {
+        max-width: 560px;
+    }
+
+    .hero-buttons {
+        justify-content: flex-start;
+    }
+}
+
+/* Narrower: the compass sits small above the words */
+@media (max-width: 960px) {
+    .hero-orb {
+        order: -1;
+        width: 150px;
+        margin-bottom: 14px;
+    }
+
+    .hero-orb-drop {
+        display: none;
+    }
+
+    .hero-orb-letter {
+        font-size: 0.625rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .hero-orb {
+        width: 96px;
+        margin-bottom: 10px;
+    }
+
+    .hero-kicker {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+    }
+
+    .hero-continue {
+        width: 100%;
+    }
+}
+
+/* --- The home cards: two big ones, then the smaller ones, each in its own colour --- */
+.home-doors {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.home-doors > li {
+    grid-column: span 3;
+}
+
+.home-doors > li:nth-child(-n+2) {
+    grid-column: span 6;
+}
+
+/* Without the Teachers card, three small ones share the row */
+.home-doors:has(> li.tk-nav-link[hidden]) > li:nth-child(n+3) {
+    grid-column: span 4;
+}
+
+.home-door {
+    --door-rgb: var(--accent-rgb);
+    overflow: hidden;
+    background-image:
+        radial-gradient(120% 90% at 100% 0%, rgba(var(--door-rgb), 0.16), transparent 55%),
+        linear-gradient(180deg, var(--glass-sheen), transparent 38%);
+    box-shadow: inset 0 1px 0 var(--glass-edge);
+    transition: border-color 0.2s ease, transform 0.25s var(--ease), box-shadow 0.25s ease;
+}
+
+.home-door[data-door="lab"],
+.home-door[data-door="timeline"] {
+    --door-rgb: var(--accent-2-rgb);
+}
+
+.home-door[data-door="quiz"],
+.home-door[data-door="teachers"] {
+    --door-rgb: var(--accent-3-rgb);
+}
+
+.home-door:hover,
+.home-door:focus-visible {
+    border-color: rgba(var(--door-rgb), 0.6);
+    transform: translateY(-3px);
+    box-shadow: inset 0 1px 0 var(--glass-edge), 0 18px 40px rgba(var(--door-rgb), 0.14);
+}
+
+/* The icon sits in a drop of the card's colour */
+.home-door-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid rgba(var(--door-rgb), 0.32);
+    border-radius: 46% 54% 50% 50% / 54% 46% 54% 46%;
+    background:
+        radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.22), transparent 55%),
+        rgba(var(--door-rgb), 0.14);
+    box-shadow: inset 0 1px 0 var(--glass-edge);
+    font-size: 1.5rem;
+}
+
+.home-door-meta {
+    color: var(--text);
+}
+
+.home-door-meta strong {
+    color: rgb(var(--door-rgb));
+}
+
+[data-theme="light"] .home-door-meta strong {
+    color: color-mix(in srgb, rgb(var(--door-rgb)) 75%, var(--text));
+}
+
+.home-door-arrow {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    color: var(--text-dim);
+    transition: transform 0.25s var(--ease), color 0.2s ease;
+}
+
+.home-door:hover .home-door-arrow,
+.home-door:focus-visible .home-door-arrow {
+    color: var(--text);
+    transform: translateX(4px);
+}
+
+/* The two big cards */
+.home-doors > li:nth-child(-n+2) .home-door {
+    padding: 28px 28px 24px;
+}
+
+.home-doors > li:nth-child(-n+2) .home-door-icon {
+    width: 64px;
+    height: 64px;
+    font-size: 1.875rem;
+}
+
+.home-doors > li:nth-child(-n+2) .home-door-name {
+    font-size: 1.5rem;
+}
+
+.home-doors > li:nth-child(-n+2) .home-door-text {
+    max-width: 420px;
+    font-size: 1rem;
+}
+
+@media (max-width: 860px) {
+    .home-doors > li,
+    .home-doors > li:nth-child(-n+2),
+    .home-doors:has(> li.tk-nav-link[hidden]) > li:nth-child(n+3) {
+        grid-column: span 6;
+    }
+}
+
+@media (max-width: 560px) {
+    .home-doors > li,
+    .home-doors > li:nth-child(-n+2),
+    .home-doors:has(> li.tk-nav-link[hidden]) > li:nth-child(n+3) {
+        grid-column: span 12;
+    }
+
+    /* Phones: the small cards are a short row each (icon, name, arrow) */
+    .home-doors > li:nth-child(n+3) .home-door {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        column-gap: 14px;
+        padding: 14px 44px 14px 14px;
+    }
+
+    .home-doors > li:nth-child(n+3) .home-door-meta {
+        grid-column: 2;
+        padding-top: 2px;
+    }
+
+    .home-doors > li:nth-child(n+3) .home-door-icon {
+        grid-row: 1 / span 3;
+        width: 44px;
+        height: 44px;
+        font-size: 1.25rem;
+    }
+
+    .home-doors > li:nth-child(n+3) .home-door-name {
+        margin-top: 0;
+        font-size: 1.0625rem;
+    }
+
+    .home-doors > li:nth-child(n+3) .home-door-text {
+        font-size: 0.875rem;
+    }
+
+    .home-doors > li:nth-child(n+3) .home-door-arrow {
+        top: 50%;
+        right: 16px;
+        margin-top: -9px;
+    }
+
+    .home-doors > li:nth-child(-n+2) .home-door {
+        padding: 22px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-continue:hover,
+    .home-door:hover,
+    .home-door:focus-visible {
+        transform: none;
+    }
+}
+
+html.fx-motion-off .hero-continue:hover,
+html.fx-motion-off .home-door:hover,
+html.fx-motion-off .home-door:focus-visible {
+    transform: none;
 }
