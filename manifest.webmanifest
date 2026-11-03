@@ -8,8 +8,8 @@
     "orientation": "any",
     "lang": "en",
     "dir": "ltr",
-    "theme_color": "#060812",
-    "background_color": "#060812",
+    "theme_color": "#050b14",
+    "background_color": "#050b14",
     "categories": ["education"],
     "icons": [
         {
