@@ -23,8 +23,8 @@
          mode, one for light mode (--bg of each theme in style.css). The script below and core.js
          give both the colour of the theme that is really on (data-dark / data-light), so the bar
          always matches the page; "media" only matters before the scripts run. -->
-    <meta name="theme-color" content="#060812" media="(prefers-color-scheme: dark)" data-dark="#060812" data-light="#f4f6fd">
-    <meta name="theme-color" content="#f4f6fd" media="(prefers-color-scheme: light)" data-dark="#060812" data-light="#f4f6fd">
+    <meta name="theme-color" content="#050b14" media="(prefers-color-scheme: dark)" data-dark="#050b14" data-light="#f2f5fa">
+    <meta name="theme-color" content="#f2f5fa" media="(prefers-color-scheme: light)" data-dark="#050b14" data-light="#f2f5fa">
 
     <!-- The app you can install (manifest.webmanifest), and the icons of the browser tab and of a
          phone's home screen (images/, drawn as a compass rose) -->
@@ -241,6 +241,7 @@
     <script src="./js/account.js" defer></script>
     <script src="./js/challenge.js" defer></script>
     <script src="./js/settings.js" defer></script>
+    <script src="./js/home.js" defer></script>
 
     <!-- What search engines read about the site (JSON-LD, schema.org): the website, who makes
          it, and the lessons as a free online course. Browsers ignore it.
@@ -320,7 +321,7 @@
 <header class="navbar" id="navbar">
     <div class="navbar-inner container">
         <a href="#home" class="logo" aria-label="AI Compass">
-            <span class="logo-mark" aria-hidden="true">🧭</span>
+            <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 32 32" width="22" height="22"><circle cx="16" cy="16" r="12.5" fill="none" stroke="currentColor" stroke-width="2" opacity="0.55"/><path d="M16 5.5l3.6 10.5H12.4z" class="logo-needle"/><path d="M16 26.5l-3.6-10.5h7.2z" fill="currentColor" opacity="0.9"/><circle class="logo-pin" cx="16" cy="16" r="1.8"/></svg></span>
             <span class="logo-text">AI <span>Compass</span></span>
         </a>
 
@@ -410,6 +411,9 @@
          then whichever page a link or the menu opens. -->
     <section class="hero" id="home">
         <div class="hero-content container">
+          <div class="hero-text">
+            <p class="hero-kicker revealed" data-reveal><span class="hero-kicker-dot" aria-hidden="true"></span><span data-i18n="home.kicker">Free · No sign-up · English and Russian</span></p>
+
             <h1 class="hero-title revealed" data-reveal>
                 <span data-i18n="hero.titleStart">Navigate the World of</span>
                 <span class="gradient-text" data-i18n="hero.titleAccent">AI</span>
@@ -421,6 +425,31 @@
                 <a href="#lessons" class="btn btn-primary" data-i18n="hero.ctaLessons">Start learning</a>
                 <a href="#lab" class="btn btn-ghost" data-i18n="hero.ctaLab">Try the AI Lab</a>
             </div>
+
+            <!-- For a visitor who has finished a lesson before: one tap opens the next one
+                 (js/home.js fills it in and shows it) -->
+            <button class="hero-continue" type="button" data-home-continue hidden>
+                <span class="hero-continue-ring" aria-hidden="true"><span data-ref="percent">0%</span></span>
+                <span class="hero-continue-body">
+                    <span class="hero-continue-label" data-i18n="home.continueLabel">Continue where you left off</span>
+                    <strong class="hero-continue-title" data-ref="title"></strong>
+                </span>
+                <svg class="hero-continue-arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+
+            <!-- The liquid compass: only decoration (style.css, 16. THE LIQUID LOOK) -->
+            <div class="hero-orb" aria-hidden="true">
+                <span class="hero-orb-blob"></span>
+                <span class="hero-orb-glass">
+                    <span class="hero-orb-ticks"></span>
+                    <span class="hero-orb-letter hero-orb-n">N</span>
+                    <span class="hero-orb-needle"><span></span></span>
+                    <span class="hero-orb-pin"></span>
+                </span>
+                <span class="hero-orb-drop hero-orb-drop-1"></span>
+                <span class="hero-orb-drop hero-orb-drop-2"></span>
+            </div>
         </div>
 
         <!-- Everything on the site, one card each. The numbers are the real counts
@@ -429,48 +458,54 @@
             <h2 class="home-doors-title" data-i18n="home.doorsTitle">What would you like to do?</h2>
             <ul class="home-doors">
                 <li>
-                    <a class="home-door card" href="#lessons">
+                    <a class="home-door card" href="#lessons" data-door="lessons">
                         <span class="home-door-icon" aria-hidden="true">📚</span>
                         <span class="home-door-name" data-i18n="nav.lessons">Lessons</span>
                         <span class="home-door-text" data-i18n="home.doorLessons">Learn how AI works, one short lesson at a time.</span>
                         <span class="home-door-meta"><strong data-count="12" data-count-name="lessonCount">12</strong> <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">interactive lessons</span></span>
+                        <svg class="home-door-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
                 </li>
                 <li>
-                    <a class="home-door card" href="#lab">
+                    <a class="home-door card" href="#lab" data-door="lab">
                         <span class="home-door-icon" aria-hidden="true">🧪</span>
                         <span class="home-door-name" data-i18n="nav.lab">AI Lab</span>
                         <span class="home-door-text" data-i18n="home.doorLab">Teach a real model in your browser and watch it learn.</span>
                         <span class="home-door-meta"><strong data-count="10" data-count-name="labExperimentCount">10</strong> <span data-i18n="hero.statDemos" data-i18n-plural="labExperimentCount">live AI experiments</span></span>
+                        <svg class="home-door-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
                 </li>
                 <li>
-                    <a class="home-door card" href="#quiz">
+                    <a class="home-door card" href="#quiz" data-door="quiz">
                         <span class="home-door-icon" aria-hidden="true">🏆</span>
                         <span class="home-door-name" data-i18n="nav.quiz">Quiz</span>
                         <span class="home-door-text" data-i18n="home.doorQuiz">Check what you know, with an explanation after every answer.</span>
                         <span class="home-door-meta"><strong data-count="60" data-count-name="quizQuestionCount">60</strong> <span data-i18n="hero.statQuiz" data-i18n-plural="quizQuestionCount">quiz questions</span></span>
+                        <svg class="home-door-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
                 </li>
                 <li>
-                    <a class="home-door card" href="#glossary">
+                    <a class="home-door card" href="#glossary" data-door="glossary">
                         <span class="home-door-icon" aria-hidden="true">📖</span>
                         <span class="home-door-name" data-i18n="nav.glossary">Glossary</span>
                         <span class="home-door-text" data-i18n="home.doorGlossary">The key words of AI, each explained in a sentence or two.</span>
+                        <svg class="home-door-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
                 </li>
                 <li>
-                    <a class="home-door card" href="#timeline">
+                    <a class="home-door card" href="#timeline" data-door="timeline">
                         <span class="home-door-icon" aria-hidden="true">🕰️</span>
                         <span class="home-door-name" data-i18n="nav.timeline">History</span>
                         <span class="home-door-text" data-i18n="home.doorHistory">How AI got here, from 1950 to the phone in your pocket.</span>
+                        <svg class="home-door-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
                 </li>
                 <li class="tk-nav-link">
-                    <a class="home-door card" href="#teachers">
+                    <a class="home-door card" href="#teachers" data-door="teachers">
                         <span class="home-door-icon" aria-hidden="true">🍎</span>
                         <span class="home-door-name" data-i18n="nav.teachers">Teachers</span>
                         <span class="home-door-text" data-i18n="home.doorTeachers">Lesson plans, worksheets and answer keys to print.</span>
+                        <svg class="home-door-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
                 </li>
             </ul>
@@ -595,7 +630,7 @@
     <div class="footer-inner container">
         <div class="footer-brand">
             <a href="#home" class="logo">
-                <span class="logo-mark" aria-hidden="true">🧭</span>
+                <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 32 32" width="22" height="22"><circle cx="16" cy="16" r="12.5" fill="none" stroke="currentColor" stroke-width="2" opacity="0.55"/><path d="M16 5.5l3.6 10.5H12.4z" class="logo-needle"/><path d="M16 26.5l-3.6-10.5h7.2z" fill="currentColor" opacity="0.9"/><circle class="logo-pin" cx="16" cy="16" r="1.8"/></svg></span>
                 <span class="logo-text">AI <span>Compass</span></span>
             </a>
             <p data-i18n="footer.tagline">Made for curious minds.</p>

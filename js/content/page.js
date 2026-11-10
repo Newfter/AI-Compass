@@ -61,6 +61,10 @@ window.AICompass.addTranslations({
         "hero.scrollHint": "Scroll to the lessons",
 
         "home.subtitle": "Free, short lessons and hands-on experiments that explain Artificial Intelligence simply. For students, teachers, parents and everyone, in English and Russian.",
+        "home.kicker": "Free · No sign-up · English and Russian",
+        "home.continueLabel": "Continue where you left off",
+        "home.continueTitle": "Lesson {n}: {title}",
+        "home.continueDone": "{done} of {total} lessons done",
         "home.doorsTitle": "What would you like to do?",
         "home.doorLessons": "Learn how AI works, one short lesson at a time.",
         "home.doorLab": "Teach a real model in your browser and watch it learn.",
@@ -144,6 +148,10 @@ window.AICompass.addTranslations({
         "hero.scrollHint": "Прокрутить к урокам",
 
         "home.subtitle": "Бесплатные короткие уроки и опыты, которые просто объясняют искусственный интеллект. Для школьников, учителей, родителей и всех, на русском и английском.",
+        "home.kicker": "Бесплатно · Без регистрации · На русском и английском",
+        "home.continueLabel": "Продолжи с того места, где остановился",
+        "home.continueTitle": "Урок {n}: {title}",
+        "home.continueDone": "Пройдено уроков: {done} из {total}",
         "home.doorsTitle": "С чего начнём?",
         "home.doorLessons": "Узнай, как работает ИИ, по одному короткому уроку за раз.",
         "home.doorLab": "Обучи настоящую модель прямо в браузере и посмотри, как она учится.",
