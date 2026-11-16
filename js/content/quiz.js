@@ -259,6 +259,8 @@ window.AICompass.addTranslations({
         "quiz.topic.creative": "Creative AI",
         "quiz.topic.safety": "Testing and safety",
         "quiz.topic.prompting": "Asking and checking",
+        "quiz.topic.recommend": "Recommendations",
+        "quiz.topic.projects": "AI projects",
         "quiz.topic.myth": "Myth or fact"
     },
     ru: {
@@ -484,6 +486,8 @@ window.AICompass.addTranslations({
         "quiz.topic.creative": "Творческий ИИ",
         "quiz.topic.safety": "Проверка и безопасность",
         "quiz.topic.prompting": "Запросы и проверка",
+        "quiz.topic.recommend": "Рекомендации",
+        "quiz.topic.projects": "ИИ-проекты",
         "quiz.topic.myth": "Миф или факт"
     }
 });
@@ -496,7 +500,7 @@ window.AICompass.content.set("quiz", {
     // option is always the right one, so "correct" is 0 for every multiple-choice
     // ("choice") question. Don't worry: the options are shuffled every game.
     // True-or-false questions ("truefalse"): correct 0 means "True", 1 means "False".
-    //   lesson       the lesson that explains it (1-12), or "timeline" (the history section)
+    //   lesson       the lesson that explains it (1-15), or "timeline" (the history section)
     //   topic        "quiz.topic.…" above (other features can find questions by topic)
     //   difficulty   1 easy, 2 medium, 3 hard
     // A game mixes lessons and difficulties (see "Choosing the questions" in js/quiz.js).
@@ -568,6 +572,21 @@ window.AICompass.content.set("quiz", {
         { key: "q55", lesson: 12, topic: "prompting", difficulty: 1, type: "choice", correct: 0 },
         { key: "q56", lesson: 12, topic: "responsible", difficulty: 2, type: "choice", correct: 0 },
         { key: "q57", lesson: 12, topic: "prompting", difficulty: 2, type: "truefalse", correct: 1 },
+        // Lesson 13: Data, the fuel of AI
+        { key: "q61", lesson: 13, topic: "data", difficulty: 1, type: "choice", correct: 0 },
+        { key: "q62", lesson: 13, topic: "data", difficulty: 1, type: "choice", correct: 0 },
+        { key: "q63", lesson: 13, topic: "ml", difficulty: 2, type: "choice", correct: 0 },
+        { key: "q64", lesson: 13, topic: "data", difficulty: 3, type: "truefalse", correct: 0 },
+        // Lesson 14: How apps choose for you
+        { key: "q65", lesson: 14, topic: "recommend", difficulty: 2, type: "choice", correct: 0 },
+        { key: "q66", lesson: 14, topic: "recommend", difficulty: 1, type: "choice", correct: 0 },
+        { key: "q67", lesson: 14, topic: "recommend", difficulty: 3, type: "choice", correct: 0 },
+        { key: "q68", lesson: 14, topic: "recommend", difficulty: 1, type: "truefalse", correct: 0 },
+        // Lesson 15: Plan your own AI project
+        { key: "q69", lesson: 15, topic: "projects", difficulty: 1, type: "choice", correct: 0 },
+        { key: "q70", lesson: 15, topic: "projects", difficulty: 2, type: "choice", correct: 0 },
+        { key: "q71", lesson: 15, topic: "projects", difficulty: 3, type: "choice", correct: 0 },
+        { key: "q72", lesson: 15, topic: "responsible", difficulty: 1, type: "truefalse", correct: 0 },
         // The history of AI (the timeline section)
         { key: "q10", lesson: "timeline", topic: "history", difficulty: 1, type: "choice", correct: 0 },
         { key: "q11", lesson: "timeline", topic: "history", difficulty: 2, type: "truefalse", correct: 0 },
@@ -601,7 +620,10 @@ window.AICompass.content.set("quiz", {
         { key: "m17", lesson: 10, fact: false },
         { key: "m18", lesson: 11, fact: true },
         { key: "m19", lesson: 12, fact: true },
-        { key: "m20", lesson: "timeline", fact: false }
+        { key: "m20", lesson: "timeline", fact: false },
+        { key: "m21", lesson: 13, fact: false },
+        { key: "m22", lesson: 14, fact: true },
+        { key: "m23", lesson: 15, fact: false }
     ],
 
     // The rank you get for your share of correct answers ("min" or more):

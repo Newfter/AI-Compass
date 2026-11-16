@@ -256,7 +256,7 @@
     function trackBars(n) {
         const tracks = safe(function () { return A.lessons.tracks(); }, []);
         const rows = tracks.map(function (track) {
-            return { label: track.icon + " " + track.title(), done: track.done, total: track.total, tone: track.id === "deep" ? "3" : "1" };
+            return { label: track.icon + " " + track.title(), done: track.done, total: track.total, tone: track.id === "deep" ? "3" : track.id === "world" ? "2" : "1" };
         });
         rows.push({ label: "🧪 " + t("pro.lab"), done: n.lab.done, total: n.lab.total, tone: "2" });
         rows.push({ label: "📖 " + t("pro.glossary"), done: n.terms.done, total: n.terms.total, tone: "2" });
@@ -485,7 +485,7 @@
     const COMMANDS = [
         { names: ["help", "помощь", "?"], usage: "help", does: "pro.cmd.help", run: cmdHelp },
         { names: ["go", "open", "открыть"], usage: "go <page>", does: "pro.cmd.go", run: cmdGo },
-        { names: ["lesson", "урок"], usage: "lesson <1-12>", does: "pro.cmd.lesson", run: cmdLesson },
+        { names: ["lesson", "урок"], usage: "lesson <1-15>", does: "pro.cmd.lesson", run: cmdLesson },
         { names: ["lab", "лаб"], usage: "lab [id]", does: "pro.cmd.lab", run: cmdLab },
         { names: ["quiz", "тест"], usage: "quiz [classic|timed|daily|myth]", does: "pro.cmd.quiz", run: cmdQuiz },
         { names: ["define", "def", "что"], usage: "define <word>", does: "pro.cmd.define", run: cmdDefine },
