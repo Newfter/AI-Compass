@@ -120,6 +120,22 @@
     min-height: 1900px;
 }
 
+.js [data-feature="lab"][data-lab-last="tree"]:empty {
+    min-height: 2100px;
+}
+
+.lab-stage[data-loading="tree"] {
+    min-height: 1850px;
+}
+
+.js [data-feature="lab"][data-lab-last="spam"]:empty {
+    min-height: 1650px;
+}
+
+.lab-stage[data-loading="spam"] {
+    min-height: 1400px;
+}
+
 /* ===== 2. THE CARD ===== */
 
 .lab {
@@ -895,6 +911,22 @@
         min-height: 2560px;
     }
 
+    .js [data-feature="lab"][data-lab-last="tree"]:empty {
+        min-height: 2250px;
+    }
+
+    .lab-stage[data-loading="tree"] {
+        min-height: 1950px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="spam"]:empty {
+        min-height: 2450px;
+    }
+
+    .lab-stage[data-loading="spam"] {
+        min-height: 2150px;
+    }
+
     .lab-skeleton {
         grid-template-columns: minmax(0, 1fr);
         grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1fr);
@@ -1008,6 +1040,22 @@
         min-height: 2610px;
     }
 
+    .js [data-feature="lab"][data-lab-last="tree"]:empty {
+        min-height: 2300px;
+    }
+
+    .lab-stage[data-loading="tree"] {
+        min-height: 2000px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="spam"]:empty {
+        min-height: 2550px;
+    }
+
+    .lab-stage[data-loading="spam"] {
+        min-height: 2230px;
+    }
+
     .lab-steps-3 {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -1104,6 +1152,22 @@
 
     .lab-stage[data-loading="cluster"] {
         min-height: 2630px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="tree"]:empty {
+        min-height: 2400px;
+    }
+
+    .lab-stage[data-loading="tree"] {
+        min-height: 2100px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="spam"]:empty {
+        min-height: 2800px;
+    }
+
+    .lab-stage[data-loading="spam"] {
+        min-height: 2500px;
     }
 
     .lab {
@@ -1256,6 +1320,22 @@
 
     .lab-stage[data-loading="cluster"] {
         min-height: 2960px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="tree"]:empty {
+        min-height: 2950px;
+    }
+
+    .lab-stage[data-loading="tree"] {
+        min-height: 2650px;
+    }
+
+    .js [data-feature="lab"][data-lab-last="spam"]:empty {
+        min-height: 3250px;
+    }
+
+    .lab-stage[data-loading="spam"] {
+        min-height: 2950px;
     }
 
     /* "All experiments" takes the row, previous / next stay at its end.

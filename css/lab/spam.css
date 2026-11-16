@@ -1,0 +1,251 @@
+/* =========================================================
+   AI COMPASS — LAB: BUILD A SPAM FILTER (js/lab/spam.js)
+   Prefix: sp-. The kit (css/lab/kit.css) styles every control; this file
+   styles the message box, the chance meter, the word chips and the table.
+   ========================================================= */
+
+.sp-help,
+.sp-idea,
+.sp-test-title {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.sp-test-title {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.sp-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.sp-box {
+    width: 100%;
+    min-height: 5rem;
+    padding: 0.625rem 0.75rem;
+    border: 0.0625rem solid var(--border-strong, var(--border));
+    border-radius: var(--radius-sm, 0.5rem);
+    background: var(--surface-solid, var(--surface));
+    color: var(--text);
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.sp-box:focus-visible {
+    outline: 0.125rem solid var(--accent);
+    outline-offset: 0.125rem;
+}
+
+/* ----- The chance meter ----- */
+.sp-meter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.sp-meter-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.sp-meter-value {
+    font-size: 1.375rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.sp-track {
+    position: relative;
+    height: 0.75rem;
+    border-radius: 999px;
+    background: var(--border);
+}
+
+.sp-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: inherit;
+    background: var(--lk-series-1);
+    transition: width 0.2s ease;
+}
+
+.sp-meter.is-spam .sp-fill {
+    background: var(--danger);
+}
+
+.sp-mark {
+    position: absolute;
+    top: -0.25rem;
+    bottom: -0.25rem;
+    width: 0.1875rem;
+    margin-left: -0.09375rem;
+    border-radius: 0.125rem;
+    background: var(--text);
+}
+
+.sp-verdict {
+    margin: 0;
+    font-weight: 600;
+}
+
+.sp-meter.is-spam .sp-verdict {
+    color: var(--danger);
+}
+
+.sp-meter.is-ham .sp-verdict {
+    color: var(--text-accent-2, var(--accent-2));
+}
+
+/* ----- The word chips ----- */
+.sp-chips {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+}
+
+.sp-chip {
+    --sp-strength: 0;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3125rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    border: 0.0625rem solid var(--border);
+    font-size: 0.9375rem;
+}
+
+.sp-chip.is-spam {
+    border-color: color-mix(in srgb, var(--danger) 60%, transparent);
+    background: color-mix(in srgb, var(--danger) calc(10% + var(--sp-strength) * 30%), transparent);
+}
+
+.sp-chip.is-ham {
+    border-color: color-mix(in srgb, var(--accent-2) 60%, transparent);
+    background: color-mix(in srgb, var(--accent-2) calc(8% + var(--sp-strength) * 26%), transparent);
+}
+
+.sp-chip.is-new {
+    color: var(--text-muted);
+    border-style: dashed;
+}
+
+.sp-chip-n {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ----- The four counts ----- */
+.sp-good .lk-stat-value {
+    color: var(--success);
+}
+
+.sp-bad .lk-stat-value {
+    color: var(--danger);
+}
+
+.sp-clues {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.sp-clues-title {
+    margin: 0.25rem 0 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* ----- The table ----- */
+.sp-table-box {
+    border: 0.0625rem solid var(--border);
+    border-radius: 0.625rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.sp-table-sum {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9375rem;
+}
+
+.sp-table-wrap {
+    overflow-x: auto;
+    margin-top: 0.5rem;
+}
+
+.sp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.sp-table th,
+.sp-table td {
+    padding: 0.3125rem 0.5rem;
+    text-align: left;
+    border-bottom: 0.0625rem solid var(--border);
+    vertical-align: top;
+}
+
+.sp-table thead th {
+    color: var(--text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.sp-table tbody th.sp-msg {
+    font-weight: 400;
+}
+
+.sp-table td {
+    white-space: nowrap;
+}
+
+.sp-num {
+    font-variant-numeric: tabular-nums;
+}
+
+.sp-markch {
+    display: inline-block;
+    width: 1.1em;
+    font-weight: 700;
+}
+
+.is-right .sp-markch {
+    color: var(--success);
+}
+
+.is-wrong .sp-markch {
+    color: var(--danger);
+}
+
+/* A phone: smaller cells, so the four columns fit */
+@media (max-width: 30rem) {
+    .sp-table th,
+    .sp-table td {
+        padding: 0.25rem 0.3125rem;
+    }
+
+    .sp-table td {
+        white-space: normal;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sp-fill {
+        transition: none;
+    }
+}

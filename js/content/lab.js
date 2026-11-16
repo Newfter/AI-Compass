@@ -146,7 +146,15 @@ window.AICompass.addTranslations({
 
         "lab.cluster.title": "Finding groups",
         "lab.cluster.hook": "Nobody tells the computer the answers. Watch k-means find the groups in a cloud of points by itself.",
-        "lab.cluster.idea": "Unsupervised learning: finding groups"
+        "lab.cluster.idea": "Unsupervised learning: finding groups",
+
+        "lab.tree.title": "Grow a decision tree",
+        "lab.tree.hook": "Ask yes/no questions to sort animals, then let the computer find the best questions itself.",
+        "lab.tree.idea": "Decision trees and overfitting",
+
+        "lab.spam.title": "Build a spam filter",
+        "lab.spam.hook": "Teach a filter which words smell like spam, then try to sneak a message past it.",
+        "lab.spam.idea": "Naive Bayes and false alarms"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -187,7 +195,15 @@ window.AICompass.addTranslations({
 
         "lab.cluster.title": "Поиск групп",
         "lab.cluster.hook": "Компьютеру никто не подсказывает ответы. Посмотри, как k-means сам находит группы в облаке точек.",
-        "lab.cluster.idea": "Обучение без учителя: поиск групп"
+        "lab.cluster.idea": "Обучение без учителя: поиск групп",
+
+        "lab.tree.title": "Вырасти дерево решений",
+        "lab.tree.hook": "Задавай вопросы «да/нет», чтобы рассортировать животных, а потом пусть компьютер сам найдёт лучшие вопросы.",
+        "lab.tree.idea": "Деревья решений и переобучение",
+
+        "lab.spam.title": "Собери спам-фильтр",
+        "lab.spam.hook": "Научи фильтр, какие слова пахнут спамом, а потом попробуй пронести мимо него сообщение.",
+        "lab.spam.idea": "Наивный Байес и ложные тревоги"
     }
 });
 
@@ -289,6 +305,26 @@ window.AICompass.content.set("lab.icons", {
             '<rect x="17.6" y="12.9" width="3.4" height="3.4" rx=".5" fill="currentColor"/>' +
             '<rect x="13.8" y="17.7" width="3.4" height="3.4" rx=".5" fill="currentColor"/>' +
             '<rect x="18.4" y="18.5" width="3.4" height="3.4" rx=".5" fill="currentColor"/>' +
+        '</symbol>' +
+        // A tree of boxes: one question at the top, two answers below it, one of them split again
+        '<symbol id="lab-icon-tree" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">' +
+                '<path d="M12 7v3M12 10H6.5v3M12 10h5.5v3M17.5 16.5v1.5M17.5 18h-3.5v1.5M17.5 18H21v1.5"/>' +
+            '</g>' +
+            '<rect x="9" y="2.5" width="6" height="4.5" rx="1.2" fill="currentColor"/>' +
+            '<rect x="3.5" y="13" width="6" height="4" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
+            '<rect x="14.5" y="13" width="6" height="3.5" rx="1.2" fill="currentColor"/>' +
+            '<circle cx="14" cy="20.6" r="1.3" fill="currentColor"/>' +
+            '<circle cx="21" cy="20.6" r="1.3" fill="none" stroke="currentColor" stroke-width="1.3"/>' +
+        '</symbol>' +
+        // An envelope with a funnel line under it: a message being filtered
+        '<symbol id="lab-icon-spam" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">' +
+                '<rect x="3" y="4" width="18" height="12" rx="2"/>' +
+                '<path d="M3.5 5l8.5 6.5L20.5 5"/>' +
+                '<path d="M8 19.5h8"/>' +
+            '</g>' +
+            '<circle cx="12" cy="19.5" r="1.6" fill="currentColor"/>' +
         '</symbol>'
 });
 
@@ -327,6 +363,26 @@ window.AICompass.content.set("lab.catalogue", [
         level: 2,
         emoji: "🍇",
         keywords: "lab finding groups clustering cluster clusters k-means kmeans unsupervised learning groups centres centroids elbow chart customers shop segments data points лаборатория поиск групп кластеризация кластер кластеры k-средних обучение без учителя группы центры центроиды метод локтя покупатели магазин сегменты данные точки"
+    },
+    {
+        id: "tree",
+        icon: "lab-icon-tree",
+        titleKey: "lab.tree.title",
+        hookKey: "lab.tree.hook",
+        ideaKey: "lab.tree.idea",
+        level: 1,
+        emoji: "🌳",
+        keywords: "lab decision tree trees questions yes no sort animals classify classification gini messiness impurity split overfitting depth cycling training test accuracy лаборатория дерево решений деревья вопросы да нет сортировка животные классификация джини беспорядок деление переобучение глубина велосипед обучение проверка точность"
+    },
+    {
+        id: "spam",
+        icon: "lab-icon-spam",
+        titleKey: "lab.spam.title",
+        hookKey: "lab.spam.hook",
+        ideaKey: "lab.spam.idea",
+        level: 1,
+        emoji: "📨",
+        keywords: "lab spam filter email messages words naive bayes probability chance threshold false alarm false positive phishing inbox teach report spam лаборатория спам фильтр почта письма сообщения слова наивный байес вероятность шанс порог ложная тревога фишинг входящие научить"
     },
     {
         id: "classifier",
