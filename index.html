@@ -193,6 +193,7 @@
     <link rel="stylesheet" href="./css/settings.css">
     <link rel="stylesheet" href="./css/account.css">
     <link rel="stylesheet" href="./css/challenge.css">
+    <link rel="stylesheet" href="./css/learn.css">
     <!-- The Pro design: only used with class design-pro on <html> (Settings, or the Simple / Pro switch) -->
     <link rel="stylesheet" href="./css/pro.css">
     <!-- Printing: only used when the page is printed (keep it after the other stylesheets).
@@ -226,6 +227,7 @@
     <script src="./js/content/settings.js" defer></script>
     <script src="./js/content/account.js" defer></script>
     <script src="./js/content/challenge.js" defer></script>
+    <script src="./js/content/learn.js" defer></script>
     <script src="./js/content/platform.js" defer></script>
     <script src="./js/content/pro.js" defer></script>
 
@@ -247,6 +249,7 @@
     <script src="./js/account.js" defer></script>
     <script src="./js/challenge.js" defer></script>
     <script src="./js/settings.js" defer></script>
+    <script src="./js/learn.js" defer></script>
     <script src="./js/home.js" defer></script>
     <script src="./js/pro.js" defer></script>
 
@@ -337,6 +340,7 @@
 
         <nav class="nav-links" id="nav-links" aria-label="Main menu" data-i18n-attr="aria-label:core.navMain">
             <a href="#home" data-i18n="cmd.home">Home</a>
+            <a href="#learn" data-i18n="nav.learn">My path</a>
             <a href="#lessons" data-i18n="nav.lessons">Lessons</a>
             <a href="#lab" data-i18n="nav.lab">AI Lab</a>
             <a href="#quiz" data-i18n="nav.quiz">Quiz</a>
@@ -449,7 +453,7 @@
             <p class="hero-subtitle revealed" data-reveal data-i18n="home.subtitle">Free, short lessons and hands-on experiments that explain Artificial Intelligence simply. For students, teachers, parents and everyone, in English and Russian.</p>
 
             <div class="hero-buttons revealed" data-reveal>
-                <a href="#lessons" class="btn btn-primary" data-i18n="hero.ctaLessons">Start learning</a>
+                <a href="#learn" class="btn btn-primary" data-i18n="hero.ctaLessons">Start learning</a>
                 <a href="#lab" class="btn btn-ghost" data-i18n="hero.ctaLab">Try the AI Lab</a>
             </div>
 
@@ -494,6 +498,10 @@
             <!-- Pro design only: the workspace (terminal, activity, progress by track, today, term of the day; js/pro.js) -->
             <div class="pro-deck" data-pro-deck hidden></div>
 
+            <!-- "My path": today's plan for a visitor with a path; an invitation in the Pro
+                 design for one without (js/learn.js fills it in and shows it) -->
+            <section class="home-path card" data-home-path hidden></section>
+
             <!-- Simple design only: three first steps for a new visitor (js/home.js shows it) -->
             <section class="home-start card" data-home-start aria-labelledby="home-start-title" hidden>
                 <h2 class="home-start-title" id="home-start-title" data-i18n="home.startTitle">New here? Start with three steps</h2>
@@ -503,6 +511,7 @@
                     <li><button type="button" class="home-start-step" data-start="quiz"><span class="home-start-num" aria-hidden="true">3</span><span data-i18n="home.start3">Check yourself with the quiz</span><span class="home-start-done" data-i18n="home.startDone" hidden>Done</span></button></li>
                 </ol>
                 <p class="home-start-all" data-i18n="home.startAll" hidden>All three done. Great start! Keep going with the next lesson.</p>
+                <p class="home-start-path"><span data-i18n="learn.home.orText">Want a plan made just for you?</span> <button type="button" class="lp-link" data-open-path data-i18n="learn.home.newButton">Build my path</button></p>
             </section>
 
             <!-- Simple design only: one AI word a day, explained in a sentence (js/home.js) -->
@@ -566,6 +575,18 @@
                     </a>
                 </li>
             </ul>
+        </div>
+    </section>
+
+    <!-- ===== MY PATH: the personal learning plan (js/learn.js) ===== -->
+    <section class="section" id="learn">
+        <div class="container">
+            <div class="section-head" data-reveal>
+                <p class="section-label" data-i18n="learn.label">YOUR PERSONAL PLAN</p>
+                <h2 data-i18n="learn.title">My learning path</h2>
+                <p class="section-sub" data-i18n="learn.subtitle">Say who is learning and get a path that fits: small daily steps, practice with feedback, and reviews that come back just before you would forget.</p>
+            </div>
+            <div data-feature="learn"></div>
         </div>
     </section>
 
@@ -703,6 +724,7 @@
         </div>
 
         <nav class="footer-links" aria-label="Footer links" data-i18n-attr="aria-label:core.navFooter">
+            <a href="#learn" data-i18n="nav.learn">My path</a>
             <a href="#lessons" data-i18n="nav.lessons">Lessons</a>
             <a href="#lab" data-i18n="nav.lab">AI Lab</a>
             <a href="#quiz" data-i18n="nav.quiz">Quiz</a>

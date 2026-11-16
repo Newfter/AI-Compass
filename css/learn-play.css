@@ -1,0 +1,1028 @@
+/* =========================================================
+   AI COMPASS — THE STUDY WINDOW (part of "My path")
+   Styles of the window made by js/learn-play.js: the memory check, the
+   level check, a stage test, a guided step and "Explain it back".
+   Every class starts with lpw-. This file loads with the script, the
+   first time the window is needed.
+   1. The window
+   2. The top bar and the buttons at the bottom
+   3. Texts, pictures, tables and examples
+   4. The tasks: choose, type a number, order, sort, match
+   5. The feedback under a task
+   6. The end screens
+   7. Explain it back
+   8. For young explorers (bigger letters)
+   9. Phones
+   Colours come from the variables in style.css. The opening and closing
+   animations stop by themselves with reduced motion and in calm mode.
+   ========================================================= */
+
+/* ===== 1. THE WINDOW ===== */
+.lpw {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-reader) + 5);     /* above an open lesson: "Explain it back" starts inside one */
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.lpw[hidden] {
+    display: none;
+}
+
+.lpw-backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--backdrop);
+    animation: lpw-fade-in 0.3s ease both;
+}
+
+.lpw-window {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(720px, 100%);
+    height: min(740px, 100%);
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background:
+        radial-gradient(ellipse at 0% 0%, rgba(var(--accent-rgb), 0.14), transparent 55%),
+        radial-gradient(ellipse at 100% 100%, rgba(var(--accent-2-rgb), 0.08), transparent 50%),
+        var(--surface-solid);
+    box-shadow: var(--shadow), 0 0 80px rgba(var(--accent-rgb), 0.18);
+    outline: none;
+    text-align: left;
+    animation: lpw-in 0.4s var(--ease) both;
+}
+
+.lpw.is-closing {
+    pointer-events: none;
+}
+
+.lpw.is-closing .lpw-backdrop {
+    animation: lpw-fade-out 0.22s ease both;
+}
+
+.lpw.is-closing .lpw-window {
+    animation: lpw-out 0.22s ease both;
+}
+
+@keyframes lpw-in {
+    from { opacity: 0; transform: translateY(22px) scale(0.98); }
+}
+
+@keyframes lpw-out {
+    to { opacity: 0; transform: translateY(14px) scale(0.98); }
+}
+
+@keyframes lpw-fade-in {
+    from { opacity: 0; }
+}
+
+@keyframes lpw-fade-out {
+    to { opacity: 0; }
+}
+
+.lpw [hidden] {
+    display: none !important;
+}
+
+/* ===== 2. THE TOP BAR AND THE BUTTONS AT THE BOTTOM ===== */
+.lpw-head {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 10px;
+    min-height: 60px;
+    padding: 10px 14px 10px 24px;
+}
+
+.lpw-kicker {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--text-accent-2);
+    font-size: 0.75rem;
+    letter-spacing: 1.2px;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.lpw-count {
+    flex: none;
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.lpw-listen,
+.lpw-close {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font: 600 0.8125rem/1 var(--font-body);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.lpw-listen:hover,
+.lpw-close:hover {
+    border-color: var(--accent-2);
+    color: var(--text);
+}
+
+.lpw-listen.is-on {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.14);
+    color: var(--text);
+}
+
+.lpw-bar {
+    flex: none;
+    height: 4px;
+    background: rgba(var(--accent-rgb), 0.16);
+}
+
+.lpw-bar > span {
+    display: block;
+    width: calc(var(--done, 0) * 100%);
+    height: 100%;
+    background: var(--gradient);
+    transition: width 0.4s var(--ease);
+}
+
+.lpw-body {
+    flex: 1;
+    min-height: 0;
+    padding: 26px 28px 20px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.lpw-foot {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 24px 18px;
+    border-top: 1px solid var(--border);
+}
+
+/* "Back" and the other quiet buttons stay on the left, the main button on the right */
+.lpw-foot .btn-ghost:first-child:not(:last-child) {
+    margin-right: auto;
+}
+
+/* The keys of the window: a quiet line at the very bottom, only in the Pro design
+   and only where there is a keyboard and a mouse (not on phones and tablets) */
+.lpw-keys {
+    display: none;
+    flex: none;
+    margin: 0;
+    padding: 5px 24px 7px;
+    border-top: 1px solid var(--border);
+    background: rgba(var(--accent-rgb), 0.04);
+    color: var(--text-dim);
+    font-size: 0.6875rem;
+    letter-spacing: 0.03em;
+    text-align: right;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    html.design-pro .lpw-keys {
+        display: block;
+    }
+}
+
+/* ===== 3. TEXTS, PICTURES, TABLES AND EXAMPLES ===== */
+.lpw-step {
+    display: grid;
+    gap: 14px;
+}
+
+.lpw-info-icon {
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface-2);
+    font-size: 32px;       /* px: an emoji in a tile of fixed size */
+    line-height: 1;
+}
+
+.lpw-title,
+.lpw-q {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.3;
+    outline: none;
+}
+
+.lpw-q {
+    font-family: var(--font-body);
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.lpw-text {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+}
+
+.lpw-body code {
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: rgba(var(--accent-rgb), 0.16);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+}
+
+.lpw-example {
+    display: grid;
+    gap: 6px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--accent-2);
+    border-radius: 0 14px 14px 0;
+    background: var(--surface-2);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.lpw-example.mono {
+    font-size: 0.9375rem;
+    overflow-x: auto;
+}
+
+.lpw-example p {
+    margin: 0;
+}
+
+.lpw-note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+}
+
+.lpw-from,
+.lpw-mini {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.6875rem;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.lpw-task-kind {
+    margin: -6px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+}
+
+/* A picture made of pixels: --v is the brightness of each one (0 to 255) */
+.lpw-pixels {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    gap: 3px;
+    width: min(100%, calc(var(--cols) * 46px));
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+}
+
+.lpw-pixel {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    border-radius: 4px;
+    background: rgb(var(--v), var(--v), var(--v));
+    color: #f4f6ff;
+    font: 600 11px/1 var(--font-mono);       /* px: a number inside a small square */
+}
+
+.lpw-pixel.is-light {
+    color: #10131f;
+}
+
+.lpw-table-box {
+    overflow-x: auto;
+}
+
+.lpw-table {
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+}
+
+.lpw-table th,
+.lpw-table td {
+    padding: 8px 14px;
+    border: 1px solid var(--border-strong);
+    text-align: center;
+}
+
+.lpw-table th {
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.lpw-table th[scope="row"] {
+    text-align: left;
+}
+
+.lpw-table td {
+    font-family: var(--font-mono);
+    font-weight: 600;
+}
+
+.lpw-reveal {
+    display: grid;
+    gap: 10px;
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--accent-2) 50%, transparent);
+    border-radius: 14px;
+    background: rgba(var(--accent-2-rgb), 0.08);
+}
+
+.lpw-points {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lpw-points li {
+    position: relative;
+    padding: 12px 14px 12px 42px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-2);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+}
+
+.lpw-points li::before {
+    content: "✓";
+    position: absolute;
+    top: 13px;
+    left: 14px;
+    color: var(--text-success);
+    font-weight: 800;
+}
+
+.lpw-loading {
+    margin: 60px 0;
+    color: var(--text-muted);
+    text-align: center;
+    outline: none;
+}
+
+/* ===== 4. THE TASKS ===== */
+.lpw-task {
+    display: grid;
+    gap: 14px;
+}
+
+.lpw-options,
+.lpw-order-pool {
+    display: grid;
+    gap: 10px;
+}
+
+.lpw-option,
+.lpw-order-pick,
+.lpw-sort-group,
+.lpw-match-item {
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.lpw-option-key {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 12px;       /* px: a glyph in a tile of fixed size */
+}
+
+.lpw-option.is-correct .lpw-option-key {
+    border-color: var(--success);
+    color: var(--text-success);
+}
+
+.lpw-option.is-wrong .lpw-option-key {
+    border-color: var(--danger);
+    color: var(--text-danger);
+}
+
+/* Type a number */
+.lpw-number {
+    display: grid;
+    gap: 8px;
+}
+
+.lpw-label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.lpw-number-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.lpw-input {
+    width: 170px;
+    min-height: 48px;
+    padding: 8px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--text);
+    font: 600 1.25rem/1.2 var(--font-mono);
+}
+
+.lpw-input:focus,
+.lpw-textarea:focus {
+    border-color: var(--accent-2);
+    box-shadow: var(--field-focus-glow);
+    outline: none;
+}
+
+.lpw-input.is-right {
+    border-color: var(--success);
+}
+
+.lpw-input.is-wrong {
+    border-color: var(--danger);
+}
+
+.lpw-input.is-shaking {
+    animation: lpw-shake 0.35s ease;
+}
+
+@keyframes lpw-shake {
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.lpw-number-unit {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Put the lines in order */
+.lpw-order-list {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 12px;
+    padding: 0;
+    list-style: none;
+}
+
+.lpw-order-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 50px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: rgba(var(--accent-rgb), 0.1);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.lpw-order-item.is-kept,
+.lpw-order-item.is-right {
+    border-color: var(--success);
+    background: color-mix(in srgb, var(--success) 12%, var(--surface-solid));
+}
+
+.lpw-order-item.is-shown {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.1);
+}
+
+.lpw-order-num {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--surface-solid);
+    font-size: 12px;       /* px: a glyph in a tile of fixed size */
+}
+
+.lpw-order-pick {
+    border-style: dashed;
+}
+
+.lpw-order-tools {
+    margin: 10px 0 0;
+    font-size: 0.875rem;
+}
+
+/* Put each one in its group */
+.lpw-sort-left {
+    margin: 0 0 8px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+}
+
+.lpw-sort-item {
+    margin: 0 0 12px;
+    padding: 18px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background: rgba(var(--accent-rgb), 0.1);
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    outline: none;
+}
+
+.lpw-sort-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.lpw-sort-done,
+.lpw-pairs {
+    display: grid;
+    gap: 6px;
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lpw-pairs {
+    margin-top: 0;
+}
+
+.lpw-sort-done li,
+.lpw-pairs li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    font-size: 0.9375rem;
+    line-height: 1.45;
+}
+
+.lpw-sort-done .is-right .lpw-sort-mark {
+    color: var(--text-success);
+}
+
+.lpw-sort-done .is-wrong {
+    border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+}
+
+.lpw-sort-done .is-wrong .lpw-sort-mark {
+    color: var(--text-danger);
+}
+
+.lpw-sort-arrow,
+.lpw-pairs-arrow {
+    color: var(--text-dim);
+}
+
+.lpw-pairs li > span:last-child {
+    font-weight: 700;
+}
+
+/* Find the pairs */
+.lpw-match {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.lpw-match-col {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+}
+
+.lpw-match-item {
+    --option-height: 52px;
+    --option-pad: 10px 12px;
+    font-size: 0.9375rem;
+}
+
+.lpw-match-item.is-chosen {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.14);
+}
+
+/* ===== 5. THE FEEDBACK UNDER A TASK ===== */
+.lpw-task-feedback:empty {
+    display: none;
+}
+
+.lpw-feedback {
+    display: grid;
+    gap: 6px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-left-width: 4px;
+    border-radius: 14px;
+    background: var(--surface-2);
+    animation: lpw-feedback-in 0.3s var(--ease) both;
+}
+
+@keyframes lpw-feedback-in {
+    from { opacity: 0; transform: translateY(6px); }
+}
+
+.lpw-feedback.is-right {
+    border-color: var(--success);
+    background: color-mix(in srgb, var(--success) 9%, var(--surface-solid));
+}
+
+.lpw-feedback.is-wrong {
+    border-color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 8%, var(--surface-solid));
+}
+
+.lpw-feedback.is-hint {
+    border-color: var(--warning);
+    background: color-mix(in srgb, var(--warning) 9%, var(--surface-solid));
+}
+
+.lpw-feedback-title {
+    margin: 0;
+    font-weight: 800;
+}
+
+.lpw-feedback.is-right .lpw-feedback-title {
+    color: var(--text-success);
+}
+
+.lpw-feedback.is-wrong .lpw-feedback-title {
+    color: var(--text-danger);
+}
+
+.lpw-feedback.is-hint .lpw-feedback-title {
+    color: var(--text-warning);
+}
+
+.lpw-feedback-text {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.lpw-back {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* ===== 6. THE END SCREENS ===== */
+.lpw-end {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    text-align: center;
+}
+
+.lpw-end-icon {
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface-2);
+    font-size: 42px;       /* px: an emoji in a tile of fixed size */
+    line-height: 1;
+}
+
+.lpw-end.is-pass .lpw-end-icon {
+    border-color: color-mix(in srgb, var(--success) 60%, transparent);
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.lpw-end-title {
+    max-width: 24ch;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.25;
+    outline: none;
+}
+
+.lpw-explain-end .lpw-end-title {
+    max-width: 34ch;
+    font-family: var(--font-body);
+    font-size: 1.1875rem;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.lpw-end .lpw-text {
+    max-width: 52ch;
+    color: var(--text-muted);
+}
+
+.lpw-score {
+    margin: 0;
+    color: var(--text-accent-2);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.lpw-next,
+.lpw-again,
+.lpw-save-note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+}
+
+.lpw-save-note {
+    color: var(--text-dim);
+    font-size: 0.8125rem;
+}
+
+.lpw-lines {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    list-style: none;
+}
+
+.lpw-missed {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+}
+
+.lpw-missed ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lpw-missed li {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface-2);
+    line-height: 1.5;
+}
+
+.lpw-missed .lp-link {
+    font-size: 0.875rem;
+}
+
+/* ===== 7. EXPLAIN IT BACK ===== */
+.lpw-textarea,
+.lpw-prompt {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: var(--surface-2);
+    color: var(--text);
+    font: 500 1.0625rem/1.6 var(--font-body);
+    resize: vertical;
+}
+
+.lpw-prompt {
+    min-height: 120px;
+    color: var(--text-muted);
+    font: 400 0.8125rem/1.55 var(--font-mono);
+}
+
+.lpw-error {
+    margin: 0;
+    color: var(--text-danger);
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.lpw-yours {
+    display: grid;
+    gap: 6px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 14px 14px 0;
+    background: var(--surface-2);
+}
+
+.lpw-yours-text {
+    margin: 0;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.lpw-keys {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lpw-key {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-height: 52px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: var(--surface-solid);
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.lpw-key:has(input:checked) {
+    border-color: var(--success);
+    background: color-mix(in srgb, var(--success) 10%, var(--surface-solid));
+}
+
+.lpw-key input {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 2px 0 0;
+    accent-color: var(--success);
+}
+
+.lpw-bot {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface-2);
+    text-align: left;
+}
+
+.lpw-bot-title {
+    margin: 0;
+    font-weight: 700;
+}
+
+.lpw-bot .lpw-text {
+    max-width: none;
+    font-size: 0.9375rem;
+}
+
+.lpw-bot .lpw-prompt {
+    background: var(--surface-solid);
+}
+
+.lpw-bot-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin: 0;
+}
+
+.lpw-copy-state {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* ===== 8. FOR YOUNG EXPLORERS: BIGGER LETTERS ===== */
+.lpw.is-kid .lpw-text,
+.lpw.is-kid .lpw-points li,
+.lpw.is-kid .lpw-example {
+    font-size: 1.1875rem;
+}
+
+.lpw.is-kid .lpw-q {
+    font-size: 1.375rem;
+}
+
+.lpw.is-kid .lpw-option,
+.lpw.is-kid .lpw-order-pick,
+.lpw.is-kid .lpw-sort-group {
+    font-size: 1.0625rem;
+}
+
+.lpw.is-kid .lpw-listen {
+    border-color: var(--accent-2);
+    color: var(--text);
+}
+
+/* ===== 9. PHONES ===== */
+@media (max-width: 640px) {
+    .lpw {
+        padding: 0;
+    }
+
+    .lpw-window {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+    }
+
+    .lpw-head {
+        padding-left: 16px;
+    }
+
+    .lpw-body {
+        padding: 20px 16px 16px;
+    }
+
+    .lpw-foot {
+        padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .lpw-foot .btn {
+        flex: 1 1 auto;
+        padding-right: 14px;
+        padding-left: 14px;
+    }
+
+    .lpw-foot .btn-ghost:first-child:not(:last-child) {
+        flex: 0 1 auto;
+    }
+
+    .lpw-title {
+        font-size: 1.25rem;
+    }
+
+    .lpw-q {
+        font-size: 1.125rem;
+    }
+
+    .lpw-listen-text {
+        display: none;
+    }
+
+    .lpw-match {
+        gap: 8px;
+    }
+
+    .lpw-match-item {
+        --option-pad: 8px 10px;
+        font-size: 0.875rem;
+    }
+
+    .lpw-table th,
+    .lpw-table td {
+        padding: 6px 8px;
+        font-size: 0.875rem;
+    }
+}

@@ -410,7 +410,9 @@
     // state.awarded, so the same thing never pays twice:
     //   "lesson:3"  "check:3"  "certificate:all"  "lab:classifier"  "challenge:maze:2"
     //   "term:bias"  "era:deep"                   once, ever
+    //   "unit:z1"  "stage:basics"  "explain:3"                 once, ever (My path)
     //   "quiz.classic@2026-01-15"  "daily@2026-01-15"           once on that day
+    //   "review@2026-01-15"  "session@2026-01-15"             once on that day (My path)
     //   "bot@2026-01-15": 4   "palette@2026-01-15": 7           how many paid that day
     // Each function gets the event's detail and its day.
     const EVENTS = {
@@ -458,6 +460,23 @@
         },
         "settings.change": function (detail) {
             if (detail.name === "calm" && detail.value === true) addFact("calm");
+        },
+        // My path (js/learn.js): a guided step, a stage test passed, a lesson explained
+        // in your own words (each once), a memory check and today's session (once a day)
+        "learn.unit": function (detail, day) {
+            if (isId(detail.unit)) payOnce("unit:" + detail.unit, RULES.unit, day);
+        },
+        "learn.test": function (detail, day) {
+            if (detail.star === true && isId(detail.stage)) payOnce("stage:" + detail.stage, RULES.stage, day);
+        },
+        "learn.explain": function (detail, day) {
+            if (isLesson(detail.n)) payOnce("explain:" + detail.n, RULES.explain, day);
+        },
+        "learn.review": function (detail, day) {
+            if (detail.kind === "review" && isCount(detail.cards) && detail.cards > 0) payOnce("review@" + day, RULES.review, day);
+        },
+        "learn.session": function (detail, day) {
+            payOnce("session@" + day, RULES.session, day);
         },
         "journey.open": function () {
             addFact("open");

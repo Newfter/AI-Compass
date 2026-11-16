@@ -1,0 +1,1263 @@
+/* =========================================================
+   AI COMPASS — MY PATH (the page and the card on the home page)
+   Styles of the "My path" page (js/learn.js). Every class starts with
+   lp- (the page) or home-path (the card on the home page). The study
+   window that opens from here has its own file, css/learn-play.css,
+   loaded the first time the window is needed.
+   1. The page
+   2. The three questions
+   3. Who is learning
+   4. Today's session
+   5. The path: stages and steps
+   6. What you remember
+   7. How the site teaches, and the difference from a chatbot
+   8. The card on the home page
+   9. The Pro design
+   10. Phones
+   11. Printing
+   Colours come from the variables in style.css. Calm mode needs
+   nothing here: the only movement is the colour of hovered buttons
+   and the progress bars, which style.css already stops.
+   ========================================================= */
+
+/* ===== 1. THE PAGE ===== */
+/* The page is built when it is first shown: until then its place keeps some height */
+#learn [data-feature="learn"]:empty {
+    min-height: 900px;
+}
+
+.lp {
+    display: grid;
+    gap: 28px;
+    max-width: 980px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.lp-main {
+    display: grid;
+    gap: 28px;
+}
+
+.lp [hidden] {
+    display: none !important;
+}
+
+.lp-kicker {
+    margin: 0 0 6px;
+    color: var(--text-accent-2);
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.lp-block-head {
+    margin-bottom: 16px;
+}
+
+.lp-block-title {
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.lp-block-text {
+    max-width: 62ch;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+}
+
+/* A button that looks like a link */
+.lp-link {
+    padding: 2px 0;
+    border: 0;
+    border-bottom: 1px solid currentColor;
+    background: none;
+    color: var(--text-accent-2);
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.lp-link:hover {
+    color: var(--text);
+}
+
+/* A thin progress bar: its fill takes --done (0 to 1) of the width */
+.lp-bar {
+    display: block;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.16);
+}
+
+.lp-bar > span {
+    display: block;
+    width: calc(var(--done, 0) * 100%);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--gradient);
+    transition: width 0.5s var(--ease);
+}
+
+.lp-note {
+    margin: 0;
+    padding: 12px 16px;
+    border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* ===== 2. THE THREE QUESTIONS ===== */
+.lp-setup {
+    padding: 30px 30px 24px;
+}
+
+.lp-setup-dots {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.lp-setup-dots span {
+    width: 34px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(var(--accent-rgb), 0.18);
+}
+
+.lp-setup-dots .is-done {
+    background: var(--success);
+}
+
+.lp-setup-dots .is-now {
+    background: var(--accent-2);
+}
+
+.lp-setup-title {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: 1.625rem;
+    font-weight: 600;
+    line-height: 1.2;
+    outline: none;
+}
+
+.lp-setup-text {
+    margin: 0 0 20px;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.lp-choices {
+    display: grid;
+    gap: 12px;
+}
+
+.lp-choices-1 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.lp-choices-2,
+.lp-choices-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lp-choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    width: 100%;
+    height: 100%;
+    min-height: 84px;
+    padding: 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    background: var(--surface-2);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s var(--ease);
+}
+
+.lp-choice:hover {
+    border-color: var(--accent-2);
+    transform: translateY(-2px);
+}
+
+.lp-choice.is-chosen {
+    border-color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.14);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.lp-choice-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: rgba(var(--accent-2-rgb), 0.12);
+    font-size: 24px;       /* px: an emoji in a tile of fixed size */
+    line-height: 1;
+}
+
+.lp-choice-body {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.lp-choice-title {
+    font-weight: 700;
+    font-size: 1.0625rem;
+    line-height: 1.3;
+}
+
+.lp-choice-small {
+    color: var(--text-dim);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.lp-choice-text {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.lp-setup-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 48px;
+    margin-top: 22px;
+}
+
+.lp-setup-privacy {
+    margin: 16px 0 0;
+    color: var(--text-dim);
+    font-size: 0.8125rem;
+}
+
+/* ===== 3. WHO IS LEARNING ===== */
+.lp-me {
+    display: grid;
+    gap: 10px;
+}
+
+.lp-me-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+}
+
+.lp-me-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface-2);
+    font-size: 24px;       /* px: an emoji in a tile of fixed size */
+    line-height: 1;
+}
+
+.lp-me-who {
+    margin: 0;
+    font-size: 1.0625rem;
+    line-height: 1.35;
+}
+
+.lp-me-label {
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.6875rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.lp-me-goal {
+    color: var(--text-muted);
+}
+
+.lp-me-days {
+    margin: 0 0 0 auto;
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.lp-me-tip {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+/* ===== 4. TODAY'S SESSION ===== */
+.lp-today {
+    padding: 26px 28px;
+    border-color: var(--border-strong);
+}
+
+.lp-today-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.lp-today-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.2;
+    outline: none;
+}
+
+.lp-today-progress {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.lp-steps {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-step {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    min-height: 66px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface-2);
+}
+
+.lp-step.is-next {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.08);
+}
+
+.lp-step.is-done {
+    opacity: 0.72;
+}
+
+.lp-step-mark {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(var(--accent-rgb), 0.2);
+    font-size: 14px;       /* px: a glyph in a tile of fixed size */
+    font-weight: 800;
+}
+
+.lp-step.is-done .lp-step-mark {
+    background: var(--success);
+    color: #04140d;
+}
+
+.lp-step-icon {
+    font-size: 22px;       /* px: an emoji next to the round mark */
+    line-height: 1;
+}
+
+.lp-step-body {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.lp-step-title {
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.lp-step-text {
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    text-overflow: ellipsis;
+}
+
+.lp-today-empty {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.lp-today-all {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--success) 45%, transparent);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--success) 9%, transparent);
+    line-height: 1.55;
+}
+
+.lp-today-all-icon {
+    font-size: 26px;       /* px: an emoji */
+    line-height: 1;
+}
+
+.lp-today-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin: 16px 0 0;
+    color: var(--text-dim);
+    font-size: 0.875rem;
+}
+
+/* ===== 5. THE PATH: STAGES AND STEPS ===== */
+.lp-stages {
+    display: grid;
+    gap: 12px;
+}
+
+.lp-stage {
+    position: relative;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--glass);
+}
+
+.lp-stage.is-start,
+.lp-stage.is-progress {
+    border-color: var(--border-strong);
+}
+
+.lp-stage.is-known,
+.lp-stage.is-later {
+    background: var(--surface);
+}
+
+.lp-stage-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px 16px;
+}
+
+.lp-stage-icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface-2);
+    font-size: 28px;       /* px: an emoji in a tile of fixed size */
+    line-height: 1;
+}
+
+.lp-stage.is-done .lp-stage-icon {
+    border-color: color-mix(in srgb, var(--success) 55%, transparent);
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.lp-stage-kicker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    margin: 0 0 4px;
+    color: var(--text-dim);
+    font-size: 0.6875rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.lp-chip {
+    padding: 3px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-size: 0.6875rem;
+    letter-spacing: 0.5px;
+}
+
+.lp-chip-start,
+.lp-chip-progress {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.12);
+    color: var(--text-accent-2);
+}
+
+.lp-chip-done {
+    border-color: color-mix(in srgb, var(--success) 60%, transparent);
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    color: var(--text-success);
+}
+
+.lp-stage-title {
+    margin: 0 0 4px;
+    font-size: 1.1875rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.lp-stage-text {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+.lp-stage-optional {
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+.lp-stage-side {
+    display: grid;
+    justify-items: end;
+    gap: 8px;
+    min-width: 150px;
+}
+
+.lp-stage-count {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.8125rem;
+}
+
+.lp-stage-side .lp-bar {
+    width: 100%;
+}
+
+.lp-caret {
+    display: inline-block;
+    transition: transform 0.25s var(--ease);
+}
+
+.lp-stage.is-open .lp-caret {
+    transform: rotate(180deg);
+}
+
+.lp-units {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 16px 0 0;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--border);
+    list-style: none;
+}
+
+.lp-unit {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+    min-height: 68px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface-2);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.lp-unit:hover {
+    border-color: var(--accent-2);
+}
+
+.lp-unit.is-next {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.08);
+}
+
+.lp-unit.is-test {
+    border-style: dashed;
+}
+
+.lp-unit-icon {
+    flex: none;
+    width: 30px;
+    font-size: 24px;       /* px: an emoji */
+    line-height: 1;
+    text-align: center;
+}
+
+.lp-unit-body {
+    display: grid;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
+}
+
+.lp-unit-title {
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.lp-unit-kind {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+}
+
+.lp-unit-text {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+}
+
+.lp-unit-state {
+    flex: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.lp-unit-state.is-done {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--success);
+    color: #04140d;
+    font-size: 14px;       /* px: a glyph in a tile of fixed size */
+}
+
+.lp-unit-state.is-next {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--accent-2);
+    color: #04141a;
+    white-space: nowrap;
+}
+
+[data-theme="light"] .lp-unit-state.is-next,
+[data-theme="light"] .lp-unit-state.is-done,
+[data-theme="light"] .lp-step.is-done .lp-step-mark {
+    color: #ffffff;
+}
+
+/* ===== 6. WHAT YOU REMEMBER ===== */
+.lp-skills {
+    padding: 26px 28px;
+}
+
+.lp-skills-empty,
+.lp-skills-next {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.lp-skills-action,
+.lp-skills-next {
+    margin: 14px 0 0;
+}
+
+.lp-tiles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-tile {
+    display: grid;
+    gap: 2px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface-2);
+}
+
+.lp-tile-num {
+    font-size: 1.625rem;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.lp-tile-label {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.lp-tile.is-due .lp-tile-num {
+    color: var(--text-accent-3);
+}
+
+.lp-tile.is-strong .lp-tile-num {
+    color: var(--text-success);
+}
+
+.lp-topics {
+    display: grid;
+    gap: 8px;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-topic {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(80px, 0.8fr) auto;
+    align-items: center;
+    gap: 8px 14px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.lp-topic:last-child {
+    border-bottom: 0;
+}
+
+.lp-topic-name {
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.lp-topic-state {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+}
+
+.lp-topic.is-strong .lp-topic-state {
+    color: var(--text-success);
+}
+
+.lp-topic.is-strong .lp-bar > span {
+    background: var(--success);
+}
+
+/* Pro only: the boxes, the next two weeks, the share of right answers */
+.lp-pro-only {
+    display: none;
+}
+
+.lp-pro-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+    gap: 16px;
+}
+
+.lp-mini-title {
+    margin: 0 0 10px;
+    color: var(--text-dim);
+    font-size: 0.6875rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.lp-boxes ol,
+.lp-forecast ol {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 110px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-boxes li,
+.lp-forecast li {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+    height: 100%;
+    min-width: 0;
+}
+
+.lp-box-bar {
+    width: 100%;
+    max-width: 34px;
+    height: max(2px, calc(var(--h, 0) * 70px));
+    border-radius: 4px 4px 0 0;
+    background: var(--gradient);
+}
+
+.lp-box-num,
+.lp-box-name {
+    color: var(--text-dim);
+    font-size: 0.6875rem;
+    line-height: 1;
+}
+
+.lp-box-num {
+    color: var(--text);
+}
+
+.lp-accuracy {
+    margin: 14px 0 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+/* ===== 7. HOW THE SITE TEACHES, AND THE DIFFERENCE FROM A CHATBOT ===== */
+.lp-about {
+    display: grid;
+    gap: 12px;
+}
+
+.lp-details {
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+}
+
+.lp-details > summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 60px;
+    padding: 14px 20px;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.35;
+    cursor: pointer;
+    list-style: none;
+}
+
+.lp-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.lp-details > summary::after {
+    content: "⌄";
+    margin-left: auto;
+    color: var(--text-dim);
+    transition: transform 0.25s var(--ease);
+}
+
+.lp-details[open] > summary::after {
+    transform: rotate(180deg);
+}
+
+.lp-details > :not(summary) {
+    margin-right: 20px;
+    margin-left: 20px;
+}
+
+.lp-details > :last-child {
+    margin-bottom: 20px;
+}
+
+.lp-details-lead {
+    max-width: 68ch;
+    margin-top: 0;
+    margin-bottom: 16px;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.lp-method {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-method li {
+    display: flex;
+    gap: 12px;
+}
+
+.lp-method-num {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(var(--accent-rgb), 0.2);
+    font-size: 13px;       /* px: a glyph in a tile of fixed size */
+    font-weight: 600;
+}
+
+.lp-method p {
+    margin: 3px 0 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+.lp-why {
+    display: grid;
+    gap: 8px;
+}
+
+.lp-why-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.lp-why-bot,
+.lp-why-here {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.lp-why-bot {
+    background: var(--surface-2);
+    color: var(--text-muted);
+}
+
+.lp-why-here {
+    border-color: color-mix(in srgb, var(--accent-2) 50%, transparent);
+    background: rgba(var(--accent-2-rgb), 0.08);
+}
+
+.lp-why-tag {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-dim);
+    font-size: 0.6875rem;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.lp-why-here .lp-why-tag {
+    color: var(--text-accent-2);
+}
+
+.lp-both {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    border-radius: 14px;
+    background: rgba(var(--accent-rgb), 0.08);
+}
+
+.lp-both p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+}
+
+/* ===== 8. THE CARD ON THE HOME PAGE ===== */
+html:not(.js) .home-path {
+    display: none !important;
+}
+
+.home-path {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    max-width: 880px;
+    margin: 56px auto 0;
+    padding: 22px 24px;
+    border-color: var(--border-strong);
+    text-align: left;
+}
+
+.home-path[hidden] {
+    display: none;
+}
+
+/* With a path, the Simple design's "three first steps" make room for today's plan */
+html.has-path .home-start {
+    display: none !important;
+}
+
+.home-path-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: rgba(var(--accent-2-rgb), 0.12);
+    font-size: 30px;       /* px: an emoji in a tile of fixed size */
+    line-height: 1;
+}
+
+.home-path-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.home-path-kicker {
+    margin: 0 0 2px;
+    color: var(--text-accent-2);
+    font-size: 0.6875rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.home-path-title {
+    margin: 0;
+    font-size: 1.1875rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.home-path-text {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.home-path-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 10px 0 0;
+    padding: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    list-style: none;
+}
+
+.home-path-steps .is-done {
+    color: var(--text-success);
+}
+
+.home-path-what {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.home-path-button {
+    flex: none;
+}
+
+.home-path:not([hidden]) + .home-start + .home-word + .home-doors-title,
+.home-path:not([hidden]) ~ .home-doors-title {
+    margin-top: 48px;
+}
+
+/* The link to "My path" inside the three first steps */
+.home-start-path {
+    margin: 14px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+}
+
+/* ===== 9. THE PRO DESIGN ===== */
+html.design-pro .lp-pro-only {
+    display: block;
+}
+
+html.design-pro .lp-accuracy {
+    display: block;
+}
+
+html.design-pro .lp-pro-grid {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+html.design-pro .lp-block-title,
+html.design-pro .lp-today-title,
+html.design-pro .lp-setup-title {
+    letter-spacing: -0.01em;
+}
+
+html.design-pro .lp-stage,
+html.design-pro .lp-details,
+html.design-pro .lp-step,
+html.design-pro .lp-unit,
+html.design-pro .lp-choice,
+html.design-pro .lp-tile {
+    border-radius: var(--radius);
+}
+
+html.design-pro .lp-stage-icon,
+html.design-pro .lp-choice-icon,
+html.design-pro .home-path-icon {
+    border-radius: var(--radius-sm);
+}
+
+html.design-pro .home-path {
+    max-width: none;
+    margin-top: 20px;
+}
+
+/* ===== 10. PHONES ===== */
+@media (max-width: 720px) {
+    .lp {
+        gap: 22px;
+    }
+
+    .lp-setup,
+    .lp-today,
+    .lp-skills {
+        padding: 20px 16px;
+    }
+
+    .lp-setup-title {
+        font-size: 1.3125rem;
+    }
+
+    .lp-choices-2,
+    .lp-choices-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .lp-me-days {
+        margin-left: 0;
+    }
+
+    .lp-today-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .lp-step {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .lp-step-icon {
+        display: none;
+    }
+
+    .lp-stage {
+        padding: 16px 14px;
+    }
+
+    .lp-stage-head {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .lp-stage-side {
+        grid-column: 1 / -1;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        justify-items: stretch;
+        min-width: 0;
+    }
+
+    .lp-units,
+    .lp-method,
+    .lp-pro-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lp-topic {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .lp-topic .lp-bar {
+        grid-column: 1;
+        grid-row: 3;
+    }
+
+    .lp-topic-state {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .lp-topic .btn {
+        grid-column: 2;
+        grid-row: 1 / span 3;
+    }
+
+    .lp-why-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+
+    .home-path {
+        flex-wrap: wrap;
+        padding: 18px;
+    }
+
+    .home-path-button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .lp-tiles {
+        gap: 6px;
+    }
+
+    .lp-tile {
+        padding: 12px 10px;
+    }
+
+    .lp-tile-num {
+        font-size: 1.375rem;
+    }
+
+    .lp-step {
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .home-path-icon {
+        width: 46px;
+        height: 46px;
+        font-size: 24px;
+    }
+}
+
+/* ===== 11. PRINTING ===== */
+@media print {
+    .lp-setup-nav,
+    .lp-me-change,
+    .lp-stage-toggle,
+    .lp-step .btn,
+    .lp-topic .btn,
+    .lp-today-foot,
+    .home-path {
+        display: none !important;
+    }
+
+    .lp-units[hidden] {
+        display: grid !important;
+    }
+}

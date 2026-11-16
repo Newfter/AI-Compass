@@ -46,7 +46,7 @@
        A.countUp(element, from, to, ms, { format, ease, done }) -> { finish(), stop(), value, running }
     6  A.util.clamp / lerp / easeOut / random / randomInt / pick / shuffle(list, random) /
               seeded(text) / sampleWeighted / debounce / frameThrottle / attempt(fn, fallback)
-       A.dom.focusable / focusHeading / pauseScrollAnchoring / replay / fromHTML /
+       A.dom.focusable / focusHeading / findAgain / pauseScrollAnchoring / replay / fromHTML /
              setText / setAttr / setHidden (write only what changed) / isTyping(element)
        A.confirmPress(button, { onArm, onDisarm, onConfirm, enabled, timeout })
            -> { armed, disarm() }: a button that needs a second press
@@ -813,6 +813,22 @@
             return true;
         },
 
+        // A part of the page that was drawn again has new buttons in place of the old
+        // ones. findAgain(oldButton) gives the button that took its place: the one with
+        // the same data-fid ("focus id") that is on the page and can be seen, so a
+        // window that closes can still give the focus back. null when there is none.
+        findAgain: function (element) {
+            if (!element || typeof element.getAttribute !== "function") return null;
+            if (element.isConnected) return element;
+            const fid = element.getAttribute("data-fid");
+            if (!fid) return null;
+            const twins = document.querySelectorAll("[data-fid]");
+            for (let i = 0; i < twins.length; i++) {
+                if (twins[i].getAttribute("data-fid") === fid && twins[i].getClientRects().length > 0) return twins[i];
+            }
+            return null;
+        },
+
         // Browsers try to keep what you are looking at in place when content above it
         // changes ("scroll anchoring"). That would fight our own scrolling, so it is
         // switched off for a moment while content appears and disappears.
@@ -1438,8 +1454,12 @@
             const active = document.activeElement;
             const lost = !active || active === document.body || (item.root && item.root.contains(active));
             if (!lost) return;                                 // the focus went somewhere on purpose
-            if (typeof item.focus === "function") safeCall(item.focus);
-            else if (item.focus && typeof item.focus.focus === "function") item.focus.focus({ preventScroll: true });
+            if (typeof item.focus === "function") {
+                safeCall(item.focus);
+            } else if (item.focus && typeof item.focus.focus === "function") {
+                // (the page may have drawn that button again in the meantime)
+                (dom.findAgain(item.focus) || item.focus).focus({ preventScroll: true });
+            }
         });
     }
 
@@ -1593,6 +1613,7 @@
     // The sections of the page, in order: their id, the name (a translation key) and an icon
     const SECTIONS = [
         { id: "home", key: "cmd.home", icon: "🏠" },
+        { id: "learn", key: "nav.learn", icon: "🧭" },
         { id: "lessons", key: "nav.lessons", icon: "📚" },
         { id: "lab", key: "nav.lab", icon: "🧪" },
         { id: "quiz", key: "nav.quiz", icon: "🏆" },
