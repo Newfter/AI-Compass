@@ -311,7 +311,7 @@ window.AICompass.addTranslations({
         "pro.cmd.whoami": "твой уровень, XP и значки",
         "pro.cmd.random": "случайный термин ИИ",
         "pro.cmd.timer": "запустить (или остановить) таймер фокуса",
-        "pro.cmd.history": "команды, которые ты вводил",
+        "pro.cmd.history": "введённые команды",
         "pro.cmd.neofetch": "о сайте в стиле терминала",
         "pro.cmd.echo": "вывести текст",
         "pro.term.whoami": "Уровень {level} · {xp} XP · значков: {badges} · серия: {streak} дн.",

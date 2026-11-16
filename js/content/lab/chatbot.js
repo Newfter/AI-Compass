@@ -342,7 +342,7 @@ window.AICompass.addTranslations({
         "lab.chatbot.mean.answer": "≈ {word}",
         "lab.chatbot.mean.answerSim": "сходство с результатом: {sim}",
         "lab.chatbot.mean.candidates": "Ближе всего к результату",
-        "lab.chatbot.mean.mathsNote": "Ответ — это слово, ближайшее к результату, не считая трёх слов, с которых ты начал. Именно так проверяют word2vec.",
+        "lab.chatbot.mean.mathsNote": "Ответ — это слово, ближайшее к результату, не считая трёх исходных слов. Именно так проверяют word2vec.",
         "lab.chatbot.mean.own": "Числа твоего слова",
         "lab.chatbot.mean.ownClear": "Начать заново",
         "lab.chatbot.mean.ownEmpty": "Подвинь любой ползунок, чтобы у твоего слова появился смысл.",
