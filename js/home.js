@@ -83,9 +83,30 @@
     }
 
     // The progress changes in a lesson; the texts change with the language
+    // ----- "Word of the day" (Simple design only; the Pro design has its own card) -----
+    const word = document.querySelector("[data-home-word]");
+    let wordId = "";
+
+    function refreshWord() {
+        if (!word || !A.glossary || typeof A.glossary.termOfDay !== "function") return;
+        const term = A.util.attempt(function () { return A.glossary.termOfDay(); });
+        if (!term) return;
+        wordId = term.id;
+        A.dom.setText(word.querySelector('[data-ref="term"]'), term.term);
+        A.dom.setText(word.querySelector('[data-ref="text"]'), "— " + (term.short || ""));
+        A.dom.setHidden(word, false);
+    }
+
+    if (word) {
+        word.querySelector('[data-ref="term"]').addEventListener("click", function () {
+            if (wordId && A.glossary) A.glossary.show(wordId, { focus: true });
+        });
+    }
+
     function refreshAll() {
         refresh();
         refreshStart();
+        refreshWord();
     }
 
     A.on("activity", refreshAll);
