@@ -1,6 +1,10 @@
 # AI Compass
 
-AI Compass is a free website that teaches teenagers about artificial intelligence, in English and in Russian. It has short lessons with mini-labs, an AI Lab of live experiments (small, real models that learn in your browser), a quiz, a glossary, a history timeline, a chat helper (Compass Bot), a search window for the whole site (Ctrl+K), My Compass, where learners see their XP, level, badges and streak, and Settings (bigger text, high contrast, an easy-to-read font and more).
+AI Compass is a free website that teaches artificial intelligence from zero, in English and in Russian, to anyone: a child, a school student, an adult, a teacher or a professional.
+
+Its heart is **My path**, a personal learning plan. A visitor says who is learning and gets a path of stages (from "what is a program?" to the maths inside a model), a short session for every day, guided steps with a task after every idea, a memory check that brings each question back just before it would be forgotten, and "Explain it back". Around it are short lessons with mini-labs, an AI Lab of live experiments (small, real models that learn in your browser), a quiz, a glossary, a history timeline, a chat helper (Compass Bot), a search window for the whole site (Ctrl+K), My Compass, where learners see their XP, level, badges and streak, and Settings (bigger text, high contrast, an easy-to-read font and more).
+
+The site has two designs, chosen with the Simple / Pro switch in the menu bar: **Simple** (the default) is calm and shows one thing at a time; **Pro** is a dense look for people who know AI well, with a terminal, a status bar and a keyboard shortcut for everything.
 
 It is plain HTML, CSS and JavaScript: no libraries, no frameworks, no build step. The files in this folder are exactly what visitors get.
 
@@ -9,8 +13,9 @@ This guide is for the people who look after the site. It explains how the code i
 - [Run it on your computer](#run-it-on-your-computer)
 - [The folder map](#the-folder-map)
 - [How the pieces talk](#how-the-pieces-talk)
+- [My path: the learning plan](#my-path-the-learning-plan)
 - [The app, offline use, sharing, printing and search engines](#the-app-offline-use-sharing-printing-and-search-engines)
-- [Recipes](#recipes): [change a text](#change-a-text-in-both-languages), [add a lesson](#add-a-lesson), [add a quiz question](#add-a-quiz-question), [add a glossary term](#add-a-glossary-term), [add a timeline milestone](#add-a-timeline-milestone), [add a fact or a joke to Compass Bot](#add-a-fun-fact-or-a-joke-to-compass-bot), [help Compass Bot find an answer](#help-compass-bot-find-an-answer), [add a Ctrl+K command](#add-a-command-to-the-ctrlk-palette), [add an AI Lab experiment](#add-an-ai-lab-experiment)
+- [Recipes](#recipes): [change a text](#change-a-text-in-both-languages), [add a lesson](#add-a-lesson), [add a quiz question](#add-a-quiz-question), [add a glossary term](#add-a-glossary-term), [add a timeline milestone](#add-a-timeline-milestone), [add a fact or a joke to Compass Bot](#add-a-fun-fact-or-a-joke-to-compass-bot), [help Compass Bot find an answer](#help-compass-bot-find-an-answer), [add a Ctrl+K command](#add-a-command-to-the-ctrlk-palette), [add an AI Lab experiment](#add-an-ai-lab-experiment), [add a guided step to My path](#add-a-guided-step-to-my-path)
 - [House rules](#house-rules)
 - [Before you merge: a test checklist](#before-you-merge-a-test-checklist)
 - [Credits](#credits)
@@ -57,6 +62,11 @@ A local server shows you the site the way GitHub Pages serves it.
 | `css/print.css` | The page on paper (used only when printing): black on white, an open lesson as a handout, the certificate on one A4 page. |
 | `css/teachers.css` | The "For teachers" section. |
 | `css/teachers-kit.css` | The teacher kit: the window with the lesson plan, the worksheet and the answer key, how they look on paper, and the classroom quiz. It loads with the kit, not with the page. |
+| `css/learn.css` | The "My path" page: the three setup questions, today's session, the path with its stages, the memory map, and the card on the home page. |
+| `css/learn-play.css` | The study window of "My path" (guided steps, the memory check, tests, "Explain it back"). It loads with the window, not with the page. |
+| `css/pro.css` | The Pro design: everything that looks different while `<html>` has the class `design-pro`, and the parts only that design has (control panel, terminal, status bar...). |
+| `css/account.css` | The Sign in button and the account window. Used only when accounts are on. |
+| `css/challenge.css` | The Knowledge Challenge and the leaderboard. Used only when accounts are on. |
 | `js/core.js` | The toolkit that every other script uses (`window.AICompass`, called `A`): saved settings, texts and languages, the theme, calm mode, pop-up windows, scrolling to sections, Ctrl+K commands and toasts. It is loaded first. |
 | `js/effects.js` | Small touches: the scroll progress bar, cards that rise in, numbers that count up, typewriter words, tilting cards, the mouse spotlight, magnetic buttons, ripples, the section mini-map and confetti. |
 | `js/neural-bg.js` | The animated "brain" drawn behind the page. |
@@ -82,7 +92,14 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/platform.js` | The app around the site: starts the offline copy (`sw.js`), the "Install the app" button, the offline / back online messages, `?lang=` in the address, sharing (`A.share`) and the Share and Print commands. |
 | `js/teachers.js` | The "For teachers" section: the course at a glance, three buttons for each lesson (plan, worksheet, answer key) and the classroom quiz button. It stays small: it loads the teacher kit the first time one of them is opened. |
 | `js/teachers-kit.js` | The teacher kit: the window that shows a lesson plan, a worksheet or an answer key (with Print and Copy as text), and the classroom quiz for the projector (teams, a timer, big type). Not in `index.html`: `js/teachers.js` loads it when it is needed. |
+| `js/learn.js` | My path: who is learning, the path and its stages, today's session, the memory (which card comes back on which day) and the card on the home page. It is described in [My path](#my-path-the-learning-plan). |
+| `js/learn-play.js` | The study window of My path: it shows a guided step screen by screen, the memory check, a stage test, the level check and "Explain it back". Not in `index.html`: `js/learn.js` loads it when it is needed. |
+| `js/pro.js` | What only the Pro design has: the control panel and the workspace on the home page (terminal, activity map, to-do list), the status bar, "g then a letter" to jump to a page, the focus timer and the bar at the top of every page. |
+| `js/home.js` | The "Continue where you left off" button on the home page. |
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
+| `js/content/learn.js` | My path: its texts and its data (who can be learning, the stages, the guided courses and their steps, the memory boxes, the stage test). |
+| `js/content/courses/` | The guided courses of My path, one file each (`zero.js`: "Start from zero", `pro.js`: "Under the hood"). A file loads the first time one of its steps opens. Its header explains every kind of screen. |
+| `js/content/pro.js` | The texts of the Pro design and the terminal's commands. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
 | `js/content/lessons.js` | The texts of the tracks, the reader's buttons, the certificates and lessons 1-6 (with their mini-labs). |
@@ -181,7 +198,7 @@ A text for one exact number can be added too: `"quiz.subtitle.60"` would be used
 
 Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `.many` (5–20, 25...).
 
-**Features talk to each other through their API.** The last section of each feature file shares a few functions with `A.feature(...)`: `A.lessons.open(3)`, `A.glossary.show("bias")`, `A.quiz.start()`, `A.lab.open("predictor")`, `A.timeline.show("e3")`, `A.assistant.open()`, `A.palette.open()`. For example, the timeline's "In the glossary" buttons call `A.glossary.show(id, { focus: true })`. The quiz shares the most: `A.quiz.start(mode, options)`, `A.quiz.question(id)`, `A.quiz.bank()`, `A.quiz.stats()` and `A.quiz.ready()`, described at the end of `js/quiz.js`.
+**Features talk to each other through their API.** The last section of each feature file shares a few functions with `A.feature(...)`: `A.lessons.open(3)`, `A.glossary.show("bias")`, `A.quiz.start()`, `A.lab.open("predictor")`, `A.timeline.show("e3")`, `A.assistant.open()`, `A.palette.open()`, `A.learn.today()`. For example, the timeline's "In the glossary" buttons call `A.glossary.show(id, { focus: true })`. The quiz shares the most: `A.quiz.start(mode, options)`, `A.quiz.question(id)`, `A.quiz.bank()`, `A.quiz.stats()` and `A.quiz.ready()`, described at the end of `js/quiz.js`.
 
 **Accounts are optional, and off by default.** `js/account.js` offers `A.account` (`enabled`, `user()`: `{ id, nickname }` and never the e-mail, `signedIn()`, `signIn()`, `open()`, `rpc(name, args)` for the database functions of `supabase/schema.sql`, `history()`) and sends the `"account"` event (`{ type: "signin" | "signout" | "nickname" | "saved", user }`). A feature that needs it checks `A.account && A.account.enabled` first and keeps working without it. The progress itself needs no change: `js/account.js` watches the saved keys and the progress events, saves them online, and merges what other devices saved (a lesson finished on the phone and another on the laptop both count).
 
@@ -192,6 +209,20 @@ Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `
 **Shared components.** A visual part that several features use (corner brackets, sliders, on/off switches, chips...) is written once in `css/components.css`, as a `ui-...` class. A feature adds that class next to its own one in its HTML template, for example `<input class="lsn-range ui-range" type="range">`, and changes only the custom properties listed at the top of that file.
 
 **Screen sizes.** Every CSS file uses the same few widths (breakpoints), listed at the top of `style.css`. The three main ones are also in `js/core.js` as `A.breakpoints`: change both together.
+
+
+## My path: the learning plan
+
+"My path" (`#learn`) is what turns the site from a place to read into a course. It is built from four ideas, and all of them come from what is known about how people learn:
+
+- **A path, not a pile.** The stages go from "Start from zero" to "Under the hood". A stage is a track of lessons or a guided course. Nothing is locked: a marker only shows the best next step. A short level check can choose where the path starts.
+- **Do, don't only read.** A guided step is a row of small screens: one idea, then a task about it straight away (choose, type a number, put in order, sort, match), with a hint after a wrong try and an explanation after every answer.
+- **Come back before you forget.** Every question of a finished lesson or guided step becomes a card. A card lives in one of six boxes and comes back after 1, 2, 4, 8, 16 and 32 days: a right answer on its day moves it one box up, a wrong one back to box 1. The memory map shows which topics are strong.
+- **Say it yourself.** "Explain it back" asks for a lesson in the learner's own words and compares them with the lesson's three key ideas.
+
+All of it is data in `js/content/learn.js` (the stages, the courses, the boxes, the minutes a day) and in `js/content/courses/` (the screens of every guided step). Everything is saved in this browser only, under five keys that start with `learn.`; the header of `js/learn.js` lists what each one holds.
+
+Other features use `A.learn`: `open()`, `today(opener)` (the first step of today's session that is not done), `review(opener)` (the memory check), `explain(n, opener)`, and to read: `profile()`, `plan()`, `memory()`, `topics()` and `path()`. The Pro design's panels and its terminal command `path` are built on these.
 
 
 ## Progress events
@@ -237,6 +268,13 @@ These events are for features on the same page (for example "My Compass", which 
 | | `settings.change` | `{ name: "calm", value }` | calm mode is switched on (`true`) or off (`false`) |
 | My Compass | `journey.open` | `{}` | the window opens |
 | | `journey.export` | `{ how }` | the progress is saved to a file (`how: "file"`) or copied as text (`how: "text"`) |
+| My path | `learn.setup` | `{ who, start, goal }` | the three setup questions are answered (`who`: `"kid"`, `"teen"`, `"adult"`, `"teacher"` or `"pro"`; `start`: `"zero"`, `"some"` or `"check"`; `goal`: minutes a day) |
+| | `learn.placement` | `{ start }` | the level check is finished (`start`: the stage where the path begins) |
+| | `learn.unit` | `{ course, unit, first, total }` | a guided step is finished (`first` of its `total` tasks were right on the first try) |
+| | `learn.review` | `{ kind, cards, right }` | a memory check (`kind: "review"`) or an extra practice (`"practice"`) ends |
+| | `learn.test` | `{ stage, score, total, star }` | a stage test ends (`star`: it was passed) |
+| | `learn.explain` | `{ n, score }` | lesson `n` is explained back (`score`: 0 to 3 key ideas) |
+| | `learn.session` | `{ day }` | every step of today's session is done |
 | Knowledge Challenge | `challenge.start` | `{ attempt }` | a signed-in player starts a round of 20 questions |
 | | `challenge.finish` | `{ attempt, correct, total, seconds, eligible, newBest }` | the round is marked (on the server). `eligible`: it counts for the leaderboard (finished in time, not faster than the minimum); `newBest`: it is the player's new personal best |
 
@@ -717,6 +755,54 @@ In `css/lab.css`, section 1, copy the two rules of another experiment (`[data-la
 **Check:** go to `http://localhost:8000/#lab/spam`: your experiment opens, with its icon and title above it. Close it: its card is in the grid, with the hook and the idea, and the subtitle counts one more experiment. Ctrl+K finds it by its title. While it is open, switch the language, the theme and calm mode: it follows. Open another experiment and come back: nothing appears twice, and the console has no red errors.
 
 
+### Add a guided step to My path
+
+A guided step (a "unit") is a list of small screens in a course file, for example `js/content/courses/zero.js`. To add the step `z5` to the course "Start from zero":
+
+**1.** In `js/content/learn.js`, add the unit to its course (`courses.zero.units`) and write its name in both languages:
+
+```js
+{ id: "z5", icon: "🎚️", minutes: 5, cards: 3 }      // cards: how many of its tasks become memory cards
+```
+
+```js
+"learn.unit.z5": "Train your first model",
+"learn.unit.z5.text": "Find the number that makes the fewest mistakes.",
+```
+
+**2.** In the course file, add `z5` after the last unit. Every screen has a `type` and its texts in `en` and `ru`:
+
+```js
+z5: {
+    steps: [
+        {
+            type: "info", icon: "📏",
+            en: { title: "The smallest model in the world", text: ["One idea, in two or three short sentences."] },
+            ru: { title: "Самая маленькая модель в мире", text: ["Одна идея, в двух-трёх коротких предложениях."] }
+        },
+        {
+            type: "choice", card: "z5a",        // the FIRST option is the right one: the window mixes them
+            en: { q: "A question about that idea?", options: ["Right", "Wrong", "Wrong too"], hint: "Shown after a wrong try.", why: "Shown after the answer." },
+            ru: { q: "Вопрос об этой идее?", options: ["Верно", "Неверно", "Тоже неверно"], hint: "Показывается после неверной попытки.", why: "Показывается после ответа." }
+        },
+        {
+            type: "recap",                      // always the last screen
+            en: { points: ["What to remember.", "One more thing."] },
+            ru: { points: ["Что запомнить.", "И ещё одно."] }
+        }
+    ]
+}
+```
+
+The kinds of screen are `info`, `choice`, `number`, `order`, `sort`, `match`, `reveal` and `recap`; the header of every course file explains them. Three rules make a step teach well:
+
+- one idea on a screen, and a task right after it;
+- a task with `card: "z5a"` (the unit's name and a letter, in order) also becomes a card of the memory check, so it must make sense on its own, without the screens before it;
+- the explanation (`why`) says why the right answer is right, not only that it is.
+
+**A new course** needs three more things in `js/content/learn.js`: an entry in `courses` (its file, the `topic` its cards belong to on the memory map, and two `probes`: cards that the level check asks), a stage in `stages` that names it (`{ id: "mine", icon: "🧪", course: "mine" }`), and the texts `learn.stage.mine`, `learn.stage.mine.text`, `learn.topic.<topic>` and `learn.place.result.mine`. The page, the stage test, the memory map and the offline copy pick it up from the data.
+
+
 ## House rules
 
 These keep the code easy to read, as if one person wrote it all.
@@ -724,7 +810,7 @@ These keep the code easy to read, as if one person wrote it all.
 - **The same shape in every script.** A header comment says what the file does and lists its numbered sections. Then come, in this order: "Settings" (the numbers you may want to change, each with a short comment), "Small helpers" (only what `js/core.js` doesn't have), the feature itself, and at the end the Ctrl+K commands and the public API (`A.feature(...)`).
 - **Comments** are plain English for a beginner: what a block does and why. No need to explain obvious lines.
 - **Style:** 4 spaces to indent, double quotes, semicolons. Keep the style of the file you are in.
-- **Every text in both languages**, in `js/content/`. Russian uses the informal "ты".
+- **Every text in both languages**, in `js/content/`. Russian uses the informal "ты" and never assumes who is reading: not "ты сделал" or "ты сделала", but "у тебя получилось".
 - **No hard-coded counts.** Never write "6 lessons" or "12 questions": count the data and use `{n}` and the plural forms (see [How the pieces talk](#how-the-pieces-talk)).
 - **No numbers out of nowhere.** A time, a size or a limit goes in the Settings block with a name (`const RESET_CONFIRM_TIME = 4000;`). Colours and sizes in CSS use the design tokens, and screen widths use the breakpoints at the top of `style.css`.
 - **Use the toolkit.** If `js/core.js` already does it (saving, plurals, pop-up windows, scrolling, random numbers...), use it instead of writing it again.
@@ -751,6 +837,8 @@ Open the site on a local server and go through this list for the parts you chang
 - [ ] **The console.** Press F12, open Console and reload: no red errors.
 - [ ] **Links into the page.** `#lesson-4`, `#term-bias` and `#quiz` at the end of the address open the right place.
 - [ ] **Saved progress.** Finish a lesson, change the language and the theme, reload: everything is remembered.
+- [ ] **Both designs.** Flip the Simple / Pro switch in the menu bar: what you changed looks right in both, and Simple shows nothing new that a beginner does not need.
+- [ ] **My path** (if you touched a course or the plan). Open `#learn`, go through the step you changed to its last screen, in both languages, and give one wrong answer on the way: the hint and the explanation make sense.
 - [ ] **Offline** (if you added a file to `index.html`, or a file loaded on demand: list that one with `A.keepOffline`). Load the page, wait a few seconds, then in F12 → Network tick "Offline" and reload: everything still works, also the parts you didn't open.
 - [ ] **Printing** (if you changed a layout). Ctrl+P: the preview is black on white, and an open lesson prints as a handout.
 - [ ] **Accounts off.** With an empty `js/config.js`, the page shows no sign-in button and no Challenge section, and nothing you changed waits for an account.
