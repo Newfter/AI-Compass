@@ -14,6 +14,8 @@
     6. The status bar at the bottom of the screen
     7. "g then a letter": jumping to a page with the keyboard
     8. Keeping everything up to date
+    9. The focus timer (status bar, terminal: timer 25)
+   10. The context bar at the top of every page
    Everything is built only while the Pro design is on, and nothing is
    saved by this file except the terminal's last commands (this browser
    only). It reads what the other parts know (A.lessons, A.lab, A.quiz,
@@ -45,6 +47,11 @@
     const HISTORY_MAX = 30;
     const LOG_MAX = 80;                    // lines kept in the terminal
     const JUMP_MS = 1200;                  // "g", then the letter within this time
+    const TIMER_KEY = "pro.timer";         // the focus timer: { end, minutes } while it runs
+    const TIMER_DEFAULT = 25;              // minutes, like a "pomodoro"
+
+    // This visit only (nothing saved): when it started, the pages seen, the commands run
+    const session = { start: Date.now(), pages: new Set(), commands: 0 };
 
     // The pages a command or "g + letter" can open: the name (in both languages),
     // the section id, the letter for "g + letter"
@@ -289,6 +296,61 @@
                 esc(t("pro.termOpen")) + ARROW + "</button>";
     }
 
+    // "This session": how long this visit has lasted, the pages seen, the commands run
+    function duration(ms) {
+        const minutes = Math.floor(ms / 60000);
+        const hours = Math.floor(minutes / 60);
+        return hours ? hours + ":" + String(minutes % 60).padStart(2, "0") + " h" : minutes + " min";
+    }
+
+    function sessionHTML() {
+        const timer = timerState();
+        const rows = [
+            ["pro.sessionTime", duration(Date.now() - session.start)],
+            ["pro.sessionPages", num(session.pages.size)],
+            ["pro.sessionCommands", num(session.commands)],
+            ["pro.sessionTimer", timer ? clock(timer.end - Date.now()) : t("pro.timerOff")]
+        ];
+        return '<dl class="pro-kv">' + rows.map(function (row) {
+                return "<div><dt>" + esc(t(row[0])) + '</dt><dd' + (row[0] === "pro.sessionTimer" ? ' data-pro-timer-text' : "") + ">" + esc(row[1]) + "</dd></div>";
+            }).join("") + "</dl>" +
+            '<button type="button" class="pro-link" data-pro-action="timer">' +
+                esc(t(timer ? "pro.timerStop" : "pro.timerStart", { n: num(TIMER_DEFAULT) })) + ARROW + "</button>";
+    }
+
+    // "Recommended next": up to four steps, picked from what is not done yet
+    function insightsList(n) {
+        const list = [];
+        const lessons = A.lessons;
+        const next = safe(function () { return lessons.next(); }, 0);
+        if (next && n.lessons.done < n.lessons.total) {
+            list.push({ icon: "📚", text: t("pro.recLesson", { n: num(next), title: safe(function () { return lessons.title(next); }, "") }), act: "next" });
+        }
+        const tried = labTried();
+        const untried = safe(function () { return A.lab.list(); }, []).filter(function (entry) { return tried.indexOf(entry.id) === -1; });
+        if (untried.length) {
+            list.push({ icon: untried[0].icon || "🧪", text: t("pro.recLab", { title: t(untried[0].titleKey), n: num(untried.length) }), act: "lab", arg: untried[0].id });
+        }
+        const mistakes = n.quizStats && n.quizStats.mistakes;
+        if (!n.quiz) list.push({ icon: "🏆", text: t("pro.recQuizFirst"), act: "quiz" });
+        else if (mistakes && mistakes.due) list.push({ icon: "🔁", text: t("pro.recMistakes", { n: num(mistakes.due) }), act: "mistakes" });
+        else list.push({ icon: "⏱️", text: t("pro.recTimed"), act: "timed" });
+        if (n.terms.done < n.terms.total) list.push({ icon: "📖", text: t("pro.recTerms", { n: num(n.terms.total - n.terms.done) }), act: "glossary" });
+        return list.slice(0, 4);
+    }
+
+    function insightsHTML(n) {
+        const list = insightsList(n);
+        if (!list.length) return '<li class="pro-muted">' + esc(t("pro.recAllDone")) + "</li>";
+        return list.map(function (item, index) {
+            return '<li><button type="button" class="pro-insight" data-pro-action="' + item.act + '"' + (item.arg ? ' data-arg="' + esc(item.arg) + '"' : "") + ">" +
+                    '<span class="pro-insight-rank">' + String(index + 1).padStart(2, "0") + "</span>" +
+                    '<span class="pro-insight-icon" aria-hidden="true">' + esc(item.icon) + "</span>" +
+                    '<span class="pro-insight-text">' + esc(item.text) + "</span>" + ARROW +
+                "</button></li>";
+        }).join("");
+    }
+
     function card(id, titleKey, body, extraClass, meta) {
         return '<section class="pro-card' + (extraClass ? " " + extraClass : "") + '" aria-labelledby="pro-card-' + id + '">' +
                 '<header class="pro-card-head">' +
@@ -316,6 +378,8 @@
                 '<div class="pro-card-slot" data-ref="tracks"></div>' +
                 '<div class="pro-card-slot" data-ref="today"></div>' +
                 '<div class="pro-card-slot" data-ref="term"></div>' +
+                '<div class="pro-card-slot" data-ref="session"></div>' +
+                '<div class="pro-card-slot" data-ref="insights"></div>' +
             "</div>";
 
         const ref = function (name) { return deck.querySelector('[data-ref="' + name + '"]'); };
@@ -325,7 +389,7 @@
             input: ref("input"),
             hint: ref("hint"),
             meta: ref("termMeta"),
-            slots: { activity: ref("activity"), tracks: ref("tracks"), today: ref("today"), term: ref("term") },
+            slots: { activity: ref("activity"), tracks: ref("tracks"), today: ref("today"), term: ref("term"), session: ref("session"), insights: ref("insights") },
             history: loadHistory(),
             back: -1,
             greeted: false
@@ -374,6 +438,8 @@
         terminal.slots.tracks.innerHTML = card("tracks", "pro.tracks", '<ul class="pro-tracks">' + trackBars(n) + "</ul>", "pro-card-tracks");
         terminal.slots.today.innerHTML = card("today", "pro.today", '<ul class="pro-todos">' + todayList(n) + "</ul>", "pro-card-today");
         terminal.slots.term.innerHTML = card("term", "pro.termDay", termOfDay(), "pro-card-term");
+        terminal.slots.session.innerHTML = card("session", "pro.session", sessionHTML(), "pro-card-session");
+        terminal.slots.insights.innerHTML = card("insights", "pro.insights", '<ol class="pro-insights">' + insightsHTML(n) + "</ol>", "pro-card-insights");
 
         terminal.input.setAttribute("aria-label", t("pro.terminalLabel"));
         terminal.input.setAttribute("placeholder", t("pro.terminalPlaceholder"));
@@ -430,6 +496,13 @@
         { names: ["design", "дизайн"], usage: "design simple", does: "pro.cmd.design", run: cmdDesign },
         { names: ["keys", "клавиши"], usage: "keys", does: "pro.cmd.keys", run: function () { if (A.settings) A.settings.shortcuts(); } },
         { names: ["date", "time", "дата"], usage: "date", does: "pro.cmd.date", run: function () { print(new Date().toLocaleString(A.lang === "ru" ? "ru-RU" : "en-GB")); } },
+        { names: ["ls", "pages"], usage: "ls", does: "pro.cmd.ls", run: cmdLs },
+        { names: ["whoami", "кто"], usage: "whoami", does: "pro.cmd.whoami", run: cmdWhoami },
+        { names: ["random", "случайный"], usage: "random", does: "pro.cmd.random", run: cmdRandom },
+        { names: ["timer", "таймер"], usage: "timer [minutes|stop]", does: "pro.cmd.timer", run: cmdTimer },
+        { names: ["history", "история"], usage: "history", does: "pro.cmd.history", run: cmdHistory },
+        { names: ["neofetch", "sysinfo"], usage: "neofetch", does: "pro.cmd.neofetch", run: cmdNeofetch },
+        { names: ["echo"], usage: "echo <text>", does: "pro.cmd.echo", run: function (arg) { print(arg || ""); } },
         { names: ["clear", "cls", "очистить"], usage: "clear", does: "pro.cmd.clear", run: clearLog }
     ];
 
@@ -454,6 +527,7 @@
     }
 
     function run(line) {
+        session.commands++;
         const parts = line.split(/\s+/);
         const command = findCommand(parts[0]);
         if (!command) {
@@ -560,6 +634,85 @@
         print("  " + t("pro.streak") + ": " + n.streak);
     }
 
+    function cmdLs() {
+        PAGES.forEach(function (page) {
+            const ready = pageReady(page.id);
+            print("  " + (ready ? "drwxr-x  " : "d------  ") + ("~/" + page.id + "/              ").slice(0, 16) + "g " + page.key);
+        });
+    }
+
+    function cmdWhoami() {
+        const n = numbers();
+        print(t("pro.term.whoami", {
+            level: n.level === null ? "—" : n.level,
+            xp: n.xp === null ? 0 : n.xp,
+            badges: n.badges,
+            streak: n.streak
+        }), "info");
+    }
+
+    function cmdRandom() {
+        const term = safe(function () { return A.glossary.random(); }, null);
+        if (!term) {
+            print(t("pro.none"), "error");
+            return;
+        }
+        print(term.term.toUpperCase(), "info");
+        print(term.short || term.definition || "");
+    }
+
+    function cmdTimer(arg) {
+        const value = (arg || "").toLowerCase();
+        if (value === "stop" || value === "стоп") {
+            stopTimer(false);
+            print(t("pro.term.timerStopped"), "ok");
+            return;
+        }
+        const minutes = value ? parseInt(value, 10) : TIMER_DEFAULT;
+        if (!(minutes >= 1 && minutes <= 180)) {
+            print(t("pro.term.timerHow"), "error");
+            return;
+        }
+        startTimer(minutes);
+        print(t("pro.term.timerStarted", { n: minutes }), "ok");
+    }
+
+    function cmdHistory() {
+        const list = terminal.history;
+        if (!list.length) {
+            print(t("pro.none"), "dim");
+            return;
+        }
+        list.forEach(function (line, index) {
+            print(("   " + (index + 1)).slice(-4) + "  " + line, "dim");
+        });
+    }
+
+    function cmdNeofetch() {
+        const n = numbers();
+        const art = [
+            "      .-^-.      ",
+            "    /   N   \\    ",
+            "   |  \\ | /  |   ",
+            "   | -- o -- |   ",
+            "   |  / | \\  |   ",
+            "    \\   S   /    ",
+            "      '-.-'      "
+        ];
+        const info = [
+            "ai@compass",
+            "----------",
+            "OS: AI Compass (" + (A.lang === "ru" ? "RU" : "EN") + ")",
+            "Design: Pro",
+            "Theme: " + A.theme,
+            "Lessons: " + n.lessons.done + "/" + n.lessons.total,
+            "Lab: " + n.lab.done + "/" + n.lab.total + "  ·  XP: " + (n.xp === null ? 0 : n.xp)
+        ];
+        art.forEach(function (line, index) {
+            print(line + "  " + (info[index] || ""), index < 2 ? "info" : "");
+        });
+    }
+
     function cmdTheme(arg) {
         const wanted = arg ? arg.toLowerCase() : (A.theme === "light" ? "dark" : "light");
         if (wanted !== "dark" && wanted !== "light") {
@@ -613,6 +766,8 @@
             '<span class="pro-status-item">' + esc(t("pro.level")) + " <b>" + (n.level === null ? "—" : num(n.level)) + "</b>" +
                 (n.xp === null ? "" : " · " + esc(t("pro.xp", { n: num(n.xp) }))) + "</span>" +
             '<span class="pro-status-item">🔥 <b>' + num(n.streak) + "</b></span>" +
+            '<button type="button" class="pro-status-item pro-status-timer" data-pro-action="timer" title="' + esc(t("pro.timerTitle")) + '">⏱ <b data-pro-timer-text>' +
+                esc(timerState() ? clock(timerState().end - Date.now()) : t("pro.timerOff")) + "</b></button>" +
             '<span class="pro-status-item pro-status-keys"><kbd>' + esc(mod) + "</kbd> " + esc(t("pro.statusSearch")) + " <kbd>?</kbd> " + esc(t("pro.statusKeys")) + " <kbd>g</kbd> " + esc(t("pro.statusJump")) + "</span>";
         A.dom.setHidden(statusBar, false);
     }
@@ -666,6 +821,8 @@
 
     let waiting = false;
     function refresh() {
+        const current = document.querySelector("main > section.page-current");
+        session.pages.add(current ? current.id : "home");
         if (!isPro()) {
             hideAll();
             return;
@@ -674,6 +831,8 @@
         drawPanel(n);
         drawDeck(n);
         drawStatus(n);
+        drawPageBars(n);
+        tickTimer();
     }
 
     // Many changes can come at once (a lesson finished gives XP, a badge...): drawn once per frame
@@ -690,6 +849,7 @@
         panel.addEventListener("click", onAction);
     }
     if (deck) deck.addEventListener("click", onAction);
+    if (statusBar) statusBar.addEventListener("click", onAction);
 
     function onAction(event) {
         const button = event.target.closest("[data-pro-action]");
@@ -705,6 +865,17 @@
             if (A.settings) A.settings.shortcuts();
         } else if (name === "terminal") {
             focusTerminal();
+        } else if (name === "timer") {
+            if (timerState()) stopTimer(false);
+            else startTimer(TIMER_DEFAULT);
+        } else if (name === "lab") {
+            const id = button.getAttribute("data-arg");
+            if (A.lab && id) A.lab.open(id);
+            else A.navigate("lab");
+        } else if (name === "quiz" || name === "timed" || name === "mistakes") {
+            if (A.quiz) A.quiz.start(name === "quiz" ? "classic" : name);
+        } else if (name === "glossary") {
+            A.navigate("glossary");
         } else if (name === "daily") {
             if (A.quiz) A.quiz.start("daily");
         } else if (name === "cards") {
@@ -741,4 +912,106 @@
     window.addEventListener("online", later);
     window.addEventListener("offline", later);
     A.ready(refresh);
+    /* =========================================================
+       9. THE FOCUS TIMER
+       A study timer (25 minutes unless asked otherwise). It shows in the
+       status bar and in "This session", and a toast says when it is over.
+       Its end time is saved, so it keeps running after a reload.
+       ========================================================= */
+    let timerTicker = 0;
+
+    function timerState() {
+        const saved = A.storage.get(TIMER_KEY, null);
+        if (!saved || typeof saved.end !== "number" || typeof saved.minutes !== "number") return null;
+        return saved;
+    }
+
+    function clock(ms) {
+        const total = Math.max(0, Math.round(ms / 1000));
+        return String(Math.floor(total / 60)).padStart(2, "0") + ":" + String(total % 60).padStart(2, "0");
+    }
+
+    function startTimer(minutes) {
+        A.storage.set(TIMER_KEY, { end: Date.now() + minutes * 60000, minutes: minutes });
+        A.toast(t("pro.timerStarted", { n: num(minutes) }), "⏱️");
+        later();
+    }
+
+    function stopTimer(finished) {
+        const was = timerState();
+        A.storage.remove(TIMER_KEY);
+        if (finished && was) A.toast(t("pro.timerDone", { n: num(was.minutes) }), "🎉");
+        later();
+    }
+
+    // Once a second while the timer runs: only the time texts change
+    function tickTimer() {
+        const timer = timerState();
+        if (!timer) {
+            clearInterval(timerTicker);
+            timerTicker = 0;
+            return;
+        }
+        if (timer.end <= Date.now()) {
+            clearInterval(timerTicker);
+            timerTicker = 0;
+            stopTimer(true);
+            return;
+        }
+        document.querySelectorAll("[data-pro-timer-text]").forEach(function (element) {
+            A.dom.setText(element, clock(timer.end - Date.now()));
+        });
+        if (!timerTicker) timerTicker = setInterval(tickTimer, 1000);
+    }
+
+    /* =========================================================
+       10. THE CONTEXT BAR AT THE TOP OF EVERY PAGE
+       A line above each page's title: where you are (like a path in a
+       terminal), live numbers for that page, and its "g" key.
+       ========================================================= */
+    function chip(label, value) {
+        return '<span class="pro-chip"><span>' + esc(label) + "</span><b>" + value + "</b></span>";
+    }
+
+    function pageChips(id, n) {
+        if (id === "lessons") {
+            const next = safe(function () { return A.lessons.next(); }, 0);
+            return chip(t("pro.lessons"), count(n.lessons)) +
+                chip(t("pro.chipNext"), next ? "#" + num(next) : "✓");
+        }
+        if (id === "lab") {
+            return chip(t("pro.lab"), count(n.lab)) + chip(t("pro.chipLeft"), num(n.lab.total - n.lab.done));
+        }
+        if (id === "quiz" || id === "challenge") {
+            const mistakes = n.quizStats && n.quizStats.mistakes;
+            return chip(t("pro.quiz"), n.quiz ? num(n.quiz.score) + "/" + num(n.quiz.total) : "—") +
+                chip(t("pro.streak"), num(n.streak)) +
+                chip(t("pro.chipMistakes"), num(mistakes ? mistakes.count : 0));
+        }
+        if (id === "glossary") {
+            const due = safe(function () { return A.glossary.due(); }, null);
+            return chip(t("pro.glossary"), count(n.terms)) + chip(t("pro.chipDue"), due === null ? "—" : num(due));
+        }
+        return chip(t("pro.level"), n.level === null ? "—" : num(n.level)) + chip("XP", n.xp === null ? "—" : num(n.xp));
+    }
+
+    function drawPageBars(n) {
+        document.querySelectorAll("main > section.section[id]").forEach(function (section) {
+            const container = section.querySelector(":scope > .container");
+            if (!container) return;
+            let bar = container.querySelector(":scope > .pro-pagebar");
+            if (!bar) {
+                bar = document.createElement("div");
+                bar.className = "pro-pagebar";
+                container.insertBefore(bar, container.firstChild);
+            }
+            // Only the open page needs fresh numbers; the others are drawn when they open
+            if (!section.classList.contains("page-current") && bar.childElementCount) return;
+            const page = PAGES.find(function (p) { return p.id === section.id; });
+            bar.innerHTML =
+                '<span class="pro-path" aria-hidden="true"><span>~/ai-compass/</span><b>' + esc(section.id) + "</b></span>" +
+                '<span class="pro-chips">' + pageChips(section.id, n) + "</span>" +
+                (page ? '<span class="pro-pagebar-key" aria-hidden="true"><kbd>g</kbd><kbd>' + esc(page.key) + "</kbd></span>" : "");
+        });
+    }
 })();
