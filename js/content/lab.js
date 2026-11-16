@@ -154,7 +154,11 @@ window.AICompass.addTranslations({
 
         "lab.spam.title": "Build a spam filter",
         "lab.spam.hook": "Teach a filter which words smell like spam, then try to sneak a message past it.",
-        "lab.spam.idea": "Naive Bayes and false alarms"
+        "lab.spam.idea": "Naive Bayes and false alarms",
+
+        "lab.recommend.title": "Why your feed looks like that",
+        "lab.recommend.hook": "Like a few videos and see how an app finds people like you, then watch a feed shrink into a bubble.",
+        "lab.recommend.idea": "Recommendations and filter bubbles"
     },
     ru: {
         "lab.classifier.title": "Обучи машину",
@@ -203,7 +207,11 @@ window.AICompass.addTranslations({
 
         "lab.spam.title": "Собери спам-фильтр",
         "lab.spam.hook": "Научи фильтр, какие слова пахнут спамом, а потом попробуй пронести мимо него сообщение.",
-        "lab.spam.idea": "Наивный Байес и ложные тревоги"
+        "lab.spam.idea": "Наивный Байес и ложные тревоги",
+
+        "lab.recommend.title": "Почему твоя лента такая",
+        "lab.recommend.hook": "Лайкни несколько видео и посмотри, как приложение находит похожих на тебя людей, а потом — как лента сжимается в пузырь.",
+        "lab.recommend.idea": "Рекомендации и пузыри фильтров"
     }
 });
 
@@ -325,6 +333,16 @@ window.AICompass.content.set("lab.icons", {
                 '<path d="M8 19.5h8"/>' +
             '</g>' +
             '<circle cx="12" cy="19.5" r="1.6" fill="currentColor"/>' +
+        '</symbol>' +
+        // A screen showing a play triangle, with a small loop arrow: the feed that feeds itself
+        '<symbol id="lab-icon-recommend" viewBox="0 0 24 24">' +
+            '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">' +
+                '<rect x="2.5" y="3.5" width="15" height="11" rx="2"/>' +
+                '<path d="M14 20.5a4.5 4.5 0 1 0-4-6.5"/>' +
+                '<path d="M9.5 11.5l.5 2.6 2.5-.8"/>' +
+            '</g>' +
+            '<path d="M8.5 6.5v5l4-2.5z" fill="currentColor"/>' +
+            '<circle cx="19" cy="6" r="2" fill="currentColor"/>' +
         '</symbol>'
 });
 
@@ -383,6 +401,16 @@ window.AICompass.content.set("lab.catalogue", [
         level: 1,
         emoji: "📨",
         keywords: "lab spam filter email messages words naive bayes probability chance threshold false alarm false positive phishing inbox teach report spam лаборатория спам фильтр почта письма сообщения слова наивный байес вероятность шанс порог ложная тревога фишинг входящие научить"
+    },
+    {
+        id: "recommend",
+        icon: "lab-icon-recommend",
+        titleKey: "lab.recommend.title",
+        hookKey: "lab.recommend.hook",
+        ideaKey: "lab.recommend.idea",
+        level: 2,
+        emoji: "📺",
+        keywords: "lab recommendations recommendation system feed videos likes similar viewers collaborative filtering cosine similarity filter bubble algorithm youtube tiktok exploration variety лаборатория рекомендации рекомендательная система лента видео лайки похожие зрители коллаборативная фильтрация косинусное сходство пузырь фильтров алгоритм разнообразие сюрпризы"
     },
     {
         id: "classifier",
