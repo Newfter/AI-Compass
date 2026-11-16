@@ -487,6 +487,20 @@
         <!-- Everything on the site, one card each. The numbers are the real counts
              (data-count-name, js/effects.js); the ones written here show before that. -->
         <div class="container">
+            <!-- Pro design only: the workspace (terminal, activity, progress by track, today, term of the day; js/pro.js) -->
+            <div class="pro-deck" data-pro-deck hidden></div>
+
+            <!-- Simple design only: three first steps for a new visitor (js/home.js shows it) -->
+            <section class="home-start card" data-home-start aria-labelledby="home-start-title" hidden>
+                <h2 class="home-start-title" id="home-start-title" data-i18n="home.startTitle">New here? Start with three steps</h2>
+                <ol class="home-start-steps">
+                    <li><button type="button" class="home-start-step" data-start="lesson"><span class="home-start-num" aria-hidden="true">1</span><span data-i18n="home.start1">Read lesson 1: What is AI?</span><span class="home-start-done" data-i18n="home.startDone" hidden>Done</span></button></li>
+                    <li><button type="button" class="home-start-step" data-start="lab"><span class="home-start-num" aria-hidden="true">2</span><span data-i18n="home.start2">Try an experiment in the AI Lab</span><span class="home-start-done" data-i18n="home.startDone" hidden>Done</span></button></li>
+                    <li><button type="button" class="home-start-step" data-start="quiz"><span class="home-start-num" aria-hidden="true">3</span><span data-i18n="home.start3">Check yourself with the quiz</span><span class="home-start-done" data-i18n="home.startDone" hidden>Done</span></button></li>
+                </ol>
+                <p class="home-start-all" data-i18n="home.startAll" hidden>All three done. Great start! Keep going with the next lesson.</p>
+            </section>
+
             <h2 class="home-doors-title" data-i18n="home.doorsTitle">What would you like to do?</h2>
             <ul class="home-doors">
                 <li>
@@ -701,6 +715,9 @@
 <div data-feature="palette"></div>
 <div data-feature="journey"></div>
 <div data-feature="settings"></div>
+
+<!-- Pro design only: the status bar at the bottom of wide screens (js/pro.js) -->
+<div class="pro-status" data-pro-status role="status" aria-live="off" hidden></div>
 
 <!-- Small pop-up messages, e.g. "Lesson completed!" (AICompass.toast in js/core.js) -->
 <div class="toast-stack" id="toast-stack" aria-live="polite" data-overlay-keep></div>

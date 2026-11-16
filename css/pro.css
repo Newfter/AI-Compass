@@ -636,3 +636,621 @@ html.design-pro .about-card {
         display: none !important;
     }
 }
+
+/* =========================================================
+   SECOND ROUND (2026-11-16)
+    8. Simple: "Start here", three first steps
+    9. Pro: the overall ring in the control panel
+   10. Pro: the workspace (terminal, activity, tracks, today, term)
+   11. Pro: the status bar
+   ========================================================= */
+
+/* ===== 8. SIMPLE: "START HERE" ===== */
+html.design-pro .home-start,
+html:not(.js) .home-start {
+    display: none !important;
+}
+
+.home-start {
+    margin: 56px auto 0;
+    max-width: 880px;
+    padding: 22px 24px;
+    text-align: left;
+}
+
+.home-start[hidden] {
+    display: none;
+}
+
+.home-start-title {
+    margin: 0 0 14px;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.home-start-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.home-start-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+    min-height: 56px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface-2);
+    color: var(--text);
+    font: 600 0.9375rem/1.35 var(--font-body);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.home-start-step:hover,
+.home-start-step:focus-visible {
+    border-color: var(--accent-2);
+}
+
+.home-start-num {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(var(--accent-rgb), 0.2);
+    color: var(--text);
+    font-size: 14px;       /* px: a glyph in a tile of fixed size */
+    font-weight: 800;
+}
+
+.home-start-step.is-done .home-start-num {
+    background: var(--success);
+    color: #04140d;
+    font-size: 0;
+}
+
+.home-start-step.is-done .home-start-num::before {
+    content: "✓";
+    font-size: 15px;       /* px: a glyph in a tile of fixed size */
+}
+
+.home-start-done {
+    margin-left: auto;
+    color: var(--text-success);
+    font-size: 0.8125rem;
+}
+
+.home-start-done[hidden],
+.home-start-all[hidden] {
+    display: none;
+}
+
+.home-start-all {
+    margin: 14px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+}
+
+/* When the steps are there, the cards' title comes a little closer */
+.home-start:not([hidden]) + .home-doors-title {
+    margin-top: 48px;
+}
+
+@media (max-width: 720px) {
+    .home-start-steps {
+        grid-template-columns: 1fr;
+    }
+
+    .home-start {
+        padding: 18px;
+    }
+}
+
+/* ===== 9. PRO: THE OVERALL RING IN THE CONTROL PANEL ===== */
+.pro-overall {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.pro-overall-ring {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background:
+        radial-gradient(closest-side, var(--surface-solid) 72%, transparent 74%),
+        conic-gradient(var(--accent-2) calc(var(--share, 0) * 360deg), var(--border) 0);
+}
+
+.pro-overall-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.pro-overall-text strong {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    line-height: 1.1;
+}
+
+.pro-overall-text span {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.pro-overall-badges {
+    margin-left: auto;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-accent-3);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* ===== 10. PRO: THE WORKSPACE ===== */
+html:not(.design-pro) .pro-deck,
+html:not(.design-pro) .pro-status {
+    display: none !important;
+}
+
+.pro-deck[hidden],
+.pro-status[hidden] {
+    display: none;
+}
+
+.pro-deck {
+    margin-top: 56px;
+    text-align: left;
+}
+
+.pro-deck-title {
+    margin: 0 0 14px;
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.pro-deck-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.pro-card-slot {
+    display: contents;
+}
+
+.pro-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--pro-panel, var(--surface-solid));
+}
+
+.pro-card-terminal { grid-column: span 7; grid-row: span 2; }
+.pro-card-activity { grid-column: span 5; }
+.pro-card-tracks { grid-column: span 5; }
+.pro-card-today { grid-column: span 6; }
+.pro-card-term { grid-column: span 6; }
+
+.pro-card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.pro-card-title {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.pro-card-meta {
+    color: var(--text-label);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+}
+
+.pro-muted {
+    margin: 0;
+    color: var(--text-dim);
+}
+
+/* --- The terminal: always dark, like a real one --- */
+.pro-card-terminal {
+    background: #03070e;
+    border-color: rgba(var(--accent-2-rgb), 0.28);
+    color: #d6e2ff;
+}
+
+.pro-card-terminal .pro-card-title { color: #eef1ff; }
+.pro-card-terminal .pro-card-meta { color: #7f8bab; }
+
+.pro-term-log {
+    flex: 1;
+    min-height: 220px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 4px 2px 8px;
+    font: 0.8125rem/1.6 var(--font-mono);
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+.pro-term-log:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+}
+
+.pro-term-line {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.pro-term-line.is-cmd { color: #ffffff; }
+.pro-term-line.is-info { color: #5fe3cf; }
+.pro-term-line.is-ok { color: #3ee6a0; }
+.pro-term-line.is-error { color: #ff8aa0; }
+.pro-term-line.is-dim { color: #7f8bab; }
+
+.pro-term-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(150, 175, 255, 0.2);
+}
+
+.pro-term-prompt {
+    flex: none;
+    color: #3ee6a0;
+    font: 600 0.8125rem/1 var(--font-mono);
+}
+
+.pro-term-input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 0;
+    border: 0;
+    background: transparent;
+    color: #ffffff;
+    font: 0.875rem/1.4 var(--font-mono);
+    caret-color: #5fe3cf;
+}
+
+.pro-term-input::placeholder {
+    color: #5d6886;
+}
+
+.pro-term-input:focus {
+    outline: none;
+}
+
+.pro-term-form:focus-within {
+    border-top-color: #5fe3cf;
+}
+
+.pro-term-hint {
+    margin: 8px 0 0;
+    color: #7f8bab;
+    font: 0.6875rem/1.4 var(--font-mono);
+}
+
+@media (hover: none), (pointer: coarse) {
+    .pro-term-hint {
+        display: none;
+    }
+}
+
+/* --- The activity map: 6 weeks, one square a day --- */
+.pro-heat {
+    display: grid;
+    grid-template-columns: repeat(14, minmax(0, 1fr));
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pro-heat-cell,
+.pro-heat-legend i {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: var(--border);
+}
+
+.pro-heat-cell[data-level="1"], .pro-heat-legend i[data-level="1"] { background: rgba(var(--accent-2-rgb), 0.3); }
+.pro-heat-cell[data-level="2"], .pro-heat-legend i[data-level="2"] { background: rgba(var(--accent-2-rgb), 0.55); }
+.pro-heat-cell[data-level="3"], .pro-heat-legend i[data-level="3"] { background: rgba(var(--accent-2-rgb), 0.8); }
+.pro-heat-cell[data-level="4"], .pro-heat-legend i[data-level="4"] { background: var(--accent-2); }
+
+.pro-heat-cell[data-today="true"] {
+    outline: 1px solid var(--text);
+    outline-offset: 1px;
+}
+
+.pro-heat-legend {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    margin: 10px 0 0;
+    color: var(--text-label);
+    font: 0.6875rem/1 var(--font-mono);
+}
+
+.pro-heat-legend i {
+    width: 10px;
+}
+
+.pro-heat-legend span:first-child { margin-right: 2px; }
+.pro-heat-legend span:last-child { margin-left: 2px; }
+
+/* --- Progress by track --- */
+.pro-tracks {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pro-track {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 5px 10px;
+    font-size: 0.8125rem;
+}
+
+.pro-track-name {
+    overflow: hidden;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pro-track-count {
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+}
+
+.pro-track .pro-bar {
+    grid-column: 1 / -1;
+}
+
+.pro-track[data-tone="2"] .pro-bar > span { background: var(--accent-2); }
+.pro-track[data-tone="3"] .pro-bar > span { background: var(--accent-3); }
+
+/* --- Today --- */
+.pro-todos {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pro-todo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    font: 600 0.8125rem/1.3 var(--font-body);
+    text-align: left;
+    cursor: pointer;
+}
+
+.pro-todo:hover,
+.pro-todo:focus-visible {
+    border-color: var(--accent-2);
+}
+
+.pro-todo svg {
+    margin-left: auto;
+    flex: none;
+    color: var(--text-dim);
+}
+
+.pro-todo-box {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 4px;
+}
+
+.pro-todo[data-done="true"] {
+    color: var(--text-muted);
+}
+
+.pro-todo[data-done="true"] .pro-todo-box {
+    border-color: var(--success);
+    background: var(--success) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%2304140d' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat;
+}
+
+/* --- Term of the day --- */
+.pro-term-name {
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.pro-term-text {
+    margin: 0 0 12px;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+}
+
+.pro-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto;
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-accent-2);
+    font: 600 0.8125rem/1.3 var(--font-body);
+    cursor: pointer;
+}
+
+.pro-link:hover,
+.pro-link:focus-visible {
+    text-decoration: underline;
+}
+
+@media (max-width: 1100px) {
+    .pro-card-terminal { grid-column: 1 / -1; grid-row: auto; }
+    .pro-card-activity,
+    .pro-card-tracks,
+    .pro-card-today,
+    .pro-card-term { grid-column: span 6; }
+}
+
+@media (max-width: 720px) {
+    .pro-card-activity,
+    .pro-card-tracks,
+    .pro-card-today,
+    .pro-card-term { grid-column: 1 / -1; }
+
+    .pro-term-log {
+        min-height: 160px;
+    }
+}
+
+/* ===== 11. PRO: THE STATUS BAR (wide screens only) ===== */
+.pro-status {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-nav, 50);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 28px;
+    padding: 0 12px;
+    overflow: hidden;
+    border-top: 1px solid var(--pro-line, var(--border));
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    color: var(--text-muted);
+    font: 0.6875rem/1 var(--font-mono);
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+}
+
+.pro-status-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border-right: 1px solid var(--border);
+}
+
+.pro-status-item:last-child {
+    border-right: 0;
+}
+
+.pro-status-item b {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.pro-status-brand {
+    color: var(--text-accent-2);
+    letter-spacing: 0.08em;
+}
+
+.pro-status-brand .pro-pulse {
+    width: 6px;
+    height: 6px;
+}
+
+.pro-status-spacer {
+    flex: 1;
+}
+
+.pro-status kbd {
+    padding: 1px 5px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    color: var(--text);
+    font: inherit;
+}
+
+/* The bar keeps the bottom of the page and the round assistant button free */
+@media (min-width: 961px) {
+    html.design-pro body {
+        padding-bottom: 28px;
+    }
+
+    html.design-pro .cb-launcher {
+        bottom: 46px;
+    }
+
+    html.design-pro .cb-tip {
+        bottom: 58px;
+    }
+
+    html.design-pro {
+        --toast-bottom: 52px;
+    }
+}
+
+@media (max-width: 960px) {
+    .pro-status {
+        display: none !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .pro-status-keys {
+        display: none;
+    }
+}
+
+@media print {
+    .pro-deck,
+    .pro-status,
+    .home-start {
+        display: none !important;
+    }
+}

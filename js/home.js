@@ -44,10 +44,53 @@
         if (nextNumber && A.lessons) A.lessons.open(nextNumber, button);
     });
 
+    // ----- "Start here": three first steps (Simple design only, css/pro.css hides it in Pro) -----
+    const start = document.querySelector("[data-home-start]");
+
+    function startSteps() {
+        const lessonDone = Boolean(A.lessons && A.util.attempt(function () { return A.lessons.completed().indexOf(1) !== -1; }));
+        const tried = A.storage.get("lab.tried", []);
+        const labDone = Array.isArray(tried) && tried.length > 0;
+        const quiz = A.quiz && typeof A.quiz.stats === "function" ? A.util.attempt(function () { return A.quiz.stats(); }) : null;
+        const quizDone = Boolean(quiz && quiz.best && ["classic", "timed", "myth", "daily"].some(function (mode) { return quiz.best[mode]; }) ||
+            quiz && quiz.daily && quiz.daily.last);
+        return { lesson: lessonDone, lab: labDone, quiz: quizDone };
+    }
+
+    function refreshStart() {
+        if (!start || !A.lessons) return;
+        const steps = startSteps();
+        let all = true;
+        start.querySelectorAll("[data-start]").forEach(function (step) {
+            const done = steps[step.getAttribute("data-start")];
+            if (!done) all = false;
+            step.classList.toggle("is-done", done);
+            A.dom.setHidden(step.querySelector(".home-start-done"), !done);
+        });
+        A.dom.setHidden(start.querySelector(".home-start-all"), !all);
+        A.dom.setHidden(start, false);
+    }
+
+    if (start) {
+        start.addEventListener("click", function (event) {
+            const step = event.target.closest("[data-start]");
+            if (!step) return;
+            const name = step.getAttribute("data-start");
+            if (name === "lesson" && A.lessons) A.lessons.open(1, step);
+            else if (name === "lab") A.navigate("lab");
+            else if (name === "quiz" && A.quiz) A.quiz.start("classic");
+        });
+    }
+
     // The progress changes in a lesson; the texts change with the language
-    A.on("activity", refresh);
-    A.on("section", refresh);
-    A.onLanguageChange(refresh);
-    window.addEventListener("hashchange", refresh);
-    A.ready(refresh);
+    function refreshAll() {
+        refresh();
+        refreshStart();
+    }
+
+    A.on("activity", refreshAll);
+    A.on("section", refreshAll);
+    A.onLanguageChange(refreshAll);
+    window.addEventListener("hashchange", refreshAll);
+    A.ready(refreshAll);
 })();

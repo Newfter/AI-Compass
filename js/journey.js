@@ -984,6 +984,8 @@
             const day = today();
             return { days: currentStreak(), best: state.best.streak || 0, today: has(state.days, day) ? state.days[day] : 0 };
         },
+        // The XP of each of the last 42 days: { "2026-01-15": 120, ... } (a copy)
+        activity: function () { return Object.assign({}, state.days); },
         open: function () { return open(document.activeElement); },
         export: exportData,
         import: importProgress
