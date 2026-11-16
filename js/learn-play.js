@@ -177,7 +177,7 @@
                     '<div class="lpw-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><span></span></div>' +
                     '<div class="lpw-body"></div>' +
                     '<footer class="lpw-foot"></footer>' +
-                    '<p class="lpw-keys mono" aria-hidden="true"></p>' +
+                    '<p class="lpw-legend mono" aria-hidden="true"></p>' +
                 "</div>";
             document.body.appendChild(root);
             const find = function (selector) { return root.querySelector(selector); };
@@ -185,10 +185,11 @@
                 window: find(".lpw-window"), kicker: find(".lpw-kicker"), count: find(".lpw-count"),
                 listen: find(".lpw-listen"), listenIcon: find(".lpw-listen-icon"), listenText: find(".lpw-listen-text"),
                 close: find(".lpw-close"), bar: find(".lpw-bar"), barFill: find(".lpw-bar span"),
-                body: find(".lpw-body"), foot: find(".lpw-foot"), keys: find(".lpw-keys")
+                body: find(".lpw-body"), foot: find(".lpw-foot"), keys: find(".lpw-legend")
             };
             root.addEventListener("click", onClick);
             document.addEventListener("keydown", onKey);
+            window.addEventListener("resize", function () { if (isOpen) liftToasts(); });
 
             // The window is a pop-up of the page (see "overlays" in js/core.js): while it is
             // open, core stops the page from scrolling, keeps Tab inside and closes it with Esc.
@@ -232,6 +233,25 @@
                     esc(button.label) + "</button>";
             }).join("");
             A.dom.setHidden(parts.foot, !buttons.length);
+            liftToasts();
+        }
+
+        // Pop-up messages ("Level 2!") appear just above the buttons of the window, so
+        // they never cover them: --toast-bottom, see "toasts" in style.css. The bar of
+        // buttons is one or two rows tall, so its place is measured (with offsetTop:
+        // unlike getBoundingClientRect, it is not moved by the opening animation).
+        function liftToasts() {
+            const toasts = document.getElementById("toast-stack");
+            if (!toasts) return;
+            if (!isOpen) {
+                toasts.style.removeProperty("--toast-bottom");
+                return;
+            }
+            const top = parts.window.offsetTop + (parts.foot.hidden
+                ? parts.window.offsetHeight
+                : parts.window.clientTop + parts.foot.offsetTop);
+            const gap = Math.max(12, Math.round(window.innerHeight - top) + 12);
+            toasts.style.setProperty("--toast-bottom", "calc(" + gap + "px - env(safe-area-inset-bottom, 0px))");
         }
 
         function focusButton(act) {
@@ -392,9 +412,10 @@
             return "";
         }
 
-        // The box under a task: "right", "wrong", or "hint" (a wrong try that can be tried again)
+        // The box under a task: "right", "wrong", "hint" (a wrong try that can be tried
+        // again) or "shown" (the learner asked to see the answer)
         function feedbackHTML(kind, title, lines) {
-            const mark = kind === "right" ? "✓" : (kind === "wrong" ? "✗" : "💡");
+            const mark = { right: "✓", wrong: "✗", hint: "💡", shown: "👀" }[kind];
             return '<div class="lpw-feedback is-' + kind + '">' +
                 '<p class="lpw-feedback-title"><span class="lpw-feedback-mark" aria-hidden="true">' + mark + "</span> " + esc(title) + "</p>" +
                 lines.filter(Boolean).map(function (line) { return '<p class="lpw-feedback-text" data-speak>' + line + "</p>"; }).join("") +
@@ -409,12 +430,14 @@
 
         // Puts a task into "box". settings: { tries, done(result, feedback) }.
         // done gets { correct (right on the first try), solved (right in the end),
-        // answer (a text to show, or "") } and the element for the feedback.
+        // shown (the learner pressed "Show the answer"), answer (a text to show, or "") }
+        // and the element for the feedback.
         // Returns { giveUp(), key(event) }: "I don't know" and the number keys.
         function mountTask(box, step, settings) {
             const tries = settings.tries;
             let wrong = 0;          // wrong tries so far
             let over = false;
+            let shown = false;      // "Show the answer" was pressed
             box.innerHTML = '<div class="lpw-task-area"></div><div class="lpw-task-feedback"></div>';
             const area = box.firstChild;
             const feedback = box.lastChild;
@@ -423,7 +446,7 @@
                 if (over) return;
                 over = true;
                 box.classList.add("is-over");
-                settings.done({ correct: solved && wrong === 0, solved: solved, answer: answer || "" }, feedback);
+                settings.done({ correct: solved && wrong === 0, solved: solved, shown: shown && !solved, answer: answer || "" }, feedback);
             }
 
             // A wrong try that can be tried again: says so, with the hint of the task
@@ -500,7 +523,7 @@
             // ----- Type a number -----
             function numberTask() {
                 const tolerance = typeof step.tolerance === "number" ? step.tolerance : 0;
-                const shown = num(step.answer) + (step.unit ? " " + step.unit : "");
+                const answerText = num(step.answer) + (step.unit ? " " + step.unit : "");
                 area.innerHTML = '<form class="lpw-number" novalidate>' +
                     '<label class="lpw-label" for="lpw-number">' + esc(t("learn.task.numberLabel")) + "</label>" +
                     '<span class="lpw-number-row">' +
@@ -533,7 +556,7 @@
                     wrong += 1;
                     if (wrong >= tries) {
                         lock("wrong");
-                        end(false, shown);
+                        end(false, answerText);
                     } else {
                         tryAgain();
                         input.select();
@@ -542,8 +565,9 @@
                 return {
                     giveUp: function () {
                         wrong += 1;
-                        lock("wrong");
-                        end(false, shown);
+                        input.value = num(step.answer);
+                        lock("shown");
+                        end(false, answerText);
                     },
                     key: function () { return false; }
                 };
@@ -638,7 +662,7 @@
                 const rows = [];
                 const rowHTML = function (item, ok) {
                     return '<li class="' + (ok ? "is-right" : "is-wrong") + '"><span class="lpw-sort-mark" aria-hidden="true">' + (ok ? "✓" : "✗") + "</span>" +
-                        "<span>" + rich(item[0]) + '</span><span class="lpw-sort-arrow" aria-hidden="true">→</span><strong>' + rich(step.groups[item[1]]) + "</strong></li>";
+                        '<span class="lpw-sort-line">' + rich(item[0]) + ' <span class="lpw-sort-arrow" aria-hidden="true">→</span> <strong>' + rich(step.groups[item[1]]) + "</strong></span></li>";
                 };
                 const draw = function () {
                     const left = queue.length - at;
@@ -764,7 +788,15 @@
             }
 
             const types = { choice: choiceTask, number: numberTask, order: orderTask, sort: sortTask, match: matchTask };
-            return types[step.type]();
+            const made = types[step.type]();
+            return {
+                giveUp: function () {
+                    if (over) return;
+                    shown = true;
+                    made.giveUp();
+                },
+                key: made.key
+            };
         }
 
         // ---------- 6. Cards: the memory check, practice, a stage test, the level check ----------
@@ -910,8 +942,9 @@
             if (back) {
                 lines.push('<span class="lpw-back">' + esc(back.wait === 1 ? t("learn.review.backTomorrow") : A.plural("learn.review.back", back.wait)) + "</span>");
             }
-            const title = t(result.solved ? "learn.play.right" : "learn.play.wrong");
-            feedback.innerHTML = feedbackHTML(result.solved ? "right" : "wrong", title, lines);
+            const kind = result.solved ? "right" : (result.shown ? "shown" : "wrong");
+            const title = t("learn.play." + kind);
+            feedback.innerHTML = feedbackHTML(kind, title, lines);
             say(title + " " + (card.why || ""));
             const last = session.index >= session.queue.length - 1;
             actions = { next: nextCard };
@@ -946,8 +979,8 @@
                 if (card.lesson) {
                     link = '<button type="button" class="lp-link" data-act="lesson" data-n="' + card.lesson + '">' +
                         esc(t("learn.review.openLesson", { n: num(card.lesson) })) + "</button>";
-                } else if (card.unit) {
-                    link = '<button type="button" class="lp-link" data-act="unit" data-unit="' + esc(card.unit) + '">' +
+                } else if (card.unitId) {
+                    link = '<button type="button" class="lp-link" data-act="unit" data-unit="' + esc(card.unitId) + '">' +
                         esc(t("learn.review.openUnit", { title: card.from })) + "</button>";
                 }
                 return '<li><span class="lpw-missed-q">' + rich(card.q) + "</span>" + link + "</li>";
@@ -1184,8 +1217,9 @@
                     const lines = [];
                     if (!result.solved && result.answer) lines.push(esc(t("learn.play.answerWas", { answer: result.answer })));
                     if (step.why) lines.push(rich(step.why));
-                    const title = t(result.solved ? "learn.play.right" : "learn.play.wrong");
-                    feedback.innerHTML = feedbackHTML(result.solved ? "right" : "wrong", title, lines);
+                    const kind = result.solved ? "right" : (result.shown ? "shown" : "wrong");
+                    const title = t("learn.play." + kind);
+                    feedback.innerHTML = feedbackHTML(kind, title, lines);
                     say(title + " " + (step.why || ""));
                     actions = move;
                     setButtons(back.concat([goOn]));
@@ -1213,6 +1247,8 @@
                 showStep();
             };
             actionsNow.nextunit = function () { host.openUnit(info.next.id, opener); };
+            actionsNow.stagetest = function () { host.openTest(info.stage, opener); };
+            const back = { act: "path", label: t("learn.play.backToPath") };
             screen({
                 kicker: sessionTitle(),
                 progress: 1,
@@ -1225,8 +1261,10 @@
                         saveNote() +
                     "</div>",
                 buttons: info.next
-                    ? [{ act: "path", label: t("learn.play.backToPath") }, { act: "nextunit", label: t("learn.guide.nextUnit", { title: info.next.title }), primary: true }]
-                    : [{ act: "path", label: t("learn.play.backToPath"), primary: true }],
+                    ? [back, { act: "nextunit", label: t("learn.guide.nextUnit", { title: info.next.title }), primary: true }]
+                    : info.test
+                        ? [back, { act: "stagetest", label: t("learn.guide.toTest"), primary: true }]
+                        : [{ act: "path", label: t("learn.play.backToPath"), primary: true }],
                 actions: actionsNow
             });
         }
@@ -1316,19 +1354,27 @@
             const info = session.info;
             const prompt = t("learn.explain.prompt", { title: info.title, text: session.text, k1: info.keys[0], k2: info.keys[1], k3: info.keys[2] });
             const score = Math.max(0, Math.min(3, session.score));
+            // A second opinion: a prompt for the learner's own chatbot. Young explorers are
+            // not sent to a chatbot: they are asked to tell it to a person they know.
+            const second = host.who() === "kid"
+                ? '<div class="lpw-bot">' +
+                    '<p class="lpw-bot-title"><span aria-hidden="true">🧑‍🤝‍🧑</span> ' + esc(t("learn.explain.kidTitle")) + "</p>" +
+                    '<p class="lpw-text" data-speak>' + esc(t("learn.explain.kidText")) + "</p>" +
+                  "</div>"
+                : '<div class="lpw-bot">' +
+                    '<p class="lpw-bot-title"><span aria-hidden="true">💬</span> ' + esc(t("learn.explain.botTitle")) + "</p>" +
+                    '<p class="lpw-text">' + esc(t("learn.explain.botText")) + "</p>" +
+                    '<textarea class="lpw-prompt" rows="6" readonly aria-label="' + esc(t("learn.explain.botCopy")) + '">' + esc(prompt) + "</textarea>" +
+                    '<p class="lpw-bot-row"><button type="button" class="btn btn-ghost btn-small" data-act="copy">' + esc(t("learn.explain.botCopy")) + "</button>" +
+                        '<span class="lpw-copy-state" role="status"></span></p>' +
+                  "</div>";
             screen({
                 kicker: sessionTitle(),
                 html: '<div class="lpw-end lpw-explain-end' + (score === 3 ? " is-pass" : "") + '">' +
                         '<span class="lpw-end-icon" aria-hidden="true">' + (score === 3 ? "🌟" : "🗣️") + "</span>" +
                         '<h3 class="lpw-end-title" data-focus tabindex="-1" data-speak>' + esc(t("learn.explain.result." + score)) + "</h3>" +
                         (score < 3 ? '<p class="lpw-again"><button type="button" class="lp-link" data-act="keys">' + esc(t("learn.explain.openLesson")) + "</button></p>" : "") +
-                        '<div class="lpw-bot">' +
-                            '<p class="lpw-bot-title"><span aria-hidden="true">💬</span> ' + esc(t("learn.explain.botTitle")) + "</p>" +
-                            '<p class="lpw-text">' + esc(t("learn.explain.botText")) + "</p>" +
-                            '<textarea class="lpw-prompt" rows="6" readonly aria-label="' + esc(t("learn.explain.botCopy")) + '">' + esc(prompt) + "</textarea>" +
-                            '<p class="lpw-bot-row"><button type="button" class="btn btn-ghost btn-small" data-act="copy">' + esc(t("learn.explain.botCopy")) + "</button>" +
-                                '<span class="lpw-copy-state" role="status"></span></p>' +
-                        "</div>" +
+                        second +
                         saveNote() +
                     "</div>",
                 buttons: [
@@ -1399,6 +1445,7 @@
         function close(options) {
             if (!isOpen) return;
             isOpen = false;
+            liftToasts();
             run += 1;
             stopSpeaking();
             task = null;

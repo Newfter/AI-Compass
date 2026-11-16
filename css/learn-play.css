@@ -188,9 +188,17 @@
     margin-right: auto;
 }
 
+/* A new screen puts the keyboard focus on its title, so that it is read first and
+   the next Tab starts there. A title is not a button: no ring around it. (This rule
+   has to be stronger than "[tabindex]:focus-visible" in style.css.) */
+.lpw .lpw-window:focus-visible,
+.lpw-window [tabindex="-1"]:focus-visible {
+    outline: none;
+}
+
 /* The keys of the window: a quiet line at the very bottom, only in the Pro design
    and only where there is a keyboard and a mouse (not on phones and tablets) */
-.lpw-keys {
+.lpw-legend {
     display: none;
     flex: none;
     margin: 0;
@@ -204,7 +212,7 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-    html.design-pro .lpw-keys {
+    html.design-pro .lpw-legend {
         display: block;
     }
 }
@@ -424,6 +432,15 @@
     line-height: 1.4;
 }
 
+/* A very long word in a narrow button breaks instead of running out of it */
+.lpw-option > span:last-child,
+.lpw-sort-group > span:last-child,
+.lpw-order-pick,
+.lpw-match-item {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .lpw-option-key {
     display: grid;
     flex: none;
@@ -485,6 +502,10 @@
 
 .lpw-input.is-right {
     border-color: var(--success);
+}
+
+.lpw-input.is-shown {
+    border-color: var(--accent-2);
 }
 
 .lpw-input.is-wrong {
@@ -611,6 +632,15 @@
     line-height: 1.45;
 }
 
+/* The mark stays beside the first line of a long row */
+.lpw-sort-done li {
+    flex-wrap: nowrap;
+}
+
+.lpw-sort-line {
+    min-width: 0;
+}
+
 .lpw-sort-done .is-right .lpw-sort-mark {
     color: var(--text-success);
 }
@@ -691,6 +721,12 @@
     background: color-mix(in srgb, var(--warning) 9%, var(--surface-solid));
 }
 
+/* "Show the answer" was pressed: nothing was wrong, so no red */
+.lpw-feedback.is-shown {
+    border-color: var(--accent-2);
+    background: color-mix(in srgb, var(--accent-2) 8%, var(--surface-solid));
+}
+
 .lpw-feedback-title {
     margin: 0;
     font-weight: 800;
@@ -706,6 +742,10 @@
 
 .lpw-feedback.is-hint .lpw-feedback-title {
     color: var(--text-warning);
+}
+
+.lpw-feedback.is-shown .lpw-feedback-title {
+    color: var(--text-accent-2);
 }
 
 .lpw-feedback-text {
@@ -1009,6 +1049,21 @@
 
     .lpw-listen-text {
         display: none;
+    }
+
+    /* The groups of a "sort" task stand side by side, so each is narrow: no key
+       number here, and one group per line with the bigger letters */
+    .lpw-sort-group {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .lpw-sort-group .lpw-option-key {
+        display: none;
+    }
+
+    .lpw.is-kid .lpw-sort-groups {
+        grid-template-columns: 1fr;
     }
 
     .lpw-match {

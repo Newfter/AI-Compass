@@ -1345,7 +1345,9 @@
         },
 
         // A card as a task for the window (in the current language), or null:
-        //   { id, type, q, options, correct, why, keepOrder, from, topic, lesson, unit }
+        //   { id, type, q, options, correct, why, keepOrder, from, topic, lesson, unitId }
+        // (unitId is the guided step a card comes from: "unit" is already taken by a
+        // "number" task, where it is the unit of measure, like "%")
         card: function (id) {
             const info = cardInfo(id);
             if (!info) return null;
@@ -1356,7 +1358,7 @@
                     id: id, type: "choice", q: question.text, options: question.options, correct: question.correct, why: question.explain,
                     keepOrder: question.type !== "choice",
                     from: typeof info.lesson === "number" ? t("learn.review.fromLesson", { n: num(info.lesson) }) : t("nav.timeline"),
-                    topic: topicName(info.topic), lesson: typeof info.lesson === "number" ? info.lesson : 0, unit: ""
+                    topic: topicName(info.topic), lesson: typeof info.lesson === "number" ? info.lesson : 0, unitId: ""
                 };
             }
             const course = A.content.get("course." + info.course);
@@ -1364,7 +1366,7 @@
             const step = unit ? unit.steps.filter(function (item) { return item.card === id; })[0] : null;
             if (!step) return null;
             return Object.assign(localStep(step), {
-                id: id, from: t("learn.unit." + info.unit), topic: topicName(info.topic), lesson: 0, unit: info.unit
+                id: id, from: t("learn.unit." + info.unit), topic: topicName(info.topic), lesson: 0, unitId: info.unit
             });
         },
 
@@ -1437,11 +1439,15 @@
             const unit = UNIT_BY_ID[id];
             const list = COURSES[unit.course].units;
             const next = list[unit.index + 1];
+            const allDone = list.every(function (item) { return has(units.done, item.id); });
+            const star = Boolean(units.tests[unit.stage] && units.tests[unit.stage][2]);
             return {
                 id: id, course: unit.course, stage: unit.stage, icon: unit.icon, minutes: unit.minutes,
                 title: t("learn.unit." + id), stageTitle: t("learn.stage." + unit.stage),
                 done: has(units.done, id),
-                next: next ? { id: next.id, title: t("learn.unit." + next.id) } : null
+                next: next ? { id: next.id, title: t("learn.unit." + next.id) } : null,
+                // after the last step of a finished course: the stage test, until its star is earned
+                test: !next && allDone && !star
             };
         },
         // result: { first, total } (tasks right on the first try, of all tasks). -> how many cards are new
