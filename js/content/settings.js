@@ -24,6 +24,13 @@ window.AICompass.addTranslations({
         "settings.previewButton": "Try it",
 
         // The groups
+        "settings.groupDesign": "Design",
+        "settings.design": "Design",
+        "settings.designSimple": "Simple",
+        "settings.designPro": "Pro",
+        "settings.designHint": "Simple: calm and easy, for beginners. Pro: a rich control panel with your stats, every page in the menu and all the effects, for people who know AI well.",
+        "settings.cmdDesignPro": "Switch to the Pro design",
+        "settings.cmdDesignSimple": "Switch to the Simple design",
         "settings.groupLanguage": "Language and theme",
         "settings.groupReading": "Reading",
         "settings.groupComfort": "Comfort",
@@ -214,6 +221,13 @@ window.AICompass.addTranslations({
         "settings.previewLink": "Читать урок",
         "settings.previewButton": "Попробовать",
 
+        "settings.groupDesign": "Дизайн",
+        "settings.design": "Дизайн",
+        "settings.designSimple": "Простой",
+        "settings.designPro": "Про",
+        "settings.designHint": "Простой: спокойный и понятный, для новичков. Про: насыщенная панель управления со статистикой, всеми разделами в меню и всеми эффектами, для тех, кто хорошо знает ИИ.",
+        "settings.cmdDesignPro": "Включить дизайн «Про»",
+        "settings.cmdDesignSimple": "Включить простой дизайн",
         "settings.groupLanguage": "Язык и тема",
         "settings.groupReading": "Чтение",
         "settings.groupComfort": "Комфорт",
