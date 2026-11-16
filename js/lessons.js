@@ -132,7 +132,17 @@
     const NO_VOICE_WARNING_GAP = 5000;            // "no voice" is shown at most once in this time
     const CERT_ICON_STEP = 190;                   // the space between the lesson icons on the certificate (canvas pixels)
     const CERT_ICON_ROW = 1330;                   // their row is never wider than this: with more than 8 lessons, the icons get smaller
-    const CERT_ROW_GAP = 152;                     // the full-course certificate has one row of icons per track, this far apart
+    // The full-course certificate has one row of icons per track, under the track's name.
+    // The rows share the space between the "for completing..." line and the date,
+    // so with more tracks the icons get smaller (see drawCertificate).
+    const CERT_ROWS_TOP = 596;                    // the top of the first track's name (canvas pixels)
+    const CERT_ROWS_BOTTOM = 934;                 // the bottom of the last row of icons: just above the date
+    const CERT_ROW_LABEL = 27;                    // a track's name and the space under it
+    const CERT_ROW_SPACE = 16;                    // the smallest space between two rows (never more than CERT_ROW_SPACE_MAX)
+    const CERT_ROW_SPACE_MAX = 44;
+    const CERT_ROW_SCALE = 0.8;                   // the icons' biggest size in these rows (1 is their size on a track's certificate)
+    const CERT_ROW_WIDTH = 900;                   // these rows are never wider than this, so they stay clear of the round seal
+    const CERT_RING = 108;                        // the width of a lesson's ring at size 1 (see drawLessonBadge)
     const DOWNLOAD_CLEANUP_TIME = 4000;           // the certificate's temporary download address is freed after this
     const LAB_FOLDER = "js/lessons/";             // a mini-lab with its own file is js/lessons/<name>.js ...
     const LAB_STYLES = "css/lessons-labs.css";    // ... and these are the styles of those mini-labs (both load on first use)
@@ -941,10 +951,10 @@
     }
 
     // A row of lessons centred on x = W / 2. The row is never wider than
-    // CERT_ICON_ROW: with many lessons, the icons get smaller (never bigger than maxScale).
-    function drawLessonRow(ctx, numbers, W, y, maxScale, withTitle, look) {
+    // maxWidth: with many lessons, the icons get smaller (never bigger than maxScale).
+    function drawLessonRow(ctx, numbers, W, y, maxScale, withTitle, look, maxWidth) {
         const count = numbers.length;
-        const scale = Math.min(maxScale, CERT_ICON_ROW / Math.max(1, (count - 1) * CERT_ICON_STEP));
+        const scale = Math.min(maxScale, (maxWidth || CERT_ICON_ROW) / Math.max(1, (count - 1) * CERT_ICON_STEP));
         numbers.forEach(function (n, index) {
             const x = W / 2 + (index - (count - 1) / 2) * CERT_ICON_STEP * scale;
             drawLessonBadge(ctx, LESSONS[n - 1], x, y, scale, withTitle, look);
@@ -1069,17 +1079,27 @@
         fitText(ctx, forText, W / 2, 566, 1240, "500", 34, fonts.body);
 
         // The lessons with a check mark: a track's in one row around the middle, with
-        // their titles; the full course's in one row per track, with the track's name
+        // their titles; the full course's in one row per track, with the track's name.
+        // The rows of the full course fill the space above the date together: the
+        // more tracks, the smaller their icons, and the block stays centred in that space.
         if (certKind !== "all") {
             drawLessonRow(ctx, numbers, W, 700, 1, true, look);
         } else {
+            const rows = TRACKS.length;
+            const room = CERT_ROWS_BOTTOM - CERT_ROWS_TOP;
+            const rowScale = Math.min(CERT_ROW_SCALE,
+                (room - rows * CERT_ROW_LABEL - (rows - 1) * CERT_ROW_SPACE) / (rows * CERT_RING));
+            const rowHeight = CERT_ROW_LABEL + CERT_RING * rowScale;
+            const rowSpace = rows > 1 ? Math.min(CERT_ROW_SPACE_MAX, (room - rows * rowHeight) / (rows - 1)) : 0;
+            const firstTop = CERT_ROWS_TOP + (room - rows * rowHeight - (rows - 1) * rowSpace) / 2;
             TRACKS.forEach(function (track, index) {
-                const y = 690 + index * CERT_ROW_GAP;
+                const rowTop = Math.round(firstTop + index * (rowHeight + rowSpace));
                 ctx.fillStyle = color.muted;
                 if ("letterSpacing" in ctx) ctx.letterSpacing = "4px";
-                fitText(ctx, trackTitle(track.id).toUpperCase(), W / 2, y - 60, 900, "600", 20, fonts.mono);
+                fitText(ctx, trackTitle(track.id).toUpperCase(), W / 2, rowTop + 14, 900, "600", 18, fonts.mono);
                 if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
-                drawLessonRow(ctx, TRACK_LESSONS[track.id], W, y, 0.8, false, look);
+                drawLessonRow(ctx, TRACK_LESSONS[track.id], W, rowTop + CERT_ROW_LABEL + CERT_RING * rowScale / 2,
+                    rowScale, false, look, CERT_ROW_WIDTH);
             });
         }
 
