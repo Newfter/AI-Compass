@@ -1,14 +1,23 @@
 /* =========================================================
-   AI COMPASS — THE PRO DESIGN: THE CONTROL PANEL
+   AI COMPASS — THE PRO DESIGN
    The site has two designs (Settings, or the Simple / Pro switch in the
    menu bar; js/settings.js keeps the choice):
    - Simple (the default): calm and easy, for beginners.
    - Pro: a rich, dense look for people who know AI well (css/pro.css).
-   This file draws the Pro design's control panel on the home page: your
-   progress in every part of the site, and quick actions with their
-   keyboard keys. It is only built when the Pro design is on.
-   Nothing is saved by this file: it reads what the other parts know
-   (A.lessons, A.lab, A.quiz, A.glossary, A.journey).
+   This file draws what only the Pro design has:
+    1. Settings and small helpers
+    2. What the panels show (the numbers)
+    3. The control panel (next to the home page title)
+    4. The workspace under it: the terminal, the activity map, progress
+       by track, the term of the day and today's to-do list
+    5. The terminal's commands
+    6. The status bar at the bottom of the screen
+    7. "g then a letter": jumping to a page with the keyboard
+    8. Keeping everything up to date
+   Everything is built only while the Pro design is on, and nothing is
+   saved by this file except the terminal's last commands (this browser
+   only). It reads what the other parts know (A.lessons, A.lab, A.quiz,
+   A.glossary, A.journey).
    Its texts (English and Russian) are in js/content/pro.js.
    ========================================================= */
 
@@ -16,15 +25,40 @@
     "use strict";
 
     const A = window.AICompass;
-    const mount = document.querySelector('[data-feature="pro"]');
-    if (!A || !mount) return;
+    if (!A) return;
+
+    /* =========================================================
+       1. SETTINGS AND SMALL HELPERS
+       ========================================================= */
+    const panel = document.querySelector('[data-feature="pro"]');
+    const deck = document.querySelector("[data-pro-deck]");
+    const statusBar = document.querySelector("[data-pro-status]");
 
     const t = A.t;
     const esc = A.escapeHTML;
     const root = document.documentElement;
     const PRO_CLASS = "design-pro";
 
-    let built = false;
+    const DAYS_SHOWN = 42;                 // the activity map: six weeks (My Compass keeps 42 days)
+    const DAY_STARTS_AT = 4;               // like js/journey.js: a new day starts at 4 a.m.
+    const HISTORY_KEY = "pro.history";     // the terminal's last commands
+    const HISTORY_MAX = 30;
+    const LOG_MAX = 80;                    // lines kept in the terminal
+    const JUMP_MS = 1200;                  // "g", then the letter within this time
+
+    // The pages a command or "g + letter" can open: the name (in both languages),
+    // the section id, the letter for "g + letter"
+    const PAGES = [
+        { id: "home", key: "h", names: ["home", "главная"] },
+        { id: "lessons", key: "l", names: ["lessons", "уроки"] },
+        { id: "lab", key: "a", names: ["lab", "лаборатория"] },
+        { id: "quiz", key: "q", names: ["quiz", "тест"] },
+        { id: "challenge", key: "c", names: ["challenge", "вызов"] },
+        { id: "glossary", key: "g", names: ["glossary", "словарь"] },
+        { id: "timeline", key: "t", names: ["history", "timeline", "история"] },
+        { id: "teachers", key: "e", names: ["teachers", "учителя"] },
+        { id: "about", key: "i", names: ["about", "о проекте"] }
+    ];
 
     function isPro() {
         return root.classList.contains(PRO_CLASS);
@@ -34,21 +68,52 @@
     function safe(callback, fallback) {
         try {
             const value = callback();
-            return value === undefined ? fallback : value;
+            return value === undefined || value === null ? fallback : value;
         } catch (error) {
             return fallback;
         }
     }
 
-    /* ----- What the panel shows ----- */
+    function num(n) {
+        return A.format.number(n);
+    }
+
+    const ARROW = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    // A page can be opened only when it is on the page (Challenge and Teachers show up later)
+    function pageReady(id) {
+        const section = document.getElementById(id);
+        return Boolean(section) && !section.hidden;
+    }
+
+    function openPage(id) {
+        if (!pageReady(id)) return false;
+        A.navigate(id);
+        return true;
+    }
+
+    function dayKey(time) {
+        const date = new Date(time - DAY_STARTS_AT * 3600000);
+        const pad = function (n) { return (n < 10 ? "0" : "") + n; };
+        return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
+    }
+
+    /* =========================================================
+       2. WHAT THE PANELS SHOW (THE NUMBERS)
+       ========================================================= */
+    function labTried() {
+        const tried = A.storage.get("lab.tried", []);
+        return Array.isArray(tried) ? tried : [];
+    }
+
     function numbers() {
         const lessons = A.lessons;
         const lessonDone = safe(function () { return lessons.completed().length; }, 0);
         const lessonTotal = safe(function () { return lessons.count; }, 0);
 
-        const labIds = safe(function () { return A.lab.list().map(function (entry) { return entry.id; }); }, []);
-        const tried = A.storage.get("lab.tried", []);
-        const labDone = Array.isArray(tried) ? labIds.filter(function (id) { return tried.indexOf(id) !== -1; }).length : 0;
+        const labList = safe(function () { return A.lab.list(); }, []);
+        const tried = labTried();
+        const labDone = labList.filter(function (entry) { return tried.indexOf(entry.id) !== -1; }).length;
 
         const quiz = safe(function () { return A.quiz.stats(); }, null);
         let bestQuiz = null;
@@ -62,18 +127,18 @@
         const termsDone = safe(function () { return A.glossary.explored().length; }, 0);
         const termsTotal = safe(function () { return A.glossary.ids.length; }, 0);
 
-        const xp = safe(function () { return A.journey.xp(); }, null);
-        const level = safe(function () { return A.journey.level(); }, null);
         const streakJourney = safe(function () { return A.journey.streak().days; }, 0);
         const streakQuiz = quiz && quiz.daily ? quiz.daily.streak || 0 : 0;
 
         return {
             lessons: { done: lessonDone, total: lessonTotal },
-            lab: { done: labDone, total: labIds.length },
+            lab: { done: labDone, total: labList.length },
             quiz: bestQuiz,
+            quizStats: quiz,
             terms: { done: termsDone, total: termsTotal },
-            xp: xp,
-            level: level,
+            xp: safe(function () { return A.journey.xp(); }, null),
+            level: safe(function () { return A.journey.level(); }, null),
+            badges: safe(function () { return A.journey.badges().length; }, 0),
             streak: Math.max(streakJourney || 0, streakQuiz)
         };
     }
@@ -82,6 +147,13 @@
         return part && part.total ? Math.min(1, part.done / part.total) : 0;
     }
 
+    function count(part) {
+        return num(part.done) + "<small>/" + num(part.total) + "</small>";
+    }
+
+    /* =========================================================
+       3. THE CONTROL PANEL (next to the home page title)
+       ========================================================= */
     function tile(key, value, sub, part, tone) {
         return '<li class="pro-tile" data-tone="' + tone + '">' +
                 '<span class="pro-tile-label">' + esc(t(key)) + "</span>" +
@@ -91,32 +163,35 @@
             "</li>";
     }
 
-    function count(part) {
-        return A.format.number(part.done) + '<small>/' + A.format.number(part.total) + "</small>";
-    }
-
-    function action(name, key, keys, extra) {
+    function action(name, text, keys) {
         return '<li><button type="button" class="pro-action" data-pro-action="' + name + '">' +
-                '<span class="pro-action-text">' + esc(extra || t(key)) + "</span>" +
-                (keys ? '<span class="pro-action-keys">' + keys.map(function (k) { return "<kbd>" + esc(k) + "</kbd>"; }).join("") + "</span>"
-                      : '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>') +
+                '<span class="pro-action-text">' + esc(text) + "</span>" +
+                (keys ? '<span class="pro-action-keys">' + keys.map(function (k) { return "<kbd>" + esc(k) + "</kbd>"; }).join("") + "</span>" : ARROW) +
             "</button></li>";
     }
 
-    function draw() {
-        if (!isPro()) return;
-        built = true;
-        const n = numbers();
+    function drawPanel(n) {
+        if (!panel) return;
         const lessons = A.lessons;
         const next = safe(function () { return lessons.next(); }, 0);
         const nextText = next ? t("pro.next", { title: safe(function () { return lessons.title(next); }, String(next)) }) : t("pro.allDone");
-        const quizValue = n.quiz ? A.format.number(n.quiz.score) + "<small>/" + A.format.number(n.quiz.total) + "</small>" : esc(t("pro.none"));
+        const quizValue = n.quiz ? num(n.quiz.score) + "<small>/" + num(n.quiz.total) + "</small>" : esc(t("pro.none"));
         const mod = A.isMac ? "⌘" : "Ctrl";
+        const overall = share({ done: n.lessons.done + n.lab.done + n.terms.done, total: n.lessons.total + n.lab.total + n.terms.total });
 
-        mount.innerHTML =
+        panel.innerHTML =
             '<div class="pro-dash-head">' +
                 '<span class="pro-dash-title"><span class="pro-pulse" aria-hidden="true"></span>' + esc(t("pro.title")) + "</span>" +
-                '<span class="pro-dash-meta">' + esc(A.lang.toUpperCase()) + " · " + esc(t(A.theme === "light" ? "settings.themeLight" : "settings.themeDark").toUpperCase()) + "</span>" +
+                '<span class="pro-dash-meta">' + esc(A.lang.toUpperCase()) + " · " +
+                    esc(t(A.theme === "light" ? "settings.themeLight" : "settings.themeDark").toUpperCase()) + "</span>" +
+            "</div>" +
+            '<div class="pro-overall">' +
+                '<span class="pro-overall-ring" style="--share: ' + overall.toFixed(3) + '" aria-hidden="true"></span>' +
+                '<span class="pro-overall-text">' +
+                    '<strong>' + esc(A.format.percent ? A.format.percent(overall) : Math.round(overall * 100) + "%") + "</strong>" +
+                    "<span>" + esc(t("pro.overall")) + "</span>" +
+                "</span>" +
+                '<span class="pro-overall-badges">' + esc(t("pro.badges", { n: num(n.badges) })) + "</span>" +
             "</div>" +
             '<h2 class="pro-dash-label">' + esc(t("pro.statsLabel")) + "</h2>" +
             '<ul class="pro-tiles">' +
@@ -124,29 +199,499 @@
                 tile("pro.lab", count(n.lab), "", n.lab, "2") +
                 tile("pro.quiz", quizValue, "", n.quiz ? { done: n.quiz.score, total: n.quiz.total } : null, "3") +
                 tile("pro.glossary", count(n.terms), "", n.terms, "2") +
-                tile("pro.level", n.level === null ? esc(t("pro.none")) : A.format.number(n.level),
-                    n.xp === null ? "" : esc(t("pro.xp", { n: A.format.number(n.xp) })), null, "1") +
-                tile("pro.streak", A.format.number(n.streak) + "<small>" + esc(t("pro.days", { n: "" }).trim()) + "</small>", "", null, "3") +
+                tile("pro.level", n.level === null ? esc(t("pro.none")) : num(n.level),
+                    n.xp === null ? "" : esc(t("pro.xp", { n: num(n.xp) })), null, "1") +
+                tile("pro.streak", num(n.streak) + "<small>" + esc(t("pro.daysShort")) + "</small>", "", null, "3") +
             "</ul>" +
             '<h2 class="pro-dash-label">' + esc(t("pro.actionsLabel")) + "</h2>" +
             '<ul class="pro-actions">' +
-                action("next", "", null, nextText) +
-                action("search", "pro.search", [mod, "K"]) +
-                action("keys", "pro.keys", ["?"]) +
-                action("daily", "pro.daily") +
-                action("term", "pro.term") +
-                action("compass", "pro.compass") +
-                action("simple", "pro.back") +
+                action("next", nextText) +
+                action("search", t("pro.search"), [mod, "K"]) +
+                action("keys", t("pro.keys"), ["?"]) +
+                action("terminal", t("pro.terminalOpen"), ["`"]) +
+                action("daily", t("pro.daily")) +
+                action("compass", t("pro.compass")) +
+                action("simple", t("pro.back")) +
             "</ul>";
-        A.dom.setHidden(mount, false);
+        A.dom.setHidden(panel, false);
     }
 
+    /* =========================================================
+       4. THE WORKSPACE (under the home page title)
+       ========================================================= */
+    let terminal = null;     // the terminal's parts, once the workspace is built
+
+    function heatmap() {
+        const days = safe(function () { return A.journey.activity(); }, {});
+        const now = Date.now();
+        let max = 0;
+        let active = 0;
+        let total = 0;
+        const cells = [];
+        for (let i = DAYS_SHOWN - 1; i >= 0; i--) {
+            const key = dayKey(now - i * 86400000);
+            const xp = typeof days[key] === "number" ? days[key] : 0;
+            if (xp > max) max = xp;
+            if (xp > 0) active++;
+            total += xp;
+            cells.push({ key: key, xp: xp, today: i === 0 });
+        }
+        const html = cells.map(function (cell) {
+            const level = !cell.xp ? 0 : Math.min(4, 1 + Math.floor((cell.xp / Math.max(1, max)) * 3.999));
+            const date = A.format.date ? A.format.date(new Date(cell.key + "T12:00:00"), { day: "numeric", month: "short" }) : cell.key;
+            const label = t("pro.heatCell", { date: date, n: num(cell.xp) });
+            return '<li class="pro-heat-cell" data-level="' + level + '"' + (cell.today ? ' data-today="true"' : "") +
+                ' title="' + esc(label) + '"><span class="sr-only">' + esc(label) + "</span></li>";
+        }).join("");
+        return { html: html, active: active, total: total };
+    }
+
+    function trackBars(n) {
+        const tracks = safe(function () { return A.lessons.tracks(); }, []);
+        const rows = tracks.map(function (track) {
+            return { label: track.icon + " " + track.title(), done: track.done, total: track.total, tone: track.id === "deep" ? "3" : "1" };
+        });
+        rows.push({ label: "🧪 " + t("pro.lab"), done: n.lab.done, total: n.lab.total, tone: "2" });
+        rows.push({ label: "📖 " + t("pro.glossary"), done: n.terms.done, total: n.terms.total, tone: "2" });
+        return rows.map(function (row) {
+            const part = share(row);
+            return '<li class="pro-track" data-tone="' + row.tone + '">' +
+                    '<span class="pro-track-name">' + esc(row.label) + "</span>" +
+                    '<span class="pro-track-count">' + num(row.done) + "/" + num(row.total) + "</span>" +
+                    '<span class="pro-bar" aria-hidden="true"><span style="--share: ' + part.toFixed(3) + '"></span></span>' +
+                "</li>";
+        }).join("");
+    }
+
+    function todayList(n) {
+        const daily = n.quizStats && n.quizStats.daily;
+        const due = safe(function () { return A.glossary.due(); }, null);
+        const today = safe(function () { return A.journey.streak().today; }, 0);
+        const items = [
+            { done: Boolean(daily && daily.done), text: t(daily && daily.done ? "pro.todayDailyDone" : "pro.todayDaily"), act: "daily" },
+            { done: due === 0, text: due === null ? t("pro.todayCardsNone") : due === 0 ? t("pro.todayCardsDone") : t("pro.todayCards", { n: num(due) }), act: "cards" },
+            { done: today > 0, text: today > 0 ? t("pro.todayXp", { n: num(today) }) : t("pro.todayXpNone"), act: "next" }
+        ];
+        return items.map(function (item) {
+            return '<li><button type="button" class="pro-todo" data-pro-action="' + item.act + '" data-done="' + item.done + '">' +
+                    '<span class="pro-todo-box" aria-hidden="true"></span>' +
+                    '<span class="pro-todo-text">' + esc(item.text) + "</span>" + ARROW +
+                "</button></li>";
+        }).join("");
+    }
+
+    function termOfDay() {
+        const term = safe(function () { return A.glossary.termOfDay(); }, null);
+        if (!term) return '<p class="pro-muted">' + esc(t("pro.none")) + "</p>";
+        return '<p class="pro-term-name">' + esc(term.term) + "</p>" +
+            '<p class="pro-term-text">' + esc(term.short || term.definition || "") + "</p>" +
+            '<button type="button" class="pro-link" data-pro-action="termday" data-term="' + esc(term.id) + '">' +
+                esc(t("pro.termOpen")) + ARROW + "</button>";
+    }
+
+    function card(id, titleKey, body, extraClass, meta) {
+        return '<section class="pro-card' + (extraClass ? " " + extraClass : "") + '" aria-labelledby="pro-card-' + id + '">' +
+                '<header class="pro-card-head">' +
+                    '<h3 class="pro-card-title" id="pro-card-' + id + '">' + esc(t(titleKey)) + "</h3>" +
+                    (meta ? '<span class="pro-card-meta">' + meta + "</span>" : "") +
+                "</header>" + body +
+            "</section>";
+    }
+
+    function buildDeck() {
+        if (!deck || terminal) return;
+        deck.innerHTML =
+            '<h2 class="pro-deck-title">' + esc(t("pro.deckTitle")) + "</h2>" +
+            '<div class="pro-deck-grid">' +
+                card("terminal", "pro.terminal",
+                    '<div class="pro-term-log" role="log" aria-live="polite" tabindex="0" data-ref="log"></div>' +
+                    '<form class="pro-term-form" data-ref="form" autocomplete="off">' +
+                        '<label class="pro-term-prompt" for="pro-term-input">ai@compass:~$</label>' +
+                        '<input class="pro-term-input" id="pro-term-input" type="text" spellcheck="false" autocapitalize="off" ' +
+                            'enterkeyhint="go" data-ref="input" aria-describedby="pro-term-hint">' +
+                    "</form>" +
+                    '<p class="pro-term-hint" id="pro-term-hint" data-ref="hint"></p>',
+                    "pro-card-terminal", '<span data-ref="termMeta"></span>') +
+                '<div class="pro-card-slot" data-ref="activity"></div>' +
+                '<div class="pro-card-slot" data-ref="tracks"></div>' +
+                '<div class="pro-card-slot" data-ref="today"></div>' +
+                '<div class="pro-card-slot" data-ref="term"></div>' +
+            "</div>";
+
+        const ref = function (name) { return deck.querySelector('[data-ref="' + name + '"]'); };
+        terminal = {
+            log: ref("log"),
+            form: ref("form"),
+            input: ref("input"),
+            hint: ref("hint"),
+            meta: ref("termMeta"),
+            slots: { activity: ref("activity"), tracks: ref("tracks"), today: ref("today"), term: ref("term") },
+            history: loadHistory(),
+            back: -1,
+            greeted: false
+        };
+
+        terminal.form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            const line = terminal.input.value.trim();
+            terminal.input.value = "";
+            terminal.back = -1;
+            if (!line) return;
+            remember(line);
+            print("$ " + line, "cmd");
+            run(line);
+        });
+
+        terminal.input.addEventListener("keydown", function (event) {
+            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+                const list = terminal.history;
+                if (!list.length) return;
+                event.preventDefault();
+                if (event.key === "ArrowUp") terminal.back = Math.min(list.length - 1, terminal.back + 1);
+                else terminal.back = Math.max(-1, terminal.back - 1);
+                terminal.input.value = terminal.back === -1 ? "" : list[list.length - 1 - terminal.back];
+            } else if (event.key === "Tab" && terminal.input.value.trim() && !event.shiftKey) {
+                const done = complete(terminal.input.value);
+                if (done) {
+                    event.preventDefault();
+                    terminal.input.value = done;
+                }
+            } else if (event.key === "l" && event.ctrlKey) {
+                event.preventDefault();
+                clearLog();
+            }
+        });
+    }
+
+    function drawDeck(n) {
+        if (!deck) return;
+        buildDeck();
+        const heat = heatmap();
+        terminal.slots.activity.innerHTML = card("activity", "pro.activity",
+            '<ol class="pro-heat" aria-label="' + esc(t("pro.activityLabel")) + '">' + heat.html + "</ol>" +
+            '<p class="pro-heat-legend"><span>' + esc(t("pro.heatLess")) + '</span><i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i><span>' + esc(t("pro.heatMore")) + "</span></p>",
+            "pro-card-activity", esc(t("pro.activityMeta", { days: num(heat.active), xp: num(heat.total) })));
+        terminal.slots.tracks.innerHTML = card("tracks", "pro.tracks", '<ul class="pro-tracks">' + trackBars(n) + "</ul>", "pro-card-tracks");
+        terminal.slots.today.innerHTML = card("today", "pro.today", '<ul class="pro-todos">' + todayList(n) + "</ul>", "pro-card-today");
+        terminal.slots.term.innerHTML = card("term", "pro.termDay", termOfDay(), "pro-card-term");
+
+        terminal.input.setAttribute("aria-label", t("pro.terminalLabel"));
+        terminal.input.setAttribute("placeholder", t("pro.terminalPlaceholder"));
+        A.dom.setText(terminal.hint, t("pro.terminalHint"));
+        A.dom.setText(terminal.meta, "UTF-8 · " + A.lang.toUpperCase());
+        if (!terminal.greeted) {
+            terminal.greeted = true;
+            print(t("pro.termWelcome"), "info");
+            print(t("pro.termWelcome2"), "dim");
+        }
+        A.dom.setHidden(deck, false);
+    }
+
+    /* =========================================================
+       5. THE TERMINAL'S COMMANDS
+       ========================================================= */
+    function loadHistory() {
+        const list = A.storage.get(HISTORY_KEY, []);
+        return Array.isArray(list) ? list.filter(function (item) { return typeof item === "string" && item.length < 200; }).slice(-HISTORY_MAX) : [];
+    }
+
+    function remember(line) {
+        const list = terminal.history;
+        if (list[list.length - 1] !== line) list.push(line);
+        while (list.length > HISTORY_MAX) list.shift();
+        A.storage.set(HISTORY_KEY, list);
+    }
+
+    function print(text, kind) {
+        const line = document.createElement("p");
+        line.className = "pro-term-line" + (kind ? " is-" + kind : "");
+        line.textContent = text;
+        terminal.log.appendChild(line);
+        while (terminal.log.childElementCount > LOG_MAX) terminal.log.firstElementChild.remove();
+        terminal.log.scrollTop = terminal.log.scrollHeight;
+    }
+
+    function clearLog() {
+        terminal.log.textContent = "";
+    }
+
+    // Every command: its names (English and Russian), what it takes, what it does
+    const COMMANDS = [
+        { names: ["help", "помощь", "?"], usage: "help", does: "pro.cmd.help", run: cmdHelp },
+        { names: ["go", "open", "открыть"], usage: "go <page>", does: "pro.cmd.go", run: cmdGo },
+        { names: ["lesson", "урок"], usage: "lesson <1-12>", does: "pro.cmd.lesson", run: cmdLesson },
+        { names: ["lab", "лаб"], usage: "lab [id]", does: "pro.cmd.lab", run: cmdLab },
+        { names: ["quiz", "тест"], usage: "quiz [classic|timed|daily|myth]", does: "pro.cmd.quiz", run: cmdQuiz },
+        { names: ["define", "def", "что"], usage: "define <word>", does: "pro.cmd.define", run: cmdDefine },
+        { names: ["search", "find", "поиск"], usage: "search", does: "pro.cmd.search", run: function () { if (A.palette) A.palette.open(); } },
+        { names: ["stats", "статистика"], usage: "stats", does: "pro.cmd.stats", run: cmdStats },
+        { names: ["theme", "тема"], usage: "theme [dark|light]", does: "pro.cmd.theme", run: cmdTheme },
+        { names: ["lang", "язык"], usage: "lang [en|ru]", does: "pro.cmd.lang", run: cmdLang },
+        { names: ["design", "дизайн"], usage: "design simple", does: "pro.cmd.design", run: cmdDesign },
+        { names: ["keys", "клавиши"], usage: "keys", does: "pro.cmd.keys", run: function () { if (A.settings) A.settings.shortcuts(); } },
+        { names: ["date", "time", "дата"], usage: "date", does: "pro.cmd.date", run: function () { print(new Date().toLocaleString(A.lang === "ru" ? "ru-RU" : "en-GB")); } },
+        { names: ["clear", "cls", "очистить"], usage: "clear", does: "pro.cmd.clear", run: clearLog }
+    ];
+
+    function findCommand(name) {
+        const wanted = name.toLowerCase();
+        return COMMANDS.find(function (command) { return command.names.indexOf(wanted) !== -1; }) || null;
+    }
+
+    function complete(text) {
+        const parts = text.replace(/^\s+/, "").split(/\s+/);
+        if (parts.length !== 1) return "";
+        const start = parts[0].toLowerCase();
+        const matches = [];
+        COMMANDS.forEach(function (command) {
+            command.names.forEach(function (name) {
+                if (name.indexOf(start) === 0 && name !== start) matches.push(name);
+            });
+        });
+        if (matches.length === 1) return matches[0] + " ";
+        if (matches.length > 1) print(matches.join("   "), "dim");
+        return "";
+    }
+
+    function run(line) {
+        const parts = line.split(/\s+/);
+        const command = findCommand(parts[0]);
+        if (!command) {
+            print(t("pro.term.unknown", { name: parts[0] }), "error");
+            return;
+        }
+        try {
+            command.run(parts.slice(1).join(" "));
+        } catch (error) {
+            print(t("pro.term.failed"), "error");
+        }
+    }
+
+    function cmdHelp() {
+        print(t("pro.term.helpTitle"), "info");
+        COMMANDS.forEach(function (command) {
+            print("  " + (command.usage + "                                ").slice(0, 34) + t(command.does));
+        });
+        print(t("pro.term.helpKeys"), "dim");
+    }
+
+    function findPage(name) {
+        const wanted = name.toLowerCase().trim();
+        return PAGES.find(function (page) { return page.id === wanted || page.names.indexOf(wanted) !== -1; }) || null;
+    }
+
+    function cmdGo(arg) {
+        const page = arg ? findPage(arg) : null;
+        if (!page) {
+            print(t("pro.term.pages", { list: PAGES.filter(function (p) { return pageReady(p.id); }).map(function (p) { return p.names[0]; }).join(", ") }), "dim");
+            return;
+        }
+        if (openPage(page.id)) print(t("pro.term.opened", { name: page.names[0] }), "ok");
+        else print(t("pro.term.notHere"), "error");
+    }
+
+    function cmdLesson(arg) {
+        const lessons = A.lessons;
+        const total = safe(function () { return lessons.count; }, 0);
+        const number = arg ? parseInt(arg, 10) : safe(function () { return lessons.next(); }, 1) || 1;
+        if (!(number >= 1 && number <= total)) {
+            print(t("pro.term.lessonRange", { n: num(total) }), "error");
+            return;
+        }
+        print(t("pro.term.lessonOpen", { n: num(number), title: safe(function () { return lessons.title(number); }, "") }), "ok");
+        lessons.open(number, terminal.input);
+    }
+
+    function cmdLab(arg) {
+        const list = safe(function () { return A.lab.list(); }, []);
+        if (!arg) {
+            const tried = labTried();
+            print(t("pro.term.labTitle"), "info");
+            list.forEach(function (entry) {
+                print("  " + (tried.indexOf(entry.id) !== -1 ? "✓ " : "· ") + (entry.id + "              ").slice(0, 14) + t(entry.titleKey));
+            });
+            print(t("pro.term.labHint"), "dim");
+            return;
+        }
+        const wanted = arg.toLowerCase();
+        const entry = list.find(function (item) { return item.id === wanted || t(item.titleKey).toLowerCase().indexOf(wanted) !== -1; });
+        if (!entry) {
+            print(t("pro.term.labUnknown", { name: arg }), "error");
+            return;
+        }
+        print(t("pro.term.labOpen", { title: t(entry.titleKey) }), "ok");
+        A.lab.open(entry.id);
+    }
+
+    function cmdQuiz(arg) {
+        const modes = ["classic", "timed", "daily", "myth"];
+        const mode = arg ? arg.toLowerCase() : "classic";
+        if (modes.indexOf(mode) === -1) {
+            print(t("pro.term.quizModes", { list: modes.join(", ") }), "error");
+            return;
+        }
+        print(t("pro.term.quizStart", { mode: mode }), "ok");
+        if (A.quiz) A.quiz.start(mode);
+    }
+
+    function cmdDefine(arg) {
+        if (!arg) {
+            print(t("pro.term.defineHow"), "dim");
+            return;
+        }
+        const term = safe(function () { return A.glossary.find(arg); }, null);
+        if (!term) {
+            print(t("pro.term.defineNone", { word: arg }), "error");
+            return;
+        }
+        print(term.term.toUpperCase(), "info");
+        print(term.short || term.definition || "");
+        print(t("pro.term.defineMore"), "dim");
+    }
+
+    function cmdStats() {
+        const n = numbers();
+        print(t("pro.statsLabel").toUpperCase(), "info");
+        print("  " + t("pro.lessons") + ": " + n.lessons.done + "/" + n.lessons.total);
+        print("  " + t("pro.lab") + ": " + n.lab.done + "/" + n.lab.total);
+        print("  " + t("pro.quiz") + ": " + (n.quiz ? n.quiz.score + "/" + n.quiz.total : t("pro.none")));
+        print("  " + t("pro.glossary") + ": " + n.terms.done + "/" + n.terms.total);
+        print("  " + t("pro.level") + ": " + (n.level === null ? t("pro.none") : n.level) + (n.xp === null ? "" : "  (" + t("pro.xp", { n: n.xp }) + ")"));
+        print("  " + t("pro.streak") + ": " + n.streak);
+    }
+
+    function cmdTheme(arg) {
+        const wanted = arg ? arg.toLowerCase() : (A.theme === "light" ? "dark" : "light");
+        if (wanted !== "dark" && wanted !== "light") {
+            print("theme dark | theme light", "error");
+            return;
+        }
+        A.setTheme(wanted);
+        print(t("pro.term.done"), "ok");
+    }
+
+    function cmdLang(arg) {
+        const wanted = arg ? arg.toLowerCase() : (A.lang === "ru" ? "en" : "ru");
+        if (wanted !== "en" && wanted !== "ru") {
+            print("lang en | lang ru", "error");
+            return;
+        }
+        A.setLanguage(wanted);
+        print(t("pro.term.done"), "ok");
+    }
+
+    function cmdDesign(arg) {
+        const wanted = arg ? arg.toLowerCase() : "simple";
+        if (wanted !== "simple" && wanted !== "pro") {
+            print("design simple | design pro", "error");
+            return;
+        }
+        if (A.settings) A.settings.set("design", wanted);
+    }
+
+    /* =========================================================
+       6. THE STATUS BAR (bottom of the screen, wide screens)
+       ========================================================= */
+    function pageName() {
+        const current = document.querySelector("main > section.page-current");
+        const id = current ? current.id : "home";
+        const page = PAGES.find(function (p) { return p.id === id; });
+        const keys = { home: "cmd.home", lessons: "nav.lessons", lab: "nav.lab", quiz: "nav.quiz", challenge: "nav.challenge", glossary: "nav.glossary", timeline: "nav.timeline", teachers: "nav.teachers", about: "nav.about" };
+        return keys[id] ? t(keys[id]) : page ? page.names[0] : id;
+    }
+
+    function drawStatus(n) {
+        if (!statusBar) return;
+        const mod = A.isMac ? "⌘K" : "Ctrl+K";
+        const online = navigator.onLine !== false;
+        statusBar.innerHTML =
+            '<span class="pro-status-item pro-status-brand"><span class="pro-pulse" aria-hidden="true"></span>AI COMPASS · PRO</span>' +
+            '<span class="pro-status-item">' + esc(t("pro.statusPage")) + " <b>" + esc(pageName()) + "</b></span>" +
+            '<span class="pro-status-item">' + esc(online ? t("pro.statusOnline") : t("pro.statusOffline")) + "</span>" +
+            '<span class="pro-status-item">' + esc(A.lang.toUpperCase()) + " · " + esc(t(A.theme === "light" ? "settings.themeLight" : "settings.themeDark")) + "</span>" +
+            '<span class="pro-status-spacer"></span>' +
+            '<span class="pro-status-item">' + esc(t("pro.level")) + " <b>" + (n.level === null ? "—" : num(n.level)) + "</b>" +
+                (n.xp === null ? "" : " · " + esc(t("pro.xp", { n: num(n.xp) }))) + "</span>" +
+            '<span class="pro-status-item">🔥 <b>' + num(n.streak) + "</b></span>" +
+            '<span class="pro-status-item pro-status-keys"><kbd>' + esc(mod) + "</kbd> " + esc(t("pro.statusSearch")) + " <kbd>?</kbd> " + esc(t("pro.statusKeys")) + " <kbd>g</kbd> " + esc(t("pro.statusJump")) + "</span>";
+        A.dom.setHidden(statusBar, false);
+    }
+
+    /* =========================================================
+       7. "G THEN A LETTER": JUMPING TO A PAGE WITH THE KEYBOARD
+       Pro design only. "g", then within a second: h home, l lessons,
+       a lab, q quiz, c challenge, g glossary, t history, e teachers,
+       i about. "`" (the key left of 1) goes to the terminal.
+       ========================================================= */
+    let jumpUntil = 0;
+
+    document.addEventListener("keydown", function (event) {
+        if (!isPro() || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+        if (A.dom.isTyping(event.target) || A.overlays.hasModal()) return;
+        const key = event.key.toLowerCase();
+        if (Date.now() < jumpUntil) {
+            jumpUntil = 0;
+            const page = PAGES.find(function (p) { return p.key === key; });
+            if (page && openPage(page.id)) event.preventDefault();
+            return;
+        }
+        if (key === "g" && !event.shiftKey) {
+            jumpUntil = Date.now() + JUMP_MS;
+            return;
+        }
+        if (event.key === "`") {
+            event.preventDefault();
+            focusTerminal();
+        }
+    });
+
+    function focusTerminal() {
+        openPage("home");
+        refresh();
+        if (!terminal) return;
+        requestAnimationFrame(function () {
+            terminal.input.scrollIntoView({ block: "center", behavior: A.motion.ok() ? "smooth" : "auto" });
+            terminal.input.focus({ preventScroll: true });
+        });
+    }
+
+    /* =========================================================
+       8. KEEPING EVERYTHING UP TO DATE
+       ========================================================= */
+    function hideAll() {
+        [panel, deck, statusBar].forEach(function (element) {
+            if (element) A.dom.setHidden(element, true);
+        });
+    }
+
+    let waiting = false;
     function refresh() {
-        if (isPro()) draw();
-        else if (built) A.dom.setHidden(mount, true);
+        if (!isPro()) {
+            hideAll();
+            return;
+        }
+        const n = numbers();
+        drawPanel(n);
+        drawDeck(n);
+        drawStatus(n);
     }
 
-    mount.addEventListener("click", function (event) {
+    // Many changes can come at once (a lesson finished gives XP, a badge...): drawn once per frame
+    function later() {
+        if (waiting) return;
+        waiting = true;
+        requestAnimationFrame(function () {
+            waiting = false;
+            refresh();
+        });
+    }
+
+    if (panel) {
+        panel.addEventListener("click", onAction);
+    }
+    if (deck) deck.addEventListener("click", onAction);
+
+    function onAction(event) {
         const button = event.target.closest("[data-pro-action]");
         if (!button) return;
         const name = button.getAttribute("data-pro-action");
@@ -158,12 +703,16 @@
             if (A.palette) A.palette.open();
         } else if (name === "keys") {
             if (A.settings) A.settings.shortcuts();
+        } else if (name === "terminal") {
+            focusTerminal();
         } else if (name === "daily") {
             if (A.quiz) A.quiz.start("daily");
-        } else if (name === "term") {
-            const term = safe(function () { return A.glossary.random(); }, null);
-            if (term) A.glossary.show(term.id, { focus: true });
+        } else if (name === "cards") {
+            if (A.glossary && typeof A.glossary.study === "function") A.glossary.study();
             else A.navigate("glossary");
+        } else if (name === "termday") {
+            const id = button.getAttribute("data-term");
+            if (A.glossary && id) A.glossary.show(id, { focus: true });
         } else if (name === "compass") {
             if (A.journey) A.journey.open();
         } else if (name === "simple") {
@@ -172,15 +721,24 @@
                 A.toast(t("settings.saidValue", { setting: t("settings.design"), value: t("settings.designSimple") }), "🌱");
             }
         }
-    });
+    }
 
-    // The progress changes; the texts change with the language; the design can be switched
-    A.on("activity", refresh);
+    A.on("activity", later);
+    A.on("section", later);
     A.on("settings", function (detail) {
-        if (detail && (detail.name === "design" || detail.name === "theme")) refresh();
+        if (detail && (detail.name === "design" || detail.name === "theme")) later();
     });
-    A.onLanguageChange(refresh);
-    A.onThemeChange(refresh);
-    window.addEventListener("hashchange", refresh);
+    A.onLanguageChange(function () {
+        if (terminal) {
+            // The welcome lines are written again in the new language
+            clearLog();
+            terminal.greeted = false;
+        }
+        later();
+    });
+    A.onThemeChange(later);
+    window.addEventListener("hashchange", later);
+    window.addEventListener("online", later);
+    window.addEventListener("offline", later);
     A.ready(refresh);
 })();
