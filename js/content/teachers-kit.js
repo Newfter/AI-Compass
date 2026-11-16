@@ -8,8 +8,9 @@
      and team scores.
    js/teachers-kit.js loads this file with the kit, the first time a
    teacher opens something. The plans and worksheets themselves are in
-   js/content/teachers-basics.js (lessons 1-6) and
-   js/content/teachers-deep.js (lessons 7-12).
+   js/content/teachers-basics.js (lessons 1-6),
+   js/content/teachers-deep.js (lessons 7-12) and
+   js/content/teachers-world.js (lessons 13-15).
 
    Russian: like the plans, the teacher's side is written impersonally
    ("Нужно выбрать..."); what students read on paper or on the

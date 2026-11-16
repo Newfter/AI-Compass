@@ -106,7 +106,8 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/teachers.js` | The texts of the "For teachers" section. |
 | `js/content/teachers-kit.js` | The texts of the teacher kit's window and of the classroom quiz. Loaded with the kit. |
 | `js/content/teachers-basics.js` | The lesson plans and worksheets of lessons 1-6, in both languages. Its header explains every part of a plan and every kind of task. Loaded the first time a teacher opens one of them. |
-| `js/content/teachers-deep.js` | The same for the "Deep dive" lessons (7 and on). |
+| `js/content/teachers-deep.js` | The same for the "Deep dive" lessons (7-12). |
+| `js/content/teachers-world.js` | The same for the "AI in your world" lessons (13 and on). |
 | `sw.js` | The service worker: the copy of the site that works without a connection. You never need to change it when you edit the site. |
 | `manifest.webmanifest` | The app's name, colours and icons, used when the site is installed as an app. |
 | `404.html` | The page GitHub Pages shows for an address that doesn't exist, however deep, in both languages. |
@@ -319,14 +320,14 @@ The lessons come in tracks: "Basics" (lessons 1-6), "Deep dive" (7-12) and "AI i
 
 ```js
         {
-            number: 13, track: "deep", icon: "🗨️", level: "beginner", minutes: 3, rgb: "--accent-2-rgb",
+            number: 16, track: "world", icon: "🗨️", level: "beginner", minutes: 3, rgb: "--accent-2-rgb",
             sections: 2, notes: { 2: "tip" }, lab: "words", correct: 1,
             tryIt: "lab", tryIcon: "🔮",
             keywords: "prompt prompting ask chatbot questions промпт запрос чат-бот вопросы"
         }
 ```
 
-- `number`: the next number. `track`: the track it belongs to (`"basics"` or `"deep"`, the ids in `TRACKS` just above). `icon`: the emoji on the card. `minutes`: the reading time on the card.
+- `number`: the next number. `track`: the track it belongs to (`"basics"`, `"deep"` or `"world"`, the ids in `TRACKS` just above). `icon`: the emoji on the card. `minutes`: the reading time on the card.
 - `level`: `"beginner"` or `"intermediate"`.
 - `rgb`: the lesson's colour: `"--accent-rgb"` (violet), `"--accent-2-rgb"` (cyan) or `"--accent-3-rgb"` (pink).
 - `sections`: how many parts the text has (`s1`, `s2`, ...).
@@ -339,28 +340,28 @@ The lessons come in tracks: "Basics" (lessons 1-6), "Deep dive" (7-12) and "AI i
 **2. The texts.** In `js/content/lessons-world.js`, copy the block of lesson 13 to the end of the file and change `l13` to `l16` and `w13` to `w16`. Every key starts with `lessons.l16.` (the lesson) or `lessons.w16.` (its mini-lab). Each part needs `.h` (title) and `.p` (text), each box needs `.note`, and there are always three key ideas, a tip and three answers:
 
 ```js
-// Lesson 13 — Talking to AI (an example made up for this guide)
+// Lesson 16 — Talking to AI (an example made up for this guide)
 window.AICompass.addTranslations({
     en: {
-        "lessons.l13.title": "Talking to AI",
-        "lessons.l13.desc": "How to ask a chatbot good questions — and check its answers.",
-        "lessons.l13.s1.h": "Say what you need",
-        "lessons.l13.s1.p": "A chatbot only knows what you type. Say what you need, who it is for and how long the answer should be: <em>“Explain photosynthesis to a 14-year-old in five sentences”</em> works much better than <em>“photosynthesis”</em>.",
-        "lessons.l13.s2.h": "Check before you trust",
-        "lessons.l13.s2.p": "Chatbots can sound sure and still be wrong. A <strong data-term='hallucination'>hallucination</strong> looks just like a true answer. Compare important answers with a textbook or a trusted website, and never type in passwords or private details.",
-        "lessons.l13.s2.note": "If an answer matters (homework, health, money), check it in a second place.",
-        "lessons.l13.key1": "A clear, detailed question gets a more useful answer.",
-        "lessons.l13.key2": "Chatbots can be confidently wrong: check what matters.",
-        "lessons.l13.key3": "Never share passwords or private details with a chatbot.",
-        "lessons.l13.tip": "See how a language model picks its next word, live in the AI Lab.",
-        "lessons.l13.tipBtn": "Open the AI Lab",
-        "lessons.l13.q": "Which question will probably get the most useful answer?",
-        "lessons.l13.a1": "“Volcanoes”",
-        "lessons.l13.a2": "“Explain in five sentences, for a 14-year-old, why volcanoes erupt”",
-        "lessons.l13.a3": "“Tell me everything you know”",
-        "lessons.l13.explain": "The second question says what you need, who it is for and how long the answer should be. The first is too short to know what you want, and the third is far too wide.",
-        "lessons.w13.title": "Be the language model",
-        "lessons.w13.intro": "A chatbot writes one word at a time. Pick the next word yourself and see how the “temperature” changes the choice."
+        "lessons.l16.title": "Talking to AI",
+        "lessons.l16.desc": "How to ask a chatbot good questions — and check its answers.",
+        "lessons.l16.s1.h": "Say what you need",
+        "lessons.l16.s1.p": "A chatbot only knows what you type. Say what you need, who it is for and how long the answer should be: <em>“Explain photosynthesis to a 14-year-old in five sentences”</em> works much better than <em>“photosynthesis”</em>.",
+        "lessons.l16.s2.h": "Check before you trust",
+        "lessons.l16.s2.p": "Chatbots can sound sure and still be wrong. A <strong data-term='hallucination'>hallucination</strong> looks just like a true answer. Compare important answers with a textbook or a trusted website, and never type in passwords or private details.",
+        "lessons.l16.s2.note": "If an answer matters (homework, health, money), check it in a second place.",
+        "lessons.l16.key1": "A clear, detailed question gets a more useful answer.",
+        "lessons.l16.key2": "Chatbots can be confidently wrong: check what matters.",
+        "lessons.l16.key3": "Never share passwords or private details with a chatbot.",
+        "lessons.l16.tip": "See how a language model picks its next word, live in the AI Lab.",
+        "lessons.l16.tipBtn": "Open the AI Lab",
+        "lessons.l16.q": "Which question will probably get the most useful answer?",
+        "lessons.l16.a1": "“Volcanoes”",
+        "lessons.l16.a2": "“Explain in five sentences, for a 14-year-old, why volcanoes erupt”",
+        "lessons.l16.a3": "“Tell me everything you know”",
+        "lessons.l16.explain": "The second question says what you need, who it is for and how long the answer should be. The first is too short to know what you want, and the third is far too wide.",
+        "lessons.w16.title": "Be the language model",
+        "lessons.w16.intro": "A chatbot writes one word at a time. Pick the next word yourself and see how the “temperature” changes the choice."
     },
     ru: {
         // the same keys, in Russian (see below)
@@ -375,25 +376,25 @@ window.AICompass.addTranslations({
 
 ```js
     ru: {
-        "lessons.l13.title": "Как говорить с ИИ",
-        "lessons.l13.desc": "Как задавать чат-боту хорошие вопросы — и проверять его ответы.",
-        "lessons.l13.s1.h": "Скажи, что тебе нужно",
-        "lessons.l13.s1.p": "Чат-бот знает только то, что ты напишешь. Скажи, что тебе нужно, для кого и какой длины должен быть ответ: <em>«Объясни фотосинтез четырнадцатилетнему в пяти предложениях»</em> работает гораздо лучше, чем просто <em>«фотосинтез»</em>.",
-        "lessons.l13.s2.h": "Проверяй, прежде чем верить",
-        "lessons.l13.s2.p": "Чат-бот может говорить уверенно и всё равно ошибаться. <strong data-term='hallucination'>Галлюцинация</strong> выглядит точно так же, как верный ответ. Сверяй важные ответы с учебником или надёжным сайтом и никогда не вводи пароли и личные данные.",
-        "lessons.l13.s2.note": "Если ответ важен (домашка, здоровье, деньги), проверь его ещё в одном месте.",
-        "lessons.l13.key1": "На понятный подробный вопрос ты получишь более полезный ответ.",
-        "lessons.l13.key2": "Чат-бот может уверенно ошибаться: проверяй то, что важно.",
-        "lessons.l13.key3": "Никогда не сообщай чат-боту пароли и личные данные.",
-        "lessons.l13.tip": "Посмотри в ИИ-лаборатории, как языковая модель выбирает следующее слово.",
-        "lessons.l13.tipBtn": "Открыть ИИ-лабораторию",
-        "lessons.l13.q": "На какой вопрос ты, скорее всего, получишь самый полезный ответ?",
-        "lessons.l13.a1": "«Вулканы»",
-        "lessons.l13.a2": "«Объясни в пяти предложениях для четырнадцатилетнего, почему извергаются вулканы»",
-        "lessons.l13.a3": "«Расскажи всё, что знаешь»",
-        "lessons.l13.explain": "Во втором вопросе сказано, что нужно, для кого и какой длины должен быть ответ. Первый слишком короткий, чтобы понять, чего ты хочешь, а третий слишком широкий.",
-        "lessons.w13.title": "Побудь языковой моделью",
-        "lessons.w13.intro": "Чат-бот пишет по одному слову. Выбери следующее слово сам и посмотри, как «температура» меняет выбор."
+        "lessons.l16.title": "Как говорить с ИИ",
+        "lessons.l16.desc": "Как задавать чат-боту хорошие вопросы — и проверять его ответы.",
+        "lessons.l16.s1.h": "Скажи, что тебе нужно",
+        "lessons.l16.s1.p": "Чат-бот знает только то, что ты напишешь. Скажи, что тебе нужно, для кого и какой длины должен быть ответ: <em>«Объясни фотосинтез четырнадцатилетнему в пяти предложениях»</em> работает гораздо лучше, чем просто <em>«фотосинтез»</em>.",
+        "lessons.l16.s2.h": "Проверяй, прежде чем верить",
+        "lessons.l16.s2.p": "Чат-бот может говорить уверенно и всё равно ошибаться. <strong data-term='hallucination'>Галлюцинация</strong> выглядит точно так же, как верный ответ. Сверяй важные ответы с учебником или надёжным сайтом и никогда не вводи пароли и личные данные.",
+        "lessons.l16.s2.note": "Если ответ важен (домашка, здоровье, деньги), проверь его ещё в одном месте.",
+        "lessons.l16.key1": "На понятный подробный вопрос ты получишь более полезный ответ.",
+        "lessons.l16.key2": "Чат-бот может уверенно ошибаться: проверяй то, что важно.",
+        "lessons.l16.key3": "Никогда не сообщай чат-боту пароли и личные данные.",
+        "lessons.l16.tip": "Посмотри в ИИ-лаборатории, как языковая модель выбирает следующее слово.",
+        "lessons.l16.tipBtn": "Открыть ИИ-лабораторию",
+        "lessons.l16.q": "На какой вопрос ты, скорее всего, получишь самый полезный ответ?",
+        "lessons.l16.a1": "«Вулканы»",
+        "lessons.l16.a2": "«Объясни в пяти предложениях для четырнадцатилетнего, почему извергаются вулканы»",
+        "lessons.l16.a3": "«Расскажи всё, что знаешь»",
+        "lessons.l16.explain": "Во втором вопросе сказано, что нужно, для кого и какой длины должен быть ответ. Первый слишком короткий, чтобы понять, чего ты хочешь, а третий слишком широкий.",
+        "lessons.w16.title": "Побудь языковой моделью",
+        "lessons.w16.intro": "Чат-бот пишет по одному слову. Выбери следующее слово сам и посмотри, как «температура» меняет выбор."
     }
 ```
 
@@ -410,10 +411,10 @@ window.AICompass.addTranslations({
     A.lessons.defineLab("<name>", {
         // Draws the lab inside host (an empty <div>). Runs when the lesson opens, and again after a language change.
         build: function (host, api) {
-            host.innerHTML = '<button type="button" class="btn btn-primary btn-small" data-fid="w13-go">' + api.text("go") + "</button>";
+            host.innerHTML = '<button type="button" class="btn btn-primary btn-small" data-fid="w16-go">' + api.text("go") + "</button>";
             host.querySelector("button").addEventListener("click", function () {
                 api.state.clicks = (api.state.clicks || 0) + 1;   // api.state survives closing the reader
-                api.announce(api.plural("clicked", api.state.clicks));   // "lessons.w13.clicked.one" / ".many"
+                api.announce(api.plural("clicked", api.state.clicks));   // "lessons.w16.clicked.one" / ".many"
             });
         },
         destroy: function (host) { /* optional: stop timers */ },
@@ -426,11 +427,11 @@ The whole contract (what `api` has, and the rules: listeners only inside `host`,
 
 **4. Search engines.** In `index.html`, add the lesson to `"syllabusSections"` in the JSON-LD at the end of `<head>` (its number, its English title and description, and its reading time, `"PT3M"` for 3 minutes), and add its minutes to `"courseWorkload"`. This is the only list of lessons that doesn't count itself: search engines read it without running any script.
 
-**5. Its lesson plan and worksheet.** The "For teachers" section gives every lesson a lesson plan, a worksheet and an answer key. In `js/content/teachers-deep.js`, copy the block of lesson 7 (`7: { ... }`) to the end of the list, change `7` to `13`, and write the plan and the tasks of the new lesson in both parts, `en` and `ru` (see [Change a lesson plan or a worksheet](#change-a-lesson-plan-or-a-worksheet)). Its `exit` and `quiz` name questions of the quiz by their id: add the lesson's quiz questions first. Without a plan, the lesson's buttons in "For teachers" open a window that says the lesson plans didn't load.
+**5. Its lesson plan and worksheet.** The "For teachers" section gives every lesson a lesson plan, a worksheet and an answer key. The plans are in one file per track (`teachers-basics.js`, `teachers-deep.js`, `teachers-world.js`). In `js/content/teachers-world.js`, copy the block of lesson 13 (`13: { ... }`) to the end of the list, change `13` to `16`, and write the plan and the tasks of the new lesson in both parts, `en` and `ru` (see [Change a lesson plan or a worksheet](#change-a-lesson-plan-or-a-worksheet)). Its `exit` and `quiz` name questions of the quiz by their id: add the lesson's quiz questions first. Without a plan, the lesson's buttons in "For teachers" open a window that says the lesson plans didn't load.
 
-That's all: the track's cards, the lesson map, the counts ("0 of 7 done"), the hero number, the section subtitle, the certificates, the Ctrl+K command and the site search follow the list by themselves. (Numbers in texts come from the data: the subtitle says "13 short lessons"; to spell a number out, add an exact key such as `"lessons.subtitle.13"`, in both languages.)
+That's all: the track's cards, the lesson map, the counts ("0 of 4 done"), the hero number, the section subtitle, the certificates, the Ctrl+K command and the site search follow the list by themselves. (Numbers in texts come from the data: the subtitle says "16 short lessons"; to spell a number out, add an exact key such as `"lessons.subtitle.16"`, in both languages. The certificate of the whole course spells its number out: add `"lessons.cert.count.16"`, "sixteen", next to `"lessons.cert.count.15"` in `js/content/lessons.js`.)
 
-**Check:** there are 13 cards (7 in "Deep dive") and the hero says 13; open the lesson (click its card, or go to `http://localhost:8000/#lesson-13`) and look at every part, the box, the glossary word, the mini-lab, the three key ideas and the three answers; pick the right answer (it says "Correct!" and the panel counts 1 more); try the "Try it" button; press Ctrl+K and type the lesson's title. Do it again in Russian, and once on a phone (the "Deep dive" cards fold away there until you open one).
+**Check:** there are 16 cards (4 in "AI in your world") and the hero says 16; open the lesson (click its card, or go to `http://localhost:8000/#lesson-16`) and look at every part, the box, the glossary word, the mini-lab, the three key ideas and the three answers; pick the right answer (it says "Correct!" and the panel counts 1 more); try the "Try it" button; press Ctrl+K and type the lesson's title. Do it again in Russian, and once on a phone (the cards of every track after "Basics" fold away there until you open one).
 
 ### Add a quiz question
 
@@ -483,7 +484,7 @@ The `ranks` at the bottom are shares of right answers (`0.65` = 65 %), so they w
 
 ### Change a lesson plan or a worksheet
 
-**Files:** `js/content/teachers-basics.js` (lessons 1-6) and `js/content/teachers-deep.js` (7 and on). Each lesson has one block, with an English part (`en`) and a Russian part (`ru`). The header of `js/content/teachers-basics.js` explains every part of a plan and every kind of task.
+**Files:** `js/content/teachers-basics.js` (lessons 1-6), `js/content/teachers-deep.js` (7-12) and `js/content/teachers-world.js` (13 and on). Each lesson has one block, with an English part (`en`) and a Russian part (`ru`). The header of `js/content/teachers-basics.js` explains every part of a plan and every kind of task.
 
 Change the text in both parts. They must keep the same shape: the same tasks in the same order, and the same number of items in each list, of pairs in a "match" task, of rows in a table and of gaps in [brackets]. A gap's answer goes between the brackets: the worksheet shows an empty line there, and the answer key shows the answer.
 

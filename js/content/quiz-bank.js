@@ -932,7 +932,8 @@ window.AICompass.addTranslations({
         "quiz.q63.o1": "It overfitted: it memorised details of the training data instead of the general rule",
         "quiz.q63.o2": "The new data was too easy for it",
         "quiz.q63.o3": "It needs to be trained even longer on the same data",
-        "quiz.q63.explain": "Doing great on practice and much worse on the real test is overfitting. Training even longer on the same data usually makes it worse. Easy new data would have given a higher score, not a lower one.",
+        "quiz.q63.o4": "The computer it ran on was too slow",
+        "quiz.q63.explain": "Doing great on practice and much worse on the real test is overfitting. Training even longer on the same data usually makes it worse. Easy new data would have given a higher score, not a lower one, and a slow computer changes how long the work takes, not the score.",
 
         "quiz.q64.text": "A model can learn a shortcut that happens to be in its data, like “a ruler in the photo means a worrying spot”.",
         "quiz.q64.explain": "True. Researchers found exactly this in a skin-cancer model: doctors often photograph worrying spots next to a ruler, so the model partly learned the ruler. That's why people check what a model really pays attention to."
@@ -956,7 +957,8 @@ window.AICompass.addTranslations({
         "quiz.q63.o1": "Она переобучилась: запомнила подробности обучающих данных вместо общего правила",
         "quiz.q63.o2": "Новые данные оказались для неё слишком лёгкими",
         "quiz.q63.o3": "Её нужно ещё дольше обучать на тех же данных",
-        "quiz.q63.explain": "Отлично на тренировке и гораздо хуже на настоящей проверке — это переобучение. Ещё более долгое обучение на тех же данных обычно делает только хуже. А лёгкие новые данные дали бы результат выше, а не ниже.",
+        "quiz.q63.o4": "Компьютер, на котором она работала, был слишком медленным",
+        "quiz.q63.explain": "Отлично на тренировке и гораздо хуже на настоящей проверке — это переобучение. Ещё более долгое обучение на тех же данных обычно делает только хуже. А лёгкие новые данные дали бы результат выше, а не ниже, и медленный компьютер меняет время работы, а не результат.",
 
         "quiz.q64.text": "Модель может выучить обходной признак, который случайно есть в данных, например «линейка на фото значит тревожное пятно».",
         "quiz.q64.explain": "Верно. Исследователи нашли именно это в модели для поиска рака кожи: врачи часто фотографируют тревожные пятна рядом с линейкой, и модель отчасти выучила линейку. Поэтому люди проверяют, на что модель действительно обращает внимание."
@@ -1038,6 +1040,7 @@ window.AICompass.addTranslations({
         "quiz.q71.o1": "Accuracy alone can hide that a model is useless for what matters",
         "quiz.q71.o2": "The model is excellent and ready to share",
         "quiz.q71.o3": "Sick leaves don't matter because they are rare",
+        "quiz.q71.o4": "Always giving the same answer is the safest way to build a model",
         "quiz.q71.explain": "The model never finds a single sick leaf, which is the whole point of the app. Looking at which mistakes it makes (here, every sick leaf missed) tells you far more than one score.",
 
         "quiz.q72.text": "An honest AI app should tell its users that it can be wrong, and what to do when it might be.",
@@ -1062,6 +1065,7 @@ window.AICompass.addTranslations({
         "quiz.q71.o1": "Одна точность может скрыть, что модель бесполезна для самого важного",
         "quiz.q71.o2": "Модель отличная и готова для всех",
         "quiz.q71.o3": "Больные листья не важны, потому что их мало",
+        "quiz.q71.o4": "Всегда давать один и тот же ответ — самый надёжный способ сделать модель",
         "quiz.q71.explain": "Модель не находит ни одного больного листа, а ради этого приложение и делают. Посмотреть, какие ошибки она совершает (здесь — пропускает каждый больной лист), гораздо полезнее одного числа.",
 
         "quiz.q72.text": "Честное ИИ-приложение должно говорить пользователям, что может ошибаться, и что делать в таком случае.",
