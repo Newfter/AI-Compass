@@ -1,7 +1,8 @@
 /* =========================================================
    AI COMPASS — TEXTS: LESSON PLANS AND WORKSHEETS, LESSONS 1-6
    The teacher kit's plans and worksheets for the "Basics" track, in
-   English and in Russian. Lessons 7-12 are in js/content/teachers-deep.js.
+   English and in Russian. Lessons 7-12 are in js/content/teachers-deep.js,
+   lessons 13-15 in js/content/teachers-world.js.
    This file is big, so js/teachers-kit.js loads it only when a teacher
    opens a plan or a worksheet.
 

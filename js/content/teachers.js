@@ -5,11 +5,12 @@
    bottom). Used by js/teachers.js, which is loaded with the page.
 
    The teacher kit itself (the windows with the plans, the worksheets
-   and the classroom quiz) has its texts in three more files, loaded
+   and the classroom quiz) has its texts in four more files, loaded
    only when a teacher opens something:
        js/content/teachers-kit.js     the kit's buttons, headings and messages
        js/content/teachers-basics.js  the plans and worksheets of lessons 1-6
        js/content/teachers-deep.js    the plans and worksheets of lessons 7-12
+       js/content/teachers-world.js   the plans and worksheets of lessons 13-15
 
    Russian: the texts for teachers are written in the usual style of
    Russian lesson plans (no "ты" or "вы": "Ученики читают...",

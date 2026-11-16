@@ -910,3 +910,185 @@ window.AICompass.addTranslations({
         "quiz.m20.explain": "Исследования ИИ начались в 1950-х, а ChatGPT вышел в ноябре 2022 года — больше чем через 65 лет."
     }
 });
+
+// ----- Lesson 13: Data: the fuel of AI -----
+window.AICompass.addTranslations({
+    en: {
+        "quiz.q61.text": "Why do data scientists put some examples aside as a “test set” before training?",
+        "quiz.q61.o1": "To check the model fairly on examples it has never learned from",
+        "quiz.q61.o2": "To make training faster by using less data",
+        "quiz.q61.o3": "To keep the hardest examples away from the model",
+        "quiz.q61.o4": "Because computers can only learn from a small amount of data",
+        "quiz.q61.explain": "A model can memorise its training examples, so testing on them says little. A test set it never saw shows how it will do on new, real examples. Speed isn't the point, and the test set should be ordinary examples, not only the hard ones.",
+
+        "quiz.q62.text": "A class survey says one student is 150 years old. What should happen before a model is trained on it?",
+        "quiz.q62.o1": "The value should be checked and fixed or removed: it's almost certainly a mistake",
+        "quiz.q62.o2": "Nothing: a model can tell by itself that it's a mistake",
+        "quiz.q62.o3": "The whole survey should be thrown away",
+        "quiz.q62.o4": "All the ages should be changed to 150 to make them consistent",
+        "quiz.q62.explain": "A model can't tell a mistake from a fact: it learns from both. Cleaning the data (fixing or removing impossible values) comes first. One bad value doesn't spoil the whole survey.",
+
+        "quiz.q63.text": "A model scores 99% on its training data but only 60% on new data. What most likely happened?",
+        "quiz.q63.o1": "It overfitted: it memorised details of the training data instead of the general rule",
+        "quiz.q63.o2": "The new data was too easy for it",
+        "quiz.q63.o3": "It needs to be trained even longer on the same data",
+        "quiz.q63.o4": "The computer it ran on was too slow",
+        "quiz.q63.explain": "Doing great on practice and much worse on the real test is overfitting. Training even longer on the same data usually makes it worse. Easy new data would have given a higher score, not a lower one, and a slow computer changes how long the work takes, not the score.",
+
+        "quiz.q64.text": "A model can learn a shortcut that happens to be in its data, like “a ruler in the photo means a worrying spot”.",
+        "quiz.q64.explain": "True. Researchers found exactly this in a skin-cancer model: doctors often photograph worrying spots next to a ruler, so the model partly learned the ruler. That's why people check what a model really pays attention to."
+    },
+    ru: {
+        "quiz.q61.text": "Зачем специалисты по данным откладывают часть примеров в «проверочный набор» до обучения?",
+        "quiz.q61.o1": "Чтобы честно проверить модель на примерах, на которых она не училась",
+        "quiz.q61.o2": "Чтобы обучение шло быстрее на меньшем количестве данных",
+        "quiz.q61.o3": "Чтобы спрятать от модели самые трудные примеры",
+        "quiz.q61.o4": "Потому что компьютер может учиться только на небольшом количестве данных",
+        "quiz.q61.explain": "Модель может запомнить обучающие примеры, поэтому проверка на них мало что значит. Проверочный набор, которого она не видела, показывает, как она справится с новыми, настоящими примерами. Дело не в скорости, и в проверочном наборе должны быть обычные примеры, а не только трудные.",
+
+        "quiz.q62.text": "В школьном опросе одному ученику 150 лет. Что нужно сделать, прежде чем обучать на этом модель?",
+        "quiz.q62.o1": "Проверить значение и исправить или убрать его: это почти наверняка ошибка",
+        "quiz.q62.o2": "Ничего: модель сама поймёт, что это ошибка",
+        "quiz.q62.o3": "Выбросить весь опрос",
+        "quiz.q62.o4": "Поменять всем возраст на 150, чтобы данные были одинаковыми",
+        "quiz.q62.explain": "Модель не отличает ошибку от факта: она учится на том и другом. Сначала данные очищают — исправляют или убирают невозможные значения. Одно плохое значение не портит весь опрос.",
+
+        "quiz.q63.text": "Модель угадывает 99% обучающих данных, но только 60% новых. Что скорее всего произошло?",
+        "quiz.q63.o1": "Она переобучилась: запомнила подробности обучающих данных вместо общего правила",
+        "quiz.q63.o2": "Новые данные оказались для неё слишком лёгкими",
+        "quiz.q63.o3": "Её нужно ещё дольше обучать на тех же данных",
+        "quiz.q63.o4": "Компьютер, на котором она работала, был слишком медленным",
+        "quiz.q63.explain": "Отлично на тренировке и гораздо хуже на настоящей проверке — это переобучение. Ещё более долгое обучение на тех же данных обычно делает только хуже. А лёгкие новые данные дали бы результат выше, а не ниже, и медленный компьютер меняет время работы, а не результат.",
+
+        "quiz.q64.text": "Модель может выучить обходной признак, который случайно есть в данных, например «линейка на фото значит тревожное пятно».",
+        "quiz.q64.explain": "Верно. Исследователи нашли именно это в модели для поиска рака кожи: врачи часто фотографируют тревожные пятна рядом с линейкой, и модель отчасти выучила линейку. Поэтому люди проверяют, на что модель действительно обращает внимание."
+    }
+});
+
+// ----- Lesson 14: How apps choose for you -----
+window.AICompass.addTranslations({
+    en: {
+        "quiz.q65.text": "A music app suggests a song because people with listening history like yours loved it. What is this idea called?",
+        "quiz.q65.o1": "Collaborative filtering",
+        "quiz.q65.o2": "A Turing test",
+        "quiz.q65.o3": "Gradient descent",
+        "quiz.q65.o4": "Data cleaning",
+        "quiz.q65.explain": "Collaborative filtering recommends what similar people liked, without needing to know what the song is about. A Turing test is about telling people from machines, gradient descent is how many models train, and data cleaning fixes messy data.",
+
+        "quiz.q66.text": "Which of these usually tells a video app the most about what you like?",
+        "quiz.q66.o1": "How long you actually watch before scrolling away",
+        "quiz.q66.o2": "The colour of your phone",
+        "quiz.q66.o3": "The name you chose for your account",
+        "quiz.q66.o4": "How loud your phone's volume is",
+        "quiz.q66.explain": "Apps learn most from what you do: watching a video through says “more of this” louder than almost anything else, and a quick skip is a strong “no”. Your phone's colour or your account name say very little about your taste.",
+
+        "quiz.q67.text": "Why can a feed shrink into a “filter bubble” even if nobody planned it?",
+        "quiz.q67.o1": "You can only watch what's shown, and what you watch decides what's shown next",
+        "quiz.q67.o2": "Apps are only allowed to show one topic per person",
+        "quiz.q67.o3": "The app runs out of videos on other topics",
+        "quiz.q67.o4": "Bubbles only happen when your phone is low on memory",
+        "quiz.q67.explain": "It's a loop: each watch makes the app show more of the same, and you can only pick from what it shows. Apps have plenty of videos on every topic, and there's no rule of one topic per person. Searching for new things breaks the loop.",
+
+        "quiz.q68.text": "Tapping “Not interested” on a video can change what your feed shows you.",
+        "quiz.q68.explain": "True. It's a signal like any other, and a direct one: it tells the app to show you less of that kind of video. Searching for and watching new topics helps too."
+    },
+    ru: {
+        "quiz.q65.text": "Музыкальный сервис советует песню, потому что она очень понравилась людям с похожей на твою историей прослушиваний. Как называется эта идея?",
+        "quiz.q65.o1": "Коллаборативная фильтрация",
+        "quiz.q65.o2": "Тест Тьюринга",
+        "quiz.q65.o3": "Градиентный спуск",
+        "quiz.q65.o4": "Очистка данных",
+        "quiz.q65.explain": "Коллаборативная фильтрация советует то, что понравилось похожим людям, и ей не нужно знать, о чём песня. Тест Тьюринга — про то, отличишь ли машину от человека, градиентным спуском обучают многие модели, а очистка данных исправляет грязные данные.",
+
+        "quiz.q66.text": "Что обычно больше всего говорит видеоприложению о том, что тебе нравится?",
+        "quiz.q66.o1": "Сколько ты на самом деле смотришь, прежде чем пролистать",
+        "quiz.q66.o2": "Цвет твоего телефона",
+        "quiz.q66.o3": "Имя, которое ты выбрал для аккаунта",
+        "quiz.q66.o4": "Громкость звука на телефоне",
+        "quiz.q66.explain": "Приложения больше всего узнают из того, что ты делаешь: досмотренное видео говорит «ещё такого» громче почти всего остального, а быстрый пропуск — сильное «нет». Цвет телефона или имя аккаунта почти ничего не говорят о твоём вкусе.",
+
+        "quiz.q67.text": "Почему лента может сжаться в «пузырь фильтров», даже если никто этого не планировал?",
+        "quiz.q67.o1": "Смотреть можно только то, что показали, а то, что ты смотришь, решает, что покажут дальше",
+        "quiz.q67.o2": "Приложениям разрешено показывать одному человеку только одну тему",
+        "quiz.q67.o3": "У приложения заканчиваются видео на другие темы",
+        "quiz.q67.o4": "Пузыри бывают только когда на телефоне мало памяти",
+        "quiz.q67.explain": "Это петля: каждый просмотр заставляет приложение показывать больше того же, а выбирать можно только из показанного. Видео на любые темы у приложений полно, и правила «одна тема на человека» нет. Поиск нового разрывает петлю.",
+
+        "quiz.q68.text": "Если нажать «Не интересно» на видео, лента может измениться.",
+        "quiz.q68.explain": "Верно. Это такой же сигнал, как остальные, и очень прямой: он просит приложение показывать меньше такого. Поиск и просмотр новых тем тоже помогают."
+    }
+});
+
+// ----- Lesson 15: Plan your own AI project -----
+window.AICompass.addTranslations({
+    en: {
+        "quiz.q69.text": "Your school's bins need sorting: paper always goes in the blue bin. What's the best first step?",
+        "quiz.q69.o1": "Ask whether a simple rule already solves it, before reaching for AI",
+        "quiz.q69.o2": "Train the biggest model you can find",
+        "quiz.q69.o3": "Collect as much personal data about students as possible",
+        "quiz.q69.o4": "Skip planning and start coding right away",
+        "quiz.q69.explain": "Good projects start with the problem. If a clear rule works, it's easier to build, check and explain than a model. AI is worth it when the rule is hard to write down but easy to show with examples. Collecting personal data the project doesn't need is never a good start.",
+
+        "quiz.q70.text": "You want an app that spots sick leaves. Which training data is best?",
+        "quiz.q70.o1": "Hundreds of photos of many plants, both healthy and sick, in different light",
+        "quiz.q70.o2": "Thousands of photos of healthy leaves only",
+        "quiz.q70.o3": "Twenty photos of your own plant",
+        "quiz.q70.o4": "Photos of flowers, because they are prettier",
+        "quiz.q70.explain": "A model needs varied examples of every answer it must give. With only healthy leaves it can never learn what “sick” looks like, and twenty photos of one plant teach it that plant, not leaves in general.",
+
+        "quiz.q71.text": "95 of your 100 test leaves are healthy. A model that always answers “healthy” scores 95%. What does this show?",
+        "quiz.q71.o1": "Accuracy alone can hide that a model is useless for what matters",
+        "quiz.q71.o2": "The model is excellent and ready to share",
+        "quiz.q71.o3": "Sick leaves don't matter because they are rare",
+        "quiz.q71.o4": "Always giving the same answer is the safest way to build a model",
+        "quiz.q71.explain": "The model never finds a single sick leaf, which is the whole point of the app. Looking at which mistakes it makes (here, every sick leaf missed) tells you far more than one score.",
+
+        "quiz.q72.text": "An honest AI app should tell its users that it can be wrong, and what to do when it might be.",
+        "quiz.q72.explain": "True. No model is 100% accurate. Saying how sure it is and what to do next (“ask an expert”) keeps people safe when it's wrong, and makes them trust it for the right reasons."
+    },
+    ru: {
+        "quiz.q69.text": "В школе нужно сортировать мусор: бумага всегда идёт в синий контейнер. С чего лучше начать?",
+        "quiz.q69.o1": "Спросить, не решает ли задачу простое правило, прежде чем браться за ИИ",
+        "quiz.q69.o2": "Обучить самую большую модель, какую найдёшь",
+        "quiz.q69.o3": "Собрать как можно больше личных данных об учениках",
+        "quiz.q69.o4": "Не планировать и сразу начать писать код",
+        "quiz.q69.explain": "Хорошие проекты начинаются с задачи. Если подходит понятное правило, его легче сделать, проверить и объяснить, чем модель. ИИ стоит того, когда правило трудно записать, но легко показать на примерах. А собирать ненужные проекту личные данные — плохое начало всегда.",
+
+        "quiz.q70.text": "Ты хочешь сделать приложение, которое находит больные листья. Какие обучающие данные лучше?",
+        "quiz.q70.o1": "Сотни фото разных растений, здоровых и больных, при разном освещении",
+        "quiz.q70.o2": "Тысячи фото только здоровых листьев",
+        "quiz.q70.o3": "Двадцать фото твоего собственного растения",
+        "quiz.q70.o4": "Фото цветов, потому что они красивее",
+        "quiz.q70.explain": "Модели нужны разнообразные примеры каждого ответа, который она должна давать. Только на здоровых листьях она никогда не узнает, как выглядит «болен», а двадцать фото одного растения научат её этому растению, а не листьям вообще.",
+
+        "quiz.q71.text": "Из 100 проверочных листьев 95 здоровы. Модель, которая всегда отвечает «здоров», получает 95%. Что это показывает?",
+        "quiz.q71.o1": "Одна точность может скрыть, что модель бесполезна для самого важного",
+        "quiz.q71.o2": "Модель отличная и готова для всех",
+        "quiz.q71.o3": "Больные листья не важны, потому что их мало",
+        "quiz.q71.o4": "Всегда давать один и тот же ответ — самый надёжный способ сделать модель",
+        "quiz.q71.explain": "Модель не находит ни одного больного листа, а ради этого приложение и делают. Посмотреть, какие ошибки она совершает (здесь — пропускает каждый больной лист), гораздо полезнее одного числа.",
+
+        "quiz.q72.text": "Честное ИИ-приложение должно говорить пользователям, что может ошибаться, и что делать в таком случае.",
+        "quiz.q72.explain": "Верно. Ни одна модель не точна на 100%. Сказать, насколько она уверена и что делать дальше («спроси специалиста»), — значит уберечь людей, когда она ошибается, и заслужить доверие по правильным причинам."
+    }
+});
+
+// ----- Myth or fact: lessons 13-15 -----
+window.AICompass.addTranslations({
+    en: {
+        "quiz.m21.text": "The more data you give a model, the better it gets, no matter how messy the data is.",
+        "quiz.m21.explain": "Myth. Garbage in, garbage out: a model learns mistakes as happily as facts, so a smaller clean dataset can beat a big messy one.",
+        "quiz.m22.text": "Recommendation apps learn more from what you do (watching, skipping) than from what you say you like.",
+        "quiz.m22.explain": "Fact. Watch time, skips and replays are strong signals, often stronger than a like.",
+        "quiz.m23.text": "You need to be an expert programmer to train your first AI model.",
+        "quiz.m23.explain": "Myth. Free tools such as Google's Teachable Machine let you train a model on your own photos or sounds in the browser, without writing code."
+    },
+    ru: {
+        "quiz.m21.text": "Чем больше данных дать модели, тем она лучше, даже если данные грязные.",
+        "quiz.m21.explain": "Миф. Мусор на входе — мусор на выходе: модель так же охотно учит ошибки, как факты, поэтому небольшой чистый набор может победить большой грязный.",
+        "quiz.m22.text": "Рекомендательные приложения узнают больше из того, что ты делаешь (смотришь, пропускаешь), чем из того, что ты говоришь о своих вкусах.",
+        "quiz.m22.explain": "Факт. Время просмотра, пропуски и повторы — сильные сигналы, часто сильнее лайка.",
+        "quiz.m23.text": "Чтобы обучить свою первую модель ИИ, нужно быть опытным программистом.",
+        "quiz.m23.explain": "Миф. Бесплатные инструменты вроде Teachable Machine от Google позволяют обучить модель на своих фото или звуках прямо в браузере, без кода."
+    }
+});

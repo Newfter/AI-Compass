@@ -77,8 +77,8 @@ window.AICompass.content.set("glossary", {
             }
         },
         {
-            id: "data", cat: "basics", icon: "📊", lessons: [2], lab: "classifier",
-            related: ["dataset", "privacy", "recommendation", "unsupervised", "clustering", "proxy"],
+            id: "data", cat: "basics", icon: "📊", lessons: [2, 13], lab: "classifier",
+            related: ["dataset", "privacy", "recommendation", "unsupervised", "clustering", "proxy", "collaborative-filtering", "data-cleaning"],
             en: {
                 name: "Data",
                 aliases: [],
@@ -95,8 +95,8 @@ window.AICompass.content.set("glossary", {
             }
         },
         {
-            id: "dataset", cat: "basics", icon: "🗂️", lessons: [2, 7], lab: "draw",
-            related: ["data", "training", "supervised", "bias", "overfitting", "data-augmentation"],
+            id: "dataset", cat: "basics", icon: "🗂️", lessons: [2, 7, 13], lab: "draw",
+            related: ["data", "training", "supervised", "bias", "overfitting", "data-augmentation", "test-set", "data-cleaning", "label"],
             en: {
                 name: "Dataset",
                 aliases: ["data set", "training data"],
@@ -114,7 +114,7 @@ window.AICompass.content.set("glossary", {
         },
         {
             id: "model", cat: "basics", icon: "🧩", lessons: [2], lab: "classifier",
-            related: ["training", "parameters", "algorithm", "ml", "overfitting", "generalization"],
+            related: ["training", "parameters", "algorithm", "ml", "overfitting", "generalization", "decision-tree", "naive-bayes"],
             en: {
                 name: "Model",
                 aliases: ["AI model"],
@@ -203,8 +203,8 @@ window.AICompass.content.set("glossary", {
             }
         },
         {
-            id: "recommendation", cat: "basics", icon: "🎯", lessons: [5], lab: "cluster",
-            related: ["algorithm", "data", "privacy", "filter-bubble", "unsupervised", "clustering"],
+            id: "recommendation", cat: "basics", icon: "🎯", lessons: [5, 14], lab: "recommend",
+            related: ["algorithm", "data", "privacy", "filter-bubble", "unsupervised", "clustering", "collaborative-filtering"],
             en: {
                 name: "Recommendation system",
                 aliases: ["recommendation algorithm", "recommendations", "recommender"],
@@ -350,7 +350,7 @@ window.AICompass.content.set("glossary", {
         },
         {
             id: "supervised", cat: "learning", icon: "🏷️", lessons: [2], lab: "draw",
-            related: ["unsupervised", "reinforcement", "dataset", "ml"],
+            related: ["unsupervised", "reinforcement", "dataset", "ml", "decision-tree", "naive-bayes", "label"],
             en: {
                 name: "Supervised learning",
                 aliases: [],
@@ -385,8 +385,8 @@ window.AICompass.content.set("glossary", {
             }
         },
         {
-            id: "overfitting", cat: "learning", icon: "📝", lessons: [2], lab: "draw",
-            related: ["generalization", "data-augmentation", "training", "dataset", "model"],
+            id: "overfitting", cat: "learning", icon: "📝", lessons: [2, 13], lab: "draw",
+            related: ["generalization", "data-augmentation", "training", "dataset", "model", "decision-tree", "test-set"],
             en: {
                 name: "Overfitting",
                 aliases: ["overfit", "overfitted"],
@@ -404,7 +404,7 @@ window.AICompass.content.set("glossary", {
         },
         {
             id: "generalization", cat: "learning", icon: "🌍", lessons: [2], lab: "draw",
-            related: ["overfitting", "data-augmentation", "model"],
+            related: ["overfitting", "data-augmentation", "model", "test-set"],
             en: {
                 name: "Generalisation",
                 aliases: ["generalization", "generali*"],
@@ -1079,7 +1079,7 @@ window.AICompass.content.set("glossary", {
 
         // ===== Ethics & Safety =====
         {
-            id: "bias", cat: "ethics", icon: "⚖️", lessons: [6, 11], lab: "bias",
+            id: "bias", cat: "ethics", icon: "⚖️", lessons: [6, 11, 13], lab: "bias",
             related: ["dataset", "proxy", "black-box", "ai-act"],
             en: {
                 name: "Bias",
@@ -1223,7 +1223,7 @@ window.AICompass.content.set("glossary", {
             }
         },
         {
-            id: "proxy", cat: "ethics", icon: "🏘️", lessons: [11], lab: "bias",
+            id: "proxy", cat: "ethics", icon: "🏘️", lessons: [11, 13], lab: "bias",
             related: ["bias", "data"],
             en: {
                 name: "Proxy",
@@ -1241,8 +1241,8 @@ window.AICompass.content.set("glossary", {
             }
         },
         {
-            id: "filter-bubble", cat: "ethics", icon: "🔁", lessons: [5], lab: "",
-            related: ["recommendation", "algorithm"],
+            id: "filter-bubble", cat: "ethics", icon: "🔁", lessons: [5, 14], lab: "recommend",
+            related: ["recommendation", "algorithm", "collaborative-filtering"],
             en: {
                 name: "Filter bubble",
                 aliases: ["echo chamber"],
@@ -1274,6 +1274,150 @@ window.AICompass.content.set("glossary", {
                 short: "Видимая или скрытая метка на картинках, звуке, видео или тексте, созданных ИИ, которая показывает их происхождение.",
                 def: "Метка, которую добавляют к контенту, созданному ИИ, чтобы люди или программы могли узнать, откуда он взялся. Бывают видимые водяные знаки, например маленькая надпись, а бывают скрытые — в пикселях или звуке, их находит только специальная программа. Они помогают, но не идеальны: некоторые можно удалить или испортить, если отредактировать файл.",
                 ex: "К 2025 году некоторые генераторы изображений добавляли в каждую картинку невидимый водяной знак, а некоторые приложения помечали публикации надписью вроде «Создано ИИ»."
+            }
+        },
+        {
+            id: "decision-tree", cat: "learning", icon: "🌳", lessons: [13], lab: "tree",
+            related: ["model", "overfitting", "supervised", "test-set"],
+            en: {
+                name: "Decision tree",
+                aliases: ["decision trees", "classification tree"],
+                short: "A model that answers by asking a chain of yes/no questions about an example, like a flowchart.",
+                def: "A model that sorts an example by asking yes/no questions one after another (“Is it raining?”, “Is it warm?”) until it reaches an answer. The computer grows the tree from training examples, choosing at each step the question that splits them into the tidiest groups. Small trees are easy to read and check; very deep trees tend to overfit.",
+                ex: "A bank might use a decision tree to sort loan requests: “Has a steady income?” Yes → “Owes a lot already?” No → likely to pay back."
+            },
+            ru: {
+                name: "Дерево решений",
+                aliases: ["деревья решений", "дерево классификации"],
+                short: "Модель, которая отвечает, задавая о примере цепочку вопросов «да/нет», как в блок-схеме.",
+                def: "Модель, которая сортирует пример, задавая вопросы «да/нет» один за другим («Идёт дождь?», «Тепло?»), пока не дойдёт до ответа. Компьютер выращивает дерево по обучающим примерам и на каждом шаге выбирает вопрос, который делит их на самые аккуратные группы. Маленькие деревья легко читать и проверять, а очень глубокие часто переобучаются.",
+                ex: "Банк может сортировать заявки на кредит деревом решений: «Есть постоянный доход?» Да → «Уже много долгов?» Нет → скорее всего, вернёт."
+            }
+        },
+        {
+            id: "naive-bayes", cat: "learning", icon: "📨", lessons: [], lab: "spam",
+            related: ["model", "supervised", "false-positive"],
+            en: {
+                name: "Naive Bayes classifier",
+                aliases: ["naive bayes", "bayesian spam filter", "bayes"],
+                short: "A simple model that adds up clues, such as words, each counted separately, to guess a category like “spam”.",
+                def: "A simple, fast way to sort things into categories using probabilities. It counts how often each clue (for example, each word) appears in each category, then, for a new example, multiplies the evidence of all its clues together. It's “naive” because it treats every clue as independent and ignores their order. Spam filters used it for years.",
+                ex: "An email full of “free”, “win” and “click” piles up spam evidence word by word, while “homework” and “tomorrow” pull the other way."
+            },
+            ru: {
+                name: "Наивный байесовский классификатор",
+                aliases: ["наивный байес", "байесовский спам-фильтр", "байес"],
+                short: "Простая модель, которая складывает подсказки, например слова, каждую отдельно, чтобы угадать категорию вроде «спам».",
+                def: "Простой и быстрый способ сортировать вещи по категориям с помощью вероятностей. Он считает, как часто каждая подсказка (например, каждое слово) встречается в каждой категории, а для нового примера перемножает свидетельства всех его подсказок. «Наивным» его называют потому, что он считает подсказки независимыми и не смотрит на их порядок. Спам-фильтры использовали его много лет.",
+                ex: "Письмо, полное слов «бесплатно», «выиграй» и «жми», набирает свидетельства спама слово за словом, а «домашка» и «завтра» тянут в другую сторону."
+            }
+        },
+        {
+            id: "collaborative-filtering", cat: "basics", icon: "👥", lessons: [14], lab: "recommend",
+            related: ["recommendation", "filter-bubble", "data"],
+            en: {
+                name: "Collaborative filtering",
+                aliases: ["people like you", "user-based recommendations"],
+                short: "Recommending things that people with tastes like yours enjoyed, without knowing what the things are about.",
+                def: "A way to make recommendations from what many people did. The system finds people whose history (likes, views, purchases) looks like yours and suggests what they liked that you haven't seen yet. It doesn't need to know what a video or song is about, only who liked what.",
+                ex: "You and another viewer both loved three space videos. She also loved a video about volcanoes, so the app suggests it to you."
+            },
+            ru: {
+                name: "Коллаборативная фильтрация",
+                aliases: ["люди как ты", "рекомендации по похожим пользователям"],
+                short: "Рекомендации того, что понравилось людям с похожими на твои вкусами, без знания, о чём эти вещи.",
+                def: "Способ давать рекомендации по тому, что делали многие люди. Система находит людей, чья история (лайки, просмотры, покупки) похожа на твою, и предлагает то, что понравилось им, а ты ещё не видел. Ей не нужно знать, о чём видео или песня, — только кому что понравилось.",
+                ex: "Тебе и ещё одной зрительнице понравились три видео о космосе. Ей понравилось и видео о вулканах, поэтому приложение предлагает его тебе."
+            }
+        },
+        {
+            id: "test-set", cat: "learning", icon: "🧪", lessons: [13, 15], lab: "tree",
+            related: ["overfitting", "generalization", "dataset", "decision-tree", "accuracy"],
+            en: {
+                name: "Test set",
+                aliases: ["test data", "held-out data", "train/test split"],
+                short: "Examples put aside before training and used only to check how well a model does on data it has never seen.",
+                def: "Part of the examples that is kept away from the model during training. Because the model never learned from them, its score on the test set is a fair estimate of how it will do on new, real examples. Testing on the training data instead can hide overfitting.",
+                ex: "From 1,000 labelled photos, you train on 800 and keep 200 as the test set. The score on those 200 is the one you report."
+            },
+            ru: {
+                name: "Проверочный набор",
+                aliases: ["тестовые данные", "тестовый набор", "отложенная выборка"],
+                short: "Примеры, отложенные до обучения, на которых только проверяют, как модель справляется с невиданными данными.",
+                def: "Часть примеров, которую не показывают модели во время обучения. Модель на них не училась, поэтому её результат на проверочном наборе честно показывает, как она справится с новыми, настоящими примерами. Если проверять на обучающих данных, можно не заметить переобучение.",
+                ex: "Из 1000 размеченных фото ты обучаешь модель на 800, а 200 оставляешь для проверки. Именно результат на этих 200 и стоит называть."
+            }
+        },
+        {
+            id: "data-cleaning", cat: "basics", icon: "🧹", lessons: [13], lab: "",
+            related: ["data", "dataset", "label"],
+            en: {
+                name: "Data cleaning",
+                aliases: ["cleaning data", "data cleaning", "messy data"],
+                short: "Finding and fixing mistakes in data, such as missing, wrong, repeated or impossible values, before a model learns from it.",
+                def: "The work of checking a dataset and fixing its problems before training: missing values, typos, duplicates, impossible numbers and wrong labels. A model can't tell a mistake from a fact, so “garbage in, garbage out”. Data scientists often spend more time cleaning data than building models.",
+                ex: "In a class survey, one student is “150” years old and one favourite pet is “dgo”. Cleaning fixes them to 15 and “dog” before training."
+            },
+            ru: {
+                name: "Очистка данных",
+                aliases: ["чистка данных", "грязные данные"],
+                short: "Поиск и исправление ошибок в данных — пропусков, опечаток, повторов, невозможных значений — до того, как на них учится модель.",
+                def: "Работа по проверке набора данных и исправлению его проблем до обучения: пропусков, опечаток, повторов, невозможных чисел и неверных меток. Модель не отличает ошибку от факта, поэтому «мусор на входе — мусор на выходе». Специалисты по данным часто тратят на очистку больше времени, чем на сами модели.",
+                ex: "В школьном опросе одному ученику «150» лет, а любимый питомец — «сбоака». Очистка исправит это на 15 и «собака» до обучения."
+            }
+        },
+        {
+            id: "label", cat: "learning", icon: "🔖", lessons: [13, 15], lab: "draw",
+            related: ["supervised", "dataset", "data-cleaning"],
+            en: {
+                name: "Label",
+                aliases: ["labels", "labelling", "labeling", "annotation"],
+                short: "The right answer attached to a training example, such as “cat” on a photo of a cat.",
+                def: "The correct answer that goes with an example in supervised learning: the category of a photo, whether an email is spam, the price of a house. A model learns by comparing its guesses with the labels, so wrong labels teach it wrong answers. Labels are often added by people, one example at a time.",
+                ex: "To teach a model to spot healthy and sick leaves, each photo is labelled “healthy” or “sick”, ideally by someone who knows plants."
+            },
+            ru: {
+                name: "Метка",
+                aliases: ["метки", "разметка", "аннотация"],
+                short: "Правильный ответ, прикреплённый к обучающему примеру, например «кошка» на фото кошки.",
+                def: "Правильный ответ к примеру при обучении с учителем: категория фото, спам ли письмо, цена дома. Модель учится, сравнивая свои догадки с метками, поэтому неверные метки учат её неверным ответам. Метки часто ставят люди, по одному примеру за раз.",
+                ex: "Чтобы научить модель отличать здоровые листья от больных, каждое фото помечают «здоров» или «болен», лучше всего — с помощью человека, разбирающегося в растениях."
+            }
+        },
+        {
+            id: "accuracy", cat: "learning", icon: "✅", lessons: [15], lab: "spam",
+            related: ["test-set", "false-positive"],
+            en: {
+                name: "Accuracy",
+                aliases: ["accurate", "score"],
+                short: "The share of examples a model gets right, usually measured on a test set.",
+                def: "The percentage of answers a model gets right. It's a useful first number, but it can mislead: if 95 of 100 leaves are healthy, a model that always says “healthy” is 95% accurate and still useless. So people also look at which mistakes a model makes.",
+                ex: "A spam filter that sorts 970 of 1,000 test emails correctly has 97% accuracy."
+            },
+            ru: {
+                name: "Точность",
+                aliases: ["точная модель", "доля верных ответов"],
+                short: "Доля примеров, на которых модель отвечает правильно; обычно её измеряют на проверочном наборе.",
+                def: "Процент правильных ответов модели. Это полезное первое число, но оно может обмануть: если из 100 листьев 95 здоровы, модель, которая всегда говорит «здоров», точна на 95% и всё равно бесполезна. Поэтому смотрят ещё и на то, какие ошибки модель совершает.",
+                ex: "Спам-фильтр, который верно сортирует 970 из 1000 проверочных писем, имеет точность 97%."
+            }
+        },
+        {
+            id: "false-positive", cat: "learning", icon: "🚨", lessons: [15], lab: "spam",
+            related: ["accuracy", "naive-bayes"],
+            en: {
+                name: "False positive",
+                aliases: ["false alarm", "false negative", "false positives"],
+                short: "A false alarm: the model says “yes” (spam, sick, danger) when the true answer is “no”.",
+                def: "A mistake where a model flags something that isn't there: a real email sent to spam, a healthy person told they might be ill. The opposite mistake, missing something that is there, is a false negative. Moving a model's threshold trades one for the other, so builders decide which mistake is worse for their task.",
+                ex: "A strict spam filter catches every advert but also hides a message from your teacher: that hidden message is a false positive."
+            },
+            ru: {
+                name: "Ложное срабатывание",
+                aliases: ["ложная тревога", "ложноположительный", "ложноотрицательный", "пропуск"],
+                short: "Ложная тревога: модель говорит «да» (спам, болен, опасно), когда правильный ответ — «нет».",
+                def: "Ошибка, когда модель отмечает то, чего нет: настоящее письмо попадает в спам, здоровому человеку говорят, что он может быть болен. Обратная ошибка — пропустить то, что есть, — называется ложноотрицательной. Сдвигая порог модели, меняют одну ошибку на другую, поэтому создатели решают, какая ошибка хуже для их задачи.",
+                ex: "Строгий спам-фильтр ловит всю рекламу, но прячет и письмо от учителя: это спрятанное письмо — ложное срабатывание."
             }
         }
     ]

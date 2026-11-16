@@ -510,7 +510,7 @@
 
     // ---------- 5. Choosing the questions of a game ----------
     // The lessons go in pairs, so that 12 questions visit every part of the course:
-    // lessons 1-2, 3-4, 5-6, 7-8, 9-10, 11-12, and the history.
+    // lessons 1-2, 3-4, ... 13-14, 15, and the history.
     function groupOf(question) {
         return question.lesson === "timeline" ? "history" : String(Math.ceil(question.lesson / 2));
     }
@@ -605,7 +605,7 @@
     const state = {
         screen: "start",              // "start", "lessons", "daily", "question" or "results"
         mode: "classic",              // the mode of the current (or last) game
-        lesson: null,                 // Lesson review: the lesson (1-12 or "timeline")
+        lesson: null,                 // Lesson review: the lesson (1-15 or "timeline")
         timed: false,                 // does the current game have a timer?
         day: "",                      // the day the current game started
         questions: [],                // the questions of this game, in order

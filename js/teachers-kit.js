@@ -24,8 +24,9 @@
    10. The classroom quiz: playing (the timer, the answer, the teams, the keys)
    11. Language changes and the API
    Texts: js/content/teachers-kit.js. The plans and worksheets:
-   js/content/teachers-basics.js (lessons 1-6) and
-   js/content/teachers-deep.js (lessons 7-12). Styles: css/teachers-kit.css.
+   js/content/teachers-basics.js (lessons 1-6),
+   js/content/teachers-deep.js (lessons 7-12) and
+   js/content/teachers-world.js (lessons 13-15). Styles: css/teachers-kit.css.
 
    API, for js/teachers.js only (others use AICompass.teachers):
        AICompass.teachersKit.openDocument(view, n, opener)
@@ -60,7 +61,8 @@
     // js/teachers.js lists them too (KIT_PLANS), to save them ahead for offline use.
     const PLAN_FILES = {
         basics: "js/content/teachers-basics.js",
-        deep: "js/content/teachers-deep.js"
+        deep: "js/content/teachers-deep.js",
+        world: "js/content/teachers-world.js"
     };
 
     // The three documents of a lesson, in the order of their tabs
