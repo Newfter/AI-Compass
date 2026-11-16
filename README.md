@@ -86,11 +86,12 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
 | `js/content/lessons.js` | The texts of the tracks, the reader's buttons, the certificates and lessons 1-6 (with their mini-labs). |
-| `js/content/lessons-deep.js` | The texts of the "Deep dive" lessons (7 and on) and of their mini-labs. |
+| `js/content/lessons-deep.js` | The texts of the "Deep dive" lessons (7-12) and of their mini-labs. |
+| `js/content/lessons-world.js` | The texts of the "AI in your world" track (lessons 13-15: data, feeds, your own project) and of their mini-labs (`js/lessons/clean.js`, `signals.js`, `plan.js`). |
 | `js/content/lab.js` | The AI Lab's texts, each experiment's title, hook and big idea (the picker shows them before the experiment loads), the icons, and the catalogue: which experiments the lab shows, in which order. |
 | `js/content/lab/` | Each experiment's own texts (`<id>.js`, loaded with it) and the lab kit's texts (`kit.js`). `predictor.js` also has the sentences the next-word predictor learns from. |
 | `js/content/quiz.js` | The quiz's buttons and messages, the list of questions with their tags, the "Myth or fact" statements and the ranks. |
-| `js/content/quiz-bank.js` | The texts of the 60 questions and 20 "Myth or fact" statements, one block per lesson. Not in `index.html`: the quiz loads it when it is needed. |
+| `js/content/quiz-bank.js` | The texts of the 72 questions and 23 "Myth or fact" statements, one block per lesson. Not in `index.html`: the quiz loads it when it is needed. |
 | `js/content/glossary.js` | The glossary texts. |
 | `js/content/glossary-terms.js` | The glossary's categories and every term. |
 | `js/content/timeline.js` | The timeline texts, the eras, the themes and every milestone (with its lesson and lab experiment). |
@@ -312,7 +313,7 @@ Good to know:
 
 ### Add a lesson
 
-The lessons come in tracks: "Basics" (lessons 1-6) and "Deep dive" (7 and on). A lesson needs one entry in `js/lessons.js`, its texts in `js/content/lessons-deep.js` and a mini-lab. Add new lessons at the end, in the last track: saved progress remembers lessons by their number, so don't change the order of the ones that exist.
+The lessons come in tracks: "Basics" (lessons 1-6), "Deep dive" (7-12) and "AI in your world" (13 and on). A lesson needs one entry in `js/lessons.js`, its texts in `js/content/lessons-world.js` (the last track) and a mini-lab. Add new lessons at the end, in the last track: saved progress remembers lessons by their number, so don't change the order of the ones that exist.
 
 **1. The entry.** In `js/lessons.js`, section 2, add it at the end of `LESSONS`:
 
@@ -335,7 +336,7 @@ The lessons come in tracks: "Basics" (lessons 1-6) and "Deep dive" (7 and on). A
 - `tryIt`: where the "Try it" button goes: a section (`"timeline"`, `"glossary"`, `"quiz"`, `"lab"`) or an experiment of the AI Lab (`"classifier"`, `"predictor"`, ...; while the AI Lab doesn't have that experiment yet, the button opens the AI Lab). `tryIcon`: its emoji.
 - `keywords`: extra words (both languages) that find the lesson in the Ctrl+K search.
 
-**2. The texts.** In `js/content/lessons-deep.js`, copy the block of lesson 7 to the end of the file and change `l7` to `l13` and `w7` to `w13`. Every key starts with `lessons.l13.` (the lesson) or `lessons.w13.` (its mini-lab). Each part needs `.h` (title) and `.p` (text), each box needs `.note`, and there are always three key ideas, a tip and three answers:
+**2. The texts.** In `js/content/lessons-world.js`, copy the block of lesson 13 to the end of the file and change `l13` to `l16` and `w13` to `w16`. Every key starts with `lessons.l16.` (the lesson) or `lessons.w16.` (its mini-lab). Each part needs `.h` (title) and `.p` (text), each box needs `.note`, and there are always three key ideas, a tip and three answers:
 
 ```js
 // Lesson 13 — Talking to AI (an example made up for this guide)
@@ -435,7 +436,7 @@ That's all: the track's cards, the lesson map, the counts ("0 of 7 done"), the h
 
 **Files:** the texts in `js/content/quiz-bank.js`, the entry in `js/content/quiz.js`.
 
-**1. The texts.** In `js/content/quiz-bank.js`, find the block of the lesson (`// ----- Lesson 5: ...`) and add the texts at the end of both parts, English and Russian (with "ты"). Use the next free number: there are 60 questions, so the next one is `q61`. For a multiple-choice question, write four options and put the right one **first** (`o1`): the quiz shuffles the options in every game. The explanation says why the right answer is right, and why the tempting wrong one is wrong.
+**1. The texts.** In `js/content/quiz-bank.js`, find the block of the lesson (`// ----- Lesson 5: ...`) and add the texts at the end of both parts, English and Russian (with "ты"). Use the next free number: there are 72 questions, so the next one is `q73`. For a multiple-choice question, write four options and put the right one **first** (`o1`): the quiz shuffles the options in every game. The explanation says why the right answer is right, and why the tempting wrong one is wrong.
 
 English part:
 
@@ -467,7 +468,7 @@ A true-or-false question has only `.text` and `.explain`, and the explanation st
         { key: "q61", lesson: 5, topic: "everyday", difficulty: 1, type: "choice", correct: 0 },
 ```
 
-- `lesson`: the lesson that explains it (1-12), or `"timeline"` for the history. Its "Learn more" button opens that lesson.
+- `lesson`: the lesson that explains it (1-15), or `"timeline"` for the history. Its "Learn more" button opens that lesson.
 - `topic`: one of the `quiz.topic.…` texts (`basics`, `ml`, `data`, `nn`, `genai`, `hallucination`, `bias`, `privacy`, `everyday`, `history`, `responsible`, `vision`, `rl`, `language`, `creative`, `safety`, `prompting`). Other features find questions by topic.
 - `difficulty`: 1 easy, 2 medium, 3 hard. A Classic game takes 4 easy, 5 medium and 3 hard questions, from every pair of lessons; the daily challenge 2 easy, 2 medium and 1 hard.
 - `type`: `"choice"` (four options, `correct: 0`) or `"truefalse"` (`correct: 0` means "True", `1` means "False").
