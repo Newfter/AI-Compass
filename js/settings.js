@@ -76,6 +76,7 @@
         contrast: false,
         reduceTransparency: false,
         fancy: false,               // the decorative effects: moving background, "decoding" titles, tilting cards
+        design: "simple",           // the site's design: "simple" (for beginners) or "pro" (rich, for experts)
         voiceEn: "",                // the voiceURI of the chosen voice; "" = automatic
         voiceRu: "",
         speechRate: 1
@@ -89,6 +90,8 @@
         reduceTransparency: "st-solid",
         fancy: "fx-fancy"
     };
+    const DESIGNS = ["simple", "pro"];
+    const PRO_CLASS = "design-pro";           // on <html> with the Pro design (css/pro.css)
     const RELAXED_CLASS = "st-relaxed";      // line spacing: relaxed
     const LARGE_TEXT_CLASS = "st-large-text"; // any text size above 100%
 
@@ -125,6 +128,7 @@
         contrast: "settings.contrast",
         reduceTransparency: "settings.solid",
         fancy: "settings.fancy",
+        design: "settings.design",
         calm: "settings.calm",
         voiceEn: "settings.voiceEn",
         voiceRu: "settings.voiceRu",
@@ -182,6 +186,7 @@
         contrast: isBoolean,
         reduceTransparency: isBoolean,
         fancy: isBoolean,
+        design: function (value) { return DESIGNS.indexOf(value) !== -1; },
         voiceEn: isVoiceName,
         voiceRu: isVoiceName,
         speechRate: function (value) { return SPEECH_RATES.indexOf(value) !== -1; }
@@ -238,6 +243,7 @@
         Object.keys(PAGE_CLASSES).forEach(function (name) {
             setPageClass(PAGE_CLASSES[name], prefs[name]);
         });
+        setPageClass(PRO_CLASS, prefs.design === "pro");
         if (prefs.easyFont) loadFont();
     }
 
@@ -515,6 +521,13 @@
                             text("settings.previewButton", "btn btn-primary btn-small st-preview-button") +
                         "</div>" +
 
+                        group("settings.groupDesign", "st-group-design", [
+                            optionRow("design", "settings.design", [
+                                { value: "simple", html: text("settings.designSimple") },
+                                { value: "pro", html: text("settings.designPro") }
+                            ], "settings.designHint")
+                        ]) +
+
                         group("settings.groupLanguage", "st-group-language", [
                             optionRow("language", "settings.language", [
                                 { value: "en", html: '<span lang="en">English</span>' },
@@ -657,6 +670,7 @@
         checkRadio("theme", get("theme"));
         checkRadio("textSize", String(prefs.textSize));
         checkRadio("lineSpacing", prefs.lineSpacing);
+        checkRadio("design", prefs.design);
         if (canSpeak) checkRadio("speechRate", String(prefs.speechRate));
 
         ui.switches.forEach(function (button) {
@@ -747,6 +761,7 @@
         if (name === "textSize") return percentText(value);
         if (name === "speechRate") return speedText(value);
         if (name === "lineSpacing") return t(value === "relaxed" ? "settings.lineRelaxed" : "settings.lineNormal");
+        if (name === "design") return t(value === "pro" ? "settings.designPro" : "settings.designSimple");
         if (name === "voiceEn" || name === "voiceRu") {
             const voice = voiceFor(name === "voiceRu" ? "ru" : "en");
             return value && voice ? voice.name : t("settings.voiceAuto");
@@ -1002,18 +1017,48 @@
         if (name === "followSystem" || !CHECKS[name] || !CHECKS[name](value)) return false;
         if (prefs[name] === value) return true;
         prefs[name] = value;
+        // The Pro design comes with the extra effects, the simple one without them
+        // ("Extra effects" can still be switched on or off by hand after that)
+        let fancyChanged = false;
+        if (name === "design" && prefs.fancy !== (value === "pro")) {
+            prefs.fancy = value === "pro";
+            fancyChanged = true;
+        }
         save();
         applyToPage();
-        if (LAYOUT_SETTINGS.indexOf(name) !== -1) A.layoutChanged();
+        if (LAYOUT_SETTINGS.indexOf(name) !== -1 || name === "design") A.layoutChanged();
         changed(name);
+        if (fancyChanged) changed("fancy");
         return true;
     }
+
+    // The menu bar's "Simple / Pro" switch, and every other button with data-design-toggle
+    function paintDesignButtons() {
+        document.querySelectorAll("[data-design-toggle]").forEach(function (button) {
+            A.dom.setHidden(button, false);
+            const value = button.getAttribute("data-design-toggle");
+            if (value) A.dom.setAttr(button, "aria-pressed", String(prefs.design === value));
+        });
+    }
+
+    document.addEventListener("click", function (event) {
+        const button = event.target.closest("[data-design-toggle]");
+        if (!button) return;
+        const wanted = button.getAttribute("data-design-toggle") || (prefs.design === "pro" ? "simple" : "pro");
+        if (wanted === prefs.design) return;
+        set("design", wanted);
+        A.toast(changeMessage("design"), wanted === "pro" ? "🛰️" : "🌱");
+    });
+    A.on("settings", function (detail) {
+        if (detail && detail.name === "design") paintDesignButtons();
+    });
+    A.ready(paintDesignButtons);
 
     // Back to the defaults: every setting of the Reading, Comfort and Reading aloud
     // groups. The language and the theme stay as they are.
     function reset() {
         Object.keys(DEFAULTS).forEach(function (name) {
-            if (name !== "followSystem") set(name, DEFAULTS[name]);
+            if (name !== "followSystem" && name !== "design") set(name, DEFAULTS[name]);
         });
         set("calm", false);
     }
@@ -1174,6 +1219,22 @@
     switchCommand("reduceTransparency", "settings.solid", "🌫️",
         "reduce transparency solid glass background прозрачность сплошной фон стекло");
 
+    // The design: simple or Pro
+    A.registerCommand({
+        id: "settings-design",
+        group: GROUP,
+        icon: "🛰️",
+        title: function () {
+            return t(prefs.design === "pro" ? "settings.cmdDesignSimple" : "settings.cmdDesignPro");
+        },
+        keywords: "design pro professional expert simple beginner mode look дизайн про профессиональный эксперт простой новичок режим вид",
+        keepOverlays: true,
+        run: function () {
+            set("design", prefs.design === "pro" ? "simple" : "pro");
+            A.toast(changeMessage("design"), prefs.design === "pro" ? "🛰️" : "🌱");
+        }
+    });
+
     // Line spacing: relaxed or normal
     A.registerCommand({
         id: "settings-lineSpacing",
@@ -1219,7 +1280,8 @@
     // Names and values:
     //   language "en" | "ru"      theme "dark" | "light" | "system"      calm true | false
     //   textSize 1 | 1.125 | 1.25 | 1.5        lineSpacing "normal" | "relaxed"
-    //   easyFont, underlineLinks, contrast, reduceTransparency   true | false
+    //   easyFont, underlineLinks, contrast, reduceTransparency, fancy   true | false
+    //   design "simple" | "pro"
     //   voiceEn, voiceRu   a voice's voiceURI, "" for automatic
     //   speechRate 0.75 | 1 | 1.25 | 1.5  (for SpeechSynthesisUtterance.rate)
     A.feature("settings", {
