@@ -142,7 +142,8 @@
     // Texts: "lessons.track.<id>.title" and ".desc". rgb: the track's colour.
     const TRACKS = [
         { id: "basics", icon: "🌱", rgb: "--accent-rgb" },
-        { id: "deep", icon: "🤿", rgb: "--accent-2-rgb" }
+        { id: "deep", icon: "🤿", rgb: "--accent-2-rgb" },
+        { id: "world", icon: "🌍", rgb: "--accent-3-rgb" }
     ];
 
     // The texts are in js/content/lessons.js (lessons 1-6) and js/content/lessons-deep.js
@@ -225,6 +226,24 @@
             sections: 4, notes: { 2: "tip", 3: "example", 4: "fact" }, lab: "prompt", correct: 0,
             tryIt: "lab", tryIcon: "🧪",
             keywords: "ai toolkit prompt prompting check answers sources homework school honest tutor future skills jobs набор инструментов промпт запрос проверка ответов источники домашнее задание школа честно репетитор будущее навыки профессии"
+        },
+        {
+            number: 13, track: "world", icon: "🗂️", level: "beginner", minutes: 7, rgb: "--accent-3-rgb",
+            sections: 4, notes: { 1: "fact", 2: "example", 4: "fact" }, lab: "clean", correct: 1,
+            tryIt: "tree", tryIcon: "🌳",
+            keywords: "data dataset labels labelling cleaning missing values typos duplicates garbage in garbage out train test split test set overfitting privacy consent gdpr данные набор данных метки разметка очистка пропуски опечатки повторы мусор обучение проверка проверочный набор переобучение приватность согласие"
+        },
+        {
+            number: 14, track: "world", icon: "📺", level: "beginner", minutes: 7, rgb: "--accent-rgb",
+            sections: 4, notes: { 1: "fact", 3: "tip", 4: "tip" }, lab: "signals", correct: 1,
+            tryIt: "recommend", tryIcon: "📺",
+            keywords: "recommendations recommendation system feed for you youtube tiktok algorithm signals watch time skip like collaborative filtering filter bubble autoplay not interested рекомендации рекомендательная система лента для тебя алгоритм сигналы время просмотра пропуск лайк коллаборативная фильтрация пузырь фильтров автовоспроизведение не интересно"
+        },
+        {
+            number: 15, track: "world", icon: "🛠️", level: "intermediate", minutes: 8, rgb: "--accent-2-rgb",
+            sections: 4, notes: { 2: "example", 3: "tip" }, lab: "plan", correct: 1,
+            tryIt: "draw", tryIcon: "✏️",
+            keywords: "ai project plan school project problem data labels teachable machine test set accuracy mistakes false alarm users honest limits privacy проект ии план школьный проект задача данные метки проверочный набор точность ошибки ложная тревога пользователи честно границы приватность"
         }
     ];
 

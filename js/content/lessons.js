@@ -16,17 +16,17 @@ window.AICompass.addTranslations({
     en: {
         "lessons.label": "LEARN SOMETHING NEW",
         "lessons.title": "Learn AI Step by Step",
-        "lessons.subtitle": "Short lessons: start with the Basics, then take the Deep dive. Read, try the mini-lab and check yourself.",
+        "lessons.subtitle": "Short lessons: start with the Basics, take the Deep dive, then see AI in your world. Read, try the mini-lab and check yourself.",
         "lessons.subtitle.one": "{n} short lesson. Open it, read it, try the mini-lab and check yourself.",
-        "lessons.subtitle.many": "{n} short lessons: start with the Basics, then take the Deep dive. Read, try the mini-labs and check yourself."
+        "lessons.subtitle.many": "{n} short lessons: start with the Basics, take the Deep dive, then see AI in your world. Read, try the mini-labs and check yourself."
     },
     ru: {
         "lessons.label": "УЗНАЙ ЧТО-ТО НОВОЕ",
         "lessons.title": "Изучай ИИ шаг за шагом",
-        "lessons.subtitle": "Короткие уроки: начни с «Основ», а потом отправляйся в «Погружение». Читай, пробуй мини-лаборатории и проверяй себя.",
+        "lessons.subtitle": "Короткие уроки: начни с «Основ», отправляйся в «Погружение», а потом посмотри на «ИИ вокруг тебя». Читай, пробуй мини-лаборатории и проверяй себя.",
         "lessons.subtitle.one": "{n} короткий урок. Открой его, прочитай, попробуй мини-лабораторию и проверь себя.",
-        "lessons.subtitle.few": "{n} коротких урока: начни с «Основ», а потом отправляйся в «Погружение». Читай, пробуй мини-лаборатории и проверяй себя.",
-        "lessons.subtitle.many": "{n} коротких уроков: начни с «Основ», а потом отправляйся в «Погружение». Читай, пробуй мини-лаборатории и проверяй себя."
+        "lessons.subtitle.few": "{n} коротких урока: начни с «Основ», отправляйся в «Погружение», а потом посмотри на «ИИ вокруг тебя». Читай, пробуй мини-лаборатории и проверяй себя.",
+        "lessons.subtitle.many": "{n} коротких уроков: начни с «Основ», отправляйся в «Погружение», а потом посмотри на «ИИ вокруг тебя». Читай, пробуй мини-лаборатории и проверяй себя."
     }
 });
 
@@ -168,6 +168,7 @@ window.AICompass.addTranslations({
         "lessons.cert.count.6": "six",
         "lessons.cert.count.9": "nine",
         "lessons.cert.count.12": "twelve",
+        "lessons.cert.count.15": "fifteen",
         "lessons.cert.defaultName": "AI Explorer",
         "lessons.cert.date": "Issued on {date}",
         "lessons.cert.lessons.one": "lesson",
@@ -312,6 +313,7 @@ window.AICompass.addTranslations({
         "lessons.cert.count.6": "шести",
         "lessons.cert.count.9": "девяти",
         "lessons.cert.count.12": "двенадцати",
+        "lessons.cert.count.15": "пятнадцати",
         "lessons.cert.defaultName": "Исследователь ИИ",
         "lessons.cert.date": "Дата выдачи: {date}",
         "lessons.cert.lessons.one": "урок",

@@ -212,6 +212,7 @@
     <script src="./js/content/neural-bg.js" defer></script>
     <script src="./js/content/lessons.js" defer></script>
     <script src="./js/content/lessons-deep.js" defer></script>
+    <script src="./js/content/lessons-world.js" defer></script>
     <script src="./js/content/lab.js" defer></script>
     <script src="./js/content/quiz.js" defer></script>
     <script src="./js/content/glossary.js" defer></script>
@@ -281,7 +282,7 @@
                 "@id": "https://newfter.github.io/AI-Compass/#course",
                 "name": "Learn AI Step by Step",
                 "alternateName": "Изучай ИИ шаг за шагом",
-                "description": "Short interactive lessons about Artificial Intelligence for teenagers, in two tracks (Basics, then Deep dive), each with a mini-lab and a question to check yourself. Free, in English and Russian.",
+                "description": "Short interactive lessons about Artificial Intelligence for teenagers, in three tracks (Basics, Deep dive, AI in your world), each with a mini-lab and a question to check yourself. Free, in English and Russian.",
                 "url": "https://newfter.github.io/AI-Compass/#lessons",
                 "image": "https://newfter.github.io/AI-Compass/images/og-image.png",
                 "provider": { "@id": "https://newfter.github.io/AI-Compass/#organization" },
@@ -293,7 +294,7 @@
                 "typicalAgeRange": "13-18",
                 "audience": { "@type": "EducationalAudience", "educationalRole": "student" },
                 "offers": { "@type": "Offer", "category": "Free", "price": 0, "priceCurrency": "USD" },
-                "hasCourseInstance": { "@type": "CourseInstance", "courseMode": "Online", "courseWorkload": "PT74M" },
+                "hasCourseInstance": { "@type": "CourseInstance", "courseMode": "Online", "courseWorkload": "PT96M" },
                 "syllabusSections": [
                     { "@type": "Syllabus", "position": 1, "name": "What is AI?", "description": "What artificial intelligence really is — and what it isn't.", "educationalLevel": "Beginner", "timeRequired": "PT4M" },
                     { "@type": "Syllabus", "position": 2, "name": "Machine Learning", "description": "How computers learn from examples instead of instructions.", "educationalLevel": "Beginner", "timeRequired": "PT5M" },
@@ -306,7 +307,10 @@
                     { "@type": "Syllabus", "position": 9, "name": "How Chatbots Write", "description": "Tokens, probabilities and attention: what really happens when a chatbot writes an answer.", "educationalLevel": "Intermediate", "timeRequired": "PT8M" },
                     { "@type": "Syllabus", "position": 10, "name": "Creative AI", "description": "How AI makes pictures, music and stories, how a picture appears out of noise, and the questions it raises.", "educationalLevel": "Intermediate", "timeRequired": "PT7M" },
                     { "@type": "Syllabus", "position": 11, "name": "Can You Trust AI?", "description": "How AI gets things wrong, how it is tested, how to protect your data, and the rules that are appearing for AI.", "educationalLevel": "Intermediate", "timeRequired": "PT8M" },
-                    { "@type": "Syllabus", "position": 12, "name": "Your AI Toolkit", "description": "How to ask AI good questions, check its answers, learn honestly with it, and keep growing your skills.", "educationalLevel": "Intermediate", "timeRequired": "PT7M" }
+                    { "@type": "Syllabus", "position": 12, "name": "Your AI Toolkit", "description": "How to ask AI good questions, check its answers, learn honestly with it, and keep growing your skills.", "educationalLevel": "Intermediate", "timeRequired": "PT7M" },
+                    { "@type": "Syllabus", "position": 13, "name": "Data: The Fuel of AI", "description": "Where the examples that AI learns from come from, how they go wrong, and why a model is always tested on examples it has never seen.", "educationalLevel": "Beginner", "timeRequired": "PT7M" },
+                    { "@type": "Syllabus", "position": 14, "name": "How Apps Choose for You", "description": "How video, music and shopping apps decide what to show you next, which signals they read, and how to stay in charge of your feed.", "educationalLevel": "Beginner", "timeRequired": "PT7M" },
+                    { "@type": "Syllabus", "position": 15, "name": "Plan Your Own AI Project", "description": "From an idea to a working model: choosing a problem, collecting data, testing honestly and thinking about the people it affects.", "educationalLevel": "Intermediate", "timeRequired": "PT8M" }
                 ]
             }
         ]
@@ -515,7 +519,7 @@
                         <span class="home-door-icon" aria-hidden="true">📚</span>
                         <span class="home-door-name" data-i18n="nav.lessons">Lessons</span>
                         <span class="home-door-text" data-i18n="home.doorLessons">Learn how AI works, one short lesson at a time.</span>
-                        <span class="home-door-meta"><strong data-count="12" data-count-name="lessonCount">12</strong> <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">interactive lessons</span></span>
+                        <span class="home-door-meta"><strong data-count="15" data-count-name="lessonCount">15</strong> <span data-i18n="hero.statLessons" data-i18n-plural="lessonCount">interactive lessons</span></span>
                         <svg class="home-door-arrow" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
                 </li>
@@ -571,7 +575,7 @@
             <div class="section-head" data-reveal>
                 <p class="section-label" data-i18n="lessons.label">LEARN SOMETHING NEW</p>
                 <h2 data-i18n="lessons.title">Learn AI Step by Step</h2>
-                <p class="section-sub" data-i18n="lessons.subtitle" data-i18n-plural="lessonCount">Short lessons: start with the Basics, then take the Deep dive. Read, try the mini-lab and check yourself.</p>
+                <p class="section-sub" data-i18n="lessons.subtitle" data-i18n-plural="lessonCount">Short lessons: start with the Basics, take the Deep dive, then see AI in your world. Read, try the mini-lab and check yourself.</p>
             </div>
             <div data-feature="lessons"></div>
         </div>

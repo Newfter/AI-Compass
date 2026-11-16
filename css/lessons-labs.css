@@ -12,6 +12,9 @@
    4. From noise to picture (lesson 10, js/lessons/noise.js): .noise-
    5. Fair or not? (lesson 11, js/lessons/fairness.js): .fair-
    6. Prompt makeover (lesson 12, js/lessons/prompt.js): .prompt-
+   6a. Data detective (lesson 13, js/lessons/clean.js): .cln-
+   6b. What the app sees (lesson 14, js/lessons/signals.js): .sig-
+   6c. Project planner (lesson 15, js/lessons/plan.js): .pln-
    7. Switches of the mini-labs
    8. Responsive
    9. Calm mode and reduced motion
@@ -1275,6 +1278,289 @@
     margin-top: 0;
 }
 
+/* ===== 6a. DATA DETECTIVE =====
+   The table is a column of row buttons (a <table> can't hold buttons that
+   are whole rows). A found row turns orange with a strike-through; a good
+   row that was tapped turns green for a moment's reassurance. */
+.cln-table {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cln-row {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1.2fr) minmax(0, 0.7fr) minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    min-height: 44px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-solid);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+button.cln-row:hover {
+    border-color: var(--border-strong);
+}
+
+.cln-head {
+    min-height: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: default;
+}
+
+.cln-empty {
+    color: var(--text-muted);
+}
+
+.cln-row.is-found {
+    border-color: var(--warning);
+    background: color-mix(in srgb, var(--warning) 14%, var(--surface-solid));
+}
+
+.cln-row.is-found span:not(:first-child) {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+}
+
+.cln-row.is-fine {
+    border-color: var(--success);
+}
+
+/* ===== 6b. WHAT THE APP SEES ===== */
+.sig-video {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.sig-thumb {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 40px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    font-size: 22px;     /* px: a glyph in a tile of fixed size */
+}
+
+.sig-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sig-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 6px 14px 6px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--surface-solid);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.sig-chip[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface-solid));
+}
+
+.sig-meter {
+    margin-top: 16px;
+}
+
+.sig-track {
+    position: relative;
+    display: block;
+    height: 12px;
+    margin: 8px 0 6px;
+    border-radius: 999px;
+    background: var(--border);
+}
+
+.sig-zero {
+    position: absolute;
+    left: 40%;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    background: var(--text-muted);
+}
+
+.sig-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 999px;
+    background: var(--success);
+    transition: left 0.25s ease, width 0.25s ease;
+}
+
+.sig-fill.is-less {
+    background: var(--danger);
+}
+
+.sig-guesses {
+    margin-top: 14px;
+}
+
+.sig-guesses ul {
+    margin: 6px 0 0;
+    padding-left: 20px;
+    font-size: 0.90625rem;
+    line-height: 1.55;
+}
+
+.sig-none {
+    color: var(--text-muted);
+    list-style: none;
+    margin-left: -20px;
+}
+
+.sig-mixed {
+    font-weight: 700;
+}
+
+/* ===== 6c. PROJECT PLANNER ===== */
+.pln-dots {
+    display: flex;
+    gap: 6px;
+    margin: 6px 0 12px;
+}
+
+.pln-dots i {
+    width: 28px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--border);
+}
+
+.pln-dots i.is-past {
+    background: var(--accent-2);
+}
+
+.pln-dots i.is-now {
+    background: var(--accent);
+}
+
+.pln-step {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.pln-q {
+    margin-bottom: 4px;
+    padding: 0;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.pln-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: var(--surface-solid);
+    font-size: 0.90625rem;
+    cursor: pointer;
+}
+
+.pln-option input {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+}
+
+.pln-option.is-good {
+    border-color: var(--success);
+}
+
+.pln-option.is-ok,
+.pln-option.is-bad {
+    border-color: var(--warning);
+}
+
+.pln-feedback {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.90625rem;
+    background: color-mix(in srgb, var(--warning) 12%, transparent);
+}
+
+.pln-feedback.is-good {
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+
+.pln-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.90625rem;
+}
+
+.pln-summary li {
+    display: flex;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.pln-summary li.is-good {
+    border-color: var(--success);
+}
+
+.pln-summary li.is-ok,
+.pln-summary li.is-bad {
+    border-color: var(--warning);
+}
+
+.pln-mark {
+    flex: none;
+    width: 1.2em;
+    font-weight: 800;
+}
+
+.is-good > .pln-mark {
+    color: var(--text-success, var(--success));
+}
+
+.is-ok > .pln-mark,
+.is-bad > .pln-mark {
+    color: var(--warning);
+}
+
 /* ===== 7. SWITCHES OF THE MINI-LABS =====
    The track and the knob are .ui-switch (css/components.css). */
 
@@ -1365,6 +1651,16 @@
     .tmp-table td {
         padding: 5px 5px;
         font-size: 0.78125rem;
+    }
+}
+
+/* Data detective on a phone: smaller cells so the five columns fit */
+@media (max-width: 480px) {
+    .cln-row {
+        grid-template-columns: 18px minmax(0, 1fr) minmax(0, 0.6fr) minmax(0, 1fr) minmax(0, 0.7fr);
+        gap: 6px;
+        padding: 6px 8px;
+        font-size: 0.8125rem;
     }
 }
 
