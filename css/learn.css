@@ -39,6 +39,22 @@
     gap: 28px;
 }
 
+/* The page's stacks: one thing under another, in one column. A grid column is
+   normally never narrower than its widest row, so with large letters on a small
+   phone the whole page got wider than the screen and lost its right edge. These
+   columns may shrink, and the rows inside rearrange (css/settings.css, 1). */
+.lp,
+.lp-main,
+.lp-me,
+.lp-steps,
+.lp-stages,
+.lp-topics,
+.lp-choice-body,
+.lp-step-body,
+.lp-unit-body {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 /* When a part of the page is drawn again, the keyboard focus goes to its title,
    so the next Tab starts there. A title is not a button: no ring around it. (This
    rule has to be stronger than "[tabindex]:focus-visible" in style.css.) */
@@ -231,11 +247,15 @@
     line-height: 1.3;
 }
 
+/* The small words after a title ("about 8-11 years") stay together: they go to the
+   next line as one piece. Only when they are longer than a whole line do they wrap
+   inside ("пишешь код или работаешь с данными" on a phone). */
 .lp-choice-small {
+    display: inline-block;
+    max-width: 100%;
     color: var(--text-dim);
     font-size: 0.8125rem;
     font-weight: 600;
-    white-space: nowrap;
 }
 
 .lp-choice-text {
@@ -591,6 +611,7 @@
 
 .lp-unit {
     display: flex;
+    flex-wrap: wrap;       /* "Next step" goes under the text when the text would keep less than 6em beside it */
     align-items: center;
     gap: 12px;
     width: 100%;
@@ -630,7 +651,7 @@
 
 .lp-unit-body {
     display: grid;
-    flex: 1;
+    flex: 1 1 6em;
     gap: 2px;
     min-width: 0;
 }
@@ -653,6 +674,7 @@
 
 .lp-unit-state {
     flex: none;
+    margin-left: auto;     /* on the right also when it stands under the text */
     font-size: 0.75rem;
     font-weight: 700;
 }
@@ -1149,7 +1171,7 @@ html.design-pro .home-path {
 
     .lp-choices-2,
     .lp-choices-3 {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .lp-me-days {
@@ -1189,7 +1211,7 @@ html.design-pro .home-path {
     .lp-units,
     .lp-method,
     .lp-pro-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .lp-topic {
@@ -1212,7 +1234,7 @@ html.design-pro .home-path {
     }
 
     .lp-why-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: 4px;
         margin-bottom: 8px;
     }

@@ -97,6 +97,67 @@ html.st-large-text .lab-range-head {
     row-gap: 6px;
 }
 
+/* My path (css/learn.css) on a phone. A row that keeps a button or a label
+   beside its text has no room for both with bigger letters: the text was
+   squeezed into a strip a few letters wide, or lay under the button. So the
+   button goes under the text. (The steps of a stage do this at any text size,
+   when it is needed: css/learn.css, 5.) */
+@media (max-width: 480px) {
+    /* today's session: a step's button under its text, as wide as the row */
+    html.st-large-text .lp-step {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    html.st-large-text .lp-step > .btn {
+        grid-column: 1 / -1;
+    }
+
+    html.st-large-text .lp-step-done {       /* only words for screen readers: no row of its own */
+        position: absolute;
+    }
+
+    /* a stage: "2 of 5" and its bar share a line, the "Show steps" button has its own */
+    html.st-large-text .lp-stage-side {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    html.st-large-text .lp-stage-toggle {
+        grid-column: 1 / -1;
+    }
+
+    /* what you remember: the three numbers one under another, each beside its label;
+       a topic's "Practise" button under its bar */
+    html.st-large-text .lp-tiles {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    html.st-large-text .lp-tile {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+    }
+
+    html.st-large-text .lp-topic {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    html.st-large-text .lp-topic .btn {
+        grid-column: 1;
+        grid-row: auto;
+        justify-self: start;
+    }
+
+    /* Pro design: the forecast has 14 days, and "10" to "13" need the room of the
+       gaps and slightly smaller digits */
+    html.st-large-text .lp-forecast ol {
+        gap: 2px;
+    }
+
+    html.st-large-text .lp-forecast :is(.lp-box-num, .lp-box-name) {
+        font-size: 0.5625rem;
+    }
+}
+
 /* Section titles (style.css, 7): on a phone a long word ("ИИ-лаборатория")
    must still fit in its line, so a title is at most 10vw (a tenth of the
    screen's width). On a 390px phone that only changes 150%. */
