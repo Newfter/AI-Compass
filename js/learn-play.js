@@ -31,6 +31,8 @@
    Any screen can also show, above its question: "text" (paragraphs),
    "pixels" ({ rows: ["090", ...], numbers }), "table" ({ head, rows, side })
    and "example" (lines in a box; "mono": true for code and formulas).
+   An info screen can end with "prompts": ready requests for a chatbot, each
+   with a Copy button ([{ label, text }]; text: one line or a list of lines).
    In the texts of a course, **two stars** make bold and `backticks` code.
 
    Sections of this file:
@@ -64,6 +66,10 @@
     const CARD_TRIES = 1;            // a card: one try, because it tests the memory
     const EXPLAIN_MIN = 20;          // letters an explanation needs before it is compared
     const WRONG_FLASH = 650;         // ms a wrong pair stays red in a "match" task
+    const PROMPT_LINE = 46;          // about how many letters of a ready request fit on one line
+    const PROMPT_ROWS_MIN = 2;       // a ready request shows at least this many lines...
+    const PROMPT_ROWS_MAX = 7;       // ...and at most this many, until the window has measured its text
+    const PROMPT_EDGE = 2;           // px: the field's two borders, added to the height of its text
     const TASKS = ["choice", "order", "sort", "match", "number"];
     const CLOSE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 
@@ -126,6 +132,21 @@
         return '<div class="lpw-table-box"><table class="lpw-table">' + head + "<tbody>" + body + "</tbody></table></div>";
     }
 
+    // Ready requests for a chatbot: [{ label, text }], each in a box with a Copy button
+    function promptsHTML(prompts) {
+        return list(prompts).map(function (item) {
+            const lines = list(item.text);
+            const text = lines.join("\n");
+            const rows = Math.max(PROMPT_ROWS_MIN, Math.min(PROMPT_ROWS_MAX, Math.ceil(text.length / PROMPT_LINE) + lines.length - 1));
+            return '<div class="lpw-bot lpw-ready">' +
+                '<p class="lpw-bot-title" data-speak>' + rich(item.label) + "</p>" +
+                '<textarea class="lpw-prompt" rows="' + rows + '" readonly aria-label="' + esc(plain(item.label)) + '">' + esc(text) + "</textarea>" +
+                '<p class="lpw-bot-row"><button type="button" class="btn btn-ghost btn-small" data-act="copy">' + esc(t("learn.explain.botCopy")) + "</button>" +
+                    '<span class="lpw-copy-state" role="status"></span></p>' +
+            "</div>";
+        }).join("");
+    }
+
     // What a screen shows above its question: paragraphs, a picture, a table, an example, a note
     function contextHTML(step) {
         let html = paragraphs(step.text, "lpw-text");
@@ -137,6 +158,7 @@
             }).join("") + "</div>";
         }
         if (step.note) html += '<p class="lpw-note" data-speak>' + rich(step.note) + "</p>";
+        html += promptsHTML(step.prompts);
         return html;
     }
 
@@ -189,7 +211,15 @@
             };
             root.addEventListener("click", onClick);
             document.addEventListener("keydown", onKey);
-            window.addEventListener("resize", function () { if (isOpen) liftToasts(); });
+            window.addEventListener("resize", function () {
+                if (!isOpen) return;
+                liftToasts();
+                fitPrompts();
+            });
+            // (a font that arrives after the first screen changes how tall its text is)
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(function () { if (isOpen) fitPrompts(); });
+            }
 
             // The window is a pop-up of the page (see "overlays" in js/core.js): while it is
             // open, core stops the page from scrolling, keeps Tab inside and closes it with Esc.
@@ -274,9 +304,20 @@
             setChrome(options);
             parts.body.innerHTML = options.html;
             parts.body.scrollTop = 0;
+            fitPrompts();
             setButtons(options.buttons || []);
             updateListen();
             focusScreen();
+        }
+
+        // A ready request of a guided screen is as tall as its text, so that nothing
+        // has to be scrolled inside a small box (the "rows" of the field are only a start)
+        function fitPrompts() {
+            Array.prototype.forEach.call(parts.body.querySelectorAll(".lpw-ready .lpw-prompt"), function (field) {
+                field.style.height = "auto";
+                // (a window that is not on screen yet measures 0: then the rows stay)
+                if (field.scrollHeight) field.style.height = (field.scrollHeight + PROMPT_EDGE) + "px";
+            });
         }
 
         function saveNote() {
@@ -307,7 +348,29 @@
             const act = button.getAttribute("data-act");
             if (act === "close") close({ focusBack: true });
             else if (act === "listen") toggleSpeaking();
+            else if (act === "copy") copyPrompt(button);
             else if (typeof actions[act] === "function") actions[act](button);
+        }
+
+        // "Copy the prompt": copies the ready request in the same box, and says how it went
+        function copyPrompt(button) {
+            const box = button.closest(".lpw-bot");
+            const field = box && box.querySelector(".lpw-prompt");
+            const state = box && box.querySelector(".lpw-copy-state");
+            if (!field) return;
+            const tell = function (ok) { A.dom.setText(state, t(ok ? "learn.explain.botCopied" : "learn.explain.botFailed")); };
+            const byHand = function () {
+                field.focus();
+                field.select();
+                let ok = false;
+                try { ok = document.execCommand("copy"); } catch (error) { ok = false; }
+                tell(ok);
+            };
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+                navigator.clipboard.writeText(field.value).then(function () { tell(true); }, byHand);
+            } else {
+                byHand();
+            }
         }
 
         // 1-9 choose an answer; Enter presses the main button of the screen
@@ -1059,7 +1122,7 @@
                 kicker: sessionTitle(),
                 html: '<div class="lpw-end"><span class="lpw-end-icon" aria-hidden="true">🎯</span>' +
                     '<h3 class="lpw-end-title" data-focus tabindex="-1">' + esc(t("learn.place.title")) + "</h3>" +
-                    '<p class="lpw-text" data-speak>' + esc(t("learn.place.intro")) + "</p></div>",
+                    '<p class="lpw-text" data-speak>' + esc(A.plural("learn.place.intro", session.queue.length)) + "</p></div>",
                 buttons: [{ act: "begin", label: t("learn.place.begin"), primary: true }],
                 actions: { begin: showCard }
             });
@@ -1387,23 +1450,6 @@
                     keys: function () {
                         close({ focusBack: false });
                         host.openLesson(info.n, { part: "keys" });
-                    },
-                    copy: function () {
-                        const field = parts.body.querySelector(".lpw-prompt");
-                        const state = parts.body.querySelector(".lpw-copy-state");
-                        const tell = function (ok) { A.dom.setText(state, t(ok ? "learn.explain.botCopied" : "learn.explain.botFailed")); };
-                        const byHand = function () {
-                            field.focus();
-                            field.select();
-                            let ok = false;
-                            try { ok = document.execCommand("copy"); } catch (error) { ok = false; }
-                            tell(ok);
-                        };
-                        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
-                            navigator.clipboard.writeText(field.value).then(function () { tell(true); }, byHand);
-                        } else {
-                            byHand();
-                        }
                     }
                 }
             });

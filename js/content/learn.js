@@ -85,7 +85,8 @@ window.AICompass.addTranslations({
         "learn.start.some": "I know a little",
         "learn.start.some.text": "I have used chatbots and heard the words. Start with the basics.",
         "learn.start.check": "Find my level",
-        "learn.start.check.text": "A check of about 8 questions, 2 minutes. No grades: it only places you on the path.",
+        "learn.start.check.text.one": "A check of {n} question, a couple of minutes. No grades: it only places you on the path.",
+        "learn.start.check.text.many": "A check of about {n} questions, a couple of minutes. No grades: it only places you on the path.",
 
         "learn.setup.goalTitle": "How much time on a learning day?",
         "learn.setup.goalText": "Little and often works better than one long evening.",
@@ -130,7 +131,9 @@ window.AICompass.addTranslations({
         "learn.start.some": "Кое-что знаю",
         "learn.start.some.text": "Я пользовался чат-ботами и слышал эти слова. Начнём с основ.",
         "learn.start.check": "Найти мой уровень",
-        "learn.start.check.text": "Проверка примерно из 8 вопросов, 2 минуты. Без оценок: она только выбирает место на пути.",
+        "learn.start.check.text.one": "Проверка примерно из {n} вопроса, пара минут. Без оценок: она только выбирает место на пути.",
+        "learn.start.check.text.few": "Проверка примерно из {n} вопросов, пара минут. Без оценок: она только выбирает место на пути.",
+        "learn.start.check.text.many": "Проверка примерно из {n} вопросов, пара минут. Без оценок: она только выбирает место на пути.",
 
         "learn.setup.goalTitle": "Сколько времени в учебный день?",
         "learn.setup.goalText": "Понемногу, но часто — лучше, чем один длинный вечер.",
@@ -189,7 +192,10 @@ window.AICompass.addTranslations({
         "learn.today.more": "Practise a little more",
 
         "learn.path.title": "Your path",
-        "learn.path.text": "Five stages, from the very first idea to the maths inside. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.one": "{n} stage, from the very first idea to the maths inside. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.many": "{n} stages, from the very first idea to the maths inside. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.5": "Five stages, from the very first idea to the maths inside. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.6": "Six stages, from the very first idea to the maths inside. Everything is open: the marker only shows the best next step.",
         "learn.path.stage": "Stage {n}",
         "learn.path.count": "{done} of {total}",
         "learn.path.next": "Next step",
@@ -215,6 +221,8 @@ window.AICompass.addTranslations({
         "learn.stage.zero.text": "What a program is, how everything becomes numbers, and the two ways to make a computer smart. No knowledge needed.",
         "learn.stage.basics": "The basics",
         "learn.stage.basics.text": "What AI is, how machines learn, neural networks, chatbots and safety.",
+        "learn.stage.skills": "Use AI well",
+        "learn.stage.skills.text": "Practise four skills: ask so that AI understands, check its answers, learn with a chatbot without letting it think for you, and stay safe.",
         "learn.stage.deep": "Deep dive",
         "learn.stage.deep.text": "How AI sees, plays, writes and creates, and when you can trust it.",
         "learn.stage.world": "AI in your world",
@@ -230,6 +238,14 @@ window.AICompass.addTranslations({
         "learn.unit.z3.text": "Two ways to make a computer do a task.",
         "learn.unit.z4": "How learning works: you and the machine",
         "learn.unit.z4.text": "Why you forget, and how to make knowledge stay.",
+        "learn.unit.s1": "Ask so that AI understands",
+        "learn.unit.s1.text": "The four parts of a good request, and what to do with a weak answer.",
+        "learn.unit.s2": "Check before you trust",
+        "learn.unit.s2.text": "Why a confident answer can be made up, and three quick checks.",
+        "learn.unit.s3": "A tutor, not a ghostwriter",
+        "learn.unit.s3.text": "Requests that make you better, and honest use at school.",
+        "learn.unit.s4": "Keep yourself safe",
+        "learn.unit.s4.text": "What never to type, fakes that look real, and who answers for the result.",
         "learn.unit.p1": "A neuron by hand",
         "learn.unit.p1.text": "Weighted sums, activations and counting parameters.",
         "learn.unit.p2": "Gradient descent by hand",
@@ -260,7 +276,25 @@ window.AICompass.addTranslations({
         "learn.skills.accuracy": "Right answers so far",
         "learn.skills.reviewNow": "Start the memory check",
         "learn.topic.foundations": "Foundations",
-        "learn.topic.maths": "The maths inside"
+        "learn.topic.skills": "Working with AI",
+        "learn.topic.maths": "The maths inside",
+
+        // The site search (Ctrl+K) finds the guided steps: where a result is, and the
+        // words each step is found by besides its own texts (never shown)
+        "learn.search.section": "My path · {stage}",
+        "learn.search.label": "Guided step · {title}",
+        "learn.unit.z1.words": "program instructions algorithm bug code if then",
+        "learn.unit.z2.words": "numbers pixels letters code picture sound data binary",
+        "learn.unit.z3.words": "rules examples machine learning model training",
+        "learn.unit.z4.words": "memory forgetting spaced repetition study remember learning",
+        "learn.unit.s1.words": "prompt prompting request ask question chatbot context format",
+        "learn.unit.s2.words": "hallucination fact check source verify trust wrong answer made up",
+        "learn.unit.s3.words": "homework study tutor essay cheating school honest hint quiz",
+        "learn.unit.s4.words": "privacy password deepfake scam voice safety personal data fake unfair",
+        "learn.unit.p1.words": "neuron weights bias activation relu sigmoid perceptron xor parameters",
+        "learn.unit.p2.words": "gradient descent learning rate loss derivative chain rule batch",
+        "learn.unit.p3.words": "confusion matrix precision recall f1 accuracy threshold metrics",
+        "learn.unit.p4.words": "tokens embeddings dot product cosine softmax attention transformer temperature"
     },
     ru: {
         "learn.me.as": "Учится",
@@ -303,7 +337,11 @@ window.AICompass.addTranslations({
         "learn.today.more": "Потренироваться ещё немного",
 
         "learn.path.title": "Твой путь",
-        "learn.path.text": "Пять этапов: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.one": "{n} этап: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.few": "{n} этапа: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.many": "{n} этапов: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.5": "Пять этапов: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.6": "Шесть этапов: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
         "learn.path.stage": "Этап {n}",
         "learn.path.count": "{done} из {total}",
         "learn.path.next": "Следующий шаг",
@@ -330,6 +368,8 @@ window.AICompass.addTranslations({
         "learn.stage.zero.text": "Что такое программа, как всё превращается в числа и два способа сделать компьютер умным. Знать ничего не нужно.",
         "learn.stage.basics": "Основы",
         "learn.stage.basics.text": "Что такое ИИ, как учатся машины, нейросети, чат-боты и безопасность.",
+        "learn.stage.skills": "ИИ с умом",
+        "learn.stage.skills.text": "Четыре умения на практике: спрашивать так, чтобы ИИ понял, проверять его ответы, учиться с чат-ботом так, чтобы он не думал за тебя, и беречь себя.",
         "learn.stage.deep": "Погружение",
         "learn.stage.deep.text": "Как ИИ видит, играет, пишет и творит — и когда ему можно доверять.",
         "learn.stage.world": "ИИ вокруг тебя",
@@ -345,6 +385,14 @@ window.AICompass.addTranslations({
         "learn.unit.z3.text": "Два способа научить компьютер делать задачу.",
         "learn.unit.z4": "Как устроено обучение: ты и машина",
         "learn.unit.z4.text": "Почему ты забываешь и как сделать, чтобы знания остались.",
+        "learn.unit.s1": "Спрашивай так, чтобы ИИ понял",
+        "learn.unit.s1.text": "Четыре части хорошего запроса и что делать со слабым ответом.",
+        "learn.unit.s2": "Сначала проверь, потом верь",
+        "learn.unit.s2.text": "Почему уверенный ответ может быть выдумкой, и три быстрые проверки.",
+        "learn.unit.s3": "Репетитор, а не решебник",
+        "learn.unit.s3.text": "Запросы, с которыми становишься сильнее, и честное использование в школе.",
+        "learn.unit.s4": "Береги себя и свои данные",
+        "learn.unit.s4.text": "Что нельзя писать в чат, подделки, похожие на правду, и кто отвечает за результат.",
         "learn.unit.p1": "Нейрон своими руками",
         "learn.unit.p1.text": "Взвешенные суммы, функции активации и подсчёт параметров.",
         "learn.unit.p2": "Градиентный спуск своими руками",
@@ -377,7 +425,23 @@ window.AICompass.addTranslations({
         "learn.skills.accuracy": "Правильных ответов за всё время",
         "learn.skills.reviewNow": "Начать проверку памяти",
         "learn.topic.foundations": "Самые основы",
-        "learn.topic.maths": "Математика внутри"
+        "learn.topic.skills": "Работа с ИИ",
+        "learn.topic.maths": "Математика внутри",
+
+        "learn.search.section": "Мой путь · {stage}",
+        "learn.search.label": "Шаг · {title}",
+        "learn.unit.z1.words": "программа инструкции алгоритм баг ошибка код если то",
+        "learn.unit.z2.words": "числа пиксели буквы код картинка звук данные двоичный",
+        "learn.unit.z3.words": "правила примеры машинное обучение модель тренировка",
+        "learn.unit.z4.words": "память забывание интервальное повторение учёба запоминать",
+        "learn.unit.s1.words": "промпт запрос спросить вопрос чат-бот контекст формат",
+        "learn.unit.s2.words": "галлюцинация проверка фактов источник доверие ошибка выдумка",
+        "learn.unit.s3.words": "домашка учёба репетитор сочинение списывание школа честно подсказка",
+        "learn.unit.s4.words": "приватность пароль дипфейк мошенники голос безопасность личные данные подделка",
+        "learn.unit.p1.words": "нейрон веса смещение активация relu сигмоида перцептрон xor параметры",
+        "learn.unit.p2.words": "градиентный спуск скорость обучения функция потерь производная цепное правило батч",
+        "learn.unit.p3.words": "матрица ошибок точность полнота f1 accuracy precision recall порог метрики",
+        "learn.unit.p4.words": "токены эмбеддинги скалярное произведение косинус softmax внимание трансформер температура"
     }
 });
 
@@ -570,12 +634,14 @@ window.AICompass.addTranslations({
         "learn.test.again": "Try the test again",
 
         "learn.place.title": "Find my level",
-        "learn.place.intro": "About 8 questions. Don't guess: “I don't know yet” is a fine answer, and it makes the path fit you better.",
+        "learn.place.intro.one": "Just {n} question. Don't guess: “I don't know yet” is a fine answer, and it makes the path fit you better.",
+        "learn.place.intro.many": "Up to {n} questions. Don't guess: “I don't know yet” is a fine answer, and it makes the path fit you better.",
         "learn.place.begin": "Begin",
         "learn.place.resultTitle": "Your path starts at “{stage}”",
         "learn.place.line": "{stage}: {score} of {total}",
         "learn.place.result.zero": "We will start from the very beginning: what a program is and how computers learn. Small steps, nothing assumed.",
         "learn.place.result.basics": "You have the first ideas. The basics will make them solid.",
+        "learn.place.result.skills": "You know the basics. Next: how to use AI well, so that it helps you think and does not think for you.",
         "learn.place.result.deep": "The basics are in place. Time to look inside: how AI sees, plays and writes.",
         "learn.place.result.world": "You know how AI works. Now see what it does with data and with you, and plan a project.",
         "learn.place.result.pro": "You know the ideas well. Next comes the maths, done by hand.",
@@ -617,12 +683,15 @@ window.AICompass.addTranslations({
         "learn.test.again": "Пройти тест ещё раз",
 
         "learn.place.title": "Найти мой уровень",
-        "learn.place.intro": "Примерно 8 вопросов. Не угадывай: «Пока не знаю» — хороший ответ, с ним путь подойдёт тебе лучше.",
+        "learn.place.intro.one": "Всего {n} вопрос. Не угадывай: «Пока не знаю» — хороший ответ, с ним путь подойдёт тебе лучше.",
+        "learn.place.intro.few": "До {n} вопросов. Не угадывай: «Пока не знаю» — хороший ответ, с ним путь подойдёт тебе лучше.",
+        "learn.place.intro.many": "До {n} вопросов. Не угадывай: «Пока не знаю» — хороший ответ, с ним путь подойдёт тебе лучше.",
         "learn.place.begin": "Начать",
         "learn.place.resultTitle": "Твой путь начинается с этапа «{stage}»",
         "learn.place.line": "{stage}: {score} из {total}",
         "learn.place.result.zero": "Начнём с самого начала: что такое программа и как учатся компьютеры. Маленькими шагами, ничего знать заранее не нужно.",
         "learn.place.result.basics": "Первые идеи у тебя уже есть. Основы сделают их прочными.",
+        "learn.place.result.skills": "Основы ты знаешь. Дальше — как пользоваться ИИ с умом: чтобы он помогал думать, а не думал за тебя.",
         "learn.place.result.deep": "Основы на месте. Пора заглянуть внутрь: как ИИ видит, играет и пишет.",
         "learn.place.result.world": "Ты знаешь, как работает ИИ. Теперь посмотри, что он делает с данными и с тобой, и спланируй проект.",
         "learn.place.result.pro": "Идеи ты знаешь хорошо. Дальше — математика своими руками.",
@@ -845,8 +914,9 @@ window.AICompass.content.set("learn", {
     // The stage test: how many questions, and the share of right answers that earns the star
     test: { questions: 8, pass: 0.8 },
 
-    // The level check: how many questions it asks about each stage it probes
-    placement: { perStage: 2 },
+    // The level check: how many questions it asks about each stage it probes (every
+    // stage but the first one), and how many stages a young explorer is asked about
+    placement: { perStage: 2, kidStages: 2 },
 
     // Roughly how long each step of today's session takes (minutes), for "About 10 minutes"
     minutes: { review: 2, lab: 4, explain: 2 }

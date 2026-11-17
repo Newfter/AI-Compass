@@ -982,6 +982,21 @@
     font-size: 0.875rem;
 }
 
+/* A ready request for a chatbot on a guided screen ("prompts"): the same box,
+   only as tall as its text, and in the reading colour because it is the lesson */
+.lpw-ready {
+    gap: 8px;
+    padding: 14px;
+}
+
+.lpw-ready .lpw-prompt {
+    min-height: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 0.875rem;
+    resize: none;
+}
+
 /* ===== 8. FOR YOUNG EXPLORERS: BIGGER LETTERS ===== */
 .lpw.is-kid .lpw-text,
 .lpw.is-kid .lpw-points li,

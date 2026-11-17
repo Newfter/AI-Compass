@@ -7,7 +7,7 @@
      or after a short level check) and how many minutes a day;
    - "Today's session": a memory check, the next step of the path,
      something to try in the AI Lab and "Explain it back";
-   - the path: five stages, from "Start from zero" to "Under the hood".
+   - the path: a row of stages, from "Start from zero" to "Under the hood".
      A stage is a lesson track or a guided course (small steps with a
      task each), and ends with a stage test. Nothing is locked;
    - the memory: every question of a finished lesson becomes a card that
@@ -30,7 +30,7 @@
    10. The study window (js/learn-play.js) and what it gets
    11. Following what the learner does elsewhere
    12. The card on the home page
-   13. Ctrl+K commands and the public API
+   13. Ctrl+K commands, the site search and the public API
    Progress events (A.track):
      learn.setup { who, start, goal }      the three questions are answered
      learn.placement { start }             the level check is finished
@@ -772,7 +772,8 @@
             text = t("learn.setup.startText");
             const icons = { zero: "🐣", some: "🌱", check: "🎯" };
             choices = STARTS.map(function (id) {
-                return choiceHTML("start", id, icons[id], t("learn.start." + id), "", t("learn.start." + id + ".text"), wizard.start === id);
+                const about = id === "check" ? A.plural("learn.start.check.text", placementQuestions(wizard.who)) : t("learn.start." + id + ".text");
+                return choiceHTML("start", id, icons[id], t("learn.start." + id), "", about, wizard.start === id);
             }).join("");
         } else {
             title = t("learn.setup.goalTitle");
@@ -826,7 +827,7 @@
         else if (count) daysText = A.plural("learn.me.days", count);
         let tip = "";
         if (profile.start === "check" && !profile.placed) {
-            tip = '<p class="lp-me-tip"><span aria-hidden="true">🎯</span> ' + esc(t("learn.start.check.text")) +
+            tip = '<p class="lp-me-tip"><span aria-hidden="true">🎯</span> ' + esc(A.plural("learn.start.check.text", placementQuestions(profile.who))) +
                 ' <button type="button" class="lp-link" data-lp="level" data-fid="level">' + esc(t("learn.setup.finishCheck")) + "</button></p>";
         } else if (profile.who === "kid") {
             tip = '<p class="lp-me-tip"><span aria-hidden="true">🔊</span> ' + esc(t("learn.me.kidTip")) + "</p>";
@@ -949,7 +950,7 @@
             "</article>";
         }).join("");
         return '<div class="lp-block-head"><h3 class="lp-block-title" id="lp-path-title">' + esc(t("learn.path.title")) + "</h3>" +
-            '<p class="lp-block-text">' + esc(t("learn.path.text")) + "</p></div>" +
+            '<p class="lp-block-text">' + esc(A.plural("learn.path.text", STAGES.length)) + "</p></div>" +
             '<div class="lp-stages">' + cards + "</div>";
     }
 
@@ -1257,6 +1258,20 @@
         return play({ mode: "cards", kind: "test", stage: stageId, cards: A.util.shuffle(cards) }, opener);
     }
 
+    // The stages the level check asks about: every stage but "zero" (that is where the
+    // path starts when nothing is known yet). A young explorer is asked about the
+    // first few only.
+    function placementStages(who) {
+        const stages = STAGES.filter(function (stage) { return stage.id !== "zero"; });
+        return who === "kid" ? stages.slice(0, data.placement.kidStages) : stages;
+    }
+
+    // How many questions the level check has at most (it stops early when the
+    // first stages are not known yet)
+    function placementQuestions(who) {
+        return placementStages(who).length * data.placement.perStage;
+    }
+
     // The level check: a few questions for each stage, from the easier stages up
     function startPlacement(opener) {
         const bank = quizBank();
@@ -1266,9 +1281,7 @@
         });
         const who = wizard.who || (profile ? profile.who : "teen");
         const probes = [];
-        STAGES.forEach(function (stage) {
-            if (stage.id === "zero") return;
-            if (who === "kid" && stage.index > 2) return;
+        placementStages(who).forEach(function (stage) {
             let ids = [];
             if (stage.track) {
                 const pool = A.util.shuffle(stageCards(stage).filter(function (id) { return has(bank, id); }));
@@ -1579,7 +1592,7 @@
         if (event.target.closest("[data-open-path]")) A.navigate("learn");
     });
 
-    // ---------- 13. Ctrl+K commands and the public API ----------
+    // ---------- 13. Ctrl+K commands, the site search and the public API ----------
     const ensure = A.whenNeeded(mount, build);
 
     function openPage() {
@@ -1611,8 +1624,72 @@
         });
     });
 
+    // The site search (js/search.js: the Ctrl+K window) finds the guided steps: by their
+    // name and their search words at once, and by everything they teach as soon as their
+    // course file is there. Asking for the documents starts loading the course files, and
+    // "version" tells the search to build its index again when one has arrived.
+    function loadedCourses() {
+        return Object.keys(COURSES).filter(function (id) { return Boolean(A.content.get("course." + id)); });
+    }
+
+    function unmarked(text) {
+        return String(text).replace(/\*\*(.+?)\*\*/g, "$1").replace(/`(.+?)`/g, "$1");
+    }
+
+    function searchDocuments() {
+        Object.keys(COURSES).forEach(function (id) { loadCourse(id).catch(function () {}); });
+        const documents = [];
+        STAGES.forEach(function (stage) {
+            if (!stage.course || !COURSES[stage.course]) return;
+            const course = A.content.get("course." + stage.course);
+            const stageName = t("learn.stage." + stage.id);
+            COURSES[stage.course].units.forEach(function (unit) {
+                const title = t("learn.unit." + unit.id);
+                const lines = [t("learn.unit." + unit.id + ".text")];
+                const steps = course && course.units && course.units[unit.id] ? course.units[unit.id].steps : [];
+                // What a step teaches: its ideas, its "think first" answers and its recap.
+                // (The tasks stay out: a wrong option must never be found as if it were a fact.)
+                steps.forEach(function (step) {
+                    const text = step[A.lang] || step.en || {};
+                    if (step.type === "info") lines.push.apply(lines, [text.title].concat(text.text || [], text.note || []));
+                    else if (step.type === "reveal") lines.push.apply(lines, [text.q].concat(text.answer || []));
+                    else if (step.type === "recap") lines.push.apply(lines, text.points || []);
+                });
+                documents.push({
+                    id: unit.id,
+                    title: title,
+                    heading: stageName,
+                    text: lines.filter(Boolean).map(unmarked).join(" "),
+                    keywords: A.has("learn.unit." + unit.id + ".words") ? t("learn.unit." + unit.id + ".words") : "",
+                    section: t("learn.search.section", { stage: stageName }),
+                    label: t("learn.search.label", { title: title }),
+                    icon: unit.icon,
+                    open: function () { openGuidedStep(unit.id); }
+                });
+            });
+        });
+        return documents;
+    }
+
+    // Opens a guided step from anywhere (the search, another feature)
+    function openGuidedStep(id, opener) {
+        if (!has(UNIT_BY_ID, id)) return false;
+        ensure();
+        play({ mode: "guide", unit: id }, opener || document.activeElement);
+        return true;
+    }
+
+    if (A.search && typeof A.search.register === "function") {
+        A.search.register("learn", {
+            icon: "🧭",
+            version: function () { return "steps " + Object.keys(UNIT_BY_ID).length + ", courses " + loadedCourses().join(" "); },
+            documents: searchDocuments
+        });
+    }
+
     // Other features use AICompass.learn:
     //   open()                 goes to the "My path" page
+    //   step(id, opener)       opens a guided step ("z1", "p3"...); false if there is no such step
     //   today(opener)          starts the first step of today's session that is not done
     //   review(opener)         starts the memory check
     //   explain(n, opener)     "Explain it back" for lesson n (without n: the best one to explain)
@@ -1623,6 +1700,7 @@
     //   path()                 { stages: [{ id, state, done, total, star }], next: { stage, key, title } or null }
     A.feature("learn", {
         open: openPage,
+        step: openGuidedStep,
         today: function (opener) { ensure(); startToday(opener || document.activeElement); },
         review: function (opener) { ensure(); return startCards("review", opener); },
         explain: function (n, opener) {

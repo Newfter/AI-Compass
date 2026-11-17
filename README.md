@@ -80,7 +80,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/timeline.js` | "A Short History of AI": the era and theme chips, the folded milestones, and the line that fills as you scroll. |
 | `js/assistant.js` | Compass Bot, the chat helper in the corner: its prepared answers, answers looked up in the site, follow-ups ("tell me more") and "quiz me". |
 | `js/palette.js` | The Ctrl+K search window. |
-| `js/search.js` | The site search (`A.search`): finds things in the lessons, glossary, timeline, quiz, AI Lab and page texts, in the current language, with typos, synonyms and the wrong keyboard layout. The Ctrl+K palette and Compass Bot use it. |
+| `js/search.js` | The site search (`A.search`): finds things in the lessons, the guided steps of My path, the glossary, timeline, quiz, AI Lab and page texts, in the current language, with typos, synonyms and the wrong keyboard layout. The Ctrl+K palette and Compass Bot use it. |
 | `js/journey.js` | My Compass: counts XP from the progress events, and keeps the level, the badges and the streak in this browser. It also draws the button in the menu. |
 | `js/journey-panel.js` | The My Compass window (the dashboard). It is loaded the first time the window opens. With accounts switched on, its "Your account" card shows the Knowledge Challenge results and the diary of saved results. |
 | `js/config.js` | The two public values that switch the account features on (the Supabase project address and its public key). Empty = accounts off. See `docs/ACCOUNTS-SETUP.md`. Never a secret key. |
@@ -222,7 +222,7 @@ Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `
 
 All of it is data in `js/content/learn.js` (the stages, the courses, the boxes, the minutes a day) and in `js/content/courses/` (the screens of every guided step). Everything is saved in this browser only, under five keys that start with `learn.`; the header of `js/learn.js` lists what each one holds.
 
-Other features use `A.learn`: `open()`, `today(opener)` (the first step of today's session that is not done), `review(opener)` (the memory check), `explain(n, opener)`, and to read: `profile()`, `plan()`, `memory()`, `topics()` and `path()`. The Pro design's panels and its terminal command `path` are built on these.
+Other features use `A.learn`: `open()`, `today(opener)` (the first step of today's session that is not done), `step(id, opener)` (one guided step, for example `A.learn.step("z1")`), `review(opener)` (the memory check), `explain(n, opener)`, and to read: `profile()`, `plan()`, `memory()`, `topics()` and `path()`. The Pro design's panels and its terminal command `path` are built on these. The site search (Ctrl+K) finds every guided step by its title, by what its screens say and by the extra words in `learn.unit.<id>.words`.
 
 
 ## Progress events
@@ -768,6 +768,7 @@ A guided step (a "unit") is a list of small screens in a course file, for exampl
 ```js
 "learn.unit.z5": "Train your first model",
 "learn.unit.z5.text": "Find the number that makes the fewest mistakes.",
+"learn.unit.z5.words": "train model threshold mistakes",      // optional: extra words for the site search
 ```
 
 **2.** In the course file, add `z5` after the last unit. Every screen has a `type` and its texts in `en` and `ru`:
@@ -794,7 +795,7 @@ z5: {
 }
 ```
 
-The kinds of screen are `info`, `choice`, `number`, `order`, `sort`, `match`, `reveal` and `recap`; the header of every course file explains them. Three rules make a step teach well:
+The kinds of screen are `info`, `choice`, `number`, `order`, `sort`, `match`, `reveal` and `recap`; the header of every course file explains them. An `info` screen can also show `prompts`: ready requests for a chatbot, each with a Copy button. Three rules make a step teach well:
 
 - one idea on a screen, and a task right after it;
 - a task with `card: "z5a"` (the unit's name and a letter, in order) also becomes a card of the memory check, so it must make sense on its own, without the screens before it;
