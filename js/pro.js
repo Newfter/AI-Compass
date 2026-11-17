@@ -57,6 +57,7 @@
     // the section id, the letter for "g + letter"
     const PAGES = [
         { id: "home", key: "h", names: ["home", "главная"] },
+        { id: "learn", key: "p", names: ["path", "learn", "путь"] },
         { id: "lessons", key: "l", names: ["lessons", "уроки"] },
         { id: "lab", key: "a", names: ["lab", "лаборатория"] },
         { id: "quiz", key: "q", names: ["quiz", "тест"] },
@@ -322,6 +323,10 @@
     function insightsList(n) {
         const list = [];
         const lessons = A.lessons;
+        // My path first: cards that are due today, or the invitation to build a path
+        const memory = safe(function () { return A.learn.profile() ? A.learn.memory() : null; }, null);
+        if (memory && memory.due) list.push({ icon: "🧠", text: t("pro.recReview", { n: num(memory.due) }), act: "review" });
+        else if (A.learn && !memory) list.push({ icon: "🧭", text: t("pro.recPath"), act: "path" });
         const next = safe(function () { return lessons.next(); }, 0);
         if (next && n.lessons.done < n.lessons.total) {
             list.push({ icon: "📚", text: t("pro.recLesson", { n: num(next), title: safe(function () { return lessons.title(next); }, "") }), act: "next" });
@@ -491,6 +496,8 @@
         { names: ["define", "def", "что"], usage: "define <word>", does: "pro.cmd.define", run: cmdDefine },
         { names: ["search", "find", "поиск"], usage: "search", does: "pro.cmd.search", run: function () { if (A.palette) A.palette.open(); } },
         { names: ["stats", "статистика"], usage: "stats", does: "pro.cmd.stats", run: cmdStats },
+        { names: ["path", "путь"], usage: "path", does: "pro.cmd.path", run: cmdPath },
+        { names: ["review", "повторить"], usage: "review", does: "pro.cmd.review", run: cmdReview },
         { names: ["theme", "тема"], usage: "theme [dark|light]", does: "pro.cmd.theme", run: cmdTheme },
         { names: ["lang", "язык"], usage: "lang [en|ru]", does: "pro.cmd.lang", run: cmdLang },
         { names: ["design", "дизайн"], usage: "design simple", does: "pro.cmd.design", run: cmdDesign },
@@ -634,6 +641,31 @@
         print("  " + t("pro.streak") + ": " + n.streak);
     }
 
+    // "path": the stages of My path with their progress, then the memory numbers
+    function cmdPath() {
+        const learn = A.learn;
+        if (!learn || !safe(function () { return learn.profile(); }, null)) {
+            print(t("pro.term.pathNone"), "dim");
+            return;
+        }
+        const path = learn.path();
+        const marks = { done: "✓", start: "▸", progress: "▸", known: "–", later: "·" };
+        print(t("nav.learn").toUpperCase(), "info");
+        path.stages.forEach(function (stage, index) {
+            print("  " + (marks[stage.state] || "·") + " " + index + "  " + (t("learn.stage." + stage.id) + "                          ").slice(0, 26) +
+                stage.done + "/" + stage.total + (stage.star ? "  ★" : ""));
+        });
+        if (path.next) print("  " + t("pro.chipNext") + ": " + path.next.title);
+        const memory = learn.memory();
+        print("  " + t("pro.term.pathMemory", { total: num(memory.total), due: num(memory.due), strong: num(memory.strong) }), "dim");
+    }
+
+    function cmdReview() {
+        if (!A.learn) return;
+        print(t("pro.term.reviewStart"), "ok");
+        A.learn.review(terminal ? terminal.input : null);
+    }
+
     function cmdLs() {
         PAGES.forEach(function (page) {
             const ready = pageReady(page.id);
@@ -749,7 +781,7 @@
         const current = document.querySelector("main > section.page-current");
         const id = current ? current.id : "home";
         const page = PAGES.find(function (p) { return p.id === id; });
-        const keys = { home: "cmd.home", lessons: "nav.lessons", lab: "nav.lab", quiz: "nav.quiz", challenge: "nav.challenge", glossary: "nav.glossary", timeline: "nav.timeline", teachers: "nav.teachers", about: "nav.about" };
+        const keys = { home: "cmd.home", learn: "nav.learn", lessons: "nav.lessons", lab: "nav.lab", quiz: "nav.quiz", challenge: "nav.challenge", glossary: "nav.glossary", timeline: "nav.timeline", teachers: "nav.teachers", about: "nav.about" };
         return keys[id] ? t(keys[id]) : page ? page.names[0] : id;
     }
 
@@ -774,8 +806,8 @@
 
     /* =========================================================
        7. "G THEN A LETTER": JUMPING TO A PAGE WITH THE KEYBOARD
-       Pro design only. "g", then within a second: h home, l lessons,
-       a lab, q quiz, c challenge, g glossary, t history, e teachers,
+       Pro design only. "g", then within a second: h home, p my path,
+       l lessons, a lab, q quiz, c challenge, g glossary, t history, e teachers,
        i about. "`" (the key left of 1) goes to the terminal.
        ========================================================= */
     let jumpUntil = 0;
@@ -876,6 +908,10 @@
             if (A.quiz) A.quiz.start(name === "quiz" ? "classic" : name);
         } else if (name === "glossary") {
             A.navigate("glossary");
+        } else if (name === "review") {
+            if (A.learn) A.learn.review(button);
+        } else if (name === "path") {
+            openPage("learn");
         } else if (name === "daily") {
             if (A.quiz) A.quiz.start("daily");
         } else if (name === "cards") {
@@ -974,6 +1010,13 @@
     }
 
     function pageChips(id, n) {
+        if (id === "learn") {
+            const memory = safe(function () { return A.learn.profile() ? A.learn.memory() : null; }, null);
+            if (!memory) return chip(t("pro.chipCards"), "—") + chip(t("pro.chipDue"), "—");
+            return chip(t("pro.chipCards"), num(memory.total)) +
+                chip(t("pro.chipDue"), num(memory.due)) +
+                chip(t("pro.chipStrong"), num(memory.strong));
+        }
         if (id === "lessons") {
             const next = safe(function () { return A.lessons.next(); }, 0);
             return chip(t("pro.lessons"), count(n.lessons)) +

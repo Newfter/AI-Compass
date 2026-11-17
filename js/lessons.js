@@ -2264,8 +2264,8 @@
         return html;
     }
 
-    // "Test yourself on this lesson": the quiz's questions about it (its "Lesson review"
-    // mode), if the quiz has some
+    // "Test yourself on this lesson": how many questions the quiz has about it (they are
+    // asked by its "Lesson review" mode)
     function quizReviewCount(n) {
         if (!A.quiz || typeof A.quiz.bank !== "function" || typeof A.quiz.start !== "function") return 0;
         return A.util.attempt(function () {
@@ -2273,12 +2273,18 @@
         }, 0);
     }
 
+    // Under "Check yourself": the quiz's questions about this lesson, and "Explain it
+    // back" (My path, js/learn.js): write the lesson in your own words and compare
     function quizReviewHTML(n) {
         const count = quizReviewCount(n);
-        if (!count) return "";
+        const explain = Boolean(A.learn) && typeof A.learn.explain === "function" && A.has("learn.explain.readerButton");
+        if (!count && !explain) return "";
+        const quizButton = count ? `
+                    <button type="button" class="btn btn-ghost btn-small" data-action="quiz-review" data-fid="quiz-review"><span aria-hidden="true">🏆</span> ${t("lessons.reader.quizReview", { questions: A.plural("quiz.questionCount", count) })} <span class="lsn-arrow" aria-hidden="true">→</span></button>` : "";
+        const explainButton = explain ? `
+                    <button type="button" class="btn btn-ghost btn-small" data-action="explain" data-fid="explain-back" title="${A.escapeHTML(t("learn.explain.readerText"))}"><span aria-hidden="true">🗣️</span> ${t("learn.explain.readerButton")} <span class="lsn-arrow" aria-hidden="true">→</span></button>` : "";
         return `
-                <p class="lsn-quiz-review">
-                    <button type="button" class="btn btn-ghost btn-small" data-action="quiz-review" data-fid="quiz-review"><span aria-hidden="true">🏆</span> ${t("lessons.reader.quizReview", { questions: A.plural("quiz.questionCount", count) })} <span class="lsn-arrow" aria-hidden="true">→</span></button>
+                <p class="lsn-quiz-review">${quizButton}${explainButton}
                 </p>`;
     }
 
@@ -2689,7 +2695,8 @@
 
     function scrollCardIntoView(n) {
         const card = document.getElementById("lesson-card-" + n);
-        if (!card) return;
+        // (nothing to scroll to while another page is on screen: the card is hidden)
+        if (!card || !card.getClientRects().length) return;
         const box = card.getBoundingClientRect();
         const top = window.scrollY + box.top - Math.max(0, (window.innerHeight - box.height) / 2);
         window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
@@ -2772,16 +2779,23 @@
 
     // Back to the button that opened the reader. If there is none, go to the
     // card of the lesson you were reading (scrolled into view, so the focus ring is visible).
+    // A page that was drawn again while the lesson was open (My path does that when a
+    // lesson is finished) has a new button in the old one's place: that one gets it.
+    // On another page than the lessons, the last resort is the page's heading.
     function giveFocusBack(opener, lesson) {
-        if (canTakeFocus(opener)) {
-            opener.focus({ preventScroll: true });
+        const button = canTakeFocus(opener) ? opener : A.dom.findAgain(opener);
+        if (canTakeFocus(button)) {
+            button.focus({ preventScroll: true });
             return;
         }
         const card = mount.querySelector("#lesson-card-" + lesson + " [data-open]");
-        if (card) {
+        if (card && card.getClientRects().length) {
             scrollCardIntoView(lesson);
             card.focus({ preventScroll: true });
+            return;
         }
+        const page = document.querySelector("main > section.page-current");
+        if (page) A.dom.focusHeading(page);
     }
 
     // ----- Clicks and keys inside the reader -----
@@ -2827,6 +2841,11 @@
             case "size": cycleTextSize(); break;
             case "try": runTryIt(); break;
             case "quiz-review": runQuizReview(); break;
+            case "explain":
+                // The window of My path opens over the lesson, which stays open under it
+                stopSpeaking();
+                if (A.learn) A.learn.explain(reader.lesson, target);
+                break;
             case "retry": retryCheck(); break;
             case "peek-close": closePeek(true); break;
             case "glossary":

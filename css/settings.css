@@ -64,9 +64,29 @@ html.st-large-text :is(.stat span, .gl-rel,
     .lab-pick-title, .lab-seg button, .lab-lm-stat span,       /* the AI Lab: the picker, Teach the machine, the predictor */
     .lk-explain-text strong, .lk-challenge-text,               /* the experiments' "How it works" and challenges (css/lab/kit.css) */
     .cv-map .lk-btn-text,                                      /* the names of the maps in How computers see (css/lab/vision.css) */
-    .bd-table th) {                                            /* the headings of Bias detective's scorecard (css/lab/bias.css) */
+    .bd-table th,                                              /* the headings of Bias detective's scorecard (css/lab/bias.css) */
+    .lpw-title, .lpw-sort-group, .lpw-match-item) {            /* My path's study window: a screen's title, the boxes of the two-column tasks (css/learn-play.css) */
     -webkit-hyphens: auto;
     hyphens: auto;
+}
+
+/* In the study window only the long words get a hyphen, where the browser can
+   tell them apart (the three numbers: letters in the word, before the hyphen,
+   after it). A point of a summary is a whole sentence: there it is only a word
+   too long for any line ("несбалансиро-ванных"), and only in such a browser. */
+html.st-large-text .lpw-title {
+    hyphenate-limit-chars: 12 4 4;
+}
+
+html.st-large-text :is(.lpw-sort-group, .lpw-match-item) {
+    hyphenate-limit-chars: 8 3 3;
+}
+
+@supports (hyphenate-limit-chars: 16 5 5) {
+    html.st-large-text .lpw-points li {
+        hyphens: auto;
+        hyphenate-limit-chars: 16 5 5;
+    }
 }
 
 /* The AI Lab's sliders (css/lab.css): the value goes under its label when
@@ -75,6 +95,67 @@ html.st-large-text :is(.stat span, .gl-rel,
 html.st-large-text .lab-range-head {
     flex-wrap: wrap;
     row-gap: 6px;
+}
+
+/* My path (css/learn.css) on a phone. A row that keeps a button or a label
+   beside its text has no room for both with bigger letters: the text was
+   squeezed into a strip a few letters wide, or lay under the button. So the
+   button goes under the text. (The steps of a stage do this at any text size,
+   when it is needed: css/learn.css, 5.) */
+@media (max-width: 480px) {
+    /* today's session: a step's button under its text, as wide as the row */
+    html.st-large-text .lp-step {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    html.st-large-text .lp-step > .btn {
+        grid-column: 1 / -1;
+    }
+
+    html.st-large-text .lp-step-done {       /* only words for screen readers: no row of its own */
+        position: absolute;
+    }
+
+    /* a stage: "2 of 5" and its bar share a line, the "Show steps" button has its own */
+    html.st-large-text .lp-stage-side {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    html.st-large-text .lp-stage-toggle {
+        grid-column: 1 / -1;
+    }
+
+    /* what you remember: the three numbers one under another, each beside its label;
+       a topic's "Practise" button under its bar */
+    html.st-large-text .lp-tiles {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    html.st-large-text .lp-tile {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+    }
+
+    html.st-large-text .lp-topic {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    html.st-large-text .lp-topic .btn {
+        grid-column: 1;
+        grid-row: auto;
+        justify-self: start;
+    }
+
+    /* Pro design: the forecast has 14 days, and "10" to "13" need the room of the
+       gaps and slightly smaller digits */
+    html.st-large-text .lp-forecast ol {
+        gap: 2px;
+    }
+
+    html.st-large-text .lp-forecast :is(.lp-box-num, .lp-box-name) {
+        font-size: 0.5625rem;
+    }
 }
 
 /* Section titles (style.css, 7): on a phone a long word ("ИИ-лаборатория")
@@ -107,14 +188,15 @@ html.st-relaxed :is(p, li, dd, blockquote, figcaption, .cb-bubble, .lsn-feedback
    Headings keep Unbounded, and labels keep the monospace font.
    Atkinson Hyperlegible has no Russian letters: Russian pages use Andika.
    Until the font has arrived (js/settings.js loads it), the page keeps
-   Manrope, the next font in the list. */
+   Manrope, the next font in the list. ("AIC Greek" only ever draws Greek
+   letters: see the top of the font list in style.css.) */
 
 html.st-font {
-    --font-body: "Atkinson Hyperlegible", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    --font-body: "Atkinson Hyperlegible", "AIC Greek", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
 }
 
 html.st-font[lang="ru"] {
-    --font-body: "Andika", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    --font-body: "Andika", "AIC Greek", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
 }
 
 /* ===== 4. UNDERLINED LINKS =====

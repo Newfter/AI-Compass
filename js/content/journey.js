@@ -122,6 +122,11 @@ window.AICompass.addTranslations({
         "journey.rule.palette": "Run a command from the search window, Ctrl+K (up to {n} a day)",
         "journey.rule.daily": "Finish the daily challenge (once a day)",
         "journey.rule.certificate": "Get a certificate (once for each certificate)",
+        "journey.rule.unit": "Finish a guided step of My path (once for each step)",
+        "journey.rule.stage": "Pass a stage test of My path (once for each stage)",
+        "journey.rule.explain": "Explain a lesson in your own words (once for each lesson)",
+        "journey.rule.review": "Finish a memory check (once a day)",
+        "journey.rule.session": "Finish today's session of My path (once a day)",
 
         // ----- Your data -----
         "journey.data.title": "Your data",
@@ -351,6 +356,11 @@ window.AICompass.addTranslations({
         "journey.rule.palette": "Выполни команду в окне поиска, Ctrl+K (до {n} в день)",
         "journey.rule.daily": "Выполни задание дня (раз в день)",
         "journey.rule.certificate": "Получи сертификат (один раз за каждый)",
+        "journey.rule.unit": "Пройди шаг с заданиями в «Моём пути» (один раз за каждый шаг)",
+        "journey.rule.stage": "Сдай тест этапа в «Моём пути» (один раз за каждый этап)",
+        "journey.rule.explain": "Объясни урок своими словами (один раз за каждый урок)",
+        "journey.rule.review": "Пройди проверку памяти (раз в день)",
+        "journey.rule.session": "Пройди занятие на сегодня в «Моём пути» (раз в день)",
 
         // ----- Твои данные -----
         "journey.data.title": "Твои данные",
@@ -494,7 +504,13 @@ window.AICompass.content.set("journey", {
         era:         { xp: 10 },             // a timeline era reached: once for each era
         bot:         { xp: 2, perDay: 10 },  // a question to Compass Bot: at most 10 a day
         palette:     { xp: 2, perDay: 10 },  // a Ctrl+K command: at most 10 a day
-        certificate: { xp: 50 }              // a certificate made: once for each certificate
+        certificate: { xp: 50 },             // a certificate made: once for each certificate
+        // My path (js/learn.js)
+        unit:        { xp: 60 },             // a guided step finished: once for each step
+        stage:       { xp: 50 },             // a stage test passed: once for each stage
+        explain:     { xp: 15 },             // a lesson explained in your own words: once for each lesson
+        review:      { xp: 15 },             // a memory check finished: once a day
+        session:     { xp: 30 }              // today's session finished: once a day
     },
 
     // The XP you need to reach each level (level 1 = 0 XP, level 10 = 2,700 XP).
