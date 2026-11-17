@@ -107,14 +107,15 @@ html.st-relaxed :is(p, li, dd, blockquote, figcaption, .cb-bubble, .lsn-feedback
    Headings keep Unbounded, and labels keep the monospace font.
    Atkinson Hyperlegible has no Russian letters: Russian pages use Andika.
    Until the font has arrived (js/settings.js loads it), the page keeps
-   Manrope, the next font in the list. */
+   Manrope, the next font in the list. ("AIC Greek" only ever draws Greek
+   letters: see the top of the font list in style.css.) */
 
 html.st-font {
-    --font-body: "Atkinson Hyperlegible", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    --font-body: "Atkinson Hyperlegible", "AIC Greek", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
 }
 
 html.st-font[lang="ru"] {
-    --font-body: "Andika", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    --font-body: "Andika", "AIC Greek", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
 }
 
 /* ===== 4. UNDERLINED LINKS =====

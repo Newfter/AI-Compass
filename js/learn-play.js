@@ -83,11 +83,23 @@
         return value === undefined || value === null || value === "" ? [] : [value];
     }
 
-    // A text of a course or of a card: **bold** and `code`, everything else as written
-    function rich(text) {
-        return esc(String(text))
+    // A browser may break a line right after a slash, which would cut a fraction such as
+    // ∂L/∂w in two. So a short word with a slash stays on one line (in code and formulas).
+    function keepFractions(html) {
+        return html.replace(/[^\s<>`*]*[^\s<>`*\/]\/[^\s<>`*\/][^\s<>`*]*/g, function (word) {
+            return word.length <= 18 ? '<span class="lpw-nobreak">' + word + "</span>" : word;
+        });
+    }
+
+    // A text of a course or of a card: **bold** and `code`, everything else as written.
+    // formula: the whole text is a line of formulas (an example in the code font).
+    function rich(text, formula) {
+        const safe = esc(String(text));
+        return (formula ? keepFractions(safe) : safe)
             .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-            .replace(/`(.+?)`/g, "<code>$1</code>");
+            .replace(/`(.+?)`/g, function (all, code) {
+                return "<code>" + (formula ? code : keepFractions(code)) + "</code>";
+            });
     }
 
     // The same text without the marks (for reading aloud and for screen readers)
@@ -154,7 +166,7 @@
         if (step.table) html += tableHTML(step.table);
         if (list(step.example).length) {
             html += '<div class="lpw-example' + (step.mono ? " mono" : "") + '">' + list(step.example).map(function (line) {
-                return "<p data-speak>" + rich(line) + "</p>";
+                return "<p data-speak>" + rich(line, step.mono) + "</p>";
             }).join("") + "</div>";
         }
         if (step.note) html += '<p class="lpw-note" data-speak>' + rich(step.note) + "</p>";

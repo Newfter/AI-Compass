@@ -176,11 +176,31 @@
     color-scheme: light;
 }
 
+/* Greek letters (formulas use them: η, α, γ, ε, Σ) are drawn by a font of the device.
+   Manrope draws η exactly like a Latin n, so "w − η·g" would read "w − n·g", and
+   Unbounded has no Greek letters at all. Nothing is downloaded for this. On a device
+   with none of these fonts the letters come from Manrope, as before. */
+@font-face {
+    font-family: "AIC Greek";
+    src: local("Segoe UI"), local("Roboto"), local("Helvetica Neue"), local("Arial"),
+         local("Noto Sans"), local("Noto Sans Regular"), local("Liberation Sans"), local("DejaVu Sans");
+    unicode-range: U+0370-03FF;
+}
+
+@font-face {
+    font-family: "AIC Greek";
+    font-weight: 600 900;
+    src: local("Segoe UI Semibold"), local("Roboto Medium"), local("Helvetica Neue Medium"), local("Arial Bold"),
+         local("Noto Sans SemiBold"), local("Noto Sans Bold"), local("Liberation Sans Bold"), local("DejaVu Sans Bold");
+    unicode-range: U+0370-03FF;
+}
+
 /* --- The same in both themes --- */
 :root {
-    /* Fonts: headings, text, and labels / code (all three have Cyrillic letters) */
-    --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
-    --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    /* Fonts: headings, text, and labels / code (all three have Cyrillic letters).
+       "AIC Greek" (just above) only ever draws Greek letters. */
+    --font-display: "Unbounded", "AIC Greek", "Manrope", system-ui, sans-serif;
+    --font-body: "AIC Greek", "Manrope", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
 
     /* Rounded corners, the width of the page content, the height of the menu bar

@@ -267,6 +267,11 @@
     font-size: 0.9em;
 }
 
+/* A short fraction such as ∂L/∂w inside code or a formula: never cut after the slash */
+.lpw-nobreak {
+    white-space: nowrap;
+}
+
 .lpw-example {
     display: grid;
     gap: 6px;
