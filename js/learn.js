@@ -133,8 +133,14 @@
     // ---------- 4. What is saved ----------
     let canSave = A.storage.available();
 
+    // What this tab last read or wrote under each key, as text: this is how it notices
+    // that another tab has saved since (see takeSaved below)
+    const KEYS = ["learn.profile", "learn.memory", "learn.units", "learn.explain", "learn.days"];
+    const lastSeen = {};
+
     function save(key, value) {
         canSave = A.storage.set(key, value) !== false && A.storage.available();
+        lastSeen[key] = JSON.stringify(value);
     }
 
     // Who is learning (null until the three questions are answered)
@@ -238,12 +244,52 @@
 
     const days = readDays();
 
+    KEYS.forEach(function (key) { lastSeen[key] = JSON.stringify(A.storage.get(key, null)); });
+
+    // The site may be open in two tabs (or a tab stayed open since yesterday). Each tab
+    // keeps its own copy of what is saved, and a save writes the whole copy: without
+    // this, a step finished in one tab would be written over by the old copy of the
+    // other. So before every change, when another tab saves and when this tab is shown
+    // again, the tab takes what is saved now. (js/journey.js does the same for the
+    // points.) True if something was different.
+    function replaceAll(target, source) {
+        Object.keys(target).forEach(function (key) { delete target[key]; });
+        Object.assign(target, source);
+    }
+
+    function takeSaved() {
+        let changed = false;
+        KEYS.forEach(function (key) {
+            const now = JSON.stringify(A.storage.get(key, null));
+            if (now === lastSeen[key]) return;
+            lastSeen[key] = now;
+            changed = true;
+            if (key === "learn.profile") {
+                profile = readProfile();
+            } else if (key === "learn.memory") {
+                const memory = readMemory();
+                replaceAll(items, memory.items);
+                memoryState.fresh = memory.fresh;
+            } else if (key === "learn.units") {
+                const saved = readUnits();
+                replaceAll(units.done, saved.done);
+                replaceAll(units.tests, saved.tests);
+            } else if (key === "learn.explain") {
+                replaceAll(explained, readExplained());
+            } else {
+                replaceAll(days, readDays());
+            }
+        });
+        return changed;
+    }
+
     function dayRecord(day) {
         return has(days, String(day)) ? days[String(day)] : {};
     }
 
     // Marks one thing as done today: "r", "n", "l" or "e"
     function markToday(what) {
+        takeSaved();
         const key = String(today());
         if (!has(days, key)) days[key] = {};
         if (days[key][what]) return;
@@ -338,6 +384,7 @@
     // New cards: they start in box 1 and are ready after "wait" days (1: tomorrow).
     // Returns how many were really new.
     function addCards(ids, wait) {
+        takeSaved();
         let added = 0;
         ids.forEach(function (id) {
             if (has(items, id) || !cardInfo(id)) return;
@@ -358,6 +405,7 @@
     // Returns { box, wait }: the card's box now and the days until it comes back.
     function answerCard(id, correct) {
         if (!cardInfo(id)) return null;
+        takeSaved();
         const now = today();
         const known = has(items, id);
         const item = known ? items[id] : [0, now, 0, 0];
@@ -449,6 +497,7 @@
     // The first time the memory is used: the lessons that are already finished
     // give their cards, spread over a few days so the first check stays short.
     function seedMemory() {
+        takeSaved();
         if (!memoryState.fresh || !A.lessons) return;
         memoryState.fresh = false;
         const finished = A.util.attempt(function () { return A.lessons.completed(); }, []);
@@ -679,6 +728,7 @@
 
     // Once every step of today is done: say it, once
     function checkSession() {
+        takeSaved();
         if (!profile) return;
         const plan = todayPlan(buildPath());
         const key = String(today());
@@ -1071,6 +1121,7 @@
         renderQueued = true;
         setTimeout(function () {
             renderQueued = false;
+            takeSaved();
             render();
             checkSession();
         }, 0);
@@ -1079,6 +1130,7 @@
     // ---------- 9. Clicks ----------
     function finishSetup() {
         if (!wizard.who || !wizard.start || !wizard.goal) return;
+        takeSaved();
         const changed = Boolean(profile);
         profile = {
             v: 1, who: wizard.who, start: wizard.start, goal: wizard.goal,
@@ -1421,6 +1473,7 @@
             } else if (request.kind === "more" || request.kind === "topic") {
                 A.track("learn.review", { kind: "practice", cards: result.total, right: result.right });
             } else if (request.kind === "test") {
+                takeSaved();
                 const before = units.tests[request.stage];
                 const star = result.right >= testPass() && result.total >= data.test.questions;
                 const best = before && before[0] > result.right ? before[0] : result.right;
@@ -1448,6 +1501,7 @@
             // Everything right: the stage after the last one that was asked
             if (!start) start = STAGES[Math.min(STAGES.length - 1, last ? last.index + 1 : 1)].id;
             if (start === "basics" && scores.basics === 0) start = "zero";    // nothing right: from zero
+            takeSaved();
             if (profile) {
                 profile.start = "check";
                 profile.placed = { day: today(), start: start, scores: scores };
@@ -1483,6 +1537,7 @@
         // result: { first, total } (tasks right on the first try, of all tasks). -> how many cards are new
         finishUnit: function (id, result) {
             if (!has(UNIT_BY_ID, id)) return 0;
+            takeSaved();
             const before = units.done[id];
             units.done[id] = [before ? before[0] : today(), Math.max(result.first, before ? before[1] : 0), result.total];
             saveUnits();
@@ -1506,6 +1561,7 @@
             };
         },
         saveExplain: function (n, text, score) {
+            takeSaved();
             explained[String(n)] = [today(), Math.max(0, Math.min(3, score)), String(text).slice(0, EXPLAIN_MAX)];
             save("learn.explain", { v: 1, lessons: explained });
             markToday("e");
@@ -1551,6 +1607,17 @@
             if (change && change.name === "design") render();
         });
     }
+    // Another tab saved, or this tab is shown again after a while (a phone puts a tab to
+    // sleep and wakes it without its "storage" events): take what is saved and show it
+    function takeAndShow() {
+        if (takeSaved()) renderSoon();
+    }
+    window.addEventListener("storage", takeAndShow);
+    window.addEventListener("pageshow", takeAndShow);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) takeAndShow();
+    });
+
     // A new day (the page stayed open overnight): the plan is for today
     let shownDay = today();
     A.on("page", function () {
