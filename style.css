@@ -387,21 +387,25 @@ textarea:focus-visible,
     white-space: nowrap;
 }
 
+/* Waits above the page, moved up by its own height: with the largest text its
+   label takes two lines on a phone, and a fixed distance let it peek out. */
 .skip-link {
     position: fixed;
-    top: -60px;
+    top: 12px;
     left: 16px;
+    max-width: calc(100% - 32px);
     z-index: var(--z-skip);
     padding: 10px 16px;
     border-radius: var(--radius-sm);
     background: var(--accent-strong);
     color: var(--on-accent);
     font-weight: 700;
-    transition: top 0.2s ease;
+    transform: translateY(calc(-100% - 24px));
+    transition: transform 0.2s ease;
 }
 
 .skip-link:focus {
-    top: 12px;
+    transform: none;
 }
 
 .gradient-text {

@@ -223,6 +223,34 @@
     gap: 14px;
 }
 
+/* The stacks of the window: one thing under another, in one column. A grid column is
+   normally never narrower than its longest word, and Russian has very long words:
+   with large letters on a small phone, one such word made the whole window wider
+   than the screen. These columns may shrink, and then the word breaks instead. */
+.lpw-step,
+.lpw-example,
+.lpw-reveal,
+.lpw-points,
+.lpw-task,
+.lpw-options,
+.lpw-order-pool,
+.lpw-number,
+.lpw-order-list,
+.lpw-sort-done,
+.lpw-pairs,
+.lpw-match-col,
+.lpw-feedback,
+.lpw-end,
+.lpw-lines,
+.lpw-missed,
+.lpw-missed ul,
+.lpw-missed li,
+.lpw-yours,
+.lpw-keys,
+.lpw-bot {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .lpw-info-icon {
     display: grid;
     place-items: center;
@@ -265,6 +293,10 @@
     background: rgba(var(--accent-rgb), 0.16);
     font-family: var(--font-mono);
     font-size: 0.9em;
+    /* a name in code never gets a hyphen that is not part of it (with large text
+       css/settings.css hyphenates the long words of narrow labels) */
+    -webkit-hyphens: manual;
+    hyphens: manual;
 }
 
 /* A short fraction such as ∂L/∂w inside code or a formula: never cut after the slash */
@@ -1121,5 +1153,37 @@
     .lpw-table td {
         padding: 6px 8px;
         font-size: 0.875rem;
+    }
+}
+
+/* A low screen (a phone held sideways, a window zoomed far in): the window takes the
+   whole height and its two bars get thinner, so that more of the step is seen. After
+   the phone rules, to win over their paddings on a small phone held sideways. */
+@media (max-height: 520px) {
+    .lpw {
+        padding: 0;
+    }
+
+    .lpw-window {
+        height: 100%;
+        border-top: 0;
+        border-bottom: 0;
+        border-radius: 0;
+    }
+
+    .lpw-head {
+        min-height: 48px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+
+    .lpw-body {
+        padding-top: 16px;
+        padding-bottom: 12px;
+    }
+
+    .lpw-foot {
+        padding-top: 8px;
+        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
     }
 }
