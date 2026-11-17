@@ -605,12 +605,12 @@ window.AICompass.content.set("course.pro", {
                     en: {
                         title: "Softmax turns scores into probabilities",
                         text: ["A model produces a score for every possible next token. Softmax turns the scores into probabilities: all positive, adding up to 1. A higher score gets a bigger share, and the gaps are stretched."],
-                        example: ["softmax(zᵢ) = e^(zᵢ) / Σⱼ e^(zⱼ)"]
+                        example: ["softmax(z_i) = e^(z_i) / Σ_j e^(z_j)"]
                     },
                     ru: {
                         title: "Softmax превращает оценки в вероятности",
                         text: ["Модель выдаёт оценку для каждого возможного следующего токена. Softmax превращает оценки в вероятности: все положительные, в сумме 1. Чем выше оценка, тем больше доля, причём разрывы растягиваются."],
-                        example: ["softmax(zᵢ) = e^(zᵢ) / Σⱼ e^(zⱼ)"]
+                        example: ["softmax(z_i) = e^(z_i) / Σ_j e^(z_j)"]
                     }
                 },
                 {
@@ -646,12 +646,12 @@ window.AICompass.content.set("course.pro", {
                     en: {
                         title: "Attention in one line",
                         text: ["In a transformer every token asks: which other tokens matter to me? It compares its **query** vector with the **key** of every token (dot products), turns those scores into weights with softmax, and takes the weighted average of the tokens' **values**."],
-                        example: ["Attention(Q, K, V) = softmax(Q·Kᵀ / √d) · V"]
+                        example: ["Attention(Q, K, V) = softmax(Q·K^T / √d) · V"]
                     },
                     ru: {
                         title: "Внимание в одну строку",
                         text: ["В трансформере каждый токен спрашивает: какие другие токены для меня важны? Он сравнивает свой вектор-**запрос** с **ключом** каждого токена (скалярные произведения), превращает эти оценки в веса с помощью softmax и берёт взвешенное среднее **значений** токенов."],
-                        example: ["Attention(Q, K, V) = softmax(Q·Kᵀ / √d) · V"]
+                        example: ["Attention(Q, K, V) = softmax(Q·K^T / √d) · V"]
                     }
                 },
                 {
@@ -713,7 +713,7 @@ window.AICompass.content.set("course.pro", {
                             "Text → tokens → numbers → embedding vectors.",
                             "The dot product and the cosine measure how similar two vectors are.",
                             "Softmax turns scores into probabilities and depends only on their differences.",
-                            "`Attention(Q, K, V) = softmax(Q·Kᵀ / √d) · V`, and its cost grows like n².",
+                            "`Attention(Q, K, V) = softmax(Q·K^T / √d) · V`, and its cost grows like n².",
                             "Temperature reshapes the distribution; position has to be added separately."
                         ]
                     },
@@ -722,7 +722,7 @@ window.AICompass.content.set("course.pro", {
                             "Текст → токены → номера → векторы-эмбеддинги.",
                             "Скалярное произведение и косинус показывают, насколько похожи два вектора.",
                             "Softmax превращает оценки в вероятности и зависит только от разницы между ними.",
-                            "`Attention(Q, K, V) = softmax(Q·Kᵀ / √d) · V`, а его стоимость растёт как n².",
+                            "`Attention(Q, K, V) = softmax(Q·K^T / √d) · V`, а его стоимость растёт как n².",
                             "Температура меняет форму распределения; позицию нужно добавлять отдельно."
                         ]
                     }
