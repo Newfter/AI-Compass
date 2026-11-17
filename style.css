@@ -182,7 +182,7 @@
    with none of these fonts the letters come from Manrope, as before. */
 @font-face {
     font-family: "AIC Greek";
-    src: local("Segoe UI"), local("Roboto"), local("Helvetica Neue"), local("Arial"),
+    src: local("Segoe UI"), local("Roboto"), local("Roboto Regular"), local("Helvetica Neue"), local("Arial"),
          local("Noto Sans"), local("Noto Sans Regular"), local("Liberation Sans"), local("DejaVu Sans");
     unicode-range: U+0370-03FF;
 }
