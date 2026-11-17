@@ -367,7 +367,7 @@ window.AICompass.content.set("glossary", {
             }
         },
         {
-            id: "unsupervised", cat: "learning", icon: "🫧", lessons: [2], lab: "cluster",
+            id: "unsupervised", cat: "learning", icon: "🧲", lessons: [2], lab: "cluster",
             related: ["clustering", "data", "recommendation", "supervised", "ml"],
             en: {
                 name: "Unsupervised learning",

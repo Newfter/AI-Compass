@@ -98,7 +98,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/home.js` | The "Continue where you left off" button on the home page. |
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
 | `js/content/learn.js` | My path: its texts and its data (who can be learning, the stages, the guided courses and their steps, the memory boxes, the stage test). |
-| `js/content/courses/` | The guided courses of My path, one file each (`zero.js`: "Start from zero", `pro.js`: "Under the hood"). A file loads the first time one of its steps opens. Its header explains every kind of screen. |
+| `js/content/courses/` | The guided courses of My path, one file each (`zero.js`: "Start from zero", `skills.js`: "Use AI well", `pro.js`: "Under the hood"). A file loads the first time one of its steps opens. Its header explains every kind of screen. |
 | `js/content/pro.js` | The texts of the Pro design and the terminal's commands. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
@@ -795,7 +795,7 @@ z5: {
 }
 ```
 
-The kinds of screen are `info`, `choice`, `number`, `order`, `sort`, `match`, `reveal` and `recap`; the header of every course file explains them. An `info` screen can also show `prompts`: ready requests for a chatbot, each with a Copy button. Three rules make a step teach well:
+The kinds of screen are `info`, `choice`, `number`, `order`, `sort`, `match`, `reveal` and `recap`; the header of every course file explains them. An `info` screen can also show `prompts`: ready requests for a chatbot, each with a Copy button (see `js/content/courses/skills.js`). Three rules make a step teach well:
 
 - one idea on a screen, and a task right after it;
 - a task with `card: "z5a"` (the unit's name and a letter, in order) also becomes a card of the memory check, so it must make sense on its own, without the screens before it;

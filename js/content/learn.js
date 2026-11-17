@@ -877,6 +877,7 @@ window.AICompass.content.set("learn", {
     stages: [
         { id: "zero", icon: "🐣", course: "zero" },
         { id: "basics", icon: "🌱", track: "basics" },
+        { id: "skills", icon: "🧰", course: "skills" },
         { id: "deep", icon: "🤿", track: "deep" },
         { id: "world", icon: "🌍", track: "world" },
         { id: "pro", icon: "⚙️", course: "pro" }
@@ -896,6 +897,17 @@ window.AICompass.content.set("learn", {
                 { id: "z2", icon: "🔢", minutes: 4, cards: 3 },
                 { id: "z3", icon: "🧩", minutes: 4, cards: 3 },
                 { id: "z4", icon: "🧠", minutes: 5, cards: 3 }
+            ]
+        },
+        skills: {
+            file: "js/content/courses/skills.js",
+            topic: "skills",
+            probes: ["s2b", "s3a"],
+            units: [
+                { id: "s1", icon: "✍️", minutes: 5, cards: 3 },
+                { id: "s2", icon: "🔍", minutes: 5, cards: 3 },
+                { id: "s3", icon: "🎓", minutes: 5, cards: 3 },
+                { id: "s4", icon: "🛡️", minutes: 5, cards: 3 }
             ]
         },
         pro: {

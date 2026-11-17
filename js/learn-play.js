@@ -314,9 +314,13 @@
         // has to be scrolled inside a small box (the "rows" of the field are only a start)
         function fitPrompts() {
             Array.prototype.forEach.call(parts.body.querySelectorAll(".lpw-ready .lpw-prompt"), function (field) {
+                const rows = field.rows;
                 field.style.height = "auto";
+                field.rows = 1;                 // (so that the text is measured, not the rows it started with)
+                const height = field.scrollHeight;
+                field.rows = rows;
                 // (a window that is not on screen yet measures 0: then the rows stay)
-                if (field.scrollHeight) field.style.height = (field.scrollHeight + PROMPT_EDGE) + "px";
+                if (height) field.style.height = (height + PROMPT_EDGE) + "px";
             });
         }
 
