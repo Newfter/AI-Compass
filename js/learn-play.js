@@ -594,6 +594,8 @@
                 area.innerHTML = '<form class="lpw-number" novalidate>' +
                     '<label class="lpw-label" for="lpw-number">' + esc(t("learn.task.numberLabel")) + "</label>" +
                     '<span class="lpw-number-row">' +
+                        // ("±": many phone keypads for numbers have no minus key; see needsSign in js/learn.js)
+                        (step.signed ? '<button type="button" class="btn btn-ghost btn-small lpw-number-sign" aria-label="' + esc(t("learn.task.sign")) + '" title="' + esc(t("learn.task.sign")) + '">±</button>' : "") +
                         '<input class="lpw-input" id="lpw-number" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="14">' +
                         (step.unit ? '<span class="lpw-number-unit">' + esc(step.unit) + "</span>" : "") +
                         '<button type="submit" class="btn btn-primary btn-small lpw-number-check">' + esc(t("learn.play.check")) + "</button>" +
@@ -601,11 +603,22 @@
                 "</form>";
                 const form = area.firstChild;
                 const input = form.querySelector("input");
+                const signButton = form.querySelector(".lpw-number-sign");
                 const lock = function (state) {
                     input.readOnly = true;
                     input.classList.add("is-" + state);
                     form.querySelector(".lpw-number-check").hidden = true;
+                    if (signButton) signButton.hidden = true;
                 };
+                if (signButton) {
+                    signButton.addEventListener("click", function () {
+                        if (over || input.readOnly) return;
+                        const typed = input.value.trim();
+                        input.value = /^[-−–]/.test(typed) ? typed.replace(/^[-−–]\s*/, "") : "−" + typed;
+                        input.focus();
+                        input.setSelectionRange(input.value.length, input.value.length);
+                    });
+                }
                 form.addEventListener("submit", function (event) {
                     event.preventDefault();
                     if (over) return;
@@ -1192,6 +1205,7 @@
             const index = session.index;
             const total = session.steps.length;
             const step = host.localStep(session.steps[index]);
+            if (step.type === "number") step.signed = host.signed(session.info.id);
             const last = index === total - 1;
             const back = index > 0 ? [{ act: "back", label: t("learn.setup.back") }] : [];
             const goOn = { act: "next", label: t(last ? "learn.play.finish" : "learn.play.continue"), primary: true };

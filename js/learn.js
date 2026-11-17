@@ -1330,6 +1330,20 @@
         });
     }
 
+    // Many phone keypads for numbers have no minus key. So a course with a negative
+    // answer somewhere gets a "±" button beside the field of its number tasks: of all
+    // of them, so that the button never gives an answer away.
+    const signedCourses = {};
+    function needsSign(courseId) {
+        if (has(signedCourses, courseId)) return signedCourses[courseId];
+        const course = A.content.get("course." + courseId);
+        if (!course || !course.units) return false;         // not loaded yet: asked again later
+        signedCourses[courseId] = Object.keys(course.units).some(function (id) {
+            return course.units[id].steps.some(function (step) { return step.type === "number" && step.answer < 0; });
+        });
+        return signedCourses[courseId];
+    }
+
     // Everything the study window needs. It never reads the saved state itself.
     const host = {
         data: data,
@@ -1358,7 +1372,7 @@
         },
 
         // A card as a task for the window (in the current language), or null:
-        //   { id, type, q, options, correct, why, keepOrder, from, topic, lesson, unitId }
+        //   { id, type, q, options, correct, why, keepOrder, from, topic, lesson, unitId, signed }
         // (unitId is the guided step a card comes from: "unit" is already taken by a
         // "number" task, where it is the unit of measure, like "%")
         card: function (id) {
@@ -1379,7 +1393,8 @@
             const step = unit ? unit.steps.filter(function (item) { return item.card === id; })[0] : null;
             if (!step) return null;
             return Object.assign(localStep(step), {
-                id: id, from: t("learn.unit." + info.unit), topic: topicName(info.topic), lesson: 0, unitId: info.unit
+                id: id, from: t("learn.unit." + info.unit), topic: topicName(info.topic), lesson: 0, unitId: info.unit,
+                signed: needsSign(info.course)        // a number task: with the "±" button
             });
         },
 
@@ -1447,6 +1462,8 @@
         // The guided steps
         loadCourse: loadCourse,
         localStep: localStep,
+        // Do the number tasks of this guided step get the "±" button?
+        signed: function (id) { return has(UNIT_BY_ID, id) && needsSign(UNIT_BY_ID[id].course); },
         unit: function (id) {
             if (!has(UNIT_BY_ID, id)) return null;
             const unit = UNIT_BY_ID[id];
