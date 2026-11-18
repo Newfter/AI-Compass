@@ -72,8 +72,9 @@ html.st-large-text :is(.stat span, .gl-rel,
 
 /* In the study window only the long words get a hyphen, where the browser can
    tell them apart (the three numbers: letters in the word, before the hyphen,
-   after it). A point of a summary is a whole sentence: there it is only a word
-   too long for any line ("несбалансиро-ванных"), and only in such a browser. */
+   after it). A point of a summary and an answer to choose are whole sentences:
+   there it is only a word too long for any line ("несбалансиро-ванных",
+   "детерминиро-ванным" on the smallest phone), and only in such a browser. */
 html.st-large-text .lpw-title {
     hyphenate-limit-chars: 12 4 4;
 }
@@ -83,7 +84,7 @@ html.st-large-text :is(.lpw-sort-group, .lpw-match-item) {
 }
 
 @supports (hyphenate-limit-chars: 16 5 5) {
-    html.st-large-text .lpw-points li {
+    html.st-large-text :is(.lpw-points li, .lpw-option) {
         hyphens: auto;
         hyphenate-limit-chars: 16 5 5;
     }
