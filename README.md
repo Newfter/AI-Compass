@@ -757,32 +757,32 @@ In `css/lab.css`, section 1, copy the two rules of another experiment (`[data-la
 
 ### Add a guided step to My path
 
-A guided step (a "unit") is a list of small screens in a course file, for example `js/content/courses/zero.js`. To add the step `z5` to the course "Start from zero":
+A guided step (a "unit") is a list of small screens in a course file, for example `js/content/courses/zero.js`. To add the step `z6` to the course "Start from zero":
 
 **1.** In `js/content/learn.js`, add the unit to its course (`courses.zero.units`) and write its name in both languages:
 
 ```js
-{ id: "z5", icon: "🎚️", minutes: 5, cards: 3 }      // cards: how many of its tasks become memory cards
+{ id: "z6", icon: "📈", minutes: 5, cards: 3 }      // cards: how many of its tasks become memory cards
 ```
 
 ```js
-"learn.unit.z5": "Train your first model",
-"learn.unit.z5.text": "Find the number that makes the fewest mistakes.",
-"learn.unit.z5.words": "train model threshold mistakes",      // optional: extra words for the site search
+"learn.unit.z6": "More examples, better guesses",
+"learn.unit.z6.text": "See why one example is never enough.",
+"learn.unit.z6.words": "examples data more",      // optional: extra words for the site search
 ```
 
-**2.** In the course file, add `z5` after the last unit. Every screen has a `type` and its texts in `en` and `ru`:
+**2.** In the course file, add `z6` after the last unit. Every screen has a `type` and its texts in `en` and `ru`:
 
 ```js
-z5: {
+z6: {
     steps: [
         {
             type: "info", icon: "📏",
-            en: { title: "The smallest model in the world", text: ["One idea, in two or three short sentences."] },
-            ru: { title: "Самая маленькая модель в мире", text: ["Одна идея, в двух-трёх коротких предложениях."] }
+            en: { title: "One example is not enough", text: ["One idea, in two or three short sentences."] },
+            ru: { title: "Одного примера мало", text: ["Одна идея, в двух-трёх коротких предложениях."] }
         },
         {
-            type: "choice", card: "z5a",        // the FIRST option is the right one: the window mixes them
+            type: "choice", card: "z6a",        // the FIRST option is the right one: the window mixes them
             en: { q: "A question about that idea?", options: ["Right", "Wrong", "Wrong too"], hint: "Shown after a wrong try.", why: "Shown after the answer." },
             ru: { q: "Вопрос об этой идее?", options: ["Верно", "Неверно", "Тоже неверно"], hint: "Показывается после неверной попытки.", why: "Показывается после ответа." }
         },
@@ -798,7 +798,7 @@ z5: {
 The kinds of screen are `info`, `choice`, `number`, `order`, `sort`, `match`, `reveal` and `recap`; the header of every course file explains them. An `info` screen can also show `prompts`: ready requests for a chatbot, each with a Copy button (see `js/content/courses/skills.js`). Three rules make a step teach well:
 
 - one idea on a screen, and a task right after it;
-- a task with `card: "z5a"` (the unit's name and a letter, in order) also becomes a card of the memory check, so it must make sense on its own, without the screens before it;
+- a task with `card: "z6a"` (the unit's name and a letter, in order) also becomes a card of the memory check, so it must make sense on its own, without the screens before it;
 - the explanation (`why`) says why the right answer is right, not only that it is.
 
 **A new course** needs three more things in `js/content/learn.js`: an entry in `courses` (its file, the `topic` its cards belong to on the memory map, and two `probes`: cards that the level check asks), a stage in `stages` that names it (`{ id: "mine", icon: "🧪", course: "mine" }`), and the texts `learn.stage.mine`, `learn.stage.mine.text`, `learn.topic.<topic>` and `learn.place.result.mine`. The page, the stage test, the memory map and the offline copy pick it up from the data.
