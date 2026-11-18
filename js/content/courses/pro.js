@@ -14,7 +14,9 @@
    The screens are shown one by one by js/learn-play.js. How a screen is
    written is explained at the top of js/content/courses/zero.js:
    - in a "choice", the FIRST option is the right one;
-   - a "number" has its "answer" (and a "tolerance" when rounding is fine);
+   - a "number" has its "answer" (and a "tolerance" when rounding is fine,
+     and "share": true when the answer is a share or a probability from 0 to 1:
+     then "50%" counts as 0.5);
    - "card": the task also becomes a card of the memory check, and two of
      them ("probes" in js/content/learn.js) are asked by the level check.
      A card must make sense alone, so each one repeats what it needs;
@@ -91,7 +93,7 @@ window.AICompass.content.set("course.pro", {
                     }
                 },
                 {
-                    type: "number", answer: 0.5, card: "p1b",
+                    type: "number", share: true, answer: 0.5, card: "p1b",
                     en: {
                         q: "What is σ(0), the sigmoid of zero?",
                         hint: "σ(z) = 1 / (1 + e^(−z)), and e⁰ = 1.",
@@ -536,13 +538,13 @@ window.AICompass.content.set("course.pro", {
                     type: "choice", card: "p5d",
                     en: {
                         q: "Why does backpropagation run backwards, from the loss towards the inputs?",
-                        options: ["One backward pass gives every weight its gradient for about the cost of a forward pass", "The gradients of the early layers do not depend on what the later layers do", "A pass in the forward direction would give the gradients the wrong sign", "Only the last layer needs training, so the computation has to start there"],
+                        options: ["One backward pass gives every gradient for about the cost of two forward passes", "The gradients of the early layers do not depend on what the later layers do", "A pass in the forward direction would give the gradients the wrong sign", "Only the last layer needs training, so the computation has to start there"],
                         hint: "Count the passes: how many would it take to find the gradients of a million weights one at a time?",
                         why: "Every gradient is built from the loss backwards, so the weights of the early layers all share the factors of the later layers. A backward pass computes each shared factor once. Going forwards, or testing the weights one by one with small changes, would need about one pass per weight."
                     },
                     ru: {
                         q: "Почему обратное распространение ошибки идёт назад — от функции потерь к входам?",
-                        options: ["Один обратный проход даёт градиенты всех весов примерно по цене одного прямого прохода", "Градиенты ранних слоёв не зависят от того, что происходит в поздних слоях", "При проходе в прямом направлении у градиентов получился бы неверный знак", "Обучать нужно только последний слой, поэтому расчёт начинают с него"],
+                        options: ["Один обратный проход даёт все градиенты примерно по цене двух прямых", "Градиенты ранних слоёв не зависят от того, что происходит в поздних слоях", "При проходе в прямом направлении у градиентов получился бы неверный знак", "Обучать нужно только последний слой, поэтому расчёт начинают с него"],
                         hint: "Посчитай проходы: сколько их нужно, чтобы найти градиенты миллиона весов по одному?",
                         why: "Каждый градиент строится от функции потерь назад, поэтому в градиенты по весам ранних слоёв входят одни и те же множители от поздних слоёв. Обратный проход считает каждый общий множитель один раз. Если идти вперёд или по очереди чуть менять веса, понадобится примерно по проходу на каждый вес."
                     }
@@ -568,7 +570,7 @@ window.AICompass.content.set("course.pro", {
                         points: [
                             "The **forward pass** computes the chain from the input to the loss and stores every intermediate value.",
                             "The **backward pass** is the chain rule: local derivatives are multiplied from the loss back, as in `∂L/∂w₁ = ∂L/∂ŷ · ∂ŷ/∂h · ∂h/∂z · ∂z/∂w₁`.",
-                            "One backward pass gives the gradient of every weight, for about the cost of one forward pass.",
+                            "One backward pass gives the gradient of every weight, for about the cost of two forward passes.",
                             "A gradient can be lost. A ReLU with z < 0 passes back 0 (a dead ReLU if z < 0 for every example). Many small factors multiply to almost nothing (a vanishing gradient)."
                         ]
                     },
@@ -576,7 +578,7 @@ window.AICompass.content.set("course.pro", {
                         points: [
                             "**Прямой проход** вычисляет цепочку от входа до функции потерь и сохраняет каждое промежуточное значение.",
                             "**Обратный проход** — это цепное правило: локальные производные перемножаются от функции потерь назад, например `∂L/∂w₁ = ∂L/∂ŷ · ∂ŷ/∂h · ∂h/∂z · ∂z/∂w₁`.",
-                            "Один обратный проход даёт градиент каждого веса примерно по цене одного прямого прохода.",
+                            "Один обратный проход даёт градиент каждого веса примерно по цене двух прямых проходов.",
                             "Градиент можно потерять. ReLU при z < 0 передаёт назад 0 (если так на всех примерах, это мёртвый нейрон). Много малых множителей даёт в произведении почти ноль (затухание градиента)."
                         ]
                     }
@@ -803,7 +805,7 @@ window.AICompass.content.set("course.pro", {
                     type: "recap",
                     en: {
                         points: [
-                            "Judge a model by its validation loss, not its training loss: only the validation loss shows how it does on new data.",
+                            "Judge a model by its loss on held-back examples, not its training loss: only examples it never trained on show how it does on new data.",
                             "Training loss falls while validation loss rises: **overfitting**. Both stay high: **underfitting**.",
                             "Train to fit the weights, validate to choose, test once to report.",
                             "An L2 penalty `λ·Σw²`, dropout, more varied data and early stopping all fight overfitting."
@@ -811,7 +813,7 @@ window.AICompass.content.set("course.pro", {
                     },
                     ru: {
                         points: [
-                            "Суди о модели по потерям на валидации, а не на обучении: только они показывают, как она справляется с новыми данными.",
+                            "Суди о модели по потерям на отложенных примерах, а не на обучающих: только примеры, на которых она не училась, показывают, как она справляется с новыми данными.",
                             "Потери на обучении падают, а на валидации растут — это **переобучение**. И те и другие остаются высокими — **недообучение**.",
                             "Обучающая выборка — чтобы подбирать веса, валидационная — чтобы выбирать, тестовая — чтобы один раз сообщить результат.",
                             "С переобучением борются L2-штраф `λ·Σw²`, dropout, более разнообразные данные и ранняя остановка."
@@ -898,7 +900,7 @@ window.AICompass.content.set("course.pro", {
                     }
                 },
                 {
-                    type: "number", answer: 0.8, tolerance: 0.005,
+                    type: "number", share: true, answer: 0.8, tolerance: 0.005,
                     en: {
                         q: "For the filter, P = 0.75 and R = 6/7 ≈ 0.857. What is its F1 score, to two decimal places?",
                         hint: "2·0.75·0.857 / (0.75 + 0.857)",
@@ -1073,7 +1075,7 @@ window.AICompass.content.set("course.pro", {
                     }
                 },
                 {
-                    type: "number", answer: 0.5, card: "p4c",
+                    type: "number", share: true, answer: 0.5, card: "p4c",
                     en: {
                         q: "Two tokens have the scores (2, 2). What probability does softmax give to the first one?",
                         hint: "e² / (e² + e²)",
@@ -1462,7 +1464,7 @@ window.AICompass.content.set("course.pro", {
                     }
                 },
                 {
-                    type: "number", answer: 0.71, tolerance: 0.005, card: "p8a",
+                    type: "number", share: true, answer: 0.71, tolerance: 0.005, card: "p8a",
                     en: {
                         q: "A language model's next-token probabilities are 0.5, 0.2, 0.15, 0.1 and 0.05. With top-k sampling and k = 2, what is the probability of the most likely token after renormalising, to two decimal places?",
                         hint: "Which tokens are left when k = 2? Their probabilities have to add up to 1 again.",
@@ -1562,7 +1564,7 @@ window.AICompass.content.set("course.pro", {
                     }
                 },
                 {
-                    type: "number", answer: 0.9,
+                    type: "number", share: true, answer: 0.9,
                     en: {
                         q: "Two tokens have the logits (ln 3, 0). At T = 1 softmax gives them the probabilities (0.75, 0.25), because e^(ln 3) = 3 and e⁰ = 1. What is the probability of the first token at T = 0.5?",
                         hint: "Dividing by 0.5 doubles the logits: (2·ln 3, 0). What is e^(2·ln 3)?",

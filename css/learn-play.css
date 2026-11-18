@@ -99,7 +99,11 @@
     padding: 10px 14px 10px 24px;
 }
 
+/* The name of the session: a long one (Russian, bigger text, "10 of 11" beside it)
+   takes up to three lines before it is cut with "…" (and on a phone with bigger
+   text it gets a whole line: see 9. PHONES) */
 .lpw-kicker {
+    display: -webkit-box;
     flex: 1;
     min-width: 0;
     margin: 0;
@@ -107,9 +111,10 @@
     color: var(--text-accent-2);
     font-size: 0.75rem;
     letter-spacing: 1.2px;
-    text-overflow: ellipsis;
+    line-height: 1.35;
     text-transform: uppercase;
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
 }
 
 .lpw-count {
@@ -712,6 +717,17 @@
     color: var(--text-danger);
 }
 
+/* A row placed by "Show the answer", not by the learner: no colour of right or wrong */
+.lpw-sort-done .is-shown {
+    border-style: dashed;
+}
+
+/* After a wrong row: the group that was picked */
+.lpw-sort-picked {
+    color: var(--text-dim);
+    font-size: 0.875rem;
+}
+
 .lpw-sort-arrow,
 .lpw-pairs-arrow {
     color: var(--text-dim);
@@ -1079,6 +1095,24 @@
 }
 
 /* ===== 9. PHONES ===== */
+/* Bigger text on a phone held upright: the name of the session gets a whole line
+   under the count and the buttons. (On a low screen, a phone held sideways, it
+   stays beside them, so the bar stays thin.) */
+@media (max-width: 640px) and (min-height: 521px) {
+    html.st-large-text .lpw-head {
+        flex-wrap: wrap;
+    }
+
+    html.st-large-text .lpw-count {
+        margin-right: auto;
+    }
+
+    html.st-large-text .lpw-kicker {
+        order: 1;
+        flex-basis: 100%;
+    }
+}
+
 @media (max-width: 640px) {
     .lpw {
         padding: 0;
