@@ -1,11 +1,12 @@
 /* =========================================================
    AI COMPASS — GUIDED COURSE: START FROM ZERO
-   Stage 0 of "My path": four guided steps for someone who has never
+   Stage 0 of "My path": five guided steps for someone who has never
    learned how computers or AI work. Nothing is assumed.
      z1  What is a program?
      z2  Everything is numbers
      z3  Rules or examples?
      z4  How learning works: you and the machine
+     z5  Train your first model
    Each step is a list of small screens, shown one by one by
    js/learn-play.js: a short idea ("info"), then a task right away
    ("choice", "number", "order", "sort", "match"), a question to think
@@ -801,6 +802,248 @@ window.AICompass.content.set("course.zero", {
                             "Вспоминать по памяти полезнее, чем перечитывать.",
                             "**Интервальное повторение**: возвращайся через 1, 2, 4, 8 … дней — как раз перед тем, как забудешь.",
                             "Объяснение своими словами показывает, что ты знаешь на самом деле."
+                        ]
+                    }
+                }
+            ]
+        },
+
+        /* ----- z5. Train your first model ----- */
+        z5: {
+            steps: [
+                {
+                    type: "info", icon: "📏",
+                    en: {
+                        title: "A tiny model: one rule, one number",
+                        text: [
+                            "A model can be tiny: just one rule with one number in it. The rule below is a model like that. It sorts messages into spam and not spam, and the letter T stands for its number.",
+                            "In machine learning, nobody writes T by hand: it has to be found from examples. A number that a model learns from examples is called a **parameter**."
+                        ],
+                        example: ["IF a message has more than T exclamation marks, THEN it is spam.", "Otherwise it is not spam."],
+                        note: "Spam means messages that nobody asked for, like adverts sent to thousands of people."
+                    },
+                    ru: {
+                        title: "Крошечная модель: одно правило, одно число",
+                        text: [
+                            "Модель может быть совсем крошечной: одно правило, а в нём одно число. Правило ниже — как раз такая модель. Она делит сообщения на спам и не спам, а буква T обозначает её число.",
+                            "В машинном обучении число T никто не вписывает вручную: его нужно найти по примерам. Число, которое модель находит по примерам, называется **параметром**."
+                        ],
+                        example: ["ЕСЛИ в сообщении больше T восклицательных знаков, ТО это спам.", "Иначе это не спам."],
+                        note: "Спам — это сообщения, которых никто не просил: например, реклама, которую рассылают тысячам людей."
+                    }
+                },
+                {
+                    type: "info", icon: "📋",
+                    en: {
+                        title: "Six examples with the right answers",
+                        text: [
+                            "To find T, the model needs examples. The table below shows six messages: the number of exclamation marks in each one, and whether it really is spam. A person has checked every message and written down the right answer.",
+                            "The examples that a model learns from are called its **training data**."
+                        ],
+                        table: { head: ["Exclamation marks", "It really is"], rows: [["0", "not spam"], ["1", "not spam"], ["3", "not spam"], ["4", "spam"], ["6", "spam"], ["9", "spam"]] }
+                    },
+                    ru: {
+                        title: "Шесть примеров с правильными ответами",
+                        text: [
+                            "Чтобы найти T, модели нужны примеры. В таблице ниже шесть сообщений: сколько в каждом восклицательных знаков и спам ли это на самом деле. Каждое сообщение проверил человек и записал правильный ответ.",
+                            "Примеры, на которых учится модель, называются её **обучающими данными**."
+                        ],
+                        table: { head: ["Восклицательных знаков", "На самом деле"], rows: [["0", "не спам"], ["1", "не спам"], ["3", "не спам"], ["4", "спам"], ["6", "спам"], ["9", "спам"]] }
+                    }
+                },
+                {
+                    type: "number", answer: 2,
+                    en: {
+                        q: "Start with a guess: T = 0. Now the model says “spam” when a message has more than 0 exclamation marks, and “not spam” otherwise. On how many of the six examples is it wrong?",
+                        table: { head: ["Exclamation marks", "It really is"], rows: [["0", "not spam"], ["1", "not spam"], ["3", "not spam"], ["4", "spam"], ["6", "spam"], ["9", "spam"]] },
+                        hint: "Which messages have more than 0 exclamation marks? Are all of them really spam?",
+                        why: "On 2. The messages with 1 and 3 exclamation marks are not spam, but the model calls them spam. Its other four answers are right. That includes the message with 0 marks: 0 is not more than 0, so the model says “not spam”."
+                    },
+                    ru: {
+                        q: "Начнём наугад: T = 0. Теперь модель говорит «спам», если в сообщении больше 0 восклицательных знаков, а иначе — «не спам». На скольких из шести примеров она ошибётся?",
+                        table: { head: ["Восклицательных знаков", "На самом деле"], rows: [["0", "не спам"], ["1", "не спам"], ["3", "не спам"], ["4", "спам"], ["6", "спам"], ["9", "спам"]] },
+                        hint: "В каких сообщениях больше 0 восклицательных знаков? Все ли они на самом деле спам?",
+                        why: "На 2. Сообщения с 1 и 3 восклицательными знаками — не спам, а модель называет их спамом. Остальные четыре её ответа верны. Среди них и ответ про сообщение с 0 знаков: 0 не больше 0, поэтому модель говорит «не спам»."
+                    }
+                },
+                {
+                    type: "number", answer: 1,
+                    en: {
+                        q: "Try another number: T = 5. Now the model says “spam” only when a message has more than 5 exclamation marks. How many mistakes does it make on the six examples?",
+                        table: { head: ["Exclamation marks", "It really is"], rows: [["0", "not spam"], ["1", "not spam"], ["3", "not spam"], ["4", "spam"], ["6", "spam"], ["9", "spam"]] },
+                        hint: "Go through the table row by row. Does the message have more than 5 marks? Does the model's answer match what the message really is?",
+                        why: "Just 1. The message with 4 exclamation marks is spam, but 4 is not more than 5, so the model lets it through. That is better than with T = 0, but still not perfect."
+                    },
+                    ru: {
+                        q: "Попробуй другое число: T = 5. Теперь модель говорит «спам», только если в сообщении больше 5 восклицательных знаков. Сколько ошибок она сделает на шести примерах?",
+                        table: { head: ["Восклицательных знаков", "На самом деле"], rows: [["0", "не спам"], ["1", "не спам"], ["3", "не спам"], ["4", "спам"], ["6", "спам"], ["9", "спам"]] },
+                        hint: "Пройди по таблице строку за строкой. В сообщении больше 5 знаков? Совпадает ли ответ модели с тем, что есть на самом деле?",
+                        why: "Всего 1. Сообщение с 4 восклицательными знаками — спам, но 4 не больше 5, поэтому модель его пропускает. Это лучше, чем при T = 0, но ещё не идеально."
+                    }
+                },
+                {
+                    type: "number", answer: 3, card: "z5a",
+                    en: {
+                        q: "A model says “spam” when a message has more than T exclamation marks, and “not spam” otherwise. The table shows six messages with the right answers. For which whole number T is the model right about all six?",
+                        table: { head: ["Exclamation marks", "It really is"], rows: [["0", "not spam"], ["1", "not spam"], ["3", "not spam"], ["4", "spam"], ["6", "spam"], ["9", "spam"]] },
+                        hint: "Find the place in the table where “not spam” ends and “spam” begins. The last “not spam” message must not have more than T marks. The first “spam” message must have more than T.",
+                        why: "T = 3. Then the messages with 4, 6 and 9 marks are called spam, and the ones with 0, 1 and 3 are not: no mistakes. With T = 2 the message with 3 marks would be called spam too, and with T = 4 the spam message with 4 marks would get through. T is the model's parameter: a number found from examples."
+                    },
+                    ru: {
+                        q: "Модель говорит «спам», если в сообщении больше T восклицательных знаков, а иначе — «не спам». В таблице — шесть сообщений с правильными ответами. При каком целом числе T модель даст верный ответ для всех шести?",
+                        table: { head: ["Восклицательных знаков", "На самом деле"], rows: [["0", "не спам"], ["1", "не спам"], ["3", "не спам"], ["4", "спам"], ["6", "спам"], ["9", "спам"]] },
+                        hint: "Найди в таблице место, где кончается «не спам» и начинается «спам». В последнем сообщении «не спам» знаков должно быть не больше T, а в первом сообщении «спам» — больше T.",
+                        why: "T = 3. Тогда сообщения с 4, 6 и 9 знаками модель назовёт спамом, а с 0, 1 и 3 — нет: ни одной ошибки. При T = 2 спамом оказалось бы и сообщение с 3 знаками, а при T = 4 модель пропустила бы спам с 4 знаками. T — это параметр модели: число, которое она находит по примерам."
+                    }
+                },
+                {
+                    type: "info", icon: "🔁",
+                    en: {
+                        title: "That was training",
+                        text: [
+                            "You did it: your first model is trained! That is what **training** is: try a number, count the mistakes, try another, and keep the one with the fewest mistakes.",
+                            "A computer does the same, only with far more numbers. A big model can have millions or even billions of parameters and learn from millions of examples.",
+                            "And the computer does not guess blindly. It looks at the mistakes, moves every parameter a little so that the mistakes get smaller, and repeats this again and again. Most of today's AI models learn like this."
+                        ]
+                    },
+                    ru: {
+                        title: "Это и было обучение",
+                        text: [
+                            "Получилось: твоя первая модель обучена! Вот что такое **обучение**: пробуем число, считаем ошибки, пробуем другое и оставляем то, с которым ошибок меньше всего.",
+                            "Компьютер делает то же самое, только чисел у него гораздо больше. У большой модели могут быть миллионы и даже миллиарды параметров, а учиться она может на миллионах примеров.",
+                            "И компьютер не гадает вслепую. Он смотрит на ошибки, чуть-чуть сдвигает каждый параметр, чтобы ошибки стали меньше, и повторяет это снова и снова. Так учится большинство сегодняшних моделей ИИ."
+                        ]
+                    }
+                },
+                {
+                    type: "choice", card: "z5b",
+                    en: {
+                        q: "What does it mean to “train” an AI model?",
+                        options: [
+                            "To find the parameters: the numbers that give the fewest mistakes on its examples",
+                            "To write all of its rules and numbers by hand, as a programmer writes a program",
+                            "To make the computer faster, so that the model gives its answers sooner",
+                            "To copy all the training data into its memory, so that it can look the answers up"
+                        ],
+                        hint: "A model has numbers inside it. Where do they come from?",
+                        why: "Training is a search for the model's parameters: the numbers with which it makes the fewest mistakes on its examples. Nobody writes them by hand. And the model does not need to keep the examples: what it keeps is the numbers it has found."
+                    },
+                    ru: {
+                        q: "Что значит «обучить» модель ИИ?",
+                        options: [
+                            "Найти параметры — числа, с которыми она меньше всего ошибается на своих примерах",
+                            "Вписать в неё все правила и числа вручную, как программист пишет программу",
+                            "Ускорить работу компьютера, чтобы модель быстрее выдавала ответы",
+                            "Скопировать в её память все обучающие данные, чтобы искать в них ответы"
+                        ],
+                        hint: "Внутри модели есть числа. Откуда они берутся?",
+                        why: "Обучение — это поиск параметров модели: чисел, с которыми она делает меньше всего ошибок на своих примерах. Вручную их никто не пишет. А сами примеры модель может и не хранить: она хранит числа, которые нашла."
+                    }
+                },
+                {
+                    type: "info", icon: "🆕",
+                    en: {
+                        title: "The real test: a new message",
+                        text: [
+                            "Your model with T = 3 makes no mistakes on its six examples. But a model is made for new messages, the ones it has never seen. Here comes one.",
+                            "A friend writes: “Happy birthday!!!!!” That is 5 exclamation marks, and 5 is more than 3. So the model says: spam.",
+                            "Wrong: it is a greeting from a friend! The model was perfect on its six examples, and it still fails on a new one."
+                        ]
+                    },
+                    ru: {
+                        title: "Настоящая проверка: новое сообщение",
+                        text: [
+                            "Твоя модель с T = 3 не ошибается ни на одном из шести примеров. Но модель нужна для новых сообщений — тех, которых она не видела. Вот одно из них.",
+                            "Друг пишет: «С днём рождения!!!!!» Это 5 восклицательных знаков, а 5 больше 3. Значит, модель говорит: спам.",
+                            "Ошибка: это же поздравление от друга! На своих шести примерах модель не ошиблась ни разу — и всё равно промахнулась на новом."
+                        ]
+                    }
+                },
+                {
+                    type: "choice",
+                    en: {
+                        q: "Why did the model call the birthday message spam?",
+                        options: [
+                            "Its six examples had no friendly message with more than 3 exclamation marks",
+                            "The computer made a mistake when it counted the exclamation marks",
+                            "T = 3 was the wrong choice: another whole number fits the six examples better",
+                            "A model can never be right about a message that it has not seen"
+                        ],
+                        hint: "Think of the six examples. Were the messages with more than 3 exclamation marks spam or not spam?",
+                        why: "A model knows only what was in its examples. In them, every message with more than 3 exclamation marks was spam, so the model learned “more than 3 marks means spam”. It counted correctly, and T = 3 fits the six examples best. The trouble was the examples: too few and too one-sided."
+                    },
+                    ru: {
+                        q: "Почему модель назвала поздравление спамом?",
+                        options: [
+                            "В шести примерах не было дружеских сообщений, где больше 3 восклицательных знаков",
+                            "Компьютер ошибся, когда считал восклицательные знаки в сообщении",
+                            "T = 3 выбрано неудачно: другое целое число лучше подходит к шести примерам",
+                            "Модель не может дать верный ответ на сообщение, которого не видела"
+                        ],
+                        hint: "Вспомни шесть примеров. Сообщения, в которых больше 3 восклицательных знаков, были спамом или нет?",
+                        why: "Модель знает только то, что было в её примерах. А в них каждое сообщение, где больше 3 восклицательных знаков, было спамом, вот она и выучила: «больше 3 знаков — значит, спам». Посчитала она верно, и T = 3 подходит к шести примерам лучше всего. Дело в самих примерах: их было мало, и они были однобокими."
+                    }
+                },
+                {
+                    type: "reveal", icon: "💡",
+                    en: {
+                        q: "How would you make this model better?",
+                        answer: [
+                            "Give it more examples, and more kinds of them: friendly messages with many exclamation marks too.",
+                            "Let it look at more than one clue: with exclamation marks alone, it cannot tell a happy friend from an advert. The words (“free”, “win”), the sender and the links help too. Real spam filters can use thousands of clues, each with its own parameter.",
+                            "And always test it on examples it has never seen. In the AI Lab, the experiment “Build a spam filter” lets you teach a filter that looks at the words, and test it on new messages."
+                        ]
+                    },
+                    ru: {
+                        q: "Как сделать эту модель лучше?",
+                        answer: [
+                            "Дать ей больше примеров, и притом разных: например, дружеские сообщения, в которых много восклицательных знаков.",
+                            "Научить её смотреть не на один признак, а на многие: по одним восклицательным знакам не отличить радостного друга от рекламы. Помогут ещё слова («бесплатно», «выиграй»), отправитель и ссылки. Настоящие спам-фильтры могут учитывать тысячи признаков, и у каждого свой параметр.",
+                            "И обязательно проверять её на примерах, которых она не видела. В ИИ-лаборатории есть эксперимент «Собери спам-фильтр»: там можно обучить фильтр, который смотрит на слова, и проверить его на новых сообщениях."
+                        ]
+                    }
+                },
+                {
+                    type: "choice", card: "z5c",
+                    en: {
+                        q: "A model makes no mistakes on the examples it was trained on. What does that say about new examples?",
+                        options: [
+                            "Not much: it has to be tested on examples it has never seen",
+                            "It will get new examples right too: it has learned the rule",
+                            "It will get most new examples wrong: it has never seen them",
+                            "It is ready to use: a test on new examples would add nothing"
+                        ],
+                        hint: "The model has already seen its training examples. What about the new ones?",
+                        why: "The model has already seen its training examples, so getting them right proves little. On new ones it may do well or badly: only a test on examples it has never seen can show which."
+                    },
+                    ru: {
+                        q: "Модель не ошибается ни на одном из примеров, на которых её обучали. Что это говорит о новых примерах?",
+                        options: [
+                            "Мало что: её нужно проверить на примерах, которых она не видела",
+                            "На новых примерах она тоже не ошибётся: правило она уже выучила",
+                            "На большинстве новых примеров она ошибётся: она ведь их не видела",
+                            "Модель готова к работе: проверка на новых примерах ничего не добавит"
+                        ],
+                        hint: "Свои обучающие примеры модель уже видела. А новые?",
+                        why: "Свои обучающие примеры модель уже видела, поэтому верные ответы на них мало что доказывают. С новыми она может справиться и хорошо, и плохо: это покажет только проверка на примерах, которых она не видела."
+                    }
+                },
+                {
+                    type: "recap",
+                    en: {
+                        points: [
+                            "A model is a rule with numbers in it. The numbers are called **parameters**: they are not written by hand but found from examples.",
+                            "**Training** is a search for the parameters: try them on the **training data**, count the mistakes and keep the ones that give fewer mistakes.",
+                            "A model is only as good as its examples.",
+                            "The real test is on examples the model has never seen."
+                        ]
+                    },
+                    ru: {
+                        points: [
+                            "Модель — это правило с числами. Эти числа называются **параметрами**: их не пишут вручную, а находят по примерам.",
+                            "**Обучение** — это поиск параметров: пробуем их на **обучающих данных**, считаем ошибки и оставляем те, с которыми ошибок меньше.",
+                            "Какие примеры — такая и модель.",
+                            "Настоящая проверка — на примерах, которых модель не видела."
                         ]
                     }
                 }

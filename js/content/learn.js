@@ -23,7 +23,7 @@ window.AICompass.addTranslations({
 
         "learn.home.kicker": "My path",
         "learn.home.newTitle": "Not sure where to start?",
-        "learn.home.newText": "Answer three questions and get your own path, from the very first idea to the maths inside.",
+        "learn.home.newText": "Answer three questions and get your own path, from the very first idea to building with AI.",
         "learn.home.newButton": "Build my path",
         "learn.home.orText": "Want a plan made just for you?",
         "learn.home.title": "Your plan for today",
@@ -42,7 +42,7 @@ window.AICompass.addTranslations({
 
         "learn.home.kicker": "Мой путь",
         "learn.home.newTitle": "Не знаешь, с чего начать?",
-        "learn.home.newText": "Ответь на три вопроса и получи свой путь: от самой первой идеи до математики внутри.",
+        "learn.home.newText": "Ответь на три вопроса и получи свой путь: от самой первой идеи до своих приложений на ИИ.",
         "learn.home.newButton": "Построить мой путь",
         "learn.home.orText": "Хочешь план именно для тебя?",
         "learn.home.title": "Твой план на сегодня",
@@ -192,10 +192,9 @@ window.AICompass.addTranslations({
         "learn.today.more": "Practise a little more",
 
         "learn.path.title": "Your path",
-        "learn.path.text.one": "{n} stage, from the very first idea to the maths inside. Everything is open: the marker only shows the best next step.",
-        "learn.path.text.many": "{n} stages, from the very first idea to the maths inside. Everything is open: the marker only shows the best next step.",
-        "learn.path.text.5": "Five stages, from the very first idea to the maths inside. Everything is open: the marker only shows the best next step.",
-        "learn.path.text.6": "Six stages, from the very first idea to the maths inside. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.one": "{n} stage, from the very first idea to building with AI. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.many": "{n} stages, from the very first idea to building with AI. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.7": "Seven stages, from the very first idea to building with AI. Everything is open: the marker only shows the best next step.",
         "learn.path.stage": "Stage {n}",
         "learn.path.count": "{done} of {total}",
         "learn.path.next": "Next step",
@@ -218,7 +217,7 @@ window.AICompass.addTranslations({
         "learn.path.optional": "Optional for you: skim it or skip it.",
 
         "learn.stage.zero": "Start from zero",
-        "learn.stage.zero.text": "What a program is, how everything becomes numbers, and the two ways to make a computer smart. No knowledge needed.",
+        "learn.stage.zero.text": "What a program is, how everything becomes numbers, the two ways to make a computer smart, and your first tiny model. No knowledge needed.",
         "learn.stage.basics": "The basics",
         "learn.stage.basics.text": "What AI is, how machines learn, neural networks, chatbots and safety.",
         "learn.stage.skills": "Use AI well",
@@ -228,7 +227,9 @@ window.AICompass.addTranslations({
         "learn.stage.world": "AI in your world",
         "learn.stage.world.text": "Data, the apps that choose for you, and planning your own AI project.",
         "learn.stage.pro": "Under the hood",
-        "learn.stage.pro.text": "The real maths, done by hand: a neuron, gradient descent, measuring a model, attention.",
+        "learn.stage.pro.text": "The real maths, done by hand: a neuron, gradient descent, backpropagation, overfitting, metrics, attention, cross-entropy and sampling.",
+        "learn.stage.build": "Build with AI",
+        "learn.stage.build.text": "What it takes to build on a language model: tokens and context, search by meaning, answers from your documents, honest evaluation, prompt injection, agents, and running it for real users.",
 
         "learn.unit.z1": "What is a program?",
         "learn.unit.z1.text": "A computer follows instructions, one by one.",
@@ -238,6 +239,8 @@ window.AICompass.addTranslations({
         "learn.unit.z3.text": "Two ways to make a computer do a task.",
         "learn.unit.z4": "How learning works: you and the machine",
         "learn.unit.z4.text": "Why you forget, and how to make knowledge stay.",
+        "learn.unit.z5": "Train your first model",
+        "learn.unit.z5.text": "Find the number that makes the fewest mistakes.",
         "learn.unit.s1": "Ask so that AI understands",
         "learn.unit.s1.text": "The four parts of a good request, and what to do with a weak answer.",
         "learn.unit.s2": "Check before you trust",
@@ -254,6 +257,28 @@ window.AICompass.addTranslations({
         "learn.unit.p3.text": "Confusion matrix, precision, recall, F1 and the accuracy trap.",
         "learn.unit.p4": "Tokens, embeddings and attention",
         "learn.unit.p4.text": "Dot products, softmax and why transformers scale as n².",
+        "learn.unit.p5": "Backpropagation by hand",
+        "learn.unit.p5.text": "One forward pass, one backward pass and one update of a tiny network.",
+        "learn.unit.p6": "Overfitting, and how to catch it",
+        "learn.unit.p6.text": "Training and validation loss, early stopping and regularisation.",
+        "learn.unit.p7": "Cross-entropy by hand",
+        "learn.unit.p7.text": "The loss behind every classifier and language model, and perplexity.",
+        "learn.unit.p8": "How a model picks the next token",
+        "learn.unit.p8.text": "Temperature, top-k and top-p, with the numbers in your hands.",
+        "learn.unit.b1": "Tokens and the context window",
+        "learn.unit.b1.text": "Count tokens, plan the window as a budget and work out what a request costs.",
+        "learn.unit.b2": "Search by meaning",
+        "learn.unit.b2.text": "Embeddings, cosine similarity, chunks and recall@k, by hand.",
+        "learn.unit.b3": "RAG: answers from your documents",
+        "learn.unit.b3.text": "Retrieve, then generate: the pipeline, its two ways to fail and how to tell them apart.",
+        "learn.unit.b4": "Measure a language model",
+        "learn.unit.b4.text": "Evaluation sets, ways to score answers and how much a score can be trusted.",
+        "learn.unit.b5": "Prompt injection",
+        "learn.unit.b5.text": "Why a model can take data for commands, and how to build so that it does little harm.",
+        "learn.unit.b6": "Agents and tools",
+        "learn.unit.b6.text": "The loop of an agent, who really runs a tool, and why long chains break.",
+        "learn.unit.b7": "Run it for real users",
+        "learn.unit.b7.text": "Speed, cost, what to watch after launch, and building for failure.",
 
         "learn.skills.title": "What you remember",
         "learn.skills.text": "Every answer moves a card to a stronger or a weaker box. Strong cards come back less often, weak ones sooner.",
@@ -278,6 +303,7 @@ window.AICompass.addTranslations({
         "learn.topic.foundations": "Foundations",
         "learn.topic.skills": "Working with AI",
         "learn.topic.maths": "The maths inside",
+        "learn.topic.build": "Building with AI",
 
         // The site search (Ctrl+K) finds the guided steps: where a result is, and the
         // words each step is found by besides its own texts (never shown)
@@ -287,6 +313,7 @@ window.AICompass.addTranslations({
         "learn.unit.z2.words": "numbers pixels letters code picture sound data binary",
         "learn.unit.z3.words": "rules examples machine learning model training",
         "learn.unit.z4.words": "memory forgetting spaced repetition study remember learning",
+        "learn.unit.z5.words": "train training first model threshold mistakes errors spam fit",
         "learn.unit.s1.words": "prompt prompting request ask question chatbot context format",
         "learn.unit.s2.words": "hallucination fact check source verify trust wrong answer made up",
         "learn.unit.s3.words": "homework study tutor essay cheating school honest hint quiz",
@@ -294,7 +321,18 @@ window.AICompass.addTranslations({
         "learn.unit.p1.words": "neuron weights bias activation relu sigmoid perceptron xor parameters",
         "learn.unit.p2.words": "gradient descent learning rate loss derivative chain rule batch",
         "learn.unit.p3.words": "confusion matrix precision recall f1 accuracy threshold metrics",
-        "learn.unit.p4.words": "tokens embeddings dot product cosine softmax attention transformer temperature"
+        "learn.unit.p4.words": "tokens embeddings dot product cosine softmax attention transformer temperature",
+        "learn.unit.p5.words": "backpropagation backprop chain rule forward pass backward pass gradient relu vanishing autodiff",
+        "learn.unit.p6.words": "overfitting underfitting validation early stopping regularisation regularization l2 weight decay dropout",
+        "learn.unit.p7.words": "cross-entropy loss logarithm perplexity logits softmax nats",
+        "learn.unit.p8.words": "sampling temperature top-k top-p nucleus greedy decoding next token generation",
+        "learn.unit.b1.words": "tokens tokenizer tokenization byte-pair encoding bpe context window system prompt cost price budget",
+        "learn.unit.b2.words": "embeddings vector search semantic search cosine similarity chunks chunking recall keyword hybrid search",
+        "learn.unit.b3.words": "rag retrieval-augmented generation retrieval documents sources citations fine-tuning knowledge base",
+        "learn.unit.b4.words": "evaluation evals test set benchmark judge rubric standard error confidence interval contamination regression",
+        "learn.unit.b5.words": "prompt injection jailbreak security least privilege untrusted input system prompt secrets api key",
+        "learn.unit.b6.words": "agents tools tool call function calling loop steps budget stop condition automation",
+        "learn.unit.b7.words": "latency streaming time to first token cost caching routing monitoring logs fallback retries production deployment"
     },
     ru: {
         "learn.me.as": "Учится",
@@ -337,11 +375,10 @@ window.AICompass.addTranslations({
         "learn.today.more": "Потренироваться ещё немного",
 
         "learn.path.title": "Твой путь",
-        "learn.path.text.one": "{n} этап: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
-        "learn.path.text.few": "{n} этапа: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
-        "learn.path.text.many": "{n} этапов: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
-        "learn.path.text.5": "Пять этапов: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
-        "learn.path.text.6": "Шесть этапов: от самой первой идеи до математики внутри. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.one": "{n} этап: от самой первой идеи до своих приложений на ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.few": "{n} этапа: от самой первой идеи до своих приложений на ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.many": "{n} этапов: от самой первой идеи до своих приложений на ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.7": "Семь этапов: от самой первой идеи до своих приложений на ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
         "learn.path.stage": "Этап {n}",
         "learn.path.count": "{done} из {total}",
         "learn.path.next": "Следующий шаг",
@@ -365,7 +402,7 @@ window.AICompass.addTranslations({
         "learn.path.optional": "Для тебя необязательно: пролистай или пропусти.",
 
         "learn.stage.zero": "С нуля",
-        "learn.stage.zero.text": "Что такое программа, как всё превращается в числа и два способа сделать компьютер умным. Знать ничего не нужно.",
+        "learn.stage.zero.text": "Что такое программа, как всё превращается в числа, два способа сделать компьютер умным и твоя первая маленькая модель. Знать ничего не нужно.",
         "learn.stage.basics": "Основы",
         "learn.stage.basics.text": "Что такое ИИ, как учатся машины, нейросети, чат-боты и безопасность.",
         "learn.stage.skills": "ИИ с умом",
@@ -375,7 +412,9 @@ window.AICompass.addTranslations({
         "learn.stage.world": "ИИ вокруг тебя",
         "learn.stage.world.text": "Данные, приложения, которые выбирают за тебя, и план собственного ИИ-проекта.",
         "learn.stage.pro": "Под капотом",
-        "learn.stage.pro.text": "Настоящая математика своими руками: нейрон, градиентный спуск, оценка модели, внимание.",
+        "learn.stage.pro.text": "Настоящая математика своими руками: нейрон, градиентный спуск, обратное распространение, переобучение, метрики, внимание, кросс-энтропия и сэмплирование.",
+        "learn.stage.build": "Строим на ИИ",
+        "learn.stage.build.text": "Что нужно, чтобы строить на языковой модели: токены и контекст, поиск по смыслу, ответы по своим документам, честная оценка качества, промпт-инъекции, агенты и запуск для настоящих пользователей.",
 
         "learn.unit.z1": "Что такое программа?",
         "learn.unit.z1.text": "Компьютер выполняет инструкции, одну за другой.",
@@ -385,6 +424,8 @@ window.AICompass.addTranslations({
         "learn.unit.z3.text": "Два способа научить компьютер делать задачу.",
         "learn.unit.z4": "Как устроено обучение: ты и машина",
         "learn.unit.z4.text": "Почему ты забываешь и как сделать, чтобы знания остались.",
+        "learn.unit.z5": "Обучи свою первую модель",
+        "learn.unit.z5.text": "Найди число, с которым ошибок меньше всего.",
         "learn.unit.s1": "Спрашивай так, чтобы ИИ понял",
         "learn.unit.s1.text": "Четыре части хорошего запроса и что делать со слабым ответом.",
         "learn.unit.s2": "Сначала проверь, потом верь",
@@ -401,6 +442,28 @@ window.AICompass.addTranslations({
         "learn.unit.p3.text": "Матрица ошибок, точность, полнота, F1 и ловушка accuracy.",
         "learn.unit.p4": "Токены, эмбеддинги и внимание",
         "learn.unit.p4.text": "Скалярные произведения, softmax и почему трансформеры растут как n².",
+        "learn.unit.p5": "Обратное распространение своими руками",
+        "learn.unit.p5.text": "Прямой проход, обратный проход и один шаг обучения маленькой сети.",
+        "learn.unit.p6": "Переобучение и как его поймать",
+        "learn.unit.p6.text": "Потери на обучении и на валидации, ранняя остановка и регуляризация.",
+        "learn.unit.p7": "Кросс-энтропия своими руками",
+        "learn.unit.p7.text": "Функция потерь любого классификатора и языковой модели, а ещё перплексия.",
+        "learn.unit.p8": "Как модель выбирает следующий токен",
+        "learn.unit.p8.text": "Температура, top-k и top-p — с числами в руках.",
+        "learn.unit.b1": "Токены и контекстное окно",
+        "learn.unit.b1.text": "Считай токены, планируй окно как бюджет и узнай, сколько стоит запрос.",
+        "learn.unit.b2": "Поиск по смыслу",
+        "learn.unit.b2.text": "Эмбеддинги, косинусное сходство, фрагменты и полнота на k — своими руками.",
+        "learn.unit.b3": "RAG: ответы по твоим документам",
+        "learn.unit.b3.text": "Сначала найти, потом ответить: из чего состоит конвейер, где он ломается и как это различить.",
+        "learn.unit.b4": "Измерь языковую модель",
+        "learn.unit.b4.text": "Наборы для оценки, способы проверять ответы и сколько можно верить одной цифре.",
+        "learn.unit.b5": "Промпт-инъекции",
+        "learn.unit.b5.text": "Почему модель принимает данные за команды и как строить так, чтобы вреда было мало.",
+        "learn.unit.b6": "Агенты и инструменты",
+        "learn.unit.b6.text": "Цикл агента, кто на самом деле запускает инструмент и почему длинные цепочки ломаются.",
+        "learn.unit.b7": "Запуск для настоящих пользователей",
+        "learn.unit.b7.text": "Скорость, стоимость, за чем следить после запуска и как готовиться к сбоям.",
 
         "learn.skills.title": "Что ты помнишь",
         "learn.skills.text": "Каждый ответ переносит карточку в коробку посильнее или послабее. Сильные карточки приходят реже, слабые — раньше.",
@@ -427,6 +490,7 @@ window.AICompass.addTranslations({
         "learn.topic.foundations": "Самые основы",
         "learn.topic.skills": "Работа с ИИ",
         "learn.topic.maths": "Математика внутри",
+        "learn.topic.build": "Разработка на ИИ",
 
         "learn.search.section": "Мой путь · {stage}",
         "learn.search.label": "Шаг · {title}",
@@ -434,6 +498,7 @@ window.AICompass.addTranslations({
         "learn.unit.z2.words": "числа пиксели буквы код картинка звук данные двоичный",
         "learn.unit.z3.words": "правила примеры машинное обучение модель тренировка",
         "learn.unit.z4.words": "память забывание интервальное повторение учёба запоминать",
+        "learn.unit.z5.words": "обучение обучить первая модель порог ошибки спам подбор",
         "learn.unit.s1.words": "промпт запрос спросить вопрос чат-бот контекст формат",
         "learn.unit.s2.words": "галлюцинация проверка фактов источник доверие ошибка выдумка",
         "learn.unit.s3.words": "домашка учёба репетитор сочинение списывание школа честно подсказка",
@@ -441,7 +506,18 @@ window.AICompass.addTranslations({
         "learn.unit.p1.words": "нейрон веса смещение активация relu сигмоида перцептрон xor параметры",
         "learn.unit.p2.words": "градиентный спуск скорость обучения функция потерь производная цепное правило батч",
         "learn.unit.p3.words": "матрица ошибок точность полнота f1 accuracy precision recall порог метрики",
-        "learn.unit.p4.words": "токены эмбеддинги скалярное произведение косинус softmax внимание трансформер температура"
+        "learn.unit.p4.words": "токены эмбеддинги скалярное произведение косинус softmax внимание трансформер температура",
+        "learn.unit.p5.words": "обратное распространение ошибки бэкпроп цепное правило прямой проход обратный проход градиент relu затухание",
+        "learn.unit.p6.words": "переобучение недообучение валидация ранняя остановка регуляризация l2 дропаут",
+        "learn.unit.p7.words": "кросс-энтропия функция потерь логарифм перплексия логиты softmax",
+        "learn.unit.p8.words": "сэмплирование температура top-k top-p жадный выбор следующий токен генерация",
+        "learn.unit.b1.words": "токены токенизация bpe кодирование пар байтов контекстное окно системные инструкции стоимость цена бюджет",
+        "learn.unit.b2.words": "эмбеддинги векторный поиск семантический поиск косинусное сходство фрагменты чанки полнота ключевые слова гибридный поиск",
+        "learn.unit.b3.words": "rag генерация с опорой на документы поиск документы источники ссылки дообучение база знаний",
+        "learn.unit.b4.words": "оценка качества эвал тестовый набор бенчмарк модель-судья рубрика стандартная ошибка доверительный интервал утечка",
+        "learn.unit.b5.words": "промпт-инъекция инъекция джейлбрейк безопасность наименьшие привилегии недоверенные данные секреты ключ api",
+        "learn.unit.b6.words": "агенты инструменты вызов инструмента вызов функций цикл шаги бюджет условие остановки автоматизация",
+        "learn.unit.b7.words": "задержка потоковый вывод время до первого токена стоимость кэш маршрутизация мониторинг логи запасной вариант продакшен"
     }
 });
 
@@ -647,6 +723,7 @@ window.AICompass.addTranslations({
         "learn.place.result.deep": "The basics are in place. Time to look inside: how AI sees, plays and writes.",
         "learn.place.result.world": "You know how AI works. Now see what it does with data and with you, and plan a project.",
         "learn.place.result.pro": "You know the ideas well. Next comes the maths, done by hand.",
+        "learn.place.result.build": "You know the maths too. The last stage is yours: how real products are built on language models.",
         "learn.place.stopped": "No need for more questions: the path will start from the beginning.",
         "learn.place.see": "See my path"
     },
@@ -697,6 +774,7 @@ window.AICompass.addTranslations({
         "learn.place.result.deep": "Основы на месте. Пора заглянуть внутрь: как ИИ видит, играет и пишет.",
         "learn.place.result.world": "Ты знаешь, как работает ИИ. Теперь посмотри, что он делает с данными и с тобой, и спланируй проект.",
         "learn.place.result.pro": "Идеи ты знаешь хорошо. Дальше — математика своими руками.",
+        "learn.place.result.build": "Математику ты тоже знаешь. Твой этап — последний: как на языковых моделях строят настоящие продукты.",
         "learn.place.stopped": "Больше вопросов не нужно: путь начнётся с самого начала.",
         "learn.place.see": "Посмотреть мой путь"
     }
@@ -882,7 +960,8 @@ window.AICompass.content.set("learn", {
         { id: "skills", icon: "🧰", course: "skills" },
         { id: "deep", icon: "🤿", track: "deep" },
         { id: "world", icon: "🌍", track: "world" },
-        { id: "pro", icon: "⚙️", course: "pro" }
+        { id: "pro", icon: "⚙️", course: "pro" },
+        { id: "build", icon: "🚀", course: "build" }
     ],
 
     // The guided courses: the file with their steps (loaded when a unit opens), the
@@ -898,7 +977,8 @@ window.AICompass.content.set("learn", {
                 { id: "z1", icon: "🤖", minutes: 4, cards: 3 },
                 { id: "z2", icon: "🔢", minutes: 4, cards: 3 },
                 { id: "z3", icon: "🧩", minutes: 4, cards: 3 },
-                { id: "z4", icon: "🧠", minutes: 5, cards: 3 }
+                { id: "z4", icon: "🧠", minutes: 5, cards: 3 },
+                { id: "z5", icon: "🎚️", minutes: 5, cards: 3 }
             ]
         },
         skills: {
@@ -919,8 +999,26 @@ window.AICompass.content.set("learn", {
             units: [
                 { id: "p1", icon: "🧮", minutes: 6, cards: 4 },
                 { id: "p2", icon: "📉", minutes: 7, cards: 4 },
+                { id: "p5", icon: "⛓️", minutes: 8, cards: 4 },
+                { id: "p6", icon: "🧵", minutes: 7, cards: 4 },
                 { id: "p3", icon: "🎯", minutes: 7, cards: 5 },
-                { id: "p4", icon: "🔤", minutes: 7, cards: 5 }
+                { id: "p4", icon: "🔤", minutes: 7, cards: 5 },
+                { id: "p7", icon: "📐", minutes: 7, cards: 4 },
+                { id: "p8", icon: "🎲", minutes: 7, cards: 4 }
+            ]
+        },
+        build: {
+            file: "js/content/courses/build.js",
+            topic: "build",
+            probes: ["b1c", "b3b"],
+            units: [
+                { id: "b1", icon: "🎫", minutes: 8, cards: 4 },
+                { id: "b2", icon: "🧲", minutes: 7, cards: 4 },
+                { id: "b3", icon: "📚", minutes: 7, cards: 4 },
+                { id: "b4", icon: "🧪", minutes: 7, cards: 4 },
+                { id: "b5", icon: "💉", minutes: 7, cards: 4 },
+                { id: "b6", icon: "🛠️", minutes: 7, cards: 4 },
+                { id: "b7", icon: "🚦", minutes: 7, cards: 4 }
             ]
         }
     },
