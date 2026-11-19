@@ -13,7 +13,8 @@
    written is explained at the top of js/content/courses/zero.js:
    - in a "choice", the FIRST option is the right one;
    - "number": the learner types the answer; "tolerance" is how far off
-     it may be. Russian texts write decimals with a comma;
+     it may be, and "share": true lets a share or a probability from 0 to 1
+     be typed as a percentage ("81%"). Russian texts write decimals with a comma;
    - "card": the task also becomes a card of the memory check, and two of
      them ("probes" in js/content/learn.js) are asked by the level check.
      A card must make sense alone.
@@ -176,12 +177,12 @@ window.AICompass.content.set("course.build", {
                 {
                     type: "number", answer: 6200, card: "b1c",
                     en: {
-                        q: "A model has a context window of 8000 tokens. The instructions take 500 tokens, the question takes 300, and 1000 are kept free for the answer. How many tokens are left for documents?",
+                        q: "A model has a context window of 8000 tokens. You send instructions of 500 tokens and a question of 300 tokens, and the answer may be up to 1000 tokens long. At most, how many tokens can the documents take?",
                         hint: "The model's answer has to fit into the same window as everything you send. Subtract every part from 8000.",
                         why: "8000 − 500 − 300 − 1000 = 6200. The room for the answer comes out of the same window as the input, so it is subtracted too. A longer document has to be shortened, or only its most useful parts are sent."
                     },
                     ru: {
-                        q: "Контекстное окно модели — 8000 токенов. Инструкции занимают 500 токенов, вопрос — 300, и ещё 1000 отложено на ответ. Сколько токенов остаётся на документы?",
+                        q: "Контекстное окно модели — 8000 токенов. Ты отправляешь инструкции на 500 токенов и вопрос на 300, а ответ может занять до 1000 токенов. Сколько токенов самое большее можно отвести под документы?",
                         hint: "Ответ модели занимает место в том же окне, что и всё отправленное. Вычти из 8000 каждую часть.",
                         why: "8000 − 500 − 300 − 1000 = 6200. Место для ответа берётся из того же окна, что и входной текст, поэтому его тоже нужно вычесть. Более длинный документ придётся сократить или отправить только самые нужные его части."
                     }
@@ -202,7 +203,7 @@ window.AICompass.content.set("course.build", {
                     }
                 },
                 {
-                    type: "info", icon: "💶", mono: true,
+                    type: "info", icon: "🏷️", mono: true,
                     en: {
                         title: "Tokens are also the price and the waiting time",
                         text: [
@@ -429,7 +430,7 @@ window.AICompass.content.set("course.build", {
                     }
                 },
                 {
-                    type: "number", answer: 0.75, tolerance: 0.005, card: "b2c",
+                    type: "number", share: true, answer: 0.75, tolerance: 0.005, card: "b2c",
                     en: {
                         q: "A search runs over a collection of text chunks. For one question, 4 chunks are relevant: they hold the answer. The top 5 results contain 3 of them. What is recall@5? Answer with a number from 0 to 1.",
                         hint: "Recall asks: of everything that should have been found, what share was found?",
@@ -845,7 +846,7 @@ window.AICompass.content.set("course.build", {
                     }
                 },
                 {
-                    type: "number", answer: 0.04, tolerance: 0.001, card: "b4a",
+                    type: "number", share: true, answer: 0.04, tolerance: 0.001, card: "b4a",
                     en: {
                         q: "A model answers 80 of 100 test questions correctly. The standard error of this accuracy is √(p·(1 − p) / n): p is the share of right answers, n is the number of questions. What is this error, as a number from 0 to 1?",
                         hint: "Here p = 80 / 100 = 0.8, so p·(1 − p) = 0.8·0.2 = 0.16. Divide by n, then take the square root.",
@@ -1325,29 +1326,29 @@ window.AICompass.content.set("course.build", {
                     }
                 },
                 {
-                    type: "number", answer: 0.81, tolerance: 0.005, card: "b6b",
+                    type: "number", share: true, answer: 0.81, tolerance: 0.005, card: "b6b",
                     en: {
-                        q: "An agent gets each step right with probability 0.9, independently of the other steps. A task needs 2 steps in a row, and a mistake cannot be repaired. What is the probability that the whole task succeeds?",
+                        q: "An agent gets each step right with probability 0.9, independently of the other steps. A task needs 2 steps in a row, and a mistake cannot be repaired. What is the probability that the whole task succeeds, as a number from 0 to 1?",
                         hint: "The task succeeds only if the first step and the second step both succeed.",
                         why: "Both steps must succeed, so their chances multiply: 0.9 · 0.9 = 0.81. Even two good steps give only about 81 successes in 100 runs, and every extra step lowers that number further."
                     },
                     ru: {
-                        q: "Агент верно выполняет каждый шаг с вероятностью 0,9, независимо от других шагов. В задаче 2 шага подряд, и ошибку исправить нельзя. С какой вероятностью удастся вся задача?",
+                        q: "Агент верно выполняет каждый шаг с вероятностью 0,9, независимо от других шагов. В задаче 2 шага подряд, и ошибку исправить нельзя. С какой вероятностью удастся вся задача? Ответ дай числом от 0 до 1.",
                         hint: "Задача удаётся, только если удались и первый шаг, и второй.",
                         why: "Должны удаться оба шага, поэтому их вероятности перемножаются: 0,9 · 0,9 = 0,81. Даже два хороших шага дают лишь около 81 успеха на 100 запусков, а каждый следующий шаг снижает это число ещё сильнее."
                     }
                 },
                 {
-                    type: "number", answer: 0.64, tolerance: 0.005,
+                    type: "number", share: true, answer: 0.64, tolerance: 0.005,
                     en: {
                         table: { side: true, head: ["Steps in a row", "All succeed"], rows: [["1", "0.95"], ["5", "0.77"], ["10", "0.60"], ["20", "0.36"]] },
-                        q: "Each step of an agent succeeds with probability 0.95, independently, and one slip spoils the whole task. The table shows the chance that all steps succeed. What is the probability that a 20-step task fails?",
+                        q: "Each step of an agent succeeds with probability 0.95, independently, and one slip spoils the whole task. The table shows the chance that all steps succeed. What is the probability, from 0 to 1, that a 20-step task fails?",
                         hint: "The task fails unless all 20 steps succeed. Failing is the opposite of “all succeed”.",
                         why: "From the table, all 20 steps succeed with probability 0.95²⁰ ≈ 0.36, so the task fails with probability 1 − 0.36 = 0.64. Almost two runs out of three fail, although each step works 95 times out of 100."
                     },
                     ru: {
                         table: { side: true, head: ["Шагов подряд", "Все шаги удались"], rows: [["1", "0,95"], ["5", "0,77"], ["10", "0,60"], ["20", "0,36"]] },
-                        q: "Каждый шаг агента удаётся с вероятностью 0,95, независимо от других, а один промах губит всю задачу. В таблице — вероятность того, что удадутся все шаги. С какой вероятностью провалится задача из 20 шагов?",
+                        q: "Каждый шаг агента удаётся с вероятностью 0,95, независимо от других, а один промах губит всю задачу. В таблице — вероятность того, что удадутся все шаги. С какой вероятностью (от 0 до 1) провалится задача из 20 шагов?",
                         hint: "Задача проваливается, если удались не все 20 шагов. Провал противоположен событию «все шаги удались».",
                         why: "По таблице все 20 шагов удаются с вероятностью 0,95²⁰ ≈ 0,36, значит, задача проваливается с вероятностью 1 − 0,36 = 0,64. Почти два запуска из трёх заканчиваются провалом, хотя каждый шаг срабатывает 95 раз из 100."
                     }
@@ -1421,18 +1422,37 @@ window.AICompass.content.set("course.build", {
                     }
                 },
                 {
+                    type: "info", icon: "🛤️", mono: true,
+                    en: {
+                        title: "Do you need an agent at all?",
+                        text: [
+                            "An agent pays for its freedom. At every step a model call decides what to do next, and each such decision costs tokens and time and can go wrong.",
+                            "When the steps are known in advance, plain code can run them in order and call a model only inside a step, for example to summarise a text. No call is spent on choosing the steps, so this is cheaper and faster, takes the same path every time and is easier to test."
+                        ],
+                        example: ["the steps are known (download, summarise, send) → plain code", "the next step depends on the last result → an agent"]
+                    },
+                    ru: {
+                        title: "Нужен ли здесь агент?",
+                        text: [
+                            "За свободу агента приходится платить. На каждом шаге вызов модели решает, что делать дальше, а каждое такое решение стоит токенов и времени и может оказаться ошибкой.",
+                            "Если шаги известны заранее, обычный код может выполнить их по порядку и вызывать модель только внутри отдельного шага, например чтобы кратко пересказать текст. На выбор шагов вызовы не тратятся, поэтому так дешевле и быстрее, путь каждый раз один и тот же, и это проще тестировать."
+                        ],
+                        example: ["шаги известны (скачать, пересказать, отправить) → обычный код", "следующий шаг зависит от прошлого результата → агент"]
+                    }
+                },
+                {
                     type: "choice", card: "b6d",
                     en: {
                         q: "A task can be done by code that runs fixed steps in order, or by an agent: a language model that chooses its own steps. When is the code with fixed steps the better choice?",
-                        options: ["When the steps are known in advance: such code is cheaper, faster and easier to test", "Never: an agent that plans its own steps is always the more capable choice", "Only when no language model is available, or none is allowed for the task", "Whenever the task needs a tool, such as a web search or a database query"],
+                        options: ["When the steps are known in advance: such code is cheaper, faster and easier to test", "When the steps depend on what each result shows, so nobody can list them in advance", "When the task needs a tool, such as a web search or a database query", "When the answer must be written as text for a user, such as an email"],
                         hint: "In each case, who chooses the next step, and what does that choice cost?",
-                        why: "When the steps are known, code simply runs them in order. No model call is spent on choosing them, so the code is cheaper and faster, follows the same path every time and is easier to test. A step can still call a model, for example to summarise a text. Agents are for tasks whose steps cannot be known in advance."
+                        why: "When the steps are known, code runs them in order and spends no model call on choosing them: it is cheaper and faster, takes the same path every time and is easier to test. Its steps can still use tools and models, such as a web search or a model writing an email. Agents are for tasks whose steps cannot be known in advance."
                     },
                     ru: {
                         q: "Задачу можно решить кодом, который выполняет заранее заданные шаги по порядку, или агентом — языковой моделью, которая сама выбирает шаги. Когда лучше код с заданными шагами?",
-                        options: ["Когда шаги известны заранее: такой код дешевле, быстрее и проще в тестировании", "Никогда: агент, который планирует свои шаги, всегда справляется лучше", "Только когда языковой модели нет или её нельзя использовать в этой задаче", "Всегда, когда задаче нужен инструмент, например веб-поиск или запрос к базе данных"],
+                        options: ["Когда шаги известны заранее: такой код дешевле, быстрее и проще в тестировании", "Когда шаги зависят от того, что покажет каждый результат, и заранее их не перечислить", "Когда задаче нужен инструмент, например веб-поиск или запрос к базе данных", "Когда ответ нужно написать текстом для пользователя, например письмом"],
                         hint: "Кто в каждом случае выбирает следующий шаг и чего стоит этот выбор?",
-                        why: "Если шаги известны, код просто выполняет их по порядку. Вызовы модели на выбор шагов не нужны, поэтому такой код дешевле и быстрее, каждый раз проходит один и тот же путь, и его проще тестировать. Отдельный шаг всё же может вызвать модель, например чтобы кратко пересказать текст. Агенты нужны, когда шаги заранее неизвестны."
+                        why: "Если шаги известны, код просто выполняет их по порядку и не тратит вызовы модели на их выбор: так дешевле и быстрее, путь каждый раз один и тот же, и это проще тестировать. Шаги кода всё равно могут пользоваться инструментами и моделью — например, для веб-поиска или письма. Агенты нужны, когда шаги заранее неизвестны."
                     }
                 },
                 {
@@ -1510,7 +1530,7 @@ window.AICompass.content.set("course.build", {
                     }
                 },
                 {
-                    type: "info", icon: "💸",
+                    type: "info", icon: "✂️",
                     en: {
                         title: "Three ways to pay less",
                         text: ["The bill grows with the number of model calls and with the tokens in each call. There are three common ways to cut it, and each has its own risk."],

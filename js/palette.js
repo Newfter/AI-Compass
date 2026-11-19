@@ -447,11 +447,14 @@
         if (!results) return none;
         const listed = {};
         shown.forEach(function (item) { listed[item.id] = true; });
+        let hidden = 0;      // the best score of a result left out because its command is listed
         const items = results.filter(function (result) {
             if (result.match < SITE_MIN_MATCH) return false;
-            if (result.type === "glossary") return !listed["glossary-" + result.id] && !listed["glossary-term-" + result.id];
-            if (result.type === "pages") return !listed["go-" + result.id];
-            return true;
+            let keep = true;
+            if (result.type === "glossary") keep = !listed["glossary-" + result.id] && !listed["glossary-term-" + result.id];
+            else if (result.type === "pages") keep = !listed["go-" + result.id];
+            if (!keep) hidden = Math.max(hidden, result.score);
+            return keep;
         }).slice(0, SITE_MAX).map(function (result, order) {
             return {
                 id: "site-" + result.type + "-" + result.id,
@@ -466,7 +469,7 @@
                 remember: false
             };
         });
-        return { items: items, switched: results.switched || "" };
+        return { items: items, switched: results.switched || "", hidden: hidden };
     }
 
     // Everything the palette shows for a search:
@@ -523,6 +526,18 @@
 
         const site = searchSite(rawQuery, found);
         if (site.switched && !note) note = t("palette.layout", { query: site.switched });
+        // When no command matches at the start of a word ("rag" only inside "garage") and
+        // the best page found starts a word with the search ("RAG: answers from your
+        // documents"), "Found on the site" comes first, so Enter opens that page. This
+        // also counts the search typed in the other keyboard layout ("кфп") and a space
+        // for a hyphen. Not when a glossary entry or page that the list shows as a
+        // command scores more ("agents": the glossary's "Agent")
+        const bestCommand = found.reduce(function (best, item) { return Math.max(best, item.score || 0); }, 0);
+        const loose = function (text) { return text.replace(/-/g, " "); };
+        const firstTitle = site.items.length ? loose(fold(site.items[0].title)) : "";
+        const firstFound = firstTitle ? firstTitle.indexOf(loose(fold(site.switched) || query)) : -1;
+        const siteFirst = bestCommand < SCORE.prefix && firstFound !== -1 && isWordStart(firstTitle, firstFound) &&
+            site.items[0].score > (site.hidden || 0);
         const nothing = !found.length && !site.items.length;
         const onlySite = !found.length && site.items.length > 0;
 
@@ -553,7 +568,7 @@
         if (site.items.length) {
             const last = groups[groups.length - 1];
             const askAlone = last && last.items.length === 1 && last.items[0].id === "ask-bot";
-            groups.splice(askAlone ? groups.length - 1 : groups.length, 0,
+            groups.splice(siteFirst ? 0 : (askAlone ? groups.length - 1 : groups.length), 0,
                 { key: "palette.siteGroup", label: t("palette.siteGroup"), items: site.items, more: 0 });
         }
         return {

@@ -66,6 +66,9 @@
     const CARD_TRIES = 1;            // a card: one try, because it tests the memory
     const EXPLAIN_MIN = 20;          // letters an explanation needs before it is compared
     const WRONG_FLASH = 650;         // ms a wrong pair stays red in a "match" task
+    const DOUBLE_TAP_MS = 400;       // a second tap this soon, on the same spot, after the first one's button was replaced...
+    const DOUBLE_TAP_PX = 24;        // ...is part of a double tap (see holdBackDouble)
+    const DOUBLE_CLICK_MS = 500;     // the longest usual pause between the two clicks of a double click
     const PROMPT_LINE = 46;          // about how many letters of a ready request fit on one line
     const PROMPT_ROWS_MIN = 2;       // a ready request shows at least this many lines...
     const PROMPT_ROWS_MAX = 7;       // ...and at most this many, until the window has measured its text
@@ -174,10 +177,20 @@
         return html;
     }
 
-    // "12", "0,5", "-3", "85 %" -> a number, or null when it is not one
+    // What the learner typed as a number: { value, percent } ("85 %" has percent: true),
+    // or null when it is not one. "12", "0,5", "−3", "+2", "6 200" and, in English,
+    // "2,000" (the window writes big numbers that way: a comma before three digits
+    // groups the thousands). Otherwise a comma is the decimal mark, as in Russian.
+    // With both marks, the last one is the decimal mark: "1,234.5" or "1.234,5".
     function readNumber(text) {
-        const clean = String(text).replace(/\s+/g, "").replace(/[−–]/g, "-").replace(",", ".").replace(/%$/, "");
-        return /^-?(\d+\.?\d*|\.\d+)$/.test(clean) ? Number(clean) : null;
+        let clean = String(text).replace(/\s+/g, "").replace(/[−–]/g, "-").replace(/^\+/, "");
+        const percent = /%$/.test(clean);
+        clean = clean.replace(/%$/, "");
+        if (/^-?\d{1,3}(,\d{3})+\.\d+$/.test(clean)) clean = clean.replace(/,/g, "");
+        else if (/^-?\d{1,3}(\.\d{3})+,\d+$/.test(clean)) clean = clean.replace(/\./g, "").replace(",", ".");
+        else if (A.lang !== "ru" && /^-?[1-9]\d{0,2}(,\d{3})+$/.test(clean)) clean = clean.replace(/,/g, "");
+        else clean = clean.replace(",", ".");
+        return /^-?(\d+\.?\d*|\.\d+)$/.test(clean) ? { value: Number(clean), percent: percent } : null;
     }
 
     function create(host) {
@@ -192,6 +205,7 @@
         let session = null;      // the session on screen (cards, a guided step or an explanation)
         let task = null;         // the task on screen: { giveUp(), key(event) }, or null
         let actions = {};        // what the buttons of the screen do: { name: function (button) }
+        const drafts = {};       // "Explain it back": what was typed for each lesson and not saved yet (until the page reloads)
 
         // ---------- 2. Building the window ----------
         function build() {
@@ -221,6 +235,7 @@
                 close: find(".lpw-close"), bar: find(".lpw-bar"), barFill: find(".lpw-bar span"),
                 body: find(".lpw-body"), foot: find(".lpw-foot"), keys: find(".lpw-legend")
             };
+            root.addEventListener("click", holdBackDouble, true);
             root.addEventListener("click", onClick);
             document.addEventListener("keydown", onKey);
             window.addEventListener("resize", function () {
@@ -251,6 +266,14 @@
             if (typeof A.announce === "function") A.announce(plain(text));
         }
 
+        // What is said after an answer: how it went, the right answer when it was
+        // missed (it is shown in the box too), and why
+        function sayResult(title, result, why) {
+            const end = function (text) { return /[.!?…]$/.test(text) ? text : text + "."; };
+            const answer = !result.solved && result.answer ? end(t("learn.play.answerWas", { answer: plain(result.answer) })) + " " : "";
+            say(end(title) + " " + answer + (why || ""));
+        }
+
         // The bar at the top: the name of the session, "3 of 8" and the progress
         function setChrome(options) {
             A.dom.setText(parts.kicker, options.kicker || "");
@@ -265,7 +288,8 @@
             }
             parts.close.setAttribute("aria-label", t("learn.play.close"));
             parts.close.title = t("learn.play.close");
-            A.dom.setText(parts.keys, t("learn.play.keys"));
+            // The number keys only work on a task with buttons to choose (see mountTask)
+            A.dom.setText(parts.keys, t("learn.play.keysNext"));
         }
 
         // The buttons under the screen: [{ act, label, primary }]
@@ -301,9 +325,18 @@
             if (button) button.focus({ preventScroll: true });
         }
 
-        // The keyboard focus goes to the heading of the screen, so it is read first
+        // The keyboard focus goes to the heading of the screen, so it is read first. A
+        // question that stands below what it needs (a table, an example, a picture) takes
+        // the focus at the first of those, so a screen reader reads them before it.
         function focusScreen() {
-            const target = parts.body.querySelector("[data-focus]") || parts.window;
+            let target = parts.body.querySelector("[data-focus]") || parts.window;
+            let first = null;
+            for (let node = target.previousElementSibling; node; node = node.previousElementSibling) {
+                if (node.getAttribute("aria-hidden") === "true") continue;
+                if (!node.matches(".lpw-text, .lpw-table-box, .lpw-example, .lpw-note, .lpw-pixels")) break;
+                first = node;
+            }
+            if (first) target = first.querySelector("table") || first;
             if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
             target.focus({ preventScroll: true });
         }
@@ -356,6 +389,37 @@
                 buttons: [{ act: "retry", label: t("learn.play.tryLoad"), primary: true }],
                 actions: { retry: retry }
             });
+        }
+
+        // A double click, or two quick taps, must not press what the first one put in its
+        // place: the next card's "I don't know yet", the next item of a sort, a second try.
+        // So the second click of a double click is held back, and so is a tap right
+        // after a tap whose button was replaced. A key press clicks with detail 0 and
+        // always goes through.
+        let lastTap = null;          // { time, x, y, target }
+
+        function holdBackDouble(event) {
+            if (!event.isTrusted || !event.detail || !event.target.closest || !event.target.closest("button")) return;
+            const before = lastTap;
+            let hold = event.detail >= 2;
+            if (!hold && before && event.pointerType === "touch") {
+                hold = event.timeStamp - before.time < DOUBLE_TAP_MS && !before.target.isConnected &&
+                    Math.abs(event.clientX - before.x) < DOUBLE_TAP_PX && Math.abs(event.clientY - before.y) < DOUBLE_TAP_PX;
+            }
+            if (hold) {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
+            lastTap = { time: event.timeStamp, x: event.clientX, y: event.clientY, target: event.target };
+        }
+
+        // When the first click closes the window (× or "Back to my path"), the second one
+        // would press what is behind it on the page: for a moment it is held back there too
+        function holdBackAfterClose(event) {
+            if (!event.isTrusted || event.detail < 2) return;
+            event.preventDefault();
+            event.stopPropagation();
         }
 
         function onClick(event) {
@@ -419,6 +483,8 @@
             parts.listen.classList.toggle("is-on", speech.active);
             A.dom.setText(parts.listenIcon, speech.active ? "⏹" : "🔊");
             A.dom.setText(parts.listenText, t(speech.active ? "learn.play.stop" : "learn.play.listen"));
+            // (on a phone the words are hidden and only the icon shows: the button keeps its name)
+            parts.listen.setAttribute("aria-label", t(speech.active ? "learn.play.stop" : "learn.play.listen"));
         }
 
         function stopSpeaking() {
@@ -563,11 +629,22 @@
                 }).join("") + "</div>";
                 const buttons = Array.prototype.slice.call(area.querySelectorAll(".lpw-option"));
                 const isLocked = function (button) { return button.getAttribute("aria-disabled") === "true"; };
+                const rightText = plain(step.options[right]);
+                // A picked option and the right one are marked with more than a colour:
+                // ✗ or ✓ in place of the number key, and words for screen readers
+                const mark = function (button, sign, words) {
+                    A.dom.setText(button.querySelector(".lpw-option-key"), sign);
+                    button.insertAdjacentHTML("beforeend", '<span class="sr-only"> (' + esc(words) + ")</span>");
+                };
                 const reveal = function () {
                     buttons.forEach(function (button) {
                         button.setAttribute("aria-disabled", "true");
-                        if (Number(button.getAttribute("data-option")) === right) button.classList.add("is-correct");
-                        else if (!button.classList.contains("is-wrong")) button.classList.add("is-dim");
+                        if (Number(button.getAttribute("data-option")) === right) {
+                            button.classList.add("is-correct");
+                            mark(button, "✓", t("learn.task.srRight"));
+                        } else if (!button.classList.contains("is-wrong")) {
+                            button.classList.add("is-dim");
+                        }
                     });
                 };
                 area.addEventListener("click", function (event) {
@@ -581,10 +658,11 @@
                     wrong += 1;
                     button.classList.add("is-wrong");
                     button.setAttribute("aria-disabled", "true");
+                    mark(button, "✗", t("learn.task.srPicked"));
                     const open = buttons.filter(function (item) { return !isLocked(item); }).length;
                     if (wrong >= tries || open <= 1) {
                         reveal();
-                        end(false);
+                        end(false, rightText);
                     } else {
                         tryAgain();
                     }
@@ -593,7 +671,7 @@
                     giveUp: function () {
                         wrong += 1;
                         reveal();
-                        end(false);
+                        end(false, rightText);
                     },
                     key: function (event) { return numberKey(event, ".lpw-option"); }
                 };
@@ -618,10 +696,12 @@
                 const signButton = form.querySelector(".lpw-number-sign");
                 const lock = function (state) {
                     input.readOnly = true;
+                    input.removeAttribute("aria-invalid");      // it may now hold the right answer
                     input.classList.add("is-" + state);
                     form.querySelector(".lpw-number-check").hidden = true;
                     if (signButton) signButton.hidden = true;
                 };
+                input.addEventListener("input", function () { input.removeAttribute("aria-invalid"); });
                 if (signButton) {
                     signButton.addEventListener("click", function () {
                         if (over || input.readOnly) return;
@@ -634,12 +714,24 @@
                 form.addEventListener("submit", function (event) {
                     event.preventDefault();
                     if (over) return;
-                    const value = readNumber(input.value);
-                    if (value === null) {
+                    const typed = readNumber(input.value);
+                    if (typed === null) {
+                        // Not a number: said in words (the shake alone is not seen in calm
+                        // mode, nor heard), and it does not count as a try. After a wrong
+                        // try, the hint of the task stays in the box
                         A.dom.replay(input, "is-shaking");
+                        input.setAttribute("aria-invalid", "true");
+                        const hint = wrong ? step.hint || t("learn.play.retry") : "";
+                        feedback.innerHTML = feedbackHTML("hint", t("learn.task.notNumber"), hint ? [rich(hint)] : []);
+                        say(t("learn.task.notNumber") + (hint ? " " + hint : ""));
                         input.focus();
+                        // After the focus: a focus that moves (from "Check") would stop the scroll
+                        revealFeedback(feedback);
                         return;
                     }
+                    // A share or a probability ("share": true in the course) may be typed as a
+                    // percentage: "81%" is 0.81. Any other answer reads "100%" as 100
+                    const value = typed.percent && step.share ? typed.value / 100 : typed.value;
                     if (Math.abs(value - step.answer) <= tolerance + 1e-9) {
                         lock("right");
                         end(true);
@@ -661,7 +753,12 @@
                         lock("shown");
                         end(false, answerText);
                     },
-                    key: function () { return false; }
+                    // A digit typed while the focus is elsewhere (on the question) goes into
+                    // the field: the field takes the focus, and the key is typed there
+                    key: function (event) {
+                        if (!over && !input.readOnly && /^[0-9.,\-−]$/.test(event.key)) input.focus();
+                        return false;
+                    }
                 };
             }
 
@@ -752,9 +849,15 @@
                 const queue = A.util.shuffle(step.items.map(function (_, index) { return index; }));
                 let at = 0;
                 const rows = [];
-                const rowHTML = function (item, ok) {
-                    return '<li class="' + (ok ? "is-right" : "is-wrong") + '"><span class="lpw-sort-mark" aria-hidden="true">' + (ok ? "✓" : "✗") + "</span>" +
-                        '<span class="lpw-sort-line">' + rich(item[0]) + ' <span class="lpw-sort-arrow" aria-hidden="true">→</span> <strong>' + rich(step.groups[item[1]]) + "</strong></span></li>";
+                // A row of what is sorted: "right", "wrong" (with the group that was picked)
+                // or "shown" (not sorted by the learner: "Show the answer" placed it)
+                const rowHTML = function (item, state, picked) {
+                    const mark = { right: "✓", wrong: "✗", shown: "👀" }[state];
+                    return '<li class="is-' + state + '"><span class="lpw-sort-mark" aria-hidden="true">' + mark + "</span>" +
+                        '<span class="lpw-sort-line">' + rich(item[0]) + ' <span class="lpw-sort-arrow" aria-hidden="true">→</span> <strong>' + rich(step.groups[item[1]]) + "</strong>" +
+                        (state === "wrong" ? ' <span class="lpw-sort-picked">' + esc(t("learn.task.sortPicked", { group: plain(step.groups[picked]) })) + "</span>" : "") +
+                        (state === "shown" ? ' <span class="sr-only">(' + esc(t("learn.task.srShown")) + ")</span>" : "") +
+                        "</span></li>";
                 };
                 const draw = function () {
                     const left = queue.length - at;
@@ -775,7 +878,7 @@
                     const item = step.items[queue[at]];
                     const ok = item[1] === group;
                     if (!ok) wrong += 1;
-                    rows.unshift(rowHTML(item, ok));
+                    rows.unshift(rowHTML(item, ok ? "right" : "wrong", group));
                     say(t(ok ? "learn.play.right" : "learn.play.wrong") + " " + item[0] + ": " + step.groups[item[1]]);
                     at += 1;
                     draw();
@@ -791,7 +894,7 @@
                     giveUp: function () {
                         wrong += 1;
                         while (at < queue.length) {
-                            rows.unshift(rowHTML(step.items[queue[at]], true));
+                            rows.unshift(rowHTML(step.items[queue[at]], "shown"));
                             at += 1;
                         }
                         draw();
@@ -804,6 +907,9 @@
             // ----- Find the pairs -----
             function matchTask() {
                 const rights = A.util.shuffle(step.pairs.map(function (_, index) { return index; }));
+                // A shuffle that changes nothing would put every pair side by side: move each
+                // one down a row (turning it round would leave the middle one of three in place)
+                if (rights.length > 1 && rights.every(function (value, index) { return value === index; })) rights.push(rights.shift());
                 const chosen = { left: -1, right: -1 };
                 let matched = 0;
                 const itemHTML = function (side, index, text) {
@@ -881,6 +987,7 @@
 
             const types = { choice: choiceTask, number: numberTask, order: orderTask, sort: sortTask, match: matchTask };
             const made = types[step.type]();
+            if (step.type !== "number" && step.type !== "match") A.dom.setText(parts.keys, t("learn.play.keys"));
             return {
                 giveUp: function () {
                     if (over) return;
@@ -1025,19 +1132,25 @@
                 } else {
                     back = host.answer(item.id, result.correct);
                     // A missed card comes once more at the end, so the session ends with it right
-                    if (!result.correct && session.kind !== "test") session.queue.push({ id: item.id, stage: "" });
+                    if (!result.correct && session.kind !== "test") {
+                        session.queue.push({ id: item.id, stage: "" });
+                        if (back) back.again = true;
+                    }
                 }
             }
             const lines = [];
             if (!result.solved && result.answer) lines.push(esc(t("learn.play.answerWas", { answer: result.answer })));
             if (card.why) lines.push(rich(card.why));
             if (back) {
-                lines.push('<span class="lpw-back">' + esc(back.wait === 1 ? t("learn.review.backTomorrow") : A.plural("learn.review.back", back.wait)) + "</span>");
+                const when = back.again ? t("learn.review.backAgain") : (back.wait === 1 ? t("learn.review.backTomorrow") : A.plural("learn.review.back", back.wait));
+                lines.push('<span class="lpw-back">' + esc(when) + "</span>");
             }
-            const kind = result.solved ? "right" : (result.shown ? "shown" : "wrong");
+            // A card counts only when it is right at once: a "match" card with a wrong pair
+            // ends with every pair found, but it is not right
+            const kind = result.correct ? "right" : (result.shown ? "shown" : "wrong");
             const title = t("learn.play." + kind);
             feedback.innerHTML = feedbackHTML(kind, title, lines);
-            say(title + " " + (card.why || ""));
+            sayResult(title, result, card.why);
             const last = session.index >= session.queue.length - 1;
             actions = { next: nextCard };
             setButtons([{ act: "next", label: t(last ? "learn.play.finish" : "learn.play.next"), primary: true }]);
@@ -1313,7 +1426,7 @@
                     const kind = result.solved ? "right" : (result.shown ? "shown" : "wrong");
                     const title = t("learn.play." + kind);
                     feedback.innerHTML = feedbackHTML(kind, title, lines);
-                    say(title + " " + (step.why || ""));
+                    sayResult(title, result, step.why);
                     actions = move;
                     setButtons(back.concat([goOn]));
                     updateListen();
@@ -1369,7 +1482,9 @@
                 close({ focusBack: true });
                 return;
             }
-            session = { mode: "explain", request: request, info: info, text: info.saved ? info.saved.text : "", score: 0, show: null };
+            // A text typed but not saved yet (the window was closed) is still there
+            const draft = Object.prototype.hasOwnProperty.call(drafts, info.n) ? drafts[info.n] : null;
+            session = { mode: "explain", request: request, info: info, text: draft !== null ? draft : (info.saved ? info.saved.text : ""), score: 0, show: null };
             showExplainWrite();
         }
 
@@ -1408,6 +1523,7 @@
             const field = parts.body.querySelector(".lpw-textarea");
             field.addEventListener("input", function () {
                 session.text = field.value;
+                drafts[info.n] = field.value;
                 parts.body.querySelector(".lpw-error").hidden = true;
             });
         }
@@ -1435,6 +1551,7 @@
                     save: function () {
                         session.score = parts.body.querySelectorAll(".lpw-key input:checked").length;
                         host.saveExplain(info.n, session.text, session.score);
+                        delete drafts[info.n];
                         if (session.score === info.keys.length) celebrate();
                         showExplainEnd();
                     }
@@ -1528,6 +1645,8 @@
             session = null;
             actions = {};
             root.classList.add("is-closing");
+            document.addEventListener("click", holdBackAfterClose, true);
+            setTimeout(function () { document.removeEventListener("click", holdBackAfterClose, true); }, DOUBLE_CLICK_MS);
             // (core calls this a frame later: by then the page behind may have been drawn again)
             overlay.closed(options && options.focusBack ? function () {
                 const target = focusTarget();

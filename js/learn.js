@@ -45,7 +45,11 @@
      learn.memory    { v: 1, items: { "q12": [box, dueDay, seen, right] } }
      learn.units     { v: 1, done: { z1: [day, first, total] }, tests: { basics: [best, total, star, day] } }
      learn.explain   { v: 1, lessons: { "3": [day, score, text] } }
-     learn.days      { v: 1, days: { "20408": { r, n, l, e, f } } }   (the last 60 days)
+     learn.days      { v: 1, days: { "20408": { r, n, l, e, f } }, before }
+                     (the last 400 days; n, l and e name what was done: "unit:z1",
+                     the experiment, the lesson; before: the learning days older than that)
+     learn.placed    { day, start, scores }   a level check taken before the three
+                     questions: kept until they are answered, then it moves into the profile
    Texts and data: js/content/learn.js. Styles: css/learn.css.
    ========================================================= */
 
@@ -64,7 +68,7 @@
     // ---------- 1. Settings ----------
     const DAY_STARTS_AT = 4;              // like My Compass: a new day starts at 4 a.m.
     const DAY_MS = 86400000;
-    const DAYS_KEPT = 60;                 // days of "what was done" that are kept
+    const DAYS_KEPT = 400;                // days of "what was done" that are kept (older ones are only counted)
     const FORECAST_DAYS = 14;             // the Pro design shows the reviews of the next two weeks
     const SEED_SPREAD = 3;                // lessons finished before the path existed: their cards are spread over 3 days
     const STRONG_SHARE = 0.6;             // a topic is "strong" from this share of its full strength
@@ -229,20 +233,38 @@
     const explained = readExplained();
 
     // What was done on each day: r (memory check), n (a step of the path),
-    // l (the lab), e (explained back), f (the whole session; said once)
+    // l (the lab), e (explained back), f (the whole session; said once).
+    // n, l and e name the first thing of that kind done that day ("unit:z1",
+    // "lesson:3" or "test:basics"; the experiment; the lesson's number), so that
+    // today's session shows what was done. Older saves have 1 there.
+    function isLearningDay(record) {
+        return Boolean(record && (record.r || record.n || record.l || record.e));
+    }
+
+    let daysBefore = 0;      // the learning days older than DAYS_KEPT: no longer listed, still counted
+
     function readDays() {
         const saved = A.storage.get("learn.days", null);
         const days = {};
+        daysBefore = 0;
         if (isObject(saved) && saved.v === 1 && isObject(saved.days)) {
             const oldest = today() - DAYS_KEPT;
+            daysBefore = whole(saved.before) ? saved.before : 0;
             Object.keys(saved.days).forEach(function (key) {
-                if (Number(key) >= oldest && isObject(saved.days[key])) days[key] = saved.days[key];
+                const record = saved.days[key];
+                if (!whole(Number(key)) || !isObject(record)) return;
+                if (Number(key) >= oldest) days[key] = record;
+                else if (isLearningDay(record)) daysBefore += 1;
             });
         }
         return days;
     }
 
     const days = readDays();
+
+    function saveDays() {
+        save("learn.days", { v: 1, days: days, before: daysBefore });
+    }
 
     KEYS.forEach(function (key) { lastSeen[key] = JSON.stringify(A.storage.get(key, null)); });
 
@@ -287,26 +309,23 @@
         return has(days, String(day)) ? days[String(day)] : {};
     }
 
-    // Marks one thing as done today: "r", "n", "l" or "e"
-    function markToday(what) {
+    // Marks one thing as done today: "r", "n", "l" or "e", with what it was
+    // (a step's key, an experiment, a lesson's number) when there is one
+    function markToday(what, which) {
         takeSaved();
         const key = String(today());
         if (!has(days, key)) days[key] = {};
         if (days[key][what]) return;
-        days[key][what] = 1;
-        save("learn.days", { v: 1, days: days });
+        days[key][what] = which || 1;
+        saveDays();
     }
 
     // The days in a row with something learned (today may still be empty)
     function streak() {
-        const isLearningDay = function (day) {
-            const record = dayRecord(day);
-            return Boolean(record.r || record.n || record.l || record.e);
-        };
         let day = today();
-        if (!isLearningDay(day)) day -= 1;
+        if (!isLearningDay(dayRecord(day))) day -= 1;
         let count = 0;
-        while (isLearningDay(day)) {
+        while (isLearningDay(dayRecord(day))) {
             count += 1;
             day -= 1;
         }
@@ -314,10 +333,7 @@
     }
 
     function learningDays() {
-        return Object.keys(days).filter(function (key) {
-            const record = days[key];
-            return record.r || record.n || record.l || record.e;
-        }).length;
+        return daysBefore + Object.keys(days).filter(function (key) { return isLearningDay(days[key]); }).length;
     }
 
     // ---------- 5. The memory: cards and boxes ----------
@@ -342,10 +358,12 @@
         return quizCards;
     }
 
-    // The unit of a course card: "z1a" -> "z1" ("" when it is not one)
+    // The unit of a course card: "z1a" -> "z1" ("" when it is not one, also for a
+    // letter past the unit's cards: a card left by an older version of a course)
     function unitOfCard(id) {
-        const match = /^([a-z]+\d+)[a-z]$/.exec(id);
-        return match && has(UNIT_BY_ID, match[1]) ? match[1] : "";
+        const match = /^([a-z]+\d+)([a-z])$/.exec(id);
+        if (!match || !has(UNIT_BY_ID, match[1])) return "";
+        return match[2].charCodeAt(0) - 97 < (UNIT_BY_ID[match[1]].cards || 0) ? match[1] : "";
     }
 
     // What a card is about: { id, kind: "quiz" | "course", topic, lesson, unit, course }, or null
@@ -674,6 +692,23 @@
         return 0;
     }
 
+    // A step of the path by its key ("unit:z1", "lesson:3", "test:basics"), or null
+    function stepByKey(path, key) {
+        if (typeof key !== "string") return null;
+        let found = null;
+        path.stages.some(function (entry) {
+            found = entry.steps.filter(function (step) { return step.key === key; })[0] || null;
+            return Boolean(found);
+        });
+        return found;
+    }
+
+    // An experiment of the AI Lab by its id, or null
+    function labById(id) {
+        if (typeof id !== "string" || !A.lab || typeof A.lab.list !== "function") return null;
+        return A.util.attempt(function () { return A.lab.list(); }, []).filter(function (entry) { return entry.id === id; })[0] || null;
+    }
+
     // Today's steps: [{ id: "review" | "next" | "lab" | "explain", title, text, done, minutes, ... }]
     function todayPlan(path) {
         const record = dayRecord(today());
@@ -688,15 +723,17 @@
                 done: Boolean(record.r) && !due, minutes: data.minutes.review
             });
         }
+        // A row that is done names what was done today (an older save does not say),
+        // not the step that would come next
         if (path.next || record.n) {
-            const step = path.next ? path.next.step : null;
+            const step = record.n ? stepByKey(path, record.n) : path.next.step;
             steps.push({
-                id: "next", icon: step ? step.icon : "🧭", title: t("learn.today.next"),
+                id: "next", icon: step ? step.icon : "🧭", title: t(record.n ? "learn.today.nextDone" : "learn.today.next"),
                 text: step ? step.title : "", done: Boolean(record.n), minutes: step ? step.minutes : 0, step: step
             });
         }
         if (goal >= GOALS[1]) {
-            const lab = labToTry();
+            const lab = record.l ? labById(record.l) : labToTry();
             if (lab || record.l) {
                 steps.push({
                     id: "lab", icon: lab ? lab.icon : "🧪", title: t("learn.today.lab"),
@@ -706,7 +743,8 @@
             }
         }
         if (goal >= GOALS[GOALS.length - 1]) {
-            const n = lessonToExplain();
+            const told = /^lesson:(\d+)$/.exec(typeof record.e === "string" ? record.e : "");
+            const n = record.e ? (told && A.lessons && A.lessons.title(Number(told[1])) ? Number(told[1]) : 0) : lessonToExplain();
             if (n || record.e) {
                 steps.push({
                     id: "explain", icon: "🗣️", title: t("learn.today.explain"),
@@ -735,7 +773,7 @@
         if (!plan.complete || (has(days, key) && days[key].f)) return;
         if (!has(days, key)) days[key] = {};
         days[key].f = 1;
-        save("learn.days", { v: 1, days: days });
+        saveDays();
         A.track("learn.session", { day: today() });
         A.toast(t("learn.toast.session"), "🎉");
     }
@@ -746,6 +784,17 @@
     let stagesChosen = false;          // false: the stage of the next step opens by itself
     // The three questions: which one is shown, and the answers so far
     const wizard = { open: false, step: 1, who: "", start: "", goal: 0 };
+    // A level check finished before the three questions: its result waits for them,
+    // also over a reload (as learn.placed), and "Find my level" is already chosen
+    let pendingPlaced = readPending();
+    if (pendingPlaced) wizard.start = "check";
+
+    function readPending() {
+        if (profile) return null;
+        const saved = A.storage.get("learn.placed", null);
+        if (!isObject(saved) || !has(STAGE_BY_ID, saved.start)) return null;
+        return { day: whole(saved.day) ? saved.day : today(), start: saved.start, scores: isObject(saved.scores) ? saved.scores : {} };
+    }
 
     function ref(name) {
         return mount.querySelector('[data-ref="' + name + '"]');
@@ -786,12 +835,24 @@
             return;
         }
         // The button is gone (its step is done): the block's heading takes the focus,
-        // so the next press of Tab continues from there
+        // so the next press of Tab continues from there (a block without one: its
+        // first button)
         const heading = element.querySelector("h3");
-        if (heading) {
-            heading.setAttribute("tabindex", "-1");
-            heading.focus({ preventScroll: true });
-        }
+        if (heading) heading.setAttribute("tabindex", "-1");
+        const target = heading || element.querySelector("button");
+        if (target) target.focus({ preventScroll: true });
+    }
+
+    // Brings the top of a part of the page onto the screen when it is above it or
+    // low down. (When the three questions close, a phone's browser keeps the block
+    // below them in place and would land far down the page.)
+    function showTop(element) {
+        if (!element || element.hidden) return;
+        const box = element.getBoundingClientRect();
+        const room = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+        // At once: a smooth scroll would first show where the browser jumped to
+        if (box.top < room || box.top > window.innerHeight * 0.6) element.scrollIntoView({ block: "start", behavior: "instant" });
+        else window.scrollTo({ top: window.scrollY, behavior: "instant" });   // stops a smooth scroll still running (a Tab just before)
     }
 
     // ----- The three questions -----
@@ -821,8 +882,12 @@
             title = t("learn.setup.startTitle");
             text = t("learn.setup.startText");
             const icons = { zero: "🐣", some: "🌱", check: "🎯" };
+            const placedNow = profile ? profile.placed : pendingPlaced;
             choices = STARTS.map(function (id) {
-                const about = id === "check" ? A.plural("learn.start.check.text", placementQuestions(wizard.who)) : t("learn.start." + id + ".text");
+                // "Find my level" after a check: where the path starts (it is not asked again)
+                const about = id !== "check" ? t("learn.start." + id + ".text") : (placedNow
+                    ? t("learn.start.check.done", { stage: t("learn.stage." + placedNow.start) })
+                    : A.plural("learn.start.check.text", placementQuestions(wizard.who)));
                 return choiceHTML("start", id, icons[id], t("learn.start." + id), "", about, wizard.start === id);
             }).join("");
         } else {
@@ -846,7 +911,7 @@
                     : "<span></span>") +
                 (wizard.step === 3
                     ? '<button type="button" class="btn btn-primary" data-lp="setup-finish" data-fid="setup-finish"' + (ready ? "" : ' aria-disabled="true"') + ">" +
-                        esc(t(wizard.start === "check" && !(profile && profile.placed) ? "learn.setup.finishCheck" : "learn.setup.finish")) + "</button>"
+                        esc(t(wizard.start === "check" && !(profile ? profile.placed : pendingPlaced) ? "learn.setup.finishCheck" : "learn.setup.finish")) + "</button>"
                     : "") +
             "</div>" +
             '<p class="lp-setup-privacy"><span aria-hidden="true">🔒</span> ' + esc(t("learn.setup.privacy")) + "</p>";
@@ -864,7 +929,9 @@
 
     function focusSetup() {
         const title = ui && ui.setup.querySelector(".lp-setup-title");
-        if (title) title.focus({ preventScroll: true });
+        if (!title) return;
+        title.focus({ preventScroll: true });
+        showTop(ui.setup);
     }
 
     // ----- Who is learning -----
@@ -901,7 +968,7 @@
     // ----- Today's session -----
     function todayHTML(plan, stats) {
         const head = '<header class="lp-today-head">' +
-                '<div><p class="lp-kicker mono">' + (plan.complete || !plan.total ? "&nbsp;" : esc(t("learn.today.about", { n: num(Math.max(1, plan.minutes)) }))) + "</p>" +
+                '<div><p class="lp-kicker mono">' + (plan.complete || !plan.total ? "&nbsp;" : esc(A.plural("learn.today.about", Math.max(1, plan.minutes)))) + "</p>" +
                 '<h3 class="lp-today-title" id="lp-today-title">' + esc(t("learn.today.title")) + "</h3></div>" +
                 (plan.total ? '<p class="lp-today-progress mono">' + esc(t("learn.today.progress", { done: num(plan.done), total: num(plan.total) })) + "</p>" : "") +
             "</header>";
@@ -1135,13 +1202,16 @@
         profile = {
             v: 1, who: wizard.who, start: wizard.start, goal: wizard.goal,
             since: profile ? profile.since : today(),
-            placed: profile ? profile.placed : null
+            placed: profile ? profile.placed : pendingPlaced
         };
+        pendingPlaced = null;
         save("learn.profile", profile);
+        A.storage.remove("learn.placed");
         wizard.open = false;
         stagesChosen = false;
         A.track("learn.setup", { who: profile.who, start: profile.start, goal: profile.goal });
         render();
+        showTop(ui.main);
         if (profile.start === "check" && !profile.placed) {
             startPlacement(ui.me.querySelector("[data-lp]"));
             return;
@@ -1181,7 +1251,14 @@
             if (wizard.step > 1) wizard.step -= 1;
             else wizard.open = false;
             render();
-            if (wizard.open || !profile) focusSetup();
+            if (wizard.open || !profile) {
+                focusSetup();
+            } else {
+                // Back to the path, unchanged: the focus goes to the button that opened the questions
+                showTop(ui.main);
+                const change = ui.me.querySelector('[data-lp="change"]');
+                if (change) change.focus({ preventScroll: true });
+            }
         } else if (action === "setup-finish") {
             finishSetup();
         } else if (action === "change") {
@@ -1331,7 +1408,10 @@
         A.util.attempt(function () {
             A.quiz.bank().forEach(function (question) { difficulty[question.id] = question.difficulty; });
         });
-        const who = wizard.who || (profile ? profile.who : "teen");
+        // While the three questions are open, the learner chosen there is checked (as
+        // the window is drawn for them). Otherwise a saved learner is checked as saved:
+        // the questions may still hold a choice that was left with "Back"
+        const who = wizard.open && wizard.who ? wizard.who : (profile ? profile.who : (wizard.who || "teen"));
         const probes = [];
         placementStages(who).forEach(function (stage) {
             let ids = [];
@@ -1479,7 +1559,7 @@
                 const best = before && before[0] > result.right ? before[0] : result.right;
                 units.tests[request.stage] = [best, result.total, star || Boolean(before && before[2]), today()];
                 saveUnits();
-                if (star) markToday("n");
+                if (star) markToday("n", "test:" + request.stage);
                 A.track("learn.test", { stage: request.stage, score: result.right, total: result.total, star: star });
             }
             renderSoon();
@@ -1502,10 +1582,17 @@
             if (!start) start = STAGES[Math.min(STAGES.length - 1, last ? last.index + 1 : 1)].id;
             if (start === "basics" && scores.basics === 0) start = "zero";    // nothing right: from zero
             takeSaved();
+            const placed = { day: today(), start: start, scores: scores };
             if (profile) {
                 profile.start = "check";
-                profile.placed = { day: today(), start: start, scores: scores };
+                profile.placed = placed;
                 save("learn.profile", profile);
+            } else {
+                // No path yet (the check was opened with Ctrl+K): the result waits for
+                // the three questions, where "Find my level" is already chosen
+                pendingPlaced = placed;
+                save("learn.placed", placed);
+                wizard.start = "check";
             }
             stagesChosen = false;
             A.track("learn.placement", { start: start });
@@ -1542,7 +1629,7 @@
             units.done[id] = [before ? before[0] : today(), Math.max(result.first, before ? before[1] : 0), result.total];
             saveUnits();
             const added = addCards(unitCards(id), 1);
-            markToday("n");
+            markToday("n", "unit:" + id);
             A.track("learn.unit", { course: UNIT_BY_ID[id].course, unit: id, first: result.first, total: result.total });
             renderSoon();
             return added;
@@ -1564,7 +1651,7 @@
             takeSaved();
             explained[String(n)] = [today(), Math.max(0, Math.min(3, score)), String(text).slice(0, EXPLAIN_MAX)];
             save("learn.explain", { v: 1, lessons: explained });
-            markToday("e");
+            markToday("e", "lesson:" + n);
             A.track("learn.explain", { n: n, score: score });
             renderSoon();
         },
@@ -1584,7 +1671,7 @@
         if (activity.type === "lesson.complete") {
             const added = addCards(lessonCards(detail.n), 1);
             if (profile) {
-                markToday("n");
+                markToday("n", Number.isInteger(detail.n) ? "lesson:" + detail.n : "");
                 if (added) A.toast(A.plural("learn.toast.cards", added), "🧠");
             }
             renderSoon();
@@ -1593,7 +1680,7 @@
             if (typeof detail.id === "string" && typeof detail.correct === "boolean") answerCard(detail.id, detail.correct);
             renderSoon();
         } else if (activity.type === "lab.use" || activity.type === "lab.challenge") {
-            if (profile) markToday("l");
+            if (profile) markToday("l", typeof detail.exp === "string" ? detail.exp : "");
             renderSoon();
         }
     });
@@ -1608,24 +1695,26 @@
         });
     }
     // Another tab saved, or this tab is shown again after a while (a phone puts a tab to
-    // sleep and wakes it without its "storage" events): take what is saved and show it
+    // sleep and wakes it without its "storage" events): take what is saved and show it.
+    // A new day (the page stayed open overnight) is shown too: the plan is for today.
+    let shownDay = today();
+
     function takeAndShow() {
-        if (takeSaved()) renderSoon();
+        const newDay = today() !== shownDay;
+        shownDay = today();
+        if (takeSaved() || newDay) renderSoon();
     }
     window.addEventListener("storage", takeAndShow);
     window.addEventListener("pageshow", takeAndShow);
+    window.addEventListener("focus", takeAndShow);
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden) takeAndShow();
     });
-
-    // A new day (the page stayed open overnight): the plan is for today
-    let shownDay = today();
-    A.on("page", function () {
-        if (today() !== shownDay) {
-            shownDay = today();
-            render();
-        }
-    });
+    A.on("page", takeAndShow);
+    // A tab that stays on the screen past 4 a.m. (a computer left on): once a minute
+    setInterval(function () {
+        if (today() !== shownDay) takeAndShow();
+    }, 60000);
 
     // ---------- 12. The card on the home page ----------
     // For a visitor with a path: today's steps and one button. Without a path, the
