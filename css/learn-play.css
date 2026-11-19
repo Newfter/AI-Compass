@@ -101,7 +101,7 @@
 
 /* The name of the session: a long one (Russian, bigger text, "10 of 11" beside it)
    takes up to three lines before it is cut with "…" (and on a phone with bigger
-   text it gets a whole line: see 9. PHONES) */
+   text, or on the narrowest phones, it gets a whole line: see 9. PHONES) */
 .lpw-kicker {
     display: -webkit-box;
     flex: 1;
@@ -1095,6 +1095,24 @@
 }
 
 /* ===== 9. PHONES ===== */
+/* The narrowest phones held upright (under 360 px), at any text size: beside
+   "12 of 14" and the two buttons the name has only about 120 px, too little for
+   "BACKPROPAGATION" or a long Russian name, so it gets a whole line under them */
+@media (max-width: 359px) and (min-height: 521px) {
+    .lpw-head {
+        flex-wrap: wrap;
+    }
+
+    .lpw-count {
+        margin-right: auto;
+    }
+
+    .lpw-kicker {
+        order: 1;
+        flex-basis: 100%;
+    }
+}
+
 /* Bigger text on a phone held upright: the name of the session gets a whole line
    under the count and the buttons. (On a low screen, a phone held sideways, it
    stays beside them, so the bar stays thin.) */

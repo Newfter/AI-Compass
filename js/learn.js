@@ -882,7 +882,7 @@
             title = t("learn.setup.startTitle");
             text = t("learn.setup.startText");
             const icons = { zero: "🐣", some: "🌱", check: "🎯" };
-            const placedNow = profile ? profile.placed : pendingPlaced;
+            const placedNow = pendingPlaced || (profile ? profile.placed : null);
             choices = STARTS.map(function (id) {
                 // "Find my level" after a check: where the path starts (it is not asked again)
                 const about = id !== "check" ? t("learn.start." + id + ".text") : (placedNow
@@ -911,7 +911,7 @@
                     : "<span></span>") +
                 (wizard.step === 3
                     ? '<button type="button" class="btn btn-primary" data-lp="setup-finish" data-fid="setup-finish"' + (ready ? "" : ' aria-disabled="true"') + ">" +
-                        esc(t(wizard.start === "check" && !(profile ? profile.placed : pendingPlaced) ? "learn.setup.finishCheck" : "learn.setup.finish")) + "</button>"
+                        esc(t(wizard.start === "check" && !(pendingPlaced || (profile && profile.placed)) ? "learn.setup.finishCheck" : "learn.setup.finish")) + "</button>"
                     : "") +
             "</div>" +
             '<p class="lp-setup-privacy"><span aria-hidden="true">🔒</span> ' + esc(t("learn.setup.privacy")) + "</p>";
@@ -923,6 +923,9 @@
         wizard.who = profile ? profile.who : "";
         wizard.start = profile ? profile.start : "";
         wizard.goal = profile ? profile.goal : 0;
+        // "Change" starts from the saved profile: a result kept in memory from before the
+        // path (another tab may have built it) must not win over profile.placed
+        if (profile) pendingPlaced = null;
         render();
         focusSetup();
     }
@@ -1202,7 +1205,7 @@
         profile = {
             v: 1, who: wizard.who, start: wizard.start, goal: wizard.goal,
             since: profile ? profile.since : today(),
-            placed: profile ? profile.placed : pendingPlaced
+            placed: pendingPlaced || (profile ? profile.placed : null)
         };
         pendingPlaced = null;
         save("learn.profile", profile);
@@ -1248,8 +1251,13 @@
             wizard.goal = Number(value);
             render();
         } else if (action === "setup-back") {
-            if (wizard.step > 1) wizard.step -= 1;
-            else wizard.open = false;
+            if (wizard.step > 1) {
+                wizard.step -= 1;
+            } else {
+                // Back to the path: a level check taken while the questions were open is dropped
+                wizard.open = false;
+                if (profile) pendingPlaced = null;
+            }
             render();
             if (wizard.open || !profile) {
                 focusSetup();
@@ -1408,10 +1416,10 @@
         A.util.attempt(function () {
             A.quiz.bank().forEach(function (question) { difficulty[question.id] = question.difficulty; });
         });
-        // While the three questions are open, the learner chosen there is checked (as
-        // the window is drawn for them). Otherwise a saved learner is checked as saved:
-        // the questions may still hold a choice that was left with "Back"
-        const who = wizard.open && wizard.who ? wizard.who : (profile ? profile.who : (wizard.who || "teen"));
+        // The learner the window is drawn for (host.who): the one chosen in the open
+        // questions, or before there is a path. Otherwise a saved learner is checked as
+        // saved: the questions may still hold a choice that was left with "Back"
+        const who = host.who();
         const probes = [];
         placementStages(who).forEach(function (stage) {
             let ids = [];
@@ -1481,7 +1489,9 @@
         data: data,
         boxDays: BOX_DAYS,
         canSave: function () { return canSave; },
-        who: function () { return wizard.open && wizard.who ? wizard.who : (profile ? profile.who : "teen"); },
+        // The learner chosen in the three questions while they are open (or before there is
+        // a path), otherwise the saved one
+        who: function () { return wizard.who && (wizard.open || !profile) ? wizard.who : (profile ? profile.who : "teen"); },
         whenText: whenText,
         testPass: testPass,
         stageName: function (id) { return t("learn.stage." + id); },
@@ -1583,10 +1593,15 @@
             if (start === "basics" && scores.basics === 0) start = "zero";    // nothing right: from zero
             takeSaved();
             const placed = { day: today(), start: start, scores: scores };
-            if (profile) {
+            if (profile && !wizard.open) {
                 profile.start = "check";
                 profile.placed = placed;
                 save("learn.profile", profile);
+            } else if (profile) {
+                // The three questions are open (maybe for another learner): the result waits
+                // for "Build my path", and "Back" to the path drops it
+                pendingPlaced = placed;
+                wizard.start = "check";
             } else {
                 // No path yet (the check was opened with Ctrl+K): the result waits for
                 // the three questions, where "Find my level" is already chosen
@@ -1702,7 +1717,15 @@
     function takeAndShow() {
         const newDay = today() !== shownDay;
         shownDay = today();
-        if (takeSaved() || newDay) renderSoon();
+        const changed = takeSaved();
+        // A level check finished in another tab before the three questions (learn.placed)
+        const waiting = profile ? pendingPlaced : readPending();
+        const moved = JSON.stringify(waiting) !== JSON.stringify(pendingPlaced);
+        if (moved) {
+            pendingPlaced = waiting;
+            if (waiting) wizard.start = "check";
+        }
+        if (changed || newDay || moved) renderSoon();
     }
     window.addEventListener("storage", takeAndShow);
     window.addEventListener("pageshow", takeAndShow);
