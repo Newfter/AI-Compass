@@ -1,0 +1,150 @@
+/* =========================================================
+   AI COMPASS — ARCTIC BLUE PALETTE
+   An optional colour palette that works on top of the Day and Night
+   themes. js/arctic-blue.js sets data-palette="arctic" on <html>
+   (the small script in the <head> of index.html restores it before
+   the page is drawn). It only changes the colour tokens of style.css,
+   so every feature picks the new colours up by itself.
+
+   Specificity: [data-palette][data-theme] is stronger than the plain
+   [data-theme] blocks of style.css, so the order of the files does not
+   matter. The Settings "high contrast" / "solid" modes (settings.css)
+   are stronger still, so they keep winning, as they should.
+
+   THE PARTS OF THIS FILE
+    1. Night + Arctic Blue
+    2. Day + Arctic Blue
+    3. The look button (Dark / Light / Arctic Blue)
+    4. The falling snow canvas
+   ========================================================= */
+
+/* ===== 1. NIGHT + ARCTIC BLUE ===== */
+html[data-palette="arctic"][data-theme="dark"] {
+    --bg: #04101c;
+    --bg-2: #081a2c;
+    --surface: rgba(10, 28, 48, 0.72);
+    --surface-solid: #0a1c30;
+    --glass: rgba(9, 27, 46, 0.9);
+    --surface-2: rgba(18, 42, 70, 0.78);
+    --surface-hover: rgba(24, 54, 88, 0.9);
+    --border: rgba(140, 200, 255, 0.16);
+    --border-strong: rgba(140, 205, 255, 0.4);
+
+    --text: #eaf6ff;
+    --text-muted: #a9c4d9;
+    --text-dim: #86a3ba;
+
+    --accent: #58b8ff;
+    --accent-2: #7ff0e6;
+    --accent-3: #ffc27a;
+    --accent-rgb: 88, 184, 255;
+    --accent-2-rgb: 127, 240, 230;
+    --accent-3-rgb: 255, 194, 122;
+
+    --gradient: linear-gradient(110deg, #8fd3ff 10%, #9ff5ec 90%);
+    --gradient-button: linear-gradient(115deg, #1478c8, #2f62d0);
+    --glow: 0 0 40px rgba(88, 184, 255, 0.24);
+    --nav-bg: rgba(4, 16, 28, 0.86);
+    --backdrop: rgba(4, 16, 28, 0.88);
+    --grid-line: rgba(140, 200, 255, 0.06);
+}
+
+/* ===== 2. DAY + ARCTIC BLUE ===== */
+html[data-palette="arctic"][data-theme="light"] {
+    --bg: #eef7fd;
+    --bg-2: #dcecf8;
+    --surface: rgba(255, 255, 255, 0.8);
+    --surface-solid: #ffffff;
+    --glass: rgba(255, 255, 255, 0.9);
+    --surface-2: rgba(226, 240, 251, 0.92);
+    --surface-hover: rgba(255, 255, 255, 0.98);
+    --border: rgba(20, 90, 150, 0.16);
+    --border-strong: rgba(20, 100, 170, 0.4);
+
+    --text: #0b2236;
+    --text-muted: #3d5a72;
+    --text-dim: #526e85;
+
+    --accent: #0b6fb8;
+    --accent-2: #0a7a8a;
+    --accent-3: #a85a0a;
+    --accent-rgb: 11, 111, 184;
+    --accent-2-rgb: 10, 122, 138;
+    --accent-3-rgb: 168, 90, 10;
+
+    --gradient: linear-gradient(110deg, #0b6fb8 10%, #0a8a8a 90%);
+    --gradient-button: linear-gradient(115deg, #0f78c4, #2a5fcf);
+    --glow: 0 0 40px rgba(11, 111, 184, 0.16);
+    --shadow: 0 24px 50px rgba(10, 50, 90, 0.12);
+    --shadow-card: 0 10px 28px rgba(10, 50, 90, 0.07);
+    --shadow-card-hover: 0 14px 34px rgba(10, 50, 90, 0.1);
+    --nav-bg: rgba(238, 247, 253, 0.86);
+    --backdrop: rgba(238, 247, 253, 0.88);
+    --grid-line: rgba(20, 100, 170, 0.07);
+}
+
+/* ===== 3. THE LOOK BUTTON (Dark / Light / Arctic Blue) ===== */
+/* One button that shows the look that is on (js/arctic-blue.js fills the icon and the
+   name). A click goes to the next look. Arctic Blue lights it up in the palette's colour. */
+.mode-button {
+    min-width: 42px;
+    white-space: nowrap;
+}
+
+.mode-icon {
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.mode-quick .mode-icon {
+    font-size: 1.1rem;
+}
+
+.mode-button[data-mode="arctic"],
+.mode-quick[data-mode="arctic"] {
+    color: var(--accent);
+    border-color: var(--border-strong);
+    background: rgba(var(--accent-rgb), 0.14);
+}
+
+/* Not much room in the bar: icon only on medium screens */
+@media (max-width: 1180px) {
+    .mode-button .mode-label {
+        display: none;
+    }
+}
+
+/* Like the language button, it moves into the phone menu on narrow phones */
+@media (max-width: 520px) {
+    .nav-actions .mode-button {
+        display: none;
+    }
+}
+
+/* ===== 4. THE FALLING SNOW CANVAS ===== */
+/* Drawn by js/arctic-snow.js. Only there while the palette is on, between the
+   neural background and the page, and it never takes a click. */
+#arctic-snow {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100vh;
+    height: 100lvh;
+    pointer-events: none;
+}
+
+html[data-palette="arctic"].fx-fancy:not(.fx-motion-off) #arctic-snow {
+    display: block;
+}
+
+@media print {
+    #arctic-snow,
+    .mode-button,
+    .mode-quick {
+        display: none !important;
+    }
+}
