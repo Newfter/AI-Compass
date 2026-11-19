@@ -23,7 +23,9 @@
      order    { q, items (in the right order), why, hint }
      sort     { q, groups: [names], items: [[text, number of its group]], why }
      match    { q, pairs: [[left, right]], why }
-     number   { q, answer, tolerance, unit, why, hint }
+     number   { q, answer, tolerance, unit, share, why, hint }
+              (share: true for a share or a probability from 0 to 1: "81%" is
+              then read as 0.81; for any other answer "81%" is 81)
    Screens of a guided step that are not tasks:
      info     { icon, title, text }
      reveal   { q, answer }          think first, then look
@@ -269,7 +271,8 @@
         // What is said after an answer: how it went, the right answer when it was
         // missed (it is shown in the box too), and why
         function sayResult(title, result, why) {
-            const end = function (text) { return /[.!?…]$/.test(text) ? text : text + "."; };
+            // A full stop, unless the text already ends with one (also inside a quote: “…words.”)
+            const end = function (text) { return /[.!?…]["”»)]?$/.test(text) ? text : text + "."; };
             const answer = !result.solved && result.answer ? end(t("learn.play.answerWas", { answer: plain(result.answer) })) + " " : "";
             say(end(title) + " " + answer + (why || ""));
         }
