@@ -943,7 +943,7 @@
 
         // The colour of a CSS variable in the current theme, as [r, g, b]
         rgb: function (name, fallback) {
-            const id = state.theme + name;
+            const id = state.theme + (root.getAttribute("data-palette") || "") + name;   // the palette (css/arctic-blue.css) changes the colours too
             if (!(id in colorCache)) colorCache[id] = parseColor(cssVar(name));
             return colorCache[id] || fallback || [0, 0, 0];
         },
@@ -2472,9 +2472,13 @@
         group: "cmd.groupActions",
         icon: "🌓",
         title: function () { return t("cmd.toggleTheme"); },
-        keywords: "theme dark light mode night тема тёмная светлая тёмный светлый ночной режим",
+        keywords: "theme dark light arctic blue mode night тема тёмная светлая арктический синий тёмный светлый ночной режим",
         keepOverlays: true,
-        run: function () { window.AICompass.toggleTheme(); }
+        run: function () {
+            // js/arctic-blue.js adds A.mode: dark -> light -> Arctic Blue -> dark
+            if (window.AICompass.mode) window.AICompass.mode.cycle();
+            else window.AICompass.toggleTheme();
+        }
     });
 
     registerCommand({
