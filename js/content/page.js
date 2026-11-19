@@ -26,6 +26,11 @@ window.AICompass.addTranslations({
         "core.pageDescription": "AI Compass — a free bilingual platform for learning about Artificial Intelligence: lessons, live AI experiments, a quiz, a glossary and more.",
         "core.toastLight": "Light mode on",
         "core.toastDark": "Dark mode on",
+        "core.modeDark": "Dark",
+        "core.modeLight": "Light",
+        "core.modeArctic": "Arctic Blue",
+        "core.modeLabel": "Look: {mode}. Click to switch to {next}",
+        "core.modeToast": "{mode} look on",
         "core.toastLang": "Language: English",
 
         "nav.lessons": "Lessons",
@@ -90,7 +95,7 @@ window.AICompass.addTranslations({
         "cmd.groupNavigate": "Go to",
         "cmd.groupActions": "Actions",
         "cmd.home": "Home",
-        "cmd.toggleTheme": "Switch light / dark theme",
+        "cmd.toggleTheme": "Switch look: dark / light / Arctic Blue",
         "cmd.toggleLang": "Language — switch to Russian"
     },
     ru: {
@@ -112,6 +117,11 @@ window.AICompass.addTranslations({
         "core.pageDescription": "AI Compass — бесплатная платформа на двух языках для знакомства с искусственным интеллектом: уроки, живые ИИ-эксперименты, тест, словарь и многое другое.",
         "core.toastLight": "Включена светлая тема",
         "core.toastDark": "Включена тёмная тема",
+        "core.modeDark": "Тёмная",
+        "core.modeLight": "Светлая",
+        "core.modeArctic": "Арктический синий",
+        "core.modeLabel": "Оформление: {mode}. Нажми, чтобы включить: {next}",
+        "core.modeToast": "Включено оформление: {mode}",
         "core.toastLang": "Язык: русский",
 
         "nav.lessons": "Уроки",
@@ -177,7 +187,7 @@ window.AICompass.addTranslations({
         "cmd.groupNavigate": "Перейти",
         "cmd.groupActions": "Действия",
         "cmd.home": "Главная",
-        "cmd.toggleTheme": "Сменить светлую / тёмную тему",
+        "cmd.toggleTheme": "Сменить оформление: тёмное / светлое / арктический синий",
         "cmd.toggleLang": "Язык — переключить на английский"
     }
 });
