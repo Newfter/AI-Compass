@@ -98,7 +98,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/home.js` | The "Continue where you left off" button on the home page. |
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
 | `js/content/learn.js` | My path: its texts and its data (who can be learning, the stages, the guided courses and their steps, the memory boxes, the stage test). |
-| `js/content/courses/` | The guided courses of My path, one file each (`zero.js`: "Start from zero", `skills.js`: "Use AI well", `pro.js`: "Under the hood", `build.js`: "Build with AI", `research.js`: "Research frontier"). A file loads the first time one of its steps opens. Its header explains every kind of screen. |
+| `js/content/courses/` | The guided courses of My path, one file each (`zero.js`: "Start from zero", `skills.js`: "Use AI well", `pro.js`: "Under the hood", `build.js`: "Build with AI", `research.js`: "Research frontier", `practice.js`: the short practice that follows each of the 15 lessons). A file loads the first time one of its steps opens. Its header explains every kind of screen. |
 | `js/content/pro.js` | The texts of the Pro design and the terminal's commands. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
@@ -215,7 +215,7 @@ Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `
 
 "My path" (`#learn`) is what turns the site from a place to read into a course. It is built from four ideas, and all of them come from what is known about how people learn:
 
-- **A path, not a pile.** The stages go from "Start from zero" to "Research frontier". A stage is a track of lessons or a guided course. Nothing is locked: a marker only shows the best next step. A short level check can choose where the path starts.
+- **A path, not a pile.** The stages go from "Start from zero" to "Research frontier". A stage is a track of lessons or a guided course. In a track of lessons, every lesson is followed by its practice: a short guided step that makes the learner use the lesson (recall it, apply it to new examples, catch a myth, explain it). The end of each lesson has a button for it too. Nothing is locked: a marker only shows the best next step. A short level check can choose where the path starts.
 - **Do, don't only read.** A guided step is a row of small screens: one idea, then a task about it straight away (choose, type a number, put in order, sort, match), with a hint after a wrong try and an explanation after every answer.
 - **Come back before you forget.** Every question of a finished lesson or guided step becomes a card. A card lives in one of six boxes and comes back after 1, 2, 4, 8, 16 and 32 days: a right answer on its day moves it one box up, a wrong one back to box 1. The memory map shows which topics are strong.
 - **Say it yourself.** "Explain it back" asks for a lesson in the learner's own words and compares them with the lesson's three key ideas.

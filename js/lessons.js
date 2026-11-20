@@ -2273,18 +2273,28 @@
         }, 0);
     }
 
-    // Under "Check yourself": the quiz's questions about this lesson, and "Explain it
-    // back" (My path, js/learn.js): write the lesson in your own words and compare
+    // The guided practice of a lesson in My path (js/learn.js), when it has one: "l1" for lesson 1
+    function practiceUnit(n) {
+        if (!A.learn || typeof A.learn.practice !== "function" || typeof A.learn.step !== "function") return "";
+        return A.has("learn.practice.readerButton") ? A.learn.practice(n) : "";
+    }
+
+    // Under "Check yourself": the lesson's practice (short tasks with feedback, My path), the
+    // quiz's questions about this lesson, and "Explain it back" (My path, js/learn.js): write
+    // the lesson in your own words and compare
     function quizReviewHTML(n) {
         const count = quizReviewCount(n);
         const explain = Boolean(A.learn) && typeof A.learn.explain === "function" && A.has("learn.explain.readerButton");
-        if (!count && !explain) return "";
+        const practice = practiceUnit(n);
+        if (!count && !explain && !practice) return "";
+        const practiceButton = practice ? `
+                    <button type="button" class="btn btn-ghost btn-small" data-action="practise" data-fid="practise" title="${A.escapeHTML(t("learn.practice.readerText"))}"><span aria-hidden="true">💪</span> ${t("learn.practice.readerButton")} <span class="lsn-arrow" aria-hidden="true">→</span></button>` : "";
         const quizButton = count ? `
                     <button type="button" class="btn btn-ghost btn-small" data-action="quiz-review" data-fid="quiz-review"><span aria-hidden="true">🏆</span> ${t("lessons.reader.quizReview", { questions: A.plural("quiz.questionCount", count) })} <span class="lsn-arrow" aria-hidden="true">→</span></button>` : "";
         const explainButton = explain ? `
                     <button type="button" class="btn btn-ghost btn-small" data-action="explain" data-fid="explain-back" title="${A.escapeHTML(t("learn.explain.readerText"))}"><span aria-hidden="true">🗣️</span> ${t("learn.explain.readerButton")} <span class="lsn-arrow" aria-hidden="true">→</span></button>` : "";
         return `
-                <p class="lsn-quiz-review">${quizButton}${explainButton}
+                <p class="lsn-quiz-review">${practiceButton}${quizButton}${explainButton}
                 </p>`;
     }
 
@@ -2845,6 +2855,11 @@
                 // The window of My path opens over the lesson, which stays open under it
                 stopSpeaking();
                 if (A.learn) A.learn.explain(reader.lesson, target);
+                break;
+            case "practise":
+                // The lesson's guided practice, in the same window, over the lesson
+                stopSpeaking();
+                if (practiceUnit(reader.lesson)) A.learn.step(practiceUnit(reader.lesson), target);
                 break;
             case "retry": retryCheck(); break;
             case "peek-close": closePeek(true); break;

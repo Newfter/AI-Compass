@@ -101,6 +101,16 @@
             UNIT_BY_ID[unit.id] = Object.assign({ course: stage.course, stage: stage.id, index: index }, unit);
         });
     });
+    // The practice of the lessons (the course "practice"): a short guided unit right after
+    // each lesson of a lesson stage. Each unit names its "lesson", the "stage" of that
+    // lesson's track and the "topic" of its cards on the memory map (its lesson's topic)
+    const PRACTICE_BY_LESSON = {};
+    if (COURSES.practice) {
+        COURSES.practice.units.forEach(function (unit, index) {
+            UNIT_BY_ID[unit.id] = Object.assign({ course: "practice", index: index }, unit);
+            PRACTICE_BY_LESSON[unit.lesson] = UNIT_BY_ID[unit.id];
+        });
+    }
 
     function has(object, key) {
         return Object.prototype.hasOwnProperty.call(object, key);
@@ -375,9 +385,15 @@
         const unit = unitOfCard(id);
         if (unit) {
             const course = UNIT_BY_ID[unit].course;
-            return { id: id, kind: "course", topic: COURSES[course].topic, lesson: 0, myth: false, unit: unit, course: course };
+            return { id: id, kind: "course", topic: unitTopic(unit), lesson: 0, myth: false, unit: unit, course: course };
         }
         return null;
+    }
+
+    // The topic of a unit's cards on the memory map: its own (a lesson's practice), or its course's
+    function unitTopic(unitId) {
+        const unit = UNIT_BY_ID[unitId];
+        return unit.topic || COURSES[unit.course].topic;
     }
 
     function topicName(topic) {
@@ -484,7 +500,7 @@
         const bank = quizBank();
         Object.keys(bank).forEach(function (id) { row(bank[id].topic).total += 1; });
         Object.keys(UNIT_BY_ID).forEach(function (unitId) {
-            row(COURSES[UNIT_BY_ID[unitId].course].topic).total += UNIT_BY_ID[unitId].cards || 0;
+            row(unitTopic(unitId)).total += UNIT_BY_ID[unitId].cards || 0;
         });
         const now = today();
         Object.keys(items).forEach(function (id) {
@@ -551,7 +567,7 @@
                 if (pool.length < size && bank[id].topic === topic && !has(items, id)) pool.push(id);
             });
             Object.keys(UNIT_BY_ID).forEach(function (unitId) {
-                if (COURSES[UNIT_BY_ID[unitId].course].topic !== topic) return;
+                if (unitTopic(unitId) !== topic) return;
                 unitCards(unitId).forEach(function (id) {
                     if (pool.length < size && !has(items, id)) pool.push(id);
                 });
@@ -602,15 +618,11 @@
                     title: lesson.title(), minutes: lesson.minutes,
                     done: A.lessons.isCompleted(lesson.number)
                 });
+                // The lesson's practice comes right after it
+                if (has(PRACTICE_BY_LESSON, lesson.number)) steps.push(unitStep(PRACTICE_BY_LESSON[lesson.number]));
             });
         } else if (stage.course && COURSES[stage.course]) {
-            COURSES[stage.course].units.forEach(function (unit) {
-                steps.push({
-                    key: "unit:" + unit.id, kind: "guide", icon: unit.icon, unit: unit.id,
-                    title: t("learn.unit." + unit.id), text: t("learn.unit." + unit.id + ".text"), minutes: unit.minutes,
-                    done: has(units.done, unit.id)
-                });
-            });
+            COURSES[stage.course].units.forEach(function (unit) { steps.push(unitStep(unit)); });
         }
         if (steps.length && stageCards(stage).length >= data.test.questions) {
             const test = units.tests[stage.id];
@@ -621,6 +633,15 @@
             });
         }
         return steps;
+    }
+
+    // The step of a guided unit (practice: true for the practice of a lesson)
+    function unitStep(unit) {
+        return {
+            key: "unit:" + unit.id, kind: "guide", icon: unit.icon, unit: unit.id, practice: UNIT_BY_ID[unit.id].course === "practice",
+            title: t("learn.unit." + unit.id), text: t("learn.unit." + unit.id + ".text"), minutes: unit.minutes,
+            done: has(units.done, unit.id)
+        };
     }
 
     // Where the path begins: the stage's place in the list
@@ -1015,6 +1036,7 @@
     function stepKindText(step) {
         if (step.kind === "lesson") return t("learn.path.kind.lesson", { number: num(step.number), n: num(step.minutes) });
         if (step.kind === "test") return A.plural("learn.path.kind.test", data.test.questions);
+        if (step.practice) return t("learn.path.kind.practice", { n: num(step.minutes) });
         return t("learn.path.kind.guide", { n: num(step.minutes) });
     }
 
@@ -1625,8 +1647,10 @@
             if (!has(UNIT_BY_ID, id)) return null;
             const unit = UNIT_BY_ID[id];
             const list = COURSES[unit.course].units;
-            const next = list[unit.index + 1];
-            const allDone = list.every(function (item) { return has(units.done, item.id); });
+            // A lesson's practice is followed by the next lesson, not by the next practice
+            const practice = unit.course === "practice";
+            const next = practice ? null : list[unit.index + 1];
+            const allDone = !practice && list.every(function (item) { return has(units.done, item.id); });
             const star = Boolean(units.tests[unit.stage] && units.tests[unit.stage][2]);
             return {
                 id: id, course: unit.course, stage: unit.stage, icon: unit.icon, minutes: unit.minutes,
@@ -1837,10 +1861,13 @@
         Object.keys(COURSES).forEach(function (id) { loadCourse(id).catch(function () {}); });
         const documents = [];
         STAGES.forEach(function (stage) {
-            if (!stage.course || !COURSES[stage.course]) return;
-            const course = A.content.get("course." + stage.course);
+            // A course stage: its units; a lesson stage: the practice of its lessons
+            const list = Object.keys(UNIT_BY_ID).map(function (id) { return UNIT_BY_ID[id]; }).filter(function (unit) {
+                return unit.stage === stage.id;
+            });
             const stageName = t("learn.stage." + stage.id);
-            COURSES[stage.course].units.forEach(function (unit) {
+            list.forEach(function (unit) {
+                const course = A.content.get("course." + unit.course);
                 const title = t("learn.unit." + unit.id);
                 const lines = [t("learn.unit." + unit.id + ".text")];
                 const steps = course && course.units && course.units[unit.id] ? course.units[unit.id].steps : [];
@@ -1887,6 +1914,7 @@
     // Other features use AICompass.learn:
     //   open()                 goes to the "My path" page
     //   step(id, opener)       opens a guided step ("z1", "p3"...); false if there is no such step
+    //   practice(n)            the guided practice of lesson n ("l7"), or "" when it has none
     //   today(opener)          starts the first step of today's session that is not done
     //   review(opener)         starts the memory check
     //   explain(n, opener)     "Explain it back" for lesson n (without n: the best one to explain)
@@ -1898,6 +1926,7 @@
     A.feature("learn", {
         open: openPage,
         step: openGuidedStep,
+        practice: function (n) { return has(PRACTICE_BY_LESSON, n) ? PRACTICE_BY_LESSON[n].id : ""; },
         today: function (opener) { ensure(); startToday(opener || document.activeElement); },
         review: function (opener) { ensure(); return startCards("review", opener); },
         explain: function (n, opener) {
