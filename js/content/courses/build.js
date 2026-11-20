@@ -1,7 +1,8 @@
 /* =========================================================
    AI COMPASS — GUIDED COURSE: BUILD WITH AI
-   The last stage of "My path", for people who build products on
-   language models: seven guided steps with the numbers done by hand.
+   A stage of "My path" for people who build products on language
+   models: seven guided steps with the numbers done by hand. (The last
+   stage, "Research frontier", is js/content/courses/research.js.)
      b1  Tokens and the context window
      b2  Search by meaning
      b3  RAG: answers from your documents
