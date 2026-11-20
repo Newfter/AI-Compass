@@ -1395,11 +1395,12 @@
         return play({ mode: "cards", kind: "test", stage: stageId, cards: A.util.shuffle(cards) }, opener);
     }
 
-    // The stages the level check asks about: every stage but "zero" (that is where the
-    // path starts when nothing is known yet). A young explorer is asked about the
-    // first few only.
+    // The stages the level check asks about: every stage but the first one ("zero": that
+    // is where the path starts when nothing is known yet) and the last one (a learner who
+    // knows every stage before it starts there anyway, so its questions would change
+    // nothing). A young explorer is asked about the first few only.
     function placementStages(who) {
-        const stages = STAGES.filter(function (stage) { return stage.id !== "zero"; });
+        const stages = STAGES.filter(function (stage) { return stage.id !== "zero" && stage.index < STAGES.length - 1; });
         return who === "kid" ? stages.slice(0, data.placement.kidStages) : stages;
     }
 

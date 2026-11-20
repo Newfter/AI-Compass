@@ -23,7 +23,7 @@ window.AICompass.addTranslations({
 
         "learn.home.kicker": "My path",
         "learn.home.newTitle": "Not sure where to start?",
-        "learn.home.newText": "Answer three questions and get your own path, from the very first idea to building with AI.",
+        "learn.home.newText": "Answer three questions and get your own path, from the very first idea to the research frontier.",
         "learn.home.newButton": "Build my path",
         "learn.home.orText": "Want a plan made just for you?",
         "learn.home.title": "Your plan for today",
@@ -42,7 +42,7 @@ window.AICompass.addTranslations({
 
         "learn.home.kicker": "Мой путь",
         "learn.home.newTitle": "Не знаешь, с чего начать?",
-        "learn.home.newText": "Ответь на три вопроса и получи свой путь: от самой первой идеи до своих приложений на ИИ.",
+        "learn.home.newText": "Ответь на три вопроса и получи свой путь: от самой первой идеи до переднего края науки.",
         "learn.home.newButton": "Построить мой путь",
         "learn.home.orText": "Хочешь план именно для тебя?",
         "learn.home.title": "Твой план на сегодня",
@@ -74,9 +74,9 @@ window.AICompass.addTranslations({
         "learn.who.teacher": "Teacher or parent",
         "learn.who.teacher.age": "learning it to teach it",
         "learn.who.teacher.text": "Learn it yourself first, then take the ready lesson plans to your class.",
-        "learn.who.pro": "Pro or developer",
-        "learn.who.pro.age": "you code or work with data",
-        "learn.who.pro.text": "Skip ahead with a level check, then do the maths by hand: neurons, gradients, metrics, attention.",
+        "learn.who.pro": "Pro, developer or researcher",
+        "learn.who.pro.age": "you code, work with data or do research",
+        "learn.who.pro.text": "Skip ahead with a level check, then do the maths by hand, up to the ideas of current research.",
 
         "learn.setup.startTitle": "Where do you want to start?",
         "learn.setup.startText": "Nothing is locked: this only decides where your path begins.",
@@ -121,9 +121,9 @@ window.AICompass.addTranslations({
         "learn.who.teacher": "Учитель или родитель",
         "learn.who.teacher.age": "учусь, чтобы объяснять",
         "learn.who.teacher.text": "Сначала разберись в теме, а потом возьми готовые планы уроков в свой класс.",
-        "learn.who.pro": "Профи или разработчик",
-        "learn.who.pro.age": "пишешь код или работаешь с данными",
-        "learn.who.pro.text": "Проверь уровень и иди дальше: математика своими руками — нейроны, градиенты, метрики, внимание.",
+        "learn.who.pro": "Профи, разработчик или исследователь",
+        "learn.who.pro.age": "пишешь код, работаешь с данными или занимаешься наукой",
+        "learn.who.pro.text": "Проверь уровень и иди дальше: математика своими руками, вплоть до идей современных исследований.",
 
         "learn.setup.startTitle": "С чего ты хочешь начать?",
         "learn.setup.startText": "Ничего не закрыто: этот ответ только решает, где начинается твой путь.",
@@ -196,9 +196,9 @@ window.AICompass.addTranslations({
         "learn.today.more": "Practise a little more",
 
         "learn.path.title": "Your path",
-        "learn.path.text.one": "{n} stage, from the very first idea to building with AI. Everything is open: the marker only shows the best next step.",
-        "learn.path.text.many": "{n} stages, from the very first idea to building with AI. Everything is open: the marker only shows the best next step.",
-        "learn.path.text.7": "Seven stages, from the very first idea to building with AI. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.one": "{n} stage, from the very first idea to the research frontier. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.many": "{n} stages, from the very first idea to the research frontier. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.8": "Eight stages, from the very first idea to the research frontier. Everything is open: the marker only shows the best next step.",
         "learn.path.stage": "Stage {n}",
         "learn.path.count": "{done} of {total}",
         "learn.path.next": "Next step",
@@ -234,6 +234,8 @@ window.AICompass.addTranslations({
         "learn.stage.pro.text": "The real maths, done by hand: a neuron, gradient descent, backpropagation, overfitting, metrics, attention, cross-entropy and sampling.",
         "learn.stage.build": "Build with AI",
         "learn.stage.build.text": "What it takes to build on a language model: tokens and context, search by meaning, answers from your documents, honest evaluation, prompt injection, agents, and running it for real users.",
+        "learn.stage.research": "Research frontier",
+        "learn.stage.research.text": "PhD-level ideas behind current research, worked through by hand: attention at scale, scaling laws, optimisers, generalisation, VAEs and diffusion, reinforcement learning and preferences, interpretability, efficient models, reasoning, and research that holds up.",
 
         "learn.unit.z1": "What is a program?",
         "learn.unit.z1.text": "A computer follows instructions, one by one.",
@@ -283,6 +285,30 @@ window.AICompass.addTranslations({
         "learn.unit.b6.text": "The loop of an agent, who really runs a tool, and why long chains break.",
         "learn.unit.b7": "Run it for real users",
         "learn.unit.b7.text": "Speed, cost, what to watch after launch, and building for failure.",
+        "learn.unit.r1": "Attention at scale",
+        "learn.unit.r1.text": "Why √d_k, the causal mask, the KV cache, grouped-query attention, memory-bound decoding and FlashAttention.",
+        "learn.unit.r2": "Scaling laws",
+        "learn.unit.r2.text": "Power laws, C ≈ 6·N·D, the compute-optimal split, the cost of serving, and skills that seem sudden.",
+        "learn.unit.r3": "Optimisers for large models",
+        "learn.unit.r3.text": "Moving averages, Adam and its bias correction, AdamW, gradient clipping and the memory that training needs.",
+        "learn.unit.r4": "Why giant networks generalise",
+        "learn.unit.r4.text": "Random labels, double descent, minimum-norm fits, grokking and the lazy regime.",
+        "learn.unit.r5": "Latent variables and the ELBO",
+        "learn.unit.r5.text": "The ELBO and its gap, the reparameterisation trick, the Gaussian KL term and posterior collapse.",
+        "learn.unit.r6": "Diffusion models",
+        "learn.unit.r6.text": "Noise in closed form, predicting the noise, sampling, guidance, latent diffusion and flow matching.",
+        "learn.unit.r7": "Reinforcement learning: the core",
+        "learn.unit.r7.text": "Returns, the Bellman equation, Q-learning, policy gradients with a baseline, and PPO's clipping.",
+        "learn.unit.r8": "Learning from preferences: RLHF and DPO",
+        "learn.unit.r8.text": "Bradley–Terry, the optimum of the KL-regularised objective, DPO, and reward hacking.",
+        "learn.unit.r9": "Inside the model: interpretability",
+        "learn.unit.r9.text": "Features as directions, superposition, sparse autoencoders, probes versus interventions, and induction heads.",
+        "learn.unit.r10": "Smaller and faster models",
+        "learn.unit.r10.text": "Quantization, outliers and group scales, mixture of experts, speculative decoding and distillation.",
+        "learn.unit.r11": "Reasoning and test-time compute",
+        "learn.unit.r11.text": "Chains of thought, majority votes, best-of-n with a checker, learned verifiers, and RL with checkable rewards.",
+        "learn.unit.r12": "Research that holds up",
+        "learn.unit.r12.text": "Seeds and error bars, fair baselines, multiple comparisons, ablations and scale.",
 
         "learn.skills.title": "What you remember",
         "learn.skills.text": "Every answer moves a card to a stronger or a weaker box. Strong cards come back less often, weak ones sooner.",
@@ -308,6 +334,7 @@ window.AICompass.addTranslations({
         "learn.topic.skills": "Working with AI",
         "learn.topic.maths": "The maths inside",
         "learn.topic.build": "Building with AI",
+        "learn.topic.research": "Research",
 
         // The site search (Ctrl+K) finds the guided steps: where a result is, and the
         // words each step is found by besides its own texts (never shown)
@@ -336,7 +363,19 @@ window.AICompass.addTranslations({
         "learn.unit.b4.words": "evaluation evals test set benchmark judge rubric standard error confidence interval contamination regression",
         "learn.unit.b5.words": "prompt injection jailbreak security least privilege untrusted input system prompt secrets api key",
         "learn.unit.b6.words": "agents tools tool call function calling loop steps budget stop condition automation",
-        "learn.unit.b7.words": "latency streaming time to first token cost caching routing monitoring logs fallback retries production deployment"
+        "learn.unit.b7.words": "latency streaming time to first token cost caching routing monitoring logs fallback retries production deployment",
+        "learn.unit.r1.words": "attention scaling square root dk causal mask kv cache key value cache grouped-query attention gqa multi-query attention mqa memory bandwidth decoding prefill batching flashattention online softmax tiles",
+        "learn.unit.r2.words": "scaling laws power law compute flops 6nd parameters tokens compute-optimal tokens per parameter inference serving cost emergence exact match",
+        "learn.unit.r3.words": "optimizer optimiser momentum exponential moving average adam adamw bias correction weight decay warmup cosine schedule gradient clipping mixed precision memory sharding",
+        "learn.unit.r4.words": "generalization generalisation double descent interpolation threshold minimum norm implicit bias implicit regularization random labels grokking neural tangent kernel ntk lazy regime feature learning",
+        "learn.unit.r5.words": "vae variational autoencoder elbo evidence lower bound latent variable kl divergence reparameterization trick reparameterisation posterior collapse beta-vae",
+        "learn.unit.r6.words": "diffusion denoising noise schedule score matching sampling ode classifier-free guidance latent diffusion flow matching rectified flow velocity",
+        "learn.unit.r7.words": "reinforcement learning rl return discount bellman equation value function q-learning td error policy gradient baseline advantage ppo clipping",
+        "learn.unit.r8.words": "rlhf human feedback preferences reward model bradley-terry kl penalty dpo direct preference optimization reward hacking sycophancy alignment",
+        "learn.unit.r9.words": "interpretability mechanistic features residual stream linear representation superposition polysemantic neurons sparse autoencoder sae probe activation patching steering induction heads in-context learning",
+        "learn.unit.r10.words": "quantization quantisation int8 4-bit absmax outliers group-wise scales mixture of experts moe router speculative decoding draft model distillation soft targets",
+        "learn.unit.r11.words": "reasoning chain of thought test-time compute self-consistency majority vote best-of-n pass@k verifier process reward outcome reward verifiable rewards faithfulness",
+        "learn.unit.r12.words": "research methodology seeds variance standard error baselines hyperparameter tuning multiple comparisons bonferroni p-hacking forking paths ablation scale reproducibility"
     },
     ru: {
         "learn.me.as": "Учится",
@@ -382,10 +421,10 @@ window.AICompass.addTranslations({
         "learn.today.more": "Потренироваться ещё немного",
 
         "learn.path.title": "Твой путь",
-        "learn.path.text.one": "{n} этап: от самой первой идеи до своих приложений на ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
-        "learn.path.text.few": "{n} этапа: от самой первой идеи до своих приложений на ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
-        "learn.path.text.many": "{n} этапов: от самой первой идеи до своих приложений на ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
-        "learn.path.text.7": "Семь этапов: от самой первой идеи до своих приложений на ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.one": "{n} этап: от самой первой идеи до переднего края науки. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.few": "{n} этапа: от самой первой идеи до переднего края науки. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.many": "{n} этапов: от самой первой идеи до переднего края науки. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.8": "Восемь этапов: от самой первой идеи до переднего края науки. Всё открыто: метка только показывает лучший следующий шаг.",
         "learn.path.stage": "Этап {n}",
         "learn.path.count": "{done} из {total}",
         "learn.path.next": "Следующий шаг",
@@ -422,6 +461,8 @@ window.AICompass.addTranslations({
         "learn.stage.pro.text": "Настоящая математика своими руками: нейрон, градиентный спуск, обратное распространение, переобучение, метрики, внимание, кросс-энтропия и сэмплирование.",
         "learn.stage.build": "Строим на ИИ",
         "learn.stage.build.text": "Что нужно, чтобы строить на языковой модели: токены и контекст, поиск по смыслу, ответы по своим документам, честная оценка качества, промпт-инъекции, агенты и запуск для настоящих пользователей.",
+        "learn.stage.research": "Передний край науки",
+        "learn.stage.research.text": "Идеи современных исследований уровня PhD, с выводами и расчётами своими руками: внимание в больших масштабах, законы масштабирования, оптимизаторы, обобщение, VAE и диффузия, обучение с подкреплением и на предпочтениях, интерпретируемость, эффективные модели, рассуждения и исследования, которым можно верить.",
 
         "learn.unit.z1": "Что такое программа?",
         "learn.unit.z1.text": "Компьютер выполняет инструкции, одну за другой.",
@@ -471,6 +512,30 @@ window.AICompass.addTranslations({
         "learn.unit.b6.text": "Цикл агента, кто на самом деле запускает инструмент и почему длинные цепочки ломаются.",
         "learn.unit.b7": "Запуск для настоящих пользователей",
         "learn.unit.b7.text": "Скорость, стоимость, за чем следить после запуска и как готовиться к сбоям.",
+        "learn.unit.r1": "Внимание в больших масштабах",
+        "learn.unit.r1.text": "Зачем делить на √d_k, каузальная маска, KV-кэш, групповое внимание, генерация, которая упирается в память, и FlashAttention.",
+        "learn.unit.r2": "Законы масштабирования",
+        "learn.unit.r2.text": "Степенные законы, C ≈ 6·N·D, оптимальное деление бюджета, цена инференса и умения, которые появляются будто бы внезапно.",
+        "learn.unit.r3": "Оптимизаторы для больших моделей",
+        "learn.unit.r3.text": "Скользящие средние, Adam и поправка на смещение, AdamW, обрезка градиента и память, которая нужна для обучения.",
+        "learn.unit.r4": "Почему огромные сети обобщают",
+        "learn.unit.r4.text": "Случайные метки, двойной спуск, решения с минимальной нормой, гроккинг и ленивый режим.",
+        "learn.unit.r5": "Скрытые переменные и ELBO",
+        "learn.unit.r5.text": "Нижняя граница ELBO и её зазор, трюк с репараметризацией, KL-член для гауссова энкодера и коллапс апостериорного распределения.",
+        "learn.unit.r6": "Диффузионные модели",
+        "learn.unit.r6.text": "Зашумление одной формулой, предсказание шума, сэмплирование, наведение, латентная диффузия и flow matching.",
+        "learn.unit.r7": "Обучение с подкреплением: основа",
+        "learn.unit.r7.text": "Отдача, уравнение Беллмана, Q-обучение, градиент по политике с базовой линией и обрезка в PPO.",
+        "learn.unit.r8": "Обучение на предпочтениях: RLHF и DPO",
+        "learn.unit.r8.text": "Модель Брэдли–Терри, оптимум задачи со штрафом за KL, DPO и взлом награды.",
+        "learn.unit.r9": "Заглянуть внутрь модели: интерпретируемость",
+        "learn.unit.r9.text": "Признаки как направления, суперпозиция, разреженные автокодировщики, зонды против вмешательств и индукционные головы.",
+        "learn.unit.r10": "Модели меньше и быстрее",
+        "learn.unit.r10.text": "Квантование, выбросы и групповые масштабы, смесь экспертов, спекулятивное декодирование и дистилляция.",
+        "learn.unit.r11": "Рассуждения и вычисления во время ответа",
+        "learn.unit.r11.text": "Цепочки рассуждений, голосование большинством, лучший из n с проверкой, обученные верификаторы и RL с проверяемой наградой.",
+        "learn.unit.r12": "Исследования, которым можно верить",
+        "learn.unit.r12.text": "Зёрна и погрешности, честные базовые методы, множественные сравнения, абляции и масштаб.",
 
         "learn.skills.title": "Что ты помнишь",
         "learn.skills.text": "Каждый ответ переносит карточку в коробку посильнее или послабее. Сильные карточки приходят реже, слабые — раньше.",
@@ -498,6 +563,7 @@ window.AICompass.addTranslations({
         "learn.topic.skills": "Работа с ИИ",
         "learn.topic.maths": "Математика внутри",
         "learn.topic.build": "Разработка на ИИ",
+        "learn.topic.research": "Исследования",
 
         "learn.search.section": "Мой путь · {stage}",
         "learn.search.label": "Шаг · {title}",
@@ -524,7 +590,19 @@ window.AICompass.addTranslations({
         "learn.unit.b4.words": "оценка качества эвал тестовый набор бенчмарк модель-судья рубрика стандартная ошибка доверительный интервал утечка",
         "learn.unit.b5.words": "промпт-инъекция инъекция джейлбрейк безопасность наименьшие привилегии недоверенные данные секреты ключ api",
         "learn.unit.b6.words": "агенты инструменты вызов инструмента вызов функций цикл шаги бюджет условие остановки автоматизация",
-        "learn.unit.b7.words": "задержка потоковый вывод время до первого токена стоимость кэш маршрутизация мониторинг логи запасной вариант продакшен"
+        "learn.unit.b7.words": "задержка потоковый вывод время до первого токена стоимость кэш маршрутизация мониторинг логи запасной вариант продакшен",
+        "learn.unit.r1.words": "внимание масштабирование корень dk каузальная маска kv-кэш кэш ключей и значений групповое внимание gqa mqa пропускная способность памяти декодирование префилл батчинг flashattention онлайн-softmax тайлы",
+        "learn.unit.r2.words": "законы масштабирования степенной закон вычисления флопы 6nd параметры токены оптимальный по вычислениям токенов на параметр инференс стоимость эмерджентность точное совпадение",
+        "learn.unit.r3.words": "оптимизатор импульс скользящее среднее adam adamw поправка на смещение затухание весов разогрев косинусное расписание обрезка градиента смешанная точность память шардирование",
+        "learn.unit.r4.words": "обобщение обобщающая способность двойной спуск порог интерполяции минимальная норма неявная регуляризация неявное смещение случайные метки гроккинг нейронное касательное ядро ntk ленивый режим обучение признаков",
+        "learn.unit.r5.words": "vae вариационный автокодировщик elbo нижняя вариационная граница скрытая переменная латентная kl дивергенция репараметризация коллапс апостериорного распределения beta-vae",
+        "learn.unit.r6.words": "диффузия диффузионная модель шумоподавление расписание шума score matching сэмплирование оду наведение без классификатора classifier-free guidance латентная диффузия flow matching поле скоростей",
+        "learn.unit.r7.words": "обучение с подкреплением rl отдача дисконтирование уравнение беллмана функция ценности q-обучение td-ошибка градиент по политике базовая линия преимущество ppo обрезка",
+        "learn.unit.r8.words": "rlhf отзывы людей предпочтения модель вознаграждения брэдли-терри штраф за kl dpo взлом награды угодничество выравнивание alignment",
+        "learn.unit.r9.words": "интерпретируемость механистическая признаки остаточный поток линейное представление суперпозиция полисемантичные нейроны разреженный автокодировщик sae зонд подмена активаций управляющий вектор индукционные головы обучение в контексте",
+        "learn.unit.r10.words": "квантование int8 4 бита absmax выбросы групповые масштабы смесь экспертов moe маршрутизатор спекулятивное декодирование черновая модель дистилляция мягкие метки",
+        "learn.unit.r11.words": "рассуждения цепочка рассуждений chain of thought вычисления во время ответа самосогласованность голосование большинством лучший из n pass@k верификатор награда за шаги награда за результат проверяемая награда достоверность",
+        "learn.unit.r12.words": "методология исследований зерно seed разброс стандартная ошибка базовый метод подбор гиперпараметров множественные сравнения бонферрони p-hacking абляция масштаб воспроизводимость"
     }
 });
 
@@ -743,7 +821,8 @@ window.AICompass.addTranslations({
         "learn.place.result.deep": "The basics are in place. Time to look inside: how AI sees, plays and writes.",
         "learn.place.result.world": "You know how AI works. Now see what it does with data and with you, and plan a project.",
         "learn.place.result.pro": "You know the ideas well. Next comes the maths, done by hand.",
-        "learn.place.result.build": "You know the maths too. The last stage is yours: how real products are built on language models.",
+        "learn.place.result.build": "You know the maths too. Next: how real products are built on language models.",
+        "learn.place.result.research": "You know every stage before it, the maths and building with AI included. The last stage is yours: the ideas of current research, worked through by hand.",
         "learn.place.stopped": "No need for more questions: the path will start from the beginning.",
         "learn.place.see": "See my path"
     },
@@ -795,7 +874,8 @@ window.AICompass.addTranslations({
         "learn.place.result.deep": "Основы на месте. Пора заглянуть внутрь: как ИИ видит, играет и пишет.",
         "learn.place.result.world": "Ты знаешь, как работает ИИ. Теперь посмотри, что он делает с данными и с тобой, и спланируй проект.",
         "learn.place.result.pro": "Идеи ты знаешь хорошо. Дальше — математика своими руками.",
-        "learn.place.result.build": "Математику ты тоже знаешь. Твой этап — последний: как на языковых моделях строят настоящие продукты.",
+        "learn.place.result.build": "Математику ты тоже знаешь. Дальше — как на языковых моделях строят настоящие продукты.",
+        "learn.place.result.research": "Все этапы до него тебе знакомы, включая математику и разработку на ИИ. Твой этап — последний: идеи современных исследований, с выводами и расчётами своими руками.",
         "learn.place.stopped": "Больше вопросов не нужно: путь начнётся с самого начала.",
         "learn.place.see": "Посмотреть мой путь"
     }
@@ -982,7 +1062,8 @@ window.AICompass.content.set("learn", {
         { id: "deep", icon: "🤿", track: "deep" },
         { id: "world", icon: "🌍", track: "world" },
         { id: "pro", icon: "⚙️", course: "pro" },
-        { id: "build", icon: "🚀", course: "build" }
+        { id: "build", icon: "🚀", course: "build" },
+        { id: "research", icon: "🔭", course: "research" }
     ],
 
     // The guided courses: the file with their steps (loaded when a unit opens), the
@@ -1040,6 +1121,26 @@ window.AICompass.content.set("learn", {
                 { id: "b5", icon: "💉", minutes: 7, cards: 4 },
                 { id: "b6", icon: "🛠️", minutes: 7, cards: 4 },
                 { id: "b7", icon: "🚦", minutes: 7, cards: 4 }
+            ]
+        },
+        // The last stage: the level check asks nothing about it (see placementStages in
+        // js/learn.js), so it needs no probes
+        research: {
+            file: "js/content/courses/research.js",
+            topic: "research",
+            units: [
+                { id: "r1", icon: "🔍", minutes: 8, cards: 4 },
+                { id: "r2", icon: "📈", minutes: 7, cards: 4 },
+                { id: "r3", icon: "🧭", minutes: 8, cards: 4 },
+                { id: "r4", icon: "🧩", minutes: 8, cards: 4 },
+                { id: "r5", icon: "🎲", minutes: 7, cards: 4 },
+                { id: "r6", icon: "🌫️", minutes: 8, cards: 4 },
+                { id: "r7", icon: "🎮", minutes: 8, cards: 4 },
+                { id: "r8", icon: "⚖️", minutes: 8, cards: 4 },
+                { id: "r9", icon: "🔬", minutes: 8, cards: 4 },
+                { id: "r10", icon: "🗜️", minutes: 8, cards: 4 },
+                { id: "r11", icon: "🧠", minutes: 8, cards: 4 },
+                { id: "r12", icon: "🧾", minutes: 7, cards: 4 }
             ]
         }
     },

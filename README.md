@@ -2,7 +2,7 @@
 
 AI Compass is a free website that teaches artificial intelligence from zero, in English and in Russian, to anyone: a child, a school student, an adult, a teacher or a professional.
 
-Its heart is **My path**, a personal learning plan. A visitor says who is learning and gets a path of stages (from "what is a program?" through the maths inside a model to building products on language models), a short session for every day, guided steps with a task after every idea, a memory check that brings each question back just before it would be forgotten, and "Explain it back". Around it are short lessons with mini-labs, an AI Lab of live experiments (small, real models that learn in your browser), a quiz, a glossary, a history timeline, a chat helper (Compass Bot), a search window for the whole site (Ctrl+K), My Compass, where learners see their XP, level, badges and streak, and Settings (bigger text, high contrast, an easy-to-read font and more).
+Its heart is **My path**, a personal learning plan. A visitor says who is learning and gets a path of stages (from "what is a program?" through the maths inside a model and building products on language models to the ideas of current research, at PhD level), a short session for every day, guided steps with a task after every idea, a memory check that brings each question back just before it would be forgotten, and "Explain it back". Around it are short lessons with mini-labs, an AI Lab of live experiments (small, real models that learn in your browser), a quiz, a glossary, a history timeline, a chat helper (Compass Bot), a search window for the whole site (Ctrl+K), My Compass, where learners see their XP, level, badges and streak, and Settings (bigger text, high contrast, an easy-to-read font and more).
 
 The site has two designs, chosen with the Simple / Pro switch in the menu bar: **Simple** (the default) is calm and shows one thing at a time; **Pro** is a dense look for people who know AI well, with a terminal, a status bar and a keyboard shortcut for everything.
 
@@ -98,7 +98,7 @@ A local server shows you the site the way GitHub Pages serves it.
 | `js/home.js` | The "Continue where you left off" button on the home page. |
 | `js/content/page.js` | The texts of the menu, the hero, About and the footer. |
 | `js/content/learn.js` | My path: its texts and its data (who can be learning, the stages, the guided courses and their steps, the memory boxes, the stage test). |
-| `js/content/courses/` | The guided courses of My path, one file each (`zero.js`: "Start from zero", `skills.js`: "Use AI well", `pro.js`: "Under the hood", `build.js`: "Build with AI"). A file loads the first time one of its steps opens. Its header explains every kind of screen. |
+| `js/content/courses/` | The guided courses of My path, one file each (`zero.js`: "Start from zero", `skills.js`: "Use AI well", `pro.js`: "Under the hood", `build.js`: "Build with AI", `research.js`: "Research frontier"). A file loads the first time one of its steps opens. Its header explains every kind of screen. |
 | `js/content/pro.js` | The texts of the Pro design and the terminal's commands. |
 | `js/content/effects.js` | The texts of the visual effects. |
 | `js/content/neural-bg.js` | The texts of the neural network background. |
@@ -215,7 +215,7 @@ Russian has three forms: `.one` (1, 21, 31...), `.few` (2–4, 22–24...) and `
 
 "My path" (`#learn`) is what turns the site from a place to read into a course. It is built from four ideas, and all of them come from what is known about how people learn:
 
-- **A path, not a pile.** The stages go from "Start from zero" to "Build with AI". A stage is a track of lessons or a guided course. Nothing is locked: a marker only shows the best next step. A short level check can choose where the path starts.
+- **A path, not a pile.** The stages go from "Start from zero" to "Research frontier". A stage is a track of lessons or a guided course. Nothing is locked: a marker only shows the best next step. A short level check can choose where the path starts.
 - **Do, don't only read.** A guided step is a row of small screens: one idea, then a task about it straight away (choose, type a number, put in order, sort, match), with a hint after a wrong try and an explanation after every answer.
 - **Come back before you forget.** Every question of a finished lesson or guided step becomes a card. A card lives in one of six boxes and comes back after 1, 2, 4, 8, 16 and 32 days: a right answer on its day moves it one box up, a wrong one back to box 1. The memory map shows which topics are strong.
 - **Say it yourself.** "Explain it back" asks for a lesson in the learner's own words and compares them with the lesson's three key ideas.
@@ -801,7 +801,7 @@ The kinds of screen are `info`, `choice`, `number`, `order`, `sort`, `match`, `r
 - a task with `card: "z6a"` (the unit's name and a letter, in order) also becomes a card of the memory check, so it must make sense on its own, without the screens before it;
 - the explanation (`why`) says why the right answer is right, not only that it is.
 
-**A new course** needs three more things in `js/content/learn.js`: an entry in `courses` (its file, the `topic` its cards belong to on the memory map, and two `probes`: cards that the level check asks), a stage in `stages` that names it (`{ id: "mine", icon: "🧪", course: "mine" }`), and the texts `learn.stage.mine`, `learn.stage.mine.text`, `learn.topic.<topic>` and `learn.place.result.mine`. The page, the stage test, the memory map and the offline copy pick it up from the data.
+**A new course** needs three more things in `js/content/learn.js`: an entry in `courses` (its file, the `topic` its cards belong to on the memory map, and two `probes`: cards that the level check asks; the last stage needs none, because the level check skips it), a stage in `stages` that names it (`{ id: "mine", icon: "🧪", course: "mine" }`), and the texts `learn.stage.mine`, `learn.stage.mine.text`, `learn.topic.<topic>` and `learn.place.result.mine`. The page, the stage test, the memory map and the offline copy pick it up from the data.
 
 
 ## House rules
