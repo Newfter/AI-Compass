@@ -1,7 +1,8 @@
 /* =========================================================
    AI COMPASS — THE TWO DESIGNS: SIMPLE AND PRO
-   The site has two designs. The choice is in Settings ("Design") and in
-   the Simple / Pro switch in the menu bar (js/settings.js keeps it):
+   The site has two designs. The choice is in Settings ("Design") and
+   nowhere else (js/settings.js keeps it); the home page of the Simple
+   design has one quiet line that says where it is:
    - Simple (the default): the calm, easy design of style.css, for beginners.
    - Pro: class "design-pro" on <html>. A rich, dense "control panel" look
      for people who know AI well: sharper corners, technical labels, every
@@ -10,7 +11,7 @@
    Nothing is removed in either design: Pro only shows more at once.
 
    Sections of this file:
-    1. The Simple / Pro switch (both designs)
+    1. Simple: the line about the Pro design on the home page
     2. What only one of the designs shows
     3. Pro: colours and shapes
     4. Pro: the menu bar
@@ -19,64 +20,29 @@
     7. Pro: phones and tablets
    ========================================================= */
 
-/* ===== 1. THE SIMPLE / PRO SWITCH (both designs) ===== */
-.design-switch {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    flex: none;
-    gap: 2px;
-    height: 36px;
-    padding: 3px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--text-muted);
-    font: 600 12px/1 var(--font-body);
-    cursor: pointer;
-}
-
-.design-switch[hidden] {
-    display: none;
-}
-
-.design-switch:hover,
-.design-switch:focus-visible {
-    border-color: var(--border-strong);
-}
-
-.design-switch-opt {
-    padding: 7px 10px;
-    border-radius: 999px;
-    transition: background 0.2s ease, color 0.2s ease;
-}
-
-html:not(.design-pro) .design-switch-simple,
-html.design-pro .design-switch-pro {
-    background: rgba(var(--accent-rgb), 0.22);
-    color: var(--text);
-}
-
-html.design-pro .design-switch-pro {
-    background: rgba(var(--accent-2-rgb), 0.18);
-    color: var(--text-accent-2);
-}
-
-/* The phone menu's button says what a tap will do */
-html:not(.design-pro) .design-quick-pro,
-html.design-pro .design-quick-simple {
-    display: none;
-}
-
-/* The line under the home page buttons (Simple design) */
+/* ===== 1. SIMPLE: THE LINE ABOUT THE PRO DESIGN ON THE HOME PAGE =====
+   "Already know AI well? The Pro design is in Settings." under the home
+   page buttons. Its second sentence is a button that opens Settings at
+   "Design" (data-open-settings="design", js/settings.js): it switches
+   nothing by itself. */
 .design-offer {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 6px 10px;
     margin: 18px 0 0;
     color: var(--text-dim);
     font-size: 0.875rem;
+}
+
+/* Wide enough for two columns (style.css): the words of the home page stand
+   on the left there, and so does this line. Narrower, where the line can
+   break in two, it is centred like the rest. */
+@media (min-width: 961px) {
+    .design-offer {
+        justify-content: flex-start;
+    }
 }
 
 .design-offer-button {
@@ -95,7 +61,16 @@ html.design-pro .design-quick-simple {
     display: none;
 }
 
-/* Without JavaScript the switch can't work: the offer line is not shown */
+/* A finger needs 44px to tap: the button is taller than its words, and the
+   line keeps its height */
+@media (hover: none), (pointer: coarse) {
+    .design-offer-button {
+        margin: -12px 0;
+        padding: 12px 0;
+    }
+}
+
+/* Without JavaScript Settings can't open: the line is not shown */
 html:not(.js) .design-offer {
     display: none;
 }
@@ -166,17 +141,6 @@ html.design-pro .nav-actions .palette-kbd {
     display: inline-block;
 }
 
-html.design-pro .design-switch {
-    border-radius: 8px;
-    font-family: var(--font-mono);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
-html.design-pro .design-switch-opt {
-    border-radius: 5px;
-}
-
 /* ===== 5. PRO: THE HOME PAGE AND THE CONTROL PANEL ===== */
 html.design-pro .hero-kicker {
     font-family: var(--font-mono);
@@ -243,11 +207,14 @@ html.design-pro .hero-title {
     border-bottom-right-radius: 14px;
 }
 
+/* The title, and the language and the look ("EN · TROPICAL LAGOON"). On a narrow
+   panel a long look name goes onto a line of its own, under the title. */
 .pro-dash-head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 4px 12px;
     padding-bottom: 12px;
     border-bottom: 1px dashed var(--border);
     font-family: var(--font-mono);
@@ -262,9 +229,11 @@ html.design-pro .hero-title {
     gap: 8px;
     color: var(--text);
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .pro-dash-meta {
+    min-width: 0;
     color: var(--text-label);
 }
 
@@ -599,28 +568,8 @@ html.design-pro .about-card {
     }
 }
 
-/* Narrow phones: the bar has no room for the switch; it is in the menu instead */
-@media (max-width: 520px) {
-    .nav-actions .design-switch {
-        display: none;
-    }
-}
-
-/* Wide phones and tablets keep the switch, a little smaller */
-@media (max-width: 960px) and (min-width: 521px) {
-    .design-switch {
-        height: 32px;
-        font-size: 11px;
-    }
-
-    .design-switch-opt {
-        padding: 6px 8px;
-    }
-}
-
-/* Printing: the switch and the control panel are not printed */
+/* Printing: the line about the Pro design and the control panel are not printed */
 @media print {
-    .design-switch,
     .design-offer,
     .pro-dash {
         display: none !important;

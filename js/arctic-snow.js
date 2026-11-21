@@ -10,7 +10,7 @@
    - moving it: nearby flakes are pushed away and carried a little in the
      direction it moves, and glow cyan while it is close;
    - a click or tap: a burst that blows the flakes outwards and flashes
-     them violet, then they calm down and fall again.
+     them periwinkle blue, then they calm down and fall again.
    The pointer events are listened to on the window, so nothing on the
    page is blocked by the canvas.
    ========================================================= */
@@ -32,12 +32,12 @@
     const BURST_PUSH = 420;            // how hard a click blows a flake away (px/s)
     const SETTLE = 2.2;                // how fast the push fades (higher = quicker)
     const HOVER_FADE = 2.2;            // how fast the cyan glow fades (per second)
-    const BURST_FADE = 0.9;            // how fast the violet flash fades (per second)
+    const BURST_FADE = 0.9;            // how fast the periwinkle flash fades (per second)
 
-    // Colours as [r, g, b]: calm, near the pointer, after a click. Night / day.
+    // Colours as [r, g, b]: calm, near the pointer, after a click (all blues). Night / day.
     const COLOURS = {
-        dark:  { base: [225, 245, 255], hover: [80, 225, 255],  burst: [200, 160, 255] },
-        light: { base: [40, 120, 190],  hover: [0, 160, 205],   burst: [130, 70, 220] }
+        dark:  { base: [225, 245, 255], hover: [90, 215, 255],  burst: [140, 165, 255] },
+        light: { base: [40, 120, 190],  hover: [0, 160, 205],   burst: [70, 90, 220] }
     };
 
     let flakes = [];
@@ -183,7 +183,7 @@
             if (f.x < -10) f.x = width + 10;
             if (f.x > width + 10) f.x = -10;
 
-            // 4. Colour: calm -> cyan near the pointer -> violet after a click. They also
+            // 4. Colour: calm -> cyan near the pointer -> periwinkle after a click. They also
             //    shine a little brighter and bigger while they react.
             let rgb = mix(set.base, set.hover, f.hover);
             rgb = mix(rgb, set.burst, f.burst);

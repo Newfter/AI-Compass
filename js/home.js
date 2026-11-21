@@ -1,10 +1,13 @@
 /* =========================================================
    AI COMPASS — THE HOME PAGE
-   One small helper for the home page: the "Continue where you left off"
-   button under the hero buttons. It shows only for a visitor who has
-   finished at least one lesson (and not all of them), names the next
-   lesson, and opens it with one tap.
-   Its texts (English and Russian) are in js/content/page.js ("home.continue*").
+   The small helpers of the home page:
+   - the "Continue where you left off" button under the hero buttons. It
+     shows only for a visitor who has finished at least one lesson (and not
+     all of them), names the next lesson, and opens it with one tap;
+   - "Why not just ask ChatGPT?": the short answer for a new visitor;
+   - "Start here": three first steps; and the word of the day.
+   The texts (English and Russian) are in js/content/page.js ("home...") and
+   js/content/pro.js ("home.start...", "home.word").
    Nothing is saved by this file: it reads the lessons' progress (A.lessons).
    ========================================================= */
 
@@ -81,6 +84,11 @@
             else if (name === "quiz" && A.quiz) A.quiz.start("classic");
         });
     }
+
+    // ----- "Why not just ask ChatGPT?": the short answer for a new visitor -----
+    // (style.css hides it in the Pro design and as soon as the visitor has a path)
+    const why = document.querySelector("[data-home-why]");
+    if (why) A.ready(function () { A.dom.setHidden(why, false); });
 
     // The progress changes in a lesson; the texts change with the language
     // ----- "Word of the day" (Simple design only; the Pro design has its own card) -----

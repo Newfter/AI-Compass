@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Compass | Explore Artificial Intelligence</title>
-    <meta name="description" content="AI Compass — a free bilingual platform for learning about Artificial Intelligence: lessons, live AI experiments, a quiz, a glossary and more.">
+    <meta name="description" content="Learn how AI works, free and without sign-up: a personal path in small steps, experiments you run in your browser and reviews that help you remember.">
 
     <!-- ===== Search engines, sharing and the app (see "The app, offline use, sharing, printing and search engines" in README.md) =====
          The full addresses below are where the site lives on GitHub Pages. If it ever moves,
@@ -41,7 +41,7 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="AI Compass">
     <meta property="og:title" content="AI Compass | Explore Artificial Intelligence">
-    <meta property="og:description" content="A free, interactive guide to Artificial Intelligence for teenagers, in English and Russian. Бесплатный интерактивный путеводитель по искусственному интеллекту для подростков — на русском и английском.">
+    <meta property="og:description" content="Learn how AI works: a path in small steps, experiments you run yourself and reviews that help you remember. Free. Узнай, как работает ИИ: путь маленькими шагами, эксперименты и повторения. Бесплатно.">
     <meta property="og:url" content="https://newfter.github.io/AI-Compass/">
     <meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
     <meta property="og:image:type" content="image/png">
@@ -54,8 +54,9 @@
     <meta name="twitter:image:alt" content="A glowing compass rose next to the words AI Compass: Navigate the World of AI.">
 
     <!-- Before the page is drawn, this script applies the saved settings, so nothing flashes:
-         - the theme (data-theme), and the colour of the phone's address bar to match; with
-           "Like my device" chosen in the settings, the device's light or dark mode;
+         - the look: the theme (data-theme), with "Like my device" chosen in the settings the
+           device's light or dark mode, and a palette on top of it (data-palette, one of the
+           looks of js/arctic-blue.js); the colour of the phone's address bar to match the theme;
          - calm mode: the classes fx-calm and fx-motion-off (fx-motion-off also when the device
            asks for reduced motion), so the hero doesn't start its entrance animation;
          - the settings of js/settings.js: the text size (--text-scale) and the classes
@@ -93,13 +94,17 @@
                 theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
             }
             if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
-            // A visual palette is independent from the normal light/dark setting.
-            // Restore it before the page is painted to avoid a flash of the old colours.
-            try {
-                if (JSON.parse(localStorage.getItem("aic:palette")) === "arctic") {
-                    root.setAttribute("data-palette", "arctic");
-                }
-            } catch (error) {}
+            // A palette (Arctic Blue, Tropical Lagoon...) sits on top of the theme it is built on.
+            // Restore both before the page is painted to avoid a flash of the old colours.
+            // Every palette and its base theme: this table must match PALETTES in
+            // js/arctic-blue.js (dev/tests/looks.test.js checks that it does).
+            var paletteBase = { arctic: "dark", lagoon: "dark", autumn: "dark", forest: "dark", space: "dark", blossom: "light", paper: "light" };
+            var palette = saved("palette");
+            // A saved name that is not in the table is ignored
+            if (typeof palette === "string" && Object.prototype.hasOwnProperty.call(paletteBase, palette)) {
+                root.setAttribute("data-palette", palette);
+                root.setAttribute("data-theme", paletteBase[palette]);
+            }
             // Both theme-color tags (see above) get the colour of the theme that is on
             var shownTheme = root.getAttribute("data-theme") === "light" ? "light" : "dark";
             document.querySelectorAll('meta[name="theme-color"]').forEach(function (meta) {
@@ -199,20 +204,27 @@
     <link rel="stylesheet" href="./css/journey.css">
     <link rel="stylesheet" href="./css/settings.css">
     <link rel="stylesheet" href="./css/account.css">
+    <link rel="stylesheet" href="./css/profiles.css">
     <link rel="stylesheet" href="./css/challenge.css">
     <link rel="stylesheet" href="./css/learn.css">
-    <!-- The Pro design: only used with class design-pro on <html> (Settings, or the Simple / Pro switch) -->
+    <!-- The Pro design: only used with class design-pro on <html> (chosen in Settings, "Design") -->
     <link rel="stylesheet" href="./css/pro.css">
     <!-- Printing: only used when the page is printed (keep it after the other stylesheets).
          fetchpriority="high": a print-only file is otherwise downloaded after everything else, and
          the browser waits for it before it says the page has loaded, which is when the site starts
          its "when idle" work. It is small and never holds up drawing the page. -->
     <link rel="stylesheet" href="./css/print.css" media="print" fetchpriority="high">
-    <!-- Optional colour palette, loaded last so every feature uses its Arctic tokens. -->
+    <!-- The colour palettes of the looks (Arctic Blue, Tropical Lagoon: see js/arctic-blue.js),
+         loaded last so every feature uses their tokens. A new look's css file is linked here. -->
     <link rel="stylesheet" href="./css/arctic-blue.css">
+    <link rel="stylesheet" href="./css/lagoon.css">
+    <link rel="stylesheet" href="./css/looks.css">
 
     <!-- core.js loads first: the toolkit every other script uses (texts, theme, settings, pop-up windows...) -->
     <script src="./js/core.js" defer></script>
+    <!-- The learner accounts of this device: before every feature, because a feature must never
+         read the saved data while two accounts are being swapped (see the top of the file) -->
+    <script src="./js/profiles.js" defer></script>
     <script src="./js/arctic-blue.js" defer></script>
     <!-- The settings of this copy of the site (the account service): see docs/ACCOUNTS-SETUP.md -->
     <script src="./js/config.js" defer></script>
@@ -236,6 +248,7 @@
     <script src="./js/content/journey.js" defer></script>
     <script src="./js/content/settings.js" defer></script>
     <script src="./js/content/account.js" defer></script>
+    <script src="./js/content/profiles.js" defer></script>
     <script src="./js/content/challenge.js" defer></script>
     <script src="./js/content/learn.js" defer></script>
     <script src="./js/content/platform.js" defer></script>
@@ -247,6 +260,8 @@
     <script src="./js/effects.js" defer></script>
     <script src="./js/neural-bg.js" defer></script>
     <script src="./js/arctic-snow.js" defer></script>
+    <script src="./js/lagoon-bubbles.js" defer></script>
+    <script src="./js/look-effects.js" defer></script>
     <script src="./js/lessons.js" defer></script>
     <script src="./js/lab.js" defer></script>
     <script src="./js/quiz.js" defer></script>
@@ -338,6 +353,8 @@
 <!-- Animated neural network in the background (drawn by js/neural-bg.js) -->
 <canvas id="neural-bg" class="neural-bg" aria-hidden="true"></canvas>
 <canvas id="arctic-snow" aria-hidden="true"></canvas>
+<canvas id="lagoon-bubbles" aria-hidden="true"></canvas>
+<canvas id="look-effects" aria-hidden="true"></canvas>
 <div class="bg-grid" aria-hidden="true"></div>
 
 <!-- Thin bar at the very top that fills up as you scroll (js/effects.js) -->
@@ -374,23 +391,20 @@
                 <div class="nav-more-list" id="nav-more-list" hidden></div>
             </div>
 
-            <!-- On narrow phones the theme and language buttons are here, under the links:
-                 the menu bar has no room for them (style.css, 11. RESPONSIVE) -->
+            <!-- On narrow phones these buttons are here, under the links: the menu bar
+                 has no room for the language and the account (style.css, 11. RESPONSIVE) -->
             <div class="nav-quick">
-                <!-- Simple / Pro design (js/settings.js); on wider screens it is in the bar itself -->
-                <button class="nav-quick-button design-quick" type="button" data-design-toggle hidden>
-                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M9 9v11" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                    <span class="design-quick-simple" data-i18n="pro.toPro">Switch to the Pro design</span>
-                    <span class="design-quick-pro" data-i18n="pro.toSimple">Switch to the Simple design</span>
-                </button>
                 <!-- The account (js/account.js) shows this button on narrow phones, where the bar has no room for its own -->
                 <button class="nav-quick-button" id="account-quick" type="button" hidden>
                     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 20c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                     <span class="ac-quick-text">Sign in</span>
                 </button>
-                <button class="nav-quick-button mode-quick" type="button" data-mode-toggle>
-                    <span class="mode-icon" aria-hidden="true"></span>
-                    <span class="mode-label"></span>
+                <!-- Settings: the design (Simple or Pro), the look and everything else are chosen
+                     there. Any element with data-open-settings opens the window (js/settings.js
+                     shows this button once it is ready); a value names a group: "design", "look". -->
+                <button class="nav-quick-button" type="button" data-open-settings hidden>
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9.56 4.49L9.84 1.83A10.4 10.4 0 0 1 14.16 1.83L14.44 4.49A7.9 7.9 0 0 1 17.29 6.13L19.73 5.04A10.4 10.4 0 0 1 21.89 8.79L19.73 10.36A7.9 7.9 0 0 1 19.73 13.64L21.89 15.21A10.4 10.4 0 0 1 19.73 18.96L17.29 17.87A7.9 7.9 0 0 1 14.44 19.51L14.16 22.17A10.4 10.4 0 0 1 9.84 22.17L9.56 19.51A7.9 7.9 0 0 1 6.71 17.87L4.27 18.96A10.4 10.4 0 0 1 2.11 15.21L4.27 13.64A7.9 7.9 0 0 1 4.27 10.36L2.11 8.79A10.4 10.4 0 0 1 4.27 5.04L6.71 6.13A7.9 7.9 0 0 1 9.56 4.49Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                    <span data-i18n="core.settingsLabel">Settings</span>
                 </button>
                 <button class="nav-quick-button" type="button" data-language-toggle>
                     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.4 2.6 3.6 5.6 3.6 9s-1.2 6.4-3.6 9c-2.4-2.6-3.6-5.6-3.6-9S9.6 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
@@ -399,14 +413,9 @@
             </div>
         </nav>
 
+        <!-- The design (Simple or Pro) and the look (Dark, Light, Arctic Blue...) are not
+             here: both are chosen in Settings, the gear button below -->
         <div class="nav-actions">
-            <!-- Simple / Pro: which design the site has (js/settings.js shows it once it is ready) -->
-            <button class="design-switch" type="button" data-design-toggle hidden
-                    data-i18n-attr="aria-label:pro.switchLabel,title:pro.switchLabel">
-                <span class="design-switch-opt design-switch-simple" data-i18n="settings.designSimple">Simple</span>
-                <span class="design-switch-opt design-switch-pro" data-i18n="settings.designPro">Pro</span>
-            </button>
-
             <button class="icon-button palette-trigger" type="button" data-open-palette
                     data-i18n-attr="aria-label:core.searchLabel,title:core.searchLabel">
                 <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -428,13 +437,6 @@
             <button class="icon-button settings-toggle" id="settings-toggle" type="button" hidden
                     data-i18n-attr="aria-label:core.settingsLabel,title:core.settingsLabel">
                 <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9.56 4.49L9.84 1.83A10.4 10.4 0 0 1 14.16 1.83L14.44 4.49A7.9 7.9 0 0 1 17.29 6.13L19.73 5.04A10.4 10.4 0 0 1 21.89 8.79L19.73 10.36A7.9 7.9 0 0 1 19.73 13.64L21.89 15.21A10.4 10.4 0 0 1 19.73 18.96L17.29 17.87A7.9 7.9 0 0 1 14.44 19.51L14.16 22.17A10.4 10.4 0 0 1 9.84 22.17L9.56 19.51A7.9 7.9 0 0 1 6.71 17.87L4.27 18.96A10.4 10.4 0 0 1 2.11 15.21L4.27 13.64A7.9 7.9 0 0 1 4.27 10.36L2.11 8.79A10.4 10.4 0 0 1 4.27 5.04L6.71 6.13A7.9 7.9 0 0 1 9.56 4.49Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
-            </button>
-
-            <!-- One button for the three looks: Dark, Light, Arctic Blue (js/arctic-blue.js).
-                 It shows the look that is on; a click goes to the next one. -->
-            <button class="icon-button mode-button" id="mode-toggle" type="button" data-mode-toggle>
-                <span class="mode-icon" aria-hidden="true"></span>
-                <span class="mode-label"></span>
             </button>
 
             <button class="icon-button lang-button" id="language-toggle" type="button"
@@ -469,10 +471,11 @@
                 <a href="#lab" class="btn btn-ghost" data-i18n="hero.ctaLab">Try the AI Lab</a>
             </div>
 
-            <!-- Simple design only: one tap to the Pro design (js/settings.js) -->
+            <!-- Simple design only: where the Pro design is. The button does not switch
+                 anything: it opens Settings at "Design" (data-open-settings, js/settings.js) -->
             <p class="design-offer revealed" data-reveal>
                 <span data-i18n="pro.offer">Already know AI well?</span>
-                <button type="button" class="design-offer-button" data-design-toggle="pro" hidden data-i18n="pro.offerButton">Try the Pro design</button>
+                <button type="button" class="design-offer-button" data-open-settings="design" hidden data-i18n="pro.offerButton">The Pro design is in Settings</button>
             </p>
 
             <!-- For a visitor who has finished a lesson before: one tap opens the next one
@@ -507,6 +510,32 @@
         <!-- Everything on the site, one card each. The numbers are the real counts
              (data-count-name, js/effects.js); the ones written here show before that. -->
         <div class="container">
+            <!-- Simple design only, for a visitor who has no path yet: the short answer to
+                 "why not just ask a chatbot?" (js/home.js shows it; the long answer is on the
+                 page "My path"). Texts: js/content/page.js, "home.why..." -->
+            <section class="home-why" data-home-why aria-labelledby="home-why-title" hidden>
+                <h2 class="home-why-title" id="home-why-title" data-i18n="home.whyTitle">Why not just ask ChatGPT?</h2>
+                <p class="home-why-lead" data-i18n="home.whyLead">Do ask it: chatbots are great at answering questions. But learning takes more than answers. Here is what AI Compass adds:</p>
+                <ul class="home-why-points">
+                    <li class="home-why-point">
+                        <span class="home-why-icon" aria-hidden="true">🧭</span>
+                        <h3 class="home-why-name" data-i18n="home.why1Title">No need to know what to ask</h3>
+                        <p class="home-why-text" data-i18n="home.why1Text">Three questions give you your own path: from the very first idea, in small steps, in a sensible order.</p>
+                    </li>
+                    <li class="home-why-point">
+                        <span class="home-why-icon" aria-hidden="true">🧪</span>
+                        <h3 class="home-why-name" data-i18n="home.why2Title">You practise, not only read</h3>
+                        <p class="home-why-text" data-i18n="home.why2Text">Every idea comes with a task and an explanation. In the AI Lab you teach a real model right in your browser.</p>
+                    </li>
+                    <li class="home-why-point">
+                        <span class="home-why-icon" aria-hidden="true">🧠</span>
+                        <h3 class="home-why-name" data-i18n="home.why3Title">It comes back, so it stays</h3>
+                        <p class="home-why-text" data-i18n="home.why3Text">What you learned returns in short checks after 1, 2, 4, 8 days and more: just before you would forget it.</p>
+                    </li>
+                </ul>
+                <p class="home-why-both" data-i18n="home.whyBoth">Keep the chatbot, too: the part of the path called “Use AI well” teaches how to ask it better and how to check its answers.</p>
+            </section>
+
             <!-- Pro design only: the workspace (terminal, activity, progress by track, today, term of the day; js/pro.js) -->
             <div class="pro-deck" data-pro-deck hidden></div>
 

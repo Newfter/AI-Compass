@@ -16,7 +16,7 @@ window.AICompass.addTranslations({
         "settings.intro": "Every change works at once, on the whole site.",
         "settings.close": "Close settings",
 
-        // The small sample card at the top: it shows the current settings
+        // The small sample card above "Reading": it shows the current settings
         "settings.preview": "PREVIEW",
         "settings.previewTitle": "How a neural network learns",
         "settings.previewText": "It looks at thousands of examples and adjusts its connections a little after each mistake, until its answers get better.",
@@ -25,25 +25,55 @@ window.AICompass.addTranslations({
 
         // The groups
         "settings.groupDesign": "Design",
-        "settings.design": "Design",
-        "settings.designSimple": "Simple",
-        "settings.designPro": "Pro",
-        "settings.designHint": "Simple: calm and easy, for beginners. Pro: a rich control panel with your stats, every page in the menu and all the effects, for people who know AI well.",
-        "settings.cmdDesignPro": "Switch to the Pro design",
-        "settings.cmdDesignSimple": "Switch to the Simple design",
-        "settings.groupLanguage": "Language and theme",
+        "settings.groupLook": "Look",
+        "settings.groupLanguage": "Language",
         "settings.groupReading": "Reading",
         "settings.groupComfort": "Comfort",
         "settings.groupSound": "Reading aloud",
 
-        // Language and theme
-        "settings.language": "Language",
-        "settings.theme": "Theme",
-        "settings.themeDark": "Dark",
-        "settings.themeLight": "Light",
+        // The design: two cards, each with one line that says what it is
+        "settings.design": "Design",
+        "settings.designSimple": "Simple",
+        "settings.designSimpleAbout": "Calm and step by step. The best place to start.",
+        "settings.designPro": "Pro",
+        "settings.designProAbout": "A workspace for people who know AI: a terminal, statistics and more on every page.",
+        "settings.cmdDesignPro": "Switch to the Pro design",
+        "settings.cmdDesignSimple": "Switch to the Simple design",
+
+        // The look: the colours of the whole site. The names of the looks ("Arctic Blue")
+        // and the words for their animations ("falling snow") are in js/content/page.js.
+        // One sentence for each look: "settings.lookAbout." + its id in js/arctic-blue.js.
+        "settings.look": "Look",
+        "settings.lookEveryday": "Everyday",
+        "settings.lookNature": "Seasons and places",
+        "settings.lookAbout.system": "Dark or light, the same as your phone or computer.",
+        "settings.lookAbout.dark": "The classic dark look. Easy on the eyes in the evening.",
+        "settings.lookAbout.light": "Bright and clear. Good in daylight.",
+        "settings.lookAbout.paper": "Warm paper and dark ink, with no animation. Good for long reading.",
+        "settings.lookAbout.arctic": "Deep blue ice with an aurora and falling snow. A winter mood.",
+        "settings.lookAbout.blossom": "Soft pink and white with falling petals. A spring mood.",
+        "settings.lookAbout.lagoon": "Warm turquoise water with rising bubbles. A summer mood.",
+        "settings.lookAbout.autumn": "Warm amber and red with falling leaves. An autumn mood.",
+        "settings.lookAbout.forest": "Dark green with fireflies. Calm, for focus.",
+        "settings.lookAbout.space": "A deep violet night with stars. For late evenings.",
+        // The note under the picker when the look's animation cannot be seen now.
+        // {effect}: the animation, like "falling snow"
+        "settings.lookEffectOff": "This look has a gentle animation: {effect}. Turn on “Extra effects” to see it.",
+        "settings.lookEffectButton": "Turn on",
+        "settings.lookEffectButtonLabel": "Turn on “Extra effects”",
+        "settings.lookEffectCalm": "This look has a gentle animation: {effect}. It is paused while “Calm motion” is on.",
+        "settings.lookEffectDevice": "This look has a gentle animation: {effect}. It is paused because your device asks for less motion.",
+        // "Like my device", and what the device has now
         "settings.themeSystem": "Like my device",
         "settings.themeNowDark": "Your device is in dark mode now.",
         "settings.themeNowLight": "Your device is in light mode now.",
+        // The theme under the look (the older name of the plain looks, still a setting)
+        "settings.theme": "Theme",
+        "settings.themeDark": "Dark",
+        "settings.themeLight": "Light",
+
+        // Language
+        "settings.language": "Language",
 
         // Reading
         "settings.textSize": "Text size",
@@ -90,7 +120,7 @@ window.AICompass.addTranslations({
         "settings.shortcuts": "Keyboard shortcuts",
         "settings.reset": "Reset to defaults",
         "settings.resetAsk": "Sure? Press again",
-        "settings.resetNote": "The language and the theme stay as they are.",
+        "settings.resetNote": "The language, the look and the design stay as they are.",
         "settings.resetDone": "Settings are back to the defaults",
 
         // Messages for screen readers and toasts. {setting} is the name of a setting
@@ -107,7 +137,8 @@ window.AICompass.addTranslations({
         "settings.cmdTurnOn": "{setting}: turn on",
         "settings.cmdTurnOff": "{setting}: turn off",
         "settings.cmdRelaxed": "Relaxed line spacing",
-        "settings.cmdSystemTheme": "Theme like my device",
+        "settings.cmdLook": "Choose a look",
+        "settings.cmdSystemTheme": "Look like my device",
         "settings.atLargest": "The text is already at its largest size",
         "settings.atSmallest": "The text is already at its normal size",
 
@@ -222,24 +253,46 @@ window.AICompass.addTranslations({
         "settings.previewButton": "Попробовать",
 
         "settings.groupDesign": "Дизайн",
-        "settings.design": "Дизайн",
-        "settings.designSimple": "Простой",
-        "settings.designPro": "Про",
-        "settings.designHint": "Простой: спокойный и понятный, для новичков. Про: насыщенная панель управления со статистикой, всеми разделами в меню и всеми эффектами, для тех, кто хорошо знает ИИ.",
-        "settings.cmdDesignPro": "Включить дизайн «Про»",
-        "settings.cmdDesignSimple": "Включить простой дизайн",
-        "settings.groupLanguage": "Язык и тема",
+        "settings.groupLook": "Оформление",
+        "settings.groupLanguage": "Язык",
         "settings.groupReading": "Чтение",
         "settings.groupComfort": "Комфорт",
         "settings.groupSound": "Чтение вслух",
 
-        "settings.language": "Язык",
-        "settings.theme": "Тема",
-        "settings.themeDark": "Тёмная",
-        "settings.themeLight": "Светлая",
+        "settings.design": "Дизайн",
+        "settings.designSimple": "Простой",
+        "settings.designSimpleAbout": "Спокойно и шаг за шагом. С него лучше всего начинать.",
+        "settings.designPro": "Про",
+        "settings.designProAbout": "Рабочее место для тех, кто знает ИИ: терминал, статистика и больше возможностей на каждой странице.",
+        "settings.cmdDesignPro": "Включить дизайн «Про»",
+        "settings.cmdDesignSimple": "Включить простой дизайн",
+
+        "settings.look": "Оформление",
+        "settings.lookEveryday": "На каждый день",
+        "settings.lookNature": "Времена года и места",
+        "settings.lookAbout.system": "Тёмное или светлое — как на твоём телефоне или компьютере.",
+        "settings.lookAbout.dark": "Классическое тёмное оформление. Глазам легче вечером.",
+        "settings.lookAbout.light": "Светлое и чёткое. Хорошо при дневном свете.",
+        "settings.lookAbout.paper": "Тёплая бумага и тёмные чернила, без анимации. Хорошо для долгого чтения.",
+        "settings.lookAbout.arctic": "Тёмно-синий лёд, северное сияние и падающий снег. Зимнее настроение.",
+        "settings.lookAbout.blossom": "Нежный розовый и белый, падающие лепестки. Весеннее настроение.",
+        "settings.lookAbout.lagoon": "Тёплая бирюзовая вода и пузырьки. Летнее настроение.",
+        "settings.lookAbout.autumn": "Тёплый янтарь и красный, падающие листья. Осеннее настроение.",
+        "settings.lookAbout.forest": "Тёмная зелень и светлячки. Спокойно, чтобы сосредоточиться.",
+        "settings.lookAbout.space": "Тёмно-фиолетовая ночь и звёзды. Для поздних вечеров.",
+        "settings.lookEffectOff": "У этого оформления есть мягкая анимация: {effect}. Включи «Дополнительные эффекты», чтобы её увидеть.",
+        "settings.lookEffectButton": "Включить",
+        "settings.lookEffectButtonLabel": "Включить «Дополнительные эффекты»",
+        "settings.lookEffectCalm": "У этого оформления есть мягкая анимация: {effect}. Она на паузе, пока включён «Спокойный режим».",
+        "settings.lookEffectDevice": "У этого оформления есть мягкая анимация: {effect}. Она на паузе: твоё устройство просит меньше движения.",
         "settings.themeSystem": "Как на устройстве",
         "settings.themeNowDark": "Сейчас на твоём устройстве тёмная тема.",
         "settings.themeNowLight": "Сейчас на твоём устройстве светлая тема.",
+        "settings.theme": "Тема",
+        "settings.themeDark": "Тёмная",
+        "settings.themeLight": "Светлая",
+
+        "settings.language": "Язык",
 
         "settings.textSize": "Размер текста",
         "settings.textSizeHint": "Крупнее буквы на всём сайте.",
@@ -282,7 +335,7 @@ window.AICompass.addTranslations({
         "settings.shortcuts": "Сочетания клавиш",
         "settings.reset": "Сбросить настройки",
         "settings.resetAsk": "Точно? Нажми ещё раз",
-        "settings.resetNote": "Язык и тема останутся прежними.",
+        "settings.resetNote": "Язык, оформление и дизайн останутся прежними.",
         "settings.resetDone": "Настройки сброшены",
 
         "settings.saidOn": "{setting}: вкл.",
@@ -297,7 +350,8 @@ window.AICompass.addTranslations({
         "settings.cmdTurnOn": "{setting}: включить",
         "settings.cmdTurnOff": "{setting}: выключить",
         "settings.cmdRelaxed": "Свободный межстрочный интервал",
-        "settings.cmdSystemTheme": "Тема как на устройстве",
+        "settings.cmdLook": "Выбрать оформление",
+        "settings.cmdSystemTheme": "Оформление как на устройстве",
         "settings.atLargest": "Текст уже самого крупного размера",
         "settings.atSmallest": "У текста уже обычный размер",
 

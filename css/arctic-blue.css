@@ -15,38 +15,55 @@
     1. Night + Arctic Blue
     2. Day + Arctic Blue
     3. The look button (Dark / Light / Arctic Blue)
-    4. The falling snow canvas
+    4. The aurora and the frost horizon (Night only)
+    5. The falling snow canvas
    ========================================================= */
 
 /* ===== 1. NIGHT + ARCTIC BLUE ===== */
+/* Deliberately NOT a darker Dark: the page is a deep marine blue (not near-black),
+   the accents are three blues (azure, ice cyan, periwinkle) instead of violet / mint /
+   orange, the glass has a bright frosted edge, and there is an aurora at the top and a
+   frost horizon at the bottom (section 4). */
 html[data-palette="arctic"][data-theme="dark"] {
-    --bg: #04101c;
-    --bg-2: #081a2c;
-    --surface: rgba(10, 28, 48, 0.72);
-    --surface-solid: #0a1c30;
-    --glass: rgba(9, 27, 46, 0.9);
-    --surface-2: rgba(18, 42, 70, 0.78);
-    --surface-hover: rgba(24, 54, 88, 0.9);
-    --border: rgba(140, 200, 255, 0.16);
-    --border-strong: rgba(140, 205, 255, 0.4);
+    --bg: #061a33;
+    --bg-2: #0a2547;
+    --surface: rgba(14, 44, 82, 0.66);
+    --surface-solid: #0d2a4f;
+    --glass: rgba(12, 40, 76, 0.9);
+    --surface-2: rgba(24, 64, 112, 0.7);
+    --surface-hover: rgba(32, 80, 138, 0.86);
+    --border: rgba(150, 215, 255, 0.22);
+    --border-strong: rgba(160, 222, 255, 0.5);
 
-    --text: #eaf6ff;
-    --text-muted: #a9c4d9;
-    --text-dim: #86a3ba;
+    --text: #f0f9ff;
+    --text-muted: #b4d3ec;
+    --text-dim: #8fb3d0;
 
-    --accent: #58b8ff;
-    --accent-2: #7ff0e6;
-    --accent-3: #ffc27a;
-    --accent-rgb: 88, 184, 255;
-    --accent-2-rgb: 127, 240, 230;
-    --accent-3-rgb: 255, 194, 122;
+    --accent: #4db8ff;
+    --accent-2: #9be9ff;
+    --accent-3: #7c9cff;
+    --accent-rgb: 77, 184, 255;
+    --accent-2-rgb: 155, 233, 255;
+    --accent-3-rgb: 124, 156, 255;
 
-    --gradient: linear-gradient(110deg, #8fd3ff 10%, #9ff5ec 90%);
-    --gradient-button: linear-gradient(115deg, #1478c8, #2f62d0);
-    --glow: 0 0 40px rgba(88, 184, 255, 0.24);
-    --nav-bg: rgba(4, 16, 28, 0.86);
-    --backdrop: rgba(4, 16, 28, 0.88);
-    --grid-line: rgba(140, 200, 255, 0.06);
+    --gradient: linear-gradient(110deg, #eaf9ff 0%, #8fdcff 45%, #6f9dff 100%);
+    --gradient-button: linear-gradient(115deg, #0b72cf, #2a55d8);
+    --glow: 0 0 44px rgba(77, 184, 255, 0.3);
+    --shadow: 0 24px 60px rgba(0, 14, 44, 0.5);
+    --shadow-card: 0 14px 34px rgba(0, 18, 52, 0.3);
+    --shadow-card-hover: 0 18px 40px rgba(0, 18, 52, 0.36);
+    --shadow-card-glow: 0 0 34px rgba(155, 233, 255, 0.12);
+    --nav-bg: rgba(6, 26, 51, 0.86);
+    --backdrop: rgba(6, 26, 51, 0.88);
+    --grid-line: rgba(150, 215, 255, 0.07);
+
+    /* Frosted glass: a bright, icy top edge and sheen on every card */
+    --glass-edge: rgba(215, 242, 255, 0.3);
+    --glass-sheen: rgba(170, 225, 255, 0.09);
+    /* The colour pools behind the page are stronger and bluer */
+    --pool-a: 0.34;
+    --pool-b: 0.26;
+    --pool-c: 0.22;
 }
 
 /* ===== 2. DAY + ARCTIC BLUE ===== */
@@ -121,7 +138,66 @@ html[data-palette="arctic"][data-theme="light"] {
     }
 }
 
-/* ===== 4. THE FALLING SNOW CANVAS ===== */
+/* ===== 4. THE AURORA AND THE FROST HORIZON (Night + Arctic Blue only) ===== */
+/* Two fixed layers behind the page, drawn on <html>'s own ::before / ::after, so no
+   extra markup is needed. The aurora is a few soft blue glows and faint vertical rays
+   that sway slowly (a transform, which the browser draws cheaply). The horizon is a
+   pale frost glow along the bottom edge. Both only show with "Extra effects" on; calm
+   mode and "reduce motion" keep them still (style.css, 13. REDUCED MOTION). */
+html[data-palette="arctic"][data-theme="dark"].fx-fancy::before,
+html[data-palette="arctic"][data-theme="dark"].fx-fancy::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+html[data-palette="arctic"][data-theme="dark"].fx-fancy::before {
+    top: 0;
+    height: 70vh;
+    z-index: -4;
+    background:
+        radial-gradient(ellipse 55% 42% at 24% 0%, rgba(46, 220, 255, 0.34), transparent 72%),
+        radial-gradient(ellipse 50% 46% at 72% 0%, rgba(70, 110, 255, 0.34), transparent 72%),
+        radial-gradient(ellipse 36% 30% at 50% 6%, rgba(150, 240, 255, 0.2), transparent 72%),
+        repeating-linear-gradient(102deg,
+            transparent 0 46px,
+            rgba(130, 215, 255, 0.07) 64px,
+            transparent 96px);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 100%);
+    transform-origin: 50% 0;
+    animation: arctic-aurora 26s ease-in-out infinite alternate;
+    will-change: transform;
+}
+
+html[data-palette="arctic"][data-theme="dark"].fx-fancy::after {
+    bottom: 0;
+    height: 34vh;
+    z-index: -4;
+    background:
+        linear-gradient(to top, rgba(190, 235, 255, 0.2), rgba(120, 190, 255, 0.07) 45%, transparent 100%);
+    border-bottom: 2px solid rgba(215, 242, 255, 0.32);
+}
+
+@keyframes arctic-aurora {
+    0%   { transform: translate3d(-3%, 0, 0) scaleX(1.04) skewX(-3deg); opacity: 0.85; }
+    50%  { transform: translate3d(2%, 1.5%, 0) scaleX(1.1) skewX(2deg); opacity: 1; }
+    100% { transform: translate3d(4%, 0, 0) scaleX(1.05) skewX(4deg); opacity: 0.8; }
+}
+
+/* Small touches that belong to the palette */
+html[data-palette="arctic"] {
+    accent-color: var(--accent-2);
+}
+
+html[data-palette="arctic"] ::selection {
+    background: rgba(var(--accent-rgb), 0.4);
+    color: var(--text);
+}
+
+/* ===== 5. THE FALLING SNOW CANVAS ===== */
 /* Drawn by js/arctic-snow.js. Only there while the palette is on, between the
    neural background and the page, and it never takes a click. */
 #arctic-snow {

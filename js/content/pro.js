@@ -1,21 +1,19 @@
 /* =========================================================
    AI COMPASS — TEXTS: THE TWO DESIGNS (SIMPLE AND PRO)
    Every word in English and in Russian (informal "ты").
-   The Simple / Pro switch in the menu bar, the line under the home
-   buttons, and the Pro control panel on the home page (js/pro.js).
+   The line under the home buttons that says where the Pro design is,
+   and the Pro control panel, workspace and terminal on the home page
+   (js/pro.js). The design itself is chosen in Settings: those texts are
+   in js/content/settings.js.
    To change a text, change it here (in both languages).
    ========================================================= */
 
 window.AICompass.addTranslations({
     en: {
-        // The switch in the menu bar and in the phone menu
-        "pro.switchLabel": "Design: Simple or Pro",
-        "pro.toPro": "Switch to the Pro design",
-        "pro.toSimple": "Switch to the Simple design",
-
-        // Under the home page buttons (Simple design)
+        // Under the home page buttons (Simple design): the second sentence is a
+        // button that opens Settings at "Design"
         "pro.offer": "Already know AI well?",
-        "pro.offerButton": "Try the Pro design",
+        "pro.offerButton": "The Pro design is in Settings",
 
         // The control panel (Pro design)
         "pro.title": "Control panel",
@@ -39,7 +37,7 @@ window.AICompass.addTranslations({
         "pro.term": "A random AI term",
         "pro.compass": "My Compass: badges and XP",
         "pro.settings": "Settings",
-        "pro.back": "Back to the Simple design",
+        "pro.designLook": "Design and look",
         "pro.daysShort": "d",
         "pro.overall": "of the whole site explored",
         "pro.badges": "{n} badges",
@@ -85,7 +83,8 @@ window.AICompass.addTranslations({
         "pro.term.pathNone": "No path yet. Type go path to build one.",
         "pro.term.pathMemory": "memory: {total} cards · {due} due · {strong} strong",
         "pro.term.reviewStart": "→ memory check",
-        "pro.cmd.theme": "dark or light theme",
+        "pro.cmd.look": "list the looks, or choose one",
+        "pro.cmd.theme": "the Dark or the Light look",
         "pro.cmd.lang": "English or Russian",
         "pro.cmd.design": "back to the Simple design",
         "pro.cmd.keys": "keyboard shortcuts",
@@ -109,6 +108,10 @@ window.AICompass.addTranslations({
         "pro.term.defineHow": "Type a word after define, for example define neural network",
         "pro.term.defineNone": "No glossary term for “{word}”.",
         "pro.term.defineMore": "More words: go glossary",
+        "pro.term.lookTitle": "LOOKS (▸ = on now)",
+        "pro.term.lookHint": "Choose one: look <id>, for example look lagoon",
+        "pro.term.lookUnknown": "No look called {name}.",
+        "pro.term.lookOn": "→ {name}",
         "pro.term.done": "Done.",
 
         // The status bar
@@ -182,12 +185,8 @@ window.AICompass.addTranslations({
         "home.startAll": "All three done. Great start! Keep going with the next lesson."
     },
     ru: {
-        "pro.switchLabel": "Дизайн: простой или «Про»",
-        "pro.toPro": "Включить дизайн «Про»",
-        "pro.toSimple": "Включить простой дизайн",
-
         "pro.offer": "Уже хорошо знаешь ИИ?",
-        "pro.offerButton": "Попробуй дизайн «Про»",
+        "pro.offerButton": "Дизайн «Про» включается в настройках",
 
         "pro.title": "Панель управления",
         "pro.live": "Онлайн",
@@ -210,7 +209,7 @@ window.AICompass.addTranslations({
         "pro.term": "Случайный термин ИИ",
         "pro.compass": "Мой компас: значки и XP",
         "pro.settings": "Настройки",
-        "pro.back": "Вернуться к простому дизайну",
+        "pro.designLook": "Дизайн и оформление",
         "pro.daysShort": "дн.",
         "pro.overall": "всего сайта изучено",
         "pro.badges": "Значков: {n}",
@@ -254,7 +253,8 @@ window.AICompass.addTranslations({
         "pro.term.pathNone": "Пути пока нет. Набери go path, чтобы собрать его.",
         "pro.term.pathMemory": "память: карточек {total} · на сегодня {due} · крепких {strong}",
         "pro.term.reviewStart": "→ проверка памяти",
-        "pro.cmd.theme": "тёмная или светлая тема",
+        "pro.cmd.look": "список оформлений или выбрать одно",
+        "pro.cmd.theme": "тёмное или светлое оформление",
         "pro.cmd.lang": "английский или русский",
         "pro.cmd.design": "вернуться к простому дизайну",
         "pro.cmd.keys": "сочетания клавиш",
@@ -269,7 +269,7 @@ window.AICompass.addTranslations({
         "pro.term.notHere": "Этот раздел здесь недоступен.",
         "pro.term.lessonRange": "Уроки идут с 1 по {n}.",
         "pro.term.lessonOpen": "→ Урок {n}: {title}",
-        "pro.term.labTitle": "ЭКСПЕРИМЕНТЫ (✓ = уже пробовал)",
+        "pro.term.labTitle": "ЭКСПЕРИМЕНТЫ (✓ = уже опробован)",
         "pro.term.labHint": "Открыть: lab <id>, например lab maze",
         "pro.term.labUnknown": "Эксперимента {name} нет. Напиши lab, чтобы увидеть список.",
         "pro.term.labOpen": "→ {title}",
@@ -278,6 +278,10 @@ window.AICompass.addTranslations({
         "pro.term.defineHow": "Напиши слово после define, например define нейросеть",
         "pro.term.defineNone": "В словаре нет термина «{word}».",
         "pro.term.defineMore": "Больше слов: go glossary",
+        "pro.term.lookTitle": "ОФОРМЛЕНИЯ (▸ = включено)",
+        "pro.term.lookHint": "Выбрать: look <id>, например look lagoon",
+        "pro.term.lookUnknown": "Оформления {name} нет.",
+        "pro.term.lookOn": "→ {name}",
         "pro.term.done": "Готово.",
 
         "pro.session": "Этот визит",

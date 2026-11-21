@@ -1,0 +1,616 @@
+/* =========================================================
+   AI COMPASS — LEARNER ACCOUNTS ON THIS DEVICE (js/profiles.js)
+   1. The group "Account" in the Settings window. It reuses the window's
+      groups, rows, hints and notes (css/settings.css, .st-*); only what
+      is special to accounts is here.
+   2. Pictures
+   3. The start (no account yet) and the account card
+   4. The other learners
+   5. Quiet buttons, and "Delete" with its second press
+   6. The small form: a name and a picture
+   7. The greeting on the home page
+   8. The veil while accounts are switched
+   9. Phones, touch screens, the Pro design, high contrast, no motion
+   Colours come from the tokens of style.css, so every look and both
+   themes work without a rule of their own.
+   ========================================================= */
+
+/* ===== 1. THE GROUP ===== */
+
+/* A name can be one long word (24 letters without a space), and it shows up in
+   many sentences of the group: the warning before a deletion, "Switch to NAME",
+   the line that says what happened. Such a word breaks instead of making a row
+   wider than the window. Ordinary words are never broken by this. */
+.pf {
+    overflow-wrap: anywhere;
+}
+
+/* The group's title takes the focus when the greeting or the Ctrl+K command
+   opens the window here. A title is not a button: no ring (as in style.css). */
+.pf .st-group-title:focus,
+.pf-card-name:focus {
+    outline: none;
+}
+
+/* The line that says what happened. It is always there, so screen readers
+   hear a new message; without a message it takes no room. */
+.pf .pf-status {
+    margin: 0;
+    padding: 0 18px;
+    color: var(--text-success);
+    font-size: 0.875rem;
+}
+
+.pf .pf-status:not(:empty) {
+    padding-top: 10px;
+    padding-bottom: 2px;
+}
+
+.pf .pf-status.is-problem {
+    color: var(--text-warning);
+}
+
+/* "Switch to NAME", right after an account was loaded from a file */
+.pf-offer {
+    padding: 10px 18px 0;
+}
+
+.pf-offer .btn {
+    max-width: 100%;
+}
+
+.pf-body {
+    display: flex;
+    flex-direction: column;
+}
+
+/* One sentence instead of the group (storage blocked, or a swap that waits) */
+.pf .pf-plain {
+    font-size: 0.875rem;
+}
+
+.pf-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+}
+
+/* ===== 2. PICTURES ===== */
+
+/* px: a glyph in a tile of fixed size */
+.pf-pic {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface-2);
+    font-size: 22px;
+    line-height: 1;
+}
+
+.pf-pic-big {
+    width: 56px;
+    height: 56px;
+    border-color: var(--border-strong);
+    font-size: 30px;
+}
+
+/* ===== 3. THE START AND THE ACCOUNT CARD ===== */
+
+.pf-start {
+    display: flex;
+    flex-direction: column;
+}
+
+.pf-intro {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+}
+
+/* "Create my account": the one big button */
+.pf-main {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 14px;
+    font-size: 1rem;
+}
+
+.pf-start .pf-quiet {
+    align-self: center;
+    margin-top: 8px;
+}
+
+.pf-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 14px;
+}
+
+.pf-card-text {
+    flex: 1 1 9rem;
+    min-width: 0;
+}
+
+.pf-card-name {
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.pf-card .pf-buttons {
+    flex: 1 1 100%;
+}
+
+.pf-more .pf-honest {
+    margin-top: 10px;
+}
+
+.pf-more > .pf-honest:first-child {
+    margin-top: 0;
+}
+
+.pf-online .btn {
+    margin-top: 10px;
+}
+
+.pf-end {
+    padding-top: 8px;
+    padding-bottom: 10px;
+}
+
+/* ===== 4. THE OTHER LEARNERS ===== */
+
+/* (minmax(0, 1fr): the list is as wide as the window lets it be, never as wide
+   as its longest row would like to be) */
+.pf-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+
+/* The picture and the name stay together. When the buttons do not fit next
+   to them (a phone, a long name, big letters) they go to a line of their own. */
+.pf-person {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-2);
+}
+
+.pf-person-who {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.pf-person-name {
+    min-width: 0;
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+/* (The gap: a finger that aims at "Switch" must not get "Delete", or the other
+   way round. There is room for it on the narrowest phone.) */
+.pf-person-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px 12px;
+    max-width: 100%;
+    margin-left: auto;
+}
+
+/* What "Delete" will erase: shown after the first press, above the question
+   (in the page it stands before the button: see section 5) */
+.pf .pf-warning {
+    flex: 1 1 100%;
+    min-width: 0;
+    margin-top: 0;
+}
+
+.pf-end .pf-warning {
+    margin-bottom: 8px;
+}
+
+/* ===== 5. QUIET BUTTONS, AND "DELETE" ===== */
+
+/* A button that looks like a link: for what is done rarely. The underline
+   says "you can press this" without relying on colour. */
+.pf-quiet {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    min-height: 38px;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--text-accent-2);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+    text-decoration: underline;
+    text-decoration-thickness: max(1px, 0.08em);
+    text-underline-offset: 0.2em;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.pf-quiet:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+.pf-quiet:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pf-remove {
+    color: var(--text-danger);
+}
+
+.pf-remove:hover {
+    color: var(--text-danger);
+}
+
+/* "Sure? Press again to delete" (like the reset button of the window) */
+.pf-remove.is-armed {
+    border-color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 14%, var(--surface-solid));
+    color: var(--text-danger);
+    text-decoration: none;
+}
+
+/* A child taps twice: on the wrong button, and again when "nothing happened".
+   So the second press on "Delete" must be aimed, never just repeated:
+   - The warning shows above the question and pushes it down. Where "Delete"
+     was pressed there is now the warning, which cannot be pressed.
+   - While a row asks "Sure?", the question is the only button of the row, on a
+     line of its own, at the start of the line. It is longer than "Delete":
+     next to "Switch" the row would be laid out again, and "Switch" would slide
+     to the very place where "Delete" was a moment ago.
+   "Switch" is back as soon as the question is answered or taken back
+   (js/profiles.js, section 12). */
+.pf-person.is-asking [data-pf="switch"] {
+    display: none;
+}
+
+.pf-person.is-asking .pf-person-buttons {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+}
+
+/* ===== 6. THE SMALL FORM ===== */
+
+.pf .pf-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.pf-form-title {
+    font-size: 1rem;
+}
+
+.pf-form-title + .st-hint {
+    margin-top: 4px;
+}
+
+.pf-label {
+    display: block;
+    margin-top: 14px;
+    padding: 0;
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.pf-input {
+    width: 100%;
+    min-height: 48px;
+    margin: 8px 0 6px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 1.0625rem;
+}
+
+.pf-input:focus-visible {
+    border-color: var(--accent-2);
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+}
+
+.pf-input[aria-invalid="true"] {
+    border-color: var(--danger);
+}
+
+/* The reason a name was refused. Always there (role="alert"): no room when empty. */
+.pf .pf-error:empty {
+    margin: 0;
+}
+
+/* The pictures: real radio buttons. Each one is invisible but covers its
+   picture, so a click, a tap and the arrow keys all work as usual. */
+.pf-pics {
+    min-width: 0;
+    margin: 14px 0 0;
+    padding: 0;
+    border: 0;
+}
+
+/* (the room above a fieldset's title belongs to the fieldset) */
+.pf-pics .pf-label {
+    margin-top: 0;
+}
+
+.pf-grid {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.pf-pic-option {
+    position: relative;
+    display: flex;
+}
+
+.pf-pic-option input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* px: a glyph in a tile of fixed size */
+.pf-pic-face {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    min-height: 44px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: var(--bg-2);
+    font-size: 24px;
+    line-height: 1;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease;
+}
+
+.pf-pic-option:hover .pf-pic-face {
+    background: var(--surface-hover);
+}
+
+/* The chosen picture: a frame and a small tick (not only a colour) */
+.pf-pic-option input:checked + .pf-pic-face {
+    border-color: var(--accent-2);
+    background: var(--surface-solid);
+    box-shadow: 0 6px 16px rgba(var(--accent-2-rgb), 0.22);
+}
+
+.pf-pic-option input:checked + .pf-pic-face::after {
+    content: "✓";
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    color: var(--bg);
+    font-size: 11px;        /* px: a glyph in a tile of fixed size */
+    font-weight: 800;
+    line-height: 1;
+}
+
+.pf-pic-option input:focus-visible + .pf-pic-face {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+}
+
+.pf-form-buttons {
+    margin-top: 16px;
+}
+
+.pf-form-buttons .btn {
+    flex: 1 1 7rem;
+}
+
+/* ===== 7. THE GREETING ON THE HOME PAGE ===== */
+
+/* "Hi, NAME!": a small friendly button above the home page's first line */
+.pf-hello {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 100%;
+    min-height: 44px;
+    margin-bottom: 14px;
+    padding: 5px 16px 5px 6px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--glass);
+    background-image: linear-gradient(180deg, var(--glass-sheen), transparent 70%);
+    box-shadow: inset 0 1px 0 var(--glass-edge);
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: left;
+    transition: border-color 0.2s ease, transform 0.25s var(--ease);
+}
+
+.pf-hello:hover {
+    border-color: var(--accent-2);
+    transform: translateY(-2px);
+}
+
+/* Its room is kept while the texts load, so the page does not jump */
+.pf-hello.is-waiting {
+    visibility: hidden;
+}
+
+/* px: a glyph in a tile of fixed size */
+.pf-hello-pic {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface-solid);
+    font-size: 18px;
+    line-height: 1;
+}
+
+.pf-hello-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* ===== 8. THE VEIL WHILE ACCOUNTS ARE SWITCHED ===== */
+
+/* Over everything, the toasts too: nothing can be pressed for a moment */
+.pf-veil {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-toast) + 50);
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: var(--backdrop);
+}
+
+.pf-veil:focus {
+    outline: none;
+}
+
+.pf-veil-text {
+    max-width: 100%;
+    padding: 16px 24px;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background: var(--surface-solid);
+    box-shadow: var(--shadow);
+    color: var(--text);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.pf-veil-text:empty {
+    display: none;
+}
+
+/* ===== 9. PHONES, TOUCH SCREENS, THE PRO DESIGN, HIGH CONTRAST, NO MOTION ===== */
+
+/* Big enough for a finger, like the window's other controls (44px) */
+@media (hover: none), (pointer: coarse) {
+    .pf-quiet,
+    .pf .btn-small {
+        min-height: 44px;
+    }
+
+    .pf-quiet {
+        min-width: 44px;
+    }
+}
+
+@media (max-width: 640px) {
+    /* The rows of the window have 14px at the sides here (css/settings.css) */
+    .pf .pf-status {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .pf-offer {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    /* A little tighter, so a short name and its two buttons share one line */
+    .pf-person {
+        column-gap: 8px;
+    }
+
+    .pf-person-who {
+        gap: 10px;
+    }
+
+    /* Four pictures in a row: each one is easy to hit */
+    .pf-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .pf-pic-face {
+        min-height: 48px;
+    }
+}
+
+/* The Pro design has square corners (css/pro.css) */
+html.design-pro .pf-hello {
+    border-radius: 8px;
+}
+
+html.design-pro .pf-hello-pic {
+    border-radius: 6px;
+}
+
+/* High contrast: every picture has a frame that can be seen, the chosen one a
+   plain, thick frame, and the focus frame is the window's own (css/settings.css, 13) */
+html.st-contrast .pf-pic-face {
+    border-color: var(--border-strong);
+}
+
+html.st-contrast .pf-pic-option input:checked + .pf-pic-face {
+    border-color: var(--text);
+    box-shadow: 0 0 0 1px var(--text);
+}
+
+html.st-contrast .pf-pic-option input:checked + .pf-pic-face::after {
+    background: var(--text);
+}
+
+html.st-contrast .pf-pic-option input:focus-visible + .pf-pic-face {
+    outline: 3px solid var(--st-ring);
+}
+
+html.st-contrast .pf-person,
+html.st-contrast .pf-pic {
+    border-color: var(--border-strong);
+}
+
+/* No lift on hover when motion is off (style.css does the same for its buttons) */
+html.fx-motion-off .pf-hello:hover {
+    transform: none;
+}
