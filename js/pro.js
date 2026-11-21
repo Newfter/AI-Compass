@@ -60,6 +60,7 @@
         { id: "learn", key: "p", names: ["path", "learn", "путь"] },
         { id: "lessons", key: "l", names: ["lessons", "уроки"] },
         { id: "lab", key: "a", names: ["lab", "лаборатория"] },
+        { id: "research", key: "r", names: ["research", "исследования"] },
         { id: "quiz", key: "q", names: ["quiz", "тест"] },
         { id: "challenge", key: "c", names: ["challenge", "вызов"] },
         { id: "glossary", key: "g", names: ["glossary", "словарь"] },
@@ -229,6 +230,7 @@
                 action("keys", t("pro.keys"), ["?"]) +
                 action("terminal", t("pro.terminalOpen"), ["`"]) +
                 action("daily", t("pro.daily")) +
+                action("research", t("pro.research")) +
                 action("compass", t("pro.compass")) +
                 action("design", t("pro.designLook")) +
             "</ul>";
@@ -503,6 +505,9 @@
         { names: ["go", "open", "открыть"], usage: "go <page>", does: "pro.cmd.go", run: cmdGo },
         { names: ["lesson", "урок"], usage: "lesson <1-15>", does: "pro.cmd.lesson", run: cmdLesson },
         { names: ["lab", "лаб"], usage: "lab [id]", does: "pro.cmd.lab", run: cmdLab },
+        { names: ["research", "исследования"], usage: "research", does: "pro.cmd.research", run: cmdResearch },
+        { names: ["bench", "стенд"], usage: "bench [id]", does: "pro.cmd.bench", run: cmdBench },
+        { names: ["note", "заметка"], usage: "note <text>", does: "pro.cmd.note", run: cmdNote },
         { names: ["quiz", "тест"], usage: "quiz [classic|timed|daily|myth]", does: "pro.cmd.quiz", run: cmdQuiz },
         { names: ["define", "def", "что"], usage: "define <word>", does: "pro.cmd.define", run: cmdDefine },
         { names: ["search", "find", "поиск"], usage: "search", does: "pro.cmd.search", run: function () { if (A.palette) A.palette.open(); } },
@@ -614,6 +619,58 @@
         }
         print(t("pro.term.labOpen", { title: t(entry.titleKey) }), "ok");
         A.lab.open(entry.id);
+    }
+
+    // The Research lab (js/research.js): "research" opens it, "bench" lists its tools
+    // ("bench ci" opens one), "note <text>" adds a line to its notebook
+    function cmdResearch() {
+        if (!A.research) {
+            print(t("pro.term.notHere"), "error");
+            return;
+        }
+        print(t("pro.term.opened", { name: t("nav.research") }), "ok");
+        A.research.open();
+    }
+
+    function cmdBench(arg) {
+        const tools = safe(function () { return A.research.tools(); }, []);
+        if (!tools.length) {
+            print(t("pro.term.notHere"), "error");
+            return;
+        }
+        if (!arg) {
+            print(t("pro.term.benchTitle"), "info");
+            tools.forEach(function (entry) {
+                print("  " + (entry.ready ? "▸ " : "· ") + (entry.id + "            ").slice(0, 12) + t(entry.name) + (entry.ready ? "" : "  (" + t("research.bench.soon") + ")"));
+            });
+            print(t("pro.term.benchHint"), "dim");
+            return;
+        }
+        const wanted = arg.trim().toLowerCase();
+        const entry = tools.find(function (item) { return item.id === wanted || t(item.name).toLowerCase() === wanted; }) ||
+            tools.find(function (item) { return t(item.name).toLowerCase().indexOf(wanted) !== -1; });
+        if (!entry) {
+            print(t("pro.term.benchUnknown", { name: arg.trim() }), "error");
+            return;
+        }
+        if (!entry.ready) {
+            print(t("pro.term.benchSoon", { title: t(entry.name) }), "error");
+            return;
+        }
+        print(t("pro.term.labOpen", { title: t(entry.name) }), "ok");
+        A.research.openTool(entry.id);
+    }
+
+    function cmdNote(arg) {
+        const text = (arg || "").trim();
+        if (!text) {
+            print(t("pro.term.noteHow"), "dim");
+            return;
+        }
+        const answer = safe(function () { return A.research.note({ title: text }); }, null);
+        if (!answer) print(t("pro.term.notHere"), "error");
+        else if (answer.ok) print(t("pro.term.noteAdded"), "ok");
+        else print(t("pro.term.noteFull", { max: answer.max }), "error");
     }
 
     function cmdQuiz(arg) {
@@ -833,7 +890,7 @@
         const current = document.querySelector("main > section.page-current");
         const id = current ? current.id : "home";
         const page = PAGES.find(function (p) { return p.id === id; });
-        const keys = { home: "cmd.home", learn: "nav.learn", lessons: "nav.lessons", lab: "nav.lab", quiz: "nav.quiz", challenge: "nav.challenge", glossary: "nav.glossary", timeline: "nav.timeline", teachers: "nav.teachers", about: "nav.about" };
+        const keys = { home: "cmd.home", learn: "nav.learn", lessons: "nav.lessons", lab: "nav.lab", research: "nav.research", quiz: "nav.quiz", challenge: "nav.challenge", glossary: "nav.glossary", timeline: "nav.timeline", teachers: "nav.teachers", about: "nav.about" };
         return keys[id] ? t(keys[id]) : page ? page.names[0] : id;
     }
 
@@ -972,6 +1029,10 @@
         } else if (name === "termday") {
             const id = button.getAttribute("data-term");
             if (A.glossary && id) A.glossary.show(id, { focus: true });
+        } else if (name === "research") {
+            // The Research lab (js/research.js): the bench, the station and the notebook
+            if (A.research) A.research.open();
+            else openPage("research");
         } else if (name === "compass") {
             if (A.journey) A.journey.open();
         } else if (name === "design") {
