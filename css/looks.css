@@ -1,0 +1,702 @@
+/* =========================================================
+   AI COMPASS — THE NEW LOOKS (one stylesheet for five of them)
+   A look is the colours of the whole site, chosen in Settings. Arctic Blue and
+   Tropical Lagoon have their own files (css/arctic-blue.css, css/lagoon.css).
+   The five looks of this file are built the same way: a palette on top of the
+   dark or the light theme. js/arctic-blue.js (the register of the looks) sets
+   data-palette="space" on <html>, and the small script in the <head> of
+   index.html restores it before the first paint.
+
+   HOW A LOOK IS BUILT
+   Everything of one look is in one block, between two marker lines:
+     - its colours: new values for the colour tokens of style.css, under
+       html[data-palette="<id>"][data-theme="<the theme it is built on>"].
+       Every feature uses those tokens, so the whole site follows by itself;
+     - accent-color (ticks and sliders drawn by the browser) and ::selection;
+     - its backdrop, on the ::after (and, if it needs a second layer, the
+       ::before) of <html>: only with "Extra effects" (.fx-fancy). Best a still
+       picture. It stays, standing still, in calm mode: a backdrop may move
+       only in a rule with :not(.fx-motion-off);
+     - the rule that shows the canvas of its animation, <canvas id="look-effects">,
+       drawn by js/look-effects.js: only with "Extra effects" and motion allowed;
+     - its keyframes, if it has any: their names start with the look's id.
+   Every selector of a block starts with html[data-palette="<id>"], so a look can
+   never change another look or the plain themes. "High contrast" and "Reduce
+   transparency" (css/settings.css, sections 5 and 6) are stronger than every look
+   and keep winning: no !important in a block, and colour tokens only in the one
+   rule named above.
+
+   THE LOOKS OF THIS FILE (in the order of the picker)
+     paper     Paper & Ink        on the light theme, no animation
+     blossom   Cherry Blossom     on the light theme, falling petals
+     autumn    Autumn Maple       on the dark theme, falling leaves
+     forest    Deep Forest        on the dark theme, fireflies
+     space     Deep Space         on the dark theme, twinkling stars
+
+   THE PARTS OF THIS FILE
+    1. What the five looks share: the canvas of the animations
+    2. One block per look
+    3. A few small texts of three looks, brighter (also for the two looks with
+       files of their own)
+   ========================================================= */
+
+/* ===== 1. WHAT THE FIVE LOOKS SHARE ===== */
+/* The canvas that js/look-effects.js draws on: hidden until a look shows it (see the
+   last rule of a look's block), fixed between the neural background and the page like
+   the snow and the bubbles, and it never takes a click. */
+#look-effects {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100vh;
+    height: 100lvh;
+    pointer-events: none;
+}
+
+/* A device that asks for less motion: no canvas, whatever the classes of <html> say.
+   (js/core.js sets .fx-motion-off for this too, but it can miss the moment the setting
+   changes in the middle of a visit; js/look-effects.js stops drawing by itself.) */
+@media (prefers-reduced-motion: reduce) {
+    #look-effects {
+        display: none !important;
+    }
+}
+
+/* On paper: no canvas, and no backdrop of these five looks (css/print.css makes every
+   background see-through, but a border or a mask would still print) */
+@media print {
+    #look-effects {
+        display: none !important;
+    }
+
+    html:is([data-palette="paper"], [data-palette="blossom"], [data-palette="autumn"], [data-palette="forest"], [data-palette="space"])::before,
+    html:is([data-palette="paper"], [data-palette="blossom"], [data-palette="autumn"], [data-palette="forest"], [data-palette="space"])::after {
+        content: none !important;
+    }
+}
+
+/* ===== 2. ONE BLOCK PER LOOK ===== */
+
+/* ===== LOOK: paper ===== */
+/* Paper & Ink: a well-printed book, made for long reading. Warm cream paper, cards that are
+   sheets of a lighter paper (almost opaque: this look uses no glass), thin ink-brown rules
+   and short soft shadows. Everything people read is ink: near-black text, a fountain-pen
+   blue, a blue-green ink and a sepia. Nothing glows and nothing moves. */
+html[data-palette="paper"][data-theme="light"] {
+    --bg: #f6efe0;
+    --bg-2: #efe6d2;
+    --surface: rgba(252, 247, 236, 0.78);
+    --surface-solid: #fcf7ec;
+    --glass: rgba(252, 247, 236, 0.9);
+    --surface-2: rgba(237, 227, 206, 0.92);
+    --surface-hover: rgba(228, 216, 190, 0.98);
+    --border: rgba(74, 52, 28, 0.22);
+    --border-strong: rgba(74, 52, 28, 0.5);
+
+    --text: #211a14;
+    --text-muted: #4d4033;
+    --text-dim: #5f4f40;
+
+    --accent: #1f4b99;
+    --accent-2: #0c6e72;
+    --accent-3: #80461f;
+    --accent-rgb: 31, 75, 153;
+    --accent-2-rgb: 12, 110, 114;
+    --accent-3-rgb: 128, 70, 31;
+    /* Right, wrong and careful a little deeper than on the light theme, so that they stay
+       easy to read on cream and on the darker paper of a box */
+    --success: #0b7d4e;
+    --danger: #b3261e;
+    --warning: #8a5a00;
+
+    /* Headings and the logo: almost flat, ink blue to a slightly greener ink */
+    --gradient: linear-gradient(110deg, #1f4b99 0%, #17597f 100%);
+    --gradient-button: linear-gradient(115deg, #24509e, #1c3f80);
+    --glow: 0 0 0 rgba(31, 75, 153, 0);
+    --shadow: 0 10px 26px rgba(60, 42, 20, 0.14);
+    --shadow-card: 0 1px 3px rgba(60, 42, 20, 0.12);
+    --shadow-card-hover: 0 3px 9px rgba(60, 42, 20, 0.16);
+    --shadow-card-glow: 0 0 0 rgba(31, 75, 153, 0);
+    --nav-bg: rgba(246, 239, 224, 0.92);
+    --backdrop: rgba(246, 239, 224, 0.88);
+    --grid-line: rgba(74, 52, 28, 0.05);
+
+    /* A sheet of paper has no sheen: only a thin lighter top edge */
+    --glass-edge: rgba(255, 255, 255, 0.7);
+    --glass-sheen: rgba(255, 255, 255, 0.1);
+    /* No colour pools behind the page */
+    --pool-a: 0;
+    --pool-b: 0;
+    --pool-c: 0;
+
+    /* The site's own violet would be a stranger here: the rim of the main button and the
+       "Skip to content" link are ink blue too */
+    --accent-strong: #1c4288;
+    --button-rim: rgba(255, 255, 255, 0.4);
+}
+
+html[data-palette="paper"] {
+    accent-color: var(--accent);
+}
+
+html[data-palette="paper"] ::selection {
+    background: rgba(var(--accent-rgb), 0.22);
+    color: var(--text);
+}
+
+/* The backdrop: even with "Extra effects" on, only a still, barely visible warmth: the
+   page is a little lighter in the middle and a little browner towards its edges, like an
+   old sheet. No animation and no scene: this look has no canvas rule. */
+html[data-palette="paper"].fx-fancy::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -4;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 120% 95% at 50% 42%, rgba(255, 252, 244, 0.5) 0%, transparent 46%, rgba(150, 110, 60, 0.07) 100%);
+}
+/* ===== END LOOK: paper ===== */
+
+/* ===== LOOK: blossom ===== */
+/* Cherry Blossom: a spring morning under a flowering cherry tree. The page is a warm white
+   with the faintest pink and the cards are white: pink is only the mood (the wells, the
+   glows, the shadows). Everything people read is dark and strong: plum-brown text, a rich
+   rose, a leaf green and a honey gold. */
+html[data-palette="blossom"][data-theme="light"] {
+    --bg: #fef6f8;
+    --bg-2: #f9eaee;
+    --surface: rgba(255, 255, 255, 0.74);
+    --surface-solid: #ffffff;
+    --glass: rgba(255, 255, 255, 0.9);
+    --surface-2: rgba(250, 238, 242, 0.92);
+    --surface-hover: rgba(255, 252, 253, 0.98);
+    --border: rgba(126, 52, 84, 0.17);
+    --border-strong: rgba(128, 50, 84, 0.42);
+
+    --text: #2d1a25;
+    --text-muted: #5b4350;
+    --text-dim: #6b525f;
+
+    --accent: #b12b5a;
+    --accent-2: #36701e;
+    --accent-3: #8a5c00;
+    --accent-rgb: 177, 43, 90;
+    --accent-2-rgb: 54, 112, 30;
+    --accent-3-rgb: 138, 92, 0;
+    /* "Right" is the site's emerald, a little deeper: the word "Completed" must stay easy to
+       read on its own pale green badge, which lies on a pink box here. "Wrong" is a warm
+       brick red, so that nobody takes it for the rose of the links */
+    --success: #0c8a57;
+    --danger: #c8321a;
+
+    /* Headings and the logo: rose to a warm brick red. Every stop keeps 4.5:1 for small text,
+       also on the pinkest spot of the backdrop and on a pink box under the menu bar */
+    --gradient: linear-gradient(110deg, #a8235f 0%, #b52d4a 55%, #b03a20 100%);
+    --gradient-button: linear-gradient(115deg, #b62a5b, #9a2a6e);
+    --glow: 0 0 40px rgba(200, 70, 115, 0.16);
+    --shadow: 0 24px 50px rgba(118, 44, 76, 0.13);
+    --shadow-card: 0 10px 28px rgba(118, 44, 76, 0.08);
+    --shadow-card-hover: 0 14px 34px rgba(118, 44, 76, 0.12);
+    --shadow-card-glow: 0 0 28px rgba(214, 90, 130, 0.14);
+    --nav-bg: rgba(254, 246, 248, 0.86);
+    --backdrop: rgba(254, 246, 248, 0.88);
+    --grid-line: rgba(160, 60, 100, 0.045);
+
+    /* Light on light: the top edge of every card is white */
+    --glass-edge: rgba(255, 255, 255, 0.95);
+    --glass-sheen: rgba(255, 255, 255, 0.6);
+    /* The colour pools behind the page: a breath of rose and of honey, and no green (a dark
+       green over a pink white is only grey) */
+    --pool-a: 0.07;
+    --pool-b: 0;
+    --pool-c: 0.04;
+
+    /* The site's own violet would be a stranger here: the rim of the main button and the
+       "Skip to content" link are rose too */
+    --accent-strong: #a3245a;
+    --button-rim: rgba(255, 196, 216, 0.4);
+}
+
+html[data-palette="blossom"] {
+    accent-color: var(--accent);
+}
+
+html[data-palette="blossom"] ::selection {
+    background: rgba(var(--accent-rgb), 0.26);
+    color: var(--text);
+}
+
+/* The backdrop: one still picture behind the page, on <html>'s own ::after, only with
+   "Extra effects" on. Nothing in it moves, so calm mode shows the same picture; what moves
+   is drawn elsewhere (the petals by js/look-effects.js, the colour pools by the site).
+   The picture, from the top of the list (the nearest) to the bottom:
+   - fallen petals along the bottom edge: soft, pale ovals that repeat in tiles of
+     different widths, so no pattern shows, on a pale pink band with three low drifts;
+   - a branch in flower, out of focus, in the top right corner: four flowers (each is a
+     pale heart and five soft petals in a ring) and two buds, in a glow of pink and a
+     little peach;
+   - the tip of another branch at the left edge, under the logo: two flowers. The corner
+     itself is left to the rose pool of the site (--pool-a), so that the logo stays easy
+     to read.
+   Everything is pale and soft on purpose: no hard edge, no small sharp dot; the page must
+   still look almost white, and the quietest text must stay easy to read on the pinkest
+   spot (measured in the browser: --text-dim keeps 5.4:1 there, --accent 4.8:1). */
+html[data-palette="blossom"].fx-fancy::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -4;
+    pointer-events: none;
+    /* The measure of the flowers: they are half as big on a phone */
+    --blossom-s: min(4vw, 4.2vh, 30px);
+    /* The colours of the picture: petals, a deeper petal, peach, the heart of a flower */
+    --blossom-pink: 255, 165, 197;
+    --blossom-rose: 255, 111, 163;
+    --blossom-peach: 255, 170, 130;
+    --blossom-heart: 255, 232, 190;
+    /* Where the pieces lie (place / size): the floor, the glow in the right corner and at the
+       left edge, and the squares of the six flowers (a to d on the right, e and f on the left) */
+    --blossom-floor: 0 100% / 100% min(10vh, 76px) no-repeat;
+    --blossom-right: 100% 0 / calc(var(--blossom-s) * 16) calc(var(--blossom-s) * 11) no-repeat;
+    --blossom-left: 0 0 / calc(var(--blossom-s) * 9) calc(var(--blossom-s) * 14) no-repeat;
+    --blossom-a: right calc(var(--blossom-s) * 1.5) top calc(var(--blossom-s) * 0.5) / calc(var(--blossom-s) * 4.4) calc(var(--blossom-s) * 4.4) no-repeat;
+    --blossom-b: right calc(var(--blossom-s) * 6.6) top calc(var(--blossom-s) * 2.5) / calc(var(--blossom-s) * 2.8) calc(var(--blossom-s) * 2.8) no-repeat;
+    --blossom-c: right calc(var(--blossom-s) * 9) top calc(var(--blossom-s) * -1.5) / calc(var(--blossom-s) * 3.4) calc(var(--blossom-s) * 3.4) no-repeat;
+    --blossom-d: right calc(var(--blossom-s) * -0.9) top calc(var(--blossom-s) * 5.6) / calc(var(--blossom-s) * 2.8) calc(var(--blossom-s) * 2.8) no-repeat;
+    --blossom-e: left calc(var(--blossom-s) * -0.9) top calc(var(--blossom-s) * 3) / calc(var(--blossom-s) * 3.4) calc(var(--blossom-s) * 3.4) no-repeat;
+    --blossom-f: left calc(var(--blossom-s) * 0.7) top calc(var(--blossom-s) * 6.4) / calc(var(--blossom-s) * 2.4) calc(var(--blossom-s) * 2.4) no-repeat;
+    background:
+        /* fallen petals: white ones and pale ones, then the low heaps */
+        radial-gradient(ellipse 13px 5.5px at 31px 26px, rgba(255, 255, 255, 0.85), transparent 100%) 0 100% / 173px 44px repeat-x,
+        radial-gradient(ellipse 10px 6px at 120px 14px, rgba(255, 255, 255, 0.75), transparent 100%) 0 100% / 229px 44px repeat-x,
+        radial-gradient(ellipse 15px 5px at 64px 34px, rgba(var(--blossom-rose), 0.08), transparent 100%) 0 100% / 131px 44px repeat-x,
+        radial-gradient(ellipse 9px 5.5px at 150px 9px, rgba(var(--blossom-rose), 0.09), transparent 100%) 0 100% / 197px 44px repeat-x,
+        radial-gradient(ellipse 12px 4.5px at 210px 30px, rgba(var(--blossom-peach), 0.12), transparent 100%) 0 100% / 281px 44px repeat-x,
+        radial-gradient(ellipse 11px 5px at 88px 20px, rgba(255, 255, 255, 0.7), transparent 100%) 0 100% / 347px 44px repeat-x,
+        radial-gradient(ellipse 46px 15px at 70px 100%, rgba(var(--blossom-pink), 0.07), transparent 100%) 0 100% / 263px 30px repeat-x,
+        radial-gradient(ellipse 60px 19px at 210px 100%, rgba(var(--blossom-pink), 0.06), transparent 100%) 0 100% / 389px 38px repeat-x,
+        /* the band they lie on: three low drifts and a pale ground */
+        radial-gradient(ellipse 28% 92% at 12% 100%, rgba(var(--blossom-pink), 0.07), transparent 100%) var(--blossom-floor),
+        radial-gradient(ellipse 32% 100% at 80% 100%, rgba(var(--blossom-pink), 0.07), transparent 100%) var(--blossom-floor),
+        radial-gradient(ellipse 24% 76% at 46% 100%, rgba(var(--blossom-peach), 0.07), transparent 100%) var(--blossom-floor),
+        linear-gradient(to top, rgba(var(--blossom-pink), 0.09), rgba(var(--blossom-pink), 0.03) 42%, transparent 84%) var(--blossom-floor),
+
+        /* flower a: its heart, then five petals in a ring (the same for every flower, turned) */
+        radial-gradient(ellipse 8% 8% at 50% 50%, rgba(var(--blossom-heart), 0.8), transparent 100%) var(--blossom-a),
+        radial-gradient(ellipse 23% 23% at 50% 25%, rgba(var(--blossom-pink), 0.18) 42%, transparent 100%) var(--blossom-a),
+        radial-gradient(ellipse 23% 23% at 73.8% 42.3%, rgba(var(--blossom-pink), 0.18) 42%, transparent 100%) var(--blossom-a),
+        radial-gradient(ellipse 23% 23% at 64.7% 70.2%, rgba(var(--blossom-pink), 0.18) 42%, transparent 100%) var(--blossom-a),
+        radial-gradient(ellipse 23% 23% at 35.3% 70.2%, rgba(var(--blossom-pink), 0.18) 42%, transparent 100%) var(--blossom-a),
+        radial-gradient(ellipse 23% 23% at 26.2% 42.3%, rgba(var(--blossom-pink), 0.18) 42%, transparent 100%) var(--blossom-a),
+        /* flower b, a deeper pink */
+        radial-gradient(ellipse 8% 8% at 50% 50%, rgba(var(--blossom-heart), 0.8), transparent 100%) var(--blossom-b),
+        radial-gradient(ellipse 23% 23% at 58.6% 26.5%, rgba(var(--blossom-rose), 0.11) 42%, transparent 100%) var(--blossom-b),
+        radial-gradient(ellipse 23% 23% at 75% 50.9%, rgba(var(--blossom-rose), 0.11) 42%, transparent 100%) var(--blossom-b),
+        radial-gradient(ellipse 23% 23% at 56.9% 74%, rgba(var(--blossom-rose), 0.11) 42%, transparent 100%) var(--blossom-b),
+        radial-gradient(ellipse 23% 23% at 29.3% 64%, rgba(var(--blossom-rose), 0.11) 42%, transparent 100%) var(--blossom-b),
+        radial-gradient(ellipse 23% 23% at 30.3% 34.6%, rgba(var(--blossom-rose), 0.11) 42%, transparent 100%) var(--blossom-b),
+        /* flower c, half above the top edge */
+        radial-gradient(ellipse 8% 8% at 50% 50%, rgba(var(--blossom-heart), 0.8), transparent 100%) var(--blossom-c),
+        radial-gradient(ellipse 23% 23% at 64.7% 29.8%, rgba(var(--blossom-pink), 0.16) 42%, transparent 100%) var(--blossom-c),
+        radial-gradient(ellipse 23% 23% at 73.8% 57.7%, rgba(var(--blossom-pink), 0.16) 42%, transparent 100%) var(--blossom-c),
+        radial-gradient(ellipse 23% 23% at 50% 75%, rgba(var(--blossom-pink), 0.16) 42%, transparent 100%) var(--blossom-c),
+        radial-gradient(ellipse 23% 23% at 26.2% 57.7%, rgba(var(--blossom-pink), 0.16) 42%, transparent 100%) var(--blossom-c),
+        radial-gradient(ellipse 23% 23% at 35.3% 29.8%, rgba(var(--blossom-pink), 0.16) 42%, transparent 100%) var(--blossom-c),
+        /* flower d, seen from behind (no heart), half behind the right edge */
+        radial-gradient(ellipse 23% 23% at 43.5% 25.9%, rgba(var(--blossom-pink), 0.16) 42%, transparent 100%) var(--blossom-d),
+        radial-gradient(ellipse 23% 23% at 71% 36.4%, rgba(var(--blossom-pink), 0.16) 42%, transparent 100%) var(--blossom-d),
+        radial-gradient(ellipse 23% 23% at 69.4% 65.7%, rgba(var(--blossom-pink), 0.16) 42%, transparent 100%) var(--blossom-d),
+        radial-gradient(ellipse 23% 23% at 41% 73.3%, rgba(var(--blossom-pink), 0.16) 42%, transparent 100%) var(--blossom-d),
+        radial-gradient(ellipse 23% 23% at 25% 48.7%, rgba(var(--blossom-pink), 0.16) 42%, transparent 100%) var(--blossom-d),
+        /* flower e, at the left edge under the logo */
+        radial-gradient(ellipse 8% 8% at 50% 50%, rgba(var(--blossom-heart), 0.8), transparent 100%) var(--blossom-e),
+        radial-gradient(ellipse 23% 23% at 69.2% 33.9%, rgba(var(--blossom-pink), 0.12) 42%, transparent 100%) var(--blossom-e),
+        radial-gradient(ellipse 23% 23% at 71.2% 63.2%, rgba(var(--blossom-pink), 0.12) 42%, transparent 100%) var(--blossom-e),
+        radial-gradient(ellipse 23% 23% at 44% 74.3%, rgba(var(--blossom-pink), 0.12) 42%, transparent 100%) var(--blossom-e),
+        radial-gradient(ellipse 23% 23% at 25.1% 51.7%, rgba(var(--blossom-pink), 0.12) 42%, transparent 100%) var(--blossom-e),
+        radial-gradient(ellipse 23% 23% at 40.6% 26.8%, rgba(var(--blossom-pink), 0.12) 42%, transparent 100%) var(--blossom-e),
+        /* flower f, a small peach one */
+        radial-gradient(ellipse 23% 23% at 54.3% 25.4%, rgba(var(--blossom-peach), 0.14) 42%, transparent 100%) var(--blossom-f),
+        radial-gradient(ellipse 23% 23% at 74.8% 46.5%, rgba(var(--blossom-peach), 0.14) 42%, transparent 100%) var(--blossom-f),
+        radial-gradient(ellipse 23% 23% at 61% 72.5%, rgba(var(--blossom-peach), 0.14) 42%, transparent 100%) var(--blossom-f),
+        radial-gradient(ellipse 23% 23% at 32% 67.4%, rgba(var(--blossom-peach), 0.14) 42%, transparent 100%) var(--blossom-f),
+        radial-gradient(ellipse 23% 23% at 27.9% 38.3%, rgba(var(--blossom-peach), 0.14) 42%, transparent 100%) var(--blossom-f),
+
+        /* buds on the branch: small, a deeper pink */
+        radial-gradient(circle calc(var(--blossom-s) * 0.5) at 61% 44%, rgba(var(--blossom-rose), 0.12) 30%, transparent 100%) var(--blossom-right),
+        radial-gradient(circle calc(var(--blossom-s) * 0.45) at 22% 22%, rgba(var(--blossom-rose), 0.1) 30%, transparent 100%) var(--blossom-right),
+        /* the glow of the branch in the right corner: a spot of light, pink, a little peach */
+        radial-gradient(circle calc(var(--blossom-s) * 1) at 50% 16%, rgba(255, 255, 255, 0.55), transparent 100%) var(--blossom-right),
+        radial-gradient(circle calc(var(--blossom-s) * 4.6) at 86% 10%, rgba(var(--blossom-pink), 0.07) 20%, transparent 100%) var(--blossom-right),
+        radial-gradient(circle calc(var(--blossom-s) * 3.4) at 58% 2%, rgba(var(--blossom-pink), 0.07) 20%, transparent 100%) var(--blossom-right),
+        radial-gradient(circle calc(var(--blossom-s) * 3) at 72% 46%, rgba(var(--blossom-peach), 0.12) 20%, transparent 100%) var(--blossom-right),
+        radial-gradient(circle calc(var(--blossom-s) * 2.2) at 30% 6%, rgba(var(--blossom-pink), 0.08) 20%, transparent 100%) var(--blossom-right),
+        radial-gradient(circle calc(var(--blossom-s) * 2.4) at 98% 86%, rgba(var(--blossom-pink), 0.08) 20%, transparent 100%) var(--blossom-right),
+        /* and of the one at the left edge */
+        radial-gradient(circle calc(var(--blossom-s) * 2.4) at 0% 0%, rgba(var(--blossom-pink), 0.06) 20%, transparent 100%) var(--blossom-left),
+        radial-gradient(circle calc(var(--blossom-s) * 1.9) at 20% 40%, rgba(var(--blossom-peach), 0.07) 20%, transparent 100%) var(--blossom-left),
+        radial-gradient(circle calc(var(--blossom-s) * 2.2) at 0% 72%, rgba(var(--blossom-pink), 0.08) 20%, transparent 100%) var(--blossom-left);
+}
+
+html[data-palette="blossom"].fx-fancy:not(.fx-motion-off) #look-effects {
+    display: block;
+}
+/* ===== END LOOK: blossom ===== */
+
+/* ===== LOOK: autumn ===== */
+/* Autumn Maple: an October evening in a park. The page is a deep warm brown, the cards are
+   umber glass with an amber edge, like lamplight catching them, and the accents are the
+   colours of maple leaves: amber, gold, and a warm red that is used sparingly, so that it
+   is never taken for the site's own pink-red of a wrong answer. */
+html[data-palette="autumn"][data-theme="dark"] {
+    --bg: #1c120d;
+    --bg-2: #261811;
+    --surface: rgba(54, 35, 24, 0.7);
+    --surface-solid: #2b1c14;
+    --glass: rgba(43, 28, 20, 0.9);
+    --surface-2: rgba(68, 45, 31, 0.72);
+    --surface-hover: rgba(96, 62, 40, 0.86);
+    --border: rgba(255, 200, 150, 0.18);
+    --border-strong: rgba(255, 206, 160, 0.44);
+
+    --text: #fff3e6;
+    --text-muted: #e2cbb4;
+    --text-dim: #c8ad93;
+
+    --accent: #ffa64d;
+    --accent-2: #f5cf6b;
+    --accent-3: #ff8166;
+    --accent-rgb: 255, 166, 77;
+    --accent-2-rgb: 245, 207, 107;
+    --accent-3-rgb: 255, 129, 102;
+
+    /* Headings and the logo: gold through amber to a warm red */
+    --gradient: linear-gradient(110deg, #ffd873 0%, #ffa64d 52%, #ff8166 100%);
+    --gradient-button: linear-gradient(115deg, #b3470c, #9c3418);
+    --glow: 0 0 44px rgba(255, 166, 77, 0.26);
+    --shadow: 0 24px 60px rgba(8, 4, 2, 0.55);
+    --shadow-card: 0 14px 34px rgba(8, 4, 2, 0.34);
+    --shadow-card-hover: 0 18px 40px rgba(8, 4, 2, 0.4);
+    --shadow-card-glow: 0 0 34px rgba(255, 166, 77, 0.1);
+    --nav-bg: rgba(28, 18, 13, 0.86);
+    --backdrop: rgba(28, 18, 13, 0.88);
+    --grid-line: rgba(255, 190, 130, 0.06);
+
+    /* Umber glass: lamplight on the top edge of every card */
+    --glass-edge: rgba(255, 214, 170, 0.24);
+    --glass-sheen: rgba(255, 176, 110, 0.06);
+    /* The colour pools behind the page: amber, a little gold, a little red */
+    --pool-a: 0.2;
+    --pool-b: 0.1;
+    --pool-c: 0.14;
+
+    /* The site's own violet would be a stranger here: the rim of the main button and the
+       "Skip to content" link are amber too */
+    --accent-strong: #a8410c;
+    --button-rim: rgba(255, 206, 160, 0.3);
+}
+
+html[data-palette="autumn"] {
+    accent-color: var(--accent);
+}
+
+html[data-palette="autumn"] ::selection {
+    background: rgba(var(--accent-rgb), 0.4);
+    color: var(--text);
+}
+
+/* The backdrop: one still picture behind the page, on <html>'s own ::after, only with
+   "Extra effects" on. Nothing in it moves, so calm mode shows the same picture; the leaves
+   are drawn by js/look-effects.js. From the top of the list (the nearest) to the bottom:
+   - a low band of sunset along the bottom edge, red-orange, fading upward, with two
+     brighter patches where the last light comes through the trees;
+   - the light of a park lamp in the top right corner: a warm glow with a paler heart.
+   The top left corner is left to the amber pool of the site (--pool-a): the logo stands
+   there and must stay easy to read. */
+html[data-palette="autumn"].fx-fancy::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -4;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 34% 100% at 24% 100%, rgba(255, 150, 70, 0.1), transparent 72%) bottom / 100% 24vh no-repeat,
+        radial-gradient(ellipse 30% 90% at 74% 100%, rgba(255, 122, 60, 0.09), transparent 72%) bottom / 100% 22vh no-repeat,
+        linear-gradient(to top, rgba(212, 78, 40, 0.17), rgba(212, 78, 40, 0.06) 44%, transparent 100%) bottom / 100% 28vh no-repeat,
+        radial-gradient(ellipse 22% 26% at 90% 2%, rgba(255, 226, 170, 0.1), transparent 70%) 50% 0 / 112% min(72vh, 600px) no-repeat,
+        radial-gradient(ellipse 46% 58% at 96% 0%, rgba(255, 170, 84, 0.16), transparent 70%) 50% 0 / 112% min(72vh, 600px) no-repeat;
+}
+
+/* The canvas of the falling leaves (js/look-effects.js): only with "Extra effects" on
+   and motion allowed */
+html[data-palette="autumn"].fx-fancy:not(.fx-motion-off) #look-effects {
+    display: block;
+}
+/* ===== END LOOK: autumn ===== */
+
+/* ===== LOOK: forest ===== */
+/* Deep Forest: a clearing in an old forest at night, the calmest look. The page is a very
+   dark moss green (not the blue-green water of Tropical Lagoon), the cards are mossy glass
+   with a pale green edge, and the light is warm: leaf green, the yellow of fireflies and a
+   little moonlight blue. "Right" is a cool mint and "careful" an orange here, so that
+   neither is taken for the leaf green and the yellow of the look; "wrong" is a little
+   lighter than the site's own, to stay easy to read on a mossy box. */
+html[data-palette="forest"][data-theme="dark"] {
+    --bg: #0a1c14;
+    --bg-2: #10261c;
+    --surface: rgba(23, 51, 38, 0.7);
+    --surface-solid: #12291e;
+    --glass: rgba(18, 41, 30, 0.9);
+    --surface-2: rgba(31, 65, 48, 0.72);
+    --surface-hover: rgba(45, 93, 67, 0.86);
+    --border: rgba(170, 232, 192, 0.18);
+    --border-strong: rgba(182, 238, 204, 0.44);
+
+    --text: #eefaf0;
+    --text-muted: #c0d9c7;
+    --text-dim: #a0bea9;
+
+    --accent: #8fe07a;
+    --accent-2: #ffd86b;
+    --accent-3: #a8c6ff;
+    --accent-rgb: 143, 224, 122;
+    --accent-2-rgb: 255, 216, 107;
+    --accent-3-rgb: 168, 198, 255;
+    --success: #4ce6bb;
+    --danger: #ff7089;
+    --warning: #ffab5e;
+
+    /* Headings and the logo: pale moonlight through leaf green to firefly yellow */
+    --gradient: linear-gradient(110deg, #d9f5e4 0%, #8fe07a 50%, #ffd86b 100%);
+    --gradient-button: linear-gradient(115deg, #1d7436, #17603c);
+    --glow: 0 0 44px rgba(255, 216, 107, 0.2);
+    --shadow: 0 24px 60px rgba(2, 10, 6, 0.55);
+    --shadow-card: 0 14px 34px rgba(2, 10, 6, 0.34);
+    --shadow-card-hover: 0 18px 40px rgba(2, 10, 6, 0.4);
+    --shadow-card-glow: 0 0 34px rgba(143, 224, 122, 0.1);
+    --nav-bg: rgba(10, 28, 20, 0.86);
+    --backdrop: rgba(10, 28, 20, 0.88);
+    --grid-line: rgba(160, 230, 184, 0.06);
+
+    /* Mossy glass: a pale green light on the top edge of every card */
+    --glass-edge: rgba(200, 255, 222, 0.2);
+    --glass-sheen: rgba(150, 230, 184, 0.06);
+    /* The colour pools behind the page: leaf green, a breath of yellow, moonlight blue */
+    --pool-a: 0.16;
+    --pool-b: 0.07;
+    --pool-c: 0.14;
+
+    /* The site's own violet would be a stranger here: the rim of the main button and the
+       "Skip to content" link are green too */
+    --accent-strong: #1d7436;
+    --button-rim: rgba(190, 255, 214, 0.28);
+}
+
+html[data-palette="forest"] {
+    accent-color: var(--accent);
+}
+
+html[data-palette="forest"] ::selection {
+    background: rgba(var(--accent-rgb), 0.36);
+    color: var(--text);
+}
+
+/* The backdrop: one still picture behind the page, only with "Extra effects" on. Nothing in
+   it moves, so calm mode shows the same picture; the fireflies are drawn by
+   js/look-effects.js. It has two layers.
+   Under the colour pools of the site, on ::before: three slanted shafts of moonlight that
+   come through the leaves from the top right. The first line of the list lays the page
+   colour over their lower part, so they fade out before the middle of a tall page. */
+html[data-palette="forest"].fx-fancy::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -4;
+    pointer-events: none;
+    background:
+        linear-gradient(to bottom, rgba(10, 28, 20, 0) 22%, rgba(10, 28, 20, 1) 78%),
+        linear-gradient(118deg, transparent 43%, rgba(206, 238, 255, 0.05) 48%, rgba(206, 238, 255, 0.075) 51%, transparent 57%),
+        linear-gradient(118deg, transparent 60%, rgba(206, 238, 255, 0.04) 64%, rgba(206, 238, 255, 0.06) 67%, transparent 72%),
+        linear-gradient(118deg, transparent 27%, rgba(206, 238, 255, 0.03) 32%, transparent 38%);
+}
+
+/* Over the pools, on ::after: a pale mist along the bottom edge, and the glow of the moon
+   behind the leaves in the top right corner. The top left corner is left to the green pool
+   of the site (--pool-a): the logo stands there and must stay easy to read. */
+html[data-palette="forest"].fx-fancy::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -4;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 44% 100% at 70% 100%, rgba(176, 232, 204, 0.08), transparent 72%) bottom / 100% 20vh no-repeat,
+        radial-gradient(ellipse 36% 90% at 18% 100%, rgba(176, 232, 204, 0.06), transparent 72%) bottom / 100% 18vh no-repeat,
+        linear-gradient(to top, rgba(190, 240, 216, 0.1), rgba(190, 240, 216, 0.03) 48%, transparent 100%) bottom / 100% 24vh no-repeat,
+        radial-gradient(ellipse 34% 44% at 84% -4%, rgba(214, 240, 255, 0.13), transparent 70%) 50% 0 / 112% min(72vh, 600px) no-repeat;
+}
+
+/* The canvas of the fireflies (js/look-effects.js): only with "Extra effects" on and
+   motion allowed */
+html[data-palette="forest"].fx-fancy:not(.fx-motion-off) #look-effects {
+    display: block;
+}
+/* ===== END LOOK: forest ===== */
+
+/* ===== LOOK: space ===== */
+/* Deep Space: a deep violet-indigo night. Not a second "Dark": the page is violet, not
+   blue-black; the accents are the colours of a nebula (soft violet, a cool teal, a pink);
+   the cards are dark glass with a faint cool edge. */
+html[data-palette="space"][data-theme="dark"] {
+    --bg: #100b2d;
+    --bg-2: #19123f;
+    --surface: rgba(31, 23, 81, 0.66);
+    --surface-solid: #1a1345;
+    --glass: rgba(24, 18, 66, 0.9);
+    --surface-2: rgba(40, 32, 98, 0.7);
+    --surface-hover: rgba(62, 50, 138, 0.86);
+    --border: rgba(190, 175, 255, 0.2);
+    --border-strong: rgba(200, 188, 255, 0.46);
+
+    --text: #f5f3ff;
+    --text-muted: #c6beea;
+    --text-dim: #aba1d9;
+
+    --accent: #b79bff;
+    --accent-2: #5fe1e8;
+    --accent-3: #ffa3da;
+    --accent-rgb: 183, 155, 255;
+    --accent-2-rgb: 95, 225, 232;
+    --accent-3-rgb: 255, 163, 218;
+
+    --gradient: linear-gradient(110deg, #ffb6e2 0%, #b99dff 48%, #63e2ea 100%);
+    --gradient-button: linear-gradient(115deg, #7e30d6, #5644d4);
+    --glow: 0 0 44px rgba(183, 155, 255, 0.3);
+    --shadow: 0 24px 60px rgba(4, 2, 20, 0.55);
+    --shadow-card: 0 14px 34px rgba(4, 2, 20, 0.34);
+    --shadow-card-hover: 0 18px 40px rgba(4, 2, 20, 0.4);
+    --shadow-card-glow: 0 0 34px rgba(95, 225, 232, 0.1);
+    --nav-bg: rgba(16, 11, 45, 0.86);
+    --backdrop: rgba(16, 11, 45, 0.88);
+    --grid-line: rgba(180, 160, 255, 0.07);
+
+    /* Dark glass: a faint, cool light on the top edge of every card */
+    --glass-edge: rgba(205, 225, 255, 0.24);
+    --glass-sheen: rgba(150, 170, 255, 0.07);
+    /* The colour pools behind the page: violet, teal and a little pink */
+    --pool-a: 0.26;
+    --pool-b: 0.18;
+    --pool-c: 0.16;
+}
+
+html[data-palette="space"] {
+    accent-color: var(--accent);
+}
+
+html[data-palette="space"] ::selection {
+    background: rgba(var(--accent-rgb), 0.42);
+    color: var(--text);
+}
+
+/* The backdrop: one still picture behind the page, on <html>'s own ::after (no extra
+   markup), only with "Extra effects" on. Nothing in it moves, so calm mode shows the same
+   picture. What moves in Deep Space is drawn elsewhere: the twinkling stars by
+   js/look-effects.js, and the colour pools of the site itself (style.css), which drift
+   slowly in this look's violet, teal and pink.
+   Why a still picture: a second big layer that drifts all the time made a computer without
+   a graphics chip drop about one frame in five (measured: 21 ms a frame with a nebula
+   drifting on ::before, 18 ms with this picture, 17 ms with no look at all).
+   The picture, from the top of the list (the nearest) to the bottom:
+   - the rim of a planet: one huge circle of which only the top rises above the bottom edge
+     of the screen, a thin line of light on its rim, a soft glow of air above it;
+   - the far stars: tiny, dim dots (a bright dot beside a word looks like a full stop) that
+     repeat in tiles of different sizes, so no pattern shows. The stars that twinkle are
+     drawn by js/look-effects.js;
+   - a nebula along the top: three soft glows (violet, teal, pink), a little wider than the
+     screen. They are faint on purpose: grey text must stay easy to read on the brightest
+     spot (the violet pool of the site itself, --pool-a, already glows in the top left
+     corner). */
+html[data-palette="space"].fx-fancy::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -4;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 110% 150% at 50% 163%,
+            #080520 0%, #0b0729 62%, #15104a 71.4%,
+            rgba(196, 232, 255, 0.3) 71.75%, rgba(196, 232, 255, 0.3) 72.05%,
+            rgba(122, 150, 255, 0.13) 72.5%, rgba(140, 110, 255, 0.05) 80%, transparent 93%)
+            bottom / 100% 32vh no-repeat,
+        radial-gradient(circle at 31px 47px, rgba(226, 222, 255, 0.42) 0 0.8px, transparent 1.5px) 0 0 / 293px 257px,
+        radial-gradient(circle at 150px 22px, rgba(214, 200, 255, 0.36) 0 0.7px, transparent 1.4px) 0 0 / 263px 311px,
+        radial-gradient(circle at 96px 171px, rgba(170, 236, 255, 0.34) 0 0.7px, transparent 1.4px) 0 0 / 347px 283px,
+        radial-gradient(circle at 229px 118px, rgba(255, 214, 240, 0.32) 0 0.9px, transparent 1.7px) 0 0 / 389px 353px,
+        radial-gradient(circle at 60px 290px, rgba(255, 255, 255, 0.26) 0 0.6px, transparent 1.2px) 0 0 / 173px 331px,
+        radial-gradient(circle at 201px 77px, rgba(200, 210, 255, 0.22) 0 0.6px, transparent 1.2px) 0 0 / 227px 199px,
+        radial-gradient(ellipse 42% 62% at 50% -4%, rgba(150, 100, 255, 0.33), transparent 70%) 50% 0 / 112% min(72vh, 600px) no-repeat,
+        radial-gradient(ellipse 38% 56% at 92% 0%, rgba(50, 200, 225, 0.23), transparent 70%) 50% 0 / 112% min(72vh, 600px) no-repeat,
+        radial-gradient(ellipse 28% 40% at 70% 10%, rgba(255, 120, 205, 0.17), transparent 70%) 50% 0 / 112% min(72vh, 600px) no-repeat;
+}
+
+/* The canvas of the twinkling stars (js/look-effects.js): only with "Extra effects" on
+   and motion allowed */
+html[data-palette="space"].fx-fancy:not(.fx-motion-off) #look-effects {
+    display: block;
+}
+/* ===== END LOOK: space ===== */
+
+/* =========================================================
+   3. A FEW SMALL TEXTS, BRIGHTER (Arctic Blue, Tropical Lagoon, Deep Space)
+   dev/tests/looks.audit.js measures every text on real pages. In three looks a
+   few small texts were under 4.5:1, the contrast that small text needs: some
+   lie on the bright parts of the look's backdrop (the menu bar under the
+   aurora, the last line of the page over the glow at the bottom), some are
+   coloured words on the look's tinted boxes. css/arctic-blue.css and
+   css/lagoon.css stay exactly as they were sent: the rules below only give
+   those texts a lighter tone of the same colour. Lines, buttons and glows keep
+   the look's own colours. "High contrast" has colours of its own and stays
+   stronger (its rule for the tokens is more specific, and the other rules step
+   aside with :not(.st-contrast)).
+   ========================================================= */
+
+/* Coloured words: the label of a note, the number on a tile, "Not quite" */
+html[data-palette="arctic"][data-theme="dark"] {
+    --text-accent-3: #93adff;
+    --text-danger: #ff7a92;
+}
+
+html[data-palette="lagoon"][data-theme="dark"] {
+    --text-accent-3: #ffa191;
+    --text-danger: #ff99ab;
+}
+
+/* The word "Compass" of the logo */
+html[data-palette="arctic"][data-theme="dark"]:not(.st-contrast) .logo-text span {
+    background-image: linear-gradient(135deg, #ffffff, #c9f3ff);
+}
+
+html[data-palette="lagoon"][data-theme="dark"]:not(.st-contrast) .logo-text span {
+    background-image: linear-gradient(135deg, #8ff7e3, #d9fb8a);
+}
+
+/* Arctic Blue: the links of the menu bar, under the aurora */
+html[data-palette="arctic"][data-theme="dark"]:not(.st-contrast) .nav-links a {
+    color: #e6f2fb;
+}
+
+html[data-palette="arctic"][data-theme="dark"]:not(.st-contrast) .nav-links a:hover,
+html[data-palette="arctic"][data-theme="dark"]:not(.st-contrast) .nav-links a.active {
+    color: #e0f8ff;
+}
+
+/* Arctic Blue and Deep Space: the last line of the page, over the glow at the bottom */
+html[data-palette="arctic"][data-theme="dark"]:not(.st-contrast) .footer-bottom,
+html[data-palette="space"][data-theme="dark"]:not(.st-contrast) .footer-bottom {
+    color: var(--text-muted);
+}

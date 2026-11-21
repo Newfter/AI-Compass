@@ -29,6 +29,7 @@
    THE TOOLKIT AT A GLANCE (each one is explained where it is written)
     1  A.storage.get(key, fallback) / set(key, value) / remove(key) / migrate(old, new)
        A.storage.available(): does the browser keep what is saved?
+       A.storage.freeze(): this page saves nothing from now on (js/profiles.js, before it swaps accounts)
        A.storage.session: the same, forgotten when the tab closes
     2  A.on(name, callback) -> stop()      A.emit(name, detail)
        names: language, theme, motion, overlay, section, feature, activity (sent as "aic:" + name)
@@ -108,6 +109,9 @@
        forgets afterwards. set() still says false, so a feature can tell
        the visitor; available() says it before anything is saved.
        ========================================================= */
+    // true after A.storage.freeze(): this page writes nothing to the browser's storage any more
+    let frozen = false;
+
     function makeStore(area) {
         const unsaved = new Map();     // key -> the JSON text the browser refused to keep
 
@@ -124,6 +128,7 @@
                 let text;
                 try {
                     text = JSON.stringify(value);
+                    if (frozen) throw new Error("The storage is frozen");     // kept in memory, like a refused save
                     window[area].setItem(PREFIX + key, text);
                 } catch (error) {
                     if (typeof text !== "string") return false;     // a value that can't be saved at all
@@ -135,6 +140,7 @@
             },
             remove: function (key) {
                 unsaved.delete(key);
+                if (frozen) return;
                 try {
                     window[area].removeItem(PREFIX + key);
                 } catch (error) {}
@@ -143,6 +149,7 @@
             // removed at once (a browser whose storage is full can still overwrite an
             // old value with a shorter one, so the answer of the last save would not do)
             available: function () {
+                if (frozen) return false;
                 try {
                     window[area].setItem(PREFIX + "probe", "1");
                     window[area].removeItem(PREFIX + "probe");
@@ -166,6 +173,16 @@
         if (storage.get(newKey, undefined) === undefined) storage.set(newKey, value);
         storage.remove(oldKey);
     };
+
+    // Stops every write of this page to the browser's storage, for good: from then on
+    // set() keeps a value in memory only and remove() only forgets it there.
+    // js/profiles.js calls it just before it swaps the saved data of two accounts and
+    // reloads the page: a feature that saves "one last time" while the page closes
+    // (My Compass does) must not write the old account's data over the new one's.
+    storage.freeze = function () {
+        frozen = true;
+    };
+    Object.defineProperty(storage, "frozen", { get: function () { return frozen; } });
 
     /* =========================================================
        2. EVENTS
@@ -943,7 +960,7 @@
 
         // The colour of a CSS variable in the current theme, as [r, g, b]
         rgb: function (name, fallback) {
-            const id = state.theme + (root.getAttribute("data-palette") || "") + name;   // the palette (css/arctic-blue.css) changes the colours too
+            const id = state.theme + (root.getAttribute("data-palette") || "") + name;   // the palettes (css/arctic-blue.css, css/lagoon.css) change the colours too
             if (!(id in colorCache)) colorCache[id] = parseColor(cssVar(name));
             return colorCache[id] || fallback || [0, 0, 0];
         },
@@ -2472,10 +2489,14 @@
         group: "cmd.groupActions",
         icon: "🌓",
         title: function () { return t("cmd.toggleTheme"); },
-        keywords: "theme dark light arctic blue mode night тема тёмная светлая арктический синий тёмный светлый ночной режим",
+        keywords: "theme dark light arctic blue mode night тема тёмная светлая арктический синий лагуна тропическая lagoon tropical тёмный светлый ночной режим " +
+            "look next paper ink cherry blossom autumn maple deep forest space " +
+            "оформление следующее тёмное светлое бумага чернила цветущая вишня осенний клён лесная чаща дальний космос",
         keepOverlays: true,
         run: function () {
-            // js/arctic-blue.js adds A.mode: dark -> light -> Arctic Blue -> dark
+            // js/arctic-blue.js adds A.mode: the next of its looks, with a toast that names it
+            // (Dark -> Light -> Paper & Ink -> Arctic Blue -> ... -> Deep Space -> Dark).
+            // Settings has the picker for all of them (the command "Choose a look").
             if (window.AICompass.mode) window.AICompass.mode.cycle();
             else window.AICompass.toggleTheme();
         }

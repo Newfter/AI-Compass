@@ -13,6 +13,8 @@
        html.st-solid       reduce transparency
    The text size is --text-scale on <html> (style.css, 2. BASICS).
    Calm motion is core's: html.fx-motion-off (style.css, 13).
+   High contrast and "Reduce transparency" are stronger than every look
+   of the site (the palettes of js/arctic-blue.js): see section 5.
 
    Part 2 is the two windows: Settings, and Keyboard shortcuts.
 
@@ -24,7 +26,7 @@
     6. Reduce transparency
     7. The windows: the layer over the page
     8. The settings window: preview card and groups
-    9. Rows: options, switches, voices
+    9. Rows: options, cards (the design), the look picker, switches, voices
    10. The bottom of the settings window
    11. The keyboard shortcuts window
    12. Phones, small screens and touch screens
@@ -215,12 +217,21 @@ html.st-underline a:not(.btn, .logo, .skip-link, .scroll-hint, .fx-rail-link, .n
    Stronger colours for the text and the borders, solid backgrounds and a
    solid, thicker focus frame. The text colours were measured: at least
    7:1 on the page and its cards in both themes (the report of this
-   feature lists the numbers). */
+   feature lists the numbers).
+
+   STRONGER THAN A LOOK. A look of the site is a palette on top of a theme:
+   html[data-palette="lagoon"][data-theme="dark"] in its own css file, which
+   is linked after this one. The colour blocks of this section and of the
+   next one therefore start with "html:root": one step stronger than a
+   palette's block, whatever the order of the files. So with high contrast
+   on, the text, the borders and the buttons are the ones measured here in
+   every look; the look keeps the colour of its page and of its cards.
+   Write a new colour block here in the same way. */
 
 /* Solid backgrounds (also used by "Reduce transparency", section 6).
    Each colour is the see-through one of style.css, as it looks on the page. */
-html.st-contrast[data-theme="dark"],
-html.st-solid[data-theme="dark"] {
+html:root.st-contrast[data-theme="dark"],
+html:root.st-solid[data-theme="dark"] {
     --surface: var(--surface-solid);
     --glass: var(--surface-solid);
     --surface-2: #181f39;
@@ -228,8 +239,8 @@ html.st-solid[data-theme="dark"] {
     --nav-bg: var(--bg);
 }
 
-html.st-contrast[data-theme="light"],
-html.st-solid[data-theme="light"] {
+html:root.st-contrast[data-theme="light"],
+html:root.st-solid[data-theme="light"] {
     --surface: var(--surface-solid);
     --glass: var(--surface-solid);
     --surface-2: #eef1fc;
@@ -237,8 +248,23 @@ html.st-solid[data-theme="light"] {
     --nav-bg: var(--bg);
 }
 
+/* With a palette on, the two colours above would be the wrong hue (navy boxes
+   on a teal page). They are worked out from the palette's own card colour
+   instead: a little lighter on a dark look, a little darker on a light one. */
+html:root.st-contrast[data-palette][data-theme="dark"],
+html:root.st-solid[data-palette][data-theme="dark"] {
+    --surface-2: color-mix(in srgb, var(--surface-solid) 94%, var(--text));
+    --surface-hover: color-mix(in srgb, var(--surface-solid) 88%, var(--text));
+}
+
+html:root.st-contrast[data-palette][data-theme="light"],
+html:root.st-solid[data-palette][data-theme="light"] {
+    --surface-2: color-mix(in srgb, var(--surface-solid) 94%, var(--text));
+    --surface-hover: var(--surface-solid);
+}
+
 /* Text and borders. --st-ring is the colour of the focus frame. */
-html.st-contrast[data-theme="dark"] {
+html:root.st-contrast[data-theme="dark"] {
     --text: #ffffff;
     --text-muted: #e6eaf8;
     --text-dim: #cfd6ee;
@@ -255,7 +281,7 @@ html.st-contrast[data-theme="dark"] {
     --st-ring: #8cefff;
 }
 
-html.st-contrast[data-theme="light"] {
+html:root.st-contrast[data-theme="light"] {
     --text: #05070f;
     --text-muted: #1d2440;
     --text-dim: #283050;
@@ -276,13 +302,29 @@ html.st-contrast[data-theme="light"] {
 }
 
 /* Both themes: the main buttons are darker under their white text (7.8:1),
-   and the page has no coloured glow behind the text */
-html.st-contrast {
+   and the page has no coloured glow behind the text: the drifting colour
+   pools of style.css (16. THE LIQUID LOOK) are switched off. A look gives
+   its own button colours and stronger pools in its palette block: the
+   second selector is the one that beats them. */
+html.st-contrast,
+html:root.st-contrast[data-theme] {
     --gradient-button: linear-gradient(115deg, #5229d6, #2c43c2);
+    --pool-a: 0;
+    --pool-b: 0;
+    --pool-c: 0;
 }
 
 html.st-contrast body {
     background: var(--bg);
+}
+
+/* A look's own backdrop is a coloured glow behind the text too (the aurora of
+   Arctic Blue, the ripples of Tropical Lagoon: every look draws it on the
+   ::before and ::after of <html>, see css/arctic-blue.css). Not drawn with
+   high contrast, in any look. */
+html.st-contrast[data-palette]::before,
+html.st-contrast[data-palette]::after {
+    content: none !important;
 }
 
 /* The focus frame: solid and 3px wide on everything you can reach with Tab.
@@ -314,8 +356,10 @@ html.st-contrast :is(
 }
 
 /* The moving network behind the page is fainter, so no bright dot sits
-   behind a letter */
-html.st-contrast .neural-bg {
+   behind a letter. The same for the animation of a look: the snow of
+   Arctic Blue, the bubbles of Tropical Lagoon, and the canvas that the
+   other looks share. */
+html.st-contrast :is(.neural-bg, #arctic-snow, #lagoon-bubbles, #look-effects) {
     opacity: 0.35;
 }
 
@@ -327,8 +371,9 @@ html.st-contrast .neural-bg {
    nothing here blurs what is behind it); it would become one if a blur
    (backdrop-filter) is ever added, since the rule below switches it off. */
 
-html.st-solid[data-theme="dark"],
-html.st-solid[data-theme="light"] {
+/* "html:root": stronger than a look's palette, as in section 5 */
+html:root.st-solid[data-theme="dark"],
+html:root.st-solid[data-theme="light"] {
     --backdrop: var(--bg);
 }
 
@@ -680,10 +725,6 @@ html.st-solid *::after {
     color: var(--text-warning);
 }
 
-.st-theme-note {
-    margin: -6px 18px 14px;
-}
-
 /* ----- A row of options (segmented buttons) -----
    Real radio buttons: each one is invisible but covers its option, so
    a click, a tap and the arrow keys all work as usual. The visible part
@@ -763,13 +804,14 @@ html.st-solid *::after {
     outline-offset: 2px;
 }
 
-/* Options that may not fit in one line ("Like my device") go on to the next */
-.st-seg-wrap .st-seg-options {
-    flex-wrap: wrap;
+/* A row that is alone in its group (the language) has no name of its own:
+   the group's title is right above it */
+.st-seg-alone {
+    padding-top: 10px;
 }
 
-.st-seg-wrap .st-seg-option {
-    flex: 1 1 auto;
+.st-seg-alone .st-seg-options {
+    margin-top: 0;
 }
 
 /* Text sizes and reading speeds: four in a row, or two rows of two when
@@ -808,6 +850,298 @@ html.st-solid *::after {
 
 .st-seg-option input:checked + .st-seg-face .st-size-value {
     color: var(--text-accent-2);
+}
+
+/* ----- Cards to choose from: the design, and the looks -----
+   Real radio buttons again, as in a row of options: each one is invisible
+   and covers its card. The chosen card has a gradient edge and a tick, so
+   the choice is not shown by colour alone. */
+.st-cards,
+.st-looks {
+    padding-top: 10px;
+}
+
+.st-card,
+.st-look {
+    position: relative;
+    display: flex;
+    min-width: 0;
+}
+
+.st-card input,
+.st-look input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.st-card-face,
+.st-look-face {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-2);
+    color: var(--text-muted);
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease;
+}
+
+.st-card:hover .st-card-face,
+.st-look:hover .st-look-face {
+    border-color: var(--border-strong);
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+.st-card input:checked + .st-card-face,
+.st-look input:checked + .st-look-face {
+    border-color: transparent;
+    background:
+        linear-gradient(var(--surface-solid), var(--surface-solid)) padding-box,
+        var(--gradient) border-box;
+    color: var(--text);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22), 0 0 18px rgba(var(--accent-rgb), 0.22);
+}
+
+.st-card input:focus-visible + .st-card-face,
+.st-look input:focus-visible + .st-look-face {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+}
+
+/* The tick of the chosen card: a small round badge */
+.st-tick {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    padding: 3px;
+    border-radius: 50%;
+    background: var(--text);
+    color: var(--surface-solid);
+    visibility: hidden;
+}
+
+.st-card input:checked + .st-card-face .st-tick,
+.st-look input:checked + .st-look-face .st-tick {
+    visibility: visible;
+}
+
+/* The design: two cards, one under the other. Each has a name and one line
+   that says what it is. */
+.st-cards {
+    display: grid;
+    gap: 8px;
+}
+
+.st-card-face {
+    justify-content: center;
+    gap: 4px;
+    min-height: 64px;
+    padding: 10px 12px 12px;
+}
+
+.st-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.st-card-icon {
+    flex: none;
+    font-size: 1.125rem;
+    line-height: 1;
+}
+
+.st-card-name {
+    flex: 1;
+    min-width: 0;
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.st-card-about {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+/* ----- The look picker -----
+   Ten cards in two parts ("Everyday", "Seasons and places"), three in a row
+   (two on a phone and with big letters: section 12). A card shows a small
+   picture of a page in the look's colours. js/settings.js writes them on each
+   .st-look-pane as custom properties, from the register of js/arctic-blue.js:
+       --look-bg  --look-surface  --look-accent  --look-accent-2  --look-text
+   so a new look needs no new CSS here. Without them (the register did not
+   load) the picture uses the colours of the page. "Like my device" has two
+   panes: dark and light. */
+.st-look-part + .st-look-part {
+    margin-top: 16px;
+}
+
+.st-look-heading {
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.st-look-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+html.st-large-text .st-look-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.st-look-face {
+    gap: 6px;
+    padding: 6px 6px 7px;
+}
+
+/* The picture: a page (the pane), a card on it with two lines of "text",
+   and two dots in the accent colours */
+.st-look-preview {
+    display: flex;
+    height: 52px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.st-look-pane {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 7px;
+    background: var(--look-bg, var(--bg));
+}
+
+.st-look-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    flex: 1 1 auto;
+    align-self: stretch;
+    min-width: 0;
+    padding: 0 6px;
+    border: 1px solid color-mix(in srgb, var(--look-text, var(--text)) 16%, transparent);
+    border-radius: 5px;
+    background: var(--look-surface, var(--surface-solid));
+}
+
+.st-look-line {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--look-text, var(--text));
+}
+
+.st-look-line + .st-look-line {
+    width: 62%;
+    opacity: 0.55;
+}
+
+.st-look-dots {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: none;
+}
+
+.st-look-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--look-accent, var(--accent));
+}
+
+.st-look-dot + .st-look-dot {
+    background: var(--look-accent-2, var(--accent-2));
+}
+
+/* The icon and the name. Room for two lines, so every card is the same height. */
+.st-look-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 2.5em;
+    padding: 0 2px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.st-look-icon {
+    flex: none;
+    line-height: 1;
+}
+
+/* A long word ("Арктический" on a small phone with big letters) gets a hyphen
+   rather than sticking out of its card */
+.st-look-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    -webkit-hyphens: auto;
+    hyphens: auto;
+}
+
+/* The tick sits on the corner of the chosen card */
+.st-look-face .st-tick {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    box-shadow: 0 0 0 2px var(--surface-solid);
+}
+
+/* One sentence about the chosen look. Room for two lines, so the rows under
+   it move less when another look is chosen. */
+.st-look-about {
+    min-height: 3em;
+    margin-top: 12px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* The chosen look has an animation that cannot be seen now: a note, and a
+   button when "Extra effects" would show it */
+.st-look-effect {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    margin-top: 8px;
+}
+
+.st-look-effect-text {
+    flex: 1 1 12rem;
+    min-width: 0;
+    margin-top: 0;
+}
+
+.st-look-effect-button {
+    flex: none;
+}
+
+/* "Like my device": which theme the device has now */
+.st-theme-note {
+    margin-top: 8px;
 }
 
 /* ----- An on / off row: the whole row is the switch ----- */
@@ -1103,7 +1437,8 @@ html.st-solid *::after {
     }
 
     /* Big enough for a finger, like the window's other controls (44px) */
-    .st-foot-buttons .btn {
+    .st-foot-buttons .btn,
+    .st-look-effect-button {
         min-height: 44px;
     }
 }
@@ -1139,8 +1474,9 @@ html.st-solid *::after {
         border-radius: 12px;
     }
 
+    /* (7.4vw: «Настройки» in the largest text still fits in one line at 320 px) */
     .st-title {
-        font-size: 1.1875rem;
+        font-size: min(1.1875rem, 7.4vw);
     }
 
     .st-body {
@@ -1152,6 +1488,17 @@ html.st-solid *::after {
         padding: 14px;
     }
 
+    .st-cards,
+    .st-looks,
+    .st-seg-alone {
+        padding-top: 10px;
+    }
+
+    /* The looks: two in a row (they fit a phone 320px wide) */
+    .st-look-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .st-group-title {
         padding: 14px 14px 4px;
     }
@@ -1160,11 +1507,6 @@ html.st-solid *::after {
     .st-sound-none {
         padding-left: 14px;
         padding-right: 14px;
-    }
-
-    .st-theme-note {
-        margin-left: 14px;
-        margin-right: 14px;
     }
 
     /* The shortcuts window: from the top, the whole width */
@@ -1212,6 +1554,23 @@ html.st-contrast .st-seg-option input:focus-visible + .st-seg-face {
 
 html.st-contrast .st-seg-options {
     border-color: var(--border-strong);
+}
+
+/* The cards of the design and of the looks likewise */
+html.st-contrast :is(.st-card-face, .st-look-face) {
+    border-color: var(--border-strong);
+}
+
+html.st-contrast .st-card input:checked + .st-card-face,
+html.st-contrast .st-look input:checked + .st-look-face {
+    border-color: var(--text);
+    background: var(--surface-solid);
+    box-shadow: 0 0 0 1px var(--text);
+}
+
+html.st-contrast .st-card input:focus-visible + .st-card-face,
+html.st-contrast .st-look input:focus-visible + .st-look-face {
+    outline: 3px solid var(--st-ring);
 }
 
 @keyframes st-live {

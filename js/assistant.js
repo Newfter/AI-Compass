@@ -759,7 +759,9 @@
         if (anyIn(brain.themeWords.tooDark, tokens, true)) target = "light";
         return {
             reply: target === "dark" ? "themeDark" : "themeLight",
-            pre: function () { A.setTheme(target); }
+            // Through Settings, so that a colour look (Tropical Lagoon, Paper & Ink...) steps aside:
+            // with a look on, the theme under it may already be the one that was asked for
+            pre: function () { if (A.settings) A.settings.set("theme", target); else A.setTheme(target); }
         };
     }
 
@@ -1942,7 +1944,7 @@
                 const theme = action.arg === "light" ? "light" : "dark";
                 enqueue({
                     reply: theme === "dark" ? "themeDark" : "themeLight",
-                    pre: function () { A.setTheme(theme); }
+                    pre: function () { if (A.settings) A.settings.set("theme", theme); else A.setTheme(theme); }
                 });
                 break;
             }

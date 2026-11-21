@@ -387,6 +387,11 @@ html.reveal-ready [data-reveal].fx-armed:not(.revealed) {
     background: radial-gradient(circle, rgba(var(--accent-rgb), 0.08) 0%, rgba(var(--accent-2-rgb), 0.04) 38%, rgba(var(--accent-2-rgb), 0) 68%);
 }
 
+/* Cherry Blossom: pink only (its second colour is a leaf green) */
+html[data-palette="blossom"] .fx-spotlight {
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.08) 0%, rgba(var(--accent-rgb), 0.03) 38%, rgba(var(--accent-rgb), 0) 68%);
+}
+
 html.fx-fine .fx-spotlight.is-visible {
     opacity: 1;
 }

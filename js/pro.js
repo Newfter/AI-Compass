@@ -1,7 +1,7 @@
 /* =========================================================
    AI COMPASS — THE PRO DESIGN
-   The site has two designs (Settings, or the Simple / Pro switch in the
-   menu bar; js/settings.js keeps the choice):
+   The site has two designs (chosen in Settings, "Design"; js/settings.js
+   keeps the choice):
    - Simple (the default): calm and easy, for beginners.
    - Pro: a rich, dense look for people who know AI well (css/pro.css).
    This file draws what only the Pro design has:
@@ -84,6 +84,16 @@
 
     function num(n) {
         return A.format.number(n);
+    }
+
+    // The name of a look of the site ("Tropical Lagoon": js/arctic-blue.js has the list),
+    // or without an id the name of the look that is chosen now (the one Settings shows:
+    // "Like my device" when the site follows the device)
+    function lookName(id) {
+        const wanted = id || safe(function () { return A.settings.get("look"); }, "") || safe(function () { return A.mode.current; }, "");
+        if (wanted === "system") return t("settings.themeSystem");
+        const look = safe(function () { return A.mode.info(wanted); }, null);
+        return look ? look.name : t(A.theme === "light" ? "core.modeLight" : "core.modeDark");
     }
 
     const ARROW = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -171,8 +181,10 @@
             "</li>";
     }
 
+    // data-fid: the panel is drawn again while a window that the button opened is still
+    // open (Settings, when the look changes), and the focus must find the new button
     function action(name, text, keys) {
-        return '<li><button type="button" class="pro-action" data-pro-action="' + name + '">' +
+        return '<li><button type="button" class="pro-action" data-pro-action="' + name + '" data-fid="pro-action-' + name + '">' +
                 '<span class="pro-action-text">' + esc(text) + "</span>" +
                 (keys ? '<span class="pro-action-keys">' + keys.map(function (k) { return "<kbd>" + esc(k) + "</kbd>"; }).join("") + "</span>" : ARROW) +
             "</button></li>";
@@ -190,8 +202,7 @@
         panel.innerHTML =
             '<div class="pro-dash-head">' +
                 '<span class="pro-dash-title"><span class="pro-pulse" aria-hidden="true"></span>' + esc(t("pro.title")) + "</span>" +
-                '<span class="pro-dash-meta">' + esc(A.lang.toUpperCase()) + " · " +
-                    esc(t(A.theme === "light" ? "settings.themeLight" : "settings.themeDark").toUpperCase()) + "</span>" +
+                '<span class="pro-dash-meta">' + esc(A.lang.toUpperCase()) + " · " + esc(lookName().toUpperCase()) + "</span>" +
             "</div>" +
             '<div class="pro-overall">' +
                 '<span class="pro-overall-ring" style="--share: ' + overall.toFixed(3) + '" aria-hidden="true"></span>' +
@@ -219,7 +230,7 @@
                 action("terminal", t("pro.terminalOpen"), ["`"]) +
                 action("daily", t("pro.daily")) +
                 action("compass", t("pro.compass")) +
-                action("simple", t("pro.back")) +
+                action("design", t("pro.designLook")) +
             "</ul>";
         A.dom.setHidden(panel, false);
     }
@@ -498,6 +509,7 @@
         { names: ["stats", "статистика"], usage: "stats", does: "pro.cmd.stats", run: cmdStats },
         { names: ["path", "путь"], usage: "path", does: "pro.cmd.path", run: cmdPath },
         { names: ["review", "повторить"], usage: "review", does: "pro.cmd.review", run: cmdReview },
+        { names: ["look", "оформление"], usage: "look [id]", does: "pro.cmd.look", run: cmdLook },
         { names: ["theme", "тема"], usage: "theme [dark|light]", does: "pro.cmd.theme", run: cmdTheme },
         { names: ["lang", "язык"], usage: "lang [en|ru]", does: "pro.cmd.lang", run: cmdLang },
         { names: ["design", "дизайн"], usage: "design simple", does: "pro.cmd.design", run: cmdDesign },
@@ -675,6 +687,10 @@
 
     function cmdWhoami() {
         const n = numbers();
+        // The learner's account on this device, when there is one: A.profiles.active is
+        // { id, name, avatar } or null (js/profiles.js). The name is printed as plain text.
+        const who = safe(function () { return A.profiles.active; }, null);
+        if (who && typeof who.name === "string" && who.name.trim()) print(who.name.trim(), "info");
         print(t("pro.term.whoami", {
             level: n.level === null ? "—" : n.level,
             xp: n.xp === null ? 0 : n.xp,
@@ -736,7 +752,7 @@
             "----------",
             "OS: AI Compass (" + (A.lang === "ru" ? "RU" : "EN") + ")",
             "Design: Pro",
-            "Theme: " + A.theme,
+            "Look: " + lookName(),
             "Lessons: " + n.lessons.done + "/" + n.lessons.total,
             "Lab: " + n.lab.done + "/" + n.lab.total + "  ·  XP: " + (n.xp === null ? 0 : n.xp)
         ];
@@ -745,13 +761,49 @@
         });
     }
 
+    // "look": the looks of the site, the same choice as in Settings. Alone it prints the
+    // ids and marks the look that is on; "look lagoon" (an id, or a look's whole name)
+    // switches to it; a word that is no look prints the list again.
+    function lookChoices() {
+        const looks = safe(function () { return A.mode.list(); }, null) || ["dark", "light"].map(function (id) {
+            return { id: id, name: lookName(id) };
+        });
+        return [{ id: "system", name: lookName("system") }].concat(looks);
+    }
+
+    function printLooks() {
+        const on = safe(function () { return A.settings.get("look"); }, A.theme);
+        print(t("pro.term.lookTitle"), "info");
+        lookChoices().forEach(function (look) {
+            print("  " + (look.id === on ? "▸ " : "· ") + (look.id + "          ").slice(0, 10) + look.name);
+        });
+        print(t("pro.term.lookHint"), "dim");
+    }
+
+    function cmdLook(arg) {
+        const wanted = (arg || "").trim().toLowerCase();
+        if (!wanted) {
+            printLooks();
+            return;
+        }
+        const look = lookChoices().find(function (item) { return item.id === wanted || item.name.toLowerCase() === wanted; });
+        if (!look || !A.settings || !A.settings.set("look", look.id)) {
+            print(t("pro.term.lookUnknown", { name: arg.trim() }), "error");
+            printLooks();
+            return;
+        }
+        print(t("pro.term.lookOn", { name: look.name }), "ok");
+    }
+
+    // "theme": the two plain looks. A palette that is on steps aside (A.settings does it).
     function cmdTheme(arg) {
         const wanted = arg ? arg.toLowerCase() : (A.theme === "light" ? "dark" : "light");
         if (wanted !== "dark" && wanted !== "light") {
             print("theme dark | theme light", "error");
             return;
         }
-        A.setTheme(wanted);
+        if (A.settings) A.settings.set("theme", wanted);
+        else A.setTheme(wanted);
         print(t("pro.term.done"), "ok");
     }
 
@@ -793,7 +845,7 @@
             '<span class="pro-status-item pro-status-brand"><span class="pro-pulse" aria-hidden="true"></span>AI COMPASS · PRO</span>' +
             '<span class="pro-status-item">' + esc(t("pro.statusPage")) + " <b>" + esc(pageName()) + "</b></span>" +
             '<span class="pro-status-item">' + esc(online ? t("pro.statusOnline") : t("pro.statusOffline")) + "</span>" +
-            '<span class="pro-status-item">' + esc(A.lang.toUpperCase()) + " · " + esc(t(A.theme === "light" ? "settings.themeLight" : "settings.themeDark")) + "</span>" +
+            '<span class="pro-status-item">' + esc(A.lang.toUpperCase()) + " · " + esc(lookName()) + "</span>" +
             '<span class="pro-status-spacer"></span>' +
             '<span class="pro-status-item">' + esc(t("pro.level")) + " <b>" + (n.level === null ? "—" : num(n.level)) + "</b>" +
                 (n.xp === null ? "" : " · " + esc(t("pro.xp", { n: num(n.xp) }))) + "</span>" +
@@ -922,18 +974,16 @@
             if (A.glossary && id) A.glossary.show(id, { focus: true });
         } else if (name === "compass") {
             if (A.journey) A.journey.open();
-        } else if (name === "simple") {
-            if (A.settings) {
-                A.settings.set("design", "simple");
-                A.toast(t("settings.saidValue", { setting: t("settings.design"), value: t("settings.designSimple") }), "🌱");
-            }
+        } else if (name === "design") {
+            // The design and the look are chosen in Settings: the window opens at "Design"
+            if (A.settings) A.settings.open("design", button);
         }
     }
 
     A.on("activity", later);
     A.on("section", later);
     A.on("settings", function (detail) {
-        if (detail && (detail.name === "design" || detail.name === "theme")) later();
+        if (detail && (detail.name === "design" || detail.name === "theme" || detail.name === "look")) later();
     });
     A.onLanguageChange(function () {
         if (terminal) {
