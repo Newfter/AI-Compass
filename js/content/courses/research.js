@@ -1,8 +1,9 @@
 /* =========================================================
    AI COMPASS — GUIDED COURSE: RESEARCH FRONTIER
-   The last stage of "My path", for PhD students and researchers:
-   twelve guided steps on the ideas behind current research, with the
-   derivations and the numbers done by hand.
+   A stage of "My path" for PhD students and researchers: twelve
+   guided steps on the ideas behind current research, with the
+   derivations and the numbers done by hand. (The last stage, "Theory
+   at the limit", is js/content/courses/theory.js.)
      r1   Attention at scale
      r2   Scaling laws
      r3   Optimisers for large models
@@ -23,8 +24,8 @@
      be typed as a percentage ("81%"). Russian texts write decimals with a comma;
    - "card": the task also becomes a card of the memory check. A card must
      make sense alone.
-   The level check asks nothing about this stage: it is the last one, so a
-   learner who knows every stage before it starts here anyway.
+   The level check asks nothing about this stage: it has no probes, so a
+   learner who knows every stage before it starts here.
    No company, product or model is named in this course, on purpose.
    Results from the literature are stated as carefully as the evidence
    allows, and where research is unsettled the texts say so.

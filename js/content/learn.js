@@ -23,7 +23,7 @@ window.AICompass.addTranslations({
 
         "learn.home.kicker": "My path",
         "learn.home.newTitle": "Not sure where to start?",
-        "learn.home.newText": "Answer three questions and get your own path, from the very first idea to the research frontier.",
+        "learn.home.newText": "Answer three questions and get your own path, from the very first idea to the theory behind AI research.",
         "learn.home.newButton": "Build my path",
         "learn.home.orText": "Want a plan made just for you?",
         "learn.home.title": "Your plan for today",
@@ -42,7 +42,7 @@ window.AICompass.addTranslations({
 
         "learn.home.kicker": "Мой путь",
         "learn.home.newTitle": "Не знаешь, с чего начать?",
-        "learn.home.newText": "Ответь на три вопроса и получи свой путь: от самой первой идеи до переднего края науки.",
+        "learn.home.newText": "Ответь на три вопроса и получи свой путь: от самой первой идеи до теории, на которой стоят исследования ИИ.",
         "learn.home.newButton": "Построить мой путь",
         "learn.home.orText": "Хочешь план именно для тебя?",
         "learn.home.title": "Твой план на сегодня",
@@ -76,7 +76,7 @@ window.AICompass.addTranslations({
         "learn.who.teacher.text": "Learn it yourself first, then take the ready lesson plans to your class.",
         "learn.who.pro": "Pro, developer or researcher",
         "learn.who.pro.age": "you code, work with data or do research",
-        "learn.who.pro.text": "Skip ahead with a level check, then do the maths by hand, up to the ideas of current research.",
+        "learn.who.pro.text": "Skip ahead with a level check, then do the maths by hand, up to current research and its theory.",
 
         "learn.setup.startTitle": "Where do you want to start?",
         "learn.setup.startText": "Nothing is locked: this only decides where your path begins.",
@@ -123,7 +123,7 @@ window.AICompass.addTranslations({
         "learn.who.teacher.text": "Сначала разберись в теме, а потом возьми готовые планы уроков в свой класс.",
         "learn.who.pro": "Профи, разработчик или исследователь",
         "learn.who.pro.age": "пишешь код, работаешь с данными или занимаешься наукой",
-        "learn.who.pro.text": "Проверь уровень и иди дальше: математика своими руками, вплоть до идей современных исследований.",
+        "learn.who.pro.text": "Проверь уровень и иди дальше: математика своими руками, вплоть до современных исследований и их теории.",
 
         "learn.setup.startTitle": "С чего ты хочешь начать?",
         "learn.setup.startText": "Ничего не закрыто: этот ответ только решает, где начинается твой путь.",
@@ -196,9 +196,9 @@ window.AICompass.addTranslations({
         "learn.today.more": "Practise a little more",
 
         "learn.path.title": "Your path",
-        "learn.path.text.one": "{n} stage, from the very first idea to the research frontier. Everything is open: the marker only shows the best next step.",
-        "learn.path.text.many": "{n} stages, from the very first idea to the research frontier. Everything is open: the marker only shows the best next step.",
-        "learn.path.text.8": "Eight stages, from the very first idea to the research frontier. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.one": "{n} stage, from the very first idea to the theory behind AI research. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.many": "{n} stages, from the very first idea to the theory behind AI research. Everything is open: the marker only shows the best next step.",
+        "learn.path.text.9": "Nine stages, from the very first idea to the theory behind AI research. Everything is open: the marker only shows the best next step.",
         "learn.path.stage": "Stage {n}",
         "learn.path.count": "{done} of {total}",
         "learn.path.next": "Next step",
@@ -237,6 +237,8 @@ window.AICompass.addTranslations({
         "learn.stage.build.text": "What it takes to build on a language model: tokens and context, search by meaning, answers from your documents, honest evaluation, prompt injection, agents, and running it for real users.",
         "learn.stage.research": "Research frontier",
         "learn.stage.research.text": "PhD-level ideas behind current research, worked through by hand: attention at scale, scaling laws, optimisers, generalisation, VAEs and diffusion, reinforcement learning and preferences, interpretability, efficient models, reasoning, and research that holds up.",
+        "learn.stage.theory": "Theory at the limit",
+        "learn.stage.theory.text": "The mathematics under machine learning, with proofs in pieces, for PhD students and researchers: generalisation bounds, optimisation, information, high dimensions, kernels, decision theory, diffusion as equations, the theory of RL and of transformers, causality, guarantees, and what cannot be learned at all.",
 
         "learn.unit.z1": "What is a program?",
         "learn.unit.z1.text": "A computer follows instructions, one by one.",
@@ -310,6 +312,30 @@ window.AICompass.addTranslations({
         "learn.unit.r11.text": "Chains of thought, majority votes, best-of-n with a checker, learned verifiers, and RL with checkable rewards.",
         "learn.unit.r12": "Research that holds up",
         "learn.unit.r12.text": "Seeds and error bars, fair baselines, multiple comparisons, ablations and scale.",
+        "learn.unit.t1": "Generalisation bounds: how many examples are enough",
+        "learn.unit.t1.text": "Compute sample sizes from Hoeffding and the union bound, then find their limit.",
+        "learn.unit.t2": "Optimisation theory: how fast can descent go",
+        "learn.unit.t2.text": "Derive step limits and convergence rates, then count the steps they guarantee.",
+        "learn.unit.t3": "Information theory of learning",
+        "learn.unit.t3.text": "Compute KL, code lengths and Fano bounds; order the proof that KL ≥ 0.",
+        "learn.unit.t4": "High dimensions and random matrices",
+        "learn.unit.t4.text": "Compute shell widths, projection dimensions and the edges of a noise spectrum.",
+        "learn.unit.t5": "Kernels and the infinite-width limit",
+        "learn.unit.t5.text": "Solve kernel regression by hand, derive the NTK dynamics and find their limits.",
+        "learn.unit.t6": "Statistical decision theory: what “best estimator” means",
+        "learn.unit.t6.text": "Compute risks, a Cramér–Rao bound, the James–Stein gain and a minimax rule.",
+        "learn.unit.t7": "Diffusion as differential equations: scores, SDEs and ODEs",
+        "learn.unit.t7.text": "Derive Tweedie's formula and the flow ODE; compute scores, drifts, a likelihood.",
+        "learn.unit.t8": "Reinforcement learning theory: contractions, gradients and regret",
+        "learn.unit.t8.text": "Prove the Bellman contraction; compute greedy losses, UCB indices and regret.",
+        "learn.unit.t9": "Transformers in theory: what attention can and cannot compute",
+        "learn.unit.t9.text": "Prove attention's symmetry; compute kernel weights and an in-context step.",
+        "learn.unit.t10": "Causality: from seeing to doing",
+        "learn.unit.t10.text": "Compute an effect by adjustment and by an instrument, then a counterfactual.",
+        "learn.unit.t11": "Guarantees: differential privacy and certified robustness",
+        "learn.unit.t11.text": "Calibrate noise to a privacy budget, prove it, and certify an L2 radius.",
+        "learn.unit.t12": "Limits: what cannot be learned, computed or proved",
+        "learn.unit.t12.text": "Count what data cannot decide, bound query learning, find a max-margin limit.",
         "learn.unit.l1": "Practice: What is AI?",
         "learn.unit.l1.text": "Match apps to human abilities, sort learning from fixed rules, catch a myth.",
         "learn.unit.l2": "Practice: Machine Learning",
@@ -366,6 +392,7 @@ window.AICompass.addTranslations({
         "learn.topic.maths": "The maths inside",
         "learn.topic.build": "Building with AI",
         "learn.topic.research": "Research",
+        "learn.topic.theory": "Theory",
         "learn.topic.practice": "Lesson practice",
 
         // The site search (Ctrl+K) finds the guided steps: where a result is, and the
@@ -408,6 +435,18 @@ window.AICompass.addTranslations({
         "learn.unit.r10.words": "quantization quantisation int8 4-bit absmax outliers group-wise scales mixture of experts moe router speculative decoding draft model distillation soft targets",
         "learn.unit.r11.words": "reasoning chain of thought test-time compute self-consistency majority vote best-of-n pass@k verifier process reward outcome reward verifiable rewards faithfulness",
         "learn.unit.r12.words": "research methodology seeds variance standard error baselines hyperparameter tuning multiple comparisons bonferroni p-hacking forking paths ablation scale reproducibility",
+        "learn.unit.t1.words": "learning theory generalisation generalization bound hoeffding inequality concentration union bound sample size sample complexity pac learning realisable case finite hypothesis class vc dimension vapnik-chervonenkis shattering uniform convergence test set reuse",
+        "learn.unit.t2.words": "optimisation theory optimization convergence rate smoothness lipschitz gradient descent lemma step size learning rate strong convexity condition number polyak-lojasiewicz pl inequality quadratic eigenvalues edge of stability acceleration nesterov momentum lower bound sgd",
+        "learn.unit.t3.words": "information theory entropy cross-entropy kl divergence gibbs inequality jensen bits nats perplexity compression arithmetic coding mutual information data processing inequality fano inequality minimum description length",
+        "learn.unit.t4.words": "high-dimensional geometry curse of dimensionality concentration of measure thin shell near-orthogonal random vectors cosine johnson-lindenstrauss lemma random projection random matrix theory marchenko-pastur spectrum eigenvalues covariance noise",
+        "learn.unit.t5.words": "kernel methods kernel trick feature map positive semi-definite gram matrix representer theorem kernel ridge regression rkhs neural tangent kernel ntk infinite width lazy training gradient flow feature learning",
+        "learn.unit.t6.words": "statistical decision theory estimator risk loss bias-variance admissible inadmissible fisher information cramer-rao bound cramér-rao james-stein shrinkage stein paradox bayes estimator posterior mean minimax natural gradient",
+        "learn.unit.t7.words": "diffusion sde ode stochastic differential equation score function score matching denoising tweedie formula reverse-time sde probability flow ode fokker-planck likelihood guidance bayes rule",
+        "learn.unit.t8.words": "reinforcement learning theory bellman operator contraction fixed point value iteration banach greedy policy loss q-learning convergence deadly triad policy gradient theorem performance difference lemma bandits regret ucb ucb1 epsilon-greedy exploration",
+        "learn.unit.t9.words": "transformer theory attention kernel smoothing nadaraya-watson softmax temperature permutation equivariance positional encoding rank parameters in-context learning gradient step universality expressivity circuit complexity chain of thought",
+        "learn.unit.t10.words": "causality causal inference do-operator intervention structural causal model dag d-separation confounder collider mediator backdoor criterion adjustment formula simpson's paradox instrumental variable front-door counterfactual ladder of causation",
+        "learn.unit.t11.words": "differential privacy epsilon delta privacy budget sensitivity laplace mechanism gaussian mechanism randomised response composition post-processing dp-sgd membership inference adversarial examples certified robustness randomised smoothing l2 radius",
+        "learn.unit.t12.words": "limits of learning no free lunch theorem inductive bias identifiability parity statistical query lower bound computational hardness learning parity with noise rice's theorem undecidable halting problem implicit bias max-margin logistic regression separable data",
         "learn.unit.l1.words": "what is ai artificial intelligence basics practice exercises tasks",
         "learn.unit.l2.words": "machine learning training data model practice exercises tasks",
         "learn.unit.l3.words": "neural networks neuron deep learning practice exercises tasks",
@@ -468,10 +507,10 @@ window.AICompass.addTranslations({
         "learn.today.more": "Потренироваться ещё немного",
 
         "learn.path.title": "Твой путь",
-        "learn.path.text.one": "{n} этап: от самой первой идеи до переднего края науки. Всё открыто: метка только показывает лучший следующий шаг.",
-        "learn.path.text.few": "{n} этапа: от самой первой идеи до переднего края науки. Всё открыто: метка только показывает лучший следующий шаг.",
-        "learn.path.text.many": "{n} этапов: от самой первой идеи до переднего края науки. Всё открыто: метка только показывает лучший следующий шаг.",
-        "learn.path.text.8": "Восемь этапов: от самой первой идеи до переднего края науки. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.one": "{n} этап: от самой первой идеи до теории, на которой стоят исследования ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.few": "{n} этапа: от самой первой идеи до теории, на которой стоят исследования ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.many": "{n} этапов: от самой первой идеи до теории, на которой стоят исследования ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
+        "learn.path.text.9": "Девять этапов: от самой первой идеи до теории, на которой стоят исследования ИИ. Всё открыто: метка только показывает лучший следующий шаг.",
         "learn.path.stage": "Этап {n}",
         "learn.path.count": "{done} из {total}",
         "learn.path.next": "Следующий шаг",
@@ -511,6 +550,8 @@ window.AICompass.addTranslations({
         "learn.stage.build.text": "Что нужно, чтобы строить на языковой модели: токены и контекст, поиск по смыслу, ответы по своим документам, честная оценка качества, промпт-инъекции, агенты и запуск для настоящих пользователей.",
         "learn.stage.research": "Передний край науки",
         "learn.stage.research.text": "Идеи современных исследований уровня PhD, с выводами и расчётами своими руками: внимание в больших масштабах, законы масштабирования, оптимизаторы, обобщение, VAE и диффузия, обучение с подкреплением и на предпочтениях, интерпретируемость, эффективные модели, рассуждения и исследования, которым можно верить.",
+        "learn.stage.theory": "Теория на пределе",
+        "learn.stage.theory.text": "Математика, на которой стоит машинное обучение, с доказательствами по шагам, для аспирантов и исследователей: границы обобщения, оптимизация, теория информации, высокие размерности, ядра, теория решений, диффузия как уравнения, теория RL и трансформеров, причинность, гарантии и то, чему нельзя научиться вовсе.",
 
         "learn.unit.z1": "Что такое программа?",
         "learn.unit.z1.text": "Компьютер выполняет инструкции, одну за другой.",
@@ -584,6 +625,30 @@ window.AICompass.addTranslations({
         "learn.unit.r11.text": "Цепочки рассуждений, голосование большинством, лучший из n с проверкой, обученные верификаторы и RL с проверяемой наградой.",
         "learn.unit.r12": "Исследования, которым можно верить",
         "learn.unit.r12.text": "Зёрна и погрешности, честные базовые методы, множественные сравнения, абляции и масштаб.",
+        "learn.unit.t1": "Границы обобщения: сколько примеров достаточно",
+        "learn.unit.t1.text": "Вычисли объём выборки по Хёфдингу и оценке объединения и найди их предел.",
+        "learn.unit.t2": "Теория оптимизации: как быстро может идти спуск",
+        "learn.unit.t2.text": "Выведи пределы шага и скорости сходимости, посчитай число шагов по оценкам.",
+        "learn.unit.t3": "Теория информации в обучении",
+        "learn.unit.t3.text": "Вычисли KL, длину сжатого текста и оценку Фано; собери доказательство KL ≥ 0.",
+        "learn.unit.t4": "Высокие размерности и случайные матрицы",
+        "learn.unit.t4.text": "Вычисли толщину оболочки, размерность проекции и края спектра шума.",
+        "learn.unit.t5": "Ядра и предел бесконечной ширины",
+        "learn.unit.t5.text": "Реши ядерную регрессию вручную, выведи динамику NTK и найди её пределы.",
+        "learn.unit.t6": "Теория статистических решений: что значит «лучшая оценка»",
+        "learn.unit.t6.text": "Вычисли риски, границу Рао — Крамера, выигрыш Джеймса — Стейна и минимакс.",
+        "learn.unit.t7": "Диффузия как дифференциальные уравнения: скор, СДУ и ОДУ",
+        "learn.unit.t7.text": "Выведи формулу Твиди и ОДУ потока; вычисли скоры, сносы и правдоподобие.",
+        "learn.unit.t8": "Теория обучения с подкреплением: сжатия, градиенты и сожаление",
+        "learn.unit.t8.text": "Докажи сжатие Беллмана; вычисли потери жадной политики, UCB и сожаление.",
+        "learn.unit.t9": "Трансформеры в теории: что внимание может и чего не может вычислить",
+        "learn.unit.t9.text": "Докажи симметрию внимания; вычисли веса ядра и шаг обучения в контексте.",
+        "learn.unit.t10": "Причинность: от наблюдения к вмешательству",
+        "learn.unit.t10.text": "Вычисли эффект через поправку и через инструмент, а затем контрфактуал.",
+        "learn.unit.t11": "Гарантии: дифференциальная приватность и сертифицированная устойчивость",
+        "learn.unit.t11.text": "Подбери шум под бюджет приватности, докажи гарантию, вычисли радиус L2.",
+        "learn.unit.t12": "Пределы: чему нельзя научиться, что нельзя вычислить и доказать",
+        "learn.unit.t12.text": "Посчитай, чего не решают данные, оцени число запросов, найди предельный зазор.",
         "learn.unit.l1": "Практика: что такое ИИ?",
         "learn.unit.l1.text": "Сопоставь приложения с умениями, отличи обучение от правил, поймай миф.",
         "learn.unit.l2": "Практика: машинное обучение",
@@ -642,6 +707,7 @@ window.AICompass.addTranslations({
         "learn.topic.maths": "Математика внутри",
         "learn.topic.build": "Разработка на ИИ",
         "learn.topic.research": "Исследования",
+        "learn.topic.theory": "Теория",
         "learn.topic.practice": "Практика к урокам",
 
         "learn.search.section": "Мой путь · {stage}",
@@ -682,6 +748,18 @@ window.AICompass.addTranslations({
         "learn.unit.r10.words": "квантование int8 4 бита absmax выбросы групповые масштабы смесь экспертов moe маршрутизатор спекулятивное декодирование черновая модель дистилляция мягкие метки",
         "learn.unit.r11.words": "рассуждения цепочка рассуждений chain of thought вычисления во время ответа самосогласованность голосование большинством лучший из n pass@k верификатор награда за шаги награда за результат проверяемая награда достоверность",
         "learn.unit.r12.words": "методология исследований зерно seed разброс стандартная ошибка базовый метод подбор гиперпараметров множественные сравнения бонферрони p-hacking абляция масштаб воспроизводимость",
+        "learn.unit.t1.words": "теория обучения обобщение граница обобщения неравенство хёфдинга хефдинга концентрация оценка объединения объём выборки выборочная сложность pac-обучение реализуемый случай конечный класс гипотез vc-размерность размерность вапника — червоненкиса разбиение равномерная сходимость повторное использование тестовой выборки",
+        "learn.unit.t2.words": "теория оптимизации скорость сходимости гладкость липшицев градиент лемма о спуске размер шага скорость обучения сильная выпуклость число обусловленности условие поляка — лоясевича pl квадратичная функция собственные значения граница устойчивости ускорение нестеров импульс нижняя оценка sgd",
+        "learn.unit.t3.words": "теория информации энтропия перекрёстная энтропия кросс-энтропия kl-дивергенция неравенство гиббса неравенство йенсена биты наты перплексия сжатие арифметическое кодирование взаимная информация неравенство обработки данных неравенство фано минимальная длина описания",
+        "learn.unit.t4.words": "высокая размерность проклятие размерности концентрация меры тонкий слой оболочка почти ортогональные случайные векторы косинус лемма джонсона — линденштрауса случайная проекция случайные матрицы закон марченко — пастура спектр собственные значения ковариация шум",
+        "learn.unit.t5.words": "ядерные методы ядро ядерный трюк отображение признаков неотрицательно определённая матрица грама теорема о представителе ядерная гребневая регрессия rkhs нейронное касательное ядро ntk бесконечная ширина ленивое обучение градиентный поток обучение признаков",
+        "learn.unit.t6.words": "теория статистических решений оценка риск функция потерь смещение и дисперсия допустимая недопустимая информация фишера неравенство рао — крамера джеймс — стейн сжатие парадокс стейна байесовская оценка апостериорное среднее минимакс натуральный градиент",
+        "learn.unit.t7.words": "диффузия сду оду стохастическое дифференциальное уравнение скор функция скора score matching денойзер формула твиди обратное сду оду вероятностного потока уравнение фоккера — планка правдоподобие наведение формула байеса",
+        "learn.unit.t8.words": "теория обучения с подкреплением оператор беллмана сжатие сжимающее отображение неподвижная точка итерация по ценностям банах жадная политика q-обучение сходимость смертельная триада теорема о градиенте политики бандиты многорукий бандит сожаление регрет ucb ucb1 ε-жадная исследование",
+        "learn.unit.t9.words": "теория трансформеров внимание ядерное сглаживание оценка надарая — ватсона softmax температура перестановки эквивариантность позиционное кодирование ранг параметры обучение в контексте шаг градиента универсальность выразительность сложность схем цепочка рассуждений",
+        "learn.unit.t10.words": "причинность причинный вывод оператор do вмешательство структурная причинная модель граф d-разделение конфаундер общая причина коллайдер посредник критерий чёрного хода формула поправки парадокс симпсона инструментальная переменная передняя дверь контрфактуал лестница причинности",
+        "learn.unit.t11.words": "дифференциальная приватность эпсилон дельта бюджет приватности чувствительность механизм лапласа гауссов механизм рандомизированный ответ композиция постобработка dp-sgd атака на членство состязательные примеры сертифицированная устойчивость рандомизированное сглаживание радиус l2",
+        "learn.unit.t12.words": "пределы обучения бесплатных завтраков не бывает no free lunch индуктивное смещение идентифицируемость чётность статистические запросы нижняя оценка вычислительная сложность чётность с шумом теорема райса неразрешимость проблема остановки неявное смещение максимальный зазор логистическая регрессия разделимые данные",
         "learn.unit.l1.words": "что такое ии искусственный интеллект основы практика упражнения задания тренировка",
         "learn.unit.l2.words": "машинное обучение данные модель практика упражнения задания тренировка",
         "learn.unit.l3.words": "нейронные сети нейрон глубокое обучение нейросеть практика упражнения задания тренировка",
@@ -916,7 +994,8 @@ window.AICompass.addTranslations({
         "learn.place.result.world": "You know how AI works. Now see what it does with data and with you, and plan a project.",
         "learn.place.result.pro": "You know the ideas well. Next comes the maths, done by hand.",
         "learn.place.result.build": "You know the maths too. Next: how real products are built on language models.",
-        "learn.place.result.research": "You know every stage before it, the maths and building with AI included. The last stage is yours: the ideas of current research, worked through by hand.",
+        "learn.place.result.research": "You know every stage before it, the maths and building with AI included. Next: the ideas of current research, worked through by hand, and then the theory under them.",
+        "learn.place.result.theory": "You know every stage before it, current research included. The last stage is yours: the mathematics under machine learning, with proofs in pieces.",
         "learn.place.stopped": "No need for more questions: the path will start from the beginning.",
         "learn.place.see": "See my path"
     },
@@ -969,7 +1048,8 @@ window.AICompass.addTranslations({
         "learn.place.result.world": "Ты знаешь, как работает ИИ. Теперь посмотри, что он делает с данными и с тобой, и спланируй проект.",
         "learn.place.result.pro": "Идеи ты знаешь хорошо. Дальше — математика своими руками.",
         "learn.place.result.build": "Математику ты тоже знаешь. Дальше — как на языковых моделях строят настоящие продукты.",
-        "learn.place.result.research": "Все этапы до него тебе знакомы, включая математику и разработку на ИИ. Твой этап — последний: идеи современных исследований, с выводами и расчётами своими руками.",
+        "learn.place.result.research": "Все этапы до него тебе знакомы, включая математику и разработку на ИИ. Дальше — идеи современных исследований, с выводами и расчётами своими руками, а потом теория, на которой они стоят.",
+        "learn.place.result.theory": "Все этапы до него тебе знакомы, включая современные исследования. Твой этап — последний: математика, на которой стоит машинное обучение, с доказательствами по шагам.",
         "learn.place.stopped": "Больше вопросов не нужно: путь начнётся с самого начала.",
         "learn.place.see": "Посмотреть мой путь"
     }
@@ -1161,7 +1241,8 @@ window.AICompass.content.set("learn", {
         { id: "world", icon: "🌍", track: "world" },
         { id: "pro", icon: "⚙️", course: "pro" },
         { id: "build", icon: "🚀", course: "build" },
-        { id: "research", icon: "🔭", course: "research" }
+        { id: "research", icon: "🔭", course: "research" },
+        { id: "theory", icon: "📜", course: "theory" }
     ],
 
     // The guided courses: the file with their steps (loaded when a unit opens), the
@@ -1221,8 +1302,9 @@ window.AICompass.content.set("learn", {
                 { id: "b7", icon: "🚦", minutes: 7, cards: 4 }
             ]
         },
-        // The last stage: the level check asks nothing about it (see placementStages in
-        // js/learn.js), so it needs no probes
+        // The level check asks nothing about this stage either: it has no probes (see
+        // placementStages in js/learn.js), so a learner who gets every question right
+        // starts here, and the path goes on to the last stage
         research: {
             file: "js/content/courses/research.js",
             topic: "research",
@@ -1239,6 +1321,26 @@ window.AICompass.content.set("learn", {
                 { id: "r10", icon: "🗜️", minutes: 8, cards: 4 },
                 { id: "r11", icon: "🧠", minutes: 8, cards: 4 },
                 { id: "r12", icon: "🧾", minutes: 7, cards: 4 }
+            ]
+        },
+        // The last stage: the level check asks nothing about it (see placementStages in
+        // js/learn.js), so it needs no probes
+        theory: {
+            file: "js/content/courses/theory.js",
+            topic: "theory",
+            units: [
+                { id: "t1", icon: "📏", minutes: 10, cards: 4 },
+                { id: "t2", icon: "⛰️", minutes: 10, cards: 4 },
+                { id: "t3", icon: "📦", minutes: 10, cards: 4 },
+                { id: "t4", icon: "🌐", minutes: 10, cards: 4 },
+                { id: "t5", icon: "🕸️", minutes: 10, cards: 4 },
+                { id: "t6", icon: "⚖️", minutes: 10, cards: 4 },
+                { id: "t7", icon: "🌊", minutes: 10, cards: 4 },
+                { id: "t8", icon: "🎰", minutes: 10, cards: 4 },
+                { id: "t9", icon: "🔀", minutes: 10, cards: 4 },
+                { id: "t10", icon: "🔧", minutes: 10, cards: 4 },
+                { id: "t11", icon: "🔒", minutes: 10, cards: 4 },
+                { id: "t12", icon: "⛔", minutes: 10, cards: 4 }
             ]
         },
         // The practice of the lessons: a short guided unit after each lesson of the three
@@ -1272,7 +1374,8 @@ window.AICompass.content.set("learn", {
     test: { questions: 8, pass: 0.8 },
 
     // The level check: how many questions it asks about each stage it probes (every
-    // stage but the first one), and how many stages a young explorer is asked about
+    // stage but the first and the last one that has questions), and how many stages a
+    // young explorer is asked about
     placement: { perStage: 2, kidStages: 2 },
 
     // Roughly how long each step of today's session takes (minutes), for "About 10 minutes"
