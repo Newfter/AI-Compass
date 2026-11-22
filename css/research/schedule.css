@@ -1,0 +1,57 @@
+/* =========================================================
+   AI COMPASS — RESEARCH LAB, BENCH TOOL "schedule": its only styles
+   The seven shapes do not fit in one row of a segmented control: they wrap
+   three or four to a row. The table of rates gets its "Copy table" button
+   and its message under it.
+   Sections: 1. The shapes  2. The table and its button  3. Phones
+   ========================================================= */
+
+/* ===== 1. THE SHAPES: at least about 6.5 characters per option, so they wrap ===== */
+.rs-schedule-shapes .lk-seg-option {
+    flex: 1 1 6.5em;
+}
+
+/* ===== 2. THE TABLE AND ITS BUTTON ===== */
+.rs-schedule-table {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* a grid item would grow to the width of its table: keep it in the box */
+.rs-schedule-table > * {
+    min-width: 0;
+}
+
+.rs-schedule-table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.rs-schedule-status {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    overflow-wrap: anywhere;
+}
+
+/* ===== 3. PHONES: a fingertip target, and three columns that fit in 320 px ===== */
+@media (max-width: 640px) {
+    .rs-schedule-copy {
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 400px) {
+    .rs-schedule-table .rk-table th,
+    .rs-schedule-table .rk-table td {
+        padding-inline: 5px;
+        overflow-wrap: anywhere;
+    }
+
+    .rs-schedule-table .rk-table {
+        font-size: 0.75rem;
+    }
+}

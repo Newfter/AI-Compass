@@ -1,0 +1,35 @@
+/* =========================================================
+   AI COMPASS — RESEARCH LAB, BENCH TOOL "sizer": its only styles
+   A thin bar under each row of "Where the parameters are": the share of
+   that part as a length. The number is in the row; the bar is a picture of
+   it (aria-hidden), in the chart colours of the lab kit.
+   Sections: 1. The bar  2. High contrast
+   ========================================================= */
+
+/* ===== 1. THE BAR ===== */
+.rs-sizer-bar {
+    grid-column: 1 / -1;
+    height: 6px;
+    margin: 4px 0 1px;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+}
+
+.rs-sizer-fill {
+    display: block;
+    width: calc(var(--rs-sizer-share, 0) * 100%);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--rs-sizer-color, var(--accent));
+}
+
+.rk-result[hidden] .rs-sizer-bar,
+.rk-result.is-empty .rs-sizer-bar {
+    display: none;
+}
+
+/* ===== 2. HIGH CONTRAST: the bar gets an edge ===== */
+html.st-contrast .rs-sizer-bar {
+    border: 1px solid var(--border-strong);
+}

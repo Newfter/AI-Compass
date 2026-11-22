@@ -1,0 +1,16 @@
+/* =========================================================
+   AI COMPASS — RESEARCH LAB, BENCH TOOL "privacy"
+   Loaded with the tool (css: true in js/content/research.js).
+   One rule: the classical Gaussian σ for ε ≥ 1, where its formula is not
+   proved, is shown greyed (the sentence beside it says why).
+   ========================================================= */
+
+.rk-result.rs-privacy-grey .rk-result-value,
+.rk-result.rs-privacy-grey .rk-result-unit {
+    color: var(--text-dim);
+    font-weight: 400;
+}
+
+.rk-result.rs-privacy-grey .rk-result-name {
+    color: var(--text-dim);
+}

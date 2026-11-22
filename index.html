@@ -195,6 +195,7 @@
     <link rel="stylesheet" href="./css/effects.css">
     <link rel="stylesheet" href="./css/lessons.css">
     <link rel="stylesheet" href="./css/lab.css">
+    <link rel="stylesheet" href="./css/research.css">
     <link rel="stylesheet" href="./css/quiz.css">
     <link rel="stylesheet" href="./css/glossary.css">
     <link rel="stylesheet" href="./css/timeline.css">
@@ -237,6 +238,7 @@
     <script src="./js/content/lessons-deep.js" defer></script>
     <script src="./js/content/lessons-world.js" defer></script>
     <script src="./js/content/lab.js" defer></script>
+    <script src="./js/content/research.js" defer></script>
     <script src="./js/content/quiz.js" defer></script>
     <script src="./js/content/glossary.js" defer></script>
     <script src="./js/content/glossary-terms.js" defer></script>
@@ -264,6 +266,8 @@
     <script src="./js/look-effects.js" defer></script>
     <script src="./js/lessons.js" defer></script>
     <script src="./js/lab.js" defer></script>
+    <!-- The Research lab (#research): its kits, maths and bench tools load on demand (js/research.js, section 6) -->
+    <script src="./js/research.js" defer></script>
     <script src="./js/quiz.js" defer></script>
     <script src="./js/glossary.js" defer></script>
     <script src="./js/timeline.js" defer></script>
@@ -372,6 +376,8 @@
             <a href="#learn" data-i18n="nav.learn">My path</a>
             <a href="#lessons" data-i18n="nav.lessons">Lessons</a>
             <a href="#lab" data-i18n="nav.lab">AI Lab</a>
+            <!-- The Research lab: in the menu bar of the Pro design only (css/pro.css); its address and Ctrl+K work in both -->
+            <a href="#research" class="nav-pro-link" data-i18n="nav.research">Research lab</a>
             <a href="#quiz" data-i18n="nav.quiz">Quiz</a>
             <a href="#challenge" class="ch-nav-link" data-i18n="nav.challenge">Challenge</a>
             <a href="#glossary" data-i18n="nav.glossary">Glossary</a>
@@ -652,6 +658,18 @@
                 <p class="section-sub" data-i18n="lab.subtitle" data-i18n-plural="labExperimentCount">13 real machine-learning experiments, running right here in your browser. Teach a model, test it, and watch it think.</p>
             </div>
             <div data-feature="lab"></div>
+        </div>
+    </section>
+
+    <!-- ===== RESEARCH LAB (js/research.js): the experiment station, the bench, the notebook ===== -->
+    <section class="section" id="research">
+        <div class="container">
+            <div class="section-head" data-reveal>
+                <p class="section-label" data-i18n="research.label">FOR RESEARCHERS</p>
+                <h2 data-i18n="research.title">Research lab</h2>
+                <p class="section-sub" data-i18n="research.subtitle">Precise calculators, small experiments and a lab notebook for the everyday questions of research.</p>
+            </div>
+            <div data-feature="research"></div>
         </div>
     </section>
 

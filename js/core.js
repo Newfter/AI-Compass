@@ -1633,6 +1633,7 @@
         { id: "learn", key: "nav.learn", icon: "🧭" },
         { id: "lessons", key: "nav.lessons", icon: "📚" },
         { id: "lab", key: "nav.lab", icon: "🧪" },
+        { id: "research", key: "nav.research", icon: "🔬" },
         { id: "quiz", key: "nav.quiz", icon: "🏆" },
         { id: "challenge", key: "nav.challenge", icon: "🥇" },
         { id: "glossary", key: "nav.glossary", icon: "📖" },
@@ -2142,14 +2143,17 @@
             let keep = links.length;
             if (wide.matches) {
                 const gap = parseFloat(getComputedStyle(navLinks).columnGap) || 0;
-                const room = width(inner) - width(logo) - width(actions) - 2 * (parseFloat(getComputedStyle(inner).columnGap) || 0);
+                // The buttons on the right at their full width (scrollWidth): with every link in the bar they are squeezed
+                const room = width(inner) - width(logo) - Math.max(width(actions), actions.scrollWidth) - 2 * (parseFloat(getComputedStyle(inner).columnGap) || 0);
                 const widths = links.map(width);
-                const all = widths.reduce(function (sum, value) { return sum + value + gap; }, 0) - gap;
+                // A link the design hides (a Pro link in the Simple design) takes no room and no gap
+                const space = function (value) { return value > 0 ? value + gap : 0; };
+                const all = widths.reduce(function (sum, value) { return sum + space(value); }, 0) - gap;
                 if (all > room + 0.5) {
                     let used = width(more);
                     keep = 0;
-                    while (keep < links.length && used + gap + widths[keep] <= room + 0.5) {
-                        used += gap + widths[keep];
+                    while (keep < links.length && used + space(widths[keep]) <= room + 0.5) {
+                        used += space(widths[keep]);
                         keep++;
                     }
                 }

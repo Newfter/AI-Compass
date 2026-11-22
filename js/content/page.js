@@ -46,6 +46,7 @@ window.AICompass.addTranslations({
 
         "nav.lessons": "Lessons",
         "nav.lab": "AI Lab",
+        "nav.research": "Research lab",
         "nav.quiz": "Quiz",
         "nav.challenge": "Challenge",
         "nav.glossary": "Glossary",
@@ -157,6 +158,7 @@ window.AICompass.addTranslations({
 
         "nav.lessons": "Уроки",
         "nav.lab": "ИИ-лаборатория",
+        "nav.research": "Исследовательская лаборатория",
         "nav.quiz": "Тест",
         "nav.challenge": "Рейтинг",
         "nav.glossary": "Словарь",

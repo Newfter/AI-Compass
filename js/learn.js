@@ -1420,9 +1420,19 @@
     // The stages the level check asks about: every stage but the first one ("zero": that
     // is where the path starts when nothing is known yet) and the last one (a learner who
     // knows every stage before it starts there anyway, so its questions would change
-    // nothing). A young explorer is asked about the first few only.
+    // nothing). A course stage is asked about only when it has "probes" (js/content/learn.js):
+    // a stage without questions is neither asked nor counted in "about N questions", so
+    // a learner who gets everything right starts at the first stage after the last one
+    // asked ("research", which has no probes). A young explorer is asked about the first
+    // few only.
+    function hasQuestions(stage) {
+        if (stage.track) return true;
+        const course = COURSES[stage.course];
+        return Boolean(course && Array.isArray(course.probes) && course.probes.length);
+    }
+
     function placementStages(who) {
-        const stages = STAGES.filter(function (stage) { return stage.id !== "zero" && stage.index < STAGES.length - 1; });
+        const stages = STAGES.filter(function (stage) { return stage.id !== "zero" && stage.index < STAGES.length - 1 && hasQuestions(stage); });
         return who === "kid" ? stages.slice(0, data.placement.kidStages) : stages;
     }
 
