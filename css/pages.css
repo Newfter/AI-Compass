@@ -1,8 +1,9 @@
 /* =========================================================
    AI COMPASS — THE LOOK OF THE PLAIN PAGES
    The lesson and glossary pages that search engines read
-   (lessons/, glossary/, ru/...), written by tools/build-pages.js.
-   One small file, no scripts: these pages must open fast.
+   (lessons/, glossary/, path/, teachers/, ru/...), written by
+   tools/build-pages.js. One small file: these pages must open fast.
+   (Their few buttons are js/pages.js.)
    Dark by default like the site; light on a device in light mode.
    ========================================================= */
 :root {
@@ -55,4 +56,57 @@ ul.pg-list { list-style: none; padding-left: 0; }
 .pg-pager span { flex: 1; }
 .pg-pager small { display: block; color: var(--soft); font-weight: 400; }
 .pg-foot { margin-top: 48px; padding-top: 20px; padding-bottom: 40px; border-top: 1px solid var(--line); text-align: center; color: var(--soft); font-size: 0.95rem; }
-@media print { .pg-top nav, .pg-cta, .pg-foot, .pg-pager { display: none; } body { background: #fff; color: #000; } }
+/* ----- The smaller parts: buttons under the title, questions, examples, tables, tags ----- */
+h3 { font-size: 1.1rem; line-height: 1.35; margin: 26px 0 6px; }
+.pg-soft { color: var(--soft); }
+.pg-aside { margin-top: 18px; }
+code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; overflow-wrap: anywhere; }
+.pg-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; min-height: 0; }
+.pg-chip {
+    font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--text); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer;
+}
+.pg-chip:hover, .pg-chip:focus-visible { border-color: var(--accent); }
+.pg-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.pg-tags a { text-decoration: none; font-size: 0.92rem; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; }
+.pg-example { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin: 0 0 16px; overflow-wrap: anywhere; }
+.pg-example.is-mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.9rem; line-height: 1.7; }
+.pg-table { overflow-x: auto; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+th { background: var(--card); }
+.pg-check > p:first-child { margin-top: 0; }
+.pg-check > p:last-child, .pg-check details > :last-child { margin-bottom: 0; }
+.pg-check + .pg-check { margin-top: 14px; }
+
+/* A question with answers to click (js/pages.js marks the answer) */
+.pg-quiz { margin: 0 0 22px; }
+.pg-check .pg-quiz { margin: 0; }
+.pg-q { font-weight: 600; margin: 0 0 10px; }
+h3.pg-q { font-size: 1.05rem; margin-top: 22px; }
+.pg-options { list-style: upper-alpha; padding-left: 26px; margin: 0 0 10px; }
+.pg-options li { margin: 0 0 8px; }
+.pg-options button {
+    display: block; width: 100%; text-align: left; font: inherit; color: var(--text); background: var(--card);
+    border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; cursor: pointer;
+}
+.pg-options button:hover, .pg-options button:focus-visible { border-color: var(--accent); }
+.pg-quiz.is-answered .pg-options button { cursor: default; }
+.pg-quiz.is-answered .pg-options button:hover { border-color: var(--line); }
+.pg-options button.is-right, .pg-quiz.is-answered .pg-options button.is-right:hover { border-color: #1f9d63; box-shadow: inset 0 0 0 1px #1f9d63; }
+.pg-options button.is-right::after { content: " ✓"; color: #1f9d63; font-weight: 700; }
+.pg-options button.is-wrong, .pg-quiz.is-answered .pg-options button.is-wrong:hover { border-color: #d6455d; box-shadow: inset 0 0 0 1px #d6455d; }
+.pg-options button.is-wrong::after { content: " ✗"; color: #d6455d; font-weight: 700; }
+.pg-why summary, .pg-check details summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.pg-why p { margin: 8px 0 0; }
+
+/* The menu of all sections at the bottom of every page */
+.pg-more { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-bottom: 14px; }
+.pg-more a { text-decoration: none; }
+
+@media print {
+    .pg-top nav, .pg-cta, .pg-foot, .pg-pager, .pg-tools, .pg-aside { display: none; }
+    body { background: #fff; color: #000; }
+    a { color: inherit; text-decoration: none; }
+    .pg-note, .pg-keys, .pg-check { border-color: #999; background: none; }
+}

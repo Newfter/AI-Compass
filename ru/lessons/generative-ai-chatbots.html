@@ -23,6 +23,7 @@
 <meta name="theme-color" content="#050b14">
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Генеративный ИИ и чат-боты","headline":"Генеративный ИИ и чат-боты","description":"Как чат-боты и генераторы картинок создают совершенно новый контент.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/ru/lessons/generative-ai-chatbots.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Уроки","item":"https://newfter.github.io/AI-Compass/ru/lessons/"},{"@type":"ListItem","position":3,"name":"Генеративный ИИ и чат-боты","item":"https://newfter.github.io/AI-Compass/ru/lessons/generative-ai-chatbots.html"}]}</script>
 </head>
@@ -31,7 +32,9 @@
     <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
     <nav aria-label="AI Compass">
         <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
         <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
         <a href="https://newfter.github.io/AI-Compass/lessons/generative-ai-chatbots.html" hreflang="en" lang="en">English</a>
     </nav>
 </header>
@@ -41,6 +44,7 @@
 <p class="pg-kicker">🌱 Основы · Урок 4 · 2 мин чтения</p>
 <h1>Генеративный ИИ и чат-боты</h1>
 <p class="pg-lead">Как чат-боты и генераторы картинок создают совершенно новый контент.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
 <h2>ИИ, который создаёт</h2>
 <p>Большая часть ИИ, о котором мы говорили, <em>сортирует</em> или <em>предсказывает</em>: спам или не спам, кошка или собака. <strong>Генеративный ИИ</strong> <em>создаёт</em> новое — тексты, изображения, музыку, код и даже видео. Чат-боты вроде ChatGPT, Gemini или Claude и генераторы, превращающие фразу в картинку, — всё это генеративный ИИ.</p>
 <h2>Угадать следующее слово</h2>
@@ -51,12 +55,27 @@
 <h2>Как пользоваться с умом</h2>
 <p>Генеративный ИИ отлично помогает придумывать идеи, объяснять сложную тему по-новому, тренировать иностранный язык или получать отзыв на свой текст. А вот плохая идея — копировать его ответы в домашку (ты ничему не научишься, и часто это против школьных правил), верить фактам без проверки или делиться личной информацией. Совет: чем понятнее запрос (промпт), тем лучше ответ — скажи, что тебе нужно, дай немного контекста и укажи нужный формат.</p>
 <section class="pg-keys"><h2>Главное</h2><ul><li>Генеративный ИИ создаёт новые тексты, изображения, звук, код и видео.</li><li>Чат-боты работают на LLM, которые снова и снова предсказывают следующий токен.</li><li>Они могут «галлюцинировать», поэтому важные факты всегда проверяй.</li></ul></section>
-<section class="pg-check"><h2>Проверь себя</h2><p>Почему чат-бот может уверенно сказать неправду?</p><ol type="A"><li>Он устаёт, ответив на много вопросов</li><li>Кто-то тайно вписывает в него неверные ответы</li><li>Он создаёт правдоподобный текст и не проверяет факты автоматически</li></ol><details><summary>Показать ответ</summary><p>LLM предсказывает, какие слова вероятнее всего будут дальше. Правдоподобно — не значит правдиво, поэтому модель может «галлюцинировать». Важную информацию всегда проверяй.</p></details></section>
+<section class="pg-check"><h2>Проверь себя</h2><div class="pg-quiz">
+<p class="pg-q">Почему чат-бот может уверенно сказать неправду?</p>
+<ol type="A" class="pg-options"><li><button type="button">Он устаёт, ответив на много вопросов</button></li><li><button type="button">Кто-то тайно вписывает в него неверные ответы</button></li><li><button type="button" data-right>Он создаёт правдоподобный текст и не проверяет факты автоматически</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Он создаёт правдоподобный текст и не проверяет факты автоматически</strong></p><p>LLM предсказывает, какие слова вероятнее всего будут дальше. Правдоподобно — не значит правдиво, поэтому модель может «галлюцинировать». Важную информацию всегда проверяй.</p></details>
+</div></section>
+<h2>Слова этого урока</h2><p class="pg-tags"><a href="../glossary/nlp.html">Обработка естественного языка (NLP)</a><a href="../glossary/llm.html">Большая языковая модель (LLM)</a><a href="../glossary/token.html">Токен</a><a href="../glossary/next-token.html">Предсказание следующего токена</a><a href="../glossary/generative-ai.html">Генеративный ИИ</a><a href="../glossary/chatbot.html">Чат-бот</a><a href="../glossary/prompt.html">Промпт (запрос)</a><a href="../glossary/hallucination.html">Галлюцинация</a></p>
 <aside class="pg-cta"><p>Мини-лаборатория, тест и сохранение прогресса. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#lesson-4">Пройти этот урок в приложении →</a></aside>
+<p class="pg-aside">🍎 <a href="../teachers/generative-ai-chatbots.html">Учителям: готовый план этого урока</a></p>
 <nav class="pg-pager" aria-label="Уроки"><a href="neural-networks.html"><small>Предыдущий урок</small>Нейронные сети</a><a href="ai-in-everyday-life.html"><small>Следующий урок</small>ИИ в повседневной жизни</a></nav>
 </article>
 </main>
 <footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
     <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>

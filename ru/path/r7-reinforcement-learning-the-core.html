@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Обучение с подкреплением: основа: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Отдача, уравнение Беллмана, Q-обучение, градиент по политике с базовой линией и обрезка в PPO. Передний край науки: шаг 7 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/r7-reinforcement-learning-the-core.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r7-reinforcement-learning-the-core.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Обучение с подкреплением: основа: шаг за шагом, с заданиями">
+<meta property="og:description" content="Отдача, уравнение Беллмана, Q-обучение, градиент по политике с базовой линией и обрезка в PPO. Передний край науки: шаг 7 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/r7-reinforcement-learning-the-core.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Обучение с подкреплением: основа","headline":"Обучение с подкреплением: основа","description":"Отдача, уравнение Беллмана, Q-обучение, градиент по политике с базовой линией и обрезка в PPO.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r7-reinforcement-learning-the-core.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Обучение с подкреплением: основа","item":"https://newfter.github.io/AI-Compass/ru/path/r7-reinforcement-learning-the-core.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Передний край науки</a> · Шаг 7 из 12 · 8 мин</p>
+<h1>Обучение с подкреплением: основа</h1>
+<p class="pg-lead">Отдача, уравнение Беллмана, Q-обучение, градиент по политике с базовой линией и обрезка в PPO.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🎮 Цикл взаимодействия и отдача</h2>
+<p>В <strong>обучении с подкреплением</strong> (reinforcement learning) агент учится, действуя. В состоянии s он выбирает действие a по своей <strong>политике</strong> (policy) π(a | s), которая задаёт вероятность каждого действия в каждом состоянии; среда отвечает наградой (reward) r и следующим состоянием s′.</p>
+<p>Цель — максимальная ожидаемая <strong>отдача</strong> (return): сумма будущих наград, где награда каждого следующего шага умножается ещё на один множитель γ — <strong>коэффициент дисконтирования</strong> (discount factor). При малом γ агент становится близоруким.</p>
+<div class="pg-example is-mono"><div>G = r₁ + γ · r₂ + γ² · r₃ + …, 0 ≤ γ &lt; 1</div></div>
+<p class="pg-note">При γ &lt; 1 и ограниченных наградах сумма конечна, даже если задача никогда не заканчивается. В задачах, которые всегда заканчиваются, используют и γ = 1.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Агент получает награды 1, 0 и 2 на трёх следующих шагах, а после этого — ничего. Чему равна его отдача при коэффициенте дисконтирования γ = 0,5?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🔁 Идея Беллмана</h2>
+<p><strong>Функция ценности</strong> (value function) V^π(s) — ожидаемая отдача из состояния s, если агент следует политике π. Она подчиняется рекурсии — <strong>уравнению Беллмана</strong>: ценность равна математическому ожиданию суммы следующей награды и дисконтированной ценности следующего состояния.</p>
+<p>Пусть агент получает награду 1 на каждом шаге, и так бесконечно. Тогда у всех состояний одна и та же ценность V, и рекурсия даёт V = 1/(1 − γ). Это <strong>эффективный горизонт</strong> (effective horizon): примерно на столько шагов вперёд смотрит агент.</p>
+<div class="pg-example is-mono"><div>V^π(s) = E[r + γ · V^π(s′)]</div><div>a ~ π(· | s); r и s′ выдаёт среда</div><div>всегда r = 1: V = 1 + γ · V → V = 1 / (1 − γ)</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> Агент получает награду 1 на каждом шаге, и так бесконечно. Чему равна его отдача G = r₁ + γ·r₂ + γ²·r₃ + … при коэффициенте дисконтирования γ = 0,9?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>📝 Q-обучение</h2>
+<p>Оптимальная <strong>ценность действия</strong> (action value) Q*(s, a) — ожидаемая отдача после действия a в s, если дальше действовать оптимально. <strong>Q-обучение</strong> (Q-learning) выучивает её по отдельным шагам (s, a, r, s′): сдвигает оценку Q(s, a) к цели на α, умноженное на <strong>ошибку временной разности</strong> (TD error).</p>
+<p>Цель берёт максимум по a′, что бы агент ни сделал дальше. Поэтому агент может в основном выбирать лучшее известное действие (<strong>использование</strong>, exploitation), а иногда случайное (<strong>исследование</strong>, exploration) — и всё равно выучивать ценности жадной политики: Q-обучение работает <strong>вне политики</strong> (off-policy).</p>
+<div class="pg-example is-mono"><div>Q(s, a) ← Q(s, a) + α · (r + γ · max_a′ Q(s′, a′) − Q(s, a))</div><div>цель: r + γ · max_a′ Q(s′, a′); ошибка TD: цель − Q(s, a)</div></div>
+<p class="pg-note">При конечном числе состояний и действий, ограниченных наградах, γ &lt; 1 и таблице значений Q, если каждая пара (s, a) пробуется бесконечно часто, а α подходящим образом убывает, Q с вероятностью 1 сходится к Q*. С нейросетью вместо таблицы такой гарантии в общем случае нет.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Правило Q-обучения: Q(s, a) ← Q(s, a) + α·(r + γ·max_a′ Q(s′, a′) − Q(s, a)). Сейчас Q(s, a) = 2; агент получает r = 1 и попадает в s′, где наибольшее Q(s′, a′) равно 10. Чему станет равно Q(s, a) при γ = 0,9 и α = 0,5?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🎲 Градиент по политике</h2>
+<p>Метод <strong>градиента по политике</strong> (policy gradient) настраивает параметры θ политики π_θ напрямую — градиентным подъёмом по её ожидаемой отдаче J(θ). Он повышает логарифм вероятности действий, чья отдача G превысила <strong>базовую линию</strong> (baseline) b(s), и понижает его для действий, чья отдача до неё не дотянула.</p>
+<p>Базовая линия, которая зависит только от состояния, а не от действия, не вносит смещения, а удачная может сильно снизить дисперсию. При b(s) = V^π(s) множитель G − V^π(s) оценивает <strong>преимущество</strong> (advantage) A^π(s, a) = Q^π(s, a) − V^π(s): насколько a лучше того, что π в среднем делает в s.</p>
+<div class="pg-example is-mono"><div>∇J(θ) = E[∇ log π_θ(a | s) · (G − b(s))]</div></div>
+<p class="pg-note">E берётся по состояниям и действиям, которые встречаются при следовании π_θ, а G — отдача начиная с шага, где выбрано a. Q^π(s, a) — ожидаемая отдача после действия a в s, если дальше следовать π.</p>
+<section class="pg-check"><p><strong>Задание.</strong> В градиенте по политике E[∇ log π_θ(a | s)·(G − b(s))] базовая линия b(s) зависит от состояния, но не от действия. Почему её вычитание не вносит смещения?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>✂️ PPO: маленькие безопасные шаги</h2>
+<p><strong>PPO</strong> (proximal policy optimisation) собирает данные текущей политикой, которую дальше называют π_old, и делает по ним несколько градиентных шагов по θ. Целевая функция опирается на преимущества A, оценённые для π_old, поэтому ей можно доверять, только пока π_θ остаётся близко к π_old.</p>
+<p><strong>Отношение вероятностей</strong> (probability ratio) ρ сравнивает новую и старую вероятность действия. Когда ρ выходит из [1 − ε, 1 + ε] в выгодную сторону — выше 1 + ε при A &gt; 0 или ниже 1 − ε при A &lt; 0, — целевая функция перестаёт поощрять дальнейшее изменение.</p>
+<div class="pg-example is-mono"><div>ρ = π_θ(a | s) / π_old(a | s)</div><div>L(θ) = E[min(ρ · A, clip(ρ, 1 − ε, 1 + ε) · A)]</div><div>L максимизируют; типичное значение ε = 0,2</div></div>
+<p class="pg-note">Обрезка (clipping) убирает стимул, а не возможность: обновления, вызванные другими примерами, всё равно могут вывести ρ за пределы диапазона.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Целевая функция PPO для одного действия: min(ρ·A, clip(ρ, 1 − ε, 1 + ε)·A), где ρ = π_θ(a | s)/π_old(a | s), а ε = 0,2. Преимущество A = 2, а отношение ρ выросло до 1,5. Чему равно значение целевой функции?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> В PPO с ε = 0,2 у действия с отрицательным преимуществом A = −1 отношение стало ρ = 1,5: новая политика сделала это действие вероятнее. Какой член выберет min(ρ·A; clip(ρ; 0,8; 1,2)·A)?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Отдача <code>G = r₁ + γ·r₂ + γ²·r₃ + …</code> умножает награду каждого следующего шага ещё на γ; награда 1 на каждом шаге даёт <code>1/(1 − γ)</code> — эффективный горизонт.</li><li>Ценности подчиняются рекурсии Беллмана <code>V^π(s) = E[r + γ·V^π(s′)]</code>. Q-обучение сдвигает Q(s, a) к <code>r + γ·max_a′ Q(s′, a′)</code> на α, умноженное на ошибку временной разности, и работает вне политики.</li><li>Градиент по политике повышает <code>log π_θ(a | s)</code> пропорционально <code>G − b(s)</code>; базовая линия, зависящая только от состояния, может снизить дисперсию, не внося смещения.</li><li>Целевая функция PPO <code>min(ρ·A, clip(ρ, 1 − ε, 1 + ε)·A)</code> перестаёт поощрять уход ρ за 1 ± ε в выгодную сторону, но никогда не обрезает штраф.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="r6-diffusion-models.html"><small>Предыдущий шаг</small>Диффузионные модели</a><a href="r8-learning-from-preferences-rlhf-and-dpo.html"><small>Следующий шаг</small>Обучение на предпочтениях: RLHF и DPO</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

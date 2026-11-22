@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Поиск по смыслу: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Эмбеддинги, косинусное сходство, фрагменты и полнота на k — своими руками. Строим на ИИ: шаг 2 из 7.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/b2-search-by-meaning.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b2-search-by-meaning.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Поиск по смыслу: шаг за шагом, с заданиями">
+<meta property="og:description" content="Эмбеддинги, косинусное сходство, фрагменты и полнота на k — своими руками. Строим на ИИ: шаг 2 из 7.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/b2-search-by-meaning.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Поиск по смыслу","headline":"Поиск по смыслу","description":"Эмбеддинги, косинусное сходство, фрагменты и полнота на k — своими руками.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/b2-search-by-meaning.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Поиск по смыслу","item":"https://newfter.github.io/AI-Compass/ru/path/b2-search-by-meaning.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">🚀 <a href="./#build">Строим на ИИ</a> · Шаг 2 из 7 · 7 мин</p>
+<h1>Поиск по смыслу</h1>
+<p class="pg-lead">Эмбеддинги, косинусное сходство, фрагменты и полнота на k — своими руками.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🧭 Поиск по смыслу</h2>
+<p><strong>Поиск по ключевым словам</strong> находит тексты, в которых есть слова из вопроса. Спроси: «Как получить деньги назад?» — и он может не найти страницу «Правила возврата», ведь общих слов у них нет.</p>
+<p><strong>Модель эмбеддингов</strong> превращает целый текст (вопрос, абзац, страницу) в один вектор — его <strong>эмбеддинг</strong>. Её обучают так, чтобы у близких по смыслу текстов векторы смотрели в похожие стороны, даже когда общих слов в них нет.</p>
+<p>Так получается <strong>поиск по смыслу</strong> (семантический поиск). Сохрани эмбеддинги своих документов. Для каждого вопроса (<strong>запроса</strong>) посчитай эмбеддинг и возьми документы с ближайшими к нему векторами. «Ближайшие» обычно значит «с самым высоким косинусным сходством»: это скалярное произведение, делённое на длины обоих векторов.</p>
+<div class="pg-example is-mono"><div>cos(a, b) = a·b / (|a|·|b|)</div><div>a·b = a₁·b₁ + a₂·b₂</div><div>|a| = √(a₁² + a₂²)</div><div>cos = 1: одно направление; cos = 0: прямой угол</div></div>
+<p class="pg-note">Формулы записаны для векторов из двух чисел: этого хватит, чтобы всё посчитать вручную. В настоящих эмбеддингах сотни или тысячи чисел (суммы просто становятся длиннее), причём у короткого текста их столько же, сколько у длинного.</p>
+<section class="pg-check"><p><strong>Задание.</strong> У запроса эмбеддинг q = (3; 4), а у документа — d1 = (4; 3). Чему равно их косинусное сходство?</p><details><summary>Показать решение</summary><p>Скалярное произведение: 3·4 + 4·3 = 24. Обе длины равны √(9 + 16) = 5, поэтому косинус равен 24 / (5·5) = 24 / 25 = 0,96. Это близко к 1: векторы смотрят почти в одну сторону, то есть для модели эти два текста близки по смыслу.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> У запроса эмбеддинг (3; 4), а у документа — (−4; 3). Чему равно их косинусное сходство?</p><details><summary>Показать решение</summary><p>Скалярное произведение: 3·(−4) + 4·3 = −12 + 12 = 0, поэтому и косинус равен 0, какими бы ни были длины. Векторы образуют прямой угол: для модели, которая их построила, у запроса и документа нет ничего общего.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> У документа эмбеддинг d3 = (6; 8): это запрос q = (3; 4), в котором каждое число удвоили. Чему равно их косинусное сходство?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>1: косинус сравнивает направления, а они совпадают</button></li><li><button type="button">2: вектор документа вдвое длиннее вектора запроса</button></li><li><button type="button">0,5: вектор запроса вдвое короче вектора документа</button></li><li><button type="button">Оно не определено: один вектор длиннее другого</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: 1: косинус сравнивает направления, а они совпадают</strong></p><p>(3·6 + 4·8) / (5·10) = 50 / 50 = 1. Удвоение меняет длину вектора, но не направление, а косинус от длины не зависит: на длины в его формуле делят. Больше 1 он не бывает. Многие модели эмбеддингов сразу выдают векторы длины 1: тогда косинус — это просто скалярное произведение.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Задание.</strong> Запрос: q = (3; 4). Расположи четыре документа по косинусному сходству с ним: от самого высокого к самому низкому.</p><details><summary>Показать решение</summary><ol><li>d3 = (6; 8)</li><li>d1 = (4; 3)</li><li>d4 = (0; 5)</li><li>d2 = (−4; 3)</li></ol><p>Для d4: (3·0 + 4·5) / (5·5) = 20 / 25 = 0,8. Итак, косинусы: у d3 — 1; у d1 — 0,96; у d4 — 0,8; у d2 — 0. Для поиска важен только этот порядок: в результаты попадают документы из начала списка. Сами значения у разных моделей разные, поэтому сравнивать стоит только косинусы одной и той же модели.</p></details></section>
+<h2>✂️ Что хранить: фрагменты</h2>
+<p>Эмбеддинг — это один вектор на весь текст. У длинного руководства он получился бы смесью всех его тем и плохо подходил бы к любому отдельному вопросу. Поэтому длинный документ сначала режут на <strong>фрагменты</strong> (чанки): куски обычно по несколько сотен токенов, и у каждого свой эмбеддинг.</p>
+<p>Теперь поиск возвращает не документы целиком, а фрагменты. Лучшие из них потом передают языковой модели вместе с вопросом: как именно, покажет следующий шаг твоего пути.</p>
+<p>Размер — это компромисс. Слишком большой фрагмент — это несколько тем в одном векторе, и в контекстное окно таких помещается мало. Слишком маленький теряет соседние предложения, без которых его смысл неясен. Помогает небольшое <strong>перекрытие</strong> (overlap) соседних фрагментов: мысль на их границе может уцелеть хотя бы в одном.</p>
+<p class="pg-note">У моделей эмбеддингов тоже есть ограничение на длину входа: слишком длинный текст обрежут или не примут. Это ещё одна причина резать документы на фрагменты.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Руководство длиной 12 000 токенов режут на фрагменты по 500 токенов, без перекрытия. Сколько получится фрагментов?</p><details><summary>Показать решение</summary><p>12 000 / 500 = 24 фрагмента, так что у руководства будет не один эмбеддинг, а 24. Если бы фрагменты перекрывались, их стало бы больше, потому что каждый повторял бы часть соседнего.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Для поиска по смыслу длинный документ сначала режут на фрагменты, и у каждого свой эмбеддинг. Почему не сделать один эмбеддинг на весь документ?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Один вектор смешивает все темы документа, а небольшие фрагменты помещаются в контекстное окно модели</button></li><li><button type="button">У короткого текста в векторе больше чисел, и поэтому сравнение с запросом получается точнее</button></li><li><button type="button">Косинусное сходство умеет сравнивать только тексты с одинаковым числом токенов</button></li><li><button type="button">Модель эмбеддингов в сумме читает меньше токенов, когда длинный документ разрезан на мелкие фрагменты</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Один вектор смешивает все темы документа, а небольшие фрагменты помещаются в контекстное окно модели</strong></p><p>В эмбеддинге одно и то же количество чисел, какой бы длины ни был текст. У длинного документа он становится чем-то вроде среднего по многим темам и плохо подходит к любому отдельному вопросу. Фрагмент обычно говорит об одном, а несколько лучших фрагментов помещаются в контекстное окно языковой модели, которая пишет ответ.</p></details>
+</div></section>
+<h2>🎯 Top-k и как измерить качество поиска</h2>
+<p>Поиск по смыслу возвращает k фрагментов с самым высоким косинусом: это <strong>top-k</strong>. Число k выбираешь ты, например 5. Поиск вернёт их, даже если ответа нет ни в одном, поэтому его качество нужно измерять.</p>
+<p>Собери настоящие вопросы и для каждого вручную отметь фрагменты, в которых есть ответ: это <strong>релевантные</strong> фрагменты. <strong>Полнота на k</strong> (recall@k) показывает, какую долю релевантных фрагментов поиск поместил в top-k.</p>
+<p>Посчитай её для каждого тестового вопроса и возьми среднее. Теперь две модели эмбеддингов или два вида поиска можно сравнить на своих данных, а не гадать. И помни: того, что поиск упустил, языковая модель не увидит.</p>
+<div class="pg-example is-mono"><div>recall@k = релевантные в top-k / все релевантные</div></div>
+<p class="pg-note">Это та же полнота, что и у классификаторов: здесь поиск «помечает» свои первые k результатов.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Поиск идёт по коллекции фрагментов текста. Для одного вопроса релевантны 4 фрагмента: в них есть ответ. В первые 5 результатов попали 3 из них. Чему равна полнота на 5 (recall@5)? Ответ дай числом от 0 до 1.</p><details><summary>Показать решение</summary><p>Найдено 3 релевантных фрагмента из 4: 3 / 4 = 0,75. При подсчёте полноты делят на число релевантных фрагментов, а не на число результатов: 3 / 5 = 0,6 — это уже точность на 5 (precision@5), доля релевантных среди результатов. Один релевантный фрагмент из четырёх упущен: языковая модель, которой дали только top-5, его не увидит.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Пользователь ищет в документации точный код ошибки <code>E4012</code>. Какой поиск обычно находит его надёжнее?</p>
+<ol type="A" class="pg-options"><li><button type="button">Поиск по смыслу: в коде больше смысла, чем в обычном слове</button></li><li><button type="button">Никакой: код — это не слово, и поиском его не найти</button></li><li><button type="button">Любой: оба справятся, если контекстное окно достаточно велико</button></li><li><button type="button" data-right>Поиск по ключевым словам: он ищет именно эту строку символов</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Поиск по ключевым словам: он ищет именно эту строку символов</strong></p><p>У кода почти нет смысла, который мог бы попасть в эмбеддинг: <code>E4012</code> и <code>E4013</code> модель может счесть почти одинаковыми, и тогда ближайшими окажутся фрагменты о других ошибках. Поиск по ключевым словам ищет саму строку. Во многих системах работают оба поиска, а их результаты объединяют: это <strong>гибридный поиск</strong>.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Модель эмбеддингов построила векторы двух текстов, и их косинусное сходство равно 0,95. О чём это говорит?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Для модели они близки по смыслу, но о том, правдивы ли они, это ничего не говорит</button></li><li><button type="button">Оба они, скорее всего, правдивы, потому что подтверждают друг друга</button></li><li><button type="button">У них около 95% общих слов, но стоять эти слова могут в другом порядке</button></li><li><button type="button">Один из двух почти наверняка списан с другого, возможно, с небольшими изменениями</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Для модели они близки по смыслу, но о том, правдивы ли они, это ничего не говорит</strong></p><p>Высокий косинус значит, что два вектора смотрят почти в одну сторону: для модели тексты об одном и том же. Это не доля общих слов, не доказательство списывания и не мера истинности. У фраз «Гарантия — 2 года» и «Гарантия — 3 года» косинус может быть очень высоким, а верна в лучшем случае одна из них.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li><strong>Модель эмбеддингов</strong> превращает текст в вектор. Косинусное сходство сравнивает направления, а не длины, и высокий косинус значит «для модели похоже», а не «правда».</li><li>Длинные документы хранят в виде <strong>фрагментов</strong> (чанков), и у каждого свой эмбеддинг. Слишком большой фрагмент смешивает темы, слишком маленький теряет смысл.</li><li>Измеряй качество поиска <strong>полнотой на k</strong> (recall@k): какая доля релевантных фрагментов попала в top-k. Считай её на настоящих вопросах, для которых релевантные фрагменты отмечены заранее.</li><li>Точные строки, например коды ошибок, обычно надёжнее находит поиск по ключевым словам, поэтому в настоящих системах оба поиска часто объединяют: это <strong>гибридный поиск</strong>.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="b1-tokens-and-the-context-window.html"><small>Предыдущий шаг</small>Токены и контекстное окно</a><a href="b3-rag-answers-from-your-documents.html"><small>Следующий шаг</small>RAG: ответы по твоим документам</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Почему огромные сети обобщают: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Случайные метки, двойной спуск, решения с минимальной нормой, гроккинг и ленивый режим. Передний край науки: шаг 4 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/r4-why-giant-networks-generalise.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r4-why-giant-networks-generalise.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Почему огромные сети обобщают: шаг за шагом, с заданиями">
+<meta property="og:description" content="Случайные метки, двойной спуск, решения с минимальной нормой, гроккинг и ленивый режим. Передний край науки: шаг 4 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/r4-why-giant-networks-generalise.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Почему огромные сети обобщают","headline":"Почему огромные сети обобщают","description":"Случайные метки, двойной спуск, решения с минимальной нормой, гроккинг и ленивый режим.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r4-why-giant-networks-generalise.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Почему огромные сети обобщают","item":"https://newfter.github.io/AI-Compass/ru/path/r4-why-giant-networks-generalise.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Передний край науки</a> · Шаг 4 из 12 · 8 мин</p>
+<h1>Почему огромные сети обобщают</h1>
+<p class="pg-lead">Случайные метки, двойной спуск, решения с минимальной нормой, гроккинг и ленивый режим.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🧩 Загадка ёмкости</h2>
+<p>Классическая теория обучения связывает переобучение (overfitting) с <strong>ёмкостью модели</strong> (capacity): тем, сколько разных разметок данных может подогнать класс моделей. Её верхние оценки ошибки на тесте с ростом ёмкости слабеют. Отсюда и знакомое предостережение: при избытке параметров модель заучивает данные вместе с шумом.</p>
+<p>В исследовании 2017 года стандартные сети для классификации изображений обучали на обычном для них наборе картинок, но метки заменили случайными. Сети всё равно достигли нулевой ошибки на обучении. А с настоящими метками те же сети хорошо работают и на новых данных.</p>
+<p>Значит, ни ёмкость, ни число параметров не объясняют обобщающую способность (generalisation) этих сетей: одна и та же сеть подгоняет и настоящие метки, и случайные. Какую из множества идеальных подгонок найдёт обучение, решает что-то другое. Что именно — вопрос пока отчасти открытый.</p>
+<section class="pg-check"><p><strong>Задание.</strong> С настоящими метками сеть хорошо обобщает. Если же метки её обучающих картинок заменить случайными, она всё равно отвечает верно на 100% обучающих примеров. О чём это говорит?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>📉 Двойной спуск</h2>
+<p>Будем увеличивать модель и следить за ошибкой на тесте. Классическая картина — U-образная кривая: ошибка сначала падает, а потом растёт, потому что модель начинает переобучаться.</p>
+<p>Но ошибка может достичь пика у <strong>порога интерполяции</strong> (interpolation threshold) — наименьшего размера, при котором модель способна точно подогнать каждый обучающий пример, — и затем снова упасть, часто ниже прежнего минимума. Это <strong>двойной спуск</strong> (double descent).</p>
+<p>Сильнее всего пик выражен при зашумлённых метках и слабой регуляризации; хорошо подобранная регуляризация может его сгладить. Похожая кривая может получиться и по ходу обучения, и при росте числа обучающих примеров, так что добавление данных иногда даже вредит.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Сопоставь каждую область двойного спуска с тем, что в ней происходит.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>📏 Точных подгонок много, выбирается одна</h2>
+<p>Если у модели больше параметров, чем обучающих примеров, и она способна их подогнать, то способов сделать это обычно бесконечно много. У всех таких подгонок потери на обучении равны 0, так что функция потерь их не различает. И всё же обучение приходит к одной конкретной подгонке.</p>
+<p>Простейший случай — линейная модель ŷ = w·x с квадратичной функцией потерь (w·x − y)² и одной обучающей точкой. Градиентный спуск из w = 0 при достаточно малой скорости обучения сходится к <strong>решению с минимальной нормой</strong> (minimum-norm solution) — точной подгонке с наименьшей длиной ‖w‖.</p>
+<div class="pg-example is-mono"><div>x = (3; 4), y = 25</div><div>подходит любой w, для которого 3·w₁ + 4·w₂ = 25: (25/3; 0), (0; 6,25), …</div><div>градиентный спуск из w = 0 сходится к w = y·x / ‖x‖²</div></div>
+<p class="pg-note">То же верно и для метода наименьших квадратов со многими обучающими точками, если точные подгонки существуют: градиентный спуск из 0 сходится к точной подгонке с минимальной нормой.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Линейная модель ŷ = w·x должна точно подогнать обучающую точку x = (3; 4), y = 25, то есть 3·w₁ + 4·w₂ = 25. Какова наименьшая возможная длина ‖w‖ среди всех таких векторов весов w = (w₁; w₂)?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Линейную модель обучают градиентным спуском с функцией потерь (w·x − y)² на одной точке (x, y), начиная с w = 0; скорость обучения достаточно мала. Почему спуск сходится к точной подгонке с наименьшей нормой ‖w‖?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>⏳ Гроккинг</h2>
+<p>Возьмём маленькую алгоритмическую задачу, например сложение по модулю простого числа p, и будем обучать сеть на части полной таблицы сумм. Сеть может рано начать отвечать верно на всех обучающих примерах, а на тесте оставаться на уровне случайного угадывания, 1/p.</p>
+<p>Потом, часто через многие тысячи шагов, доля верных ответов на тесте поднимается почти до 100%. Такое обобщение, наступающее намного позже заучивания обучающих данных, называют <strong>«гроккингом»</strong> (grokking). Затухание весов (weight decay) его ускоряет, а с меньшей обучающей выборкой его приходится ждать дольше.</p>
+<p>В одном из изученных случаев сложения по модулю оказалось, что обученная сеть вычисляет сумму алгоритмом на основе синусов и косинусов, а не по заученной таблице.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Сеть учится сложению по модулю на части таблицы. На обучении 100% верных ответов уже к шагу 1000, а на тесте до шага 30 000 — уровень угадывания, затем скачок почти до 100%. Что, скорее всего, приблизит этот скачок?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🌊 Ленивое обучение или обучение признаков</h2>
+<p>Возьмём предел бесконечной ширины при определённом масштабировании весов. Тогда обучение сдвигает каждый вес лишь на бесконечно малую величину, и сеть совпадает со своей линеаризацией f_lin в окрестности начальных весов θ₀ — моделью, линейной по параметрам.</p>
+<p>При квадратичной функции потерь обучение сводится к ядерной регрессии с фиксированным ядром — <strong>нейронным касательным ядром</strong> (neural tangent kernel, NTK), а скрытые признаки остаются такими же, как при инициализации. Это <strong>ленивый режим обучения</strong> (lazy regime).</p>
+<p>На практике сети в ходе обучения меняют свои скрытые представления. Такое <strong>обучение признаков</strong> (feature learning) многие считают их ключевым преимуществом перед фиксированными ядрами.</p>
+<div class="pg-example is-mono"><div>f_lin(x; θ) = f(x; θ₀) + ∇_θ f(x; θ₀)·(θ − θ₀)</div><div>NTK: K(x, x′) = ∇_θ f(x; θ₀)·∇_θ f(x′; θ₀)</div></div>
+<p class="pg-note">Ленивый режим определяется масштабированием, а не одной лишь шириной: при других масштабированиях, например в режиме среднего поля (mean-field), даже бесконечно широкие сети выучивают признаки.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Что происходит при обучении очень широкой сети в ленивом режиме (режиме нейронного касательного ядра, NTK)?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Сети, которые могут заучить случайные метки, с настоящими метками всё равно обобщают, так что одна лишь ёмкость мало что объясняет, а число параметров — тем более.</li><li>Ошибка на тесте может достичь пика у порога интерполяции и снова упасть за ним: это двойной спуск, сильнее всего выраженный при зашумлённых метках и слабой регуляризации.</li><li>Из многих точных подгонок алгоритм обучения выбирает одну: в задаче наименьших квадратов градиентный спуск из 0 при достаточно малой скорости обучения сходится к подгонке с минимальной нормой, <code>w = y·x / ‖x‖²</code> для одной точки. Неявное смещение глубоких сетей пока изучено не до конца.</li><li>Гроккинг (позднее обобщение, ускоряемое затуханием весов) и разница между ленивым режимом NTK и обучением признаков показывают, как много зависит от траектории обучения.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="r3-optimisers-for-large-models.html"><small>Предыдущий шаг</small>Оптимизаторы для больших моделей</a><a href="r5-latent-variables-and-the-elbo.html"><small>Следующий шаг</small>Скрытые переменные и ELBO</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

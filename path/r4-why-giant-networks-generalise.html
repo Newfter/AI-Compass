@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Why giant networks generalise: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Random labels, double descent, minimum-norm fits, grokking and the lazy regime. Research frontier: step 4 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r4-why-giant-networks-generalise.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Why giant networks generalise: step by step, with tasks">
+<meta property="og:description" content="Random labels, double descent, minimum-norm fits, grokking and the lazy regime. Research frontier: step 4 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Why giant networks generalise","headline":"Why giant networks generalise","description":"Random labels, double descent, minimum-norm fits, grokking and the lazy regime.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Why giant networks generalise","item":"https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/r4-why-giant-networks-generalise.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Research frontier</a> · Step 4 of 12 · 8 min</p>
+<h1>Why giant networks generalise</h1>
+<p class="pg-lead">Random labels, double descent, minimum-norm fits, grokking and the lazy regime.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🧩 A puzzle about capacity</h2>
+<p>Classical learning theory ties overfitting to <strong>capacity</strong>: how many different labellings of the data a model class can fit. Its upper bounds on the test error loosen as capacity grows. Hence the familiar warning: with too many parameters, a model memorises its data, noise included.</p>
+<p>A 2017 study took standard image-classification networks and their usual training images, but replaced the labels with random ones. The networks still reached zero training error. With the real labels, the same networks generalise well.</p>
+<p>So neither capacity nor a parameter count can explain why these networks generalise: the same network fits real and random labels alike. Something else decides which of the many perfect fits training finds. What that is remains partly open.</p>
+<section class="pg-check"><p><strong>Task.</strong> A network generalises well when trained on real labels. With the labels of its training images replaced by random ones, it still reaches 100% training accuracy. What does this show?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📉 Double descent</h2>
+<p>Grow a model and watch its test error. The classical U-curve says: it falls, then rises as the model starts to overfit.</p>
+<p>But the error can peak near the <strong>interpolation threshold</strong>, the smallest size that can fit every training example exactly, and then fall again, often below the earlier minimum. This is <strong>double descent</strong>.</p>
+<p>The peak is strongest with noisy labels and little regularisation; well-tuned regularisation can flatten it. A similar shape can appear over training time, and as the number of training examples grows, so more data can sometimes hurt.</p>
+<section class="pg-check"><p><strong>Task.</strong> Match each region of double descent with what happens there.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📏 Many ways to fit, one is chosen</h2>
+<p>When a model has more parameters than training examples and can fit them, it can usually do so in infinitely many ways. All these fits have training loss 0, so the loss cannot tell them apart. Yet training ends at one particular fit.</p>
+<p>The simplest case is a linear model ŷ = w·x with squared loss (w·x − y)² on one training point. Gradient descent from w = 0, with a small enough learning rate, converges to the <strong>minimum-norm solution</strong>: the exact fit with the smallest length ‖w‖.</p>
+<div class="pg-example is-mono"><div>x = (3, 4), y = 25</div><div>every w with 3·w₁ + 4·w₂ = 25 fits: (25/3, 0), (0, 6.25), …</div><div>gradient descent from w = 0 converges to w = y·x / ‖x‖²</div></div>
+<p class="pg-note">The same holds for least squares with many training points, whenever exact fits exist: gradient descent from 0 converges to the exact fit of minimum norm.</p>
+<section class="pg-check"><p><strong>Task.</strong> A linear model ŷ = w·x must fit the training point x = (3, 4), y = 25 exactly, so 3·w₁ + 4·w₂ = 25. Of all such weight vectors w = (w₁, w₂), what is the smallest possible length ‖w‖?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> A linear model is trained by gradient descent, with a small enough learning rate, on the loss (w·x − y)² for one point (x, y), starting from w = 0. Why does it converge to the exact fit with the smallest norm ‖w‖?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>⏳ Grokking</h2>
+<p>Take a small algorithmic task, such as addition modulo a prime p, and train a network on part of the full table of sums. It can reach 100% training accuracy early, while its test accuracy stays near chance, 1/p.</p>
+<p>Then, often many thousands of steps later, test accuracy rises to near 100%. This late generalisation, long after the training data were memorised, is called <strong>grokking</strong>. Weight decay makes it happen sooner; smaller training sets make it take longer.</p>
+<p>In one studied case of modular addition, the trained network was found to compute the sum with an algorithm built on sine and cosine waves, not with a lookup table.</p>
+<section class="pg-check"><p><strong>Task.</strong> A network learns modular addition from part of the table. Training accuracy is 100% by step 1,000, but test accuracy stays near chance until step 30,000, then jumps close to 100%. What most likely makes the jump come sooner?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🌊 Lazy training or feature learning</h2>
+<p>Take the limit of infinite width under a particular scaling of the weights. Training then moves each weight only infinitesimally, and the network stays equal to its linearisation f_lin around the initial weights θ₀: a model that is linear in its parameters.</p>
+<p>With squared loss, training amounts to kernel regression with a fixed kernel, the <strong>neural tangent kernel</strong> (NTK), and the hidden features stay as they were at initialisation. This is the <strong>lazy regime</strong>.</p>
+<p>Networks used in practice change their hidden representations during training. This <strong>feature learning</strong> is widely seen as a key advantage over fixed kernels.</p>
+<div class="pg-example is-mono"><div>f_lin(x; θ) = f(x; θ₀) + ∇_θ f(x; θ₀)·(θ − θ₀)</div><div>NTK: K(x, x′) = ∇_θ f(x; θ₀)·∇_θ f(x′; θ₀)</div></div>
+<p class="pg-note">Laziness comes from the scaling, not from width alone: under other scalings, such as the mean-field one, even infinitely wide networks learn features.</p>
+<section class="pg-check"><p><strong>Task.</strong> In the lazy (neural tangent kernel, NTK) regime of very wide networks, what happens during training?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Networks that can memorise random labels still generalise with real ones, so capacity alone explains little, and a parameter count even less.</li><li>Test error can peak near the interpolation threshold and fall again beyond it: double descent, strongest with noisy labels and little regularisation.</li><li>Among many exact fits, the training algorithm picks one: on least squares, gradient descent from 0 with a small enough learning rate converges to the minimum-norm fit, <code>w = y·x / ‖x‖²</code> for one point. The implicit bias of deep networks is still being worked out.</li><li>Grokking (late generalisation, sped up by weight decay) and the lazy NTK regime versus feature learning show how much depends on the path of training.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="r3-optimisers-for-large-models.html"><small>Previous step</small>Optimisers for large models</a><a href="r5-latent-variables-and-the-elbo.html"><small>Next step</small>Latent variables and the ELBO</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

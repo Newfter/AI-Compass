@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Diffusion as differential equations: scores, SDEs and ODEs: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Derive Tweedie's formula and the flow ODE; compute scores, drifts, a likelihood. Theory at the limit: step 7 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Diffusion as differential equations: scores, SDEs and ODEs: step by step, with tasks">
+<meta property="og:description" content="Derive Tweedie's formula and the flow ODE; compute scores, drifts, a likelihood. Theory at the limit: step 7 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Diffusion as differential equations: scores, SDEs and ODEs","headline":"Diffusion as differential equations: scores, SDEs and ODEs","description":"Derive Tweedie's formula and the flow ODE; compute scores, drifts, a likelihood.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Diffusion as differential equations: scores, SDEs and ODEs","item":"https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 7 of 12 · 10 min</p>
+<h1>Diffusion as differential equations: scores, SDEs and ODEs</h1>
+<p class="pg-lead">Derive Tweedie's formula and the flow ODE; compute scores, drifts, a likelihood.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🧭 The score of noised data</h2>
+<p>The <strong>score</strong> of a density p is ∇_x ln p(x): the direction in which ln p rises fastest. The normalising constant drops out of it. For N(m, s²·I) the score is −(x − m)/s², an arrow towards the mean (line 1).</p>
+<p>A diffusion model noises data as x_t = α_t·x_0 + σ_t·ε with ε ~ N(0, I); for a discrete schedule α_t = √ᾱ_t and σ_t = √(1 − ᾱ_t). Given x_0, x_t is Gaussian with a known score (line 2). Sampling needs the score of the marginal p_t, a mixture over all the data: for real data it has no closed form.</p>
+<p>Line 3 is the bridge: the marginal score is the posterior average of the conditional ones. A squared-error regression learns a conditional mean, so over all functions of x_t the loss of line 4 is minimised by ∇ ln p_t: <strong>denoising score matching</strong>. In terms of the noise predictor, s_θ = −ε_θ/σ_t.</p>
+<div class="pg-example is-mono"><div>N(2, 4) at x = 0: ∇ ln p = −(0 − 2)/4 = 0.5</div><div>∇ ln p(x_t | x_0) = −(x_t − α_t·x_0)/σ_t² = −ε/σ_t</div><div>∇ ln p_t(x_t) = E[∇ ln p(x_t | x_0) | x_t] = −E[ε | x_t]/σ_t</div><div>E‖s_θ(x_t, t) + ε/σ_t‖² = E‖s_θ(x_t, t) − ∇ ln p_t(x_t)‖² + C</div></div>
+<p class="pg-note">Proof of line 3: ∇p_t(x) = ∫ p(x_0)·∇p(x | x_0) dx_0 = ∫ p(x_0)·p(x | x_0)·∇ ln p(x | x_0) dx_0; divide by p_t(x) and use Bayes' rule. In line 4, C does not depend on θ: it is the spread of the target around its posterior mean, which no function of x_t can remove.</p>
+<section class="pg-check"><p><strong>Task.</strong> The data are two points: x_0 = +1 or −1, with probability ½ each. At a noise level with α_t = 0.6 and σ_t = 0.8, what is the score ∇ ln p_t(x_t) of the noised data at x_t = 0.32? Round to one decimal place.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Take the conditional expectation given x_t of x_t = α_t·x_0 + σ_t·ε, and use ∇ ln p_t(x_t) = −E[ε | x_t]/σ_t. Which formula follows for the posterior mean E[x_0 | x_t], the output of an ideal denoiser?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Tweedie's formula for x_t = α_t·x_0 + σ_t·ε, ε ~ N(0, I): E[x_0 | x_t] = (x_t + σ_t²·∇ ln p_t(x_t))/α_t. An ideal denoiser returns E[x_0 | x_t] = 0.5 at x_t = 1.1, where α_t = 0.6 and σ_t = 0.8. What is the score ∇ ln p_t(x_t)?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🌊 One family of marginals, three equations</h2>
+<p>In continuous time, noising is a <strong>stochastic differential equation</strong> (SDE): a drift f plus noise of intensity g, where w is a Brownian motion. The <strong>variance-preserving</strong> (VP) choice of line 2 gives x_t = α_t·x_0 + σ_t·ε with α_t = exp(−½·∫_0^t β(s) ds) and σ_t² = 1 − α_t².</p>
+<p>Under mild regularity conditions the same marginals p_t are produced by a <strong>reverse-time SDE</strong>, run from t = T down to 0 (w̄ is a Brownian motion in reverse time), and by a deterministic equation, the <strong>probability-flow ODE</strong>. Both depend on the data only through the score ∇ ln p_t.</p>
+<p>A sampler draws x_T from N(0, I) ≈ p_T, puts s_θ = −ε_θ/σ_t in place of the score and integrates backwards in time. Started from p_T with the exact score, both equations pass through the same p_t at every t as the forward SDE; with a learned score, only approximately.</p>
+<div class="pg-example is-mono"><div>forward SDE: dx = f(x, t)·dt + g(t)·dw</div><div>VP: f = −½·β(t)·x, g = √β(t)</div><div>reverse SDE: dx = [f − g²·∇ ln p_t(x)]·dt + g·dw̄</div><div>ODE: dx/dt = f − ½·g²·∇ ln p_t(x)</div><div>β = 2, x = 1, score −0.4: ODE drift −1 + 0.4 = −0.6; reverse-SDE drift −1 + 0.8 = −0.2</div></div>
+<p class="pg-note">Backwards in time dt is negative. An Euler step of the ODE from t to t − Δt is x ← x − Δt·[f − ½·g²·∇ ln p_t(x)]; the reverse SDE uses the full g² and adds g·√Δt·z with z ~ N(0, I).</p>
+<section class="pg-check"><p><strong>Task.</strong> A variance-preserving diffusion has f = −½·β·x and g² = β. Its probability-flow ODE is dx/dt = f − ½·g²·∇ ln p_t(x), and the score is −ε_θ/σ_t. At β = 4, x = 1.5 and σ_t = 0.5 the network predicts ε_θ = 0.4. What is dx/dt?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> The density of dx = f·dt + g·dw obeys the Fokker–Planck equation ∂p_t/∂t = −∇·(f·p_t) + ½·g²·Δp_t (∇· is the divergence, Δ the Laplacian). Put the steps that derive the probability-flow ODE from it in order.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> With the exact score, which step fails? (1) The probability-flow ODE has the marginals p_t of the forward SDE. (2) So, run back from x_T ~ p_T, it yields x_0 ~ p_0. (3) So it recovers the x_0 that the SDE noised into x_T.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📐 What the ODE buys, and a case to check it on</h2>
+<p>The probability-flow ODE is an ordinary ODE. So higher-order solvers apply, and in practice they need far fewer network evaluations than SDE samplers. Its flow is invertible: integrating forwards from x_0 gives a unique <strong>latent code</strong> x_T. And densities follow the change-of-variables rule of lines 1 and 2.</p>
+<p>With s_θ in place of the score and N(0, I) in place of p_T, line 2 is the exact log-density of the ODE sampler's own model, up to solver error. The SDE sampler built on the same network defines, in general, a different distribution, and for that one only a bound on the log-likelihood is available.</p>
+<p>A case to check by hand: x_0 ~ N(0, v) in one dimension. Then p_t = N(0, V_t), and the score is linear in x (line 3). For v = 1 and a VP schedule, V_t = 1 at every t: the density is stationary, and the right-hand side of the ODE vanishes. Under the ODE no point moves, while under both SDEs every point keeps wandering.</p>
+<div class="pg-example is-mono"><div>d ln p_t(x(t))/dt = −∇·u(x(t), t), u = f − ½·g²·∇ ln p_t</div><div>ln p_0(x(0)) = ln p_T(x(T)) + ∫_0^T ∇·u(x(t), t) dt</div><div>x_0 ~ N(0, v): V_t = α_t²·v + σ_t², ∇ ln p_t(x) = −x/V_t</div><div>v = 1, VP: V_t = 1 and u = −½·β·x + ½·β·x = 0</div><div>v = 4, α_t = 0.6, σ_t = 0.8: V_t = 0.36·4 + 0.64 = 2.08</div></div>
+<p class="pg-note">Line 1 holds along a trajectory x(t) of the ODE: d ln p_t(x(t))/dt = ∂ ln p_t/∂t + u·∇ ln p_t, and the continuity equation turns this into −∇·u. In high dimension the divergence is usually not computed exactly but estimated with random probe vectors.</p>
+<section class="pg-check"><p><strong>Task.</strong> For data N(0, v) the probability-flow ODE in one dimension is linear: dx/dt = a(t)·x. Let ∫_0^T a(t) dt = −ln 2, p_T = N(0, 1). Along a trajectory d ln p_t(x(t))/dt = −a(t). What is ln p_0(x_0) at x_0 = 2, to two decimal places?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎯 Guidance is Bayes' rule on scores</h2>
+<p>To sample given a condition c (a class, a prompt), take the logarithm of Bayes' rule p_t(x | c) = p_t(x)·p_t(c | x)/p_t(c) and differentiate in x: p_t(c) drops out (line 1). Classifier guidance takes the last term from a classifier trained on noisy inputs.</p>
+<p>Classifier-free guidance scales by w the difference s_c − s_u of a network's scores with and without c (line 2). w = 1 gives the exact conditional score; w &gt; 1 gives the score of p_t(x)·p_t(c | x)^w at each t. In general these are not marginals of one noising process: samples follow neither p(x | c) nor exactly p(x)·p(c | x)^w.</p>
+<p>Last, the weights in training. The usual loss ‖ε − ε_θ‖² treats all noise levels equally in ε-space; since s_θ = −ε_θ/σ_t, it is score matching with the weight σ_t² (line 3). The likelihood bound of the reverse-SDE model corresponds to the weight g(t)² in its place (line 4, stated here without proof).</p>
+<div class="pg-example is-mono"><div>∇ ln p_t(x | c) = ∇ ln p_t(x) + ∇ ln p_t(c | x)</div><div>guided: s_u + w·(s_c − s_u) = ∇ ln p_t(x) + w·∇ ln p_t(c | x)</div><div>‖ε − ε_θ‖² = σ_t²·‖s_θ + ε/σ_t‖²</div><div>likelihood weight: g(t)²·‖s_θ + ε/σ_t‖² = (g(t)²/σ_t²)·‖ε − ε_θ‖²</div></div>
+<p class="pg-note">In terms of the noise, line 2 is ε_g = ε_u + w·(ε_c − ε_u): the rule that is applied at sampling time.</p>
+<section class="pg-check"><p><strong>Task.</strong> Guidance in one dimension. The guided score is ∇ ln p_t(x) + w·∇ ln p_t(c | x). Here ∇ ln p_t(x) = −x, so p_t = N(0, 1), and the classifier term is ∇ ln p_t(c | x) = −(x − 3). For w = 3, at which x is the guided score zero?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge, on paper. VP diffusion in one dimension, data x_0 ~ N(0, v), so p_t = N(0, V_t), V_t = α_t²·v + σ_t². Solve the probability-flow ODE: which x_0 does it assign to x_T? And what does the reverse SDE do with the same x_T?</p><details><summary>Show the answer</summary><p>The score is −x/V_t, so the ODE reads dx/dt = −½·β·x + ½·β·x/V_t = ½·β·(1/V_t − 1)·x. From α_t′ = −½·β·α_t and σ_t² = 1 − α_t² one gets V_t′ = β·(1 − V_t), so dx/dt = (V_t′/(2·V_t))·x. That is d ln|x|/dt = ½·d ln V_t/dt: the ratio x_t/√V_t is constant along every trajectory.</p>
+<p>So x_0 = x_T·√(v/V_T): the ODE only rescales, and each point keeps its number of standard deviations. For v = 4 and V_T ≈ 1, x_T = 1.5 goes to x_0 ≈ 3; for v = 1 nothing moves. The divergence is V_t′/(2·V_t), so the change of variables gives ln p_0(x_0) = ln p_T(x_T) + ½·ln(V_T/v): exactly the density of N(0, v).</p>
+<p>The reverse SDE with the exact score has the path distribution of the forward SDE. So from the same x_T it returns a random x_0 ~ N(α_T·v·x_T/V_T, v·σ_T²/V_T), and as α_T → 0 this is N(0, v) whatever x_T was. The SDE forgets its starting point; the ODE turns it into a code. Same marginals, different couplings of noise and data.</p></details></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Score and denoiser: <code>∇ ln p_t(x_t) = −E[ε | x_t]/σ_t</code> for x_t = α_t·x_0 + σ_t·ε, so regression on the noise learns the score (denoising score matching, s_θ = −ε_θ/σ_t). Tweedie: <code>E[x_0 | x_t] = (x_t + σ_t²·∇ ln p_t(x_t))/α_t</code>, for any data distribution and Gaussian noise.</li><li>Forward SDE <code>dx = f·dt + g·dw</code>, reverse SDE <code>dx = [f − g²·∇ ln p_t]·dt + g·dw̄</code>, probability-flow ODE <code>dx/dt = f − ½·g²·∇ ln p_t</code>. With the exact score all three have the same marginals p_t (Fokker–Planck plus ∇p = p·∇ ln p). The two SDEs also share the joint law of x_0 and x_T; the ODE pairs them one to one.</li><li>The ODE is an ordinary ODE: higher-order solvers, an invertible latent code, and the exact log-density of its own model by <code>d ln p_t(x(t))/dt = −∇·u</code>. For data N(0, v), p_t = N(0, V_t) with V_t = α_t²·v + σ_t², and the ODE keeps x_t/√V_t constant.</li><li>Guidance is Bayes' rule on scores: <code>∇ ln p_t(x | c) = ∇ ln p_t(x) + ∇ ln p_t(c | x)</code>. Scaling the last term by w &gt; 1 sharpens the result, but the samples then no longer follow p(x | c). The ε-loss is score matching with the weight σ_t²; the likelihood bound corresponds to the weight g(t)².</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="t6-statistical-decision-theory-what-best-estimator-means.html"><small>Previous step</small>Statistical decision theory: what “best estimator” means</a><a href="t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"><small>Next step</small>Reinforcement learning theory: contractions, gradients and regret</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Transformers in theory: what attention can and cannot compute: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Prove attention's symmetry; compute kernel weights and an in-context step. Theory at the limit: step 9 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Transformers in theory: what attention can and cannot compute: step by step, with tasks">
+<meta property="og:description" content="Prove attention's symmetry; compute kernel weights and an in-context step. Theory at the limit: step 9 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Transformers in theory: what attention can and cannot compute","headline":"Transformers in theory: what attention can and cannot compute","description":"Prove attention's symmetry; compute kernel weights and an in-context step.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Transformers in theory: what attention can and cannot compute","item":"https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 9 of 12 · 10 min</p>
+<h1>Transformers in theory: what attention can and cannot compute</h1>
+<p class="pg-lead">Prove attention's symmetry; compute kernel weights and an in-context step.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🔍 Attention is kernel smoothing</h2>
+<p>For a query vector q, an attention head compares q with the keys k_1 … k_n and returns a weighted average of their values v_j (line 1). The weights are a softmax of the scores q·k_j divided by a <strong>temperature</strong> τ; the usual scaling by √d_k is the choice τ = √d_k.</p>
+<p>Statistics knows this form as <strong>kernel smoothing</strong>, the Nadaraya–Watson estimator (line 2): predict at x by averaging the observed y_j with weights from a similarity kernel K. Here K is exp(q·k/τ). For keys of equal length, the weights are exactly those of a Gaussian kernel in the distance ‖q − k‖ with bandwidth √τ (line 3).</p>
+<p>So τ sets the width of the smoother. As τ → 0, all weight goes to the key with the largest score (if there is only one such key): a lookup by key. As τ → ∞, every weight tends to 1/n: the plain mean of the values. A trained head works in between, and learns what to compare and what to return.</p>
+<div class="pg-example is-mono"><div>out(q) = Σ_j w_j·v_j, w_j = exp(q·k_j / τ) / Σ_l exp(q·k_l / τ)</div><div>Nadaraya–Watson: f(x) = Σ_j K(x, x_j)·y_j / Σ_l K(x, x_l)</div><div>‖k_j‖ = c for all j: w_j = exp(−‖q − k_j‖² / (2τ)) / Σ_l exp(−‖q − k_l‖² / (2τ))</div><div>scores (2, 0), values (10, 0), τ = 1: w = (0.881, 0.119), out = 8.81</div></div>
+<p class="pg-note">Line 3: q·k = (‖q‖² + ‖k‖² − ‖q − k‖²)/2. The factor exp(‖q‖²/(2τ)) is the same for every key and always cancels in the softmax; exp(‖k_j‖²/(2τ)) cancels only if the keys have equal length. Otherwise longer keys get extra weight.</p>
+<section class="pg-check"><p><strong>Task.</strong> Attention returns Σ_j w_j·v_j with the weights w = softmax(q·k_j / τ). Query q = (1, 1); keys k_1 = (1, 1), k_2 = (1, −1); values v_1 = 3, v_2 = 1; temperature τ = 2. What is the output? Two decimal places.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> A context holds 1001 keys. One key has the score s with the query, and the other 1000 keys all have the score 0 (τ = 1). At what s does that one key get a softmax weight of exactly 0.99? One decimal place.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🔀 One layer as matrices: symmetry, rank, size</h2>
+<p>Put the n tokens into the rows of a matrix X (n × d). A head with the projections W_Q, W_K (each d × d_k) and W_V (d × d: the value projection times the output projection) computes all outputs at once (lines 1 and 2). The temperature is absorbed into A; there is no mask and no positional signal.</p>
+<p>A map F is <strong>permutation-equivariant</strong> if F(P·X) = P·F(X) for every permutation matrix P: reordering the tokens only reorders the outputs. The attention of lines 1 and 2 has this symmetry (line 3), and so has any stack of such layers and per-token MLPs: it cannot see word order. Positional encodings break it on purpose.</p>
+<p>Rank: S = (X·W_Q)·(X·W_K)^T is an n × d_k matrix times a d_k × n matrix, so rank S ≤ d_k however long the sequence is. Size: with h heads of size d_k = d/h, the query, key, value and output projections hold 4·d² weights together, whatever h is; an MLP of hidden width 4d adds 8·d² (line 4, biases and norms left out).</p>
+<div class="pg-example is-mono"><div>scores: S = X·A·X^T, A = W_Q·W_K^T (d × d, rank ≤ d_k)</div><div>Att(X) = softmax(S)·X·W_V, softmax over each row</div><div>Att(P·X) = P·Att(X) for every permutation matrix P</div><div>one block: 4·d² + 2·(d·4d) = 12·d² weights; d = 1000: 12 million</div></div>
+<p class="pg-note">More heads at a fixed width d: the same number of weights, split into more score matrices, each of rank at most d/h.</p>
+<section class="pg-check"><p><strong>Task.</strong> Self-attention without masks and positions: Att(X) = softmax(S)·X·W_V with the scores S = X·A·X^T and the softmax over each row. Order the proof that Att(P·X) = P·Att(X) for every permutation matrix P.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> A plain self-attention layer that gets token vectors without positional encodings is permutation-equivariant: permuting the input tokens permutes the outputs in the same way. Which of these additions breaks that?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> A transformer has width d = 1000 and 24 blocks, each with attention and an MLP of hidden width 4d. One 50,000 × d embedding matrix serves input and output. Biases and norms are left out. How many million weights does it have?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📉 In-context learning as one gradient step</h2>
+<p><strong>In-context learning</strong>: the context holds examples (x_i, y_i), and the model predicts y for a query x_q without any change of its weights. A reference point that can be computed exactly: fit a linear predictor w·x to the examples by gradient descent on the squared loss of line 1, starting from w = 0.</p>
+<p>One step with the rate η gives w_1 = η·Σ y_i·x_i (line 2). The prediction for the query is then a sum over the examples, each y_i weighted by x_i·x_q (line 3). This is attention without the softmax, <strong>linear attention</strong>: keys x_i, query x_q, values η·y_i. Kernel smoothing again, with the linear kernel and no normalisation.</p>
+<p>What is proved: weights exist with which one linear attention layer computes exactly this step (line 4). What is observed: small transformers trained on linear regression behave much like it. Neither is a claim about how large language models learn in context in general.</p>
+<div class="pg-example is-mono"><div>loss(w) = ½·Σ_i (w·x_i − y_i)², ∇loss(0) = −Σ_i y_i·x_i</div><div>w_1 = 0 − η·∇loss(0) = η·Σ_i y_i·x_i</div><div>ŷ = w_1·x_q = η·Σ_i y_i·(x_i·x_q)</div><div>tokens e_i = (x_i, y_i), e_q = (x_q, 0); score e_i^T·M·e_q = x_i·x_q with M = diag(I, 0); value of e_i: η·y_i</div></div>
+<p class="pg-note">In line 4, M keeps the x-part of a token and drops its last coordinate, and the value projection writes η·y_i into the last coordinate. The sum over the examples then puts ŷ into the empty last coordinate of the query token.</p>
+<section class="pg-check"><p><strong>Task.</strong> Examples in a context: x_1 = (1, 0), y_1 = 2; x_2 = (0, 1), y_2 = −1; x_3 = (1, 1), y_3 = 1. Take one gradient step from w = 0 with the rate η = 0.5 on the loss ½·Σ_i (w·x_i − y_i)². What does the new w predict for x_q = (1, 2)?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🚧 Three statements about limits</h2>
+<p>Rank. The output layer turns a hidden vector h of size d into logits W·h, one per token (W: V × d). Over any N contexts the logit matrix has rank at most d, and the log-probability matrix at most d + 1 (lines 1 to 3). Next-token distributions whose ln P has a higher rank cannot be represented exactly: the <strong>softmax bottleneck</strong>.</p>
+<p>Depth. Each position gets L blocks in sequence, at any input length. Theory on idealised models shows, under standard complexity assumptions, that some problems needing many sequential steps cannot be solved this way at every length. Written steps change that: each generated token adds a pass that builds on the earlier ones.</p>
+<p>Universality. For a fixed sequence length, wide and deep enough transformers with positional encodings approximate any continuous sequence-to-sequence function on a compact domain to any accuracy (classically in an average, L^p sense). So such weights exist. Whether training finds them, and from how many examples, is not said.</p>
+<div class="pg-example is-mono"><div>logits of N contexts: H·W^T, H is N × d, W is V × d: rank ≤ d</div><div>ln P = H·W^T − z·1^T, z_c = ln Σ_v exp(h_c·w_v): rank ≤ d + 1</div><div>d = 1024, V = 50,000: rank ≤ 1024 for the logits, ≤ 1025 for ln P</div></div>
+<p class="pg-note">The bound holds for logits and log-probabilities, not for probabilities: exp acts entry by entry and does not keep the rank. With d = 1 and W = (0, 1, 2), three contexts give probability rows proportional to (1, a, a²) with three different a = e^h: rank 3.</p>
+<section class="pg-check"><p><strong>Task.</strong> An output layer with hidden size d = 1 and no bias gives three tokens the logits (−h, 0, 3h), where h is the hidden value. What is the largest probability that the token with logit 0 can get, over all h? Two decimal places.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Theorem: for a fixed sequence length, transformers with positional encodings, wide and deep enough, can approximate any continuous sequence-to-sequence function on a compact domain to any accuracy. What exactly does it guarantee?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge. An attention head reads n tokens; its scores lie in [−B, B], its values have length at most 1. Show that replacing one token (not the query) moves the output by at most 2·e^(2B)/n. What follows for the parity of n bits?</p><details><summary>Show the answer</summary><p>Let token j change; w and w′ are the weights before and after. Any weight is at most e^B/(e^B + (n − 1)·e^(−B)) ≤ e^(2B)/n. The other weights all change by one common factor, so their changes have one sign and add up to |w_j − w′_j|. Hence the output moves by at most |w_j − w′_j| + w_j + w′_j = 2·max(w_j, w′_j) ≤ 2·e^(2B)/n.</p>
+<p>Parity, the XOR of n bits, flips when one bit flips. Yet the output, and any Lipschitz readout of it, moves by O(1/n). Inputs of opposite parity get arbitrarily close outputs as n grows: the margin vanishes (a correct answer at a given n is not ruled out). The same holds at any fixed depth with bounded scores and Lipschitz maps.</p>
+<p>With written steps the model need not react to all n bits at once: token t writes p_t = p_(t−1) XOR x_t, a function of two tokens, the last written parity and the next bit. Each pass then has to focus on single tokens, which takes a score gap of order ln n (so B cannot stay fixed as n grows), and the last p_t is the answer.</p></details></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Attention is kernel smoothing: <code>out(q) = Σ_j w_j·v_j</code> with w = softmax(q·k_j / τ), a Nadaraya–Watson average of the values. τ → 0 gives a lookup, τ → ∞ the plain mean. Giving one key the weight p against n − 1 equal scores takes a gap of ln(n − 1) + ln(p/(1 − p)): with bounded scores a long context can only be averaged.</li><li>Without positions and masks, <code>Att(P·X) = P·Att(X)</code>: self-attention is permutation-equivariant, and per-token layers keep that. Positional encodings and causal masks break it. One head's score matrix has rank at most d_k, and a block with an MLP of hidden width 4d holds 12·d² weights (biases and norms aside).</li><li>One gradient step from w = 0 on ½·Σ(w·x_i − y_i)² predicts <code>ŷ = η·Σ_i y_i·(x_i·x_q)</code>, and one linear attention layer can compute exactly that. This is a construction, and small transformers trained on linear regression behave much like it; it is not a claim about large language models in general.</li><li>Limits: the logits H·W^T have rank at most d (softmax bottleneck). A fixed depth gives a bounded number of sequential steps per token, and written steps add passes (results for idealised models). Universality says that weights exist, not that training finds them.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"><small>Previous step</small>Reinforcement learning theory: contractions, gradients and regret</a><a href="t10-causality-from-seeing-to-doing.html"><small>Next step</small>Causality: from seeing to doing</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

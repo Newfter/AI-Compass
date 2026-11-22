@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- The pages of AI Compass for search engines, written by tools/build-pages.js.
-     The app itself is one page in two languages (?lang=en, ?lang=ru); every lesson and
-     glossary word also has a plain page of its own, in English and in Russian. -->
+     The app itself is one page in two languages (?lang=en, ?lang=ru); every lesson, glossary
+     word, lesson plan and step of the path also has a plain page of its own, in both languages. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
     <url>
@@ -1137,5 +1137,821 @@
         <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/glossary/false-positive.html"/>
         <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/glossary/false-positive.html"/>
         <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/glossary/false-positive.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/what-is-ai.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/what-is-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/what-is-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/what-is-ai.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/what-is-ai.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/what-is-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/what-is-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/what-is-ai.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/machine-learning.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/machine-learning.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/machine-learning.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/machine-learning.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/machine-learning.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/machine-learning.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/machine-learning.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/machine-learning.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/neural-networks.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/neural-networks.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/neural-networks.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/neural-networks.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/neural-networks.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/neural-networks.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/neural-networks.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/neural-networks.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/generative-ai-chatbots.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/generative-ai-chatbots.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/generative-ai-chatbots.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/generative-ai-chatbots.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/generative-ai-chatbots.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/generative-ai-chatbots.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/generative-ai-chatbots.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/generative-ai-chatbots.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/ai-in-everyday-life.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/ai-in-everyday-life.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/ai-in-everyday-life.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/ai-in-everyday-life.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/ai-in-everyday-life.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/ai-in-everyday-life.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/ai-in-everyday-life.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/ai-in-everyday-life.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/ai-ethics-safety.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/ai-ethics-safety.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/ai-ethics-safety.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/ai-ethics-safety.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/ai-ethics-safety.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/ai-ethics-safety.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/ai-ethics-safety.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/ai-ethics-safety.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/how-computers-see.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/how-computers-see.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/how-computers-see.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/how-computers-see.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/how-computers-see.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/how-computers-see.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/how-computers-see.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/how-computers-see.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/learning-by-trial-and-error.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/learning-by-trial-and-error.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/learning-by-trial-and-error.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/learning-by-trial-and-error.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/learning-by-trial-and-error.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/learning-by-trial-and-error.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/learning-by-trial-and-error.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/learning-by-trial-and-error.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/how-chatbots-write.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/how-chatbots-write.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/how-chatbots-write.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/how-chatbots-write.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/how-chatbots-write.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/how-chatbots-write.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/how-chatbots-write.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/how-chatbots-write.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/creative-ai.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/creative-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/creative-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/creative-ai.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/creative-ai.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/creative-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/creative-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/creative-ai.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/can-you-trust-ai.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/can-you-trust-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/can-you-trust-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/can-you-trust-ai.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/can-you-trust-ai.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/can-you-trust-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/can-you-trust-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/can-you-trust-ai.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/your-ai-toolkit.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/your-ai-toolkit.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/your-ai-toolkit.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/your-ai-toolkit.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/your-ai-toolkit.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/your-ai-toolkit.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/your-ai-toolkit.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/your-ai-toolkit.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/data-the-fuel-of-ai.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/data-the-fuel-of-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/data-the-fuel-of-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/data-the-fuel-of-ai.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/data-the-fuel-of-ai.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/data-the-fuel-of-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/data-the-fuel-of-ai.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/data-the-fuel-of-ai.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/how-apps-choose-for-you.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/how-apps-choose-for-you.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/how-apps-choose-for-you.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/how-apps-choose-for-you.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/how-apps-choose-for-you.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/how-apps-choose-for-you.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/how-apps-choose-for-you.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/how-apps-choose-for-you.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/teachers/plan-your-own-ai-project.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/plan-your-own-ai-project.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/plan-your-own-ai-project.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/plan-your-own-ai-project.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/teachers/plan-your-own-ai-project.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/plan-your-own-ai-project.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/plan-your-own-ai-project.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/plan-your-own-ai-project.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/z1-what-is-a-program.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z1-what-is-a-program.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z1-what-is-a-program.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z1-what-is-a-program.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/z1-what-is-a-program.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z1-what-is-a-program.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z1-what-is-a-program.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z1-what-is-a-program.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/z2-everything-is-numbers.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z2-everything-is-numbers.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z2-everything-is-numbers.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z2-everything-is-numbers.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/z2-everything-is-numbers.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z2-everything-is-numbers.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z2-everything-is-numbers.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z2-everything-is-numbers.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/z3-rules-or-examples.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z3-rules-or-examples.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z3-rules-or-examples.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z3-rules-or-examples.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/z3-rules-or-examples.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z3-rules-or-examples.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z3-rules-or-examples.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z3-rules-or-examples.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/z4-how-learning-works-you-and-the-machine.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z4-how-learning-works-you-and-the-machine.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z4-how-learning-works-you-and-the-machine.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z4-how-learning-works-you-and-the-machine.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/z4-how-learning-works-you-and-the-machine.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z4-how-learning-works-you-and-the-machine.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z4-how-learning-works-you-and-the-machine.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z4-how-learning-works-you-and-the-machine.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/z5-train-your-first-model.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z5-train-your-first-model.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z5-train-your-first-model.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z5-train-your-first-model.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/z5-train-your-first-model.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z5-train-your-first-model.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z5-train-your-first-model.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z5-train-your-first-model.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/s1-ask-so-that-ai-understands.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/s1-ask-so-that-ai-understands.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/s1-ask-so-that-ai-understands.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/s1-ask-so-that-ai-understands.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/s1-ask-so-that-ai-understands.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/s1-ask-so-that-ai-understands.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/s1-ask-so-that-ai-understands.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/s1-ask-so-that-ai-understands.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/s2-check-before-you-trust.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/s2-check-before-you-trust.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/s2-check-before-you-trust.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/s2-check-before-you-trust.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/s2-check-before-you-trust.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/s2-check-before-you-trust.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/s2-check-before-you-trust.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/s2-check-before-you-trust.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/s3-a-tutor-not-a-ghostwriter.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/s3-a-tutor-not-a-ghostwriter.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/s3-a-tutor-not-a-ghostwriter.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/s3-a-tutor-not-a-ghostwriter.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/s3-a-tutor-not-a-ghostwriter.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/s3-a-tutor-not-a-ghostwriter.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/s3-a-tutor-not-a-ghostwriter.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/s3-a-tutor-not-a-ghostwriter.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/s4-keep-yourself-safe.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/s4-keep-yourself-safe.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/s4-keep-yourself-safe.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/s4-keep-yourself-safe.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/s4-keep-yourself-safe.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/s4-keep-yourself-safe.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/s4-keep-yourself-safe.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/s4-keep-yourself-safe.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p1-a-neuron-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/p1-a-neuron-by-hand.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p1-a-neuron-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p2-gradient-descent-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/p2-gradient-descent-by-hand.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p2-gradient-descent-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p5-backpropagation-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/p5-backpropagation-by-hand.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p5-backpropagation-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p3-measure-a-classifier.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/p3-measure-a-classifier.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p3-measure-a-classifier.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p4-tokens-embeddings-and-attention.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/p4-tokens-embeddings-and-attention.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p4-tokens-embeddings-and-attention.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p8-how-a-model-picks-the-next-token.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/p8-how-a-model-picks-the-next-token.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p8-how-a-model-picks-the-next-token.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b1-tokens-and-the-context-window.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/b1-tokens-and-the-context-window.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b1-tokens-and-the-context-window.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b2-search-by-meaning.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/b2-search-by-meaning.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b2-search-by-meaning.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b3-rag-answers-from-your-documents.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/b3-rag-answers-from-your-documents.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b3-rag-answers-from-your-documents.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b4-measure-a-language-model.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/b4-measure-a-language-model.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b4-measure-a-language-model.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/b5-prompt-injection.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b5-prompt-injection.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b5-prompt-injection.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b5-prompt-injection.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/b5-prompt-injection.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b5-prompt-injection.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b5-prompt-injection.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b5-prompt-injection.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b6-agents-and-tools.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/b6-agents-and-tools.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b6-agents-and-tools.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/b7-run-it-for-real-users.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b7-run-it-for-real-users.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b7-run-it-for-real-users.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b7-run-it-for-real-users.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/b7-run-it-for-real-users.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b7-run-it-for-real-users.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b7-run-it-for-real-users.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b7-run-it-for-real-users.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r2-scaling-laws.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r2-scaling-laws.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r2-scaling-laws.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r2-scaling-laws.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r2-scaling-laws.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r2-scaling-laws.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r2-scaling-laws.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r2-scaling-laws.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r3-optimisers-for-large-models.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r3-optimisers-for-large-models.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r3-optimisers-for-large-models.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r4-why-giant-networks-generalise.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r4-why-giant-networks-generalise.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r4-why-giant-networks-generalise.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r4-why-giant-networks-generalise.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r6-diffusion-models.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r6-diffusion-models.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r6-diffusion-models.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r7-reinforcement-learning-the-core.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r7-reinforcement-learning-the-core.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r7-reinforcement-learning-the-core.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r9-inside-the-model-interpretability.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r9-inside-the-model-interpretability.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r9-inside-the-model-interpretability.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r9-inside-the-model-interpretability.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r9-inside-the-model-interpretability.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r9-inside-the-model-interpretability.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r9-inside-the-model-interpretability.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r9-inside-the-model-interpretability.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r10-smaller-and-faster-models.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r10-smaller-and-faster-models.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r10-smaller-and-faster-models.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r10-smaller-and-faster-models.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r10-smaller-and-faster-models.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r10-smaller-and-faster-models.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r10-smaller-and-faster-models.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r10-smaller-and-faster-models.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r11-reasoning-and-test-time-compute.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r11-reasoning-and-test-time-compute.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r11-reasoning-and-test-time-compute.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/r12-research-that-holds-up.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r12-research-that-holds-up.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r12-research-that-holds-up.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r12-research-that-holds-up.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/r12-research-that-holds-up.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r12-research-that-holds-up.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r12-research-that-holds-up.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r12-research-that-holds-up.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t2-optimisation-theory-how-fast-can-descent-go.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t2-optimisation-theory-how-fast-can-descent-go.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t2-optimisation-theory-how-fast-can-descent-go.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t3-information-theory-of-learning.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t3-information-theory-of-learning.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t3-information-theory-of-learning.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t3-information-theory-of-learning.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t3-information-theory-of-learning.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t3-information-theory-of-learning.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t3-information-theory-of-learning.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t3-information-theory-of-learning.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t4-high-dimensions-and-random-matrices.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t4-high-dimensions-and-random-matrices.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t4-high-dimensions-and-random-matrices.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t5-kernels-and-the-infinite-width-limit.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t5-kernels-and-the-infinite-width-limit.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t5-kernels-and-the-infinite-width-limit.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t6-statistical-decision-theory-what-best-estimator-means.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t6-statistical-decision-theory-what-best-estimator-means.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t6-statistical-decision-theory-what-best-estimator-means.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t10-causality-from-seeing-to-doing.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t10-causality-from-seeing-to-doing.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t10-causality-from-seeing-to-doing.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t11-guarantees-differential-privacy-and-certified-robustness.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t11-guarantees-differential-privacy-and-certified-robustness.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t11-guarantees-differential-privacy-and-certified-robustness.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t12-limits-what-cannot-be-learned-computed-or-proved.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/path/t12-limits-what-cannot-be-learned-computed-or-proved.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t12-limits-what-cannot-be-learned-computed-or-proved.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/lab/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/lab/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/lab/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/lab/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/lab/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/lab/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/lab/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/lab/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/history/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/history/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/history/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/history/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/history/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/history/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/history/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/history/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/quiz/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/quiz/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/quiz/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/quiz/"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/quiz/</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/quiz/"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/quiz/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/quiz/"/>
     </url>
 </urlset>

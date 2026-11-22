@@ -23,6 +23,7 @@
 <meta name="theme-color" content="#050b14">
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Творческий ИИ","headline":"Творческий ИИ","description":"Как ИИ создаёт картинки, музыку и истории, как из шума появляется изображение и какие вопросы всё это поднимает.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/ru/lessons/creative-ai.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Уроки","item":"https://newfter.github.io/AI-Compass/ru/lessons/"},{"@type":"ListItem","position":3,"name":"Творческий ИИ","item":"https://newfter.github.io/AI-Compass/ru/lessons/creative-ai.html"}]}</script>
 </head>
@@ -31,7 +32,9 @@
     <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
     <nav aria-label="AI Compass">
         <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
         <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
         <a href="https://newfter.github.io/AI-Compass/lessons/creative-ai.html" hreflang="en" lang="en">English</a>
     </nav>
 </header>
@@ -41,6 +44,7 @@
 <p class="pg-kicker">🤿 Погружение · Урок 10 · 2 мин чтения</p>
 <h1>Творческий ИИ</h1>
 <p class="pg-lead">Как ИИ создаёт картинки, музыку и истории, как из шума появляется изображение и какие вопросы всё это поднимает.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
 <h2>Выучить закономерности и создать новое</h2>
 <p><strong data-term='generative-ai'>Генеративный ИИ</strong> учится на огромном количестве примеров: миллионах картинок с подписями, тысячах часов музыки, горах текста. Он не хранит копию каждого примера, чтобы потом выдать её целиком. Вместо этого он выучивает <em>закономерности</em>: как выглядят кошки, как устроена поп-песня, какие слова обычно идут друг за другом. А потом по этим закономерностям создаёт новое — например, «кошку-космонавта акварелью», картинку, которой раньше не было. Так же создаются истории, музыка, голоса и короткие видео.</p>
 <h2>Из шума — в картинку</h2>
@@ -53,12 +57,27 @@
 <p>Генераторы картинок обучают на огромных коллекциях изображений из интернета — в некоторых миллиарды картинок, среди них и работы художников, которых никто не спрашивал. Многие художники считают это несправедливым, а в редких случаях модель выдавала почти точные копии картинок, на которых училась. К 2025 году суды в нескольких странах рассматривали такие дела, и правила всё ещё складываются. Некоторые компании заявляют, что обучают модели только на картинках, которые им разрешено использовать. Некоторые сервисы добавляют заметную пометку или невидимый <strong data-term='watermark'>водяной знак</strong>, чтобы было понятно, что картинку создал ИИ, но так делают не все, а часть таких меток можно убрать редактированием. Самое опасное применение — <strong data-term='deepfake'>дипфейки</strong>: никогда не создавай и не распространяй подделки с реальным человеком без его согласия.</p>
 <p class="pg-note"><strong>А ты знал?</strong> В 2023 году по всему миру разошлась созданная ИИ картинка: Папа Римский в огромном белом пуховике. Многие поверили, что это настоящее фото. Это была безобидная шутка, но она показала, как легко подделка может нас обмануть. Прежде чем делиться удивительной картинкой, выясни, откуда она.</p>
 <section class="pg-keys"><h2>Главное</h2><ul><li>Генеративный ИИ выучивает закономерности на огромном количестве примеров и создаёт по ним новые тексты, картинки, музыку, голоса и видео.</li><li>Диффузионная модель начинает со случайного шума и убирает его шаг за шагом, ориентируясь на твой запрос.</li><li>Созданное ИИ поднимает настоящие вопросы: согласие художников и авторское право, пометки и водяные знаки, опасные дипфейки.</li></ul></section>
-<section class="pg-check"><h2>Проверь себя</h2><p>Чему учится диффузионная модель во время обучения?</p><ol type="A"><li>Запоминать каждую картинку, чтобы потом её копировать</li><li>Убирать шум с картинки, понемногу за раз</li><li>Искать в интернете картинку, которая лучше всего подходит к запросу</li></ol><details><summary>Показать ответ</summary><p>При обучении диффузионная модель видит картинки с добавленным шумом и учится убирать этот шум шаг за шагом. Она не хранит обучающие картинки, чтобы их копировать, и не ищет в интернете: она строит новую картинку из случайного шума, ориентируясь на запрос.</p></details></section>
+<section class="pg-check"><h2>Проверь себя</h2><div class="pg-quiz">
+<p class="pg-q">Чему учится диффузионная модель во время обучения?</p>
+<ol type="A" class="pg-options"><li><button type="button">Искать в интернете картинку, которая лучше всего подходит к запросу</button></li><li><button type="button" data-right>Убирать шум с картинки, понемногу за раз</button></li><li><button type="button">Запоминать каждую картинку, чтобы потом её копировать</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Убирать шум с картинки, понемногу за раз</strong></p><p>При обучении диффузионная модель видит картинки с добавленным шумом и учится убирать этот шум шаг за шагом. Она не хранит обучающие картинки, чтобы их копировать, и не ищет в интернете: она строит новую картинку из случайного шума, ориентируясь на запрос.</p></details>
+</div></section>
+<h2>Слова этого урока</h2><p class="pg-tags"><a href="../glossary/generative-ai.html">Генеративный ИИ</a><a href="../glossary/prompt.html">Промпт (запрос)</a><a href="../glossary/diffusion.html">Диффузионная модель</a><a href="../glossary/gan.html">Генеративно-состязательная сеть (GAN)</a><a href="../glossary/deepfake.html">Дипфейк</a><a href="../glossary/watermark.html">Водяной знак ИИ</a></p>
 <aside class="pg-cta"><p>Мини-лаборатория, тест и сохранение прогресса. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#lesson-10">Пройти этот урок в приложении →</a></aside>
+<p class="pg-aside">🍎 <a href="../teachers/creative-ai.html">Учителям: готовый план этого урока</a></p>
 <nav class="pg-pager" aria-label="Уроки"><a href="how-chatbots-write.html"><small>Предыдущий урок</small>Как чат-боты пишут текст</a><a href="can-you-trust-ai.html"><small>Следующий урок</small>Можно ли доверять ИИ?</a></nav>
 </article>
 </main>
 <footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
     <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>

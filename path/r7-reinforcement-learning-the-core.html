@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Reinforcement learning: the core: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Returns, the Bellman equation, Q-learning, policy gradients with a baseline, and PPO's clipping. Research frontier: step 7 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r7-reinforcement-learning-the-core.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Reinforcement learning: the core: step by step, with tasks">
+<meta property="og:description" content="Returns, the Bellman equation, Q-learning, policy gradients with a baseline, and PPO's clipping. Research frontier: step 7 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Reinforcement learning: the core","headline":"Reinforcement learning: the core","description":"Returns, the Bellman equation, Q-learning, policy gradients with a baseline, and PPO's clipping.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Reinforcement learning: the core","item":"https://newfter.github.io/AI-Compass/path/r7-reinforcement-learning-the-core.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/r7-reinforcement-learning-the-core.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Research frontier</a> · Step 7 of 12 · 8 min</p>
+<h1>Reinforcement learning: the core</h1>
+<p class="pg-lead">Returns, the Bellman equation, Q-learning, policy gradients with a baseline, and PPO's clipping.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🎮 The loop and the return</h2>
+<p>In <strong>reinforcement learning</strong>, an agent learns by acting. In state s it picks an action a with its <strong>policy</strong> π(a | s), the probability of each action in each state; the environment answers with a reward r and the next state s′.</p>
+<p>The goal is the largest expected <strong>return</strong>: the sum of future rewards, each step further ahead weighted by one more factor γ, the <strong>discount factor</strong>. A small γ makes the agent short-sighted.</p>
+<div class="pg-example is-mono"><div>G = r₁ + γ · r₂ + γ² · r₃ + …, 0 ≤ γ &lt; 1</div></div>
+<p class="pg-note">With γ &lt; 1 and bounded rewards, the sum stays finite even if the task never ends. Tasks that always end can also use γ = 1.</p>
+<section class="pg-check"><p><strong>Task.</strong> An agent receives the rewards 1, 0 and 2 on its next three steps, and nothing after that. With discount factor γ = 0.5, what is its return?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🔁 Bellman's idea</h2>
+<p>The <strong>value function</strong> V^π(s) is the expected return from state s when the agent follows π. It obeys a recursion, the <strong>Bellman equation</strong>: the value is the expected sum of the next reward and the discounted value of the next state.</p>
+<p>Suppose the reward is 1 at every step, forever. Then every state has the same value V, and the recursion gives V = 1/(1 − γ). This is the <strong>effective horizon</strong>: roughly how many steps ahead the agent looks.</p>
+<div class="pg-example is-mono"><div>V^π(s) = E[r + γ · V^π(s′)]</div><div>a ~ π(· | s); r and s′ come from the environment</div><div>r = 1 always: V = 1 + γ · V → V = 1 / (1 − γ)</div></div>
+<section class="pg-check"><p><strong>Task.</strong> An agent receives a reward of 1 at every step, forever. With discount factor γ = 0.9, what is its return G = r₁ + γ·r₂ + γ²·r₃ + …?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📝 Q-learning</h2>
+<p>The optimal <strong>action value</strong> Q*(s, a) is the expected return after taking a in s and acting optimally afterwards. <strong>Q-learning</strong> learns it from single steps (s, a, r, s′): it moves its estimate Q(s, a) towards a target by α times the <strong>TD error</strong> (temporal-difference error).</p>
+<p>The target takes the max over a′, whatever the agent actually does next. So the agent can act with a mix, mostly the best-known action (<strong>exploitation</strong>) and sometimes a random one (<strong>exploration</strong>), and still learn the values of the greedy policy: Q-learning is <strong>off-policy</strong>.</p>
+<div class="pg-example is-mono"><div>Q(s, a) ← Q(s, a) + α · (r + γ · max_a′ Q(s′, a′) − Q(s, a))</div><div>target: r + γ · max_a′ Q(s′, a′); TD error: target − Q(s, a)</div></div>
+<p class="pg-note">With finitely many states and actions, bounded rewards, γ &lt; 1 and a table of Q values, if every pair (s, a) is tried infinitely often and α shrinks suitably, Q converges to Q* with probability 1. With a neural network in place of the table, there is no such guarantee in general.</p>
+<section class="pg-check"><p><strong>Task.</strong> Q-learning update: Q(s, a) ← Q(s, a) + α·(r + γ·max_a′ Q(s′, a′) − Q(s, a)). Now Q(s, a) = 2; the agent gets r = 1 and lands in s′, where the largest Q(s′, a′) is 10. With γ = 0.9 and α = 0.5, what is the new Q(s, a)?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎲 Policy gradients</h2>
+<p>A <strong>policy gradient</strong> method tunes the parameters θ of a policy π_θ directly, by gradient ascent on its expected return J(θ). It raises the log-probability of actions whose return G beat a <strong>baseline</strong> b(s), and lowers it for actions whose return fell short.</p>
+<p>A baseline that depends on the state only, not on the action, adds no bias, and a good one can cut the variance a lot. With b(s) = V^π(s), the factor G − V^π(s) estimates the <strong>advantage</strong> A^π(s, a) = Q^π(s, a) − V^π(s): how much better a is than what π does on average in s.</p>
+<div class="pg-example is-mono"><div>∇J(θ) = E[∇ log π_θ(a | s) · (G − b(s))]</div></div>
+<p class="pg-note">E is over the states and actions met when following π_θ, and G is the return from the step where a was taken. Q^π(s, a) is the expected return after taking a in s and following π afterwards.</p>
+<section class="pg-check"><p><strong>Task.</strong> In the policy gradient E[∇ log π_θ(a | s)·(G − b(s))], the baseline b(s) depends on the state but not on the action. Why does subtracting it add no bias?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>✂️ PPO: small, safe steps</h2>
+<p><strong>PPO</strong> (proximal policy optimisation) collects data with the current policy, from then on called π_old, and reuses them for several gradient steps on θ. Its objective relies on advantages A estimated for π_old, so it is a good guide only while π_θ stays close to π_old.</p>
+<p>The <strong>probability ratio</strong> ρ compares the new and the old probability of an action. Once ρ leaves [1 − ε, 1 + ε] in the direction that helps, above 1 + ε when A &gt; 0 or below 1 − ε when A &lt; 0, the objective stops rewarding further change.</p>
+<div class="pg-example is-mono"><div>ρ = π_θ(a | s) / π_old(a | s)</div><div>L(θ) = E[min(ρ · A, clip(ρ, 1 − ε, 1 + ε) · A)]</div><div>L is maximised; a typical ε = 0.2</div></div>
+<p class="pg-note">Clipping removes the incentive, not the possibility: updates driven by other samples can still move ρ outside the range.</p>
+<section class="pg-check"><p><strong>Task.</strong> The PPO objective for one action is min(ρ·A, clip(ρ, 1 − ε, 1 + ε)·A), with ρ = π_θ(a | s)/π_old(a | s) and ε = 0.2. The advantage is A = 2, and ρ has reached 1.5. What is the value of the objective?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> In PPO with ε = 0.2, an action with negative advantage A = −1 now has ratio ρ = 1.5: the new policy made it more likely. Which term does min(ρ·A, clip(ρ, 0.8, 1.2)·A) take?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>The return <code>G = r₁ + γ·r₂ + γ²·r₃ + …</code> weights each further step by one more factor γ; a reward of 1 at every step gives <code>1/(1 − γ)</code>, the effective horizon.</li><li>Values obey the Bellman recursion <code>V^π(s) = E[r + γ·V^π(s′)]</code>. Q-learning moves Q(s, a) towards <code>r + γ·max_a′ Q(s′, a′)</code> by α times the TD error, and it is off-policy.</li><li>A policy gradient raises <code>log π_θ(a | s)</code> in proportion to <code>G − b(s)</code>; a baseline that depends only on the state can cut the variance without adding bias.</li><li>PPO's objective <code>min(ρ·A, clip(ρ, 1 − ε, 1 + ε)·A)</code> stops rewarding moves of ρ past 1 ± ε in the helpful direction, but it never clips a penalty.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="r6-diffusion-models.html"><small>Previous step</small>Diffusion models</a><a href="r8-learning-from-preferences-rlhf-and-dpo.html"><small>Next step</small>Learning from preferences: RLHF and DPO</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,44 @@
+# Tells search engines (Bing, Yandex and the others that use "IndexNow") which pages the site
+# has, every time its pages change. Google does not use IndexNow: for Google see docs/GET-FOUND.md.
+# How it works: IndexNow accepts a list of addresses from whoever can prove that the site is theirs.
+# The proof is the small text file 2bcef68462ffeea45658b64de94970d4.txt next to index.html: it holds the same
+# key that this job sends. The key is not a secret (anyone can read that file).
+# The job never fails: if the service does not answer, it only says so in its log.
+name: Tell search engines about the pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["sitemap.xml", "**.html"]
+  workflow_dispatch:         # and by hand, from the Actions tab
+
+permissions:
+  contents: read
+
+jobs:
+  indexnow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # GitHub Pages needs about a minute to publish the new pages (and the key file)
+      - name: Wait until the site is published
+        run: sleep 180
+
+      - name: Send the list of pages (sitemap.xml)
+        continue-on-error: true
+        run: |
+          python3 - <<'PY'
+          import json, re, urllib.request
+          SITE = "https://newfter.github.io/AI-Compass/"
+          KEY = "2bcef68462ffeea45658b64de94970d4"
+          pages = sorted(set(re.findall(r"<loc>([^<]+)</loc>", open("sitemap.xml", encoding="utf-8").read())))
+          pages = [page for page in pages if page.startswith(SITE)]
+          body = json.dumps({"host": "newfter.github.io", "key": KEY, "keyLocation": SITE + KEY + ".txt", "urlList": pages}).encode("utf-8")
+          request = urllib.request.Request("https://api.indexnow.org/indexnow", data=body, headers={"Content-Type": "application/json; charset=utf-8"})
+          try:
+              with urllib.request.urlopen(request, timeout=30) as answer:
+                  print("Sent", len(pages), "addresses. Answer:", answer.status, "(200 and 202 mean accepted)")
+          except Exception as error:
+              print("IndexNow did not accept the list this time:", error)
+          PY

@@ -23,6 +23,7 @@
 <meta name="theme-color" content="#050b14">
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Как компьютер видит","headline":"Как компьютер видит","description":"Как картинка превращается в числа и как нейросеть находит в них края, формы и предметы.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/ru/lessons/how-computers-see.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Уроки","item":"https://newfter.github.io/AI-Compass/ru/lessons/"},{"@type":"ListItem","position":3,"name":"Как компьютер видит","item":"https://newfter.github.io/AI-Compass/ru/lessons/how-computers-see.html"}]}</script>
 </head>
@@ -31,7 +32,9 @@
     <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
     <nav aria-label="AI Compass">
         <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
         <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
         <a href="https://newfter.github.io/AI-Compass/lessons/how-computers-see.html" hreflang="en" lang="en">English</a>
     </nav>
 </header>
@@ -41,6 +44,7 @@
 <p class="pg-kicker">🤿 Погружение · Урок 7 · 2 мин чтения</p>
 <h1>Как компьютер видит</h1>
 <p class="pg-lead">Как картинка превращается в числа и как нейросеть находит в них края, формы и предметы.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
 <h2>Картинка — это сетка чисел</h2>
 <p>Для компьютера фотография — это не кошка и не лицо. Это сетка из крошечных квадратиков — <strong data-term='pixel'>пикселей</strong>, и каждый пиксель — просто число. В чёрно-белой картинке (в оттенках серого) 0 означает чёрный цвет, 255 — белый, а числа между ними — оттенки серого. У цветного пикселя три числа: сколько в нём <em>красного</em>, <em>зелёного</em> и <em>синего</em> света (RGB). В снимке с телефона на 12 мегапикселей около 12 миллионов пикселей — это примерно 36 миллионов чисел.</p>
 <p class="pg-note"><strong>А ты знал?</strong> В знаменитом наборе данных MNIST, на котором компьютеры учатся читать рукописные цифры, 70 тысяч картинок. Каждая — всего 28 × 28 пикселей, то есть 784 числа на одну цифру.</p>
@@ -53,12 +57,27 @@
 <p><strong data-term='computer-vision'>Компьютерное зрение</strong> разблокирует телефон по лицу, помогает врачам замечать проблемы на медицинских снимках, распознаёт автомобильные номера и помогает машинам видеть дорогу. Но оно находит узоры, а не смысл. Плохое освещение, необычный ракурс или картинка, не похожая на обучающие фото, могут его запутать. Исследователи даже нашли <strong data-term='adversarial-example'>состязательные примеры</strong>: крошечные, специально подобранные изменения картинки, незаметные человеку, из-за которых модель видит совсем другое.</p>
 <p class="pg-note"><strong>А ты знал?</strong> В известном эксперименте 2014 года исследователи добавили к фотографии панды едва заметный узор из шума. Люди по-прежнему видели панду, а нейросеть ответила «гиббон», причём очень уверенно. Позже другие исследователи показали, что несколько наклеек на знаке «Стоп» могут заставить модель прочитать знак неправильно. Поэтому системы, от которых зависит безопасность, проверяют особенно тщательно.</p>
 <section class="pg-keys"><h2>Главное</h2><ul><li>Для компьютера картинка — сетка чисел: одно число на пиксель или три для цвета (RGB).</li><li>Фильтр скользит по картинке и складывает произведения (это свёртка); свёрточная сеть сама учит свои фильтры на примерах.</li><li>Модели зрения видят узоры, а не смысл: их могут обмануть освещение, необычный ракурс и состязательные примеры.</li></ul></section>
-<section class="pg-check"><h2>Проверь себя</h2><p>Нейросеть научилась узнавать знаки «Стоп». Что из этого может её обмануть?</p><ol type="A"><li>Тот же знак при хорошем дневном свете</li><li>Та же фотография, только чуть крупнее</li><li>Несколько маленьких наклеек, хитро размещённых на знаке</li></ol><details><summary>Показать ответ</summary><p>Исследователи показали, что несколько удачно размещённых наклеек могут заставить модель неправильно прочитать знак «Стоп» — это состязательный пример. Хороший дневной свет — как раз то, на чём модель училась, а на чуть увеличенной фотографии те же узоры, так что ни то ни другое ей не мешает.</p></details></section>
+<section class="pg-check"><h2>Проверь себя</h2><div class="pg-quiz">
+<p class="pg-q">Нейросеть научилась узнавать знаки «Стоп». Что из этого может её обмануть?</p>
+<ol type="A" class="pg-options"><li><button type="button">Тот же знак при хорошем дневном свете</button></li><li><button type="button">Та же фотография, только чуть крупнее</button></li><li><button type="button" data-right>Несколько маленьких наклеек, хитро размещённых на знаке</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Несколько маленьких наклеек, хитро размещённых на знаке</strong></p><p>Исследователи показали, что несколько удачно размещённых наклеек могут заставить модель неправильно прочитать знак «Стоп» — это состязательный пример. Хороший дневной свет — как раз то, на чём модель училась, а на чуть увеличенной фотографии те же узоры, так что ни то ни другое ей не мешает.</p></details>
+</div></section>
+<h2>Слова этого урока</h2><p class="pg-tags"><a href="../glossary/dataset.html">Набор данных (датасет)</a><a href="../glossary/deep-learning.html">Глубокое обучение</a><a href="../glossary/computer-vision.html">Компьютерное зрение</a><a href="../glossary/pixel.html">Пиксель</a><a href="../glossary/convolution.html">Свёртка</a><a href="../glossary/cnn.html">Свёрточная нейронная сеть (CNN)</a><a href="../glossary/adversarial-example.html">Состязательный пример</a></p>
 <aside class="pg-cta"><p>Мини-лаборатория, тест и сохранение прогресса. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#lesson-7">Пройти этот урок в приложении →</a></aside>
+<p class="pg-aside">🍎 <a href="../teachers/how-computers-see.html">Учителям: готовый план этого урока</a></p>
 <nav class="pg-pager" aria-label="Уроки"><a href="ai-ethics-safety.html"><small>Предыдущий урок</small>Этика и безопасность ИИ</a><a href="learning-by-trial-and-error.html"><small>Следующий урок</small>Обучение методом проб и ошибок</a></nav>
 </article>
 </main>
 <footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
     <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Градиентный спуск своими руками: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Сделай шаги вручную и посмотри, как кусается скорость обучения. Под капотом: шаг 2 из 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/p2-gradient-descent-by-hand.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p2-gradient-descent-by-hand.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Градиентный спуск своими руками: шаг за шагом, с заданиями">
+<meta property="og:description" content="Сделай шаги вручную и посмотри, как кусается скорость обучения. Под капотом: шаг 2 из 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/p2-gradient-descent-by-hand.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Градиентный спуск своими руками","headline":"Градиентный спуск своими руками","description":"Сделай шаги вручную и посмотри, как кусается скорость обучения.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/p2-gradient-descent-by-hand.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Градиентный спуск своими руками","item":"https://newfter.github.io/AI-Compass/ru/path/p2-gradient-descent-by-hand.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Под капотом</a> · Шаг 2 из 8 · 7 мин</p>
+<h1>Градиентный спуск своими руками</h1>
+<p class="pg-lead">Сделай шаги вручную и посмотри, как кусается скорость обучения.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🎯 Функция потерь показывает, насколько модель ошибается</h2>
+<p>Обучение — это поиск параметров, при которых <strong>функция потерь</strong> мала. Возьмём самую маленькую модель: один параметр <code>w</code> и такую функцию потерь:</p>
+<div class="pg-example is-mono"><div>L(w) = (w − 3)²</div></div>
+<p class="pg-note">Минимум находится в точке w = 3. Сделаем вид, что мы этого не знаем, и найдём его шаг за шагом.</p>
+<h2>⛷️ Иди по склону вниз</h2>
+<p>Градиент <code>dL/dw</code> показывает, как меняется функция потерь, когда <code>w</code> растёт. Поэтому мы шагаем против него. Размер шага задаёт <strong>скорость обучения</strong> <code>η</code>.</p>
+<div class="pg-example is-mono"><div>dL/dw = 2·(w − 3)</div><div>w ← w − η · dL/dw</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> L(w) = (w − 3)². Чему равен градиент dL/dw в точке w = 5?</p><details><summary>Показать решение</summary><p>2·(5 − 3) = 4. Он положительный: функция потерь растёт вместе с w, значит, w нужно уменьшать.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> L(w) = (w − 3)², w = 5, скорость обучения η = 0,1. Чему равно w после одного шага градиентного спуска?</p><details><summary>Показать решение</summary><p>5 − 0,1·4 = 4,6: небольшой шаг в сторону 3.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> Сделай второй шаг из точки w = 4,6 с той же η = 0,1. Чему теперь равно w?</p><details><summary>Показать решение</summary><p>4,6 − 0,1·3,2 = 4,28. Шаги уменьшаются, потому что склон становится положе: здесь каждый шаг убирает 20% оставшегося расстояния до 3.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> L(w) = (w − 3)², начинаем с w = 5, но теперь скорость обучения η = 1. Что произойдёт?</p>
+<ol type="A" class="pg-options"><li><button type="button">w будет медленно ползти к 3</button></li><li><button type="button">w будет расти без предела</button></li><li><button type="button" data-right>w будет вечно прыгать между 5 и 1</button></li><li><button type="button">w попадёт точно в 3 за один шаг</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: w будет вечно прыгать между 5 и 1</strong></p><p>5 − 1·4 = 1, затем 1 − 1·(−4) = 5 и так далее: каждый шаг перелетает минимум ровно на то расстояние, с которого начал. При η = 0,5 хватило бы одного шага до 3; при η больше 1 прыжки растут.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Задание.</strong> L(w) = (w − 3)². Теперь η = 1,1 и w = 5. Чему равно w после одного шага?</p><details><summary>Показать решение</summary><p>5 − 4,4 = 0,6. Это на 2,4 от минимума — дальше, чем 2, с которых мы начали. Каждый шаг умножает расстояние на −1,2. Это расходимость: именно это на практике значит «функция потерь взорвалась».</p></details></section>
+<h2>🔗 С данными: цепное правило</h2>
+<p>Настоящая функция потерь зависит от данных. Возьмём один пример: x = 2 с правильным ответом y = 10, модель <code>ŷ = w·x</code> и квадрат ошибки. Цепное правило проводит градиент сквозь модель:</p>
+<div class="pg-example is-mono"><div>L = (w·x − y)²</div><div>dL/dw = 2·(w·x − y)·x</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> Один пример: x = 2, y = 10. Модель ŷ = w·x с w = 3, функция потерь L = (w·x − y)². Чему равно dL/dw?</p><details><summary>Показать решение</summary><p>2·(6 − 10)·2 = −16. Градиент отрицательный, поэтому шаг w − η·(−16) увеличивает w — в сторону верного значения 5.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Почему градиент обычно считают по небольшой пачке примеров, а не по всему набору данных?</p>
+<ol type="A" class="pg-options"><li><button type="button">В маленькой пачке совсем нет шума</button></li><li><button type="button" data-right>Каждый шаг гораздо дешевле, а много шумных шагов лучше нескольких точных</button></li><li><button type="button">Градиент по всему набору указывает не туда</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Каждый шаг гораздо дешевле, а много шумных шагов лучше нескольких точных</strong></p><p>Шаг по 32 примерам стоит крошечную долю прохода по миллионам. Это стохастический градиентный спуск (SGD), и его шум часто даже помогает.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Во время обучения функция потерь сильно скачет вверх-вниз, а потом превращается в NaN. Что стоит попробовать первым?</p>
+<ol type="A" class="pg-options"><li><button type="button">Добавить слоёв</button></li><li><button type="button">Учить больше эпох</button></li><li><button type="button" data-right>Уменьшить скорость обучения</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Уменьшить скорость обучения</strong></p><p>Скачущая и «взрывающаяся» функция потерь значит, что шаги слишком большие: каждый перелетает минимум сильнее предыдущего. Уменьши скорость обучения (или ограничь градиенты).</p></details>
+</div></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Градиентный спуск: <code>w ← w − η·dL/dw</code>.</li><li>Слишком маленькая скорость обучения — медленно; слишком большая — колебания или расходимость.</li><li>Цепное правило проводит градиент сквозь модель: для <code>L = (w·x − y)²</code> получаем <code>dL/dw = 2·(w·x − y)·x</code>.</li><li>Мини-пачки дают более дешёвые и шумные шаги: это SGD.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="p1-a-neuron-by-hand.html"><small>Предыдущий шаг</small>Нейрон своими руками</a><a href="p5-backpropagation-by-hand.html"><small>Следующий шаг</small>Обратное распространение своими руками</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Guarantees: differential privacy and certified robustness: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Calibrate noise to a privacy budget, prove it, and certify an L2 radius. Theory at the limit: step 11 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t11-guarantees-differential-privacy-and-certified-robustness.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Guarantees: differential privacy and certified robustness: step by step, with tasks">
+<meta property="og:description" content="Calibrate noise to a privacy budget, prove it, and certify an L2 radius. Theory at the limit: step 11 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Guarantees: differential privacy and certified robustness","headline":"Guarantees: differential privacy and certified robustness","description":"Calibrate noise to a privacy budget, prove it, and certify an L2 radius.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Guarantees: differential privacy and certified robustness","item":"https://newfter.github.io/AI-Compass/path/t11-guarantees-differential-privacy-and-certified-robustness.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t11-guarantees-differential-privacy-and-certified-robustness.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 11 of 12 · 10 min</p>
+<h1>Guarantees: differential privacy and certified robustness</h1>
+<p class="pg-lead">Calibrate noise to a privacy budget, prove it, and certify an L2 radius.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🔒 ε-differential privacy: a bound on what an output reveals</h2>
+<p>A statistic or a model computed from personal data can reveal who is in the data. A <strong>mechanism</strong> M is a randomised algorithm that maps a dataset D to an output. Two datasets are <strong>neighbours</strong> when they differ in the record of one person (here: one record is replaced, and the size n is public).</p>
+<p>M is <strong>ε-differentially private</strong> (ε-DP) when, for all neighbours D, D′ and every set S of outputs, the probability of S changes by at most the factor e^ε. The probability is over the randomness of M only: nothing is assumed about the data, or about what an attacker knows or can compute.</p>
+<p>Its meaning, by Bayes’ rule: for an attacker who hesitates between D and D′, the posterior odds are the prior odds times a likelihood ratio that lies between e^(−ε) and e^ε. Whatever the output is, it moves the odds between two versions of one person’s record by at most the factor e^ε.</p>
+<div class="pg-example is-mono"><div>P(M(D) ∈ S) ≤ e^ε·P(M(D′) ∈ S) for all neighbours D, D′ and all S</div><div>posterior odds of D against D′ ≤ e^ε · prior odds</div><div>ε = 0.1: e^ε ≈ 1.105</div><div>ε = 10: e^ε ≈ 22,026, almost no formal protection</div></div>
+<p class="pg-note">The definition is symmetric: D and D′ can be swapped. It is a property of the mechanism, not of one output, and it must hold for the worst pair of neighbours, not on average. A deterministic M that is not constant is not ε-DP for any ε: the noise is necessary.</p>
+<section class="pg-check"><p><strong>Task.</strong> Randomised response to a yes/no question: each person reports the true answer with probability 0.75 and the opposite one otherwise. For what smallest ε is the report an ε-DP function of the true answer? Two decimal places.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> M is ε-DP with e^ε = 3: P(M(D) ∈ S) ≤ 3·P(M(D′) ∈ S) for all neighbouring datasets D, D′ and all sets S. An attacker knows the data are one of two neighbours, D or D′, with the prior P(D) = 0.1. At most what is P(D | output)?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📏 Sensitivity and the Laplace mechanism</h2>
+<p>The noise has to hide whatever one person can change in the answer. The <strong>sensitivity</strong> of a numeric query f is Δ = max |f(D) − f(D′)| over all neighbours D, D′. A count (how many records have some property) has Δ = 1. The mean of n values in [0, 1] has Δ = 1/n: replacing one value moves the sum by at most 1.</p>
+<p>The <strong>Laplace mechanism</strong> releases f(D) + Z, where Z has the Laplace density exp(−|z|/b)/(2b) with the scale b = Δ/ε. It is ε-DP for every query with sensitivity Δ. The noise has mean 0 and standard deviation b·√2, and it depends only on Δ and ε, not on the data.</p>
+<div class="pg-example is-mono"><div>M(D) = f(D) + Z, density of Z: exp(−|z|/b) / (2b), b = Δ/ε</div><div>standard deviation of Z: b·√2; P(|Z| ≥ t) = exp(−t/b)</div><div>count, ε = 0.5: b = 1/0.5 = 2, standard deviation 2.83</div><div>mean of n = 1000 values in [0, 1], ε = 0.1: b = (1/1000)/0.1 = 0.01</div></div>
+<p class="pg-note">Sensitivity is a worst case over all possible datasets, not over the one at hand. A query on unbounded values, such as a mean income, has infinite sensitivity: the values are first clipped to a fixed range.</p>
+<section class="pg-check"><p><strong>Task.</strong> The Laplace mechanism releases f(D) + Z. The noise Z has the density exp(−|u|/b)/(2b) at the point u, with b = Δ/ε, where Δ is the sensitivity of f. Put the steps of the proof that it is ε-DP in order.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> The mean of n values in [0, 1] gets Laplace noise of scale b = Δ/ε (standard deviation b·√2); Δ is the largest change of the mean if one value is replaced. For ε = 0.1, what is the smallest n with noise standard deviation ≤ 0.01?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>💰 The budget: three rules, and a relaxation</h2>
+<p>Three rules follow from the definition. <strong>Post-processing</strong>: a function of an ε-DP output, computed without the data, is ε-DP. <strong>Composition</strong>: releases with ε_1 … ε_k are together (ε_1 + … + ε_k)-DP: ε is a <strong>privacy budget</strong> spent by every release. <strong>Group privacy</strong>: for datasets differing in k records the factor is e^(k·ε).</p>
+<p><strong>(ε, δ)-DP</strong> relaxes the definition by an additive δ, taken far below 1/n. It admits the <strong>Gaussian mechanism</strong>: noise N(0, σ²·I) calibrated to the L2 sensitivity Δ_2 = max ‖f(D) − f(D′)‖_2. Composition still adds up both the ε and the δ, and post-processing still costs nothing.</p>
+<p>Private training (DP-SGD) combines these pieces. Clip each example’s gradient to a norm C: then one example changes the sum of the gradients by at most C when it is added or removed (2C when replaced). Add Gaussian noise to the sum. Account for the budget over all steps: the trained model is post-processing.</p>
+<div class="pg-example is-mono"><div>post-processing: g(M(D)) is ε-DP for every g that does not use D</div><div>composition: ε_1 + … + ε_k; a group of k records: k·ε</div><div>(ε, δ)-DP: P(M(D) ∈ S) ≤ e^ε·P(M(D′) ∈ S) + δ</div><div>Gaussian mechanism, classical bound for 0 &lt; ε &lt; 1:</div><div>σ = Δ_2·√(2·ln(1.25/δ)) / ε gives (ε, δ)-DP</div></div>
+<p class="pg-note">Why δ must be tiny: publishing one record chosen at random satisfies the relaxed definition with ε = 0 and δ = 1/n. For many steps there are tighter accounting theorems than the plain sum: for a small ε per step the total ε grows roughly as √k, not k, at the price of a slightly larger δ.</p>
+<section class="pg-check"><p><strong>Task.</strong> M is an ε-DP mechanism for a query f, and y = M(D) has been computed. Is what gets published still guaranteed to be ε-DP?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> A count is asked 100 times; each answer gets fresh Laplace noise and is ε-DP on its own. The analyst publishes only the average and argues: averaging is post-processing, so the average is ε-DP. Where does the argument fail?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> The Gaussian mechanism adds noise N(0, σ²) with σ = Δ_2·√(2·ln(1.25/δ))/ε; by the classical bound this gives (ε, δ)-DP for 0 &lt; ε &lt; 1. What σ does it prescribe for Δ_2 = 1, ε = 0.5 and δ = 10⁻⁵? Two decimal places.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🛡️ Attacks, and a certificate against them</h2>
+<p>An <strong>adversarial example</strong> is an input x + δ with a small perturbation δ that changes the model’s answer. For a linear score w·x and a budget of ε per coordinate, the score can shift by up to ε·‖w‖_1, reached by δ = ε·sign(w). With many coordinates ‖w‖_1 is large, although every single change is tiny.</p>
+<p><strong>Randomised smoothing</strong> turns any base classifier f into a <strong>smoothed classifier</strong> g: g(x) is the class that f returns most often on x + noise, with noise ~ N(0, σ²·I). Theorem: if that class has probability at least p_A &gt; ½, then g returns the same class at every x + δ with ‖δ‖_2 &lt; R, the certified radius below.</p>
+<p>The certificate holds against every attack and asks nothing of f. Its limits: it is about g, not f; it covers only the L2 norm, and only up to R; p_A is estimated from samples of the noise, so it holds with a chosen confidence; and a larger σ blurs the input, which costs accuracy.</p>
+<div class="pg-example is-mono"><div>max of w·δ over all δ with |δ_i| ≤ ε: ε·‖w‖_1</div><div>1000 weights of size 0.05, ε = 0.01: 0.01·50 = 0.5</div><div>certified radius: R = σ·Φ⁻¹(p_A)</div><div>σ = 0.5: p_A = 0.8413 → R = 0.5; p_A = 0.9772 → R = 1.0</div></div>
+<p class="pg-note">Letters: in this field ε is the attacker’s budget and δ a perturbation, not the ε and δ of privacy. Φ⁻¹ is the inverse of the standard normal distribution function: Φ⁻¹(0.8413) ≈ 1 and Φ⁻¹(0.9772) ≈ 2.</p>
+<section class="pg-check"><p><strong>Task.</strong> Randomised smoothing, noise N(0, σ²·I): if the top class has probability ≥ p_A &gt; ½, the prediction is fixed for ‖δ‖_2 &lt; R = σ·Φ⁻¹(p_A). From the table: below what ε is every δ with all |δ_i| ≤ ε certified? Three decimals.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge, on paper. The base classifier is a half-space: f(x) = A if w·x + b &gt; 0, else B. For x with w·x + b &gt; 0 and noise N(0, σ²·I), find p_A and R = σ·Φ⁻¹(p_A). Compare R with the distance from x to the boundary. What follows?</p><details><summary>Show the answer</summary><p>Let m = (w·x + b)/‖w‖_2, the distance from x to the hyperplane. For noise n ~ N(0, σ²·I) the projection w·n is distributed as N(0, σ²·‖w‖_2²), so p_A = P(w·n &gt; −(w·x + b)) = Φ(m/σ).</p>
+<p>Then R = σ·Φ⁻¹(Φ(m/σ)) = m: the certified radius is exactly the distance to the boundary. And here g = f, because Φ(m/σ) &gt; ½ exactly when m &gt; 0. So at distance m the answer of g really changes: no theorem that uses only p_A and σ can give a larger radius.</p>
+<p>The half-space is the worst case of the theorem: among all base classifiers with the same p_A at x, it loses probability fastest as x moves to its boundary (the Neyman–Pearson lemma, the core of the proof). And smoothing does not make a linear model more robust: it certifies the stability under noise that f already has.</p></details></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>ε-DP: <code>P(M(D) ∈ S) ≤ e^ε·P(M(D′) ∈ S)</code> for all neighbours D, D′ and all S. For every attacker, posterior odds ≤ e^ε · prior odds. Randomised response with a truth probability p &gt; ½ has ε = ln(p/(1 − p)).</li><li>Laplace mechanism: noise of scale <code>b = Δ/ε</code> (standard deviation b·√2), where the sensitivity Δ is the largest change of the query between neighbours. A count has Δ = 1, a mean of n values in [0, 1] has Δ = 1/n. The proof is the triangle inequality applied to the densities.</li><li>Post-processing is free, composition adds up the ε of all releases, a group of k records gets k·ε. (ε, δ)-DP admits Gaussian noise: <code>σ = Δ_2·√(2·ln(1.25/δ))/ε</code> for 0 &lt; ε &lt; 1. DP-SGD is clipping of the gradients, Gaussian noise and accounting over the steps.</li><li>A linear score w·x shifts by up to ε·‖w‖_1 when every coordinate moves by at most ε. Randomised smoothing certifies the smoothed classifier within the L2 radius <code>R = σ·Φ⁻¹(p_A)</code>, which is exact for a half-space; coordinate-wise changes are covered only below R/√d.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="t10-causality-from-seeing-to-doing.html"><small>Previous step</small>Causality: from seeing to doing</a><a href="t12-limits-what-cannot-be-learned-computed-or-proved.html"><small>Next step</small>Limits: what cannot be learned, computed or proved</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

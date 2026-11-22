@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Overfitting, and how to catch it: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Training and validation loss, early stopping and regularisation. Under the hood: step 4 of 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Overfitting, and how to catch it: step by step, with tasks">
+<meta property="og:description" content="Training and validation loss, early stopping and regularisation. Under the hood: step 4 of 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Overfitting, and how to catch it","headline":"Overfitting, and how to catch it","description":"Training and validation loss, early stopping and regularisation.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Overfitting, and how to catch it","item":"https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Under the hood</a> · Step 4 of 8 · 7 min</p>
+<h1>Overfitting, and how to catch it</h1>
+<p class="pg-lead">Training and validation loss, early stopping and regularisation.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>📊 Two losses, not one</h2>
+<p>Training makes the loss small on the examples the model learns from: this is the <strong>training loss</strong>.</p>
+<p>But the model is built to work on new examples. So the loss is also measured on examples that were held back, which the model never trains on: this is the <strong>validation loss</strong>.</p>
+<p>Only the validation loss tells you how the model does on new data. Here are both for one model after 1, 5, 10, 20 and 40 epochs:</p>
+<div class="pg-table"><table><thead><tr><th>Epoch</th><th>Training loss</th><th>Validation loss</th></tr></thead><tbody><tr><td>1</td><td>0.90</td><td>0.95</td></tr><tr><td>5</td><td>0.40</td><td>0.50</td></tr><tr><td>10</td><td>0.20</td><td>0.42</td></tr><tr><td>20</td><td>0.08</td><td>0.55</td></tr><tr><td>40</td><td>0.02</td><td>0.80</td></tr></tbody></table></div><p class="pg-note">An <strong>epoch</strong> is one full pass over all the training examples.</p>
+<section class="pg-check"><p><strong>Task.</strong> The table shows the loss of one model on its training examples and on held-back validation examples. At which of these epochs is the model best on new data?</p><details><summary>Show the solution</summary><p>The validation loss is measured on examples the model did not train on, and it is lowest at epoch 10 (0.42). After that it rises, although the training loss keeps falling. Keeping the weights of that epoch and stopping the training is called <strong>early stopping</strong>.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> From epoch 10 to epoch 40 the training loss kept falling, from 0.20 to 0.02, while the validation loss kept rising, from 0.42 to 0.80. What is happening?</p>
+<ol type="A" class="pg-options"><li><button type="button">Underfitting: the model is too simple to learn the pattern in the data</button></li><li><button type="button">The learning rate is too low, so the model has almost stopped learning</button></li><li><button type="button">There are too few held-back examples, so the rise is just random noise</button></li><li><button type="button" data-right>Overfitting: the model is memorising its training examples, noise included</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Overfitting: the model is memorising its training examples, noise included</strong></p><p>The model keeps improving on the examples it trains on and gets worse on examples it has never trained on. It is learning the details and the random noise of its training examples, which do not help on new data: this is <strong>overfitting</strong>. <strong>Underfitting</strong> is the opposite: even the training loss stays high.</p></details>
+</div></section>
+<h2>✂️ Split the data into three parts</h2>
+<p>You have just used the validation loss to choose an epoch. But a score is an honest estimate for new data only if the examples it was measured on played no part in any choice: neither in fitting the weights nor in picking a setting.</p>
+<p>So the data is split into three parts before training, and each part has one job:</p>
+<div class="pg-example"><div><strong>Training set</strong>: for fitting the weights.</div><div><strong>Validation set</strong>: for choosing the hyperparameters and the moment to stop.</div><div><strong>Test set</strong>: for reporting the result, once, at the very end.</div></div>
+<p class="pg-note"><strong>Hyperparameters</strong> are the settings that gradient descent does not learn: for example the learning rate or the number of layers.</p>
+<section class="pg-check"><p><strong>Task.</strong> A dataset has 2000 examples. You hold back 15% for validation and 15% for testing. How many examples are left for training?</p><details><summary>Show the solution</summary><p>100% − 15% − 15% = 70%, and 70% of 2000 is 0.7·2000 = 1400. The other 600 examples (300 for validation, 300 for testing) never train the model: that is the price of an honest score.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> You train a model 50 times, each time with different hyperparameters, and keep the version with the best score on the test set. What is wrong with reporting that score as the result on new data?</p>
+<ol type="A" class="pg-options"><li><button type="button">It is too pessimistic: on truly new data the model will score higher than that</button></li><li><button type="button">Only the score on the training set is honest, so only that one may be reported</button></li><li><button type="button" data-right>It is too optimistic: the test set helped to choose, so it is no longer unseen data</button></li><li><button type="button">Nothing is wrong: choosing the best settings is exactly what a test set is for</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: It is too optimistic: the test set helped to choose, so it is no longer unseen data</strong></p><p>The best of 50 scores is partly luck: some settings suit these particular test examples by chance. Picking by the test score makes that luck part of the result, so on truly new data the score will usually be lower. Choose on the validation set, and use the test set once, at the very end.</p></details>
+</div></section>
+<h2>🧲 Regularisation: make large weights cost something</h2>
+<p>To fit individual examples and their noise, a model often needs large weights. <strong>Regularisation</strong> means changing the training so that such memorising gets harder.</p>
+<p>A very common kind, the <strong>L2 penalty</strong>, puts a price on large weights. To the usual loss <code>L_data</code> it adds the sum of all the squared weights, multiplied by a small number λ. Training now minimises the loss together with the penalty, so the model keeps a large weight only if it really helps.</p>
+<div class="pg-example is-mono"><div>L_total = L_data + λ·Σw²</div><div>Σw² = w₁² + w₂² + …</div></div>
+<p class="pg-note">λ is a hyperparameter: it sets the price. Another common regulariser is <strong>dropout</strong>: at each training step a random share of the neurons is switched off, so the network cannot rely on any single one.</p>
+<section class="pg-check"><p><strong>Task.</strong> A model has two weights: w = (3, −4). An L2 penalty adds λ·Σw² to the loss: λ times the sum of the squared weights. With λ = 0.01, how much does it add?</p><details><summary>Show the solution</summary><p>The squares are 3² = 9 and (−4)² = 16. Their sum is 25, and 0.01·25 = 0.25. The sign of a weight does not matter, only its size, and the square makes large weights cost much more than small ones.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> For one weight the L2 penalty is λ·w², so its gradient with respect to w is 2λw. What is this gradient for w = 5 and λ = 0.1?</p><details><summary>Show the solution</summary><p>2·0.1·5 = 1. In the update w ← w − η · gradient (η is the learning rate) the penalty therefore subtracts η·2λw: at every step it takes the same small fraction off each weight and pulls it towards zero. So L2 regularisation is also called <strong>weight decay</strong>: with plain gradient descent the two are the same thing.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> A model overfits. Which of these changes fight overfitting, and which make it worse?</p><details><summary>Show the solution</summary><p>The changes that fight overfitting all make memorising harder or less useful: more varied examples, a price on large weights, neurons switched off at random, stopping in time. Fewer examples, extra epochs and no regularisation make memorising easier.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A model has a training loss of 0.45 and a validation loss of 0.47. Both are too high for the task. What is the problem, and what should you do?</p>
+<ol type="A" class="pg-options"><li><button type="button">Overfitting: add dropout or a stronger L2 penalty</button></li><li><button type="button">Validation examples leaked into training: remove them</button></li><li><button type="button">The validation set is too large: move some of it into training</button></li><li><button type="button" data-right>Underfitting: use a bigger model or train it for longer</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Underfitting: use a bigger model or train it for longer</strong></p><p>The two losses are almost equal, so there is no sign of memorising: the model is as bad on its own training examples as on new ones. It is too simple, or has trained too little, to learn the pattern: this is <strong>underfitting</strong>. A bigger model or longer training can help. More regularisation or more data would not.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Think first.</strong> A model has 99% accuracy on its validation set and still fails in production, with real users. How can that be?</p><details><summary>Show the answer</summary><p>The world may differ from the data. New users, new devices or a new season bring examples unlike the ones the model was trained and validated on. This is <strong>distribution shift</strong>.</p>
+<p>The validation set may not have been truly unseen. Perhaps it included copies of training examples, or the data contained information from the future, which does not exist yet when the model has to answer. This is <strong>data leakage</strong>, and it makes the score look better than it is.</p>
+<p>The number may have hidden the problem. If only 1% of the cases are positive, a model that always answers “no” is 99% accurate and finds nothing.</p></details></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Judge a model by its loss on held-back examples, not its training loss: only examples it never trained on show how it does on new data.</li><li>Training loss falls while validation loss rises: <strong>overfitting</strong>. Both stay high: <strong>underfitting</strong>.</li><li>Train to fit the weights, validate to choose, test once to report.</li><li>An L2 penalty <code>λ·Σw²</code>, dropout, more varied data and early stopping all fight overfitting.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="p5-backpropagation-by-hand.html"><small>Previous step</small>Backpropagation by hand</a><a href="p3-measure-a-classifier.html"><small>Next step</small>Measure a classifier</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Causality: from seeing to doing: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Compute an effect by adjustment and by an instrument, then a counterfactual. Theory at the limit: step 10 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t10-causality-from-seeing-to-doing.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Causality: from seeing to doing: step by step, with tasks">
+<meta property="og:description" content="Compute an effect by adjustment and by an instrument, then a counterfactual. Theory at the limit: step 10 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Causality: from seeing to doing","headline":"Causality: from seeing to doing","description":"Compute an effect by adjustment and by an instrument, then a counterfactual.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Causality: from seeing to doing","item":"https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t10-causality-from-seeing-to-doing.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 10 of 12 · 10 min</p>
+<h1>Causality: from seeing to doing</h1>
+<p class="pg-lead">Compute an effect by adjustment and by an instrument, then a counterfactual.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🔧 Seeing is not doing</h2>
+<p>A <strong>structural causal model</strong> (SCM) gives every variable its own equation V_i = f_i(pa_i, U_i): a function of its parents pa_i in a directed acyclic graph and of a noise U_i, with all noises independent. Hence the joint distribution factorises along the graph (line 1).</p>
+<p>Conditioning, P(y | x), filters the data: it keeps the cases where X happened to equal x. The <strong>intervention</strong> do(X = x) changes the model: the equation of X is replaced by X = x, all others stay. In line 1 the factor of X disappears and the rest is taken at X = x (line 2): the <strong>truncated factorisation</strong>.</p>
+<p>Lines 3 to 5 apply this to a graph in which Z is a common cause of X and Y, a <strong>confounder</strong>. Doing and seeing average the same P(y | x, z) with different weights: seeing X = x is evidence about Z, setting X = x is not.</p>
+<div class="pg-example is-mono"><div>P(v_1, …, v_n) = Π_i P(v_i | pa_i)</div><div>P(v_1, …, v_n | do(x)) = Π_(i: V_i ≠ X) P(v_i | pa_i), taken at X = x</div><div>graph Z → X, Z → Y, X → Y: P(z, y | do(x)) = P(z)·P(y | x, z)</div><div>doing: P(y | do(x)) = Σ_z P(y | x, z)·P(z)</div><div>seeing: P(y | x) = Σ_z P(y | x, z)·P(z | x)</div></div>
+<p class="pg-note">P(y | do(x)) is a property of the model, not of the data alone: it is defined through the changed equations. The question of this unit is when it can be computed from the distribution of observations, and what has to be assumed for that.</p>
+<section class="pg-check"><p><strong>Task.</strong> SCM with independent noises of mean 0 and variance 1: Z = U_Z, X = Z + U_X, Y = X − 4·Z + U_Y. Setting X raises Y: E[Y | do(X = x)] = x. What is the slope Cov(X, Y)/Var(X) of the regression of Y on X in observational data?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🔀 Three junctions and d-separation</h2>
+<p>A <strong>path</strong> is a sequence of adjacent arrows, followed in any direction. Every inner variable of a path is one of three junctions (lines 1 to 3). A chain and a fork pass dependence on until their middle variable is conditioned on. A <strong>collider</strong> is the opposite: closed until it is conditioned on.</p>
+<p>A set S <strong>blocks</strong> a path if the path has a chain or a fork whose middle variable is in S, or a collider that is not in S and has no descendant in S. X and Y are <strong>d-separated</strong> by S if S blocks every path between them. Theorem: then X and Y are independent given S in every distribution generated by an SCM with this graph.</p>
+<p>The collider rule is the one that intuition gets wrong. Two independent causes of a common effect are in general dependent once the effect is known: learning that one cause is present can make the other less likely (<strong>explaining away</strong>). Selecting data on a common effect does the same: <strong>selection bias</strong>.</p>
+<div class="pg-example is-mono"><div>chain X → M → Y: open; blocked when M is in S</div><div>fork X ← Z → Y: open; blocked when Z is in S</div><div>collider X → C ← Y: closed; opened when C or a descendant of C is in S</div></div>
+<p class="pg-note">The converse is not a theorem: variables joined by open paths can still be independent, for example when the effects along two paths cancel exactly. The assumption that this does not happen is called faithfulness; the theorem on d-separation does not need it.</p>
+<section class="pg-check"><p><strong>Task.</strong> X and Y are independent N(0, 1); X has no effect on Y. Their common effect is C = X + Y + U_C with an independent U_C ~ N(0, 1). With infinite data, what is the coefficient of X in the least-squares regression of Y on X and C?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🚪 The backdoor criterion</h2>
+<p>A <strong>backdoor path</strong> from X to Y is a path that begins with an arrow into X. Such a path can carry association that is not an effect of X. A set Z satisfies the <strong>backdoor criterion</strong> for (X, Y) if it contains no descendant of X and blocks every backdoor path from X to Y.</p>
+<p>Theorem (<strong>backdoor adjustment</strong>): for such a Z, line 1 holds, provided P(x, z) &gt; 0 for every z with P(z) &gt; 0. The effect of an intervention is then computed from observational data alone. Compare line 2: plain conditioning weights the same strata by P(z | x).</p>
+<p>Adjusting for more is not safer. A <strong>mediator</strong> (X → M → Y) carries part of the effect; conditioning on it removes that part. Conditioning on a collider, or on a descendant of one, can open a path that was blocked. In a <strong>randomised</strong> experiment a coin sets X: no arrow enters X, no backdoor path exists, and line 3 holds.</p>
+<div class="pg-example is-mono"><div>P(y | do(x)) = Σ_z P(y | x, z)·P(z)</div><div>P(y | x) = Σ_z P(y | x, z)·P(z | x)</div><div>X randomised: P(y | do(x)) = P(y | x)</div><div>linear SCM, Z a backdoor set: the effect of X on Y is the coefficient of X in the regression of Y on X and Z</div></div>
+<p class="pg-note">A variable measured before X is not automatically safe. In the graph X ← A → C ← B → Y the variable C is a collider: adjusting for C alone opens a backdoor path that was blocked.</p>
+<section class="pg-check"><p><strong>Task.</strong> Backdoor adjustment: P(y | do(x)) = Σ_z P(y | x, z)·P(z). Severity Z is the only common cause of treatment and recovery. Half the patients got A, half B; 80% of group A and 20% of group B were severe. What is P(recovery | do(A))?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Causal graph: Z → X, Z → Y, X → M → Y, X → C ← Y, C → D. For which set of covariates S does the adjustment formula Σ_s P(y | x, s)·P(s) equal P(y | do(x)) in every SCM with this graph?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Linear SCM: Y = β·X + U; the hidden U also affects X, so no observed set meets the backdoor criterion. An instrument Z has Cov(Z, X) ≠ 0, no arrow into Y, and is independent of U. Order the derivation of β and of its weak point.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Y = β·X + U; the hidden U also affects X. An instrument Z affects Y only through X and is independent of U, so β = Cov(Z, Y)/Cov(Z, X). With the table’s values: by how much does the regression slope Cov(X, Y)/Var(X) exceed β?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🔮 Counterfactuals and the three levels</h2>
+<p>A <strong>counterfactual</strong> asks about one unit after the fact: given what was observed, what would Y have been, had X been x′? An SCM answers in three steps. <strong>Abduction</strong>: update the distribution of the noises U by the observation. <strong>Action</strong>: replace the equation of X by X = x′. <strong>Prediction</strong>: compute Y with the updated noises.</p>
+<p>This gives three levels: association P(y | x), intervention P(y | do(x)), counterfactuals. Without causal assumptions, data of a lower level do not determine the answers of a higher one. Lines 3 to 5: two SCMs with exactly the same joint distribution of (X, Y) and different effects of setting X.</p>
+<p>So a model trained only to predict learns at best P(y | x) of its training distribution, whatever its size. It may rely on correlations that break when someone intervenes or when the distribution shifts; no amount of data of the same kind tells model 1 from model 2.</p>
+<div class="pg-example is-mono"><div>Y = 2·X + U; observed X = 1, Y = 3; had X been 2?</div><div>abduction: U = 3 − 2·1 = 1; action: X = 2; prediction: Y = 2·2 + 1 = 5</div><div>model 1 (X → Y): X ~ N(0, 1), Y = 0.6·X + U_Y, Gaussian U_Y with mean 0, variance 0.64</div><div>model 2 (Y → X): Y ~ N(0, 1), X = 0.6·Y + U_X, Gaussian U_X with mean 0, variance 0.64</div><div>both: means 0, variances 1, correlation 0.6; E[Y | do(X = x)] is 0.6·x in model 1 and 0 in model 2</div></div>
+<section class="pg-check"><p><strong>Task.</strong> SCM with binary X: Y = max(X·U_1, U_2); U_1 ~ Bernoulli(0.5) and U_2 ~ Bernoulli(0.2) are independent of each other and of X. A unit has X = 1, Y = 1. With what probability would its Y have been 0, had X been 0? Two decimals.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Find the flaw. X and Y are binary. (1) A large randomised trial finds P(Y = 1 | do(X = 1)) = P(Y = 1 | do(X = 0)) = 0.5. (2) So X has no average effect on Y. (3) So X does not change Y for any unit.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge, on paper. Graph: X → M → Y and X ← U → Y, where U is hidden and M is observed. No observed set satisfies the backdoor criterion for (X, Y). Show that P(y | do(x)) can still be computed from P(x, m, y).</p><details><summary>Show the answer</summary><p>The idea: split the effect into two links and use the backdoor criterion on each. From X to M the only backdoor path is X ← U → Y ← M, and the collider Y blocks it with nothing conditioned on: the empty set works, so P(m | do(x)) = P(m | x).</p>
+<p>From M to Y the backdoor path M ← X ← U → Y is blocked by X, which is not a descendant of M: P(y | do(m)) = Σ_x′ P(y | m, x′)·P(x′).</p>
+<p>X acts on Y only through M, and under do(x) M is independent of U, so the links chain: P(y | do(x)) = Σ_m P(m | x)·Σ_x′ P(y | m, x′)·P(x′). This is the <strong>front-door adjustment</strong>; it needs P(x, m) &gt; 0. A hidden common cause does not always prevent identification: the graph decides.</p></details></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li><code>do(x)</code> replaces the equation of X in a structural causal model; conditioning only filters the data. With a common cause Z: <code>P(y | do(x)) = Σ_z P(y | x, z)·P(z)</code>, while <code>P(y | x)</code> weights the same strata by P(z | x). Randomising X makes the two equal.</li><li>d-separation: conditioning on its middle variable blocks a chain or a fork; a collider is closed until it or a descendant is conditioned on. A backdoor set blocks every backdoor path and holds no descendant of X, so never a mediator; a collider or its descendant in the set can open a path. “Adjust for everything” is wrong.</li><li>With a hidden common cause, structure can still identify the effect. In a linear model an instrument gives <code>β = Cov(Z, Y)/Cov(Z, X)</code>; its exclusion and Cov(Z, U) = 0 cannot be tested from data on (Z, X, Y). A mediator that carries the whole effect and is shielded from the hidden cause gives the front-door formula.</li><li>A counterfactual is abduction, action, prediction, with the unit’s own noises. Association, intervention, counterfactual: each level needs assumptions that the level below cannot supply. A model trained only to predict learns at best P(y | x) of its training distribution; under intervention or shift its predictions may fail.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"><small>Previous step</small>Transformers in theory: what attention can and cannot compute</a><a href="t11-guarantees-differential-privacy-and-certified-robustness.html"><small>Next step</small>Guarantees: differential privacy and certified robustness</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

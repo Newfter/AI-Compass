@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Diffusion models: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Noise in closed form, predicting the noise, sampling, guidance, latent diffusion and flow matching. Research frontier: step 6 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r6-diffusion-models.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Diffusion models: step by step, with tasks">
+<meta property="og:description" content="Noise in closed form, predicting the noise, sampling, guidance, latent diffusion and flow matching. Research frontier: step 6 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Diffusion models","headline":"Diffusion models","description":"Noise in closed form, predicting the noise, sampling, guidance, latent diffusion and flow matching.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Diffusion models","item":"https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/r6-diffusion-models.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Research frontier</a> · Step 6 of 12 · 8 min</p>
+<h1>Diffusion models</h1>
+<p class="pg-lead">Noise in closed form, predicting the noise, sampling, guidance, latent diffusion and flow matching.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🌫️ Destroy, then learn to undo</h2>
+<p>A <strong>diffusion model</strong> learns to undo a fixed <strong>forward process</strong>. Over T steps, that process adds a little Gaussian noise to the data, until almost nothing but noise remains. A network learns the <strong>reverse process</strong>: removing the noise step by step.</p>
+<p>Step s multiplies x_(s−1) by √(1 − β_s) and adds Gaussian noise of variance β_s; the sequence β_1, …, β_T is the <strong>noise schedule</strong>. The noises of different steps are independent Gaussians, and a weighted sum of such variables is Gaussian too, so x_t for any t can be drawn from x₀ in one go:</p>
+<div class="pg-example is-mono"><div>x_t = √ᾱ_t · x₀ + √(1 − ᾱ_t) · ε, ε ~ N(0, I)</div><div>ᾱ_t = (1 − β_1) · … · (1 − β_t): from 1 at t = 0 to ≈ 0 at t = T</div><div>ᾱ_t = 0.64 → x_t = 0.8 · x₀ + 0.6 · ε</div></div>
+<section class="pg-check"><p><strong>Task.</strong> In a diffusion model, the noisy value is x_t = √ᾱ_t·x₀ + √(1 − ᾱ_t)·ε. With ᾱ_t = 0.64, the clean value x₀ = 1 and the noise ε = −0.5, what is x_t?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎯 The network predicts the noise</h2>
+<p>A network ε_θ(x_t, t) learns to recover the added noise: draw x₀ from the data, a random t and ε ~ N(0, I), form x_t, and minimise ‖ε − ε_θ(x_t, t)‖². With fixed reverse variances, this is the negative ELBO up to one weight per t and a constant: x_1, …, x_T are the latents, and the forward process is a fixed encoder.</p>
+<p>The predicted noise gives an estimate x̂₀ of the clean data. The ideal prediction, the one with the lowest expected squared error, is E[ε | x_t]; up to a known factor, it equals the <strong>score</strong> ∇ ln p_t(x_t), the gradient of the log density of the noisy data with respect to x_t.</p>
+<div class="pg-example is-mono"><div>x̂₀ = (x_t − √(1 − ᾱ_t) · ε_θ) / √ᾱ_t</div><div>x_t = 0.5, ᾱ_t = 0.64, ε_θ = −0.5 → x̂₀ = (0.5 + 0.3) / 0.8 = 1</div><div>ideal: ε_θ(x_t, t) = E[ε | x_t] = −√(1 − ᾱ_t) · ∇ ln p_t(x_t)</div></div>
+<p class="pg-note">With the ideal ε_θ, x̂₀ = E[x₀ | x_t]: the posterior mean over all clean data that could have produced x_t, so under heavy noise it is a blurry average.</p>
+<section class="pg-check"><p><strong>Task.</strong> A diffusion model's network ε_θ(x_t, t) sees only the noisy input x_t and the step t, and is trained to predict the added noise, minimising the squared error. Up to a known factor, what does the best possible prediction equal?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🔁 Sampling: from noise to data</h2>
+<p>Generation, or <strong>sampling</strong>, starts from pure noise x_T ~ N(0, I) and repeatedly removes a little of it, using the network's prediction at every step. Early steps typically settle the overall layout, late steps the fine details.</p>
+<p>The first samplers took about 1000 steps. Deterministic samplers often need only tens: they solve an ordinary differential equation (ODE) with the same marginal distributions p_t as the forward process, the <strong>probability flow ODE</strong>.</p>
+<p><strong>Distillation</strong> trains a student model to do in a few steps, or even one, what a teacher model does in many.</p>
+<section class="pg-check"><p><strong>Task.</strong> Put the steps of generating a sample with a trained diffusion model in order.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🧭 Classifier-free guidance</h2>
+<p><strong>Classifier-free guidance</strong> helps a model follow a condition c, such as a text prompt. One network is trained both with c and without it: c is dropped for some of the training examples. At sampling time, its two noise predictions are combined with a weight w.</p>
+<p>Setting w = 0 gives the unconditional model, and w = 1 the plain conditional one. With w &gt; 1, sampling moves further from “any image” towards “this prompt”: the result follows the prompt more closely, with less variety. A very large w tends to give oversaturated, unnatural images.</p>
+<div class="pg-example is-mono"><div>ε_g = ε_u + w · (ε_c − ε_u)</div><div>ε_u: without the prompt, ε_c: with it</div><div>ideal: ε_c − ε_u = −√(1 − ᾱ_t) · ∇ ln p_t(c | x_t)</div></div>
+<p class="pg-note">The last line explains the name: the difference acts as the gradient of an implicit classifier, so no separate classifier is trained. Some papers write (1 + w′)·ε_c − w′·ε_u: the same rule with w′ = w − 1.</p>
+<section class="pg-check"><p><strong>Task.</strong> Classifier-free guidance combines two noise predictions: ε_g = ε_u + w·(ε_c − ε_u). For one pixel, the prediction without the prompt is ε_u = 0.2, the one with it is ε_c = 0.5, and w = 3. What is ε_g?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🗜️ Diffusion in a latent space</h2>
+<p>The cost of each denoising step grows with the size of the input, and sampling repeats the step many times. So an <strong>autoencoder</strong>, an encoder and a decoder trained beforehand to reconstruct images, compresses each image into a much smaller array: its <strong>latent</strong>.</p>
+<p>Both training and sampling of the diffusion model happen in this latent space: this is <strong>latent diffusion</strong>. The decoder turns the final latent back into pixels once, at the end.</p>
+<div class="pg-example"><div>image: 512 × 512 pixels × 3 colour channels = 786,432 values</div><div>latent: 64 × 64 × 4 = 16,384 values</div></div>
+<section class="pg-check"><p><strong>Task.</strong> An image of 512 × 512 pixels with 3 colour channels is encoded into a latent of 64 × 64 × 4 numbers. How many times fewer numbers does a diffusion model process when it works on the latent instead of the image?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>➡️ Flow matching</h2>
+<p><strong>Flow matching</strong>, a newer family of methods, learns a <strong>velocity field</strong>: a direction and speed for every point and time. Its flow links data and noise. Join a data point x₀ and a noise sample ε by a straight path: along it, the velocity is constant.</p>
+<p>A network v_θ(x_t, t) is trained to predict this velocity. Sampling starts from noise at t = 1 and follows the learned velocity back to t = 0, for example with Euler steps. Straighter paths can be followed with fewer steps.</p>
+<div class="pg-example is-mono"><div>x_t = (1 − t) · x₀ + t · ε, t from 0 (data) to 1 (noise)</div><div>dx_t / dt = ε − x₀</div><div>loss: ‖(ε − x₀) − v_θ(x_t, t)‖²</div><div>Euler step back: x_(t−Δt) = x_t − Δt · v_θ(x_t, t)</div></div>
+<section class="pg-check"><p><strong>Task.</strong> In flow matching, the path x_t = (1 − t)·x₀ + t·ε runs from the data x₀ at t = 0 to the noise ε at t = 1. What target does the network learn to predict at x_t?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>The forward process <code>x_t = √ᾱ_t·x₀ + √(1 − ᾱ_t)·ε</code> destroys data and can be sampled at any t in one go. A network ε_θ learns to predict the noise, which is the same as learning the score ∇ ln p_t(x_t) up to the factor −√(1 − ᾱ_t).</li><li>Sampling starts from noise and denoises step by step: about 1000 steps in early samplers, tens with ODE solvers, a few or even one after distillation.</li><li>Classifier-free guidance <code>ε_g = ε_u + w·(ε_c − ε_u)</code> trades variety for faithfulness to the prompt. Latent diffusion saves work by running in a space compressed by an autoencoder.</li><li>Flow matching trains a network to predict the velocity ε − x₀ along straight paths between data and noise; straighter paths need fewer sampling steps.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="r5-latent-variables-and-the-elbo.html"><small>Previous step</small>Latent variables and the ELBO</a><a href="r7-reinforcement-learning-the-core.html"><small>Next step</small>Reinforcement learning: the core</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

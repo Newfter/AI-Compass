@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Limits: what cannot be learned, computed or proved: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Count what data cannot decide, bound query learning, find a max-margin limit. Theory at the limit: step 12 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t12-limits-what-cannot-be-learned-computed-or-proved.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Limits: what cannot be learned, computed or proved: step by step, with tasks">
+<meta property="og:description" content="Count what data cannot decide, bound query learning, find a max-margin limit. Theory at the limit: step 12 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Limits: what cannot be learned, computed or proved","headline":"Limits: what cannot be learned, computed or proved","description":"Count what data cannot decide, bound query learning, find a max-margin limit.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Limits: what cannot be learned, computed or proved","item":"https://newfter.github.io/AI-Compass/path/t12-limits-what-cannot-be-learned-computed-or-proved.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t12-limits-what-cannot-be-learned-computed-or-proved.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 12 of 12 · 10 min</p>
+<h1>Limits: what cannot be learned, computed or proved</h1>
+<p class="pg-lead">Count what data cannot decide, bound query learning, find a max-margin limit.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🎲 No free lunch: data alone decide nothing</h2>
+<p>Take all binary functions on n-bit inputs: there are 2^(2^n) of them. Let the target f be any one of them with equal probability, and let a learner see the labels of m distinct inputs. Exactly 2^(2^n − m) functions fit this sample, and at any unseen input x exactly half of them say f(x) = 1.</p>
+<p>So whatever the learner predicts at x, it is wrong with probability ½. This is the <strong>no-free-lunch theorem</strong>: averaged uniformly over all target functions, every learning algorithm has the same expected error on inputs outside its sample, ½ for binary labels.</p>
+<p>The uniform average is the whole assumption: under it the unseen labels are independent of the seen ones. Real problems are not uniform over all functions. An <strong>inductive bias</strong>, a preference among hypotheses that fit the data equally well, is what lets a learner generalise: a necessity, not a defect.</p>
+<div class="pg-example is-mono"><div>binary functions on n-bit inputs: 2^(2^n); n = 3: 2⁸ = 256</div><div>fit m distinct labelled inputs: 2^(2^n − m); n = 3, m = 5: 2³ = 8</div><div>of these, f(x) = 1 at a given unseen x: half, here 4</div><div>error at an unseen x, averaged over targets: 1/2 for every learner</div></div>
+<p class="pg-note">The theorem also covers a randomised learner and a learner that chooses which inputs to have labelled: the labels it has not seen remain fair coins.</p>
+<section class="pg-check"><p><strong>Task.</strong> Every binary function of 4-bit inputs is an equally likely target. A learner sees the labels of 10 distinct inputs and predicts those of the other 6. With what probability are at least 5 of the 6 predictions right? Two decimals.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> A model x = g(z) with z ~ N(0, I) in two dimensions reproduces the data distribution exactly. Its author concludes: “so z_1 and z_2 are the true independent factors behind the data.” Which fact breaks this step?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🔐 Parities: few examples, hard computation</h2>
+<p>A strong bias makes learning possible. A <strong>parity</strong> labels x by the XOR of an unknown subset S of its n bits: 2^n candidate targets instead of 2^(2^n). Each example is one linear equation mod 2 for S, so Gaussian elimination recovers S in polynomial time from about n random examples.</p>
+<p>Now restrict the algorithm instead. A <strong>statistical query</strong> (SQ) algorithm never sees single examples: it picks φ(x, y) with values in [−1, 1] and receives E[φ(x, y)] up to an error τ (any value that close may come back). For uniform inputs, identifying the parity then takes more than (2^n − 1)·τ² queries in the worst case.</p>
+<p>Gradient descent on an expected loss is of this kind when its gradients are averages known only up to τ. If every label is flipped independently with probability 0.1, elimination fails: the number of examples needed still grows only linearly in n, yet no polynomial-time algorithm is known, and some cryptography relies on that.</p>
+<div class="pg-example is-mono"><div>y = XOR of the bits x_i over i in S, S unknown: 2^n parities</div><div>a wrong parity fits one example (uniform input) with probability 1/2</div><div>P(some wrong parity fits all m examples) ≤ (2^n − 1)·2^(−m)</div><div>SQ with tolerance τ: more than (2^n − 1)·τ² queries</div></div>
+<p class="pg-note">Worst-case hardness is common: deciding whether a network of just three threshold units (two hidden, one output) can fit a given training set exactly is NP-complete. That training succeeds in practice shows that typical instances are not the worst ones.</p>
+<section class="pg-check"><p><strong>Task.</strong> A parity of n = 10 bits is learned from m examples with uniform inputs and correct labels. P(some wrong parity fits all m examples) ≤ (2^n − 1)·2^(−m). What is the smallest m for which this bound is at most 0.01?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> With uniform inputs, finding a parity of n bits can take more than (2^n − 1)·τ² statistical queries, each an average E[φ(x, y)] returned only up to ±τ. For τ = 0.01, what is the smallest n at which this bound exceeds 10⁹ queries?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>⛔ Undecidable: Rice's theorem</h2>
+<p>Some questions have no algorithm at all, whatever time is allowed. The classic one is the <strong>halting problem</strong>: no algorithm decides, for every program P and every input x, whether P eventually halts on x.</p>
+<p><strong>Rice's theorem</strong> extends this to every non-trivial <strong>semantic property</strong>: a property of the partial function a program computes (its input-output behaviour, not its code) that some programs have and others lack. No algorithm decides such a property for arbitrary programs.</p>
+<p>So “verify that this system never does X” has no general algorithmic solution. What stays possible: restricted classes (finite-state systems; a fixed network evaluated once, which is a finite circuit), bounded questions (the first k steps of a run), and a proof written for one particular program.</p>
+<p class="pg-note">Decidable is not the same as easy: verifying a ReLU network against linear constraints on its inputs and outputs is decidable but NP-hard in the worst case. And a system that runs a network in a loop with unbounded memory can be as general as an arbitrary program.</p>
+<section class="pg-check"><p><strong>Task.</strong> Order the proof that no algorithm decides, for every program, whether it ever outputs the string X (on at least one input). The proof reduces the halting problem to this question.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Rice's theorem: no algorithm decides, for arbitrary programs, a non-trivial property of the partial function a program computes. Which of these questions about an arbitrary program P can an algorithm nevertheless always answer?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📏 A proved piece: implicit bias towards the largest margin</h2>
+<p>Not every theorem in this unit is a prohibition. Take data that a linear classifier separates: some w has y_i·w·x_i &gt; 0 for all i, with labels y_i = ±1. Then the logistic loss Σ_i ln(1 + exp(−y_i·w·x_i)) has no minimiser: scaling such a w up always lowers it.</p>
+<p>Theorem: gradient descent with a small enough constant step, from any start, sends the loss to 0 and ‖w‖ to infinity (as ln t), while the direction w/‖w‖ converges to the <strong>maximum-margin</strong> separator, the one a hard-margin SVM with no bias term finds. No regulariser asks for this: it is an <strong>implicit bias</strong> of the algorithm.</p>
+<p>For deep non-linear networks only partial results of this kind exist. Around them lies what is observed and only partly explained: the generalisation of over-parameterised networks, double descent beyond linear models, grokking, the power laws of scaling, in-context learning in large models, the edge of stability.</p>
+<div class="pg-example is-mono"><div>w* = argmin ‖w‖² subject to y_i·w·x_i ≥ 1 for all i</div><div>w(t)/‖w(t)‖ → w*/‖w*‖</div><div>margin of w: min_i y_i·w·x_i/‖w‖; for w* it equals 1/‖w*‖</div><div>(1, 1) labelled +1, (−1, −1) labelled −1: w* = (0.5, 0.5)</div><div>direction (1, 1)/√2, margin √2 ≈ 1.414</div></div>
+<p class="pg-note">Open: a predictive theory of feature learning, and guarantees for the behaviour of large trained systems. Open means unsolved, not impossible: no theorem says that these questions cannot be answered.</p>
+<section class="pg-check"><p><strong>Task.</strong> On separable data, gradient descent on the logistic loss sends w/‖w‖ to the maximum-margin unit vector u. Data: (2, 0) labelled +1, (0, −1) labelled −1; boundary w·x = 0. What is the limit margin, min_i y_i·u·x_i? Two decimals.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> The last sorting of the path: what kind of statement is each of these results?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge. With bits and labels as ±1, a parity is χ_S(x) = Π_(i in S) x_i, x uniform. For a query φ, |φ| ≤ 1, find one reply within τ of E[φ(x, χ_S(x))] for all but fewer than 1/τ² sets S. Start from φ(x, y) = a(x) + y·b(x).</p><details><summary>Show the answer</summary><p>Because y = ±1, φ(x, y) = a(x) + y·b(x) with a(x) = (φ(x, 1) + φ(x, −1))/2 and b(x) = (φ(x, 1) − φ(x, −1))/2, and |b| ≤ 1. So E[φ(x, χ_S(x))] = E[a] + E[b·χ_S]. The reply E[a] does not depend on S, and it is valid for every S with |E[b·χ_S]| ≤ τ.</p>
+<p>The parities are orthonormal: χ_S·χ_T is the parity of the symmetric difference of S and T, with mean 0 unless S = T. So the numbers E[b·χ_S] are the coordinates of b in an orthonormal basis, and Σ_S E[b·χ_S]² = E[b²] ≤ 1 (Parseval). Hence fewer than 1/τ² sets S have |E[b·χ_S]| &gt; τ.</p>
+<p>After q such replies fewer than q/τ² parities are ruled out, so leaving a single one takes q &gt; (2^n − 1)·τ². For gradient descent this means: averaged over the 2^n parities, the squared target-dependent part of a gradient coordinate scaled to [−1, 1] is at most 2^(−n). The signal exists, but it is exponentially small.</p></details></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>No free lunch: averaged uniformly over all target functions, every learner has error ½ on inputs outside its sample (after m of the 2^n labels, <code>2^(2^n − m)</code> functions still fit). Data cannot choose between hypotheses that agree on everything observed: generalisation and identifiability both need an inductive bias.</li><li>Statistical and computational limits differ. A parity of n bits needs about <code>n + log₂(1/δ)</code> examples with Gaussian elimination, but more than <code>(2^n − 1)·τ²</code> statistical queries of tolerance τ; with noisy labels no polynomial-time algorithm is known.</li><li>Rice's theorem: no algorithm decides a non-trivial property of the function computed by an arbitrary program; bounded questions, restricted classes and proofs for one program remain possible. A positive theorem: on separable data, gradient descent on the logistic loss converges in direction to the maximum-margin separator.</li><li>Proved: the theorems of this stage, under their conditions. Observed, only partly explained: why huge networks generalise, double descent, grokking, scaling laws. Open, not impossible: a theory of feature learning, guarantees for large trained systems. Ask of every claim: guarantee, lower bound, solvable model or empirical law?</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="t11-guarantees-differential-privacy-and-certified-robustness.html"><small>Previous step</small>Guarantees: differential privacy and certified robustness</a><span></span></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Теория информации в обучении: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Вычисли KL, длину сжатого текста и оценку Фано; собери доказательство KL ≥ 0. Теория на пределе: шаг 3 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/t3-information-theory-of-learning.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t3-information-theory-of-learning.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t3-information-theory-of-learning.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t3-information-theory-of-learning.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Теория информации в обучении: шаг за шагом, с заданиями">
+<meta property="og:description" content="Вычисли KL, длину сжатого текста и оценку Фано; собери доказательство KL ≥ 0. Теория на пределе: шаг 3 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/t3-information-theory-of-learning.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Теория информации в обучении","headline":"Теория информации в обучении","description":"Вычисли KL, длину сжатого текста и оценку Фано; собери доказательство KL ≥ 0.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/t3-information-theory-of-learning.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Теория информации в обучении","item":"https://newfter.github.io/AI-Compass/ru/path/t3-information-theory-of-learning.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/t3-information-theory-of-learning.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Теория на пределе</a> · Шаг 3 из 12 · 10 мин</p>
+<h1>Теория информации в обучении</h1>
+<p class="pg-lead">Вычисли KL, длину сжатого текста и оценку Фано; собери доказательство KL ≥ 0.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🎲 Энтропия, перекрёстная энтропия и KL-дивергенция</h2>
+<p>Пусть p — распределение на конечном множестве. <strong>Собственная информация</strong> (surprisal) исхода x равна log₂(1/p(x)) бит, а <strong>энтропия</strong> H(p) — её математическое ожидание по p: неопределённость одного испытания. Достоверный исход даёт 0 бит, равномерный выбор из M исходов — log₂ M бит, максимум для M исходов.</p>
+<p>Если данные приходят из p, а предсказывает модель q, то математическое ожидание log₂(1/q(x)) — это <strong>перекрёстная энтропия</strong> (cross-entropy) H(p, q), обычная функция потерь. Она раскладывается на H(p), которую не изменит никакая модель, и <strong>дивергенцию Кульбака — Лейблера</strong> KL(p ‖ q): плату за то, что вместо p взято q.</p>
+<p><strong>Неравенство Гиббса</strong>: KL(p ‖ q) ≥ 0, причём равенство возможно только при q = p. Поэтому H(p, q) ≥ H(p), истинное распределение — единственный минимум перекрёстной энтропии, а минимизировать её по семейству моделей — то же, что минимизировать KL(p ‖ q).</p>
+<div class="pg-example is-mono"><div>H(p) = −Σ_x p(x)·log₂ p(x)</div><div>H(p, q) = −Σ_x p(x)·log₂ q(x) = H(p) + KL(p ‖ q)</div><div>KL(p ‖ q) = Σ_x p(x)·log₂(p(x)/q(x)) ≥ 0</div><div>честная монета: 1 бит; равномерно по 8 исходам: 3 бита</div><div>монета с P(орёл) = 0,9: 0,9·0,152 + 0,1·3,322 = 0,469 бита</div></div>
+<p class="pg-note">Слагаемые с p(x) = 0 считаются равными 0. Если q(x) = 0 при p(x) &gt; 0, то H(p, q) и KL(p ‖ q) бесконечны: один исход, который модель считала невозможным, стоит бесконечно много бит. Если вместо log₂ взять ln, единицей станет нат: 1 нат = 1/ln 2 ≈ 1,4427 бита.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Данные — броски честной монеты: p = (0,5; 0,5). Модель предсказывает q = (0,9; 0,1). На сколько бит на бросок перекрёстная энтропия H(p, q) больше энтропии H(p), то есть KL(p ‖ q) = Σ_x p(x)·log₂(p(x)/q(x))? Округли до сотых.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Расставь шаги доказательства неравенства Гиббса KL(p ‖ q) ≥ 0 для распределений p и q на конечном множестве. S — множество исходов x с p(x) &gt; 0, все суммы берутся по x из S.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>📦 Предсказание — это сжатие</h2>
+<p><strong>Перплексия</strong> (perplexity) — это 2 в степени потерь в битах, или e в степени потерь в натах: число равновероятных вариантов с той же неопределённостью. Перплексия 16 означает 4 бита на токен: неопределённость как при честном выборе из 16 токенов.</p>
+<p>Биты — это длины кодов. <strong>Неравенство Крафта</strong>: двоичный <strong>префиксный код</strong> (ни одно слово не начало другого) с длинами l(x) существует ровно тогда, когда Σ_x 2^(−l(x)) ≤ 1. Код — это модель q(x) = 2^(−l(x)), а модель q — код с l(x) ≈ log₂(1/q(x)). <strong>Арифметическое кодирование</strong> строит такой код для целых последовательностей.</p>
+<p>Длина кода последовательности тогда почти точно равна суммарной перекрёстной энтропии модели на ней, в битах: минимизировать потери — значит минимизировать сжатый размер. <strong>Теорема о кодировании источника</strong>: для символов, независимо взятых из p, ни один однозначно декодируемый код не тратит в среднем меньше H(p) бит на символ.</p>
+<div class="pg-example is-mono"><div>перплексия = 2^(потери в битах) = e^(потери в натах)</div><div>потери 1,5 ната на токен = 2,164 бита: перплексия e^1,5 ≈ 4,48</div><div>Крафт: Σ_x 2^(−l(x)) ≤ 1</div><div>арифметическое кодирование с моделью q, последовательность x_1 … x_T:</div><div>длина ≤ Σ_t log₂(1/q(x_t | x_1 … x_(t−1))) + около 2 бит</div><div>0,8 бита на символ: 1 000 000 символов в 800 000 бит = 100 000 байт</div></div>
+<p class="pg-note">Классификатор — тоже данные. Записанный ровно в b бит, он один из не более чем 2^b. Если формат записи выбран до данных, оценка разрыва обобщения для конечного класса, √((ln|H| + ln(2/δ)) / (2n)), верна с ln|H| ≤ b·ln 2. Короткое описание требует меньше примеров: это идея <strong>принципа минимальной длины описания</strong> (MDL).</p>
+<section class="pg-check"><p><strong>Задание.</strong> Потери языковой модели на тесте — 2,0 ната на токен, токен — в среднем 4 символа. Арифметический кодер с этой моделью запишет 1 000 000 символов такого текста примерно в сколько килобайт (1 КБ = 8000 бит)? Округли до целого.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> С вероятностью ≥ 1 − δ для каждого h из конечного класса H |истинная ошибка − ошибка на n независимых примерах| ≤ √((ln|H| + ln(2/δ)) / (2n)). Вычисли эту оценку для значений из таблицы. Округли до тысячных.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🔗 Взаимная информация и обработка данных</h2>
+<p><strong>Условная энтропия</strong> H(X | Y) — среднее по y от энтропии распределения p(x | y): неопределённость X, которая остаётся, когда Y известно. <strong>Взаимная информация</strong> I(X; Y) = H(X) − H(X | Y) — число бит неопределённости, которое снимает Y.</p>
+<p>I(X; Y) — это KL-дивергенция совместного распределения относительно произведения маргинальных. Поэтому по неравенству Гиббса она неотрицательна и равна нулю тогда и только тогда, когда X и Y независимы. Она симметрична: Y говорит об X столько же, сколько X об Y.</p>
+<p><strong>Неравенство обработки данных</strong> (data processing inequality): если X → Y → Z — <strong>марковская цепь</strong> (при известном Y величина Z не зависит от X), то I(X; Z) ≤ I(X; Y). Никакая обработка Y, детерминированная или случайная, не добавляет информации об X.</p>
+<div class="pg-example is-mono"><div>H(X | Y) = Σ_y p(y)·H(X | Y = y)</div><div>I(X; Y) = H(X) − H(X | Y) = H(Y) − H(Y | X)</div><div>I(X; Y) = KL(p(x, y) ‖ p(x)·p(y)) ≥ 0</div><div>X — честный бит, Y = X с вероятностью 0,9, иначе бит перевёрнут:</div><div>I(X; Y) = H(Y) − H(Y | X) = 1 − 0,469 = 0,531 бита</div><div>X → Y → Z: I(X; Z) ≤ I(X; Y)</div></div>
+<p class="pg-note">В нейросети метка → вход → слой 1 → слой 2 → … — марковская цепь: каждый слой вычисляется по предыдущему. Поэтому ни один слой не содержит больше информации о метке, чем вход.</p>
+<section class="pg-check"><p><strong>Задание.</strong> X — честный бит. Если X = 0, то Y = 0. Если X = 1, то Y — честный бит, не зависящий ни от чего другого. Чему равна I(X; Y) в битах? Округли до сотых.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Сеть вычисляет h = f(x) по входу x; y — метка. Рассуждение: (1) y → x → h — марковская цепь. (2) Значит, I(h; y) ≤ I(x; y). (3) Значит, линейный зонд (linear probe) на h не может быть точнее, чем на x. Какой шаг неверен?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> X и Y — дискретные случайные величины, p и q — распределения на одном и том же конечном множестве. Утверждение верно всегда или может нарушаться?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>⚖️ Неравенство Фано: нет информации — нет решения</h2>
+<p>Теперь обратный вопрос: сколько информации нужно для решения? Пусть X равномерно распределено на M гипотезах, а Y — данные. Каким бы правилом g ни строилась догадка g(Y), <strong>неравенство Фано</strong> ограничивает вероятность её ошибки снизу через одну лишь I(X; Y).</p>
+<p>Причина: когда Y известно, ещё один бит сообщает, верна ли догадка, а если она неверна, не более log₂ M бит называют истинную гипотезу. Поэтому H(X | Y) ≤ 1 + P(ошибка)·log₂ M, а для равномерного X выполнено H(X | Y) = log₂ M − I(X; Y).</p>
+<p>Так доказывают нижние оценки на объём выборки. Выбирают M трудноразличимых гипотез и ограничивают информацию в данных: n примеров, независимых и одинаково распределённых при заданном X, несут не более чем в n раз больше информации, чем один. Пока она не дойдёт примерно до log₂ M бит, любой алгоритм часто ошибается.</p>
+<div class="pg-example is-mono"><div>X равномерно на M гипотезах, любое правило g:</div><div>P(g(Y) ≠ X) ≥ 1 − (I(X; Y) + 1) / log₂ M</div><div>M = 1024, I(X; Y) = 4 бита: P(ошибка) ≥ 1 − 5/10 = 0,5</div><div>Y_1 … Y_n независимы при заданном X и одинаково распределены:</div><div>I(X; Y_1 … Y_n) ≤ n·I(X; Y_1)</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> Фано: если X равномерно на M гипотезах, то у любого правила P(ошибка) ≥ 1 − (I + 1)/log₂ M, где I — информация об X в данных, в битах. M = 1024; n примеров дают I ≤ 0,02·n. При каком наименьшем n это допускает P(ошибка) ≤ 0,1?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Сначала подумай.</strong> Задача со звёздочкой. Префиксный код выбран до данных; классификатор h он кодирует в L(h) бит. Докажи: с вероятностью ≥ 1 − δ для всех h |истинная ошибка − ошибка на n независимых примерах| ≤ √((L(h)·ln 2 + ln(2/δ)) / (2n)).</p><details><summary>Показать ответ</summary><p>Дадим каждому h свою долю δ: δ_h = δ·2^(−L(h)). Пусть D(h) — разрыв между двумя его ошибками. Каждый h зафиксирован до данных, поэтому по неравенству Хёфдинга P(D(h) ≥ ε) ≤ 2·exp(−2·n·ε²). Правая часть равна δ_h при ε_h = √(ln(2/δ_h) / (2n)) = √((L(h)·ln 2 + ln(2/δ)) / (2n)).</p>
+<p>Оценка объединения: P(D(h) ≥ ε_h хотя бы для одного h) ≤ Σ_h δ_h = δ·Σ_h 2^(−L(h)) ≤ δ. Последний шаг — неравенство Крафта для префиксного кода, и он проходит даже для бесконечного числа h: важна только сумма долей, а не число классификаторов.</p>
+<p>При одинаковых длинах L(h) = b это оценка для конечного класса с ln|H| = b·ln 2. В общем случае 2^(−L(h)) играет роль априорного распределения на классификаторах, выбранного до данных: у классификаторов с коротким описанием гарантии точнее. Код, выбранный после взгляда на выборку, разрушил бы доказательство.</p></details></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li><code>H(p, q) = H(p) + KL(p ‖ q)</code> и <code>KL(p ‖ q) = Σ p·log₂(p/q) ≥ 0</code>, причём ноль только при q = p (неравенство Гиббса, из неравенства Йенсена). KL-дивергенция несимметрична и бесконечна, когда q даёт вероятность 0 исходу, возможному при p.</li><li>1 нат = 1/ln 2 ≈ 1,4427 бита; перплексия = 2^(биты) = e^(наты). Арифметический кодер с моделью записывает текст в число бит, почти точно равное суммарной перекрёстной энтропии, и ни один однозначно декодируемый код в среднем не обходит энтропию. Классификатор из b бит: <code>ln|H| ≤ b·ln 2</code> в оценке для конечного класса.</li><li><code>I(X; Y) = H(X) − H(X | Y) = KL(p(x, y) ‖ p(x)·p(y))</code> неотрицательна и симметрична. Неравенство обработки данных: для марковской цепи X → Y → Z <code>I(X; Z) ≤ I(X; Y)</code>. Оно ограничивает информацию, которая есть, а не ту, что извлечёт данный декодер.</li><li>Неравенство Фано: если X равномерно на M гипотезах, то у любого решающего правила <code>P(ошибка) ≥ 1 − (I(X; Y) + 1) / log₂ M</code>. Вместе с оценкой числа бит на пример оно даёт число примеров, ниже которого любой алгоритм часто ошибается.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="t2-optimisation-theory-how-fast-can-descent-go.html"><small>Предыдущий шаг</small>Теория оптимизации: как быстро может идти спуск</a><a href="t4-high-dimensions-and-random-matrices.html"><small>Следующий шаг</small>Высокие размерности и случайные матрицы</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

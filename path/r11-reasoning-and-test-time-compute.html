@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Reasoning and test-time compute: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Chains of thought, majority votes, best-of-n with a checker, learned verifiers, and RL with checkable rewards. Research frontier: step 11 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r11-reasoning-and-test-time-compute.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Reasoning and test-time compute: step by step, with tasks">
+<meta property="og:description" content="Chains of thought, majority votes, best-of-n with a checker, learned verifiers, and RL with checkable rewards. Research frontier: step 11 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Reasoning and test-time compute","headline":"Reasoning and test-time compute","description":"Chains of thought, majority votes, best-of-n with a checker, learned verifiers, and RL with checkable rewards.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Reasoning and test-time compute","item":"https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/r11-reasoning-and-test-time-compute.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Research frontier</a> · Step 11 of 12 · 8 min</p>
+<h1>Reasoning and test-time compute</h1>
+<p class="pg-lead">Chains of thought, majority votes, best-of-n with a checker, learned verifiers, and RL with checkable rewards.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🧠 Thinking takes tokens</h2>
+<p>A transformer with a fixed number of layers produces each token with one pass through those layers: a fixed number of serial steps, however hard the problem is.</p>
+<p>Every token it writes is fed back as input. So writing out intermediate steps, a <strong>chain of thought</strong>, gives the model more serial steps of computation for one answer: each pass can build on the results of the passes before it.</p>
+<p>Theoretical work shows that, under standard assumptions of complexity theory, enough such steps let transformers of fixed depth solve problems they cannot solve when they answer at once. The computation a model spends while answering, rather than in training, is its <strong>test-time compute</strong>.</p>
+<section class="pg-check"><p><strong>Task.</strong> Why can writing out intermediate steps before the final answer help a transformer solve a problem that needs many steps in sequence?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🗳️ Sample many, take a vote</h2>
+<p>Test-time compute can also be spent in parallel. <strong>Self-consistency</strong> samples several chains of thought for one problem at a temperature above 0, so that they differ, and takes a <strong>majority vote</strong>: it returns the most common final answer.</p>
+<p>If the samples were independent and each was right with probability p &gt; 0.5, the chance that more than half of them are right would tend to 1 as their number grows. Real errors are often correlated, with the same wrong idea in many samples, so the gain is usually smaller than this promises.</p>
+<div class="pg-example is-mono"><div>P(majority of 3 right) = p³ + 3·p²·(1 − p)</div><div>p³: all 3 right; 3·p²·(1 − p): exactly 2 right</div></div>
+<p class="pg-note">When the wrong answers differ from one another, the right one can win the vote with fewer than half of the samples.</p>
+<section class="pg-check"><p><strong>Task.</strong> Each sampled answer to a problem is right with probability 0.6, independently of the others. What is the probability that the majority of 3 such samples is right?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>✅ If you can check, sample more</h2>
+<p>Some answers can be checked reliably: a proof by a proof checker, a final number against a known answer, code by thorough tests. Then no vote is needed: sample n answers and keep one that passes the check. This is <strong>best-of-n</strong> with a perfect checker.</p>
+<p>It succeeds whenever at least one sample is right. The chance that all n are wrong is (1 − p)^n, which shrinks exponentially with n.</p>
+<div class="pg-example is-mono"><div>P(at least one right among n) = 1 − (1 − p)^n</div><div>n independent samples, each right with probability p</div></div>
+<p class="pg-note">Sampling cannot find what the model never produces: if p = 0, no n helps.</p>
+<section class="pg-check"><p><strong>Task.</strong> Each sampled solution to a problem is right with probability 0.5, independently of the others, and a perfect checker recognises a right one. What is the probability that at least one of 3 samples is right?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>⚖️ A learned verifier can be fooled</h2>
+<p>Without a perfect check, a learned <strong>verifier</strong>, a reward model trained to score solutions, ranks the n samples, and best-of-n keeps the top one.</p>
+<p>As n grows, the top sample is more and more likely to owe its rank to the verifier's errors rather than to being right, so the gains can stop or even reverse.</p>
+<p>An <strong>outcome reward</strong> scores only the final answer: it comes from an outcome reward model or from a check against a known answer. A <strong>process reward</strong> scores each step and usually comes from a process reward model.</p>
+<p class="pg-note">In one 2023 study on maths problems, a verifier trained on step-by-step labels from people chose right solutions more reliably than one trained on final answers only.</p>
+<section class="pg-check"><p><strong>Task.</strong> Outcome reward or process reward: which does each sentence describe?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🏋️ Training to reason with RL</h2>
+<p>Since 2024, several groups have reported models trained with RL on problems whose answers can be checked automatically: maths with known answers, code with tests. Such a <strong>verifiable reward</strong> is computed by a program, not by a learned reward model.</p>
+<p>In these reports, the models learned to write long chains of reasoning, and their accuracy kept rising with more RL training and with more thinking tokens at answer time.</p>
+<p>Checkable rewards are harder to game than learned ones, but not immune to reward hacking: a test suite with gaps can be passed by code that only fits the tests.</p>
+<section class="pg-check"><p><strong>Task.</strong> A model is trained with RL on coding problems and rewarded when the tests pass. It starts writing code that recognises the test inputs and returns the expected outputs directly. What is this?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🔍 Is the written reasoning the real reasoning?</h2>
+<p>A chain of thought is text that the model generates, not a readout of its internal computation. How well it reflects what actually drove the answer is its <strong>faithfulness</strong>, and that cannot be taken for granted.</p>
+<p>Studies have found models whose answers followed a hint placed in the prompt while their written reasoning never mentioned the hint. So the reasoning text is useful evidence about how an answer came about, not a guaranteed explanation.</p>
+<section class="pg-check"><p><strong>Task.</strong> Without a hint, a model consistently answers a maths question with 12. With a hint suggesting 15 added to the prompt, it answers 15, and its written reasoning never mentions the hint. What can you conclude?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Each written token is fed back as input, so a chain of thought gives a fixed-depth transformer more serial computation per answer: test-time compute spent in series.</li><li>With independent errors and p &gt; 0.5, a majority vote helps: p = 0.6 per sample gives 0.648 for a majority of 3. Correlated errors shrink the gain. With a perfect checker, best-of-n succeeds with probability <code>1 − (1 − p)^n</code>.</li><li>A learned verifier can be gamed: the more samples it ranks, the more its top pick tends to owe its rank to the verifier's errors. Outcome rewards need only final answers but are blind to the path; process rewards judge each step but need step labels.</li><li>RL with verifiable rewards can teach long reasoning, but a reward with gaps, like an incomplete test suite, can be hacked. A written chain of thought is evidence about the computation, not a guaranteed explanation.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="r10-smaller-and-faster-models.html"><small>Previous step</small>Smaller and faster models</a><a href="r12-research-that-holds-up.html"><small>Next step</small>Research that holds up</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

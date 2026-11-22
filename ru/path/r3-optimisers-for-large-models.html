@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Оптимизаторы для больших моделей: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Скользящие средние, Adam и поправка на смещение, AdamW, обрезка градиента и память, которая нужна для обучения. Передний край науки: шаг 3 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/r3-optimisers-for-large-models.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r3-optimisers-for-large-models.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Оптимизаторы для больших моделей: шаг за шагом, с заданиями">
+<meta property="og:description" content="Скользящие средние, Adam и поправка на смещение, AdamW, обрезка градиента и память, которая нужна для обучения. Передний край науки: шаг 3 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/r3-optimisers-for-large-models.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Оптимизаторы для больших моделей","headline":"Оптимизаторы для больших моделей","description":"Скользящие средние, Adam и поправка на смещение, AdamW, обрезка градиента и память, которая нужна для обучения.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r3-optimisers-for-large-models.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Оптимизаторы для больших моделей","item":"https://newfter.github.io/AI-Compass/ru/path/r3-optimisers-for-large-models.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Передний край науки</a> · Шаг 3 из 12 · 8 мин</p>
+<h1>Оптимизаторы для больших моделей</h1>
+<p class="pg-lead">Скользящие средние, Adam и поправка на смещение, AdamW, обрезка градиента и память, которая нужна для обучения.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🧭 Импульс: среднее прошлых градиентов</h2>
+<p>Обычный SGD использует только градиент текущего батча, а при маленьких батчах этот градиент шумный. <strong>Метод импульса</strong> (momentum) вместо него берёт <strong>экспоненциальное скользящее среднее</strong> (exponential moving average) градиентов: на каждом шаге новый градиент g подмешивается к накопленному среднему m.</p>
+<p>Компоненты градиента, которые меняют знак от шага к шагу (шум, зигзаги поперёк узкой долины), при усреднении частично гасят друг друга, а устойчивые сохраняются. Коэффициенты при старых градиентах убывают в геометрической прогрессии:</p>
+<div class="pg-example is-mono"><div>m ← β·m + (1 − β)·g, где 0 ≤ β &lt; 1</div><div>w ← w − η·m</div><div>коэффициент при градиенте k шагов назад: (1 − β)·β^k</div><div>сумма коэффициентов: (1 − β)·(1 + β + β² + …) = 1</div><div>память ≈ 1/(1 − β) шагов: β = 0,9 → около 10</div></div>
+<p class="pg-note">Откуда 1/(1 − β): самый свежий градиент получает коэффициент 1 − β, как в обычном среднем последних 1/(1 − β) градиентов. Во многих библиотеках импульс записывают как m ← β·m + g: такое m в 1/(1 − β) раз длиннее, а это то же самое, что увеличить η в 1/(1 − β) раз.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Экспоненциальное скользящее среднее градиентов m ← β·m + (1 − β)·g считают с β = 0,999. Примерно по скольким последним шагам оно фактически усредняет?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>⚙️ Adam: свой размер шага для каждого веса</h2>
+<p><strong>Adam</strong> хранит для каждого веса два скользящих средних: m — его градиентов, v — их квадратов (это оценки первого и второго моментов). Оба инициализируются нулём, поэтому поначалу смещены к нулю: после t шагов их коэффициенты в сумме дают лишь 1 − β₁^t и 1 − β₂^t.</p>
+<p>Деление на эти суммы — <strong>поправка на смещение</strong> (bias correction) — убирает смещение. В обновлении m̂ делится на √v̂, так что у каждого веса своя эффективная скорость обучения η/(√v̂ + ε). Все операции выполняются для каждого веса отдельно.</p>
+<div class="pg-example is-mono"><div>m ← β₁·m + (1 − β₁)·g</div><div>v ← β₂·v + (1 − β₂)·g²</div><div>m̂ = m / (1 − β₁^t), v̂ = v / (1 − β₂^t), t = 1, 2, …</div><div>w ← w − η·m̂ / (√v̂ + ε)</div></div>
+<p class="pg-note">Обычно по умолчанию β₁ = 0,9 и β₂ = 0,999 (для больших моделей β₂ часто берут меньше, и память становится короче). ε — крошечная константа, которая делает деление численно устойчивым, когда v̂ близко к 0.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Adam с поправкой на смещение делает первый шаг: t = 1, m и v инициализированы нулём, ε пренебрежимо мало. Градиент одного веса g = 250, скорость обучения η = 0,001. Чему равен модуль |Δw| обновления этого веса?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> По ошибке функцию потерь умножили на 100 с самого первого шага обучения. Что станет с обновлениями Adam и обычного SGD?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🧽 AdamW: затухание весов вне адаптивного шага</h2>
+<p>L2-штраф (λ/2)·‖w‖² добавляет к градиенту λ·w. При обычном SGD это в точности затухание весов (weight decay). В Adam — нет: λ·w проходит через m̂ и делится на √v̂, как и остальной градиент, поэтому сила затухания у разных весов разная.</p>
+<p><strong>AdamW</strong> выносит затухание из адаптивного шага и применяет его напрямую: это <strong>раздельное затухание весов</strong> (decoupled weight decay). На каждом шаге он умножает все веса на один и тот же множитель 1 − η·λ и прибавляет обычное обновление Adam. AdamW — распространённый выбор по умолчанию для обучения больших моделей.</p>
+<div class="pg-example is-mono"><div>Adam + L2: шаг Adam по g + λ·w</div><div>AdamW: m̂ и v̂ только по g, и</div><div>w ← w − η·(m̂ / (√v̂ + ε) + λ·w)</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> Adam используют с L2-штрафом (λ/2)·‖w‖², добавленным к функции потерь, а не с раздельным затуханием весов, как в AdamW. Какие веса этот штраф тянет к нулю слабее всего относительно их величины?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🧯 Как сделать обучение устойчивым</h2>
+<p><strong>Разогрев скорости обучения</strong> (warmup): на первых шагах она растёт почти от нуля до пикового значения, часто линейно. Потом она обычно убывает, часто по косинусу: это <strong>косинусное расписание</strong> (cosine schedule).</p>
+<p><strong>Обрезка градиента по норме</strong> (gradient clipping): если глобальная норма ‖g‖ (длина всех градиентов модели, собранных в один вектор) больше порога c, весь градиент уменьшают до длины c. Направление сохраняется, меняется только длина, так что влияние редкого огромного градиента на шаг и на средние Adam ограничено.</p>
+<div class="pg-example is-mono"><div>если ‖g‖ &gt; c: g ← g · c / ‖g‖</div></div>
+<p class="pg-note">Почему разогрев помогает, до сих пор изучают. Одно из объяснений: поначалу v̂ опирается всего на несколько градиентов, поэтому размеры шагов Adam ненадёжны, а от слишком больших шагов функция потерь может разойтись.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Весь градиент модели — g = (3; 4). Его обрезают по глобальной норме с порогом c = 1. Чему равна его первая компонента после обрезки?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>💾 Память: около 16 байт на параметр</h2>
+<p>При обучении со <strong>смешанной точностью</strong> (mixed precision) прямой и обратный проходы в основном идут в 16-битных числах, а обновление применяется к 32-битной <strong>мастер-копии</strong> весов (master copy): многие обновления слишком малы, чтобы изменить 16-битное число.</p>
+<p>Средние m и v в Adam называют <strong>состоянием оптимизатора</strong> (optimizer state); их обычно тоже хранят в 32 битах. В распространённой схеме на каждый параметр приходится:</p>
+<div class="pg-table"><table><thead><tr><th></th><th>Байт на параметр</th></tr></thead><tbody><tr><td>Веса, 16 бит</td><td>2</td></tr><tr><td>Градиенты, 16 бит</td><td>2</td></tr><tr><td>Мастер-копия весов, 32 бита</td><td>4</td></tr><tr><td>m в Adam, 32 бита</td><td>4</td></tr><tr><td>v в Adam, 32 бита</td><td>4</td></tr><tr><td>Итого</td><td>16</td></tr></tbody></table></div><p class="pg-note">Под активации, сохранённые для обратного прохода, нужна дополнительная память: она растёт с размером батча и длиной контекста. <strong>Шардирование</strong> (sharding) делит веса, градиенты и состояние оптимизатора между устройствами: на 8 устройствах каждое хранит восьмую часть.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Обучение с Adam в смешанной точности требует около 16 байт на параметр: веса и градиенты в 16 битах, мастер-копия весов, m и v — в 32 битах. Сколько это ГБ (10⁹ байт) для 3 миллиардов параметров без учёта активаций?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Экспоненциальное скользящее среднее <code>m ← β·m + (1 − β)·g</code> помнит около 1/(1 − β) шагов: около 10 при β = 0,9 и около 1000 при β = 0,999.</li><li>Adam делит среднее градиентов m̂ на корень из среднего их квадратов √v̂; оба средних — с поправкой на смещение. Поэтому, если пренебречь ε, первый шаг сдвигает каждый вес с ненулевым градиентом на η, а постоянный положительный множитель при функции потерь сокращается.</li><li>AdamW применяет затухание весов напрямую: <code>w ← w − η·(m̂ / (√v̂ + ε) + λ·w)</code>. L2-штраф внутри Adam, наоборот, делится на √v̂ и поэтому слабее всего действует на веса с большими прошлыми градиентами.</li><li>Разогрев и обрезка градиента по глобальной норме помогают стабилизировать обучение. Обучение с Adam в смешанной точности требует около 16 байт на параметр, не считая активаций.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="r2-scaling-laws.html"><small>Предыдущий шаг</small>Законы масштабирования</a><a href="r4-why-giant-networks-generalise.html"><small>Следующий шаг</small>Почему огромные сети обобщают</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

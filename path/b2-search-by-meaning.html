@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Search by meaning: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Embeddings, cosine similarity, chunks and recall@k, by hand. Build with AI: step 2 of 7.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b2-search-by-meaning.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Search by meaning: step by step, with tasks">
+<meta property="og:description" content="Embeddings, cosine similarity, chunks and recall@k, by hand. Build with AI: step 2 of 7.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Search by meaning","headline":"Search by meaning","description":"Embeddings, cosine similarity, chunks and recall@k, by hand.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Search by meaning","item":"https://newfter.github.io/AI-Compass/path/b2-search-by-meaning.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/b2-search-by-meaning.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🚀 <a href="./#build">Build with AI</a> · Step 2 of 7 · 7 min</p>
+<h1>Search by meaning</h1>
+<p class="pg-lead">Embeddings, cosine similarity, chunks and recall@k, by hand.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🧭 Search by meaning</h2>
+<p>A <strong>keyword search</strong> finds the texts that contain the words of the question. Ask “How do I get my money back?” and it can miss the page “Refund policy”: the two have no word in common.</p>
+<p>An <strong>embedding model</strong> turns a whole text (a question, a paragraph, a page) into one vector: its <strong>embedding</strong>. It is trained so that texts with a similar meaning get vectors that point in similar directions, even when they share no words.</p>
+<p>That gives <strong>search by meaning</strong> (semantic search). Store the embeddings of your documents. For each question (the <strong>query</strong>), compute its embedding and take the documents whose vectors are nearest to it. “Nearest” usually means the highest cosine similarity: the dot product divided by the two lengths.</p>
+<div class="pg-example is-mono"><div>cos(a, b) = a·b / (|a|·|b|)</div><div>a·b = a₁·b₁ + a₂·b₂</div><div>|a| = √(a₁² + a₂²)</div><div>cos = 1: same direction; cos = 0: right angle</div></div>
+<p class="pg-note">The formulas are written for vectors of two numbers: enough to work everything out by hand. Real embeddings have hundreds or thousands of numbers (the sums just get longer), and a short text gets as many as a long one.</p>
+<section class="pg-check"><p><strong>Task.</strong> A query has the embedding q = (3, 4), and a document has the embedding d1 = (4, 3). What is their cosine similarity?</p><details><summary>Show the solution</summary><p>The dot product is 3·4 + 4·3 = 24. Both lengths are √(9 + 16) = 5, so the cosine is 24 / (5·5) = 24 / 25 = 0.96. That is close to 1: the vectors point in almost the same direction, so for the model the two texts are close in meaning.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> A query has the embedding (3, 4), and a document has the embedding (−4, 3). What is their cosine similarity?</p><details><summary>Show the solution</summary><p>The dot product is 3·(−4) + 4·3 = −12 + 12 = 0, so the cosine is 0 whatever the lengths are. The two vectors are at a right angle: for the model that made them, the query and the document have nothing in common.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A document has the embedding d3 = (6, 8): the query q = (3, 4) with every number doubled. What is their cosine similarity?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>1: the cosine compares directions, and they are the same</button></li><li><button type="button">2: the document's vector is twice as long as the query's</button></li><li><button type="button">0.5: the query's vector is half as long as the document's</button></li><li><button type="button">It is not defined: one vector is longer than the other</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: 1: the cosine compares directions, and they are the same</strong></p><p>(3·6 + 4·8) / (5·10) = 50 / 50 = 1. Doubling changes the length of a vector, not its direction, and the cosine does not depend on the length: its formula divides by the lengths. It can never be above 1. Many embedding models already return vectors of length 1: then the cosine is simply the dot product.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Task.</strong> The query is q = (3, 4). Rank the four documents by their cosine similarity to it, from the highest to the lowest.</p><details><summary>Show the solution</summary><ol><li>d3 = (6, 8)</li><li>d1 = (4, 3)</li><li>d4 = (0, 5)</li><li>d2 = (−4, 3)</li></ol><p>For d4: (3·0 + 4·5) / (5·5) = 20 / 25 = 0.8. So the cosines are 1 for d3, 0.96 for d1, 0.8 for d4 and 0 for d2. A search needs only this order: it returns the documents from the top of the list. The values themselves differ from model to model, so compare only cosines that come from the same model.</p></details></section>
+<h2>✂️ What you store: chunks</h2>
+<p>An embedding is one vector for a whole text. For a long manual it would be a blur of all its topics, and it would fit no single question well. So a long document is first cut into <strong>chunks</strong>: pieces that are usually a few hundred tokens long, each with its own embedding.</p>
+<p>The search then returns chunks, not whole documents. The best ones are later passed to a language model together with the question: the next step of your path shows how.</p>
+<p>The size is a compromise. A chunk that is too big mixes several topics in one vector, and only a few such chunks fit into the context window. A chunk that is too small loses the sentences around it that give it meaning. A small <strong>overlap</strong> between neighbours helps: a thought cut at a border can stay whole in one of them.</p>
+<p class="pg-note">Embedding models have an input limit too: a text that is longer is cut off or refused. That is one more reason to cut documents into chunks.</p>
+<section class="pg-check"><p><strong>Task.</strong> A manual of 12,000 tokens is cut into chunks of 500 tokens, without overlap. How many chunks are there?</p><details><summary>Show the solution</summary><p>12,000 / 500 = 24 chunks, so the manual gets 24 embeddings and not one. With an overlap there would be more chunks, because each of them would repeat a part of its neighbour.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> For search by meaning, a long document is first cut into chunks, and each chunk gets its own embedding. Why not one embedding for the whole document?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>One vector blurs the document's many topics, and small chunks fit into a model's context window</button></li><li><button type="button">A shorter text gets a vector with more numbers, and that makes the comparison with a query more exact</button></li><li><button type="button">The cosine similarity can only compare two texts that have the same number of tokens</button></li><li><button type="button">The embedding model reads fewer tokens in total when a long document is cut into small chunks</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: One vector blurs the document's many topics, and small chunks fit into a model's context window</strong></p><p>An embedding has as many numbers for a long text as for a short one. For a long document it becomes a kind of average of many topics and fits no single question well. A chunk is usually about one thing, and the few best chunks fit into the context window of the language model that writes the answer.</p></details>
+</div></section>
+<h2>🎯 The top k, and how to measure a search</h2>
+<p>A search by meaning returns the k chunks with the highest cosine: the <strong>top k</strong>. You choose k, for example 5. The search returns them even when none of them holds the answer, so it has to be measured.</p>
+<p>Collect real questions, and for each one mark by hand the chunks that hold its answer: the <strong>relevant</strong> chunks. <strong>Recall@k</strong> is the share of the relevant chunks that the search puts into its top k.</p>
+<p>Work it out for every test question and take the average. Now you can compare two embedding models or two kinds of search on your own data, and you do not have to guess. And remember: what the search misses, the language model never sees.</p>
+<div class="pg-example is-mono"><div>recall@k = relevant in the top k / all relevant</div></div>
+<p class="pg-note">It is the recall you may know from classifiers: here the search “flags” its first k results.</p>
+<section class="pg-check"><p><strong>Task.</strong> A search runs over a collection of text chunks. For one question, 4 chunks are relevant: they hold the answer. The top 5 results contain 3 of them. What is recall@5? Answer with a number from 0 to 1.</p><details><summary>Show the solution</summary><p>3 of the 4 relevant chunks were found: 3 / 4 = 0.75. Recall divides by the number of relevant chunks, not by the number of results: 3 / 5 = 0.6 is another measure, precision@5, the share of the results that are relevant. One relevant chunk in four was missed: a language model that gets only the top 5 never sees it.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A user searches the documentation for the exact error code <code>E4012</code>. Which kind of search usually finds it more reliably?</p>
+<ol type="A" class="pg-options"><li><button type="button">A search by meaning: a code carries more meaning than an ordinary word</button></li><li><button type="button">Neither: a code is not a word, so no search can find it</button></li><li><button type="button">Either: both work if the context window is large enough</button></li><li><button type="button" data-right>A keyword search: it looks for this exact string of characters</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: A keyword search: it looks for this exact string of characters</strong></p><p>A code has almost no meaning for an embedding to hold: for the model <code>E4012</code> and <code>E4013</code> can look nearly the same, so the nearest chunks may be about other errors. A keyword search matches the exact string. Many systems run both kinds of search and merge the results: this is called <strong>hybrid search</strong>.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> An embedding model gives two texts a cosine similarity of 0.95. What does that tell you?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>For the model they are close in meaning, but that says nothing about whether they are true</button></li><li><button type="button">They are both very likely true, because each of them confirms the other</button></li><li><button type="button">They share about 95% of their words, but the words may stand in another order</button></li><li><button type="button">One of the two was almost certainly copied from the other, perhaps with a few small changes</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: For the model they are close in meaning, but that says nothing about whether they are true</strong></p><p>A high cosine says that the two vectors point almost the same way: for the model, the texts are about the same thing. It is not a share of common words, not proof of copying and not a measure of truth. “The guarantee lasts 2 years” and “The guarantee lasts 3 years” can have a very high cosine, but at most one of them is right.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>An <strong>embedding model</strong> turns a text into a vector. The cosine similarity compares directions, not lengths, and a high cosine means “similar for the model”, not “true”.</li><li>Long documents are stored as <strong>chunks</strong>, each with its own embedding. A chunk that is too big blurs several topics; one that is too small loses its meaning.</li><li>Measure a search with <strong>recall@k</strong>: the share of the relevant chunks that reach the top k. Work it out on real questions whose relevant chunks you have marked.</li><li>A keyword search usually finds exact strings such as error codes more reliably, so real systems often combine both kinds: <strong>hybrid search</strong>.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="b1-tokens-and-the-context-window.html"><small>Previous step</small>Tokens and the context window</a><a href="b3-rag-answers-from-your-documents.html"><small>Next step</small>RAG: answers from your documents</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

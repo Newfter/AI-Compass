@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Причинность: от наблюдения к вмешательству: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Вычисли эффект через поправку и через инструмент, а затем контрфактуал. Теория на пределе: шаг 10 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/t10-causality-from-seeing-to-doing.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t10-causality-from-seeing-to-doing.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Причинность: от наблюдения к вмешательству: шаг за шагом, с заданиями">
+<meta property="og:description" content="Вычисли эффект через поправку и через инструмент, а затем контрфактуал. Теория на пределе: шаг 10 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/t10-causality-from-seeing-to-doing.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Причинность: от наблюдения к вмешательству","headline":"Причинность: от наблюдения к вмешательству","description":"Вычисли эффект через поправку и через инструмент, а затем контрфактуал.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/t10-causality-from-seeing-to-doing.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Причинность: от наблюдения к вмешательству","item":"https://newfter.github.io/AI-Compass/ru/path/t10-causality-from-seeing-to-doing.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/t10-causality-from-seeing-to-doing.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Теория на пределе</a> · Шаг 10 из 12 · 10 мин</p>
+<h1>Причинность: от наблюдения к вмешательству</h1>
+<p class="pg-lead">Вычисли эффект через поправку и через инструмент, а затем контрфактуал.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🔧 Наблюдать — не значит вмешиваться</h2>
+<p><strong>Структурная причинная модель</strong> (SCM) задаёт каждую переменную своим уравнением V_i = f_i(pa_i, U_i): это функция её родителей pa_i в ориентированном ациклическом графе и шума U_i, причём все шумы независимы. Поэтому совместное распределение факторизуется по графу (строка 1).</p>
+<p>Условная вероятность P(y | x) фильтрует данные: остаются случаи, где значение X оказалось равно x. <strong>Вмешательство</strong> (intervention) do(X = x) меняет модель: уравнение для X заменяют на X = x, остальные не трогают. В строке 1 пропадает множитель для X, остальные берутся при X = x (строка 2): это <strong>усечённая факторизация</strong>.</p>
+<p>В строках 3–5 это применено к графу, где Z — общая причина X и Y, <strong>конфаундер</strong> (confounder). Вмешательство и наблюдение усредняют одни и те же P(y | x, z), но с разными весами: наблюдение X = x несёт сведения о Z, а установка X = x — нет.</p>
+<div class="pg-example is-mono"><div>P(v_1, …, v_n) = Π_i P(v_i | pa_i)</div><div>P(v_1, …, v_n | do(x)) = Π_(i: V_i ≠ X) P(v_i | pa_i) при X = x</div><div>граф Z → X, Z → Y, X → Y: P(z, y | do(x)) = P(z)·P(y | x, z)</div><div>вмешательство: P(y | do(x)) = Σ_z P(y | x, z)·P(z)</div><div>наблюдение: P(y | x) = Σ_z P(y | x, z)·P(z | x)</div></div>
+<p class="pg-note">P(y | do(x)) — свойство модели, а не одних только данных: оно определено через изменённые уравнения. Главный вопрос этого шага — когда его можно вычислить по распределению наблюдений и какие допущения для этого нужны.</p>
+<section class="pg-check"><p><strong>Задание.</strong> SCM с независимыми шумами (среднее 0, дисперсия 1): Z = U_Z, X = Z + U_X, Y = X − 4·Z + U_Y. Установка X повышает Y: E[Y | do(X = x)] = x. Чему равен наклон Cov(X, Y)/Var(X) регрессии Y на X по данным наблюдений?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🔀 Три типа узлов и d-разделение</h2>
+<p><strong>Путь</strong> — последовательность смежных стрелок, проходимых в любом направлении. Каждая внутренняя переменная пути — узел одного из трёх типов (строки 1–3). Цепочка и вилка передают зависимость, пока по средней переменной не обусловили. <strong>Коллайдер</strong> (collider) устроен наоборот: закрыт, пока по нему не обусловили.</p>
+<p>Множество S <strong>блокирует</strong> путь, если на нём есть цепочка или вилка со средней переменной из S либо коллайдер, который не входит в S и не имеет потомков в S. X и Y <strong>d-разделены</strong> множеством S, если S блокирует все пути между ними. Теорема: тогда X и Y независимы при данном S в любом распределении, порождённом SCM с этим графом.</p>
+<p>Именно правило коллайдера противоречит интуиции. Две независимые причины общего следствия, вообще говоря, становятся зависимыми, когда следствие известно: известие об одной причине может сделать другую менее вероятной (<strong>explaining away</strong>). То же делает отбор данных по общему следствию: <strong>смещение отбора</strong> (selection bias).</p>
+<div class="pg-example is-mono"><div>цепочка X → M → Y: открыта; блокируется, если M входит в S</div><div>вилка X ← Z → Y: открыта; блокируется, если Z входит в S</div><div>коллайдер X → C ← Y: закрыт; открывается, если C или потомок C входит в S</div></div>
+<p class="pg-note">Обратное — не теорема: переменные, соединённые открытыми путями, могут оказаться независимыми, например когда эффекты вдоль двух путей в точности компенсируют друг друга. Допущение, что такого не бывает, называют верностью (faithfulness); теореме о d-разделении оно не нужно.</p>
+<section class="pg-check"><p><strong>Задание.</strong> X и Y независимы, каждая N(0, 1); X не влияет на Y. Их общее следствие — C = X + Y + U_C с независимым U_C ~ N(0, 1). Чему на бесконечной выборке равен коэффициент при X в регрессии Y на X и C по методу наименьших квадратов?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🚪 Критерий чёрного хода</h2>
+<p><strong>Путь чёрного хода</strong> (backdoor path) из X в Y — путь, который начинается со стрелки, входящей в X. Такой путь может переносить связь, которая не является эффектом X. Множество Z удовлетворяет <strong>критерию чёрного хода</strong> (backdoor criterion) для (X, Y), если в нём нет потомков X и оно блокирует все пути чёрного хода из X в Y.</p>
+<p>Теорема (<strong>формула поправки</strong>, backdoor adjustment): для такого Z верна строка 1, если P(x, z) &gt; 0 при всех z с P(z) &gt; 0. Эффект вмешательства тогда вычисляется по одним лишь данным наблюдений. Сравни со строкой 2: обычная условная вероятность взвешивает те же страты по P(z | x).</p>
+<p>Больше поправок — не значит лучше. <strong>Посредник</strong> (mediator, X → M → Y) переносит часть эффекта, а обусловливание по нему её убирает. Обусловливание по коллайдеру или его потомку может открыть заблокированный путь. При <strong>рандомизации</strong> X задаётся жребием: в X не входят стрелки, путей чёрного хода нет, и верна строка 3.</p>
+<div class="pg-example is-mono"><div>P(y | do(x)) = Σ_z P(y | x, z)·P(z)</div><div>P(y | x) = Σ_z P(y | x, z)·P(z | x)</div><div>X рандомизирован: P(y | do(x)) = P(y | x)</div><div>линейная SCM, Z удовлетворяет критерию: эффект X на Y — коэффициент при X в регрессии Y на X и Z</div></div>
+<p class="pg-note">Переменная, измеренная до X, не обязательно безопасна. В графе X ← A → C ← B → Y переменная C — коллайдер: поправка на одну лишь C открывает путь чёрного хода, который был заблокирован.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Формула поправки: P(y | do(x)) = Σ_z P(y | x, z)·P(z). Тяжесть Z — единственная общая причина выбора лечения и исхода. Половине пациентов дали A, другой — B; тяжёлых в группе A 80%, в группе B 20%. Найди P(выздоровление | do(A)).</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Причинный граф: Z → X, Z → Y, X → M → Y, X → C ← Y, C → D. При каком наборе ковариат S формула поправки Σ_s P(y | x, s)·P(s) равна P(y | do(x)) в любой SCM с этим графом?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Линейная SCM: Y = β·X + U, скрытая переменная U влияет и на X, так что наблюдаемого набора для поправки нет. У инструмента Z: Cov(Z, X) ≠ 0, нет стрелки в Y, и он не зависит от U. Расставь шаги вывода β и его слабого места.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Y = β·X + U, скрытая переменная U влияет и на X. Инструмент Z влияет на Y только через X и не зависит от U, поэтому β = Cov(Z, Y)/Cov(Z, X). По данным таблицы: на сколько наклон регрессии Cov(X, Y)/Var(X) больше β?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🔮 Контрфактуалы и три уровня</h2>
+<p><strong>Контрфактуал</strong> (counterfactual) — вопрос об одном объекте задним числом: при том, что наблюдалось, каким был бы Y, будь X равен x′? SCM отвечает в три шага. <strong>Абдукция</strong>: по наблюдению уточняем распределение шумов U. <strong>Действие</strong>: заменяем уравнение для X на X = x′. <strong>Предсказание</strong>: вычисляем Y с уточнёнными шумами.</p>
+<p>Получается три уровня: ассоциация P(y | x), вмешательство P(y | do(x)), контрфактуалы. Без причинных допущений данные нижнего уровня не определяют ответы верхнего. Строки 3–5: две SCM, у которых совместное распределение (X, Y) в точности одинаково, а эффект установки X разный.</p>
+<p>Поэтому модель, обученная только предсказывать, в лучшем случае выучивает P(y | x) своего обучающего распределения, каким бы ни был её размер. Она может опираться на корреляции, которые разрушаются при вмешательстве или сдвиге распределения; никакой объём таких же данных не отличит модель 1 от модели 2.</p>
+<div class="pg-example is-mono"><div>Y = 2·X + U; наблюдалось X = 1, Y = 3; а будь X = 2?</div><div>абдукция: U = 3 − 2·1 = 1; действие: X = 2; предсказание: Y = 2·2 + 1 = 5</div><div>модель 1 (X → Y): X ~ N(0, 1), Y = 0,6·X + U_Y, гауссов шум U_Y со средним 0 и дисперсией 0,64</div><div>модель 2 (Y → X): Y ~ N(0, 1), X = 0,6·Y + U_X, гауссов шум U_X со средним 0 и дисперсией 0,64</div><div>обе: средние 0, дисперсии 1, корреляция 0,6; E[Y | do(X = x)] равно 0,6·x в модели 1 и 0 в модели 2</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> SCM с бинарным X: Y = max(X·U_1, U_2); U_1 ~ Bernoulli(0,5) и U_2 ~ Bernoulli(0,2) не зависят друг от друга и от X. У объекта X = 1, Y = 1. С какой вероятностью его Y был бы равен 0, будь X равен 0? Округли до сотых.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Найди ошибку. X и Y бинарны. (1) Большое рандомизированное испытание даёт P(Y = 1 | do(X = 1)) = P(Y = 1 | do(X = 0)) = 0,5. (2) Значит, среднего эффекта X на Y нет. (3) Значит, X не меняет Y ни у одного объекта.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Сначала подумай.</strong> Задача со звёздочкой, на бумаге. Граф: X → M → Y и X ← U → Y; U не наблюдается, M наблюдается. Наблюдаемого набора, подходящего под критерий чёрного хода для (X, Y), нет. Покажи, что P(y | do(x)) всё же вычисляется по P(x, m, y).</p><details><summary>Показать ответ</summary><p>Идея: разбить эффект на два звена и к каждому применить критерий чёрного хода. Из X в M единственный путь чёрного хода — X ← U → Y ← M, и коллайдер Y блокирует его без всякого обусловливания: подходит пустое множество, поэтому P(m | do(x)) = P(m | x).</p>
+<p>Из M в Y путь чёрного хода M ← X ← U → Y блокируется переменной X, а она не потомок M: P(y | do(m)) = Σ_x′ P(y | m, x′)·P(x′).</p>
+<p>X действует на Y только через M, а при do(x) переменная M не зависит от U, поэтому звенья соединяются: P(y | do(x)) = Σ_m P(m | x)·Σ_x′ P(y | m, x′)·P(x′). Это <strong>поправка по парадному входу</strong> (front-door adjustment); ей нужно P(x, m) &gt; 0. Скрытая общая причина не всегда мешает идентификации: всё решает граф.</p></details></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li><code>do(x)</code> заменяет уравнение для X в структурной причинной модели, а условная вероятность лишь фильтрует данные. При общей причине Z: <code>P(y | do(x)) = Σ_z P(y | x, z)·P(z)</code>, тогда как <code>P(y | x)</code> взвешивает те же страты по P(z | x). Рандомизация X делает их равными.</li><li>d-разделение: цепочку и вилку блокирует обусловливание по средней переменной; коллайдер закрыт, пока не обусловили по нему или его потомку. Набор для поправки блокирует все пути чёрного хода и не содержит потомков X, а значит, и посредников; коллайдер или его потомок в наборе может открыть путь. «Учитывать всё» — ошибка.</li><li>При скрытой общей причине структура иногда всё же позволяет найти эффект. В линейной модели инструмент даёт <code>β = Cov(Z, Y)/Cov(Z, X)</code>; условие исключения и Cov(Z, U) = 0 по данным о (Z, X, Y) не проверить. Посредник, который переносит весь эффект и не зависит от скрытой причины напрямую, даёт формулу парадного входа.</li><li>Контрфактуал — абдукция, действие и предсказание с шумами самого объекта. Ассоциация, вмешательство, контрфактуал: каждому уровню нужны допущения, которых нижний не даёт. Модель, обученная только предсказывать, в лучшем случае выучивает P(y | x) обучающего распределения; при вмешательстве или сдвиге её прогнозы могут подвести.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"><small>Предыдущий шаг</small>Трансформеры в теории: что внимание может и чего не может вычислить</a><a href="t11-guarantees-differential-privacy-and-certified-robustness.html"><small>Следующий шаг</small>Гарантии: дифференциальная приватность и сертифицированная устойчивость</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

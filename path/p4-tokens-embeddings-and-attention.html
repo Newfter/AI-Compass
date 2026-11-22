@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Tokens, embeddings and attention: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Dot products, softmax and why transformers scale as n². Under the hood: step 6 of 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p4-tokens-embeddings-and-attention.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Tokens, embeddings and attention: step by step, with tasks">
+<meta property="og:description" content="Dot products, softmax and why transformers scale as n². Under the hood: step 6 of 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Tokens, embeddings and attention","headline":"Tokens, embeddings and attention","description":"Dot products, softmax and why transformers scale as n².","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Tokens, embeddings and attention","item":"https://newfter.github.io/AI-Compass/path/p4-tokens-embeddings-and-attention.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/p4-tokens-embeddings-and-attention.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Under the hood</a> · Step 6 of 8 · 7 min</p>
+<h1>Tokens, embeddings and attention</h1>
+<p class="pg-lead">Dot products, softmax and why transformers scale as n².</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🔤 From text to vectors</h2>
+<p>A language model never sees letters. The text is cut into <strong>tokens</strong> (words or pieces of words). Each token has a number, and that number picks a row from a big table of vectors: its <strong>embedding</strong>.</p>
+<p>Training moves these vectors so that tokens used in similar ways end up pointing in similar directions.</p>
+<section class="pg-check"><p><strong>Task.</strong> The dot product measures how much two vectors point the same way. For a = (1, 2) and b = (3, 1), what is a·b?</p><details><summary>Show the solution</summary><p>1·3 + 2·1 = 5.</p></details></section>
+<h2>📐 Cosine similarity</h2>
+<p>The dot product also grows with the length of the vectors. Dividing by the lengths leaves only the angle: this is the cosine similarity.</p>
+<div class="pg-example is-mono"><div>cos(a, b) = a·b / (|a|·|b|)</div></div>
+<p class="pg-note">1 means the same direction, 0 means perpendicular (unrelated), −1 means opposite.</p>
+<section class="pg-check"><p><strong>Task.</strong> What is the cosine similarity of a = (1, 0) and b = (0, 1)?</p><details><summary>Show the solution</summary><p>a·b = 1·0 + 0·1 = 0, so the cosine is 0: the vectors are perpendicular. For (2, 0) and (5, 0) it would be 1: the same direction, whatever the lengths.</p></details></section>
+<h2>🎚️ Softmax turns scores into probabilities</h2>
+<p>A model produces a score for every possible next token. Softmax turns the scores into probabilities: all positive, adding up to 1. A higher score gets a bigger share, and the gaps are stretched.</p>
+<div class="pg-example is-mono"><div>softmax(z_i) = e^(z_i) / Σ_j e^(z_j)</div></div>
+<section class="pg-check"><p><strong>Task.</strong> Two tokens have the scores (2, 2). What probability does softmax give to the first one?</p><details><summary>Show the solution</summary><p>Equal scores get equal shares: 0.5. Softmax depends on the differences between the scores, not on their size: (100, 100) also gives 0.5.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Three tokens have the scores (5, 1, 1). Roughly what probability does softmax give to the first one?</p>
+<ol type="A" class="pg-options"><li><button type="button">About 0.71</button></li><li><button type="button">Exactly 0.5</button></li><li><button type="button">About 0.33</button></li><li><button type="button" data-right>About 0.96</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: About 0.96</strong></p><p>148.4 / (148.4 + 2.72 + 2.72) ≈ 0.96. A gap of 4 in the scores becomes near certainty. (0.71 would be the plain share 5/7: softmax is far sharper.)</p></details>
+</div></section>
+<h2>👀 Attention in one line</h2>
+<p>In a transformer every token asks: which other tokens matter to me? It compares its <strong>query</strong> vector with the <strong>key</strong> of every token (dot products), turns those scores into weights with softmax, and takes the weighted average of the tokens' <strong>values</strong>.</p>
+<div class="pg-example is-mono"><div>Attention(Q, K, V) = softmax(Q·K^T / √d) · V</div></div>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A sequence has n tokens, and every token attends to every token. How does the number of attention scores grow with n?</p>
+<ol type="A" class="pg-options"><li><button type="button">Like 2ⁿ</button></li><li><button type="button" data-right>Like n²</button></li><li><button type="button">Like n</button></li><li><button type="button">Like log n</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Like n²</strong></p><p>n queries times n keys gives n² scores. Double the context and attention costs four times as much: one reason long contexts are expensive.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Task.</strong> A context of 1,000 tokens needs 1 million attention scores in each attention head. How many million does a context of 4,000 tokens need?</p><details><summary>Show the solution</summary><p>4,000² = 16,000,000: sixteen million, which is 16 times more for 4 times the text.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Before softmax, a language model divides its scores by a temperature T. Compared with T = 1, what does T = 0.2 do?</p>
+<ol type="A" class="pg-options"><li><button type="button">It makes every token equally likely</button></li><li><button type="button">It changes which token has the highest score</button></li><li><button type="button" data-right>It sharpens the distribution: the top token wins more often</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: It sharpens the distribution: the top token wins more often</strong></p><p>Dividing by a small T stretches the gaps between the scores, so softmax concentrates on the top one. A high T flattens the distribution: more surprising text, and more mistakes.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Attention is a weighted average, so by itself it ignores word order. How does a transformer tell “dog bites man” from “man bites dog”?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Information about each token's position is added to the model's input</button></li><li><button type="button">The tokens are sorted alphabetically first</button></li><li><button type="button">It reads the sentence twice</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Information about each token's position is added to the model's input</strong></p><p>The position has to be injected: as positional encodings added to the embeddings, or as rotations applied inside attention (RoPE).</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Text → tokens → numbers → embedding vectors.</li><li>The dot product and the cosine measure how similar two vectors are.</li><li>Softmax turns scores into probabilities and depends only on their differences.</li><li><code>Attention(Q, K, V) = softmax(Q·K^T / √d) · V</code>, and its cost grows like n².</li><li>Temperature reshapes the distribution; position has to be added separately.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="p3-measure-a-classifier.html"><small>Previous step</small>Measure a classifier</a><a href="p7-cross-entropy-by-hand.html"><small>Next step</small>Cross-entropy by hand</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

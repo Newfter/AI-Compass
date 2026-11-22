@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>RAG: answers from your documents: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Retrieve, then generate: the pipeline, its two ways to fail and how to tell them apart. Build with AI: step 3 of 7.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b3-rag-answers-from-your-documents.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="RAG: answers from your documents: step by step, with tasks">
+<meta property="og:description" content="Retrieve, then generate: the pipeline, its two ways to fail and how to tell them apart. Build with AI: step 3 of 7.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"RAG: answers from your documents","headline":"RAG: answers from your documents","description":"Retrieve, then generate: the pipeline, its two ways to fail and how to tell them apart.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"RAG: answers from your documents","item":"https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/b3-rag-answers-from-your-documents.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🚀 <a href="./#build">Build with AI</a> · Step 3 of 7 · 7 min</p>
+<h1>RAG: answers from your documents</h1>
+<p class="pg-lead">Retrieve, then generate: the pipeline, its two ways to fail and how to tell them apart.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>📚 A model has never seen your documents</h2>
+<p>What a language model knows comes from its training data, and that data ends on some date. Your internal documents, today's prices and your team's rules were never in it. If you ask about them, a model can still write a fluent answer, but a made-up one.</p>
+<p><strong>Retrieval-augmented generation (RAG)</strong> works in two stages. Retrieval: a search finds the pieces of your documents that fit the question. Generation: these pieces go into the prompt, the text that is sent to the model, and the model is asked to answer from them and to say which piece it used.</p>
+<p>The documents are prepared before any question arrives. Usually they are cut into chunks, every chunk gets an embedding, and the embeddings go into an <strong>index</strong>: a store built so that the chunks nearest to a question are found fast.</p>
+<section class="pg-check"><p><strong>Task.</strong> In a RAG system (retrieval-augmented generation), the documents are already cut into chunks, and the embeddings of the chunks are stored in an index. A user asks a question. Put the next steps in order.</p><details><summary>Show the solution</summary><ol><li>The question is turned into an embedding</li><li>The index returns the chunks most similar to the question</li><li>These chunks and the question are put into the prompt</li><li>The model writes an answer and says which chunks it used</li></ol><p>Retrieve first, generate second. The question becomes an embedding, made by the same embedding model as the embeddings of the chunks, so that they can be compared. The nearest chunks go into the prompt before the language model writes anything: it sees your documents only through the prompt.</p></details></section>
+<h2>🧾 The heart of a RAG prompt</h2>
+<p>For every question, your program builds a new prompt: fixed instructions, then the retrieved chunks, then the question. Each chunk gets a number, and in the prompt it is called a <strong>source</strong>.</p>
+<p>The first three lines below are instructions, and each has a job: to keep the model within the sources, to tell it what to do when the sources hold no answer, and to make it mark every claim with the number of its source. This number is a <strong>citation</strong>: a person can follow it and check the claim.</p>
+<div class="pg-example is-mono"><div>Answer only from the sources below.</div><div>If the answer is not in them, say that you do not know.</div><div>After every claim, give the number of its source.</div><div>[1] …text of the first chunk…</div><div>[2] …text of the second chunk…</div><div>Question: …</div></div>
+<p class="pg-note">This lowers the risk of a made-up answer. It does not remove it: a model can still misread a source or cite the wrong one. The citations are there so that a person can check.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Why does a RAG prompt say: “If the answer is not in the sources, say that you do not know”?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>To give the model a way out: otherwise it tends to fill the gap from memory</button></li><li><button type="button">To speed up the search: it can then skip the chunks that hold no answer</button></li><li><button type="button">To save tokens: the sources then take up less room in the context window</button></li><li><button type="button">To make every answer reliable: with it, a model can no longer invent anything</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: To give the model a way out: otherwise it tends to fill the gap from memory</strong></p><p>A model is trained to continue a text, so with no way out it tends to answer anyway, from what it learned in training. Such an answer cannot be checked against the sources. The sentence makes “I do not know” an allowed answer. It lowers the risk and does not remove it. It changes neither the search nor the length of the sources.</p></details>
+</div></section>
+<h2>🔧 Two places where it breaks</h2>
+<p>When the documents are right and a RAG system still answers wrongly, the fault is usually in one of its two stages.</p>
+<p>A <strong>retrieval failure</strong>: the chunk with the answer never reached the prompt. The model had nothing to answer from.</p>
+<p>A <strong>generation failure</strong>: the chunk was in the prompt, but the answer ignores it, twists it or cites the wrong source. The two failures need different repairs, so always look first at what was retrieved.</p>
+<p class="pg-note">Save the retrieved chunks together with every answer: without them, you cannot tell the two failures apart later.</p>
+<section class="pg-check"><p><strong>Task.</strong> A retrieval failure or a generation failure?</p><details><summary>Show the solution</summary><p>Ask one question: did the chunk with the answer reach the prompt? If it did not, it is a retrieval failure, whatever the model wrote next. If it did, and the answer still ignores it, contradicts it or cites the wrong source, it is a generation failure.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A RAG system first retrieves chunks of your documents, then a language model answers from them. One answer comes out wrong. What should you check first?</p>
+<ol type="A" class="pg-options"><li><button type="button">Whether the temperature of the model was set to zero for this answer</button></li><li><button type="button">Whether the model is too small for a question as hard as this one</button></li><li><button type="button">Whether the instructions in the prompt were strict enough for the model</button></li><li><button type="button" data-right>Whether the chunk with the right answer was among the retrieved chunks</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Whether the chunk with the right answer was among the retrieved chunks</strong></p><p>This one check splits the problem in two. If the chunk is missing, repair the search: the chunk size, the embedding model, a hybrid search. If it is there, repair the prompt or try another model. Temperature, model size and stricter wording cannot replace an answer that is missing from the prompt.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Task.</strong> You test the search of a RAG system on 200 questions. For 170 of them, the chunk with the answer is among the top 5 results. The share of such questions is called the <strong>hit rate</strong>. What is it, in percent?</p><details><summary>Show the solution</summary><p>170 / 200 = 0.85, that is 85%. For the other 30 questions the chunk with the answer is not in the top 5: a model that gets only these 5 results has nothing to answer from. When every question has exactly one relevant chunk, the hit rate is the same number as the average recall@5.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> For 85% of the questions, a RAG system retrieves the chunk that holds the answer. With that chunk in the prompt, the answer is right 90% of the time; without it, never. What share of all answers is right, in percent?</p><details><summary>Show the solution</summary><p>Only the 85% of questions that get their chunk can be answered right, and 90% of those are: 0.85 · 0.90 = 0.765, that is 76.5%. The success rates of the stages multiply, so the result is never above the weaker stage: even a perfect model could reach at most 85% here. So measure each stage and repair the weaker one first.</p></details></section>
+<h2>⚖️ The prompt, RAG, a tool or fine-tuning?</h2>
+<p>RAG is one of four common ways to give a model what it lacks. A <strong>tool call</strong> is another: the model asks your program to run a function, such as a database query, and the result is added to the prompt.</p>
+<p><strong>Fine-tuning</strong> means training the model further on your own examples. It changes how the model behaves: its style, its format, a narrow skill. It needs many good examples and a training run, so it is usually tried last, when the other three ways are not enough.</p>
+<div class="pg-table"><table><thead><tr><th>What the model lacks</th><th>Usual choice</th></tr></thead><tbody><tr><td>Small, stable knowledge</td><td>Put it into the prompt</td></tr><tr><td>A large or fast-changing set of documents; answers that must cite sources</td><td>RAG</td></tr><tr><td>Live data: items in stock, the status of an order</td><td>A tool call at question time</td></tr><tr><td>A style, a format, a narrow skill</td><td>Fine-tuning</td></tr></tbody></table></div><p class="pg-note">Fine-tuning is a poor way to add facts that change: every change needs new training, and the model still cannot show a source for what it says.</p>
+<section class="pg-check"><p><strong>Task.</strong> Which approach fits each case?</p><details><summary>Show the solution</summary><p>Small, stable knowledge fits into the prompt as it is. A large collection that keeps changing needs a search first: RAG. A number that is true only right now is fetched by a tool call. A style that is easier to show than to describe is behaviour, and behaviour is what fine-tuning changes.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A shop's price list changes every day. What is the usual way to make a chatbot answer price questions with today's prices?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Fetch the current prices at question time, by retrieval or a tool call, and put them into the prompt</button></li><li><button type="button">Fine-tune the model on the new price list every night, so that it always knows the latest prices</button></li><li><button type="button">Set the temperature to zero, so that the model stops guessing and gives only the exact prices</button></li><li><button type="button">Let the model learn the prices from its chats with earlier customers and use them later</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Fetch the current prices at question time, by retrieval or a tool call, and put them into the prompt</strong></p><p>Facts that change belong outside the model. They are fetched fresh at question time and put into the prompt, and the answer can show its source. Nightly fine-tuning is slow and costly, and a model can still mix up numbers held only in its weights. Temperature adds no knowledge, and the weights do not change during a chat.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li><strong>RAG</strong>: first retrieve the chunks that fit the question, then let the model answer from them and cite its sources.</li><li>“Answer only from the sources, or say that you do not know” lowers the risk of a made-up answer. It does not remove it.</li><li>When an answer is wrong, look first at what was retrieved: a retrieval failure and a generation failure need different repairs.</li><li>The success rates of the stages multiply: 0.85 · 0.90 = 0.765. Facts that change belong in retrieval or a tool call; fine-tuning is for behaviour.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="b2-search-by-meaning.html"><small>Previous step</small>Search by meaning</a><a href="b4-measure-a-language-model.html"><small>Next step</small>Measure a language model</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

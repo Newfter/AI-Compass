@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Measure a classifier: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Confusion matrix, precision, recall, F1 and the accuracy trap. Under the hood: step 5 of 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p3-measure-a-classifier.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Measure a classifier: step by step, with tasks">
+<meta property="og:description" content="Confusion matrix, precision, recall, F1 and the accuracy trap. Under the hood: step 5 of 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Measure a classifier","headline":"Measure a classifier","description":"Confusion matrix, precision, recall, F1 and the accuracy trap.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Measure a classifier","item":"https://newfter.github.io/AI-Compass/path/p3-measure-a-classifier.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/p3-measure-a-classifier.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Under the hood</a> · Step 5 of 8 · 7 min</p>
+<h1>Measure a classifier</h1>
+<p class="pg-lead">Confusion matrix, precision, recall, F1 and the accuracy trap.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🧾 Four kinds of outcome</h2>
+<p>A spam filter checked 100 messages. Compare what it said with the truth:</p>
+<div class="pg-table"><table><thead><tr><th></th><th>Really spam</th><th>Really not spam</th></tr></thead><tbody><tr><td>Filter said “spam”</td><td>30</td><td>10</td></tr><tr><td>Filter said “not spam”</td><td>5</td><td>55</td></tr></tbody></table></div><p class="pg-note">30 true positives (TP), 10 false positives (FP: good mail in the spam folder), 5 false negatives (FN: spam that got through) and 55 true negatives (TN). This table is called a confusion matrix.</p>
+<section class="pg-check"><p><strong>Task.</strong> Accuracy is the share of all answers that were right. What is the accuracy of this spam filter, in percent?</p><details><summary>Show the solution</summary><p>85 of the 100 answers were right: 85%.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> Precision = TP / (TP + FP): of everything the filter called spam, how much really was spam? Answer in percent.</p><details><summary>Show the solution</summary><p>30 / 40 = 75%. One in four flagged messages was a good one.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> Recall = TP / (TP + FN): of all the real spam, how much did the filter catch? Answer in percent, rounded to a whole number.</p><details><summary>Show the solution</summary><p>30 / 35 ≈ 85.7%, so about 86%. Five spam messages got through.</p></details></section>
+<h2>⚖️ F1: one number for both</h2>
+<p>Precision and recall pull in different directions, so they are often combined into the F1 score, their harmonic mean. It is high only when both are high.</p>
+<div class="pg-example is-mono"><div>F1 = 2·P·R / (P + R)</div></div>
+<section class="pg-check"><p><strong>Task.</strong> For the filter, P = 0.75 and R = 6/7 ≈ 0.857. What is its F1 score, to two decimal places?</p><details><summary>Show the solution</summary><p>≈ 1.286 / 1.607 ≈ 0.80. In exact fractions it is 36/45 = 0.8.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> You raise a spam filter's threshold: now it flags a message only when it is very sure. What usually happens?</p>
+<ol type="A" class="pg-options"><li><button type="button">Precision and recall both go up</button></li><li><button type="button">Recall goes up, precision goes down</button></li><li><button type="button">Nothing changes</button></li><li><button type="button" data-right>Precision goes up, recall goes down</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Precision goes up, recall goes down</strong></p><p>Fewer good messages are flagged (fewer FP), but more spam slips through (more FN). You pick the threshold by asking which mistake costs more.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> 1% of all payments are fraud. A “model” that always answers “not fraud” has which accuracy, and which recall for fraud?</p>
+<ol type="A" class="pg-options"><li><button type="button">1% accuracy and 100% recall</button></li><li><button type="button">50% accuracy and 50% recall</button></li><li><button type="button" data-right>99% accuracy and 0% recall</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: 99% accuracy and 0% recall</strong></p><p>It is right about the 99% of honest payments and catches no fraud at all. On imbalanced data, accuracy alone is a trap: look at precision and recall.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Task.</strong> Which mistake is worse here?</p><details><summary>Show the solution</summary><p>When a missed case is dangerous, tune for recall. When a false alarm hurts someone, tune for precision. Choosing the metric is a decision about people, not only about maths.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Why must the test set stay untouched until the very end?</p>
+<ol type="A" class="pg-options"><li><button type="button">Test data is always noisier than training data</button></li><li><button type="button" data-right>Every choice you make by looking at it leaks its information into the model</button></li><li><button type="button">The test set is too small to learn anything from</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Every choice you make by looking at it leaks its information into the model</strong></p><p>Tune on a separate validation set. Once you tune on the test set, its score is no longer an honest estimate of how the model does on new data.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li><code>Accuracy = (TP + TN) / all</code>, <code>Precision = TP / (TP + FP)</code>, <code>Recall = TP / (TP + FN)</code>.</li><li><code>F1 = 2·P·R / (P + R)</code>: high only when both are high.</li><li>The threshold trades precision for recall.</li><li>On imbalanced data, accuracy misleads.</li><li>Keep the test set untouched until the end.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="p6-overfitting-and-how-to-catch-it.html"><small>Previous step</small>Overfitting, and how to catch it</a><a href="p4-tokens-embeddings-and-attention.html"><small>Next step</small>Tokens, embeddings and attention</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>
