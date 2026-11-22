@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>How Chatbots Write: simple explanation for beginners | AI Compass</title>
+<meta name="description" content="Tokens, probabilities and attention: what really happens when a chatbot writes an answer. A chatbot cuts text into tokens and turns each token into a number.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/lessons/how-chatbots-write.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/lessons/how-chatbots-write.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/lessons/how-chatbots-write.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/lessons/how-chatbots-write.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="How Chatbots Write: simple explanation for beginners">
+<meta property="og:description" content="Tokens, probabilities and attention: what really happens when a chatbot writes an answer. A chatbot cuts text into tokens and turns each token into a number.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/lessons/how-chatbots-write.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"How Chatbots Write","headline":"How Chatbots Write","description":"Tokens, probabilities and attention: what really happens when a chatbot writes an answer.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/lessons/how-chatbots-write.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Lessons","item":"https://newfter.github.io/AI-Compass/lessons/"},{"@type":"ListItem","position":3,"name":"How Chatbots Write","item":"https://newfter.github.io/AI-Compass/lessons/how-chatbots-write.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../glossary/">AI words</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/lessons/how-chatbots-write.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/lessons/">Lessons</a></p>
+<article>
+<p class="pg-kicker">🤿 Deep dive · Lesson 9 · 2 min read</p>
+<h1>How Chatbots Write</h1>
+<p class="pg-lead">Tokens, probabilities and attention: what really happens when a chatbot writes an answer.</p>
+<h2>Text becomes tokens</h2>
+<p>A chatbot doesn't read letters or whole words the way you do. First it cuts the text into pieces called <strong data-term='token'>tokens</strong>: short words, parts of longer words, punctuation marks. “Unbelievable” might become “un”, “believ” and “able”. Each token has a number in the model's vocabulary, which holds tens of thousands of tokens or more. So to the model, your question is a list of numbers, something like [1043, 318, 257, …] (these numbers are only an example).</p>
+<p class="pg-note"><strong>Did you know?</strong> In English, a token is on average about three quarters of a word, so 100 tokens are roughly 75 words. Many other languages, Russian among them, often need more tokens for the same amount of text.</p>
+<h2>One token at a time</h2>
+<p>A <strong data-term='llm'>language model</strong> is trained on a huge amount of text to do one thing: guess the next token. It gives every token in its vocabulary a probability. After “The cat sat on the”, maybe “mat” gets 30%, “floor” 15%, “sofa” 10%, and so on. Then it picks one, adds it to the text, and does it all again. A whole answer is just this step, repeated token by token: <strong data-term='next-token'>next-token prediction</strong>. The word suggestions on your phone's keyboard work on a similar idea, with a much smaller model.</p>
+<h2>Looking back: attention</h2>
+<p>To guess well, the model must know which earlier words matter. In “The robot dropped the box because it was heavy”, what is “it”? The box! But in “…because it was clumsy”, “it” is the robot. A technique called <strong data-term='attention'>attention</strong> lets the model look back at every earlier token and weigh how much each one matters for the next guess. Models built on attention are called <strong data-term='transformer'>transformers</strong>: that's the T in GPT. How much text a model can look back at is called its <strong data-term='context-window'>context window</strong>.</p>
+<p class="pg-note"><strong>Did you know?</strong> Transformers were introduced in 2017 by researchers at Google, in a paper called “Attention Is All You Need”. Most big chatbots of the 2020s are built on this idea.</p>
+<h2>Sounding sure, not always right</h2>
+<p>The model picks likely words, not checked facts. So it can write something that sounds confident and is completely made up: a <strong data-term='hallucination'>hallucination</strong>. A setting called <strong data-term='temperature'>temperature</strong> changes how it picks: at a low temperature it almost always takes the most likely token (safe, a bit dull); at a high temperature unlikely tokens get more chances (more creative, more mistakes). Chatbots are made in two big steps: <em>pre-training</em> on huge amounts of text, then <strong data-term='fine-tuning'>fine-tuning</strong> on examples of good answers and with human feedback, so that they become helpful and polite.</p>
+<p class="pg-note"><strong>Did you know?</strong> If a chatbot gives you a fact, a date or a quote for homework, check it in a second, trusted source. You can ask it for its sources, but open them: sometimes the sources are made up too.</p>
+<section class="pg-keys"><h2>Key points</h2><ul><li>A chatbot cuts text into tokens and turns each token into a number.</li><li>It writes by predicting the next token again and again; attention helps it use the earlier words.</li><li>It picks likely words, not checked facts, so it can hallucinate: check what matters.</li></ul></section>
+<section class="pg-check"><h2>Check yourself</h2><p>You ask a chatbot the same question in two new chats and get two different answers. Why?</p><ol type="A"><li>It copied each answer from a different website</li><li>It picks each next token with some randomness, using the probabilities</li><li>It learned something new from your first question</li></ol><details><summary>Show the answer</summary><p>At every step the chatbot picks the next token by chance, weighted by the probabilities (the temperature decides how adventurous it is), so the same question can lead down different paths. It doesn't copy answers from websites: it writes them token by token. And the model doesn't change while you chat: its training happened before.</p></details></section>
+<aside class="pg-cta"><p>Try the mini-lab, take the quiz and keep your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#lesson-9">Do this lesson in the app →</a></aside>
+<nav class="pg-pager" aria-label="Lessons"><a href="learning-by-trial-and-error.html"><small>Previous lesson</small>Learning by Trial and Error</a><a href="creative-ai.html"><small>Next lesson</small>Creative AI</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

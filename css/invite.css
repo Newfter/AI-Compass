@@ -1,0 +1,80 @@
+/* =========================================================
+   AI COMPASS — THE CARD OF AN INVITE
+   "A friend got 8 of 10. Can you beat that?": the small card under
+   the menu bar when the site is opened from a shared link.
+   js/invite.js builds it and loads this file only then.
+   It uses the colours of the look that is on (style.css tokens).
+   ========================================================= */
+
+.invite-card {
+    position: fixed;
+    top: calc(var(--nav-height, 76px) + 12px);
+    left: 16px;
+    right: 16px;
+    z-index: var(--z-launcher, 300);    /* under the lesson reader and the other windows */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    width: fit-content;
+    max-width: min(620px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 12px 44px 12px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background: var(--surface-solid);
+    color: var(--text);
+    box-shadow: var(--shadow), var(--glow);
+    animation: invite-in 0.45s var(--ease, ease) both;
+}
+
+.invite-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.invite-text {
+    flex: 1 1 240px;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.invite-go {
+    flex: none;
+}
+
+.invite-close {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.invite-close:hover,
+.invite-close:focus-visible {
+    color: var(--text);
+    background: var(--surface-hover);
+}
+
+@keyframes invite-in {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .invite-card { animation: none; }
+}
+
+@media print {
+    .invite-card { display: none; }
+}

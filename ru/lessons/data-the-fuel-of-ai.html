@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Данные — топливо ИИ: простое объяснение для начинающих | AI Compass</title>
+<meta name="description" content="Откуда берутся примеры, на которых учится ИИ, что с ними бывает не так и почему модель всегда проверяют на примерах, которых она не видела. Модель учится только на своих примерах; многим примерам нужна метка, и её часто ставят люди.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/lessons/data-the-fuel-of-ai.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/lessons/data-the-fuel-of-ai.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/lessons/data-the-fuel-of-ai.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/lessons/data-the-fuel-of-ai.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Данные — топливо ИИ: простое объяснение для начинающих">
+<meta property="og:description" content="Откуда берутся примеры, на которых учится ИИ, что с ними бывает не так и почему модель всегда проверяют на примерах, которых она не видела. Модель учится только на своих примерах; многим примерам нужна метка, и её часто ставят люди.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/lessons/data-the-fuel-of-ai.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Данные — топливо ИИ","headline":"Данные — топливо ИИ","description":"Откуда берутся примеры, на которых учится ИИ, что с ними бывает не так и почему модель всегда проверяют на примерах, которых она не видела.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/ru/lessons/data-the-fuel-of-ai.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Уроки","item":"https://newfter.github.io/AI-Compass/ru/lessons/"},{"@type":"ListItem","position":3,"name":"Данные — топливо ИИ","item":"https://newfter.github.io/AI-Compass/ru/lessons/data-the-fuel-of-ai.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="https://newfter.github.io/AI-Compass/lessons/data-the-fuel-of-ai.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/lessons/">Уроки</a></p>
+<article>
+<p class="pg-kicker">🌍 ИИ вокруг тебя · Урок 13 · 2 мин чтения</p>
+<h1>Данные — топливо ИИ</h1>
+<p class="pg-lead">Откуда берутся примеры, на которых учится ИИ, что с ними бывает не так и почему модель всегда проверяют на примерах, которых она не видела.</p>
+<h2>Откуда берутся данные</h2>
+<p>Модель учится только на своих примерах — на своём <strong data-term='dataset'>наборе данных</strong>. Часть данных собирают специально: фото, записи, ответы на опросы. Гораздо больше данных остаётся, когда мы пользуемся приложениями: каждый поиск, клик, лайк и пауза. Ещё больше добавляют датчики: телефоны, часы, машины и метеостанции измеряют что-то весь день. Для многих задач у каждого примера должна быть ещё и <strong>метка</strong> — правильный ответ («кошка», «спам», «здоровый лист»). Метки часто ставят люди, по одному примеру за раз.</p>
+<p class="pg-note"><strong>А ты знал?</strong> За многими знаменитыми системами ИИ стоят тысячи людей, которые размечали данные вручную: обводили машины рамками, отмечали, какие ответы полезны, сортировали фотографии. Это настоящая работа, и платят за неё часто мало.</p>
+<h2>Мусор на входе — мусор на выходе</h2>
+<p>Настоящие данные бывают грязными. Каких-то значений нет, где-то опечатка («сбоака» вместо «собака»), какие-то примеры повторяются, а какие-то невозможны (ученику 150 лет). Модель не отличает ошибку от факта: она учится на том и другом. Поэтому специалисты по данным тратят много времени на <em>очистку</em>: находят и исправляют проблемы ещё до обучения. Модель также может выучить <strong data-term='proxy'>обходной признак</strong>, который случайно есть в данных, вместо настоящего.</p>
+<p class="pg-note"><strong>А ты знал?</strong> Исследователи обнаружили, что модель для поиска рака кожи на фото отчасти выучила: линейка на снимке означает «тревожно», ведь врачи часто измеряют пятна, которые их беспокоят. Модель казалась умной, но выучила линейку, а не кожу.</p>
+<h2>Обучение и проверка</h2>
+<p>Как понять, что модель хорошая? Не по примерам, на которых она училась: она могла просто их запомнить. Поэтому до обучения часть примеров откладывают — это <em>проверочный набор</em>. Модель на нём никогда не учится. Её результат на проверочном наборе честно показывает, как она справится с новыми, настоящими примерами. Если модель отлично работает на обучающих данных и гораздо хуже на проверочных, она <strong data-term='overfitting'>переобучилась</strong>: выучила подробности, а не правило.</p>
+<h2>Чьи это данные?</h2>
+<p>Данные — это сведения о людях, поэтому с ними связаны вопросы. Согласились ли люди, чтобы их данные использовали? Могут ли данные раскрыть что-то личное? Есть ли в них все, для кого будет работать модель? Если в наборе лиц в основном люди одной группы, для других модель будет работать хуже: её <strong data-term='bias'>предвзятость</strong> начинается в данных. У хороших наборов данных есть описание: откуда данные, кто в них есть и чего не хватает.</p>
+<p class="pg-note"><strong>А ты знал?</strong> Законы вроде европейского GDPR дают людям права на их данные, например право узнать, что компания о них хранит, и попросить это удалить.</p>
+<section class="pg-keys"><h2>Главное</h2><ul><li>Модель учится только на своих примерах; многим примерам нужна метка, и её часто ставят люди.</li><li>Грязные данные (пропуски, ошибки, повторы, невозможные значения) учат модель ошибкам, поэтому данные сначала очищают.</li><li>Модель оценивают на проверочном наборе, на котором она не училась; отлично на обучении, но хуже на проверке — это переобучение.</li></ul></section>
+<section class="pg-check"><h2>Проверь себя</h2><p>Модель обучили на 1000 фотографий и проверили на тех же 1000 фотографиях. Результат — 100%. О чём это говорит?</p><ol type="A"><li>Модель готова: 100% — это идеально</li><li>Почти ни о чём: она могла их запомнить, поэтому проверять нужно на новых фото</li><li>Фотографии были для неё слишком лёгкими</li></ol><details><summary>Показать ответ</summary><p>Модель может запомнить обучающие примеры, поэтому результат на них мало что значит. Только проверка на примерах, которых она не видела, показывает, выучила ли она правило. Фотографии не обязательно были лёгкими: просто проверка была нечестной.</p></details></section>
+<aside class="pg-cta"><p>Мини-лаборатория, тест и сохранение прогресса. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#lesson-13">Пройти этот урок в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Уроки"><a href="your-ai-toolkit.html"><small>Предыдущий урок</small>Твой набор инструментов ИИ</a><a href="how-apps-choose-for-you.html"><small>Следующий урок</small>Как приложения выбирают за тебя</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

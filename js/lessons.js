@@ -537,6 +537,10 @@
                     <span aria-hidden="true">⬇</span>
                     <span data-i18n="lessons.cert.download">${t("lessons.cert.download")}</span>
                 </button>
+                <button type="button" class="btn btn-ghost" data-ref="certShare">
+                    <span aria-hidden="true">🔗</span>
+                    <span data-i18n="invite.shareCert">${t("invite.shareCert")}</span>
+                </button>
             </div>
             <div class="lsn-cert-preview">
                 <canvas width="1600" height="1100" role="img" data-ref="certCanvas"></canvas>
@@ -565,6 +569,7 @@
         picks: Array.prototype.slice.call(mount.querySelectorAll(".lsn-cert-pick")),
         input: mount.querySelector("#lsn-cert-name"),
         download: ref(mount, "certDownload"),
+        share: ref(mount, "certShare"),
         canvas: ref(mount, "certCanvas")
     };
 
@@ -1175,6 +1180,10 @@
         scheduleCertificate();
     });
     cert.download.addEventListener("click", downloadCertificate);
+    // "Share": a short text and a link that invites a friend to earn one too (js/invite.js)
+    cert.share.addEventListener("click", function () {
+        if (certKind && A.invite) A.invite.share("cert", { track: certKind, name: certTitle(certKind) });
+    });
 
     // ---------- 9. Clicks on the panel, the certificates and the tracks ----------
     hud.root.addEventListener("click", function (event) {

@@ -145,7 +145,11 @@ A local server shows you the site the way GitHub Pages serves it.
 | `sw.js` | The service worker: the copy of the site that works without a connection. You never need to change it when you edit the site. |
 | `manifest.webmanifest` | The app's name, colours and icons, used when the site is installed as an app. |
 | `404.html` | The page GitHub Pages shows for an address that doesn't exist, however deep, in both languages. |
-| `robots.txt`, `sitemap.xml` | For search engines: everything may be read, and the site's three addresses (plain, `?lang=en`, `?lang=ru`). |
+| `robots.txt`, `sitemap.xml` | For search engines: everything may be read, and the list of all pages (the site's three addresses and every plain page). `tools/build-pages.js` writes `sitemap.xml`. |
+| `lessons/`, `glossary/`, `ru/lessons/`, `ru/glossary/` | The plain pages search engines read: one per lesson and per glossary word, in English and in Russian. Written by `tools/build-pages.js`, never by hand. Their look is `css/pages.css`. |
+| `go/`, `ru/go/` | The tiny pages a shared result opens first (`quiz.html`, `exam.html`, `certificate.html`): a chat app reads their title for the link's preview, a person is sent on to the site. Also written by `tools/build-pages.js`. |
+| `tools/build-pages.js` | Writes all the pages above from the texts in `js/content/`. Run `node tools/build-pages.js` after a lesson or a glossary word changes. |
+| `js/invite.js`, `js/content/invite.js`, `css/invite.css` | "Challenge a friend": the link a result is shared with, and the small card a friend sees when the link is opened. |
 | `images/` | The app icons, the browser tab's icon, and the picture shown when a link is shared (`og-image.png`, 1200 × 630). |
 | `docs/ACCOUNTS-SETUP.md` | How to create the free Supabase project and the Google sign-in key, what to put in `js/config.js`, and what must stay secret. |
 | `.github/workflows/keep-awake.yml` | A daily job on GitHub that calls the database once, so the free Supabase project is never paused for inactivity. It does nothing while `js/config.js` is empty. |
@@ -329,9 +333,13 @@ A.share({ text: A.t("quiz.shareResult", { score: 10 }), url: A.platform.link("qu
 
 **Search engines and shared links.** The top of `index.html` tells search engines and chat apps about the site: a description, the canonical address (added by the script at the top of `index.html`, for the address that was opened: with `?lang=` it names that language's page) and the language versions (`hreflang`), Open Graph and Twitter tags (the title, text and picture shown when a link is shared), and the JSON-LD at the end of `<head>`, which describes the site and the lessons as a free course. `robots.txt` and `sitemap.xml` help search engines find the pages. To check: https://validator.schema.org for the JSON-LD, and F12 → Application → Manifest for the app.
 
+**Pages that search engines can read.** The site is one page that draws every lesson with JavaScript, and search engines read that badly. So every lesson and every glossary word also has a plain page of its own, in both languages (`lessons/what-is-ai.html`, `ru/glossary/neural-network.html`...), with a title and a description for search results and a button that opens the same lesson or word in the app. `tools/build-pages.js` writes them, and `sitemap.xml`, from the texts in `js/content/`: after you change a lesson or a glossary word, run `node tools/build-pages.js` and upload the changed pages too. `docs/GET-FOUND.md` says how to tell Google about the site.
+
+**Challenge a friend.** The quiz result, a passed qualifying exam and a certificate have a button that shares a short text with a link (`js/invite.js`). The link carries the result (`go/quiz.html?s=8-10`), nothing is sent to a server and no account is needed. The friend who opens it sees a small card, "A friend got 8 of 10. Can you beat that?", and after their own quiz a message says who did better.
+
 **If the site ever moves** (a new address, or the repository is renamed), change the address in all these places:
 - `index.html`: the `hreflang` links, `og:url` (the canonical address is made from it) and `og:image`, and every address in the JSON-LD;
-- `robots.txt` and `sitemap.xml`;
+- `robots.txt`, and `SITE` at the top of `tools/build-pages.js` (then run it: it rewrites `sitemap.xml` and the plain pages);
 - `404.html`: `SITE_FOLDER` and the `<base>` tag (both are the folder, `/AI-Compass/`);
 - `css/print.css`: the address printed at the bottom of every page.
 
