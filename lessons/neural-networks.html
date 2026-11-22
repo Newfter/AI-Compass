@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Neural Networks: simple explanation for beginners | AI Compass</title>
+<meta name="description" content="The brain-inspired idea behind modern AI, explained simply. A neural network is made of many simple artificial neurons arranged in layers.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/lessons/neural-networks.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/lessons/neural-networks.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/lessons/neural-networks.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/lessons/neural-networks.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Neural Networks: simple explanation for beginners">
+<meta property="og:description" content="The brain-inspired idea behind modern AI, explained simply. A neural network is made of many simple artificial neurons arranged in layers.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/lessons/neural-networks.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Neural Networks","headline":"Neural Networks","description":"The brain-inspired idea behind modern AI, explained simply.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/lessons/neural-networks.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Lessons","item":"https://newfter.github.io/AI-Compass/lessons/"},{"@type":"ListItem","position":3,"name":"Neural Networks","item":"https://newfter.github.io/AI-Compass/lessons/neural-networks.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../glossary/">AI words</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/lessons/neural-networks.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/lessons/">Lessons</a></p>
+<article>
+<p class="pg-kicker">🌱 Basics · Lesson 3 · 2 min read</p>
+<h1>Neural Networks</h1>
+<p class="pg-lead">The brain-inspired idea behind modern AI, explained simply.</p>
+<h2>Inspired by the brain</h2>
+<p>Your brain has about <strong>86 billion neurons</strong> — cells that pass signals to each other. <strong>Artificial neural networks</strong> borrow this idea, very loosely: they're made of simple maths units, called artificial neurons, connected in layers. A neural network is far simpler than a real brain. The similarity is mostly in the name!</p>
+<h2>What one neuron does</h2>
+<p>An artificial neuron takes some numbers as <strong>inputs</strong>, multiplies each one by a <strong>weight</strong> (how important that input is), adds everything up together with a <strong>bias</strong>, and then passes the result through an <strong>activation function</strong> that decides how strongly the neuron “fires”. That's it — mostly just multiplying and adding! The power comes from connecting thousands, millions or even billions of them.</p>
+<h2>Layers upon layers</h2>
+<p>Neurons are arranged in layers. The <strong>input layer</strong> receives the data, for example the pixels of a photo. The <strong>hidden layers</strong> in the middle transform it step by step. The <strong>output layer</strong> gives the answer, such as “cat: 92%, dog: 8%”. In image recognition, early layers tend to detect simple things like edges, middle layers combine them into shapes, and later layers recognise whole objects. Networks with many layers are called <strong>deep neural networks</strong>, and training them is called <strong>deep learning</strong>.</p>
+<p class="pg-note"><strong>Did you know?</strong> Face unlock, voice assistants, translation apps and chatbots all run on deep neural networks.</p>
+<h2>How a network learns</h2>
+<p>At first, all the weights are random, so the answers are nonsense. During training, the network compares its answer with the correct one, and an algorithm called <strong>backpropagation</strong> works out how to nudge every weight to reduce the error. After millions of tiny nudges, the weights hold everything the network has learned. The biggest modern networks have billions of weights, also called <strong>parameters</strong>.</p>
+<section class="pg-keys"><h2>Key points</h2><ul><li>A neural network is made of many simple artificial neurons arranged in layers.</li><li>Each neuron multiplies its inputs by weights, adds them up and applies an activation function.</li><li>Learning means adjusting the weights, little by little, to make fewer mistakes.</li></ul></section>
+<section class="pg-check"><h2>Check yourself</h2><p>What does a “weight” do in an artificial neuron?</p><ol type="A"><li>It shows how important each input is</li><li>It measures how heavy the computer is</li><li>It stores the photo the network is looking at</li></ol><details><summary>Show the answer</summary><p>Each input is multiplied by its weight. A big weight makes that input matter more, and a negative weight pushes the answer the other way. Training is all about finding good weights.</p></details></section>
+<aside class="pg-cta"><p>Try the mini-lab, take the quiz and keep your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#lesson-3">Do this lesson in the app →</a></aside>
+<nav class="pg-pager" aria-label="Lessons"><a href="machine-learning.html"><small>Previous lesson</small>Machine Learning</a><a href="generative-ai-chatbots.html"><small>Next lesson</small>Generative AI & Chatbots</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

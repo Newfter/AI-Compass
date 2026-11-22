@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Machine Learning: simple explanation for beginners | AI Compass</title>
+<meta name="description" content="How computers learn from examples instead of instructions. Machine learning models learn patterns from examples (data) instead of hand-written rules.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/lessons/machine-learning.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/lessons/machine-learning.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/lessons/machine-learning.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/lessons/machine-learning.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Machine Learning: simple explanation for beginners">
+<meta property="og:description" content="How computers learn from examples instead of instructions. Machine learning models learn patterns from examples (data) instead of hand-written rules.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/lessons/machine-learning.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Machine Learning","headline":"Machine Learning","description":"How computers learn from examples instead of instructions.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/lessons/machine-learning.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Lessons","item":"https://newfter.github.io/AI-Compass/lessons/"},{"@type":"ListItem","position":3,"name":"Machine Learning","item":"https://newfter.github.io/AI-Compass/lessons/machine-learning.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../glossary/">AI words</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/lessons/machine-learning.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/lessons/">Lessons</a></p>
+<article>
+<p class="pg-kicker">🌱 Basics · Lesson 2 · 2 min read</p>
+<h1>Machine Learning</h1>
+<p class="pg-lead">How computers learn from examples instead of instructions.</p>
+<h2>Learning from examples</h2>
+<p><strong>Machine learning (ML)</strong> is the most common way to build AI today. Instead of programming every rule, we give the computer lots of <strong>examples</strong>, and it finds the patterns by itself. To build a spam filter, for example, you show it thousands of emails labelled “spam” or “not spam”. It starts to notice clues: words like “FREE!!!”, strange links or unknown senders.</p>
+<h2>Training and testing</h2>
+<p>Learning happens step by step. During <strong>training</strong>, the model guesses an answer, measures how wrong it was (the <strong>error</strong>) and adjusts itself a tiny bit to be less wrong. This repeats thousands or even millions of times. Then comes <strong>testing</strong>: the model gets new examples it has never seen, to check that it really learned the pattern instead of just memorising the answers.</p>
+<p class="pg-note"><strong>Did you know?</strong> When a model memorises its training examples but fails on new ones, it's called overfitting — like learning test answers by heart without understanding the topic.</p>
+<h2>Three ways to learn</h2>
+<p><strong>Supervised learning:</strong> every example comes with the right answer (a label), like photos tagged “cat” or “dog”. <strong>Unsupervised learning:</strong> there are no labels, and the model finds groups by itself, like sorting songs by how similar they sound. <strong>Reinforcement learning:</strong> the model learns by trial and error, getting rewards for good moves — that's how AI learned to play Go and many video games.</p>
+<h2>Data is everything</h2>
+<p>A model is only as good as its data. If the examples are too few, messy or one-sided, the model learns the wrong pattern. Imagine a model that learns to recognise wolves, but every wolf photo in its training data has snow in the background. It might decide that <em>snow</em> means “wolf” — and call a husky in the snow a wolf!</p>
+<section class="pg-keys"><h2>Key points</h2><ul><li>Machine learning models learn patterns from examples (data) instead of hand-written rules.</li><li>Training: guess, measure the error, adjust, repeat. Testing: check on new, unseen data.</li><li>Too little or one-sided data makes the model learn the wrong lessons.</li></ul></section>
+<section class="pg-check"><h2>Check yourself</h2><p>Why do we test a model on examples it has never seen before?</p><ol type="A"><li>To make the training go faster</li><li>Because the training examples are deleted after training</li><li>To check it learned the pattern, not just memorised the answers</li></ol><details><summary>Show the answer</summary><p>A model that only memorised its training data fails on anything new. Testing on unseen data shows whether it really learned the general pattern.</p></details></section>
+<aside class="pg-cta"><p>Try the mini-lab, take the quiz and keep your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#lesson-2">Do this lesson in the app →</a></aside>
+<nav class="pg-pager" aria-label="Lessons"><a href="what-is-ai.html"><small>Previous lesson</small>What is AI?</a><a href="neural-networks.html"><small>Next lesson</small>Neural Networks</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

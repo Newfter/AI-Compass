@@ -30,7 +30,7 @@
    14. Starting and finishing a game
    15. RESULTS screen
    16. Confetti (a new best score, a perfect daily challenge, an empty list of mistakes)
-   17. "Copy my result"
+   17. "Challenge a friend" (the result as a text with a link)
    18. Keyboard: number keys, arrows and Enter
    19. Pop-up windows, calm mode and the language
    20. Building the quiz (only when it is needed)
@@ -115,7 +115,7 @@
     // The modes, in the order of the start screen:
     //   icon    on its card, its Ctrl+K command and its results
     //   retry   the results offer "Try again"
-    //   copy    the results offer "Copy my result"
+    //   copy    the results offer "Challenge a friend" (the result with a link)
     const MODES = {
         classic: { icon: "🎯", retry: true, copy: true },
         timed: { icon: "⏱️", retry: true, copy: true },
@@ -2264,7 +2264,7 @@
         confettiUntil = 0;
     }
 
-    // ---------- 17. "Copy my result" ----------
+    // ---------- 17. "Challenge a friend" (the result as a text with a link) ----------
     let copiedTimer = 0;
 
     // The text to share: Classic, Timed and Myth or fact share the rank; the daily
@@ -2288,7 +2288,21 @@
         const result = state.result;
         if (!result) return;
         let message = shareText(result);
-        // On the real website, add a link to the quiz
+
+        // With a link that challenges a friend ("A friend got 8 of 10. Can you beat that?",
+        // js/invite.js): the phone's share window, or the text and the link copied
+        if (A.invite && typeof A.share === "function") {
+            A.invite.share("quiz", { right: result.correct, total: result.total, text: message }).then((how) => {
+                if (how !== "copied" || !ui.copy) return;
+                ui.copy.classList.add("is-copied");
+                clearTimeout(copiedTimer);
+                const button = ui.copy;
+                copiedTimer = setTimeout(() => button.classList.remove("is-copied"), COPIED_MS);
+            });
+            return;
+        }
+
+        // Without js/invite.js: the text is copied; on the real website, with a link to the quiz
         if (/^https?:$/.test(window.location.protocol)) {
             message += "\n" + window.location.origin + window.location.pathname + "#quiz";
         }

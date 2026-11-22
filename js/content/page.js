@@ -112,6 +112,8 @@ window.AICompass.addTranslations({
 
         "footer.tagline": "Made for curious minds.",
         "footer.cas": "A student CAS project.",
+        "footer.readLessons": "Lessons to read",
+        "footer.readGlossary": "AI words A–Z",
         "footer.top": "Back to top ↑",
 
         "cmd.groupNavigate": "Go to",
@@ -225,6 +227,8 @@ window.AICompass.addTranslations({
 
         "footer.tagline": "Создано для любознательных умов.",
         "footer.cas": "Школьный проект CAS.",
+        "footer.readLessons": "Уроки для чтения",
+        "footer.readGlossary": "Слова об ИИ от А до Я",
         "footer.top": "Наверх ↑",
 
         "cmd.groupNavigate": "Перейти",

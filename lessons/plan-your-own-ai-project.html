@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Plan Your Own AI Project: simple explanation for beginners | AI Compass</title>
+<meta name="description" content="From an idea to a working model: choosing a problem, collecting data, testing honestly and thinking about the people it affects. Start with a real problem, and use AI only when the rule is easier to show with examples than to write down.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/lessons/plan-your-own-ai-project.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/lessons/plan-your-own-ai-project.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/lessons/plan-your-own-ai-project.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/lessons/plan-your-own-ai-project.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Plan Your Own AI Project: simple explanation for beginners">
+<meta property="og:description" content="From an idea to a working model: choosing a problem, collecting data, testing honestly and thinking about the people it affects. Start with a real problem, and use AI only when the rule is easier to show with examples than to write down.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/lessons/plan-your-own-ai-project.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Plan Your Own AI Project","headline":"Plan Your Own AI Project","description":"From an idea to a working model: choosing a problem, collecting data, testing honestly and thinking about the people it affects.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/lessons/plan-your-own-ai-project.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Lessons","item":"https://newfter.github.io/AI-Compass/lessons/"},{"@type":"ListItem","position":3,"name":"Plan Your Own AI Project","item":"https://newfter.github.io/AI-Compass/lessons/plan-your-own-ai-project.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../glossary/">AI words</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/lessons/plan-your-own-ai-project.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/lessons/">Lessons</a></p>
+<article>
+<p class="pg-kicker">🌍 AI in your world · Lesson 15 · 2 min read</p>
+<h1>Plan Your Own AI Project</h1>
+<p class="pg-lead">From an idea to a working model: choosing a problem, collecting data, testing honestly and thinking about the people it affects.</p>
+<h2>Start with a problem, not with AI</h2>
+<p>Good projects start with a real problem: “Our school's recycling bins are always mixed up”, “I can't tell if my plant is sick”. Then ask: does this need AI at all? If a simple rule works (“paper goes in the blue bin”), use the rule: it's easier to build, check and explain. AI helps when the rule is hard to write down but easy to show with examples, like what a sick leaf looks like.</p>
+<h2>Collect examples and labels</h2>
+<p>Your model will only be as good as its examples. Collect them from the real situation it will work in: different leaves, rooms, light and phones. Include every answer it must give, with plenty of each (not 500 healthy leaves and 5 sick ones). Make sure the labels are right: ask someone who knows. You don't need to write code to start: free tools like Google's Teachable Machine train a model on your own photos or sounds, right in the browser.</p>
+<p class="pg-note"><strong>Did you know?</strong> Project ideas for a school: a recycling sorter for photos of rubbish, a plant-leaf health checker, a sign-language letter reader, or a model that guesses a bird from its song. Each needs a few hundred good examples to start.</p>
+<h2>Test it honestly</h2>
+<p>Put about one example in five aside before training, and test only on those. Then look past the single score. Which items does it get wrong? Are the test photos like the real ones? And which mistake is worse? For a spam filter, hiding a real message is worse than missing an advert. For a medical tool, missing an illness is worse than a false alarm. Decide this before you choose how sure the model must be.</p>
+<p class="pg-note"><strong>Did you know?</strong> Accuracy can fool you. If 95 of 100 test leaves are healthy, a model that always says “healthy” scores 95%, and never finds a single sick leaf.</p>
+<h2>Think about the people</h2>
+<p>Before you share it, ask who will use it and who could be hurt. Does it work equally well for everyone it's meant for? Does it collect anything private, and does it really need to? Tell people it's AI and how sure it is, and say what to do when it might be wrong (“ask a gardener”). A good AI project is honest about its limits. That's not a weakness: it's what makes people trust it.</p>
+<section class="pg-keys"><h2>Key points</h2><ul><li>Start with a real problem, and use AI only when the rule is easier to show with examples than to write down.</li><li>Collect varied, correctly labelled examples of every answer, from the real situation.</li><li>Test on examples set aside, look at the mistakes, and be honest with users about the limits.</li></ul></section>
+<section class="pg-check"><h2>Check yourself</h2><p>Your recycling sorter is right on 95% of the test photos. What should you do next?</p><ol type="A"><li>Nothing: 95% is a great score</li><li>Look at which items it gets wrong, and check that the test photos look like real bins</li><li>Train it until it scores 100% on the training photos</li></ol><details><summary>Show the answer</summary><p>One score hides a lot. The mistakes may all be one kind of item, and photos taken at home may look nothing like a real bin. Pushing training to 100% is more likely to cause overfitting than to help.</p></details></section>
+<aside class="pg-cta"><p>Try the mini-lab, take the quiz and keep your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#lesson-15">Do this lesson in the app →</a></aside>
+<nav class="pg-pager" aria-label="Lessons"><a href="how-apps-choose-for-you.html"><small>Previous lesson</small>How Apps Choose for You</a><span></span></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -2058,6 +2058,11 @@
             const again = { act: "retake", label: t("learn.exam.retake") };
             const actionsNow = endActions();
             actionsNow.retake = function () { host.openExam(opener); };
+            // A passed exam can be sent to a friend, with a link that invites them (js/invite.js)
+            const send = outcome !== "notyet" && A.invite ? [{ act: "share", label: t("invite.challenge") }] : [];
+            actionsNow.share = function () {
+                A.invite.share("exam", { right: exam.right, total: total, honours: outcome === "honours" });
+            };
             screen({
                 kicker: sessionTitle(),
                 progress: 1,
@@ -2078,7 +2083,7 @@
                         '<p class="lpw-exam-note">' + esc(t("learn.exam.note")) + "</p>" +
                         saveNote() +
                     "</div>",
-                buttons: outcome === "notyet" ? [back, Object.assign({ primary: true }, again)] : [again, Object.assign({ primary: true }, back)],
+                buttons: outcome === "notyet" ? [back, Object.assign({ primary: true }, again)] : [again].concat(send, [Object.assign({ primary: true }, back)]),
                 actions: actionsNow
             });
         }

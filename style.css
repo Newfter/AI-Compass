@@ -1140,6 +1140,18 @@ button.chip:hover,
     font-size: 0.8125rem;
 }
 
+/* "Lessons to read · AI words A–Z": the quiet links to the plain pages (lessons/, glossary/) */
+.footer-bottom p a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.footer-bottom p a:hover,
+.footer-bottom p a:focus-visible {
+    color: var(--text);
+}
+
 .back-to-top {
     color: var(--accent-2);
     font-weight: 600;

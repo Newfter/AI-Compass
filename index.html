@@ -254,11 +254,14 @@
     <script src="./js/content/challenge.js" defer></script>
     <script src="./js/content/learn.js" defer></script>
     <script src="./js/content/platform.js" defer></script>
+    <script src="./js/content/invite.js" defer></script>
     <script src="./js/content/pro.js" defer></script>
 
     <!-- The features. platform.js (the app, offline use, sharing, printing) comes first: a language
          asked for in the address is then switched on before the other features draw themselves. -->
     <script src="./js/platform.js" defer></script>
+    <!-- Invites: a shared result opens the site with "A friend got 8 of 10. Can you beat that?" -->
+    <script src="./js/invite.js" defer></script>
     <script src="./js/effects.js" defer></script>
     <script src="./js/neural-bg.js" defer></script>
     <script src="./js/arctic-snow.js" defer></script>
@@ -795,7 +798,11 @@
         </nav>
 
         <div class="footer-bottom">
-            <p>© 2026 AI Compass. <span data-i18n="footer.cas">A student CAS project.</span></p>
+            <!-- The two links lead to the plain pages that search engines read (lessons/, glossary/;
+                 tools/build-pages.js writes them). js/invite.js points them at ru/ in Russian. -->
+            <p>© 2026 AI Compass. <span data-i18n="footer.cas">A student CAS project.</span>
+                <a href="./lessons/" data-plain="lessons" data-i18n="footer.readLessons">Lessons to read</a> ·
+                <a href="./glossary/" data-plain="glossary" data-i18n="footer.readGlossary">AI words A–Z</a></p>
             <a href="#home" class="back-to-top" data-i18n="footer.top">Back to top ↑</a>
         </div>
     </div>
