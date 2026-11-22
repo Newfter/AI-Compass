@@ -92,14 +92,28 @@
     // ∂L/∂w in two. So a short word with a slash stays on one line (in code and formulas).
     function keepFractions(html) {
         return html.replace(/[^\s<>`*]*[^\s<>`*\/]\/[^\s<>`*\/][^\s<>`*]*/g, function (word) {
-            return word.length <= 18 ? '<span class="lpw-nobreak">' + word + "</span>" : word;
+            return word.replace(/\u2060/g, "").length <= 18 ? '<span class="lpw-nobreak">' + word + "</span>" : word;
         });
     }
+
+    // Inside a formula written without spaces, no line break right after / | · − ′ or right
+    // before · (a word joiner, U+2060). A word wider than the line still breaks somewhere.
+    function joinSigns(html) {
+        return html.replace(/([\/|·−′])(?=[^\s<>\u2060])/g, "$1\u2060").replace(/([^\s<>\u2060])(?=·)/g, "$1\u2060");
+    }
+
+    // The word joiners are for the screen only: a formula copied from a unit is clean text.
+    document.addEventListener("copy", function (event) {
+        const picked = String(window.getSelection());
+        if (picked.indexOf("\u2060") < 0 || !event.clipboardData) return;
+        event.clipboardData.setData("text/plain", picked.replace(/\u2060/g, ""));
+        event.preventDefault();
+    });
 
     // A text of a course or of a card: **bold** and `code`, everything else as written.
     // formula: the whole text is a line of formulas (an example in the code font).
     function rich(text, formula) {
-        const safe = esc(String(text));
+        const safe = joinSigns(esc(String(text)));
         return (formula ? keepFractions(safe) : safe)
             .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
             .replace(/`(.+?)`/g, function (all, code) {

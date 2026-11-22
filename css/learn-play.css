@@ -612,6 +612,11 @@
     line-height: 1.4;
 }
 
+.lpw-order-item > [data-speak] {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .lpw-order-item.is-kept,
 .lpw-order-item.is-right {
     border-color: var(--success);
