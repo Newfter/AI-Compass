@@ -31,40 +31,54 @@ jobs:
         continue-on-error: true
         run: |
           python3 - <<'PY'
-          import json, re, urllib.error, urllib.request
+          import json, re, time, urllib.error, urllib.parse, urllib.request
 
           SITE = "https://newfter.github.io/AI-Compass/"
           KEY = "2bcef68462ffeea45658b64de94970d4"
-          AGENT = "Mozilla/5.0 (compatible; AI-Compass-pages/1.0; +" + SITE + ")"
+          SERVICE = "https://api.indexnow.org/indexnow"    # it passes the list on to Bing, Yandex and the others
+          TRIES = 3       # a new key file can take some minutes to be seen from outside
+          PAUSE = 120     # seconds between the tries
 
-          def ask(address, data=None, agent=AGENT):
-              headers = {}
-              if agent:
-                  headers["User-Agent"] = agent
+          def ask(address, data=None):
+              """Opens an address. Gives back the number of the answer (200 = fine) and the start of its text."""
+              headers = {"User-Agent": "Mozilla/5.0 (compatible; AI-Compass-pages/1.0; +" + SITE + ")"}
               if data is not None:
                   headers["Content-Type"] = "application/json; charset=utf-8"
               request = urllib.request.Request(address, data=data, headers=headers)
               try:
                   with urllib.request.urlopen(request, timeout=30) as answer:
-                      return answer.status, answer.read(500).decode("utf-8", "replace").strip()
+                      return answer.status, answer.read(2000).decode("utf-8", "replace").strip()
               except urllib.error.HTTPError as error:
-                  return error.code, error.read(500).decode("utf-8", "replace").strip()
+                  return error.code, error.read(2000).decode("utf-8", "replace").strip()
               except Exception as error:
                   return 0, str(error)
 
-          def body(pages):
-              return json.dumps({"host": "newfter.github.io", "key": KEY, "keyLocation": SITE + KEY + ".txt", "urlList": pages}).encode("utf-8")
-
-          print("0. robots.txt of the host:", ask("https://newfter.github.io/robots.txt")[0], "| sitemap.xml of the site:", ask(SITE + "sitemap.xml")[0])
-          status, text = ask(SITE + KEY + ".txt")
-          print("1. Key file on the site:", status, repr(text[:80]), "right" if (status == 200 and text == KEY) else "NOT RIGHT")
-
           pages = sorted(set(re.findall(r"<loc>([^<]+)</loc>", open("sitemap.xml", encoding="utf-8").read())))
           pages = [page for page in pages if page.startswith(SITE)]
-          one = [SITE + "lessons/"]
+          body = json.dumps({"host": "newfter.github.io", "key": KEY, "keyLocation": SITE + KEY + ".txt", "urlList": pages}).encode("utf-8")
 
-          print("2. One address, the program does not say its name:", ask("https://api.indexnow.org/indexnow", body(one), agent=None))
-          print("3. One address, the program says its name:", ask("https://api.indexnow.org/indexnow", body(one)))
-          for service in ["https://api.indexnow.org/indexnow", "https://www.bing.com/indexnow", "https://yandex.com/indexnow"]:
-              print("4. All", len(pages), "addresses to", service, "->", ask(service, body(pages)))
+          sent = False
+          for attempt in range(1, TRIES + 1):
+              # The proof must be on the published site first: the service reads it from there
+              status, text = ask(SITE + KEY + ".txt")
+              if status == 200 and text == KEY:
+                  status, text = ask(SERVICE, body)
+                  if status in (200, 202):
+                      print("Try", attempt, "- sent", len(pages), "addresses. Answer:", status, "(accepted)")
+                      sent = True
+                      break
+                  print("Try", attempt, "- the service did not accept the list. Answer:", status, text[:300])
+                  if status in (400, 422):    # the list itself is refused: another try would not help
+                      break
+              else:
+                  print("Try", attempt, "- the key file is not on the published site yet (answer " + str(status) + ")")
+              if attempt < TRIES:
+                  time.sleep(PAUSE)
+          if not sent:
+              print("Not sent this time. Nothing is broken: the pages stay in sitemap.xml, and the next change of the site tries again.")
+
+          # TEMPORARY (removed in the next commit): why does Yandex refuse the addresses?
+          one = json.dumps({"host": "newfter.github.io", "key": KEY, "keyLocation": SITE + KEY + ".txt", "urlList": [SITE + "lessons/"]}).encode("utf-8")
+          print("PROBE yandex, one address:", ask("https://yandex.com/indexnow", one))
+          print("PROBE yandex, GET:", ask("https://yandex.com/indexnow?url=" + urllib.parse.quote(SITE + "lessons/", safe="") + "&key=" + KEY + "&keyLocation=" + urllib.parse.quote(SITE + KEY + ".txt", safe="")))
           PY
