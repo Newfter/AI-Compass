@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Reinforcement learning theory: contractions, gradients and regret: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Prove the Bellman contraction; compute greedy losses, UCB indices and regret. Theory at the limit: step 8 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Reinforcement learning theory: contractions, gradients and regret: step by step, with tasks">
+<meta property="og:description" content="Prove the Bellman contraction; compute greedy losses, UCB indices and regret. Theory at the limit: step 8 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Reinforcement learning theory: contractions, gradients and regret","headline":"Reinforcement learning theory: contractions, gradients and regret","description":"Prove the Bellman contraction; compute greedy losses, UCB indices and regret.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Reinforcement learning theory: contractions, gradients and regret","item":"https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 8 of 12 · 10 min</p>
+<h1>Reinforcement learning theory: contractions, gradients and regret</h1>
+<p class="pg-lead">Prove the Bellman contraction; compute greedy losses, UCB indices and regret.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>📐 The Bellman operator is a contraction</h2>
+<p>Setting: a finite Markov decision process (MDP) with rewards r(s, a), transition probabilities P(s′ | s, a) and a discount 0 ≤ γ &lt; 1. The <strong>Bellman optimality operator</strong> T turns any function V on the states into a new one (line 1): one step of looking ahead, with V as the estimate of everything after it.</p>
+<p>Measure such functions in the <strong>maximum norm</strong> ‖V‖_∞ = max_s |V(s)|. Theorem: T is a <strong>γ-contraction</strong> in this norm (line 2). One application of T shrinks the distance between any two functions at least by the factor γ.</p>
+<p>By Banach's fixed-point theorem, T then has exactly one fixed point; it is the optimal value function V*, and V* = T·V* is the Bellman optimality equation. And <strong>value iteration</strong> V_(k+1) = T·V_k converges to V* from any V_0, with the error bound of line 3.</p>
+<div class="pg-example is-mono"><div>(T·V)(s) = max_a [r(s, a) + γ·Σ_s′ P(s′ | s, a)·V(s′)]</div><div>‖T·V − T·U‖_∞ ≤ γ·‖V − U‖_∞ for all V, U</div><div>‖V_k − V*‖_∞ ≤ γ^k·‖V_0 − V*‖_∞</div><div>rewards in [0, R_max]: 0 ≤ V^π(s) ≤ V*(s) ≤ R_max / (1 − γ)</div></div>
+<p class="pg-note">The operator T_π of a fixed policy π, with the average over a ~ π(· | s) in place of the maximum, is a γ-contraction too; its fixed point is V^π. Line 4: a return is a sum of rewards with the weights 1, γ, γ², …, and these weights add up to 1/(1 − γ).</p>
+<section class="pg-check"><p><strong>Task.</strong> Order the proof that T is a γ-contraction in the maximum norm, with its consequence for value iteration. For a fixed state s let f(a) = r(s, a) + γ·Σ_s′ P(s′ | s, a)·V(s′), and g(a) the same with U in place of V.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Value iteration V_(k+1) = T·V_k with the Bellman optimality operator T has ‖V_k − V*‖_∞ ≤ γ^k·‖V_0 − V*‖_∞. Rewards lie in [0, 1], γ = 0.9, V_0 = 0. What is the smallest k for which this guarantees ‖V_k − V*‖_∞ ≤ 0.01?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>⚖️ An approximate value function can cost more than its error</h2>
+<p>In practice V* is known only approximately: the iteration is stopped early, or values are estimated from samples or by a network. What matters is the policy read off from the approximation. A policy π is <strong>greedy</strong> for V if in every state it picks an action that maximises r(s, a) + γ·Σ_s′ P(s′ | s, a)·V(s′); then T_π·V = T·V.</p>
+<p>Theorem: if ‖V − V*‖_∞ ≤ ε and π is greedy for V, then π loses at most 2·γ·ε/(1 − γ) in any state. Lines 1 to 4 are the proof; line 3 uses that T and T_π are γ-contractions. An error of ε in the values can cost up to 2·γ·ε at every step, and the horizon 1/(1 − γ) adds these losses up.</p>
+<div class="pg-example is-mono"><div>V* − V^π = T·V* − T_π·V^π = (T·V* − T·V) + (T_π·V − T_π·V^π)</div><div>‖V − V^π‖_∞ ≤ ‖V − V*‖_∞ + ‖V* − V^π‖_∞ ≤ ε + ‖V* − V^π‖_∞</div><div>‖V* − V^π‖_∞ ≤ γ·ε + γ·(ε + ‖V* − V^π‖_∞)</div><div>‖V* − V^π‖_∞ ≤ 2·γ·ε / (1 − γ)</div><div>ε = 0.01, γ = 0.99: up to 1.98</div></div>
+<p class="pg-note">From samples: tabular Q-learning is a noisy, asynchronous value iteration for Q. It converges to Q* with probability 1 if every pair (s, a) is updated infinitely often and the step α_n of its n-th update satisfies Σ α_n = ∞, Σ α_n² &lt; ∞: 1/n qualifies, a constant step does not. With function approximation this guarantee is lost.</p>
+<section class="pg-check"><p><strong>Task.</strong> γ = 0.9; the table defines a deterministic MDP. The estimate V(A) = 10.1, V(B) = 9.9 is within 0.1 of V* in both states. π is greedy for V: it takes the action with the largest r + γ·V(next state). What is V*(A) − V^π(A)?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Linear values v(s) = w·φ(s), φ(s_1) = 1, φ(s_2) = 2. Only the transition s_1 → s_2 (reward r = 0) is updated: w ← w + α·(r + γ·v(s_2) − v(s_1))·φ(s_1). γ = 0.9, α = 0.1, w = 1 at first. After how many updates does w exceed 100?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎰 Exploration has a price: regret</h2>
+<p>Q-learning's guarantee asks that every action be tried again and again; it does not say what that costs. The cleanest model of the cost is the <strong>bandit</strong> with K arms: pulling arm i gives an independent reward in [0, 1] with unknown mean μ_i. Over T rounds, <strong>regret</strong> is what is lost against always pulling the best arm (line 1).</p>
+<p>With ε-greedy and a fixed ε, a uniformly random arm is pulled in a share ε of the rounds, for ever: the regret is linear in T (line 2). <strong>UCB1</strong> is optimistic instead: after one pull of each arm, it pulls the arm with the largest upper confidence bound (line 3). A bad arm is pulled only while its bound is still wide.</p>
+<p>Lines 4 and 5 are the theorem for UCB1: for fixed gaps Δ_i its regret is logarithmic in T. Whatever the gaps, its regret is at most of the order of √(K·T·ln T), and no algorithm can guarantee less than the order of √(K·T) on every bandit.</p>
+<div class="pg-example is-mono"><div>gap Δ_i = μ* − μ_i, μ* = max_i μ_i; regret R_T = T·μ* − E[sum of rewards] = Σ_i Δ_i·E[n_i]</div><div>ε-greedy with a fixed ε: R_T ≥ ε·T·(Δ_1 + … + Δ_K) / K</div><div>UCB1 index of arm i after t pulls in total: μ̂_i + √(2·ln t / n_i)</div><div>UCB1: E[n_i] ≤ 8·ln T / Δ_i² + c for every arm with Δ_i &gt; 0</div><div>UCB1: R_T ≤ 8·Σ_(Δ_i &gt; 0) ln T / Δ_i + c·Σ_i Δ_i, c = 1 + π²/3 ≈ 4.29</div></div>
+<p class="pg-note">n_i is the number of pulls of arm i so far (in lines 1 and 4: after all T rounds), μ̂_i the mean of its rewards; in c, π is the number 3.14… The radius comes from Hoeffding's inequality: a mean of n rewards in [0, 1] exceeds its expectation by u with probability at most exp(−2·n·u²), which is t^(−4) for u = √(2·ln t / n).</p>
+<section class="pg-check"><p><strong>Task.</strong> UCB1 pulls the arm with the largest index μ̂ + √(2·ln t / n), where μ̂ is the arm's mean reward so far, n its number of pulls and t the total number of pulls. Here t = 100. What is the index of the arm pulled next? Two decimals.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Two arms with gap Δ, T = 10,000 rounds. UCB1's regret is at most Δ·T and at most about 8·ln T / Δ (the leading term of its bound). How large can the smaller of these two bounds get, over all gaps Δ? Round to a whole number.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🧭 Comparing two policies exactly</h2>
+<p>Now the policy itself. Let J(π) be the expected return of π from a given distribution of the start state, and d^π the <strong>discounted state distribution</strong> of π (line 1): how often π is in s, with the weight γ^t on time t. As before, A^π(s, a) = Q^π(s, a) − V^π(s) is the advantage.</p>
+<p>The <strong>performance difference lemma</strong> (line 2) is an identity for any two policies, not an approximation: the gain of π′ over π is the advantage A^π of the actions of π′, averaged over the states that π′ itself visits, times 1/(1 − γ).</p>
+<p>But data and advantage estimates come from the states of π. Putting d^π in place of d^π′ gives a <strong>surrogate</strong> (line 3) that can be trusted only while π′ stays close to π: the reason for trust regions and for PPO's clipping. Line 4 is the <strong>policy gradient theorem</strong>: no derivative of d^π appears in it, although d^π depends on θ.</p>
+<div class="pg-example is-mono"><div>d^π(s) = (1 − γ)·Σ_t γ^t·P(s_t = s | π), t = 0, 1, 2, …</div><div>J(π′) − J(π) = (1/(1 − γ))·E[A^π(s, a)], s ~ d^π′, a ~ π′(· | s)</div><div>surrogate: (1/(1 − γ))·E[A^π(s, a)], s ~ d^π, a ~ π′(· | s)</div><div>∇_θ J(π_θ) = (1/(1 − γ))·E[∇_θ ln π_θ(a | s)·Q^π(s, a)], s ~ d^π, a ~ π_θ, π = π_θ</div></div>
+<p class="pg-note">Proof of the lemma: along a trajectory of π′, the sum over t of γ^t·(r_t + γ·V^π(s_(t+1)) − V^π(s_t)) telescopes to the return minus V^π(s_0). Take expectations: given s_t and a_t, the bracket has the mean A^π(s_t, a_t).</p>
+<section class="pg-check"><p><strong>Task.</strong> γ = 0.8, the start state is A, and the table lists all transitions. π always stays in A. π′ moves with probability 0.5 each time it is in A, and stays otherwise. Use the performance difference lemma to find J(π′) − J(π).</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Lemma: J(π′) − J(π) = E[A^π(s, a)]/(1 − γ), with s from the states π′ visits and a ~ π′. Find the flaw: (1) on the states π visits, actions a ~ π′ have a positive mean A^π; (2) so the lemma's mean is positive; (3) so J(π′) &gt; J(π).</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge, on paper. Derive the policy gradient theorem from the performance difference lemma: take π = π_θ and π′ = π_(θ+δ), and let δ → 0. Why does no derivative of d^π appear, although the state distribution depends on θ?</p><details><summary>Show the answer</summary><p>Write the lemma as J(θ + δ) − J(θ) = (1/(1 − γ))·Σ_s d_δ(s)·g_s(δ), where d_δ is the state distribution of π_(θ+δ) and g_s(δ) = Σ_a π_(θ+δ)(a | s)·A^π(s, a). The idea: g_s(0) = Σ_a π_θ(a | s)·A^π(s, a) = 0 in every state, because V^π is the average of Q^π over a ~ π.</p>
+<p>So the product rule at δ = 0 gives ∇(d_δ·g_s) = ∇d_δ·g_s(0) + d^π(s)·∇g_s(0), and the first term vanishes: ∇J = (1/(1 − γ))·Σ_s d^π(s)·Σ_a ∇π_θ(a | s)·A^π(s, a). With ∇π_θ = π_θ·∇ ln π_θ this is the theorem with A^π in place of Q^π; the two agree because Σ_a ∇π_θ(a | s) = 0.</p>
+<p>The same fact explains the surrogate: it differs from the lemma only by d^π in place of d_δ, so at δ = 0 it has the value 0 and the gradient ∇J. It agrees with J(π′) − J(π) to first order; the mismatch of the states enters only at second order, and a trust region keeps that term small.</p></details></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>The Bellman optimality operator is a γ-contraction in the maximum norm: <code>‖T·V − T·U‖_∞ ≤ γ·‖V − U‖_∞</code>. So V* is its only fixed point, value iteration obeys <code>‖V_k − V*‖_∞ ≤ γ^k·‖V_0 − V*‖_∞</code>, and with rewards in [0, R_max] all values lie in [0, R_max/(1 − γ)].</li><li>The horizon multiplies errors: if ‖V − V*‖_∞ ≤ ε, a policy that is greedy for V can lose up to <code>2·γ·ε/(1 − γ)</code>. Tabular Q-learning converges if every pair is updated infinitely often and its steps satisfy Σα_n = ∞, Σα_n² &lt; ∞; with bootstrapping, function approximation and off-policy updates together, the weights can diverge.</li><li>Bandits: regret <code>R_T = Σ_i Δ_i·E[n_i]</code>. ε-greedy with a fixed ε has linear regret. UCB1, with the index <code>μ̂_i + √(2·ln t / n_i)</code>, has regret of the order of Σ ln T / Δ_i and, whatever the gaps, at most of the order of √(K·T·ln T); no algorithm beats the order √(K·T) in the worst case.</li><li>Performance difference lemma: <code>J(π′) − J(π) = (1/(1 − γ))·E[A^π(s, a)]</code> with s ~ d^π′, a ~ π′, exactly. With the states of π it is a surrogate, right only to first order; its gradient at π′ = π is the policy gradient <code>(1/(1 − γ))·E[∇ ln π_θ(a | s)·Q^π(s, a)]</code>.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"><small>Previous step</small>Diffusion as differential equations: scores, SDEs and ODEs</a><a href="t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"><small>Next step</small>Transformers in theory: what attention can and cannot compute</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

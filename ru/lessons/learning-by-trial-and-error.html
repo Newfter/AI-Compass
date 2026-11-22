@@ -23,6 +23,7 @@
 <meta name="theme-color" content="#050b14">
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Обучение методом проб и ошибок","headline":"Обучение методом проб и ошибок","description":"Как ИИ учится на наградах — так же, как ты осваиваешь новую игру: пробуешь, ошибаешься, пробуешь снова.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/ru/lessons/learning-by-trial-and-error.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Уроки","item":"https://newfter.github.io/AI-Compass/ru/lessons/"},{"@type":"ListItem","position":3,"name":"Обучение методом проб и ошибок","item":"https://newfter.github.io/AI-Compass/ru/lessons/learning-by-trial-and-error.html"}]}</script>
 </head>
@@ -31,7 +32,9 @@
     <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
     <nav aria-label="AI Compass">
         <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
         <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
         <a href="https://newfter.github.io/AI-Compass/lessons/learning-by-trial-and-error.html" hreflang="en" lang="en">English</a>
     </nav>
 </header>
@@ -41,6 +44,7 @@
 <p class="pg-kicker">🤿 Погружение · Урок 8 · 2 мин чтения</p>
 <h1>Обучение методом проб и ошибок</h1>
 <p class="pg-lead">Как ИИ учится на наградах — так же, как ты осваиваешь новую игру: пробуешь, ошибаешься, пробуешь снова.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
 <h2>Агент, среда, награда</h2>
 <p>Представь, что ты учишь собаку команде. Она пробует разное, а когда садится, получает лакомство. Скоро она садится по твоей просьбе. <strong data-term='reinforcement'>Обучение с подкреплением</strong> устроено так же. <strong data-term='agent'>Агент</strong> (тот, кто учится: персонаж игры, робот, программа) действует в <strong>среде</strong> (в игре, в комнате). За свои действия он получает <strong data-term='reward'>награду</strong> — число, которое говорит, насколько хорошо он справился, как очки в игре. Правильные ходы ему никто не показывает. Он сам должен выяснить, какие действия приносят больше всего награды со временем.</p>
 <p class="pg-note"><strong>А ты знал?</strong> Видеоигра — идеальная среда: агент — это игрок, действия — кнопки, а награда — счёт. Исследователи научили агентов играть в десятки классических игр Atari, давая им только пиксели с экрана и счёт.</p>
@@ -53,12 +57,27 @@
 <p>В 2016 году программа AlphaGo компании DeepMind, которая училась в том числе на миллионах партий против самой себя, обыграла Ли Седоля — одного из сильнейших игроков в го в мире. Обучение с подкреплением помогает и роботам учиться ходить и брать предметы. А ещё с помощью отзывов людей доводят до ума чат-ботов: люди сравнивают ответы, и модель получает награду за такие ответы, которые людям понравились больше (<strong data-term='rlhf'>RLHF</strong>). Но агент гонится за наградой, а не за тем, что имелось в виду. Если в награде есть лазейка, агент может её найти — это называется <strong data-term='reward-hacking'>взломом награды</strong>.</p>
 <p class="pg-note"><strong>А ты знал?</strong> В 2016 году в OpenAI обучали агента играть в гонки на лодках CoastRunners, где очки давали за сбитые на трассе цели. Агент нашёл лагуну, где можно кружить на месте, снова и снова сбивая одни и те же цели, когда они появлялись заново. Гонку он так и не закончил, зато набрал больше очков, чем игроки-люди.</p>
 <section class="pg-keys"><h2>Главное</h2><ul><li>В обучении с подкреплением агент учится методом проб и ошибок по наградам, а не по готовым правильным ответам.</li><li>Ему нужно сочетать исследование (пробовать новые действия) и использование (выбирать то, что работает).</li><li>Агент гонится за наградой, которую получает, поэтому плохо придуманную награду можно «взломать».</li></ul></section>
-<section class="pg-check"><h2>Проверь себя</h2><p>Робот-пылесос получает награду за каждую собранную пылинку. Он начинает высыпать пыль и снова её собирать. Что происходит?</p><ol type="A"><li>Взлом награды: он нашёл лазейку в своей награде</li><li>Исследование: он пробует новые действия, чтобы узнать больше</li><li>Сломанный датчик: он не видит пыль</li></ol><details><summary>Показать ответ</summary><p>Робот делает ровно то, за что платит награда (собирает пыль), а не то, чего хотели люди (чистую комнату), — это взлом награды. Это не исследование: он раз за разом повторяет уже известный трюк. И ничего не сломано: датчик прекрасно видит пыль. Награду за чистый пол обмануть было бы труднее.</p></details></section>
+<section class="pg-check"><h2>Проверь себя</h2><div class="pg-quiz">
+<p class="pg-q">Робот-пылесос получает награду за каждую собранную пылинку. Он начинает высыпать пыль и снова её собирать. Что происходит?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Взлом награды: он нашёл лазейку в своей награде</button></li><li><button type="button">Исследование: он пробует новые действия, чтобы узнать больше</button></li><li><button type="button">Сломанный датчик: он не видит пыль</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Взлом награды: он нашёл лазейку в своей награде</strong></p><p>Робот делает ровно то, за что платит награда (собирает пыль), а не то, чего хотели люди (чистую комнату), — это взлом награды. Это не исследование: он раз за разом повторяет уже известный трюк. И ничего не сломано: датчик прекрасно видит пыль. Награду за чистый пол обмануть было бы труднее.</p></details>
+</div></section>
+<h2>Слова этого урока</h2><p class="pg-tags"><a href="../glossary/robot.html">Робот</a><a href="../glossary/reinforcement.html">Обучение с подкреплением</a><a href="../glossary/agent.html">Агент</a><a href="../glossary/reward.html">Награда</a><a href="../glossary/exploration.html">Исследование и использование</a><a href="../glossary/q-learning.html">Q-обучение</a><a href="../glossary/reward-hacking.html">Взлом награды</a><a href="../glossary/rlhf.html">Обучение с подкреплением на основе отзывов людей (RLHF)</a></p>
 <aside class="pg-cta"><p>Мини-лаборатория, тест и сохранение прогресса. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#lesson-8">Пройти этот урок в приложении →</a></aside>
+<p class="pg-aside">🍎 <a href="../teachers/learning-by-trial-and-error.html">Учителям: готовый план этого урока</a></p>
 <nav class="pg-pager" aria-label="Уроки"><a href="how-computers-see.html"><small>Предыдущий урок</small>Как компьютер видит</a><a href="how-chatbots-write.html"><small>Следующий урок</small>Как чат-боты пишут текст</a></nav>
 </article>
 </main>
 <footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
     <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>

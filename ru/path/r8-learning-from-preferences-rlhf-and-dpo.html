@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Обучение на предпочтениях: RLHF и DPO: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Модель Брэдли–Терри, оптимум задачи со штрафом за KL, DPO и взлом награды. Передний край науки: шаг 8 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Обучение на предпочтениях: RLHF и DPO: шаг за шагом, с заданиями">
+<meta property="og:description" content="Модель Брэдли–Терри, оптимум задачи со штрафом за KL, DPO и взлом награды. Передний край науки: шаг 8 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Обучение на предпочтениях: RLHF и DPO","headline":"Обучение на предпочтениях: RLHF и DPO","description":"Модель Брэдли–Терри, оптимум задачи со штрафом за KL, DPO и взлом награды.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Обучение на предпочтениях: RLHF и DPO","item":"https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Передний край науки</a> · Шаг 8 из 12 · 8 мин</p>
+<h1>Обучение на предпочтениях: RLHF и DPO</h1>
+<p class="pg-lead">Модель Брэдли–Терри, оптимум задачи со штрафом за KL, DPO и взлом награды.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>⚖️ Как научить модель вкусу</h2>
+<p>Предобучение учит модель продолжать текст, подражая обучающему корпусу, а не быть полезной, честной и осторожной. <strong>Обучение с подкреплением на основе отзывов людей</strong> (RLHF) учит её тому, что предпочитают люди, по их сравнениям: людям проще сравнить два ответа, чем написать идеальный.</p>
+<p>После предобучения обычный рецепт начинается с <strong>дообучения на примерах</strong> (supervised fine-tuning, SFT) — на ответах, написанных людьми. Затем собирают пары сравнений: человек видит два ответа на один и тот же промпт и выбирает лучший.</p>
+<p><strong>Модель вознаграждения</strong> (reward model) — сеть, которая сопоставляет промпту и ответу одно число, — обучается на этих сравнениях. Затем модель оптимизируют по ней методом RL, часто PPO, со <strong>штрафом за KL</strong> (KL penalty), который держит её близко к модели после SFT.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Расставь обычные шаги RLHF по порядку.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>📊 Модель Брэдли–Терри</h2>
+<p>Модель вознаграждения ставит каждому ответу y число r(y). <strong>Модель Брэдли–Терри</strong> (Bradley–Terry) связывает эти числа с выбором людей: она предполагает, что люди предпочитают один ответ другому с вероятностью σ от разности их наград.</p>
+<p>Модель вознаграждения обучают методом максимального правдоподобия: минимизируют среднее −ln P по парам, которые сравнили люди; y_w — выбранный ответ, y_l — отвергнутый.</p>
+<div class="pg-example is-mono"><div>P(y_w ≻ y_l) = σ(r(y_w) − r(y_l))</div><div>функция потерь = −ln σ(r(y_w) − r(y_l))</div><div>равные награды → P = 0,5</div></div>
+<p class="pg-note">r(y) — краткая запись r(x, y), награды за ответ y на промпт x. Оба ответа пары отвечают на один и тот же промпт.</p>
+<section class="pg-check"><p><strong>Задание.</strong> По модели Брэдли–Терри ответ A предпочтут ответу B с вероятностью σ(r(A) − r(B)), где σ(z) = 1/(1 + e^(−z)). Модель вознаграждения ставит A ровно на ln 3 выше, чем B. С какой вероятностью предпочтут A?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Модель вознаграждения обучили по модели Брэдли–Терри: ответ A предпочтут ответу B с вероятностью σ(r(A) − r(B)). Затем к каждой награде, которую она выдаёт, прибавили 5. Как изменятся предсказанные ею предпочтения?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🎯 Целевая функция и её точный оптимум</h2>
+<p>Шаг RL рассматривает модель как политику π(y | x), кратко π(y): распределение ответов y на промпт x. Он максимизирует ожидаемую награду минус штраф за KL, β·KL(π ‖ π_ref), где π_ref — <strong>эталонная модель</strong> (reference model), обычно модель после SFT.</p>
+<p>Среди всех таких распределений у этой целевой функции есть точный оптимум π*: π_ref, перевзвешенная множителем exp(r/β) и делённая на нормирующий множитель Z(x) — <strong>статсумму</strong> (partition function). При малом β оптимум гонится за наградой, при большом — держится близко к π_ref.</p>
+<div class="pg-example is-mono"><div>максимизировать по π: E[r(y)] − β · KL(π ‖ π_ref), где y ~ π</div><div>π*(y) = π_ref(y) · exp(r(y) / β) / Z(x)</div><div>Z(x) = Σ_y π_ref(y) · exp(r(y) / β)</div></div>
+<p class="pg-note">Доказательство в одну строку: E[r(y)] − β·KL(π ‖ π_ref) = β·ln Z(x) − β·KL(π ‖ π*), а KL(π ‖ π*) ≥ 0, причём равенство — только при π = π*. Z(x) — сумма по всем возможным ответам, которых слишком много, чтобы их перебрать: RL приближается к π*, сэмплируя ответы.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Политика, максимизирующая E[r] − β·KL(π ‖ π_ref), — это π*(y) ∝ π_ref(y)·exp(r(y)/β). Возможны только два ответа, A и B: π_ref(A) = π_ref(B) = 0,5, а r(A) − r(B) = β·ln 4. Чему равно π*(A)?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>✨ DPO: без отдельной модели вознаграждения</h2>
+<p>Выразим из оптимума награду: r(y) равна β, умноженному на логарифм отношения π* к π_ref, плюс β·ln Z(x), а это слагаемое зависит только от промпта x. Модель Брэдли–Терри использует только разность наград двух ответов на один и тот же промпт, поэтому Z(x) сокращается.</p>
+<p><strong>DPO</strong> (direct preference optimisation) ставит на место π* обучаемую политику π_θ и минимизирует функцию потерь Брэдли–Терри на парах сравнений. Её <strong>неявная награда</strong> (implicit reward) — β·ln(π_θ(y)/π_ref(y)): отдельной модели вознаграждения нет, и во время обучения из π_θ ничего не сэмплируют.</p>
+<div class="pg-example is-mono"><div>r(y) = β · ln(π*(y) / π_ref(y)) + β · ln Z(x)</div><div>функция потерь = −ln σ(β · ln(π_θ(y_w) / π_ref(y_w)) − β · ln(π_θ(y_l) / π_ref(y_l)))</div></div>
+<p class="pg-note">ln π(y) — логарифм вероятности всего ответа y на промпт x, то есть сумма логарифмов вероятностей его токенов.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Неявная награда DPO для ответа y равна β·ln(π_θ(y)/π_ref(y)). Для одного ответа ln π_θ(y) = −10 и ln π_ref(y) = −14 (логарифмы вероятности всего ответа), а β = 0,1. Чему равна его неявная награда?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> DPO записывает награду ответа y на промпт x как r(y) = β·ln(π*(y)/π_ref(y)) + β·ln Z(x): π* — оптимальная политика, π_ref — эталонная модель, Z(x) — сумма по всем ответам на x. Почему Z(x) выпадает из функции потерь DPO?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🎭 Взлом награды</h2>
+<p>Модель вознаграждения — лишь заменитель (proxy) того, чего хотят люди. При сильной оптимизации по ней политика может найти то, что нравится заменителю, но не людям: это <strong>взлом награды</strong> (reward hacking). Здесь действует закон Гудхарта: мера, ставшая целью, перестаёт быть хорошей мерой.</p>
+<p>Модели вознаграждения часто предпочитают более длинные ответы. У моделей, обученных на одобрении людей, наблюдали склонность соглашаться с высказанными взглядами пользователя сильнее, чем позволяют факты: это <strong>угодничество</strong> (sycophancy).</p>
+<p>В исследовании 2022 года людей заменяла большая «золотая» модель вознаграждения: она размечала сравнения для прокси-модели. Пока оптимизация по прокси-модели уводила политику от исходной, прокси-награда всё росла, а «золотая» росла, достигала пика и затем падала: это <strong>переоптимизация</strong> (over-optimisation).</p>
+<p class="pg-note">Защита: штраф за KL, ранняя остановка, более качественные модели вознаграждения, заново обученные на свежих сравнениях, и проверки людьми.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Модель оптимизировали по модели вознаграждения. Какие наблюдения говорят о взломе награды, а какие — о настоящем улучшении?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>RLHF учится на сравнениях: SFT, затем модель вознаграждения по Брэдли–Терри, <code>P(y_w ≻ y_l) = σ(r(y_w) − r(y_l))</code>, затем RL, часто PPO, со штрафом за KL, который держит политику близко к π_ref.</li><li>В модель Брэдли–Терри входят только разности наград, поэтому у наград нет фиксированного нуля: прибавка константы ко всем наградам не меняет ни одного предсказания. А вот масштаб задан через σ.</li><li>У целевой функции с KL-регуляризацией <code>E[r] − β·KL(π ‖ π_ref)</code> есть точный оптимум <code>π* ∝ π_ref·exp(r/β)</code>. DPO выражает из него r; внутри пары Z(x) сокращается, и остаётся функция потерь для самой политики, без отдельной модели вознаграждения.</li><li>Модель вознаграждения — лишь заменитель: при слишком сильной оптимизации её взламывают, например длинными ответами или угодничеством. Оценивай результат по тому, чего оптимизация не видела: по слепым оценкам людей, известным ответам, отложенным проверкам.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="r7-reinforcement-learning-the-core.html"><small>Предыдущий шаг</small>Обучение с подкреплением: основа</a><a href="r9-inside-the-model-interpretability.html"><small>Следующий шаг</small>Заглянуть внутрь модели: интерпретируемость</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

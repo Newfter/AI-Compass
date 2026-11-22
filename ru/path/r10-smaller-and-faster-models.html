@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Модели меньше и быстрее: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Квантование, выбросы и групповые масштабы, смесь экспертов, спекулятивное декодирование и дистилляция. Передний край науки: шаг 10 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/r10-smaller-and-faster-models.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r10-smaller-and-faster-models.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r10-smaller-and-faster-models.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r10-smaller-and-faster-models.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Модели меньше и быстрее: шаг за шагом, с заданиями">
+<meta property="og:description" content="Квантование, выбросы и групповые масштабы, смесь экспертов, спекулятивное декодирование и дистилляция. Передний край науки: шаг 10 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/r10-smaller-and-faster-models.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Модели меньше и быстрее","headline":"Модели меньше и быстрее","description":"Квантование, выбросы и групповые масштабы, смесь экспертов, спекулятивное декодирование и дистилляция.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r10-smaller-and-faster-models.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Модели меньше и быстрее","item":"https://newfter.github.io/AI-Compass/ru/path/r10-smaller-and-faster-models.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/r10-smaller-and-faster-models.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Передний край науки</a> · Шаг 10 из 12 · 8 мин</p>
+<h1>Модели меньше и быстрее</h1>
+<p class="pg-lead">Квантование, выбросы и групповые масштабы, смесь экспертов, спекулятивное декодирование и дистилляция.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>💾 Память = параметры × байты</h2>
+<p>Память под веса = число параметров × байты на параметр. Модели с 7 миллиардами параметров в 16-битных числах нужно 7·10⁹ · 2 байта = 14 ГБ (1 ГБ = 10⁹ байт).</p>
+<p>Когда плотная модель декодирует одну последовательность, для каждого нового токена каждый вес читается один раз, поэтому скорость упирается в пропускную способность памяти. Значит, чем меньше байт на параметр, тем меньше нужно памяти и, как правило, тем быстрее декодирование.</p>
+<p><strong>Квантование</strong> (quantisation) — это хранение весов, а иногда и активаций, в более коротких числах: например, в 8- или 4-битных вместо 16-битных.</p>
+<div class="pg-table"><table><thead><tr><th>Точность</th><th>Байт на параметр</th></tr></thead><tbody><tr><td>32 бита</td><td>4</td></tr><tr><td>16 бит</td><td>2</td></tr><tr><td>8 бит</td><td>1</td></tr><tr><td>4 бита</td><td>0,5</td></tr></tbody></table></div><section class="pg-check"><p><strong>Задание.</strong> У модели 7 миллиардов параметров, и каждый хранится как 4-битное число. Сколько ГБ занимают эти числа? (1 ГБ = 10⁹ байт)</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>📏 Квантование по максимуму модуля</h2>
+<p>Самый простой способ превратить веса в 8-битные целые числа — один <strong>масштаб</strong> (scale) s на целый блок весов, например на всю матрицу. Масштаб выбирают так, чтобы наибольший по модулю вес перешёл в ±127: это <strong>квантование по максимуму модуля</strong> (absmax).</p>
+<p>Каждый вес w хранится как целочисленный код q, а в вычислениях используется значение ŵ = q · s.</p>
+<div class="pg-example is-mono"><div>s = max|w| / 127</div><div>q = round(w / s) — целое число от −127 до 127</div><div>ŵ = q · s</div><div>max|w| = 2,54 → s = 0,02</div><div>w = 0,713 → q = round(35,65) = 36 → ŵ = 0,72</div></div>
+<p class="pg-note">Ошибка округления |w − ŵ| никогда не превышает s/2: здесь 0,007 ≤ 0,01.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Веса квантуют в 8-битные целые числа по максимуму модуля: s = max|w| / 127 и q = round(w / s). В блоке max|w| = 2,54. Чему равен целочисленный код q веса w = −1,30?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🌋 Один выброс портит масштаб</h2>
+<p>Пусть теперь один вес в блоке — <strong>выброс</strong> (outlier), намного больше остальных по модулю: 25,4. Масштаб становится 25,4 / 127 = 0,2, и у каждого веса с |w| &lt; 0,1 получается |w / s| &lt; 0,5: он округляется до q = 0. Если таких малых весов большинство, теряется большая часть информации блока.</p>
+<p>Что помогает: <strong>поканальные масштабы</strong> (per-channel) — свой для каждой строки (выходного канала) матрицы весов; <strong>групповые масштабы</strong> (group-wise) — свой для каждой небольшой группы соседних весов, например из 128; и хранение редких выбросов с более высокой точностью.</p>
+<p>В больших трансформерах несколько каналов активаций могут быть намного больше остальных: это одна из причин, по которым активации обычно труднее квантовать, чем веса.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Веса хранятся 4-битными числами в группах по 128, и у каждой группы есть ещё свой 16-битный масштаб. Сколько бит в среднем приходится на один вес с учётом масштабов?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🧠 Смесь экспертов</h2>
+<p><strong>Смесь экспертов</strong> (mixture of experts, MoE) заменяет полносвязный блок (MLP) слоя трансформера на E <strong>экспертов</strong>, каждый из которых — отдельная полносвязная сеть.</p>
+<p><strong>Маршрутизатор</strong> (router), небольшой обучаемый слой, оценивает экспертов для каждого токена и отправляет токен к k экспертам с наибольшими оценками. Их выходы складываются с весами, которые тоже даёт маршрутизатор.</p>
+<p><strong>Активные параметры</strong> — те, которые токен действительно использует: общие части, например слои внимания, плюс его k экспертов. Объём вычислений на токен растёт с числом активных параметров, но в памяти нужно держать все.</p>
+<p class="pg-note">Без дополнительных мер маршрутизатор может научиться отправлять большинство токенов к немногим экспертам. Дополнительная <strong>функция потерь для балансировки нагрузки</strong> (load-balancing loss) помогает загружать экспертов равномерно.</p>
+<section class="pg-check"><p><strong>Задание.</strong> В модели со смесью экспертов 2 миллиарда общих параметров и 8 экспертов по 1,5 миллиарда. Каждый токен идёт к своим 2 лучшим экспертам. Сколько миллиардов параметров активны, то есть участвуют в обработке одного токена?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🏎️ Спекулятивное декодирование</h2>
+<p>При <strong>спекулятивном декодировании</strong> (speculative decoding) маленькая быстрая <strong>черновая модель</strong> (draft model) сэмплирует k следующих токенов по одному из своего распределения q. Затем большая модель за один прямой проход вычисляет своё распределение p во всех k позициях и ещё в одной, после них.</p>
+<p>Для одной последовательности такой проход занимает примерно столько же времени, сколько генерация одного токена: декодирование упирается в трафик памяти, а веса читаются один раз сразу для всех k + 1 позиций.</p>
+<p>Черновые токены проверяют один за другим по правилу ниже — это разновидность выборки с отклонением (rejection sampling), и выход распределён в точности по p. При первом отказе выбирают исправленный токен, а остаток черновика отбрасывают; если приняты все k, дополнительная позиция даёт ещё один токен.</p>
+<div class="pg-example is-mono"><div>принять черновой токен x с вероятностью min(1, p(x) / q(x))</div><div>при первом отказе: выбрать токен из max(0, p − q), перенормировав</div><div>ожидаемое число токенов за проход большой модели = (1 − α^(k+1)) / (1 − α)</div><div>α = 0,5; k = 3 → (1 − 0,0625) / 0,5 = 1,875</div></div>
+<p class="pg-note">α — вероятность того, что черновой токен примут; здесь она считается одинаковой для всех токенов и независимой. Ожидаемое число токенов равно 1 + α + … + α^k: принятые токены плюс исправленный или дополнительный.</p>
+<section class="pg-check"><p><strong>Задание.</strong> При спекулятивном декодировании маленькая черновая модель предлагает токены, а большая проверяет их по стандартному вероятностному правилу. Чем полученный текст отличается от текста, сэмплированного из одной большой модели?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>👩‍🏫 Дистилляция</h2>
+<p>При <strong>дистилляции</strong> (distillation) маленькую <strong>модель-ученика</strong> (student) обучают воспроизводить всё выходное распределение большой <strong>модели-учителя</strong> (teacher), а не только правильный ответ. Оба распределения часто смягчают температурой T &gt; 1: логиты делят на T перед softmax.</p>
+<p>Вероятности учителя — <strong>мягкие метки</strong> (soft targets) — несут информацию, которой нет в <strong>one-hot-метке</strong> (1 у правильного класса, 0 у остальных). Если учитель считает фото кошки немного похожим на собаку и совсем не похожим на грузовик, ученик узнаёт, как связаны классы.</p>
+<p class="pg-note">Функция потерь ученика часто складывается из обычной перекрёстной энтропии с истинными метками и слагаемого, которое тянет его смягчённое распределение к распределению учителя.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Почему мягкие метки модели-учителя могут научить ученика большему, чем одни истинные метки?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li><code>память под веса = параметры × байты на параметр</code>: 7 миллиардов параметров занимают 14 ГБ в 16-битных числах и 3,5 ГБ в 4-битных. Декодирование одной последовательности упирается в пропускную способность памяти, поэтому квантование обычно ещё и ускоряет его.</li><li>8-битное квантование по максимуму модуля хранит <code>round(w / s)</code> при <code>s = max|w| / 127</code>. Один выброс огрубляет масштаб всего блока, отсюда поканальные и групповые масштабы: 4-битные веса в группах по 128 с 16-битным масштабом стоят <code>4 + 16/128 = 4,125</code> бита на вес.</li><li>Смесь экспертов использует для каждого токена только активные параметры — общие части плюс k лучших для него экспертов, — но хранить ей нужно все параметры.</li><li>Спекулятивное декодирование может ускорить генерацию, не меняя распределения большой модели: плохая черновая модель снижает скорость, но не качество. Дистилляция обучает ученика на мягких метках учителя, которые показывают ещё и сходство входа с каждым неверным классом.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="r9-inside-the-model-interpretability.html"><small>Предыдущий шаг</small>Заглянуть внутрь модели: интерпретируемость</a><a href="r11-reasoning-and-test-time-compute.html"><small>Следующий шаг</small>Рассуждения и вычисления во время ответа</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

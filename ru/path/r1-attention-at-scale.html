@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Внимание в больших масштабах: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Зачем делить на √d_k, каузальная маска, KV-кэш, групповое внимание, генерация, которая упирается в память, и FlashAttention. Передний край науки: шаг 1 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Внимание в больших масштабах: шаг за шагом, с заданиями">
+<meta property="og:description" content="Зачем делить на √d_k, каузальная маска, KV-кэш, групповое внимание, генерация, которая упирается в память, и FlashAttention. Передний край науки: шаг 1 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Внимание в больших масштабах","headline":"Внимание в больших масштабах","description":"Зачем делить на √d_k, каузальная маска, KV-кэш, групповое внимание, генерация, которая упирается в память, и FlashAttention.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Внимание в больших масштабах","item":"https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Передний край науки</a> · Шаг 1 из 12 · 8 мин</p>
+<h1>Внимание в больших масштабах</h1>
+<p class="pg-lead">Зачем делить на √d_k, каузальная маска, KV-кэш, групповое внимание, генерация, которая упирается в память, и FlashAttention.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>📏 Зачем делить на √d_k</h2>
+<p>Оценка — это скалярное произведение q·k запроса и ключа, у каждого из которых d_k компонент. Пусть все компоненты независимы, их среднее равно 0, а дисперсия — 1. Тогда у каждого произведения q_i·k_i дисперсия 1, а у их суммы q·k — d_k.</p>
+<p>При d_k = 64 стандартное отклонение оценок равно 8. Softmax от оценок с таким разбросом обычно отдаёт почти весь вес одному или нескольким ключам, и большинство его градиентов становятся крошечными: наступает <strong>насыщение</strong> (saturation). Деление оценок на √d_k = 8 возвращает их дисперсию к 1.</p>
+<div class="pg-example is-mono"><div>Var(q_i·k_i) = E[q_i²]·E[k_i²] = 1</div><div>Var(q·k) = Σ_i Var(q_i·k_i) = d_k</div><div>Var(q·k / √d_k) = 1</div><div>Attention(Q, K, V) = softmax(Q·K^T / √d_k)·V</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> Все компоненты запроса q и ключа k независимы, их среднее равно 0, а дисперсия — 1. В каждом векторе d_k = 256 компонент. Чему равно стандартное отклонение скалярного произведения q·k?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🎭 Каузальная маска</h2>
+<p>Авторегрессионную языковую модель обучают предсказывать следующий токен в каждой позиции текста, причём все позиции обрабатываются за один параллельный проход. Значит, выход в каждой позиции может зависеть только от её токена и предыдущих.</p>
+<p><strong>Каузальная маска</strong> (causal mask) перед softmax заменяет оценку каждого ключа, стоящего позже запроса, на −∞ (в коде часто на очень большое отрицательное число), так что вес такого ключа равен 0. Из n² пар «запрос — ключ» остаётся n(n + 1)/2: при n = 4 это 10 из 16.</p>
+<p class="pg-note">В простой реализации маска не экономит вычислений: замаскированные оценки сначала вычисляются, а потом выбрасываются.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Языковую модель обучают предсказывать каждый следующий токен в тексте из 1000 токенов за один параллельный проход. Что пойдёт не так, если убрать каузальную маску?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🗄️ KV-кэш</h2>
+<p>Чтобы сгенерировать следующий токен, механизму внимания в каждом слое нужны ключи и значения всех предыдущих токенов. Из-за каузальной маски они не меняются, когда появляются новые токены, поэтому их не вычисляют заново, а хранят: это <strong>KV-кэш</strong> (KV cache).</p>
+<p>Тогда на каждом шаге в каждом слое вычисляются запрос, ключ и значение только нового токена, а новые ключ и значение дописываются в кэш.</p>
+<div class="pg-example is-mono"><div>кэш на токен = 2 · слои · KV-головы · размер головы · байты на число</div><div>2 · 32 · 32 · 128 · 2 = 524 288 байт = 2¹⁹ байт = 0,5 МиБ</div></div>
+<p class="pg-note">Множитель 2 учитывает и ключи, и значения, а размер головы — это d_k. В обычном многоголовом внимании (multi-head attention) у каждой головы свои ключи и значения, так что KV-голов столько же, сколько голов. При длинном контексте и большом числе одновременных пользователей кэш может занимать больше памяти, чем веса.</p>
+<section class="pg-check"><p><strong>Задание.</strong> KV-кэш на токен = 2 · слои · KV-головы · размер головы · байты на число. У модели 32 слоя и 32 KV-головы размером 128, числа двухбайтовые. Сколько ГиБ займёт кэш одной последовательности из 4096 токенов? (1 ГиБ = 2³⁰ байт)</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>👥 Одни ключи и значения на несколько голов</h2>
+<p>Во <strong>внимании с одной головой ключей</strong> (multi-query attention) все головы запросов используют одну общую голову ключей и одну общую голову значений.</p>
+<p>В <strong>групповом внимании по запросам</strong> (grouped-query attention) головы запросов разбиты на группы, и у каждой группы одна общая голова ключей и одна голова значений: например, 32 головы запросов в 8 группах по 4.</p>
+<p>Тогда кэш в 32/8 = 4 раза меньше, чем при 32 KV-головах, а каждая голова запросов по-прежнему считает свои оценки. В опубликованных сравнениях групповое внимание по запросам часто оказывается близким по качеству к полному многоголовому вниманию — это одна из причин, по которым его широко используют.</p>
+<p class="pg-note">Многоголовое внимание и внимание с одной головой ключей — два крайних случая группового: по группе на каждую голову запросов и одна группа на всех.</p>
+<section class="pg-check"><p><strong>Задание.</strong> У модели 32 слоя, 32 головы запросов и размер головы 128, числа двухбайтовые. Сопоставь каждый вариант с размером KV-кэша для одной последовательности из 4096 токенов.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>⏱️ Генерацию ограничивает пропускная способность памяти</h2>
+<p>Сначала весь промпт обрабатывается за один параллельный проход — это фаза <strong>prefill</strong>: каждый вес, прочитанный из памяти, используется для многих токенов, и при длинном промпте вычислительные блоки заняты работой. Затем идёт <strong>декодирование</strong> (decoding): по одному новому токену за шаг.</p>
+<p>В <strong>плотной</strong> (dense) модели, которая использует все свои веса для каждого токена, на каждом шаге декодирования одной последовательности каждый вес читается один раз, а на параметр приходится всего около 2 операций: умножение и сложение.</p>
+<p>Современный ускоритель успевает сделать несколько сотен операций за время чтения одного байта, поэтому при декодировании его вычислительные блоки в основном простаивают. Скорость тогда задаёт <strong>пропускная способность памяти</strong> (memory bandwidth): сколько байт в секунду может отдать основная память.</p>
+<div class="pg-example is-mono"><div>время на токен ≥ байты, прочитанные за токен / пропускная способность памяти</div></div>
+<p class="pg-note">Поэтому серверы объединяют запросы многих пользователей в <strong>батч</strong> (batch): одно чтение весов даёт новый токен сразу каждой последовательности в батче.</p>
+<section class="pg-check"><p><strong>Задание.</strong> На каждый новый токен одного пользователя все веса читаются один раз. У модели 10 миллиардов параметров по 2 байта, пропускная способность памяти — 2000 ГБ/с (1 ГБ = 10⁹ байт). Сколько токенов в секунду он получит самое большее?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>⚡ FlashAttention: та же математика, меньше трафика</h2>
+<p>Обычное внимание записывает матрицу оценок n × n в медленную основную память ускорителя и снова читает её для softmax, а затем так же поступает с весами внимания n × n при умножении на V.</p>
+<p><strong>FlashAttention</strong> делит Q, K и V на <strong>тайлы</strong> (tiles), которые помещаются в маленькую быструю память на самом чипе. Для каждого запроса алгоритм хранит текущий максимум m, текущую сумму ℓ и ненормированный выход o и обновляет их тайл за тайлом: это <strong>онлайн-softmax</strong> (online softmax). В конце выход равен o / ℓ.</p>
+<p>Матрица n × n никогда не попадает в основную память. Результат с точностью до округления тот же, что у обычного внимания, а дополнительная память растёт как n вместо n². FlashAttention быстрее не потому, что меньше считает, а потому, что перемещает гораздо меньше байтов: операций по-прежнему около O(n²·d_k).</p>
+<div class="pg-example is-mono"><div>m′ = max(m, max_j s_j)</div><div>ℓ′ = ℓ·e^(m − m′) + Σ_j e^(s_j − m′)</div><div>o′ = o·e^(m − m′) + Σ_j e^(s_j − m′)·v_j</div></div>
+<p class="pg-note">Здесь j пробегает ключи нового тайла, s_j = q·k_j / √d_k — их оценки, v_j — их значения. Когда максимум растёт, всё накопленное раньше умножается на e^(m − m′).</p>
+<section class="pg-check"><p><strong>Задание.</strong> Что меняет FlashAttention по сравнению с обычным вниманием?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Если компоненты q и k независимы, со средним 0 и дисперсией 1, то <code>Var(q·k) = d_k</code>. Деление оценок на √d_k возвращает дисперсию к 1, и это помогает softmax не уходить в насыщение.</li><li>Каузальная маска скрывает более поздние токены. Из-за неё же ключи и значения предыдущих токенов не меняются, и их можно кэшировать.</li><li><code>KV-кэш на токен = 2 · слои · KV-головы · размер головы · байты на число</code>. Групповое внимание по запросам и внимание с одной головой ключей уменьшают его: одну KV-голову используют сразу несколько голов запросов.</li><li>При размере батча 1 декодирование упирается в пропускную способность памяти: <code>токенов в секунду ≤ пропускная способность / байты, прочитанные за токен</code>. FlashAttention — точное внимание, которое экономит трафик памяти, а не вычисления.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><span></span><a href="r2-scaling-laws.html"><small>Следующий шаг</small>Законы масштабирования</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

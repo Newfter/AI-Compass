@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Latent variables and the ELBO: step by step, with tasks | AI Compass</title>
+<meta name="description" content="The ELBO and its gap, the reparameterisation trick, the Gaussian KL term and posterior collapse. Research frontier: step 5 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Latent variables and the ELBO: step by step, with tasks">
+<meta property="og:description" content="The ELBO and its gap, the reparameterisation trick, the Gaussian KL term and posterior collapse. Research frontier: step 5 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Latent variables and the ELBO","headline":"Latent variables and the ELBO","description":"The ELBO and its gap, the reparameterisation trick, the Gaussian KL term and posterior collapse.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Latent variables and the ELBO","item":"https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Research frontier</a> · Step 5 of 12 · 7 min</p>
+<h1>Latent variables and the ELBO</h1>
+<p class="pg-lead">The ELBO and its gap, the reparameterisation trick, the Gaussian KL term and posterior collapse.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🎲 A model with hidden causes</h2>
+<p>A <strong>latent variable</strong> z is an unobserved cause of the data x. First z is drawn from a simple <strong>prior</strong> p(z), its distribution before any x is seen: here N(0, I).</p>
+<p>Then a neural <strong>decoder</strong> with weights θ maps z to a distribution p_θ(x | z) over x, for example a Gaussian with a mean predicted from z.</p>
+<p>Maximum-likelihood training needs the log-likelihood ln p_θ(x) of every training example. But p_θ(x), called the <strong>evidence</strong> or marginal likelihood, is an integral over all possible z:</p>
+<div class="pg-example is-mono"><div>z ~ p(z) = N(0, I)</div><div>x ~ p_θ(x | z)</div><div>p_θ(x) = ∫ p_θ(x | z) · p(z) dz</div></div>
+<section class="pg-check"><p><strong>Task.</strong> A latent variable model has the prior p(z) = N(0, I) and a neural decoder p_θ(x | z). Why is it not trained by simply maximising ln p_θ(x) = ln ∫ p_θ(x | z)·p(z) dz?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📐 The ELBO and its gap</h2>
+<p>Add an <strong>encoder</strong> q_φ(z | x): a second network, with weights φ, that maps x to a distribution over the z that could have produced it. It approximates the true <strong>posterior</strong> p_θ(z | x) = p_θ(x | z)·p(z) / p_θ(x), which is intractable, since it contains p_θ(x).</p>
+<p>The <strong>KL divergence</strong> KL(q ‖ p) = E_q[ln q − ln p] is never negative and is 0 only when q = p. So, by the identity below, the <strong>ELBO</strong> (evidence lower bound) never exceeds ln p_θ(x), and the gap is exactly the KL between the encoder and the posterior.</p>
+<p>Training maximises the ELBO in θ and φ together. A decoder and an encoder trained like this form a <strong>variational autoencoder</strong> (VAE).</p>
+<div class="pg-example is-mono"><div>ln p_θ(x) = ELBO + KL(q_φ(z | x) ‖ p_θ(z | x))</div><div>ELBO = E_q[ln p_θ(x | z)] − KL(q_φ(z | x) ‖ p(z))</div></div>
+<p class="pg-note">Derivation: p_θ(x) = p_θ(x, z) / p_θ(z | x) for every z. Take ln, average over z ~ q_φ(z | x) (written E_q), add and subtract ln q_φ(z | x), then split p_θ(x, z) = p_θ(x | z) · p(z).</p>
+<section class="pg-check"><p><strong>Task.</strong> In a VAE with encoder q_φ(z | x) and decoder p_θ(x | z), one input x has ln p_θ(x) = −1000 nats and an ELBO of −1012 nats. What is KL(q_φ(z | x) ‖ p_θ(z | x)), the divergence between the encoder and the true posterior, in nats?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🔀 The reparameterisation trick</h2>
+<p>The ELBO is an expectation over z ~ q_φ(z | x), estimated with sampled z. But backpropagation cannot pass through a random draw: if z is simply sampled from q_φ, no path leads from z back to φ.</p>
+<p>The <strong>reparameterisation trick</strong> draws noise ε whose distribution does not depend on φ, and computes z as a deterministic, differentiable function of ε and of the encoder's outputs. Then, for a differentiable f such as ln p_θ(x | z), the gradient of E_q[f(z)] reaches φ by ordinary backpropagation.</p>
+<div class="pg-example is-mono"><div>z = μ_φ(x) + σ_φ(x) · ε, ε ~ N(0, I)</div><div>∇_φ E_q[f(z)] = E_ε[∇_φ f(μ_φ(x) + σ_φ(x) · ε)]</div><div>per dimension: ∂z/∂μ = 1, ∂z/∂σ = ε</div><div>without the trick: ∇_φ E_q[f(z)] = E_q[f(z) · ∇_φ ln q_φ(z | x)]</div></div>
+<p class="pg-note">The last line gives the score-function estimator (REINFORCE, also used by policy gradients). It also works for discrete z or a non-differentiable f, where the trick does not apply directly. Both estimators are unbiased, but this one usually has a much higher variance.</p>
+<section class="pg-check"><p><strong>Task.</strong> With the reparameterisation trick, a VAE computes its latent sample as z = μ + σ·ε, where ε ~ N(0, 1). Here μ = 2, σ = 0.5, and the drawn noise is ε = −2. What is ∂z/∂σ for this sample?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📦 The KL term in closed form</h2>
+<p>Take a Gaussian encoder q_φ(z | x) = N(μ, diag(σ²)), whose μ and σ are outputs of the network, and the prior N(0, I). Then the KL term of the ELBO needs no sampling: it has a closed form in each dimension of z, and the KL of the whole z is the sum over its dimensions.</p>
+<p>Both μ² and σ² − 1 − ln σ² are never negative, so the KL of one dimension is 0 only when μ = 0 and σ = 1, that is, when q_φ(z | x) equals the prior there.</p>
+<div class="pg-example is-mono"><div>KL(N(μ, σ²) ‖ N(0, 1)) = ½ · (μ² + σ² − 1 − ln σ²)</div><div>μ = 1, σ = 1 → 0.5 nats</div></div>
+<section class="pg-check"><p><strong>Task.</strong> A Gaussian encoder gives one dimension of z the mean μ = 2 and the standard deviation σ = 1. In that dimension, the KL to the prior is KL(N(μ, σ²) ‖ N(0, 1)) = ½·(μ² + σ² − 1 − ln σ²). What is it, in nats?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🧲 Two forces</h2>
+<p>The two terms of the ELBO pull in different directions. The <strong>reconstruction term</strong> E_q[ln p_θ(x | z)] wants z to describe x as precisely as possible. The KL term pulls q_φ(z | x) towards the same prior for every x.</p>
+<p>Averaged over the data, the KL term is called the <strong>rate</strong>: it is an upper bound on the mutual information between x and z under the encoder, that is, on how many nats z carries about x. A weight β &gt; 1 on it (the <strong>β-VAE</strong>) tends to give a smoother latent space and blurrier reconstructions.</p>
+<div class="pg-example is-mono"><div>E_q[ln p_θ(x | z)] − β · KL(q_φ(z | x) ‖ p(z))</div><div>β = 1: the ELBO; β &gt; 1: the β-VAE objective</div><div>rate = E_x[KL(q_φ(z | x) ‖ p(z))] ≥ I(x; z)</div></div>
+<p class="pg-note">Diffusion models, the next step of your path, are usually trained by maximising a reweighted ELBO of the same kind.</p>
+<section class="pg-check"><p><strong>Task.</strong> A VAE has a very powerful decoder: it predicts each pixel from all the previous ones. Training reaches a good ELBO, but KL(q_φ(z | x) ‖ p(z)) ends up close to 0 for every input. What has most likely happened?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>A latent variable model <code>p_θ(x) = ∫ p_θ(x | z)·p(z) dz</code> with a neural decoder has an intractable likelihood, so a VAE trains an encoder q_φ(z | x) alongside the decoder.</li><li><code>ln p_θ(x) = ELBO + KL(q_φ(z | x) ‖ p_θ(z | x))</code>: the ELBO is a lower bound, and its gap is the KL between the encoder and the true posterior.</li><li>The reparameterisation <code>z = μ + σ·ε</code> lets gradients flow through samples (∂z/∂σ = ε). With a Gaussian encoder and the prior N(0, I), the KL term is the sum over dimensions of <code>½·(μ² + σ² − 1 − ln σ²)</code>.</li><li>When the decoder can model x without z, the KL can fall to about 0 and z becomes useless: posterior collapse.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="r4-why-giant-networks-generalise.html"><small>Previous step</small>Why giant networks generalise</a><a href="r6-diffusion-models.html"><small>Next step</small>Diffusion models</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Переобучение и как его поймать: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Потери на обучении и на валидации, ранняя остановка и регуляризация. Под капотом: шаг 4 из 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Переобучение и как его поймать: шаг за шагом, с заданиями">
+<meta property="og:description" content="Потери на обучении и на валидации, ранняя остановка и регуляризация. Под капотом: шаг 4 из 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Переобучение и как его поймать","headline":"Переобучение и как его поймать","description":"Потери на обучении и на валидации, ранняя остановка и регуляризация.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Переобучение и как его поймать","item":"https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/p6-overfitting-and-how-to-catch-it.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Под капотом</a> · Шаг 4 из 8 · 7 мин</p>
+<h1>Переобучение и как его поймать</h1>
+<p class="pg-lead">Потери на обучении и на валидации, ранняя остановка и регуляризация.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>📊 Потери: два числа, а не одно</h2>
+<p>Обучение уменьшает функцию потерь на примерах, на которых модель учится: это <strong>потери на обучении</strong> (training loss).</p>
+<p>Но работать модели предстоит с новыми примерами. Поэтому потери считают ещё и на отложенных примерах, на которых модель никогда не учится: это <strong>потери на валидации</strong> (validation loss).</p>
+<p>Только потери на валидации показывают, как модель справляется с новыми данными. Вот оба числа для одной модели после 1, 5, 10, 20 и 40 эпох:</p>
+<div class="pg-table"><table><thead><tr><th>Эпоха</th><th>Потери на обучении</th><th>Потери на валидации</th></tr></thead><tbody><tr><td>1</td><td>0,90</td><td>0,95</td></tr><tr><td>5</td><td>0,40</td><td>0,50</td></tr><tr><td>10</td><td>0,20</td><td>0,42</td></tr><tr><td>20</td><td>0,08</td><td>0,55</td></tr><tr><td>40</td><td>0,02</td><td>0,80</td></tr></tbody></table></div><p class="pg-note"><strong>Эпоха</strong> — это один полный проход по всем обучающим примерам.</p>
+<section class="pg-check"><p><strong>Задание.</strong> В таблице — потери одной модели на обучающих примерах и на отложенных валидационных. На какой из этих эпох модель лучше всего справляется с новыми данными?</p><details><summary>Показать решение</summary><p>Потери на валидации считают на примерах, на которых модель не училась, и на эпохе 10 они наименьшие (0,42). Дальше они растут, хотя потери на обучении продолжают падать. Оставить веса этой эпохи и прекратить обучение — это <strong>ранняя остановка</strong> (early stopping).</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> С эпохи 10 по эпоху 40 потери на обучении продолжали падать, с 0,20 до 0,02, а потери на валидации всё это время росли, с 0,42 до 0,80. Что происходит?</p>
+<ol type="A" class="pg-options"><li><button type="button">Недообучение: модель слишком проста, чтобы уловить закономерность</button></li><li><button type="button">Скорость обучения слишком мала, и модель почти перестала учиться</button></li><li><button type="button">Отложенных примеров слишком мало, и этот рост — просто случайный шум</button></li><li><button type="button" data-right>Переобучение: модель заучивает обучающие примеры вместе с шумом</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Переобучение: модель заучивает обучающие примеры вместе с шумом</strong></p><p>На своих обучающих примерах модель становится всё лучше, а на тех, на которых не училась, — всё хуже. Она заучивает подробности и случайный шум обучающих примеров, а на новых данных они не помогают: это <strong>переобучение</strong> (overfitting). <strong>Недообучение</strong> (underfitting) — наоборот: высокими остаются даже потери на обучении.</p></details>
+</div></section>
+<h2>✂️ Раздели данные на три части</h2>
+<p>Только что мы выбрали эпоху по потерям на валидации. Но результат — честная оценка качества на новых данных, только если примеры, на которых он получен, не участвовали ни в одном решении: ни в подборе весов, ни в выборе настроек.</p>
+<p>Поэтому до обучения данные делят на три части, и у каждой своя задача:</p>
+<div class="pg-example"><div><strong>Обучающая выборка</strong>: по ней подбирают веса.</div><div><strong>Валидационная выборка</strong>: по ней выбирают гиперпараметры и момент остановки.</div><div><strong>Тестовая выборка</strong>: её используют один раз, в самом конце, чтобы сообщить результат.</div></div>
+<p class="pg-note"><strong>Гиперпараметры</strong> — это настройки, которые градиентный спуск не подбирает: например, скорость обучения или число слоёв.</p>
+<section class="pg-check"><p><strong>Задание.</strong> В наборе данных 2000 примеров. Ты откладываешь 15% на валидацию и 15% на тест. Сколько примеров остаётся для обучения?</p><details><summary>Показать решение</summary><p>100% − 15% − 15% = 70%, а 70% от 2000 — это 0,7·2000 = 1400. Остальные 600 примеров (300 на валидацию и 300 на тест) в обучении не участвуют: это плата за честный результат.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Модель обучили 50 раз с разными гиперпараметрами и оставили вариант с лучшим результатом на тестовой выборке. Что не так, если представить этот результат как качество на новых данных?</p>
+<ol type="A" class="pg-options"><li><button type="button">Он занижен: на действительно новых данных модель покажет результат ещё выше</button></li><li><button type="button">Честен только результат на обучающей выборке, и сообщать можно только его</button></li><li><button type="button" data-right>Он завышен: тестовая выборка помогала выбирать и перестала быть новыми данными</button></li><li><button type="button">Всё в порядке: тестовая выборка как раз и нужна, чтобы выбирать лучшие настройки</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Он завышен: тестовая выборка помогала выбирать и перестала быть новыми данными</strong></p><p>Лучший из 50 результатов — отчасти везение: какие-то настройки случайно подошли именно этим тестовым примерам. Если выбирать по тестовой выборке, это везение попадает в результат, поэтому на действительно новых данных он обычно ниже. Выбирай по валидационной выборке, а тестовую используй один раз, в самом конце.</p></details>
+</div></section>
+<h2>🧲 Регуляризация: пусть большие веса чего-то стоят</h2>
+<p>Чтобы подогнаться под отдельные примеры и их шум, модели часто нужны большие веса. <strong>Регуляризация</strong> — это изменения в обучении, которые мешают такой зубрёжке.</p>
+<p>Очень распространённый вид регуляризации — <strong>L2-штраф</strong>: он назначает цену за большие веса. К обычной функции потерь <code>L_data</code> он прибавляет сумму квадратов всех весов, умноженную на небольшое число λ. Обучение теперь уменьшает потери вместе со штрафом, и модель оставляет большой вес, только если он действительно помогает.</p>
+<div class="pg-example is-mono"><div>L_total = L_data + λ·Σw²</div><div>Σw² = w₁² + w₂² + …</div></div>
+<p class="pg-note">λ — гиперпараметр: он задаёт цену. Ещё один распространённый способ регуляризации — <strong>dropout</strong> (дропаут): на каждом шаге обучения случайная часть нейронов отключается, и сеть не может полагаться ни на один из них.</p>
+<section class="pg-check"><p><strong>Задание.</strong> У модели два веса: w = (3; −4). L2-штраф прибавляет к функции потерь λ·Σw²: сумму квадратов весов, умноженную на λ. Сколько он прибавит при λ = 0,01?</p><details><summary>Показать решение</summary><p>Квадраты весов: 3² = 9 и (−4)² = 16. Их сумма равна 25, а 0,01·25 = 0,25. Знак веса не важен, важна только его величина, а из-за квадрата большие веса обходятся гораздо дороже маленьких.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> L2-штраф за один вес равен λ·w², поэтому его градиент по w равен 2λw. Чему равен этот градиент при w = 5 и λ = 0,1?</p><details><summary>Показать решение</summary><p>2·0,1·5 = 1. В обновлении w ← w − η · градиент (η — скорость обучения) штраф вычитает из веса η·2λw: на каждом шаге он отнимает у каждого веса одну и ту же малую долю и тянет его к нулю. Поэтому L2-регуляризацию называют ещё <strong>затуханием весов</strong> (weight decay): при обычном градиентном спуске это одно и то же.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> Модель переобучается. Какие из этих изменений борются с переобучением, а какие его усиливают?</p><details><summary>Показать решение</summary><p>Все средства от переобучения затрудняют зубрёжку или делают её менее полезной: более разнообразные примеры, плата за большие веса, случайно отключённые нейроны, своевременная остановка. Меньше примеров, лишние эпохи и отказ от регуляризации зубрёжку облегчают.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> У модели потери на обучающей выборке 0,45, а на валидационной — 0,47. Оба значения слишком велики для задачи. В чём проблема и что с ней делать?</p>
+<ol type="A" class="pg-options"><li><button type="button">Переобучение: добавить dropout или усилить L2-штраф</button></li><li><button type="button">Валидационные примеры попали в обучающие: убрать их оттуда</button></li><li><button type="button">Валидационная выборка слишком велика: перенести часть в обучающую</button></li><li><button type="button" data-right>Недообучение: взять модель побольше или учить её дольше</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Недообучение: взять модель побольше или учить её дольше</strong></p><p>Потери почти равны, значит, признаков зубрёжки нет: на своих обучающих примерах модель так же плоха, как на новых. Она слишком проста или училась слишком мало, чтобы уловить закономерность: это <strong>недообучение</strong>. Помочь может модель побольше или более долгое обучение. А добавлять регуляризацию или данные бесполезно.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Сначала подумай.</strong> У модели accuracy 99% на валидационной выборке, но в продакшене, на реальных пользователях, она всё равно подводит. Как такое может быть?</p><details><summary>Показать ответ</summary><p>Мир может отличаться от данных. Новые пользователи, новые устройства или новый сезон приносят примеры, не похожие на те, на которых модель обучали и проверяли. Это <strong>сдвиг распределения</strong> (distribution shift).</p>
+<p>Валидационная выборка могла не быть по-настоящему новой. Возможно, в неё попали копии обучающих примеров или в данных были сведения из будущего, которых ещё нет в тот момент, когда модель должна ответить. Это <strong>утечка данных</strong> (data leakage): из-за неё результат выглядит лучше, чем на самом деле.</p>
+<p>Число могло скрывать проблему. Если положительных случаев всего 1%, модель, которая всегда отвечает «нет», получает accuracy 99% и не находит ничего.</p></details></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Суди о модели по потерям на отложенных примерах, а не на обучающих: только примеры, на которых она не училась, показывают, как она справляется с новыми данными.</li><li>Потери на обучении падают, а на валидации растут — это <strong>переобучение</strong>. И те и другие остаются высокими — <strong>недообучение</strong>.</li><li>Обучающая выборка — чтобы подбирать веса, валидационная — чтобы выбирать, тестовая — чтобы один раз сообщить результат.</li><li>С переобучением борются L2-штраф <code>λ·Σw²</code>, dropout, более разнообразные данные и ранняя остановка.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="p5-backpropagation-by-hand.html"><small>Предыдущий шаг</small>Обратное распространение своими руками</a><a href="p3-measure-a-classifier.html"><small>Следующий шаг</small>Измерь классификатор</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

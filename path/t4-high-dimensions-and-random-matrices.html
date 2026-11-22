@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>High dimensions and random matrices: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Compute shell widths, projection dimensions and the edges of a noise spectrum. Theory at the limit: step 4 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t4-high-dimensions-and-random-matrices.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="High dimensions and random matrices: step by step, with tasks">
+<meta property="og:description" content="Compute shell widths, projection dimensions and the edges of a noise spectrum. Theory at the limit: step 4 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"High dimensions and random matrices","headline":"High dimensions and random matrices","description":"Compute shell widths, projection dimensions and the edges of a noise spectrum.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"High dimensions and random matrices","item":"https://newfter.github.io/AI-Compass/path/t4-high-dimensions-and-random-matrices.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t4-high-dimensions-and-random-matrices.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 4 of 12 · 10 min</p>
+<h1>High dimensions and random matrices</h1>
+<p class="pg-lead">Compute shell widths, projection dimensions and the edges of a noise spectrum.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🌐 High dimension: the mass sits in a thin shell</h2>
+<p>Scaling a body in R^d by a factor r multiplies its volume by r^d. So the part of a ball within a share 1 − ε of its radius holds only (1 − ε)^d of the volume: once d·ε is large, almost all of the ball is a thin layer under its surface.</p>
+<p>A standard Gaussian x ~ N(0, I_d) does the same in its own way. ‖x‖² is a sum of d independent squares x_i², each with mean 1 and variance E[x_i⁴] − 1 = 2. So ‖x‖² has mean d and standard deviation √(2d), small next to d: the length ‖x‖ stays close to √d.</p>
+<p>The density is highest at the origin, yet almost no sample lands near it: the volume at radius r grows as r^(d−1), and the product of the two peaks near √d. A Gaussian in high dimension is a <strong>thin shell</strong>, not a ball. How thin: that is your next task.</p>
+<div class="pg-example is-mono"><div>ball of radius R: share of the volume inside radius (1 − ε)·R = (1 − ε)^d</div><div>d = 100, ε = 0.05: 0.95¹⁰⁰ ≈ 0.006, so 99.4% lies in the outer 5%</div><div>x ~ N(0, I_d): E[‖x‖²] = d, Var(‖x‖²) = 2d</div><div>d = 10,000: ‖x‖² = 10,000 ± 141, so ‖x‖ is close to 100</div></div>
+<p class="pg-note">The same counting is the <strong>curse of dimensionality</strong>: a grid of spacing 0.1 on the cube [0, 1]^d has 10^d cells, so a method that needs a training point within a fixed distance of every query needs a number of samples exponential in d.</p>
+<section class="pg-check"><p><strong>Task.</strong> x ~ N(0, I_d) with d = 20,000: ‖x‖² has mean d and standard deviation √(2d). Linearise the root: √(d + u) ≈ √d + u/(2·√d). What is the standard deviation of the length ‖x‖ in this approximation? Two decimal places.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🧭 Almost everything is almost orthogonal</h2>
+<p>Let u and v be independent random unit vectors in R^d, each uniform on the sphere. By symmetry their cosine u·v is distributed like one coordinate u_1. The d coordinates share one distribution and their squares add up to 1, so E[u_1²] = 1/d: the cosine has mean 0 and standard deviation exactly 1/√d.</p>
+<p>Its tails are no heavier than Gaussian ones: a bound on the area of a spherical cap gives P(|u·v| ≥ ε) ≤ 2·exp(−d·ε²/2) for 0 &lt; ε &lt; 1. Two random directions in high dimension are almost orthogonal with overwhelming probability.</p>
+<p>So far more than d almost orthogonal directions fit. Draw N such vectors independently: they form fewer than N²/2 pairs, so by the union bound P(some pair has |cos| ≥ ε) &lt; N²·exp(−d·ε²/2). If that is at most 1, some set of N vectors has every pairwise |cos| below ε.</p>
+<div class="pg-example is-mono"><div>u, v independent, uniform on the unit sphere of R^d:</div><div>E[u·v] = 0, Var(u·v) = 1/d; d = 10,000: standard deviation 0.01</div><div>P(|u·v| ≥ ε) ≤ 2·exp(−d·ε²/2); d = 10,000, ε = 0.1: at most 2·e^(−50)</div></div>
+<p class="pg-note">Exactly orthogonal directions: at most d. Almost orthogonal ones: a number exponential in d. This is the room that <strong>superposition</strong> uses: a network can store more features than it has dimensions, as directions that interfere only slightly.</p>
+<section class="pg-check"><p><strong>Task.</strong> Independent uniform random unit vectors u, v in R^d: P(|u·v| ≥ ε) ≤ 2·exp(−d·ε²/2). N such vectors form fewer than N²/2 pairs. For which smallest d does the union bound show that N = 10⁶ of them can have all pairwise |cos| &lt; 0.1?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> True or false? Each statement can be checked with a formula from the screens before and a short calculation.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📏 Johnson–Lindenstrauss: distances survive a random projection</h2>
+<p>Let A be a k × d matrix with independent N(0, 1/k) entries: a <strong>random projection</strong> from R^d to R^k. For a fixed x, the k coordinates of A·x are independent N(0, ‖x‖²/k). So ‖A·x‖²/‖x‖² is the mean of k squared standard normals: 1 on average, and close to 1 when k is large.</p>
+<p><strong>Johnson–Lindenstrauss lemma</strong>: for 0 &lt; ε &lt; 1 and any n points in R^d, if k satisfies the bound below, some linear map to R^k multiplies every squared distance between two of the points by a factor between 1 − ε and 1 + ε. The distances themselves then also change by a factor within 1 ± ε.</p>
+<p>The original dimension d does not appear, and n enters only through ln n. The proof (your next task) shows that a random A works with probability at least 1/n. With 6 in place of 4 in the bound, one draw fails with probability below 1/n.</p>
+<div class="pg-example is-mono"><div>for a fixed x and 0 &lt; ε &lt; 1:</div><div>P(‖A·x‖² outside (1 ± ε)·‖x‖²) ≤ 2·exp(−(k/2)·(ε²/2 − ε³/3))</div><div>enough for all pairs of n points at once: k ≥ 4·ln n / (ε²/2 − ε³/3)</div><div>n = 1000, ε = 0.2: 4·6.9078 / 0.017333 = 1594.1, so k = 1595</div></div>
+<section class="pg-check"><p><strong>Task.</strong> A is a k × d matrix with independent N(0, 1/k) entries. Order the proof that, for k ≥ 4·ln n / (ε²/2 − ε³/3), it keeps all squared distances between n given points within a factor 1 ± ε with positive probability.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Johnson–Lindenstrauss: any n points in R^d can be mapped linearly to R^k so that every squared pairwise distance changes by a factor within 1 ± ε, if k ≥ 4·ln n / (ε²/2 − ε³/3). Smallest such k for n = 10⁶ and ε = 0.3?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> For n = 1000 points in R^d, d = 10⁶, and ε = 0.2, the Johnson–Lindenstrauss bound is k ≥ 1595. Someone concludes: “So these points cannot be mapped to fewer than 1595 dimensions with distortion at most ε.” What is wrong?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📊 Marchenko–Pastur: the spectrum of pure noise</h2>
+<p>X has n rows (samples) and p columns (features); its entries are independent and identically distributed, with mean 0 and variance 1. So the true covariance is the identity. The <strong>sample covariance</strong> is S = X^T·X/n. Each entry of S is within about 1/√n of the identity's, yet the eigenvalues of S are not near 1.</p>
+<p><strong>Marchenko–Pastur law</strong>: as n and p grow with p/n → γ in (0, 1], the histogram of the eigenvalues of S converges to a fixed density on the interval below. If the entries have a finite fourth moment, the smallest and the largest eigenvalue converge to its two ends.</p>
+<p>The eigenvalues still average 1, but with variance γ: a spread made by sampling alone. Only γ → 0, many samples per feature, brings the identity back. At γ = 1 the lower end reaches 0: S is nearly singular, and whatever inverts S amplifies noise.</p>
+<div class="pg-example is-mono"><div>γ = p/n, a = (1 − √γ)², b = (1 + √γ)²</div><div>density on [a, b]: √((b − λ)·(λ − a)) / (2π·γ·λ)</div><div>γ = 0.25: [0.25, 2.25]; γ = 1: [0, 4]</div><div>singular values of X: from about √n − √p to about √n + √p</div></div>
+<p class="pg-note">So a largest eigenvalue of 2.2 in the sample covariance of 100 features with unit variance on 400 samples is no sign of structure: independent noise alone reaches 2.25.</p>
+<section class="pg-check"><p><strong>Task.</strong> X has n rows and p = 0.36·n columns of independent N(0, 1) entries. As n grows, the eigenvalues of S = X^T·X/n fill [(1 − √γ)², (1 + √γ)²], γ = p/n (Marchenko–Pastur). What is the limiting ratio of the largest to the smallest?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge, on paper. y = x·β + noise of variance σ², x ~ N(0, I_p); β̂ is the least-squares fit on n &gt; p examples (rows of X). Express the excess risk on a new x by the eigenvalues of S = X^T·X/n. What happens as p → n?</p><details><summary>Show the answer</summary><p>β̂ = (X^T·X)⁻¹·X^T·y = β + (X^T·X)⁻¹·X^T·e, where e holds the n noise values. A new x is independent of β̂ and has identity covariance, so the excess risk (the expected squared error on a new example, minus σ²) is E[(x·(β̂ − β))²] = E‖β̂ − β‖².</p>
+<p>Average over e with E[e·e^T] = σ²·I: for a given X, E‖β̂ − β‖² = σ²·tr((X^T·X)⁻¹) = (σ²/n)·Σ_i 1/λ_i, where λ_i are the eigenvalues of S. Each direction receives noise in proportion to 1/λ_i: a direction in which the sample hardly varies is fitted on almost nothing.</p>
+<p>Under the Marchenko–Pastur density the mean of 1/λ is 1/(1 − γ), so the risk tends to σ²·γ/(1 − γ): the smallest λ_i, near (1 − √γ)², go to 0 as p → n. For Gaussian features its mean is exactly σ²·p/(n − p − 1) if p &lt; n − 1. This blow-up at p ≈ n is the peak of <strong>double descent</strong>: ill-conditioning, already in linear regression.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> Least squares on n = 101 examples with features x ~ N(0, I_p) and noise variance σ² = 1: for p &lt; n − 1 the expected excess risk is σ²·p/(n − p − 1). By what factor does it grow when p rises from 90 to 99?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Thin shells: a ball in R^d keeps only <code>(1 − ε)^d</code> of its volume within a share 1 − ε of its radius, and for x ~ N(0, I_d) the length ‖x‖ is close to <code>√d</code>, with a standard deviation near <code>1/√2 ≈ 0.71</code> for every large d.</li><li>Two independent random unit vectors in R^d: their cosine has mean 0 and standard deviation <code>1/√d</code>, and <code>P(|cos| ≥ ε) ≤ 2·exp(−d·ε²/2)</code>. So <code>exp(d·ε²/4)</code> directions with all pairwise |cos| &lt; ε exist: the room for superposition.</li><li>Johnson–Lindenstrauss: <code>k ≥ 4·ln n / (ε²/2 − ε³/3)</code> dimensions suffice for a linear map, found as a random projection, that keeps all squared distances between n points within a factor 1 ± ε. No d in the bound; it is sufficient, not necessary.</li><li>Marchenko–Pastur: for p/n → γ ≤ 1 the eigenvalues of the sample covariance of i.i.d. unit-variance noise fill <code>[(1 − √γ)², (1 + √γ)²]</code>. Least squares pays <code>σ²·p/(n − p − 1)</code> (Gaussian features, p &lt; n − 1): the blow-up at p ≈ n is the peak of double descent.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="t3-information-theory-of-learning.html"><small>Previous step</small>Information theory of learning</a><a href="t5-kernels-and-the-infinite-width-limit.html"><small>Next step</small>Kernels and the infinite-width limit</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

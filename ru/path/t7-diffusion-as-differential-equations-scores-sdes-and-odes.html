@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Диффузия как дифференциальные уравнения: скор, СДУ и ОДУ: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Выведи формулу Твиди и ОДУ потока; вычисли скоры, сносы и правдоподобие. Теория на пределе: шаг 7 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Диффузия как дифференциальные уравнения: скор, СДУ и ОДУ: шаг за шагом, с заданиями">
+<meta property="og:description" content="Выведи формулу Твиди и ОДУ потока; вычисли скоры, сносы и правдоподобие. Теория на пределе: шаг 7 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Диффузия как дифференциальные уравнения: скор, СДУ и ОДУ","headline":"Диффузия как дифференциальные уравнения: скор, СДУ и ОДУ","description":"Выведи формулу Твиди и ОДУ потока; вычисли скоры, сносы и правдоподобие.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Диффузия как дифференциальные уравнения: скор, СДУ и ОДУ","item":"https://newfter.github.io/AI-Compass/ru/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Теория на пределе</a> · Шаг 7 из 12 · 10 мин</p>
+<h1>Диффузия как дифференциальные уравнения: скор, СДУ и ОДУ</h1>
+<p class="pg-lead">Выведи формулу Твиди и ОДУ потока; вычисли скоры, сносы и правдоподобие.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🧭 Скор зашумлённых данных</h2>
+<p><strong>Скор</strong> (score) плотности p — это ∇_x ln p(x): направление, в котором ln p растёт быстрее всего. Нормировочная константа в него не входит. Для N(m, s²·I) скор равен −(x − m)/s²: это стрелка к среднему (строка 1).</p>
+<p>Диффузионная модель зашумляет данные: x_t = α_t·x_0 + σ_t·ε, где ε ~ N(0, I); для дискретного расписания α_t = √ᾱ_t и σ_t = √(1 − ᾱ_t). При заданном x_0 величина x_t гауссова, и её скор известен (строка 2). А сэмплированию нужен скор маргинальной плотности p_t — смеси по всем данным: для реальных данных явной формулы нет.</p>
+<p>Мост — строка 3: маргинальный скор равен апостериорному среднему условных. Регрессия с квадратичной ошибкой выучивает условное среднее, поэтому среди всех функций от x_t потери из строки 4 минимизирует ∇ ln p_t: это <strong>сопоставление скоров с шумоподавлением</strong> (denoising score matching). Через предсказанный шум: s_θ = −ε_θ/σ_t.</p>
+<div class="pg-example is-mono"><div>N(2, 4) в точке x = 0: ∇ ln p = −(0 − 2)/4 = 0,5</div><div>∇ ln p(x_t | x_0) = −(x_t − α_t·x_0)/σ_t² = −ε/σ_t</div><div>∇ ln p_t(x_t) = E[∇ ln p(x_t | x_0) | x_t] = −E[ε | x_t]/σ_t</div><div>E‖s_θ(x_t, t) + ε/σ_t‖² = E‖s_θ(x_t, t) − ∇ ln p_t(x_t)‖² + C</div></div>
+<p class="pg-note">Доказательство строки 3: ∇p_t(x) = ∫ p(x_0)·∇p(x | x_0) dx_0 = ∫ p(x_0)·p(x | x_0)·∇ ln p(x | x_0) dx_0; делим на p_t(x) и применяем формулу Байеса. В строке 4 константа C не зависит от θ: это разброс цели вокруг её апостериорного среднего, и никакая функция от x_t его не уберёт.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Данные — две точки: x_0 = +1 или −1 с вероятностью ½ каждая. При уровне шума α_t = 0,6 и σ_t = 0,8 найди скор ∇ ln p_t(x_t) зашумлённых данных в точке x_t = 0,32. Округли до одного знака после запятой.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Возьми условное среднее при данном x_t от x_t = α_t·x_0 + σ_t·ε и подставь ∇ ln p_t(x_t) = −E[ε | x_t]/σ_t. Какая формула получается для апостериорного среднего E[x_0 | x_t] — выхода идеального денойзера (denoiser)?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Формула Твиди для x_t = α_t·x_0 + σ_t·ε, ε ~ N(0, I): E[x_0 | x_t] = (x_t + σ_t²·∇ ln p_t(x_t))/α_t. Идеальный денойзер выдаёт E[x_0 | x_t] = 0,5 в точке x_t = 1,1 при α_t = 0,6 и σ_t = 0,8. Чему равен скор ∇ ln p_t(x_t)?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🌊 Одни и те же маргинальные распределения, три уравнения</h2>
+<p>В непрерывном времени зашумление — это <strong>стохастическое дифференциальное уравнение</strong> (СДУ): снос f плюс шум интенсивности g, где w — броуновское движение. Выбор из строки 2, <strong>сохраняющий дисперсию</strong> (variance-preserving, VP), даёт x_t = α_t·x_0 + σ_t·ε с α_t = exp(−½·∫_0^t β(s) ds) и σ_t² = 1 − α_t².</p>
+<p>При мягких условиях регулярности те же маргинальные распределения (маргиналы) p_t дают ещё два уравнения: <strong>СДУ в обратном времени</strong>, от t = T к 0 (w̄ — броуновское движение в обратном времени), и детерминированное <strong>ОДУ вероятностного потока</strong> (probability flow ODE). От данных они зависят только через скор ∇ ln p_t.</p>
+<p>Сэмплер берёт x_T из N(0, I) ≈ p_T, подставляет вместо скора s_θ = −ε_θ/σ_t и интегрирует назад по времени. Если стартовать из p_T с точным скором, оба уравнения при каждом t проходят через то же p_t, что и прямое СДУ; при выученном скоре — лишь приближённо.</p>
+<div class="pg-example is-mono"><div>прямое СДУ: dx = f(x, t)·dt + g(t)·dw</div><div>VP: f = −½·β(t)·x, g = √β(t)</div><div>обратное СДУ: dx = [f − g²·∇ ln p_t(x)]·dt + g·dw̄</div><div>ОДУ: dx/dt = f − ½·g²·∇ ln p_t(x)</div><div>β = 2; x = 1; скор −0,4: снос ОДУ −1 + 0,4 = −0,6; снос обратного СДУ −1 + 0,8 = −0,2</div></div>
+<p class="pg-note">В обратном времени dt отрицательно. Шаг Эйлера для ОДУ от t к t − Δt: x ← x − Δt·[f − ½·g²·∇ ln p_t(x)]; в обратном СДУ стоит полное g² и добавляется g·√Δt·z, где z ~ N(0, I).</p>
+<section class="pg-check"><p><strong>Задание.</strong> У диффузии, сохраняющей дисперсию (VP), f = −½·β·x и g² = β. Её ОДУ вероятностного потока: dx/dt = f − ½·g²·∇ ln p_t(x), а скор равен −ε_θ/σ_t. При β = 4; x = 1,5; σ_t = 0,5 сеть предсказывает ε_θ = 0,4. Чему равно dx/dt?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Плотность процесса dx = f·dt + g·dw подчиняется уравнению Фоккера — Планка ∂p_t/∂t = −∇·(f·p_t) + ½·g²·Δp_t (∇· — дивергенция, Δ — лапласиан). Расставь по порядку шаги, которыми из него выводится ОДУ вероятностного потока.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Скор точный. Какой шаг неверен? (1) У ОДУ вероятностного потока те же маргиналы p_t, что у прямого СДУ. (2) Значит, идя назад из x_T ~ p_T, оно даёт x_0 ~ p_0. (3) Значит, оно возвращает тот x_0, который СДУ зашумило в x_T.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>📐 Что даёт ОДУ, и пример, на котором всё можно проверить</h2>
+<p>ОДУ вероятностного потока — обычное ОДУ. К нему применимы методы высокого порядка, и на практике им нужно гораздо меньше вызовов сети, чем СДУ-сэмплерам. Его поток обратим: интегрирование вперёд от x_0 даёт единственный <strong>латентный код</strong> (latent code) x_T. А плотности меняются по формуле замены переменных (строки 1 и 2).</p>
+<p>Если подставить s_θ вместо скора и N(0, I) вместо p_T, строка 2 — это точный логарифм плотности модели самого ОДУ-сэмплера, с точностью до ошибки численного метода. СДУ-сэмплер с той же сетью задаёт, вообще говоря, другое распределение, и для него есть лишь граница на логарифм правдоподобия.</p>
+<p>Пример, где всё проверяется вручную: x_0 ~ N(0, v) в одномерном случае. Тогда p_t = N(0, V_t), а скор линеен по x (строка 3). При v = 1 и расписании VP получается V_t = 1 при всех t: плотность стационарна, и правая часть ОДУ равна нулю. В ОДУ ни одна точка не движется, а в обоих СДУ каждая точка продолжает блуждать.</p>
+<div class="pg-example is-mono"><div>d ln p_t(x(t))/dt = −∇·u(x(t), t), u = f − ½·g²·∇ ln p_t</div><div>ln p_0(x(0)) = ln p_T(x(T)) + ∫_0^T ∇·u(x(t), t) dt</div><div>x_0 ~ N(0, v): V_t = α_t²·v + σ_t², ∇ ln p_t(x) = −x/V_t</div><div>v = 1, VP: V_t = 1 и u = −½·β·x + ½·β·x = 0</div><div>v = 4; α_t = 0,6; σ_t = 0,8: V_t = 0,36·4 + 0,64 = 2,08</div></div>
+<p class="pg-note">Строка 1 верна вдоль траектории x(t) ОДУ: d ln p_t(x(t))/dt = ∂ ln p_t/∂t + u·∇ ln p_t, а уравнение непрерывности превращает это в −∇·u. В высокой размерности дивергенцию обычно не вычисляют точно, а оценивают с помощью случайных пробных векторов.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Для данных N(0, v) одномерное ОДУ вероятностного потока линейно: dx/dt = a(t)·x. Пусть ∫_0^T a(t) dt = −ln 2, p_T = N(0, 1). Вдоль траектории d ln p_t(x(t))/dt = −a(t). Чему равен ln p_0(x_0) при x_0 = 2? Округли до сотых.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🎯 Наведение — это формула Байеса для скоров</h2>
+<p>Чтобы сэмплировать при условии c (класс, текстовый запрос), прологарифмируем формулу Байеса p_t(x | c) = p_t(x)·p_t(c | x)/p_t(c) и возьмём градиент по x: p_t(c) пропадает (строка 1). Наведение по классификатору (classifier guidance) берёт последнее слагаемое у классификатора, обученного на зашумлённых входах.</p>
+<p>Наведение без классификатора (classifier-free) умножает на w разность s_c − s_u скоров сети с условием c и без него (строка 2). При w = 1 это точный условный скор, при w &gt; 1 — скор p_t(x)·p_t(c | x)^w при всех t. Это в общем случае не маргиналы одного процесса зашумления: сэмплы не следуют ни p(x | c), ни точно p(x)·p(c | x)^w.</p>
+<p>И о весах при обучении. Обычные потери ‖ε − ε_θ‖² учитывают все уровни шума одинаково в ε-пространстве; так как s_θ = −ε_θ/σ_t, это сопоставление скоров с весом σ_t² (строка 3). Границе правдоподобия модели с обратным СДУ соответствует вес g(t)² на его месте (строка 4, здесь без доказательства).</p>
+<div class="pg-example is-mono"><div>∇ ln p_t(x | c) = ∇ ln p_t(x) + ∇ ln p_t(c | x)</div><div>с наведением: s_u + w·(s_c − s_u) = ∇ ln p_t(x) + w·∇ ln p_t(c | x)</div><div>‖ε − ε_θ‖² = σ_t²·‖s_θ + ε/σ_t‖²</div><div>вес для правдоподобия: g(t)²·‖s_θ + ε/σ_t‖² = (g(t)²/σ_t²)·‖ε − ε_θ‖²</div></div>
+<p class="pg-note">В терминах шума строка 2 — это ε_g = ε_u + w·(ε_c − ε_u): правило, которое применяют при сэмплировании.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Одномерный случай. Скор с наведением: ∇ ln p_t(x) + w·∇ ln p_t(c | x). Здесь ∇ ln p_t(x) = −x, то есть p_t = N(0, 1), а слагаемое классификатора ∇ ln p_t(c | x) = −(x − 3). При каком x скор с наведением равен нулю, если w = 3?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Сначала подумай.</strong> Задача со звёздочкой, на бумаге. Одномерная диффузия VP, данные x_0 ~ N(0, v), так что p_t = N(0, V_t), V_t = α_t²·v + σ_t². Реши ОДУ вероятностного потока: какой x_0 оно сопоставляет x_T? А что делает с тем же x_T обратное СДУ?</p><details><summary>Показать ответ</summary><p>Скор равен −x/V_t, поэтому ОДУ имеет вид dx/dt = −½·β·x + ½·β·x/V_t = ½·β·(1/V_t − 1)·x. Из α_t′ = −½·β·α_t и σ_t² = 1 − α_t² получаем V_t′ = β·(1 − V_t), так что dx/dt = (V_t′/(2·V_t))·x. Это значит, что d ln|x|/dt = ½·d ln V_t/dt: отношение x_t/√V_t постоянно вдоль каждой траектории.</p>
+<p>Итак, x_0 = x_T·√(v/V_T): ОДУ лишь меняет масштаб, и каждая точка сохраняет своё число стандартных отклонений. При v = 4 и V_T ≈ 1 точка x_T = 1,5 переходит в x_0 ≈ 3; при v = 1 ничего не движется. Дивергенция равна V_t′/(2·V_t), и замена переменных даёт ln p_0(x_0) = ln p_T(x_T) + ½·ln(V_T/v): в точности плотность N(0, v).</p>
+<p>У обратного СДУ с точным скором распределение траекторий такое же, как у прямого СДУ. Поэтому из того же x_T оно выдаёт случайный x_0 ~ N(α_T·v·x_T/V_T, v·σ_T²/V_T), а при α_T → 0 это N(0, v), каким бы ни был x_T. СДУ забывает начальную точку, а ОДУ превращает её в код. Маргиналы одни и те же, а связь шума с данными разная.</p></details></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Скор и денойзер: <code>∇ ln p_t(x_t) = −E[ε | x_t]/σ_t</code> для x_t = α_t·x_0 + σ_t·ε, поэтому регрессия на шум выучивает скор (denoising score matching, s_θ = −ε_θ/σ_t). Формула Твиди: <code>E[x_0 | x_t] = (x_t + σ_t²·∇ ln p_t(x_t))/α_t</code> — для любого распределения данных при гауссовом шуме.</li><li>Прямое СДУ <code>dx = f·dt + g·dw</code>, обратное СДУ <code>dx = [f − g²·∇ ln p_t]·dt + g·dw̄</code>, ОДУ вероятностного потока <code>dx/dt = f − ½·g²·∇ ln p_t</code>. При точном скоре маргинальные распределения p_t у всех трёх общие (Фоккер — Планк и ∇p = p·∇ ln p). У двух СДУ общее и совместное распределение x_0 и x_T, а ОДУ связывает их взаимно однозначно.</li><li>ОДУ вероятностного потока — обычное ОДУ: методы высокого порядка, обратимый латентный код и точный логарифм плотности его собственной модели по правилу <code>d ln p_t(x(t))/dt = −∇·u</code>. Для данных N(0, v) верно p_t = N(0, V_t), где V_t = α_t²·v + σ_t², и оно сохраняет x_t/√V_t.</li><li>Наведение — формула Байеса для скоров: <code>∇ ln p_t(x | c) = ∇ ln p_t(x) + ∇ ln p_t(c | x)</code>. Умножение последнего слагаемого на w &gt; 1 делает результат резче, но сэмплы тогда уже не следуют p(x | c). ε-потери — это сопоставление скоров с весом σ_t²; границе правдоподобия соответствует вес g(t)².</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="t6-statistical-decision-theory-what-best-estimator-means.html"><small>Предыдущий шаг</small>Теория статистических решений: что значит «лучшая оценка»</a><a href="t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"><small>Следующий шаг</small>Теория обучения с подкреплением: сжатия, градиенты и сожаление</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -23,6 +23,7 @@
 <meta name="theme-color" content="#050b14">
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Как приложения выбирают за тебя","headline":"Как приложения выбирают за тебя","description":"Как приложения с видео, музыкой и покупками решают, что показать тебе дальше, какие сигналы они читают и как оставаться хозяином своей ленты.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/ru/lessons/how-apps-choose-for-you.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Уроки","item":"https://newfter.github.io/AI-Compass/ru/lessons/"},{"@type":"ListItem","position":3,"name":"Как приложения выбирают за тебя","item":"https://newfter.github.io/AI-Compass/ru/lessons/how-apps-choose-for-you.html"}]}</script>
 </head>
@@ -31,7 +32,9 @@
     <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
     <nav aria-label="AI Compass">
         <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
         <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
         <a href="https://newfter.github.io/AI-Compass/lessons/how-apps-choose-for-you.html" hreflang="en" lang="en">English</a>
     </nav>
 </header>
@@ -41,6 +44,7 @@
 <p class="pg-kicker">🌍 ИИ вокруг тебя · Урок 14 · 2 мин чтения</p>
 <h1>Как приложения выбирают за тебя</h1>
 <p class="pg-lead">Как приложения с видео, музыкой и покупками решают, что показать тебе дальше, какие сигналы они читают и как оставаться хозяином своей ленты.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
 <h2>Каждая лента — это догадка</h2>
 <p>В приложении с видео миллионы роликов, а на экране помещается несколько. Кто-то должен выбирать. Этот «кто-то» — <strong data-term='recommendation'>рекомендательная система</strong>: модель, которая для каждого видео угадывает, насколько вероятно, что ты его посмотришь, и показывает лучшие догадки первыми. Главная страница, лента «Для тебя», следующая песня и «С этим товаром покупают» — всё это сделано так, отдельно для каждого человека.</p>
 <p class="pg-note"><strong>А ты знал?</strong> В 2018 году директор по продукту YouTube рассказал, что больше 70% времени, которое люди проводят за просмотром YouTube, приходится на рекомендации, а не на поиск.</p>
@@ -53,12 +57,27 @@
 <p>Смотреть можно только то, что показали, а то, что ты смотришь, решает, что тебе покажут. Поэтому лента может сжаться в <strong data-term='filter-bubble'>пузырь фильтров</strong>. К тому же приложения обычно сделаны так, чтобы удерживать тебя подольше, а это не всегда лучше для тебя. Управления у тебя больше, чем кажется: ищи новые темы, подписывайся на разных людей, нажимай «Не интересно», приостанавливай или очищай историю просмотров и выключай автовоспроизведение, когда хочешь остановиться.</p>
 <p class="pg-note"><strong>А ты знал?</strong> Некоторые приложения показывают, почему тебе что-то порекомендовали, или позволяют выключить персональную ленту. Поищи в меню поста («Почему я это вижу?») или в настройках приложения.</p>
 <section class="pg-keys"><h2>Главное</h2><ul><li>Рекомендательная система угадывает, что ты посмотришь, и показывает лучшие догадки первыми — отдельно для каждого.</li><li>Две главные идеи: ещё того же и люди как ты (коллаборативная фильтрация).</li><li>Просмотры, пропуски и поиски — это сигналы; лента может сжаться в пузырь, и ты можешь специально её расширить.</li></ul></section>
-<section class="pg-check"><h2>Проверь себя</h2><p>В твоей ленте теперь почти только футбол, хотя тебе нравится и другое. Как лучше всего её расширить?</p><ol type="A"><li>Досматривать до конца ещё больше видео о футболе</li><li>Поискать другие темы, посмотреть что-то из них и нажать «Не интересно» на нескольких футбольных видео</li><li>Ничего: приложение лучше знает, что мне нравится</li></ol><details><summary>Показать ответ</summary><p>Лента учится на том, что ты делаешь. Поиск и просмотр других тем дают ей новые сигналы, а «Не интересно» просит показывать чего-то меньше. Ещё больше футбола сделает пузырь только теснее, а приложение знает лишь то, что ты ему показываешь.</p></details></section>
+<section class="pg-check"><h2>Проверь себя</h2><div class="pg-quiz">
+<p class="pg-q">В твоей ленте теперь почти только футбол, хотя тебе нравится и другое. Как лучше всего её расширить?</p>
+<ol type="A" class="pg-options"><li><button type="button">Ничего: приложение лучше знает, что мне нравится</button></li><li><button type="button" data-right>Поискать другие темы, посмотреть что-то из них и нажать «Не интересно» на нескольких футбольных видео</button></li><li><button type="button">Досматривать до конца ещё больше видео о футболе</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Поискать другие темы, посмотреть что-то из них и нажать «Не интересно» на нескольких футбольных видео</strong></p><p>Лента учится на том, что ты делаешь. Поиск и просмотр других тем дают ей новые сигналы, а «Не интересно» просит показывать чего-то меньше. Ещё больше футбола сделает пузырь только теснее, а приложение знает лишь то, что ты ему показываешь.</p></details>
+</div></section>
+<h2>Слова этого урока</h2><p class="pg-tags"><a href="../glossary/recommendation.html">Рекомендательная система</a><a href="../glossary/filter-bubble.html">Пузырь фильтров</a><a href="../glossary/collaborative-filtering.html">Коллаборативная фильтрация</a></p>
 <aside class="pg-cta"><p>Мини-лаборатория, тест и сохранение прогресса. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#lesson-14">Пройти этот урок в приложении →</a></aside>
+<p class="pg-aside">🍎 <a href="../teachers/how-apps-choose-for-you.html">Учителям: готовый план этого урока</a></p>
 <nav class="pg-pager" aria-label="Уроки"><a href="data-the-fuel-of-ai.html"><small>Предыдущий урок</small>Данные — топливо ИИ</a><a href="plan-your-own-ai-project.html"><small>Следующий урок</small>Спланируй свой ИИ-проект</a></nav>
 </article>
 </main>
 <footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
     <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>

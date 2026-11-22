@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>AI lesson plan “How Computers See”: objectives, activity and worksheet | AI Compass</title>
+<meta name="description" content="A ready lesson plan for teachers on “How Computers See”: objectives, warm-up, activity, discussion questions and an exit ticket. Free, with a worksheet and an answer key.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/teachers/how-computers-see.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/teachers/how-computers-see.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/teachers/how-computers-see.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/teachers/how-computers-see.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="AI lesson plan “How Computers See”: objectives, activity and worksheet">
+<meta property="og:description" content="A ready lesson plan for teachers on “How Computers See”: objectives, warm-up, activity, discussion questions and an exit ticket. Free, with a worksheet and an answer key.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/teachers/how-computers-see.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Lesson plan: How Computers See","description":"A ready lesson plan for teachers on “How Computers See”: objectives, warm-up, activity, discussion questions and an exit ticket. Free, with a worksheet and an answer key.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson plan","audience":{"@type":"EducationalAudience","educationalRole":"teacher"},"about":{"@type":"Thing","name":"Artificial intelligence"},"url":"https://newfter.github.io/AI-Compass/teachers/how-computers-see.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"For teachers","item":"https://newfter.github.io/AI-Compass/teachers/"},{"@type":"ListItem","position":3,"name":"Lesson plan: How Computers See","item":"https://newfter.github.io/AI-Compass/teachers/how-computers-see.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/teachers/how-computers-see.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/teachers/">For teachers</a></p>
+<article>
+<p class="pg-kicker">🍎 Lesson plan · 🤿 Deep dive · Lesson 7</p>
+<h1>Lesson plan: How Computers See</h1>
+<p class="pg-lead">How a picture turns into numbers, and how a network finds edges, shapes and objects in them.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button><button type="button" class="pg-chip" data-print hidden>🖨️ Print</button></p>
+<h2>By the end of the lesson, students can</h2>
+<ul><li>explain how a picture becomes a grid of numbers (pixels, greyscale and RGB);</li><li>describe how a filter slides over a picture to find edges (a convolution);</li><li>explain how a CNN builds up from edges to objects, and why vision models can be fooled.</li></ul>
+<h2>Warm-up</h2>
+<p>Zoom into a photo as far as you can. What do you see in the end?</p>
+<p class="pg-note">If you can, zoom into a photo on the projector until the squares appear. Then ask: how could a computer store each square?</p>
+<h2>Reading</h2>
+<p>Students read the lesson “<a href="../lessons/how-computers-see.html">How Computers See</a>”. Students look for what 0 and 255 mean, what a filter does, and what an adversarial example is.</p>
+<h2>Activity: Mini-lab “Pixel detective”</h2>
+<ol><li>Students open the mini-lab in lesson 7 and pick the shape “Square”.</li><li>They try the three filters (vertical edges, horizontal edges, blur) and read the sentence under the result each time.</li><li>They point at one square of the result and check its sum by hand: multiply square by square, then add up.</li><li>They fill in the worksheet's table for the other shapes, then paint a picture of their own.</li></ol>
+<h2>For students who finish early</h2>
+<p>Fast finishers paint a picture that the vertical-edge filter finds but the horizontal-edge filter misses completely, and explain why it works.</p>
+<h2>Discussion questions</h2>
+<ul><li>Face unlock works well in daylight but worse in the dark. Why might that be?</li><li>Nobody writes a CNN's filters by hand. Where do they come from?</li><li>A few stickers on a stop sign can make a model misread it. What does that mean for cars that read road signs?</li><li>A vision model finds patterns, not meaning. What is the difference?</li></ul>
+<h2>Exit ticket</h2>
+<p>In one sentence, explain what a filter does to a picture.</p>
+<p class="pg-note"><strong>Quick check.</strong> Researchers added a faint pattern of noise to a photo of a panda. People still saw a panda, but the network said “gibbon”, and was very sure. What is a picture like this called?<br><strong>Right answer:</strong> An adversarial example</p>
+<h2>Easier and harder</h2>
+<p><strong>Easier.</strong> Before the mini-lab, draw a small grid of 0s and 1s and a 3 × 3 vertical-edge filter on the board, and work out two squares of the result together.</p>
+<p><strong>Harder.</strong> Students work out by hand what the blur filter gives at a corner of the square, as a fraction, and check it in the mini-lab.</p>
+<aside class="pg-cta"><p>The printable worksheet, its answer key and a classroom quiz for this lesson are in the teacher kit. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#teachers">Open the teacher kit →</a></aside>
+<nav class="pg-pager" aria-label="For teachers"><a href="ai-ethics-safety.html"><small>Previous plan</small>AI Ethics & Safety</a><a href="learning-by-trial-and-error.html"><small>Next plan</small>Learning by Trial and Error</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

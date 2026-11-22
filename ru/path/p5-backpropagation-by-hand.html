@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Обратное распространение своими руками: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Прямой проход, обратный проход и один шаг обучения маленькой сети. Под капотом: шаг 3 из 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/p5-backpropagation-by-hand.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p5-backpropagation-by-hand.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Обратное распространение своими руками: шаг за шагом, с заданиями">
+<meta property="og:description" content="Прямой проход, обратный проход и один шаг обучения маленькой сети. Под капотом: шаг 3 из 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/p5-backpropagation-by-hand.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Обратное распространение своими руками","headline":"Обратное распространение своими руками","description":"Прямой проход, обратный проход и один шаг обучения маленькой сети.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/p5-backpropagation-by-hand.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Обратное распространение своими руками","item":"https://newfter.github.io/AI-Compass/ru/path/p5-backpropagation-by-hand.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Под капотом</a> · Шаг 3 из 8 · 8 мин</p>
+<h1>Обратное распространение своими руками</h1>
+<p class="pg-lead">Прямой проход, обратный проход и один шаг обучения маленькой сети.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🧱 Нейросеть — это цепочка функций</h2>
+<p>Нейросеть — это цепочка функций: каждая берёт результат предыдущей. <strong>Обратное распространение ошибки</strong> (backpropagation) — это цепное правило, применённое к такой цепочке с конца: от функции потерь назад. Каждый промежуточный результат при этом используется повторно.</p>
+<p>На крошечной сети ниже ты вручную сделаешь один шаг обучения: <strong>прямой проход</strong> от входа к функции потерь, <strong>обратный проход</strong> от функции потерь к весам и обновление обоих весов.</p>
+<div class="pg-example is-mono"><div>z = w₁·x</div><div>h = ReLU(z)</div><div>ŷ = w₂·h</div><div>L = (ŷ − y)²</div><div>x = 2, y = 10, w₁ = 1, w₂ = 3</div></div>
+<p class="pg-note">x — вход, y — правильный ответ, ŷ — предсказание, L — функция потерь (квадрат ошибки). ReLU(z) = max(0; z). Смещений в этой сети нет, чтобы считать было проще.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Начни прямой проход: z = w₁·x, h = ReLU(z), ŷ = w₂·h. Чему равно предсказание ŷ при x = 2, w₁ = 1 и w₂ = 3?</p><details><summary>Показать решение</summary><p>z = 1·2 = 2, h = ReLU(2) = 2, ŷ = 3·2 = 6. Запомни z и h: они понадобятся на обратном проходе.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> Прямой проход заканчивается функцией потерь. Чему равно L = (ŷ − y)² при ŷ = 6 и правильном ответе y = 10?</p><details><summary>Показать решение</summary><p>(6 − 10)² = (−4)² = 16. Прямой проход закончен, и все его результаты сохранены: z = 2, h = 2, ŷ = 6, L = 16.</p></details></section>
+<h2>⛓️ Назад, по одной локальной производной за раз</h2>
+<p>Чтобы обучать сеть, нужно знать, как каждый вес влияет на L. У каждого звена цепочки есть простая <strong>локальная производная</strong>: она показывает, как меняется выход звена, когда меняется один из его входов.</p>
+<p>Градиент по весу — это произведение локальных производных вдоль пути от функции потерь назад к этому весу.</p>
+<div class="pg-example is-mono"><div>∂L/∂ŷ = 2·(ŷ − y)</div><div>∂ŷ/∂w₂ = h</div><div>∂ŷ/∂h = w₂</div><div>∂h/∂z = ReLU′(z) = 1, если z &gt; 0, иначе 0</div><div>∂z/∂w₁ = x</div></div>
+<p class="pg-note">Знак ∂ работает так же, как d в dL/dw, но для функции нескольких переменных: ∂L/∂w₂ показывает, как меняется L, когда меняется только w₂. Если от функции потерь к весу ведёт несколько путей, произведения вдоль этих путей складываются.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Обратный проход начинается с функции потерь. Чему равно ∂L/∂ŷ = 2·(ŷ − y) при ŷ = 6 и y = 10?</p><details><summary>Показать решение</summary><p>2·(6 − 10) = 2·(−4) = −8. Минус означает, что функция потерь падает, когда ŷ растёт. Каждый градиент в этой сети начинается с множителя −8: его считают один раз и используют повторно.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> Крошечная сеть: h = ReLU(w₁·x), ŷ = w₂·h, L = (ŷ − y)². Чему равен градиент по последнему весу, ∂L/∂w₂, при x = 2, y = 10, w₁ = 1 и w₂ = 3?</p><details><summary>Показать решение</summary><p>Прямой проход: h = ReLU(1·2) = 2, ŷ = 3·2 = 6. Обратный: ∂L/∂ŷ = 2·(6 − 10) = −8 и ∂ŷ/∂w₂ = h = 2. Значит, ∂L/∂w₂ = −8·2 = −16: функция потерь падает, когда w₂ растёт.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> Крошечная сеть: h = ReLU(w₁·x), ŷ = w₂·h, L = (ŷ − y)². Чему равен градиент по первому весу, ∂L/∂w₁, при x = 2, y = 10, w₁ = 1 и w₂ = 3?</p><details><summary>Показать решение</summary><p>Прямой проход: z = 1·2 = 2, h = 2, ŷ = 3·2 = 6. Обратный: ∂L/∂ŷ = 2·(6 − 10) = −8, ∂ŷ/∂h = w₂ = 3, ReLU′(z) = 1 (так как z &gt; 0), ∂z/∂w₁ = x = 2. Произведение вдоль пути: −8·3·1·2 = −48. Первый множитель, −8, общий с ∂L/∂w₂: его считают один раз.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Нейрон вычисляет h = ReLU(z), где z = w·x. На одном из обучающих примеров z отрицательно. Какой градиент получит вес w от этого примера?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Нулевой: наклон ReLU там равен 0, и назад ничего не проходит</button></li><li><button type="button">Такой же, как при положительном z: ReLU влияет только на прямой проход</button></li><li><button type="button">Отрицательный, равный z: нейрон передаёт назад свой вход</button></li><li><button type="button">Очень большой: вся ошибка достаётся одному этому весу</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Нулевой: наклон ReLU там равен 0, и назад ничего не проходит</strong></p><p>При z &lt; 0 нейрон выдаёт 0, и его локальная производная ReLU′(z) равна 0. Градиент по весу w — произведение, в котором есть этот ноль, поэтому такой пример не сдвигает w. Нейрон, у которого z отрицательно на всех примерах, перестаёт учиться: это <strong>мёртвый нейрон</strong> (dead ReLU).</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Задание.</strong> Теперь обнови веса градиентным спуском: w ← w − η · градиент, где скорость обучения η = 0,01. Сейчас w₂ = 3, а его градиент равен −16. Чему равно новое w₂?</p><details><summary>Показать решение</summary><p>3 − 0,01·(−16) = 3 + 0,16 = 3,16. Градиент отрицательный, поэтому шаг увеличивает w₂. От этого растёт ŷ, которое было ниже правильного ответа.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> То же обновление для другого веса: w₁ = 1, его градиент равен −48, а η = 0,01. Чему равно новое w₁?</p><details><summary>Показать решение</summary><p>1 − 0,01·(−48) = 1 + 0,48 = 1,48. Оба градиента мы посчитали по старым весам и только потом обновили оба веса. Градиент по w₁ втрое больше, поэтому w₁ и сдвинулось втрое дальше.</p></details></section>
+<h2>📉 Помог ли этот шаг?</h2>
+<p>Проверим ещё одним прямым проходом, уже с новыми весами w₁ = 1,48 и w₂ = 3,16. Один шаг обучения сдвинул предсказание с 6 примерно до 9,35 и уменьшил функцию потерь с 16 примерно до 0,42:</p>
+<div class="pg-example is-mono"><div>z = 1,48·2 = 2,96</div><div>h = ReLU(2,96) = 2,96</div><div>ŷ = 3,16·2,96 ≈ 9,35</div><div>L = (9,35 − 10)² ≈ 0,42</div></div>
+<p class="pg-note">Библиотеки глубокого обучения делают ровно то же для миллионов и миллиардов весов: один прямой проход, затем один обратный, который даёт все градиенты. Метод называется автоматическим дифференцированием в обратном режиме (reverse-mode automatic differentiation).</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Почему обратное распространение ошибки идёт назад — от функции потерь к входам?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Один обратный проход даёт все градиенты примерно по цене двух прямых</button></li><li><button type="button">Градиенты ранних слоёв не зависят от того, что происходит в поздних слоях</button></li><li><button type="button">При проходе в прямом направлении у градиентов получился бы неверный знак</button></li><li><button type="button">Обучать нужно только последний слой, поэтому расчёт начинают с него</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Один обратный проход даёт все градиенты примерно по цене двух прямых</strong></p><p>Каждый градиент строится от функции потерь назад, поэтому в градиенты по весам ранних слоёв входят одни и те же множители от поздних слоёв. Обратный проход считает каждый общий множитель один раз. Если идти вперёд или по очереди чуть менять веса, понадобится примерно по проходу на каждый вес.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Пусть по пути назад градиент в каждом из 10 слоёв умножается примерно на 0,25 (это наибольший наклон сигмоиды). Что дойдёт до первого слоя?</p>
+<ol type="A" class="pg-options"><li><button type="button">Градиент, знак которого меняется в каждом слое</button></li><li><button type="button" data-right>Почти ничего: около одной миллионной градиента</button></li><li><button type="button">Огромный градиент: он растёт в каждом слое</button></li><li><button type="button">Тот же градиент: глубина его не меняет</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Почти ничего: около одной миллионной градиента</strong></p><p>0,25¹⁰ = (0,25⁵)² ≈ 0,001² = 0,000001: одна миллионная. Это <strong>затухание градиента</strong> (vanishing gradient): из-за него ранние слои глубокой сети могут учиться крайне медленно. Что помогает: активации вроде ReLU (наклон 1 там, где нейрон активен), остаточные связи в обход слоёв (residual connections) и нормализация.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li><strong>Прямой проход</strong> вычисляет цепочку от входа до функции потерь и сохраняет каждое промежуточное значение.</li><li><strong>Обратный проход</strong> — это цепное правило: локальные производные перемножаются от функции потерь назад, например <code>∂L/∂w₁ = ∂L/∂ŷ · ∂ŷ/∂h · ∂h/∂z · ∂z/∂w₁</code>.</li><li>Один обратный проход даёт градиент каждого веса примерно по цене двух прямых проходов.</li><li>Градиент можно потерять. ReLU при z &lt; 0 передаёт назад 0 (если так на всех примерах, это мёртвый нейрон). Много малых множителей даёт в произведении почти ноль (затухание градиента).</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="p2-gradient-descent-by-hand.html"><small>Предыдущий шаг</small>Градиентный спуск своими руками</a><a href="p6-overfitting-and-how-to-catch-it.html"><small>Следующий шаг</small>Переобучение и как его поймать</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

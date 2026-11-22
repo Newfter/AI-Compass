@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>A neuron by hand: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Weighted sums, activations and counting parameters. Under the hood: step 1 of 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p1-a-neuron-by-hand.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="A neuron by hand: step by step, with tasks">
+<meta property="og:description" content="Weighted sums, activations and counting parameters. Under the hood: step 1 of 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"A neuron by hand","headline":"A neuron by hand","description":"Weighted sums, activations and counting parameters.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"A neuron by hand","item":"https://newfter.github.io/AI-Compass/path/p1-a-neuron-by-hand.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/p1-a-neuron-by-hand.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Under the hood</a> · Step 1 of 8 · 6 min</p>
+<h1>A neuron by hand</h1>
+<p class="pg-lead">Weighted sums, activations and counting parameters.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🧮 A neuron is a weighted sum</h2>
+<p>Forget the biology. An artificial neuron multiplies each input <code>x</code> by a weight <code>w</code>, adds a bias <code>b</code>, and passes the result through an activation function <code>f</code>.</p>
+<p>That is all. A network is this small formula, repeated.</p>
+<div class="pg-example is-mono"><div>z = w₁·x₁ + w₂·x₂ + … + b</div><div>a = f(z)</div></div>
+<section class="pg-check"><p><strong>Task.</strong> Compute z for this neuron: x = (2, 3), w = (0.5, −1), b = 1.</p><details><summary>Show the solution</summary><p>1 − 3 + 1 = −1. Every neuron of every network does exactly this.</p></details></section>
+<h2>⚡ Activation functions</h2>
+<p>An activation function decides what the neuron passes on. Two common ones:</p>
+<div class="pg-example is-mono"><div>ReLU(z) = max(0, z)</div><div>σ(z) = 1 / (1 + e^(−z))</div></div>
+<p class="pg-note">ReLU cuts negative values to zero. The sigmoid σ squashes any number into the range from 0 to 1.</p>
+<section class="pg-check"><p><strong>Task.</strong> A neuron computes z = −1. What does it output after ReLU?</p><details><summary>Show the solution</summary><p>max(0, −1) = 0: the neuron stays silent. A positive z, such as 2.5, would pass through unchanged.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> What is σ(0), the sigmoid of zero?</p><details><summary>Show the solution</summary><p>1 / (1 + 1) = 0.5. Zero is the sigmoid's midpoint: a positive z pushes the output towards 1, a negative z towards 0.</p></details></section>
+<h2>🧱 Counting parameters</h2>
+<p>In a dense (fully connected) layer every neuron is connected to every input. With n inputs and m neurons, that gives n·m weights and one bias per neuron.</p>
+<div class="pg-example is-mono"><div>parameters = n·m + m</div></div>
+<section class="pg-check"><p><strong>Task.</strong> A dense layer has 4 inputs and 3 neurons. How many parameters does it have?</p><details><summary>Show the solution</summary><p>12 weights + 3 biases = 15. A model “with 7 billion parameters” is the same count, only bigger.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A neuron outputs 1 if z &gt; 0 and 0 otherwise. Its weights are w = (1, 1), its bias is b = −1.5, and each input is 0 or 1. Which logic gate is it?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>AND</button></li><li><button type="button">OR</button></li><li><button type="button">XOR</button></li><li><button type="button">NOT</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: AND</strong></p><p>Only (1, 1) gives z = 0.5 &gt; 0. With b = −0.5 the same neuron becomes OR.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Why can't a single neuron compute XOR?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>XOR is not linearly separable: no single straight line splits its outputs</button></li><li><button type="button">A neuron cannot have negative weights</button></li><li><button type="button">XOR needs more than two inputs</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: XOR is not linearly separable: no single straight line splits its outputs</strong></p><p>One neuron draws one straight line (a hyperplane). XOR's ones sit on opposite corners, so you need at least one hidden layer. This limit, described in 1969, cooled interest in neural networks for years.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Why does a network need a non-linear activation between its layers?</p>
+<ol type="A" class="pg-options"><li><button type="button">It keeps every weight between 0 and 1</button></li><li><button type="button" data-right>Without it, any stack of layers equals a single linear layer</button></li><li><button type="button">It makes training use less memory</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Without it, any stack of layers equals a single linear layer</strong></p><p>W₂·(W₁·x) = (W₂·W₁)·x: a product of matrices is just another matrix. The non-linearity is what lets depth add power.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>A neuron: <code>a = f(w·x + b)</code>.</li><li><code>ReLU(z) = max(0, z)</code>, and <code>σ(0) = 0.5</code>.</li><li>A dense layer with n inputs and m neurons has <code>n·m + m</code> parameters.</li><li>One neuron separates with one straight line: AND and OR yes, XOR no.</li><li>Depth helps only with a non-linear activation between the layers.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><span></span><a href="p2-gradient-descent-by-hand.html"><small>Next step</small>Gradient descent by hand</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

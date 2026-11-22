@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Optimisation theory: how fast can descent go: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Derive step limits and convergence rates, then count the steps they guarantee. Theory at the limit: step 2 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t2-optimisation-theory-how-fast-can-descent-go.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Optimisation theory: how fast can descent go: step by step, with tasks">
+<meta property="og:description" content="Derive step limits and convergence rates, then count the steps they guarantee. Theory at the limit: step 2 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Optimisation theory: how fast can descent go","headline":"Optimisation theory: how fast can descent go","description":"Derive step limits and convergence rates, then count the steps they guarantee.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Optimisation theory: how fast can descent go","item":"https://newfter.github.io/AI-Compass/path/t2-optimisation-theory-how-fast-can-descent-go.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t2-optimisation-theory-how-fast-can-descent-go.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 2 of 12 · 10 min</p>
+<h1>Optimisation theory: how fast can descent go</h1>
+<p class="pg-lead">Derive step limits and convergence rates, then count the steps they guarantee.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>📉 Smoothness and the descent lemma</h2>
+<p>The question here: how fast does gradient descent with a fixed step η &gt; 0 (third line below) provably minimise f, and under which conditions? Throughout, f is differentiable, f* is its infimum (assumed finite), and x* is a minimiser when one exists.</p>
+<p>f is <strong>L-smooth</strong> when its gradient is Lipschitz with constant L (first line). For a twice differentiable f this means that all eigenvalues of the Hessian lie in [−L, L] at every point. Convexity is not assumed.</p>
+<p>The <strong>descent lemma</strong> follows (second line): the graph of f lies below a paraboloid of curvature L that touches it at x, and this holds for every x. The whole theory of step sizes starts from this upper bound.</p>
+<div class="pg-example is-mono"><div>‖∇f(x) − ∇f(y)‖ ≤ L·‖x − y‖ for all x, y</div><div>f(y) ≤ f(x) + ∇f(x)·(y − x) + (L/2)·‖y − x‖² for all x, y</div><div>gradient descent: x_(k+1) = x_k − η·∇f(x_k)</div></div>
+<p class="pg-note">Proof: f(y) − f(x) − ∇f(x)·(y − x) is the integral over t from 0 to 1 of (∇f(x + t·(y − x)) − ∇f(x))·(y − x), and by the Lipschitz condition the integrand is at most L·t·‖y − x‖². The integral of t is ½.</p>
+<section class="pg-check"><p><strong>Task.</strong> f is L-smooth with L = 4, f(x_0) − f* = 20, and gradient descent uses η = 0.4. Add up the decreases that the descent lemma guarantees over the first 1000 steps: what upper bound follows for the smallest ‖∇f(x_i)‖², i = 0 … 999?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> f is L-smooth and bounded below, η = 1/L. Find the flaw: (1) each iteration lowers f by at least ‖∇f(x_k)‖²/(2L); (2) so the sum of all ‖∇f(x_k)‖² is finite; (3) so ∇f(x_k) → 0; (4) so x_k converges to a minimiser.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎯 The exact case: a quadratic</h2>
+<p>On f(x) = (λ/2)·x² with λ &gt; 0, gradient descent is plain arithmetic: every step multiplies x by 1 − η·λ. On f(x) = ½·x^T·A·x with a symmetric positive definite matrix A, the same happens separately along each eigenvector of A, with its own eigenvalue λ_i in place of λ.</p>
+<p>So gradient descent converges from every starting point exactly when |1 − η·λ_i| &lt; 1 for all i, that is, when 0 &lt; η &lt; 2/λ_max. At η = 2/λ_max the coordinate along the sharpest direction only flips its sign, forever; for a larger η its size is multiplied by η·λ_max − 1 &gt; 1 at every step.</p>
+<p>Here L = λ_max, and μ = λ_min is the curvature of the flattest direction. Their ratio κ = L/μ is the <strong>condition number</strong>. With η = 1/L the sharpest direction is minimised in a single step, while the coordinate along the flattest is multiplied by 1 − 1/κ at every step.</p>
+<div class="pg-example is-mono"><div>f(x) = (λ/2)·x²: x_(k+1) = (1 − η·λ)·x_k</div><div>converges exactly when |1 − η·λ| &lt; 1, that is, 0 &lt; η &lt; 2/λ</div><div>η = 1/L: factors 1 − λ_i/L, from 0 to 1 − 1/κ</div><div>best fixed step η = 2/(L + μ): all factors at most (κ − 1)/(κ + 1) in size</div><div>κ = 100: 0.99 for η = 1/L, 0.9802 for η = 2/(L + μ)</div></div>
+<p class="pg-note">An empirical finding, not a theorem: in full-batch gradient descent on neural networks (every step uses the whole training set), the largest Hessian eigenvalue of the loss tends to rise during training until it is about 2/η, and then to hover there. This is called the <strong>edge of stability</strong>.</p>
+<section class="pg-check"><p><strong>Task.</strong> Gradient descent x ← x − η·∇f(x) runs on f(x_1, x_2) = x_1² + 25·x_2². It converges to the minimum from every starting point exactly when 0 &lt; η &lt; c. What is c?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> A network is trained by full-batch gradient descent with η = 0.01. The largest Hessian eigenvalue of the loss rises to about 200 and stays there; the loss falls over long stretches, but not at every step. Which reading is correct?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📊 What each assumption buys</h2>
+<p>Beyond L-smoothness, the guarantee depends on the shape of f. A <strong>convex</strong> f lies above all its tangent planes. A <strong>μ-strongly convex</strong> f, μ &gt; 0, lies above a paraboloid of curvature μ that touches it at any given point: a quadratic lower bound, just as smoothness is a quadratic upper bound.</p>
+<p>The <strong>Polyak–Łojasiewicz (PL) condition</strong> asks for less: the gradient must be large wherever the value is far from optimal. It follows from μ-strong convexity, but needs no convexity, and it makes every stationary point a global minimum.</p>
+<p>For example, f(x) = x² + 3·sin²x is not convex (its second derivative ranges from −4 to 8), yet it satisfies PL with μ = 1/8. The last three lines below are the guarantees for gradient descent with η = 1/L.</p>
+<div class="pg-example is-mono"><div>convex: f(y) ≥ f(x) + ∇f(x)·(y − x) for all x, y</div><div>μ-strongly convex: f(y) ≥ f(x) + ∇f(x)·(y − x) + (μ/2)·‖y − x‖²</div><div>PL: ½·‖∇f(x)‖² ≥ μ·(f(x) − f*) for all x</div><div>L-smooth: min over i &lt; k of ‖∇f(x_i)‖² ≤ 2L·(f(x_0) − f*) / k</div><div>L-smooth, convex, x* exists: f(x_k) − f* ≤ L·‖x_0 − x*‖² / (2k)</div><div>L-smooth, PL: f(x_k) − f* ≤ (1 − μ/L)^k·(f(x_0) − f*)</div></div>
+<p class="pg-note">Why the convex bound holds: every step brings ‖x_i − x*‖² down by at least (2/L)·(f(x_(i+1)) − f*); these decreases telescope, and f(x_i) never rises. This bound is sublinear: halving it takes twice as many steps. The PL bound is linear: multiplied by 1 − μ/L per step, so about (L/μ)·ln(1/ε) steps shrink it by a factor of 1/ε.</p>
+<section class="pg-check"><p><strong>Task.</strong> f is L-smooth and μ-strongly convex: f(y) ≥ f(x) + ∇f(x)·(y − x) + (μ/2)·‖y − x‖² for all x, y. Order the proof that gradient descent with η = 1/L satisfies f(x_k) − f* ≤ (1 − μ/L)^k·(f(x_0) − f*).</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> f is L-smooth and μ-strongly convex, L = 50, μ = 0.5. Gradient descent with η = 1/L guarantees f(x_k) − f* ≤ (1 − μ/L)^k·(f(x_0) − f*). What is the smallest k for which this bound is at most (f(x_0) − f*)/10⁶?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🚀 Acceleration, and where it must stop</h2>
+<p><strong>Nesterov's accelerated gradient method</strong> adds momentum to gradient descent, with a twist: it first extrapolates along its last move to a point y_k and takes the gradient step from there (first line below). With the right coefficients β_k the guarantees improve in order: 1/k² in place of 1/k, and √κ in place of κ.</p>
+<p>No method of this kind can do better in order. For every k ≤ (d − 1)/2 there is a convex L-smooth quadratic on R^d for which every method whose iterates stay in x_0 + the span of the gradients seen so far obeys the lower bound of the last line.</p>
+<p>In the strongly convex case a lower bound of the same kind shows that a number of steps of the order of √κ·ln(1/ε) is necessary when the dimension is large enough.</p>
+<div class="pg-example is-mono"><div>y_k = x_k + β_k·(x_k − x_(k−1)), x_(k+1) = y_k − ∇f(y_k)/L</div><div>convex: f(x_k) − f* ≤ 2·L·‖x_0 − x*‖² / (k + 1)²</div><div>μ-strongly convex, β_k = (√κ − 1)/(√κ + 1): f(x_k) − f* ≤ 2·(1 − 1/√κ)^k·(f(x_0) − f*)</div><div>κ = 100: 2·0.9^k ≤ 10^(−6) from k = 138 on; gradient descent with its 0.99^k needs k = 1375</div><div>lower bound: f(x_k) − f* ≥ 3·L·‖x_0 − x*‖² / (32·(k + 1)²)</div></div>
+<p class="pg-note">These are worst cases over a whole class, in high dimension: on R^d the conjugate gradient method minimises any strictly convex quadratic in at most d steps. And methods that use more than gradients, such as Newton's method, are not bound by this limit.</p>
+<section class="pg-check"><p><strong>Task.</strong> Convex L-smooth f, ‖x_0 − x*‖ = R: gradient descent with η = 1/L guarantees f(x_k) − f* ≤ L·R²/(2k), Nesterov's accelerated method 2·L·R²/(k + 1)². L = 10, R = 2. What is the smallest k at which Nesterov's bound is at most 0.01?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> SGD with a constant step on f(x) = (λ/2)·x²: x ← (1 − η·λ)·x − η·ξ, with gradient noise ξ, independent at every step, of mean 0 and variance σ². For λ = σ² = 1 and η = 0.1, at what variance does x settle? Four decimal places.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge, on paper. SGD on (λ/2)·x² with a decaying step: x_(t+1) = (1 − η_t·λ)·x_t − η_t·ξ_t, η_t = 1/(λ·t), t = 1, 2, …; the ξ_t are independent, with mean 0 and variance σ². Find E[x_(t+1)²] exactly. Idea: multiply by t.</p><details><summary>Show the answer</summary><p>With η_t = 1/(λ·t): x_(t+1) = (1 − 1/t)·x_t − ξ_t/(λ·t). Multiply by t: t·x_(t+1) = (t − 1)·x_t − ξ_t/λ. So s_t = (t − 1)·x_t obeys s_(t+1) = s_t − ξ_t/λ, and s_1 = 0 whatever the start x_1 is.</p>
+<p>Hence s_(t+1) = −(ξ_1 + … + ξ_t)/λ and x_(t+1) = −(ξ_1 + … + ξ_t)/(λ·t): this SGD simply averages the noise. So E[x_(t+1)²] = σ²/(λ²·t), exactly. There is no floor: the error falls as 1/t. For λ = σ² = 1 it is below 1/19 ≈ 0.0526, the floor of the constant step η = 0.1, as soon as t &gt; 19.</p>
+<p>In general: for μ-strongly convex problems, under the usual bounds on the gradient noise, steps η_t = c/t with c &gt; 1/(2μ) give an expected squared distance to the minimiser of the order of 1/t. A smaller c is slower: for c = 1/(4λ) in this model, even the contribution of the start to E[x_t²] decays only as 1/√t.</p></details></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Descent lemma for an L-smooth f: <code>f(y) ≤ f(x) + ∇f(x)·(y − x) + (L/2)·‖y − x‖²</code>. A gradient step η lowers f by at least η·(1 − L·η/2)·‖∇f(x)‖², at best ‖∇f(x)‖²/(2L) at η = 1/L. Without convexity or PL this gives small gradients only: for η = 1/L, min over i &lt; k of ‖∇f(x_i)‖² ≤ 2L·(f(x_0) − f*)/k.</li><li>On a quadratic the coordinate along each eigenvector is multiplied by 1 − η·λ_i per step: convergence from every start exactly when η &lt; 2/λ_max, and κ = L/μ sets the speed. That λ_max hovers near 2/η in full-batch training of networks (the edge of stability) is an observation, not a theorem.</li><li>With η = 1/L: a convex f has <code>f(x_k) − f* ≤ L·‖x_0 − x*‖²/(2k)</code>; PL or μ-strong convexity gives <code>f(x_k) − f* ≤ (1 − μ/L)^k·(f(x_0) − f*)</code>, about κ·ln(1/ε) steps. Nesterov's method reaches the orders 1/k² and √κ·ln(1/ε); in the worst case, in high dimension, no method built from gradients alone beats them.</li><li>SGD with a constant step η on (λ/2)·x², with gradient noise of variance σ², settles at the variance <code>η·σ²/(λ·(2 − η·λ))</code>: it is fast, but stops at a floor nearly proportional to η. Steps η_t = c/t with c &gt; 1/(2λ) remove the floor: E[x_t²] then falls as 1/t.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="t1-generalisation-bounds-how-many-examples-are-enough.html"><small>Previous step</small>Generalisation bounds: how many examples are enough</a><a href="t3-information-theory-of-learning.html"><small>Next step</small>Information theory of learning</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

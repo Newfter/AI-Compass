@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Теория обучения с подкреплением: сжатия, градиенты и сожаление: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Докажи сжатие Беллмана; вычисли потери жадной политики, UCB и сожаление. Теория на пределе: шаг 8 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Теория обучения с подкреплением: сжатия, градиенты и сожаление: шаг за шагом, с заданиями">
+<meta property="og:description" content="Докажи сжатие Беллмана; вычисли потери жадной политики, UCB и сожаление. Теория на пределе: шаг 8 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Теория обучения с подкреплением: сжатия, градиенты и сожаление","headline":"Теория обучения с подкреплением: сжатия, градиенты и сожаление","description":"Докажи сжатие Беллмана; вычисли потери жадной политики, UCB и сожаление.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Теория обучения с подкреплением: сжатия, градиенты и сожаление","item":"https://newfter.github.io/AI-Compass/ru/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Теория на пределе</a> · Шаг 8 из 12 · 10 мин</p>
+<h1>Теория обучения с подкреплением: сжатия, градиенты и сожаление</h1>
+<p class="pg-lead">Докажи сжатие Беллмана; вычисли потери жадной политики, UCB и сожаление.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>📐 Оператор Беллмана — сжимающее отображение</h2>
+<p>Дано: конечный марковский процесс принятия решений (MDP) с наградами r(s, a), вероятностями переходов P(s′ | s, a) и коэффициентом дисконтирования 0 ≤ γ &lt; 1. <strong>Оператор оптимальности Беллмана</strong> T превращает любую функцию V на состояниях в новую (строка 1): это один шаг просмотра вперёд, где V — оценка всего, что будет дальше.</p>
+<p>Такие функции будем измерять в <strong>равномерной норме</strong> (норме максимума) ‖V‖_∞ = max_s |V(s)|. Теорема: в этой норме T — <strong>сжатие с коэффициентом γ</strong> (γ-contraction, строка 2). Одно применение T сокращает расстояние между любыми двумя функциями не меньше чем в 1/γ раз.</p>
+<p>По теореме Банаха о неподвижной точке у T тогда ровно одна неподвижная точка; это оптимальная функция ценности V*, а V* = T·V* — уравнение оптимальности Беллмана. И <strong>итерация по ценностям</strong> (value iteration) V_(k+1) = T·V_k сходится к V* из любой V_0 с оценкой ошибки из строки 3.</p>
+<div class="pg-example is-mono"><div>(T·V)(s) = max_a [r(s, a) + γ·Σ_s′ P(s′ | s, a)·V(s′)]</div><div>‖T·V − T·U‖_∞ ≤ γ·‖V − U‖_∞ для всех V, U</div><div>‖V_k − V*‖_∞ ≤ γ^k·‖V_0 − V*‖_∞</div><div>награды в [0; R_max]: 0 ≤ V^π(s) ≤ V*(s) ≤ R_max / (1 − γ)</div></div>
+<p class="pg-note">Оператор T_π фиксированной политики π, в котором вместо максимума стоит среднее по a ~ π(· | s), тоже сжатие с коэффициентом γ; его неподвижная точка — V^π. Строка 4: отдача — это сумма наград с весами 1, γ, γ², …, а сумма этих весов равна 1/(1 − γ).</p>
+<section class="pg-check"><p><strong>Задание.</strong> Расставь шаги доказательства того, что T — сжатие с коэффициентом γ в равномерной норме, и следствия для итерации по ценностям. Для фиксированного s пусть f(a) = r(s, a) + γ·Σ_s′ P(s′ | s, a)·V(s′), а g(a) — то же с U вместо V.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Итерация по ценностям V_(k+1) = T·V_k с оператором оптимальности Беллмана T даёт ‖V_k − V*‖_∞ ≤ γ^k·‖V_0 − V*‖_∞. Награды лежат в [0; 1], γ = 0,9, V_0 = 0. При каком наименьшем k эта оценка гарантирует ‖V_k − V*‖_∞ ≤ 0,01?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>⚖️ Приближённая функция ценности может стоить дороже своей ошибки</h2>
+<p>На практике V* известна лишь приближённо: итерацию обрывают, ценности оценивают по выборке или нейросетью. Важна политика, которую строят по такому приближению. Политика π <strong>жадная</strong> (greedy) относительно V, если в каждом состоянии выбирает действие, максимизирующее r(s, a) + γ·Σ_s′ P(s′ | s, a)·V(s′); тогда T_π·V = T·V.</p>
+<p>Теорема: если ‖V − V*‖_∞ ≤ ε, а π жадная относительно V, то π теряет не больше 2·γ·ε/(1 − γ) в любом состоянии. Строки 1–4 — доказательство; в строке 3 использовано, что T и T_π — сжатия с коэффициентом γ. Ошибка ε в ценностях может стоить до 2·γ·ε на каждом шаге, а горизонт 1/(1 − γ) эти потери суммирует.</p>
+<div class="pg-example is-mono"><div>V* − V^π = T·V* − T_π·V^π = (T·V* − T·V) + (T_π·V − T_π·V^π)</div><div>‖V − V^π‖_∞ ≤ ‖V − V*‖_∞ + ‖V* − V^π‖_∞ ≤ ε + ‖V* − V^π‖_∞</div><div>‖V* − V^π‖_∞ ≤ γ·ε + γ·(ε + ‖V* − V^π‖_∞)</div><div>‖V* − V^π‖_∞ ≤ 2·γ·ε / (1 − γ)</div><div>ε = 0,01, γ = 0,99: до 1,98</div></div>
+<p class="pg-note">По выборке: табличное Q-обучение — зашумлённая асинхронная итерация по ценностям для Q. Оно сходится к Q* с вероятностью 1, если каждая пара (s, a) обновляется бесконечно часто, а шаг α_n на n-м её обновлении таков, что Σ α_n = ∞ и Σ α_n² &lt; ∞: 1/n подходит, постоянный шаг — нет. С аппроксимацией функций эта гарантия пропадает.</p>
+<section class="pg-check"><p><strong>Задание.</strong> γ = 0,9; в таблице — детерминированный MDP. Оценка V(A) = 10,1, V(B) = 9,9 всюду отличается от V* не больше чем на 0,1. π жадная относительно V: берёт действие с наибольшим r + γ·V(следующее состояние). Чему равно V*(A) − V^π(A)?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Оценка ценности v(s) = w·φ(s), φ(s_1) = 1, φ(s_2) = 2. Обновляют только переход s_1 → s_2 (награда r = 0): w ← w + α·(r + γ·v(s_2) − v(s_1))·φ(s_1). γ = 0,9, α = 0,1, вначале w = 1. После скольких обновлений w превысит 100?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🎰 У исследования есть цена: сожаление</h2>
+<p>Гарантия Q-обучения требует пробовать каждое действие снова и снова, но не говорит, чего это стоит. Простейшая модель — <strong>многорукий бандит</strong> с K ручками: ручка i выдаёт независимые награды из [0; 1] с неизвестным средним μ_i. <strong>Сожаление</strong> (regret) за T раундов — потеря по сравнению с игрой только на лучшей ручке (строка 1).</p>
+<p>При ε-жадной стратегии с постоянным ε в доле ε раундов ручку выбирают равновероятно, и так всегда: сожаление линейно по T (строка 2). <strong>UCB1</strong> действует оптимистично: дёрнув каждую ручку по разу, он выбирает ручку с наибольшей верхней доверительной границей (строка 3). Плохую ручку он выбирает, лишь пока её граница широка.</p>
+<p>Строки 4 и 5 — теорема для UCB1: при фиксированных разрывах Δ_i его сожаление логарифмическое по T. При любых разрывах оно не больше порядка √(K·T·ln T), и ни один алгоритм не может гарантировать на всех бандитах меньше, чем порядка √(K·T).</p>
+<div class="pg-example is-mono"><div>разрыв (gap) Δ_i = μ* − μ_i, μ* = max_i μ_i; сожаление R_T = T·μ* − E[сумма наград] = Σ_i Δ_i·E[n_i]</div><div>ε-жадная стратегия с постоянным ε: R_T ≥ ε·T·(Δ_1 + … + Δ_K) / K</div><div>индекс UCB1 ручки i после t выборов всего: μ̂_i + √(2·ln t / n_i)</div><div>UCB1: E[n_i] ≤ 8·ln T / Δ_i² + c для каждой ручки с Δ_i &gt; 0</div><div>UCB1: R_T ≤ 8·Σ_(Δ_i &gt; 0) ln T / Δ_i + c·Σ_i Δ_i, c = 1 + π²/3 ≈ 4,29</div></div>
+<p class="pg-note">n_i — сколько раз ручку i выбрали к данному моменту (в строках 1 и 4 — за все T раундов), μ̂_i — среднее её наград; в константе c стоит число π = 3,14… Радиус взят из неравенства Хёфдинга: среднее n наград из [0; 1] превышает своё ожидание на u с вероятностью не больше exp(−2·n·u²), а это t^(−4) при u = √(2·ln t / n).</p>
+<section class="pg-check"><p><strong>Задание.</strong> UCB1 выбирает ручку с наибольшим индексом μ̂ + √(2·ln t / n), где μ̂ — средняя награда ручки, n — число её выборов, t — общее число выборов. Сейчас t = 100. Чему равен индекс ручки, которую выберут следующей? Округли до сотых.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Две ручки с разрывом Δ, T = 10 000 раундов. Сожаление UCB1 не больше Δ·T и не больше примерно 8·ln T / Δ (главный член его оценки). Каким наибольшим может быть меньшая из этих двух оценок по всем разрывам Δ? Округли до целого.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🧭 Точное сравнение двух политик</h2>
+<p>Теперь о самой политике. Пусть J(π) — ожидаемая отдача политики π при заданном распределении начального состояния, а d^π — <strong>дисконтированное распределение состояний</strong> политики π (строка 1): как часто π оказывается в s, с весом γ^t для момента t. Как и раньше, A^π(s, a) = Q^π(s, a) − V^π(s) — преимущество.</p>
+<p><strong>Лемма о разности качества политик</strong> (performance difference lemma, строка 2) — тождество для любых двух политик, а не приближение: выигрыш π′ по сравнению с π — это преимущество A^π действий π′, усреднённое по состояниям, которые посещает сама π′, и умноженное на 1/(1 − γ).</p>
+<p>Но данные и оценки преимуществ получены на состояниях π. Замена d^π′ на d^π даёт <strong>суррогат</strong> (surrogate, строка 3), которому можно доверять, лишь пока π′ близка к π: отсюда доверительные области (trust region) и обрезка в PPO. Строка 4 — <strong>теорема о градиенте по политике</strong>: производной d^π в ней нет, хотя d^π зависит от θ.</p>
+<div class="pg-example is-mono"><div>d^π(s) = (1 − γ)·Σ_t γ^t·P(s_t = s | π), t = 0, 1, 2, …</div><div>J(π′) − J(π) = (1/(1 − γ))·E[A^π(s, a)], s ~ d^π′, a ~ π′(· | s)</div><div>суррогат: (1/(1 − γ))·E[A^π(s, a)], s ~ d^π, a ~ π′(· | s)</div><div>∇_θ J(π_θ) = (1/(1 − γ))·E[∇_θ ln π_θ(a | s)·Q^π(s, a)], s ~ d^π, a ~ π_θ, π = π_θ</div></div>
+<p class="pg-note">Доказательство леммы: вдоль траектории политики π′ сумма по t от γ^t·(r_t + γ·V^π(s_(t+1)) − V^π(s_t)) телескопическая и равна отдаче минус V^π(s_0). Берём математическое ожидание: при данных s_t и a_t среднее скобки равно A^π(s_t, a_t).</p>
+<section class="pg-check"><p><strong>Задание.</strong> γ = 0,8, начальное состояние — A, в таблице все переходы. Политика π всегда остаётся в A, а π′ в состоянии A каждый раз уходит с вероятностью 0,5, иначе остаётся. Найди J(π′) − J(π) с помощью леммы о разности качества политик.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Лемма: J(π′) − J(π) = E[A^π(s, a)]/(1 − γ), s — из состояний, посещаемых π′, a ~ π′. Где ошибка? (1) На состояниях, посещаемых π, среднее A^π при a ~ π′ положительно; (2) тогда и в лемме оно положительно; (3) тогда J(π′) &gt; J(π).</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Сначала подумай.</strong> Задача со звёздочкой, на бумаге. Выведи теорему о градиенте по политике из леммы о разности качества политик: возьми π = π_θ, π′ = π_(θ+δ), δ → 0. Почему в ней нет производной d^π, хотя распределение состояний зависит от θ?</p><details><summary>Показать ответ</summary><p>Запишем лемму так: J(θ + δ) − J(θ) = (1/(1 − γ))·Σ_s d_δ(s)·g_s(δ), где d_δ — распределение состояний политики π_(θ+δ), а g_s(δ) = Σ_a π_(θ+δ)(a | s)·A^π(s, a). Идея: g_s(0) = Σ_a π_θ(a | s)·A^π(s, a) = 0 в каждом состоянии, ведь V^π — среднее Q^π по a ~ π.</p>
+<p>Поэтому правило произведения при δ = 0 даёт ∇(d_δ·g_s) = ∇d_δ·g_s(0) + d^π(s)·∇g_s(0), и первое слагаемое исчезает: ∇J = (1/(1 − γ))·Σ_s d^π(s)·Σ_a ∇π_θ(a | s)·A^π(s, a). Так как ∇π_θ = π_θ·∇ ln π_θ, это теорема с A^π вместо Q^π; разницы нет, потому что Σ_a ∇π_θ(a | s) = 0.</p>
+<p>Тот же факт объясняет суррогат: он отличается от леммы только тем, что вместо d_δ стоит d^π, поэтому при δ = 0 его значение равно 0, а градиент равен ∇J. С J(π′) − J(π) он совпадает в первом порядке; несовпадение состояний сказывается лишь во втором порядке, и доверительная область удерживает этот член малым.</p></details></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Оператор оптимальности Беллмана — сжатие с коэффициентом γ в равномерной норме: <code>‖T·V − T·U‖_∞ ≤ γ·‖V − U‖_∞</code>. Поэтому V* — его единственная неподвижная точка, для итерации по ценностям <code>‖V_k − V*‖_∞ ≤ γ^k·‖V_0 − V*‖_∞</code>, а при наградах из [0; R_max] все ценности лежат в [0; R_max/(1 − γ)].</li><li>Горизонт умножает ошибки: если ‖V − V*‖_∞ ≤ ε, политика, жадная относительно V, может потерять до <code>2·γ·ε/(1 − γ)</code>. Табличное Q-обучение сходится, если каждая пара обновляется бесконечно часто и для её шагов Σα_n = ∞, Σα_n² &lt; ∞; при бутстрэппинге, аппроксимации функций и обновлениях вне политики вместе веса могут расходиться.</li><li>Бандиты: сожаление <code>R_T = Σ_i Δ_i·E[n_i]</code>. У ε-жадной стратегии с постоянным ε оно линейное. У UCB1 с индексом <code>μ̂_i + √(2·ln t / n_i)</code> сожаление порядка Σ ln T / Δ_i и при любых разрывах не больше порядка √(K·T·ln T); в худшем случае ни один алгоритм не улучшит порядок √(K·T).</li><li>Лемма о разности качества политик: <code>J(π′) − J(π) = (1/(1 − γ))·E[A^π(s, a)]</code>, где s ~ d^π′, a ~ π′, — точное равенство. С состояниями π это суррогат, верный лишь в первом порядке; его градиент при π′ = π — градиент по политике <code>(1/(1 − γ))·E[∇ ln π_θ(a | s)·Q^π(s, a)]</code>.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"><small>Предыдущий шаг</small>Диффузия как дифференциальные уравнения: скор, СДУ и ОДУ</a><a href="t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"><small>Следующий шаг</small>Трансформеры в теории: что внимание может и чего не может вычислить</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

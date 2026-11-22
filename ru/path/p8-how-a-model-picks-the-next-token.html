@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Как модель выбирает следующий токен: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Температура, top-k и top-p — с числами в руках. Под капотом: шаг 8 из 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/p8-how-a-model-picks-the-next-token.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p8-how-a-model-picks-the-next-token.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Как модель выбирает следующий токен: шаг за шагом, с заданиями">
+<meta property="og:description" content="Температура, top-k и top-p — с числами в руках. Под капотом: шаг 8 из 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/p8-how-a-model-picks-the-next-token.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Как модель выбирает следующий токен","headline":"Как модель выбирает следующий токен","description":"Температура, top-k и top-p — с числами в руках.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/p8-how-a-model-picks-the-next-token.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Как модель выбирает следующий токен","item":"https://newfter.github.io/AI-Compass/ru/path/p8-how-a-model-picks-the-next-token.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Под капотом</a> · Шаг 8 из 8 · 7 мин</p>
+<h1>Как модель выбирает следующий токен</h1>
+<p class="pg-lead">Температура, top-k и top-p — с числами в руках.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🎲 Модель выдаёт распределение, а не слово</h2>
+<p>Языковая модель не выдаёт следующее слово напрямую. Она назначает вероятность каждому токену своего словаря (это все токены, которые она может выдать): получается <strong>распределение вероятностей</strong> следующего токена. Вот пример для запроса «Кошка села на …»:</p>
+<div class="pg-example"><div><strong>Правило декодирования</strong> (его ещё называют стратегией декодирования) превращает распределение в один токен. Два самых простых правила:</div><div><strong>Жадное декодирование</strong> (greedy decoding): всегда брать самый вероятный токен. Здесь это каждый раз «коврик».</div><div><strong>Сэмплирование</strong> (sampling): выбирать токен случайно, с этими вероятностями. Токен «коврик» выпадает примерно в половине случаев, а «луну» — примерно в одном из двадцати.</div></div>
+<div class="pg-table"><table><thead><tr><th>Следующий токен</th><th>Вероятность</th></tr></thead><tbody><tr><td>коврик</td><td>0,5</td></tr><tr><td>диван</td><td>0,2</td></tr><tr><td>пол</td><td>0,15</td></tr><tr><td>крышу</td><td>0,1</td></tr><tr><td>луну</td><td>0,05</td></tr></tbody></table></div><p class="pg-note">Выбранный токен дописывается к тексту, и всё повторяется для следующей позиции. В настоящем словаре десятки тысяч токенов, а то и больше; в этом учебном их пять, чтобы считать было проще.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Жадное декодирование всегда берёт самый вероятный токен. В чём его типичная слабость на длинных текстах?</p>
+<ol type="A" class="pg-options"><li><button type="button">Оно часто выбирает один из наименее вероятных токенов</button></li><li><button type="button">Оно работает только при гораздо большем контекстном окне</button></li><li><button type="button" data-right>Оно даёт однообразный текст, который может зациклиться</button></li><li><button type="button">Оно работает намного медленнее, чем случайный выбор токена</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Оно даёт однообразный текст, который может зациклиться</strong></p><p>Жадное декодирование — детерминированное правило: в нём нет случайности, которая могла бы прервать повтор. Если фраза уже встречалась, модель может счесть её повтор ещё более вероятным, и тогда одна и та же фраза возвращается снова и снова. Сэмплирование иногда берёт менее вероятный токен, и текст остаётся разнообразным.</p></details>
+</div></section>
+<h2>✂️ Top-k: оставь k лучших и перенормируй</h2>
+<p>У сэмплирования из всего распределения слабость противоположная. У настоящего распределения длинный хвост маловероятных токенов. Каждый из них выпадает редко, но все вместе они могут выпадать довольно часто, а один странный токен может увести весь дальнейший текст не туда.</p>
+<p><strong>Сэмплирование top-k</strong> отрезает этот хвост: задай число k, оставь k самых вероятных токенов, а остальные отбрось. Потом раздели каждую из оставшихся вероятностей на их сумму, чтобы вместе они снова давали 1: это называется <strong>перенормировкой</strong>. И только после этого выбирай токен случайно.</p>
+<div class="pg-example is-mono"><div>k = 2: остаются коврик (0,5) и диван (0,2)</div><div>их сумма: 0,5 + 0,2 = 0,7</div><div>диван: 0,2 / 0,7 ≈ 0,29</div><div>коврик: 0,5 / 0,7 ≈ ?</div></div>
+<p class="pg-note">У токенов «пол», «крышу» и «луну» вероятность теперь 0: выпасть они уже не могут. А новую вероятность токена «коврик» посчитай на следующем экране.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Языковая модель выдала вероятности вариантов следующего токена: 0,5; 0,2; 0,15; 0,1 и 0,05. Применяем сэмплирование top-k при k = 2. Какой станет вероятность самого вероятного токена после перенормировки? Ответ округли до сотых.</p><details><summary>Показать решение</summary><p>Top-k при k = 2 оставляет только два самых вероятных токена: 0,5 и 0,2. Их сумма равна 0,7, и после деления на неё вероятности снова дают в сумме 1: 0,5 / 0,7 ≈ 0,71 и 0,2 / 0,7 ≈ 0,29. Остальные три токена выпасть уже не могут. При k = 1 остался бы только главный токен: это снова жадное декодирование.</p></details></section>
+<h2>🧮 Top-p: оставь наименьший набор, сумма которого достигает p</h2>
+<p><strong>Сэмплирование top-p</strong>, или <strong>nucleus sampling</strong>, фиксирует не число токенов, а долю вероятности: порог p, который задаёшь ты, например 0,9.</p>
+<p>Расположи токены от самого вероятного к наименее вероятному и складывай их вероятности по одной. Остановись, как только сумма достигнет или превысит p. Оставь токены, которые вошли в сумму, остальные отбрось, перенормируй вероятности и выбери токен случайно.</p>
+<div class="pg-table"><table><thead><tr><th>Следующий токен</th><th>Вероятность</th><th>Накопленная сумма</th></tr></thead><tbody><tr><td>коврик</td><td>0,5</td><td>0,5</td></tr><tr><td>диван</td><td>0,2</td><td>0,7</td></tr><tr><td>пол</td><td>0,15</td><td>0,85</td></tr><tr><td>крышу</td><td>0,1</td><td>0,95</td></tr><tr><td>луну</td><td>0,05</td><td>1</td></tr></tbody></table></div><p class="pg-note">При p = 0,9 сумма впервые достигает порога на токене «крышу» (0,95). Поэтому остаются четыре токена, а отбрасывается только «луну». Оставшийся набор называют ядром (nucleus).</p>
+<section class="pg-check"><p><strong>Задание.</strong> Языковая модель выдала вероятности вариантов следующего токена, по убыванию: 0,5; 0,2; 0,15; 0,1 и 0,05. Применяем сэмплирование top-p (nucleus sampling) с порогом p = 0,8. Сколько токенов останется в числе кандидатов?</p><details><summary>Показать решение</summary><p>0,5 + 0,2 = 0,7 — это ещё меньше 0,8. Прибавляем 0,15 и получаем 0,85: порог достигнут, остаются 3 токена. Токен, с которым сумма переходит через p, тоже остаётся: сумма набора должна быть не меньше p. Затем 3 оставшиеся вероятности перенормируют: каждую делят на 0,85.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Top-k на каждом шаге оставляет одно и то же число токенов. Почему top-p может подходить лучше?</p>
+<ol type="A" class="pg-options"><li><button type="button">Токенов всегда остаётся больше, чем при top-k, и текст получается разнообразнее</button></li><li><button type="button">Температура становится бесполезной: форма распределения перестаёт что-либо значить</button></li><li><button type="button">Результат становится детерминированным: один запрос всегда даёт один и тот же текст</button></li><li><button type="button" data-right>Число токенов подстраивается: мало, когда модель уверена, и много, когда она сомневается</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Число токенов подстраивается: мало, когда модель уверена, и много, когда она сомневается</strong></p><p>При p = 0,9 главный токен с вероятностью 0,95 остаётся один, а пять токенов по 0,2 остаются все: набор повторяет форму распределения. Фиксированное k = 2 в первом случае добавило бы слабый токен, а во втором отбросило бы три хороших. Оба правила можно применять и вместе.</p></details>
+</div></section>
+<h2>🌡️ Температура меняет форму распределения</h2>
+<p>Top-k и top-p обрезают распределение, а <strong>температура</strong> меняет его форму. Сначала модель вычисляет для каждого токена сырую оценку — <strong>логит</strong> (logit), а softmax превращает логиты z в вероятности p.</p>
+<p>Температура T — положительное число, которое задаёшь ты: перед softmax каждый логит делится на T. При T = 1 ничего не меняется.</p>
+<p>Температура ниже 1 растягивает разрывы между логитами: при T = 0,5 логиты (2; 1; 0) превращаются в (4; 2; 0). Распределение становится острее, а текст — предсказуемее. Температура выше 1 сжимает разрывы: распределение сглаживается, текст становится разнообразнее, а странные токены выпадают чаще.</p>
+<div class="pg-example is-mono"><div>p = softmax(z / T)</div><div>p_i = e^(z_i / T) / Σ_j e^(z_j / T)</div><div>z = (2; 1; 0)</div><div>T = 1: p ≈ (0,67; 0,24; 0,09)</div><div>T = 0,5: p ≈ (0,87; 0,12; 0,02)</div><div>T = 2: p ≈ (0,51; 0,31; 0,19)</div></div>
+<p class="pg-note">Порядок токенов не меняется: при любом T больше 0 у самого большого логита остаётся самая большая вероятность. Растёт или сокращается только его отрыв от остальных.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Языковая модель выбирает следующий токен сэмплированием из softmax(z / T): z — её логиты, T — температура. Что происходит, когда T уменьшается и стремится к 0?</p>
+<ol type="A" class="pg-options"><li><button type="button">Текст становится случайнее: маловероятные токены выпадают всё чаще</button></li><li><button type="button" data-right>Выходит почти жадное декодирование: главный токен забирает практически всё</button></li><li><button type="button">Распределение становится равномерным: все токены одинаково вероятны</button></li><li><button type="button">Распределение не меняется: деление всех логитов на T ни на что не влияет</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Выходит почти жадное декодирование: главный токен забирает практически всё</strong></p><p>При крошечном T разрывы между логитами огромны, и softmax отдаёт почти всё самому большому: для логитов (2; 1; 0) при T = 0,1 главный токен получает больше 0,9999. Поэтому многие инструменты понимают температуру 0 как жадное декодирование. Очень большое T действует наоборот: распределение становится почти равномерным.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Задание.</strong> У двух токенов логиты (ln 3; 0). При T = 1 softmax даёт им вероятности (0,75; 0,25), потому что e^(ln 3) = 3, а e⁰ = 1. Какой станет вероятность первого токена при T = 0,5?</p><details><summary>Показать решение</summary><p>Логиты превращаются в (2·ln 3; 0), а e^(2·ln 3) = 3² = 9, поэтому вероятность первого токена равна 9 / (9 + 1) = 0,9. Уменьшив T вдвое, мы возвели в квадрат отношение двух вероятностей: было 3 : 1, стало 9 : 1. При T = 2 отношение уменьшилось бы до √3 : 1, а первая вероятность — примерно до 0,63.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Ты понижаешь температуру языковой модели с 1 до 0,2. Что это меняет в её ответах?</p>
+<ol type="A" class="pg-options"><li><button type="button">Они становятся достоверными, ведь самый вероятный ответ и есть правильный</button></li><li><button type="button">Они проходят проверку: при низкой температуре модель перепроверяет факты</button></li><li><button type="button">Они становятся случайнее, потому что маловероятные токены выпадают чаще</button></li><li><button type="button" data-right>Они становятся предсказуемее, но вероятный ответ по-прежнему может быть неверным</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Они становятся предсказуемее, но вероятный ответ по-прежнему может быть неверным</strong></p><p>При низкой температуре модель держится самых вероятных продолжений, и ответы меньше меняются от запуска к запуску. Но вероятное не значит верное: если самое вероятное продолжение ошибочно, низкая температура заставит модель повторять эту ошибку раз за разом. Фактов сэмплирование не проверяет.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Языковая модель выдаёт <strong>распределение вероятностей</strong> следующего токена. Правило декодирования выбирает один токен: жадное берёт самый вероятный, сэмплирование выбирает случайно.</li><li><strong>Top-k</strong> оставляет фиксированное число токенов. <strong>Top-p</strong> оставляет наименьший набор самых вероятных токенов с суммой вероятностей не меньше p, поэтому число токенов зависит от распределения. Оба правила перенормируют вероятности перед выбором.</li><li>Температура: <code>softmax(z / T)</code>. При T меньше 1 распределение становится острее, при T больше 1 сглаживается, а при T → 0 получается жадное декодирование.</li><li>Предсказуемое не значит верное: низкая температура не проверяет факты.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="p7-cross-entropy-by-hand.html"><small>Предыдущий шаг</small>Кросс-энтропия своими руками</a><span></span></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Agents and tools: step by step, with tasks | AI Compass</title>
+<meta name="description" content="The loop of an agent, who really runs a tool, and why long chains break. Build with AI: step 6 of 7.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b6-agents-and-tools.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Agents and tools: step by step, with tasks">
+<meta property="og:description" content="The loop of an agent, who really runs a tool, and why long chains break. Build with AI: step 6 of 7.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Agents and tools","headline":"Agents and tools","description":"The loop of an agent, who really runs a tool, and why long chains break.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Agents and tools","item":"https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/b6-agents-and-tools.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🚀 <a href="./#build">Build with AI</a> · Step 6 of 7 · 7 min</p>
+<h1>Agents and tools</h1>
+<p class="pg-lead">The loop of an agent, who really runs a tool, and why long chains break.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🔁 An agent is a model in a loop</h2>
+<p>An <strong>agent</strong> is a language model that works towards a goal step by step. Along with the goal, it gets a list of <strong>tools</strong>: a web search, a calculator, a database query, any function of your program.</p>
+<p>It works in the <strong>agent loop</strong>: it chooses an action, sees its result and chooses again, until it decides that the goal is reached. One pass through the loop is called a step.</p>
+<div class="pg-example is-mono"><div>goal → the model picks a tool</div><div>→ the application runs it</div><div>→ the result goes back to the model</div><div>→ the model picks again … → final answer</div></div>
+<section class="pg-check"><p><strong>Task.</strong> An agent is a language model that works towards a goal by calling tools in a loop. It has just received its goal. Put the parts of its first step in order.</p><details><summary>Show the solution</summary><ol><li>The model chooses a tool and writes the arguments for it</li><li>The application runs the tool</li><li>The result is added to the model's context</li><li>The model reads the result and decides what to do next</li></ol><p>The model only writes a request: which tool, with which arguments. The application runs the tool and adds the result to the context: the model sees nothing outside its context. Then the model reads the result and chooses: another tool, or the final answer.</p></details></section>
+<h2>🧰 A tool is a description plus code that you control</h2>
+<p>The model does not see a tool's code. It sees only each tool's <strong>description</strong>: its name, what it does, and its parameters with their types. To use a tool, the model writes a <strong>tool call</strong>: the tool's name and the arguments, that is, values for its parameters.</p>
+<p>Your code receives the call, decides whether to run it, runs it and returns the result. A vague description often leads to wrong calls, just as a vague prompt leads to weak answers.</p>
+<div class="pg-example is-mono"><div>name: get_order_status</div><div>purpose: finds the current status of one order</div><div>parameters: order_id (integer, required)</div><div>call: get_order_status(order_id = 1042)</div></div>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A model writes a tool call to look up the status of an order. Who actually runs this call?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Code outside the model, such as your application: the model only writes the call</button></li><li><button type="button">The model itself: the tool runs inside its neural network while it writes the answer</button></li><li><button type="button">The model's provider, on its servers: it runs every tool that you describe to the model</button></li><li><button type="button">Nobody: the model imagines a likely result and carries on as if the tool had run</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Code outside the model, such as your application: the model only writes the call</strong></p><p>A model only produces text: in this case, the tool's name and its arguments. Code outside the model runs the call, so your code can check the arguments, refuse the call or ask a person first. A provider may run some ready-made tools itself, but a tool you describe runs in your code.</p></details>
+</div></section>
+<h2>📉 Errors multiply</h2>
+<p>A step that works 95 times out of 100 sounds safe. But if a slip cannot be repaired, a task succeeds only when every one of its steps does.</p>
+<p>When the steps are independent and each succeeds with probability p, all n of them succeed with probability pⁿ. With p = 0.95, a task of ten steps succeeds only about 60 times out of 100.</p>
+<div class="pg-example is-mono"><div>0.95 · 0.95 · … · 0.95 (10 times) = 0.95¹⁰ ≈ 0.60</div></div>
+<div class="pg-table"><table><thead><tr><th>Steps in a row</th><th>All succeed</th></tr></thead><tbody><tr><td>1</td><td>0.95</td></tr><tr><td>5</td><td>0.77</td></tr><tr><td>10</td><td>0.60</td></tr><tr><td>20</td><td>0.36</td></tr></tbody></table></div><p class="pg-note">This is a simple model. Real steps are not fully independent, and an agent that notices a slip can often repair it.</p>
+<section class="pg-check"><p><strong>Task.</strong> An agent gets each step right with probability 0.9, independently of the other steps. A task needs 2 steps in a row, and a mistake cannot be repaired. What is the probability that the whole task succeeds, as a number from 0 to 1?</p><details><summary>Show the solution</summary><p>Both steps must succeed, so their chances multiply: 0.9 · 0.9 = 0.81. Even two good steps give only about 81 successes in 100 runs, and every extra step lowers that number further.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> Each step of an agent succeeds with probability 0.95, independently, and one slip spoils the whole task. The table shows the chance that all steps succeed. What is the probability, from 0 to 1, that a 20-step task fails?</p><details><summary>Show the solution</summary><p>From the table, all 20 steps succeed with probability 0.95²⁰ ≈ 0.36, so the task fails with probability 1 − 0.36 = 0.64. Almost two runs out of three fail, although each step works 95 times out of 100.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Long agent runs fail more often than short ones, even with a strong model: any step can go wrong, and one slip can spoil the whole run. Which change helps the most?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Let the agent check its work and recover: run tests, check each result, retry a failed step</button></li><li><button type="button">Give the agent more tools, so that it has more ways to choose from at every step</button></li><li><button type="button">Remove the step limit, so that the agent can keep trying until it finally succeeds</button></li><li><button type="button">Hide error messages from the model, so that failed steps do not distract it from the goal</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Let the agent check its work and recover: run tests, check each result, retry a failed step</strong></p><p>A slip that is caught can be repaired, so it no longer spoils the run, and the chance of success falls far more slowly with the number of steps. More tools mean more ways to choose wrongly. With no step limit, a stuck agent can keep wasting tokens, and a model that never sees an error cannot fix it.</p></details>
+</div></section>
+<h2>🧾 At every step, the model reads the whole context again</h2>
+<p>A model remembers nothing between requests, so every step sends it the whole context again: the goal, the tool descriptions, and every call and result so far.</p>
+<p>Each result makes the context longer, and every later step pays for it again. So in a long run, the total number of input tokens grows roughly with the square of the number of steps, not in proportion to it.</p>
+<div class="pg-example is-mono"><div>each step adds 500 tokens to the context</div><div>step 1 sends 500 tokens</div><div>step 2 sends 500 + 500 = 1000</div><div>step 3 sends 1000 + 500 = 1500</div><div>3 steps send 500 + 1000 + 1500 = 3000</div></div>
+<p class="pg-note">Some providers charge less for the beginning of the context when it is the same as in a recent request. That lowers the price, but the context still grows with every step.</p>
+<section class="pg-check"><p><strong>Task.</strong> The first step of an agent sends 500 input tokens. Each step adds 500 tokens to the context, and every step sends the whole context again. How many input tokens do 4 steps send in total?</p><details><summary>Show the solution</summary><p>The four steps send 500, 1000, 1500 and 2000 tokens: 500 + 1000 + 1500 + 2000 = 5000. The last step alone sends 2000: every step pays again for all the tokens before it.</p></details></section>
+<h2>🛑 Budgets and a way to stop</h2>
+<p>Do not rely on the model to end a run that goes wrong. Give every run a <strong>budget</strong>: a limit on steps, on tokens or money, and on time. Your code keeps count and stops the run as soon as any limit is reached.</p>
+<p>Also add a <strong>stop condition</strong> for when the agent is stuck: if the same step fails again and again, it stops and reports what it tried. A retry or two can help, but a loop that keeps repeating a failing step only wastes the budget.</p>
+<div class="pg-example"><div>budget: 20 steps, 1 unit of money, 5 minutes</div><div>the same step failed 3 times → stop and report</div><div>an action is hard to undo → a person confirms first</div></div>
+<h2>🛤️ Do you need an agent at all?</h2>
+<p>An agent pays for its freedom. At every step a model call decides what to do next, and each such decision costs tokens and time and can go wrong.</p>
+<p>When the steps are known in advance, plain code can run them in order and call a model only inside a step, for example to summarise a text. No call is spent on choosing the steps, so this is cheaper and faster, takes the same path every time and is easier to test.</p>
+<div class="pg-example is-mono"><div>the steps are known (download, summarise, send) → plain code</div><div>the next step depends on the last result → an agent</div></div>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A task can be done by code that runs fixed steps in order, or by an agent: a language model that chooses its own steps. When is the code with fixed steps the better choice?</p>
+<ol type="A" class="pg-options"><li><button type="button">When the answer must be written as text for a user, such as an email</button></li><li><button type="button" data-right>When the steps are known in advance: such code is cheaper, faster and easier to test</button></li><li><button type="button">When the steps depend on what each result shows, so nobody can list them in advance</button></li><li><button type="button">When the task needs a tool, such as a web search or a database query</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: When the steps are known in advance: such code is cheaper, faster and easier to test</strong></p><p>When the steps are known, code runs them in order and spends no model call on choosing them: it is cheaper and faster, takes the same path every time and is easier to test. Its steps can still use tools and models, such as a web search or a model writing an email. Agents are for tasks whose steps cannot be known in advance.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>An <strong>agent</strong> is a model in a loop: it chooses a tool, sees the result and chooses again, until it decides that the goal is reached.</li><li>The model only writes a tool call. Your application runs it, so your code can check it, refuse it or ask a person first.</li><li>The chances of success multiply over the steps (0.95²⁰ ≈ 0.36), and every step pays for the whole context again. Keep runs short and let the agent check its work.</li><li>Give every run a budget and a stop condition. When the steps are known in advance, code with fixed steps is usually the better choice.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="b5-prompt-injection.html"><small>Previous step</small>Prompt injection</a><a href="b7-run-it-for-real-users.html"><small>Next step</small>Run it for real users</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

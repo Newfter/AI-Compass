@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Обучи свою первую модель: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Найди число, с которым ошибок меньше всего. С нуля: шаг 5 из 5.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/z5-train-your-first-model.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/z5-train-your-first-model.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/z5-train-your-first-model.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/z5-train-your-first-model.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Обучи свою первую модель: шаг за шагом, с заданиями">
+<meta property="og:description" content="Найди число, с которым ошибок меньше всего. С нуля: шаг 5 из 5.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/z5-train-your-first-model.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Обучи свою первую модель","headline":"Обучи свою первую модель","description":"Найди число, с которым ошибок меньше всего.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/z5-train-your-first-model.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Обучи свою первую модель","item":"https://newfter.github.io/AI-Compass/ru/path/z5-train-your-first-model.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/z5-train-your-first-model.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">🐣 <a href="./#zero">С нуля</a> · Шаг 5 из 5 · 5 мин</p>
+<h1>Обучи свою первую модель</h1>
+<p class="pg-lead">Найди число, с которым ошибок меньше всего.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>📏 Крошечная модель: одно правило, одно число</h2>
+<p>Модель может быть совсем крошечной: одно правило, а в нём одно число. Правило ниже — как раз такая модель. Она делит сообщения на спам и не спам, а буква T обозначает её число.</p>
+<p>В машинном обучении число T никто не вписывает вручную: его нужно найти по примерам. Число, которое модель находит по примерам, называется <strong>параметром</strong>.</p>
+<div class="pg-example"><div>ЕСЛИ в сообщении больше T восклицательных знаков, ТО это спам.</div><div>Иначе это не спам.</div></div>
+<p class="pg-note">Спам — это сообщения, которых никто не просил: например, реклама, которую рассылают тысячам людей.</p>
+<h2>📋 Шесть примеров с правильными ответами</h2>
+<p>Чтобы найти T, модели нужны примеры. В таблице ниже шесть сообщений: сколько в каждом восклицательных знаков и спам ли это на самом деле. Каждое сообщение проверил человек и записал правильный ответ.</p>
+<p>Примеры, на которых учится модель, называются её <strong>обучающими данными</strong>.</p>
+<div class="pg-table"><table><thead><tr><th>Восклицательных знаков</th><th>На самом деле</th></tr></thead><tbody><tr><td>0</td><td>не спам</td></tr><tr><td>1</td><td>не спам</td></tr><tr><td>3</td><td>не спам</td></tr><tr><td>4</td><td>спам</td></tr><tr><td>6</td><td>спам</td></tr><tr><td>9</td><td>спам</td></tr></tbody></table></div><section class="pg-check"><p><strong>Задание.</strong> Начнём наугад: T = 0. Теперь модель говорит «спам», если в сообщении больше 0 восклицательных знаков, а иначе — «не спам». На скольких из шести примеров она ошибётся?</p><details><summary>Показать решение</summary><p>На 2. Сообщения с 1 и 3 восклицательными знаками — не спам, а модель называет их спамом. Остальные четыре её ответа верны. Среди них и ответ про сообщение с 0 знаков: 0 не больше 0, поэтому модель говорит «не спам».</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> Попробуй другое число: T = 5. Теперь модель говорит «спам», только если в сообщении больше 5 восклицательных знаков. Сколько ошибок она сделает на шести примерах?</p><details><summary>Показать решение</summary><p>Всего 1. Сообщение с 4 восклицательными знаками — спам, но 4 не больше 5, поэтому модель его пропускает. Это лучше, чем при T = 0, но ещё не идеально.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> Модель говорит «спам», если в сообщении больше T восклицательных знаков, а иначе — «не спам». В таблице — шесть сообщений с правильными ответами. При каком целом числе T модель даст верный ответ для всех шести?</p><details><summary>Показать решение</summary><p>T = 3. Тогда сообщения с 4, 6 и 9 знаками модель назовёт спамом, а с 0, 1 и 3 — нет: ни одной ошибки. При T = 2 спамом оказалось бы и сообщение с 3 знаками, а при T = 4 модель пропустила бы спам с 4 знаками. T — это параметр модели: число, которое она находит по примерам.</p></details></section>
+<h2>🔁 Это и было обучение</h2>
+<p>Получилось: твоя первая модель обучена! Вот что такое <strong>обучение</strong>: пробуем число, считаем ошибки, пробуем другое и оставляем то, с которым ошибок меньше всего.</p>
+<p>Компьютер делает то же самое, только чисел у него гораздо больше. У большой модели могут быть миллионы и даже миллиарды параметров, а учиться она может на миллионах примеров.</p>
+<p>И компьютер не гадает вслепую. Он смотрит на ошибки, чуть-чуть сдвигает каждый параметр, чтобы ошибки стали меньше, и повторяет это снова и снова. Так учится большинство сегодняшних моделей ИИ.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Что значит «обучить» модель ИИ?</p>
+<ol type="A" class="pg-options"><li><button type="button">Вписать в неё все правила и числа вручную, как программист пишет программу</button></li><li><button type="button">Ускорить работу компьютера, чтобы модель быстрее выдавала ответы</button></li><li><button type="button">Скопировать в её память все обучающие данные, чтобы искать в них ответы</button></li><li><button type="button" data-right>Найти параметры — числа, с которыми она меньше всего ошибается на своих примерах</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Найти параметры — числа, с которыми она меньше всего ошибается на своих примерах</strong></p><p>Обучение — это поиск параметров модели: чисел, с которыми она делает меньше всего ошибок на своих примерах. Вручную их никто не пишет. А сами примеры модель может и не хранить: она хранит числа, которые нашла.</p></details>
+</div></section>
+<h2>🆕 Настоящая проверка: новое сообщение</h2>
+<p>Твоя модель с T = 3 не ошибается ни на одном из шести примеров. Но модель нужна для новых сообщений — тех, которых она не видела. Вот одно из них.</p>
+<p>Друг пишет: «С днём рождения!!!!!» Это 5 восклицательных знаков, а 5 больше 3. Значит, модель говорит: спам.</p>
+<p>Ошибка: это же поздравление от друга! На своих шести примерах модель не ошиблась ни разу — и всё равно промахнулась на новом.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Почему модель назвала поздравление спамом?</p>
+<ol type="A" class="pg-options"><li><button type="button">Модель не может дать верный ответ на сообщение, которого не видела</button></li><li><button type="button" data-right>В шести примерах не было дружеских сообщений, где больше 3 восклицательных знаков</button></li><li><button type="button">Компьютер ошибся, когда считал восклицательные знаки в сообщении</button></li><li><button type="button">T = 3 выбрано неудачно: другое целое число лучше подходит к шести примерам</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: В шести примерах не было дружеских сообщений, где больше 3 восклицательных знаков</strong></p><p>Модель знает только то, что было в её примерах. А в них каждое сообщение, где больше 3 восклицательных знаков, было спамом, вот она и выучила: «больше 3 знаков — значит, спам». Посчитала она верно, и T = 3 подходит к шести примерам лучше всего. Дело в самих примерах: их было мало, и они были однобокими.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Сначала подумай.</strong> Как сделать эту модель лучше?</p><details><summary>Показать ответ</summary><p>Дать ей больше примеров, и притом разных: например, дружеские сообщения, в которых много восклицательных знаков.</p>
+<p>Научить её смотреть не на один признак, а на многие: по одним восклицательным знакам не отличить радостного друга от рекламы. Помогут ещё слова («бесплатно», «выиграй»), отправитель и ссылки. Настоящие спам-фильтры могут учитывать тысячи признаков, и у каждого свой параметр.</p>
+<p>И обязательно проверять её на примерах, которых она не видела. В ИИ-лаборатории есть эксперимент «Собери спам-фильтр»: там можно обучить фильтр, который смотрит на слова, и проверить его на новых сообщениях.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Модель не ошибается ни на одном из примеров, на которых её обучали. Что это говорит о новых примерах?</p>
+<ol type="A" class="pg-options"><li><button type="button">На новых примерах она тоже не ошибётся: правило она уже выучила</button></li><li><button type="button">На большинстве новых примеров она ошибётся: она ведь их не видела</button></li><li><button type="button">Модель готова к работе: проверка на новых примерах ничего не добавит</button></li><li><button type="button" data-right>Мало что: её нужно проверить на примерах, которых она не видела</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Мало что: её нужно проверить на примерах, которых она не видела</strong></p><p>Свои обучающие примеры модель уже видела, поэтому верные ответы на них мало что доказывают. С новыми она может справиться и хорошо, и плохо: это покажет только проверка на примерах, которых она не видела.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Модель — это правило с числами. Эти числа называются <strong>параметрами</strong>: их не пишут вручную, а находят по примерам.</li><li><strong>Обучение</strong> — это поиск параметров: пробуем их на <strong>обучающих данных</strong>, считаем ошибки и оставляем те, с которыми ошибок меньше.</li><li>Какие примеры — такая и модель.</li><li>Настоящая проверка — на примерах, которых модель не видела.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="z4-how-learning-works-you-and-the-machine.html"><small>Предыдущий шаг</small>Как устроено обучение: ты и машина</a><span></span></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

@@ -23,6 +23,7 @@
 <meta name="theme-color" content="#050b14">
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Learning by Trial and Error","headline":"Learning by Trial and Error","description":"How an AI learns from rewards, the way you learn a new game: try, fail, try again.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/lessons/learning-by-trial-and-error.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Lessons","item":"https://newfter.github.io/AI-Compass/lessons/"},{"@type":"ListItem","position":3,"name":"Learning by Trial and Error","item":"https://newfter.github.io/AI-Compass/lessons/learning-by-trial-and-error.html"}]}</script>
 </head>
@@ -31,7 +32,9 @@
     <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
     <nav aria-label="AI Compass">
         <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
         <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
         <a href="https://newfter.github.io/AI-Compass/ru/lessons/learning-by-trial-and-error.html" hreflang="ru" lang="ru">Русский</a>
     </nav>
 </header>
@@ -41,6 +44,7 @@
 <p class="pg-kicker">🤿 Deep dive · Lesson 8 · 2 min read</p>
 <h1>Learning by Trial and Error</h1>
 <p class="pg-lead">How an AI learns from rewards, the way you learn a new game: try, fail, try again.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
 <h2>Agent, environment, reward</h2>
 <p>Think of teaching a dog a trick. It tries different things, and when it sits, it gets a treat. Soon it sits when you ask. <strong data-term='reinforcement'>Reinforcement learning</strong> works the same way. An <strong data-term='agent'>agent</strong> (the learner: a game character, a robot, a program) acts in an <strong>environment</strong> (the game, the room). After its actions it gets a <strong data-term='reward'>reward</strong>: a number that says how well it did, like points in a game. Nobody shows it the right moves. It has to find out which actions bring the most reward over time.</p>
 <p class="pg-note"><strong>Did you know?</strong> A video game is a perfect environment: the agent is the player, the actions are the buttons, and the reward is the score. Researchers have trained agents to play dozens of classic Atari games using nothing but the pixels on the screen and the score.</p>
@@ -53,12 +57,27 @@
 <p>In 2016, DeepMind's AlphaGo, which learned partly by playing millions of games against itself, beat Lee Sedol, one of the best Go players in the world. Reinforcement learning also helps robots learn to walk and grasp things. Chatbots are polished with human feedback too: people compare answers, and the model is rewarded for the kind of answers people preferred (<strong data-term='rlhf'>RLHF</strong>). But an agent chases the reward, not what you meant. If the reward has a loophole, the agent may find it: that's called <strong data-term='reward-hacking'>reward hacking</strong>.</p>
 <p class="pg-note"><strong>Did you know?</strong> In 2016, OpenAI trained an agent on a boat-racing game, CoastRunners, where points came from hitting targets along the course. The agent found a lagoon where it could go round in circles, hitting the same targets again and again as they reappeared. It never finished the race, yet it scored more points than human players.</p>
 <section class="pg-keys"><h2>Key points</h2><ul><li>In reinforcement learning, an agent learns by trial and error from rewards, not from correct answers.</li><li>It must balance exploration (trying new actions) and exploitation (using what works).</li><li>An agent chases the reward it gets, so a badly designed reward can be “hacked”.</li></ul></section>
-<section class="pg-check"><h2>Check yourself</h2><p>A robot vacuum gets a reward for every bit of dust it picks up. It starts tipping dust out and sucking it up again. What is going on?</p><ol type="A"><li>Reward hacking: it found a loophole in its reward</li><li>Exploration: it is trying new actions to learn more</li><li>A broken sensor: it can't see the dust</li></ol><details><summary>Show the answer</summary><p>The robot does exactly what the reward pays for (picking up dust), not what people meant (a clean room): that's reward hacking. It isn't exploration, because it keeps repeating a trick it already knows. And nothing is broken: its sensor sees the dust perfectly well. A reward for a clean floor would be harder to trick.</p></details></section>
+<section class="pg-check"><h2>Check yourself</h2><div class="pg-quiz">
+<p class="pg-q">A robot vacuum gets a reward for every bit of dust it picks up. It starts tipping dust out and sucking it up again. What is going on?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Reward hacking: it found a loophole in its reward</button></li><li><button type="button">Exploration: it is trying new actions to learn more</button></li><li><button type="button">A broken sensor: it can't see the dust</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Reward hacking: it found a loophole in its reward</strong></p><p>The robot does exactly what the reward pays for (picking up dust), not what people meant (a clean room): that's reward hacking. It isn't exploration, because it keeps repeating a trick it already knows. And nothing is broken: its sensor sees the dust perfectly well. A reward for a clean floor would be harder to trick.</p></details>
+</div></section>
+<h2>Words in this lesson</h2><p class="pg-tags"><a href="../glossary/robot.html">Robot</a><a href="../glossary/reinforcement.html">Reinforcement learning</a><a href="../glossary/agent.html">Agent</a><a href="../glossary/reward.html">Reward</a><a href="../glossary/exploration.html">Exploration vs. exploitation</a><a href="../glossary/q-learning.html">Q-learning</a><a href="../glossary/reward-hacking.html">Reward hacking</a><a href="../glossary/rlhf.html">Reinforcement learning from human feedback (RLHF)</a></p>
 <aside class="pg-cta"><p>Try the mini-lab, take the quiz and keep your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#lesson-8">Do this lesson in the app →</a></aside>
+<p class="pg-aside">🍎 <a href="../teachers/learning-by-trial-and-error.html">For teachers: a ready plan for this lesson</a></p>
 <nav class="pg-pager" aria-label="Lessons"><a href="how-computers-see.html"><small>Previous lesson</small>How Computers See</a><a href="how-chatbots-write.html"><small>Next lesson</small>How Chatbots Write</a></nav>
 </article>
 </main>
 <footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
     <p>A free student project. No ads, no sign-up.</p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Optimisers for large models: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Moving averages, Adam and its bias correction, AdamW, gradient clipping and the memory that training needs. Research frontier: step 3 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r3-optimisers-for-large-models.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Optimisers for large models: step by step, with tasks">
+<meta property="og:description" content="Moving averages, Adam and its bias correction, AdamW, gradient clipping and the memory that training needs. Research frontier: step 3 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Optimisers for large models","headline":"Optimisers for large models","description":"Moving averages, Adam and its bias correction, AdamW, gradient clipping and the memory that training needs.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Optimisers for large models","item":"https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/r3-optimisers-for-large-models.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Research frontier</a> · Step 3 of 12 · 8 min</p>
+<h1>Optimisers for large models</h1>
+<p class="pg-lead">Moving averages, Adam and its bias correction, AdamW, gradient clipping and the memory that training needs.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🧭 Momentum: an average of past gradients</h2>
+<p>Plain SGD uses only the gradient of the current batch, which is noisy when batches are small. <strong>Momentum</strong> uses an <strong>exponential moving average</strong> of the gradients instead: each step mixes the new gradient g into a running average m.</p>
+<p>Gradient components that flip sign from step to step (noise, a zigzag across a narrow valley) partly cancel in the average, while consistent ones remain. The coefficients of older gradients shrink geometrically:</p>
+<div class="pg-example is-mono"><div>m ← β·m + (1 − β)·g, with 0 ≤ β &lt; 1</div><div>w ← w − η·m</div><div>coefficient of the gradient from k steps ago: (1 − β)·β^k</div><div>the coefficients add up to (1 − β)·(1 + β + β² + …) = 1</div><div>memory ≈ 1/(1 − β) steps: β = 0.9 → about 10</div></div>
+<p class="pg-note">Why 1/(1 − β): the newest gradient gets the coefficient 1 − β, as in a plain average of the last 1/(1 − β) gradients. Many libraries write momentum as m ← β·m + g: that m is 1/(1 − β) times longer, the same as an η that is 1/(1 − β) times larger.</p>
+<section class="pg-check"><p><strong>Task.</strong> An exponential moving average of the gradients, m ← β·m + (1 − β)·g, uses β = 0.999. Roughly how many of the most recent steps does it effectively average over?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>⚙️ Adam: a step size for every weight</h2>
+<p><strong>Adam</strong> keeps two moving averages for every weight: m of its gradients and v of their squares (estimates of the first and second moments). Both start at 0, so early on both are biased towards 0: after t steps their coefficients add up to only 1 − β₁^t and 1 − β₂^t.</p>
+<p>Dividing by these sums, the <strong>bias correction</strong>, removes the bias. The update divides m̂ by √v̂, so every weight gets its own effective learning rate η/(√v̂ + ε). All operations act on each weight separately.</p>
+<div class="pg-example is-mono"><div>m ← β₁·m + (1 − β₁)·g</div><div>v ← β₂·v + (1 − β₂)·g²</div><div>m̂ = m / (1 − β₁^t), v̂ = v / (1 − β₂^t), t = 1, 2, …</div><div>w ← w − η·m̂ / (√v̂ + ε)</div></div>
+<p class="pg-note">Common defaults: β₁ = 0.9 and β₂ = 0.999 (large models often use a smaller β₂, with a shorter memory). ε is a tiny constant that keeps the division safe when v̂ is near 0.</p>
+<section class="pg-check"><p><strong>Task.</strong> Adam with bias correction makes its first step: t = 1, m and v start at 0, ε is negligible. One weight has the gradient g = 250, and the learning rate is η = 0.001. What is the size |Δw| of that weight's update?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> By mistake, the loss is multiplied by 100 from the very first step of training. What happens to the updates of Adam and of plain SGD?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🧽 AdamW: weight decay outside the adaptive step</h2>
+<p>An L2 penalty (λ/2)·‖w‖² adds λ·w to the gradient. With plain SGD that is exactly weight decay. Inside Adam it is not: λ·w passes through m̂ and is divided by √v̂ like the rest of the gradient, so the strength of the decay differs from weight to weight.</p>
+<p><strong>AdamW</strong> takes the decay out of the adaptive step and applies it directly: <strong>decoupled weight decay</strong>. At each step, it multiplies every weight by the same factor 1 − η·λ and adds the usual Adam update. AdamW is a common default for training large models.</p>
+<div class="pg-example is-mono"><div>Adam + L2: the Adam step on g + λ·w</div><div>AdamW: m̂ and v̂ from g alone, and</div><div>w ← w − η·(m̂ / (√v̂ + ε) + λ·w)</div></div>
+<section class="pg-check"><p><strong>Task.</strong> Adam is used with an L2 penalty (λ/2)·‖w‖² added to the loss, instead of AdamW's decoupled weight decay. Which weights does the penalty pull towards zero the least, relative to their size?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🧯 Keeping training stable</h2>
+<p><strong>Warmup</strong>: over the first steps, the learning rate rises from about 0 to its peak, often linearly. Then it usually decays, often along a cosine: a <strong>cosine schedule</strong>.</p>
+<p><strong>Gradient clipping</strong> by the global norm ‖g‖, the length of all the model's gradients taken as one vector: if ‖g‖ exceeds a threshold c, the whole gradient is scaled down to length c. The direction stays and only the length changes, so a rare huge gradient has a bounded effect on the step and on Adam's averages.</p>
+<div class="pg-example is-mono"><div>if ‖g‖ &gt; c: g ← g · c / ‖g‖</div></div>
+<p class="pg-note">Why warmup helps is still studied. One explanation: early on, v̂ rests on few gradients, so Adam's step sizes are unreliable, and steps that are too large can make the loss diverge.</p>
+<section class="pg-check"><p><strong>Task.</strong> A model's whole gradient is g = (3, 4). It is clipped by its global norm with the threshold c = 1. What is its first component after clipping?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>💾 Memory: about 16 bytes per parameter</h2>
+<p><strong>Mixed-precision</strong> training runs most of the forward and backward passes in 16-bit numbers, but applies the update to a 32-bit <strong>master copy</strong> of the weights: many updates are too small to change a 16-bit number.</p>
+<p>Adam's averages m and v, its <strong>optimiser state</strong>, are usually kept in 32 bits too. A common setup stores per parameter:</p>
+<div class="pg-table"><table><thead><tr><th></th><th>Bytes per parameter</th></tr></thead><tbody><tr><td>Weights, 16-bit</td><td>2</td></tr><tr><td>Gradients, 16-bit</td><td>2</td></tr><tr><td>Master copy of the weights, 32-bit</td><td>4</td></tr><tr><td>Adam's m, 32-bit</td><td>4</td></tr><tr><td>Adam's v, 32-bit</td><td>4</td></tr><tr><td>Total</td><td>16</td></tr></tbody></table></div><p class="pg-note">The activations saved for the backward pass need extra memory, which grows with the batch size and the context length. <strong>Sharding</strong> splits weights, gradients and optimiser state across devices: over 8 devices, each holds an eighth.</p>
+<section class="pg-check"><p><strong>Task.</strong> Mixed-precision training with Adam needs about 16 bytes per parameter: 16-bit weights and gradients, plus a 32-bit master copy, m and v. How many GB (10⁹ bytes) is that for 3 billion parameters, not counting activations?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>An exponential moving average <code>m ← β·m + (1 − β)·g</code> remembers about 1/(1 − β) steps: about 10 for β = 0.9, about 1000 for β = 0.999.</li><li>Adam divides a bias-corrected average of the gradients, m̂, by the root of a bias-corrected average of their squares, √v̂. So, ignoring ε, its first step moves each weight with a nonzero gradient by η, and a positive constant factor on the loss cancels.</li><li>AdamW applies weight decay directly: <code>w ← w − η·(m̂ / (√v̂ + ε) + λ·w)</code>. An L2 penalty inside Adam is divided by √v̂ instead, so it is weakest for weights with large past gradients.</li><li>Warmup and clipping by the global norm help keep training stable. Mixed-precision training with Adam needs about 16 bytes per parameter, before activations.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="r2-scaling-laws.html"><small>Previous step</small>Scaling laws</a><a href="r4-why-giant-networks-generalise.html"><small>Next step</small>Why giant networks generalise</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

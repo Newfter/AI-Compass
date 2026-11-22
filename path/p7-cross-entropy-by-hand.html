@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Cross-entropy by hand: step by step, with tasks | AI Compass</title>
+<meta name="description" content="The usual loss of neural classifiers and language models, and perplexity. Under the hood: step 7 of 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Cross-entropy by hand: step by step, with tasks">
+<meta property="og:description" content="The usual loss of neural classifiers and language models, and perplexity. Under the hood: step 7 of 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Cross-entropy by hand","headline":"Cross-entropy by hand","description":"The usual loss of neural classifiers and language models, and perplexity.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Cross-entropy by hand","item":"https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Under the hood</a> · Step 7 of 8 · 7 min</p>
+<h1>Cross-entropy by hand</h1>
+<p class="pg-lead">The usual loss of neural classifiers and language models, and perplexity.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🎯 A classifier answers with probabilities</h2>
+<p>A neural classifier gives every class a score, called a <strong>logit</strong>, and softmax turns the logits into probabilities. For a photo and the classes cat, dog and fox, the answer might be p = (0.7, 0.2, 0.1).</p>
+<p>The loss has to say in one number how bad this answer is. It should be small when the true class (what the photo really shows) gets a high probability. The usual choice is the <strong>cross-entropy</strong>: minus the natural logarithm (ln) of the probability given to the true class.</p>
+<div class="pg-example is-mono"><div>L = −ln p(true class)</div><div>photo of a cat: L = −ln 0.7 ≈ 0.36</div><div>photo of a fox: L = −ln 0.1 ≈ 2.30</div></div>
+<p class="pg-note">The full formula compares the target y with the prediction p: <code>L = −Σ_i y_i·ln p_i</code>. Here <code>y_i</code> is 1 for the true class and 0 for the others, so only one term of the sum is left.</p>
+<h2>📋 What a probability costs: −ln p</h2>
+<p>The table shows the loss for different probabilities of the true class. The loss is 0 only when p = 1, and it grows without limit as p falls towards 0.</p>
+<p>Being unsure is cheap: 0.69 at p = 0.5. Being confident and wrong is expensive: if the true class got only 0.01, the loss is 4.61.</p>
+<div class="pg-table"><table><thead><tr><th>p (true class)</th><th>−ln p</th></tr></thead><tbody><tr><td>1</td><td>0</td></tr><tr><td>0.9</td><td>0.11</td></tr><tr><td>0.5</td><td>0.69</td></tr><tr><td>0.25</td><td>1.39</td></tr><tr><td>0.1</td><td>2.30</td></tr><tr><td>0.01</td><td>4.61</td></tr></tbody></table></div><p class="pg-note">Every halving of p adds the same amount to the loss, ln 2 ≈ 0.693: falling from 0.02 to 0.01 costs as much as falling from 1 to 0.5.</p>
+<section class="pg-check"><p><strong>Task.</strong> A model gives the true class the probability 0.5. What is its cross-entropy loss −ln(0.5), to two decimal places?</p><details><summary>Show the solution</summary><p>−ln(0.5) = ln(1 / 0.5) = ln 2 ≈ 0.693, so 0.69. This is the loss of a fifty-fifty answer between two classes: the answer of a model that always says 0.5 and has learned nothing. So a loss that stays near 0.69 in a two-class task is a warning sign.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> The loss of a batch is usually the mean loss of its examples. Three examples get the true-class probabilities 0.5, 0.25 and 1. What is the mean loss, to two decimal places? Use the table.</p><details><summary>Show the solution</summary><p>(0.69 + 1.39 + 0) / 3 = 2.08 / 3 ≈ 0.69. In exact form: (ln 2 + 2·ln 2 + 0) / 3 = ln 2. The mean is the same as for three fifty-fifty answers, although one answer was perfect: one number does not show how the loss is spread over the examples.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> A model gives 0.99 to class A and 0.01 to class B. The true class is B. What is the loss? Use the table.</p><details><summary>Show the solution</summary><p>−ln(0.01) ≈ 4.61. The 0.99 for the wrong class is not in the formula: only the 0.01 of the true class counts. One confident mistake costs more than six fifty-fifty answers together: 6 · 0.69 = 4.14.</p></details></section>
+<h2>🧮 Why not accuracy?</h2>
+<p>Why not train a model on accuracy itself, the share of right answers? A tiny shift of a weight almost never changes any answer, so accuracy stays the same. Its gradient is zero almost everywhere, and gradient descent gets no direction.</p>
+<p>Cross-entropy changes smoothly with the probabilities, so it does give a direction. And together with softmax it has a very simple gradient with respect to the logits z: the prediction minus the target.</p>
+<div class="pg-example is-mono"><div>∂L/∂z = p − y</div></div>
+<p class="pg-note">y is the <strong>one-hot</strong> target: 1 for the true class and 0 for the others. With three classes and the first one true, y = (1, 0, 0).</p>
+<section class="pg-check"><p><strong>Task.</strong> Softmax gives p = (0.7, 0.2, 0.1), and the true class is the first one. The gradient of the cross-entropy with respect to the logits is p − y (y is 1 for the true class, 0 for the others). What is the gradient's first component?</p><details><summary>Show the solution</summary><p>Here y = (1, 0, 0): this is the one-hot target. So the first component is 0.7 − 1 = −0.3, and the whole gradient is (−0.3, 0.2, 0.1). A step against this gradient pushes the logit of the true class up and the other two down, each in proportion to its error.</p></details></section>
+<h2>🎲 Perplexity: the loss as a number of choices</h2>
+<p>A language model is a classifier too. Its classes are all the tokens it can output, its <strong>vocabulary</strong>, and the true class is the token that really comes next. Its loss L is the mean cross-entropy per token.</p>
+<p><strong>Perplexity</strong> turns L back into a number of choices: the model is as unsure as if it had to pick among that many equally likely tokens. If the vocabulary has V tokens and the model gives each the same probability, its perplexity is exactly V.</p>
+<div class="pg-example is-mono"><div>perplexity = e^L</div><div>p = 1/V for every token:</div><div>L = ln V, perplexity = V</div></div>
+<p class="pg-note">Because of the natural logarithm, L is measured in <strong>nats</strong> (with a base-2 logarithm it would be bits). A lower perplexity is better, and the smallest possible value is 1, when L = 0.</p>
+<section class="pg-check"><p><strong>Task.</strong> Perplexity is e raised to the mean cross-entropy. A language model has a mean cross-entropy of ln 4 ≈ 1.39 nats per token. What is its perplexity?</p><details><summary>Show the solution</summary><p>e^(ln 4) = 4. On average the model is as unsure as if it chose among 4 equally likely tokens at every step.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A model that knows nothing yet spreads its probability evenly over a vocabulary of 50,000 tokens. What cross-entropy loss should you see at the very start of training?</p>
+<ol type="A" class="pg-options"><li><button type="button">About 1: the sum of all the probabilities</button></li><li><button type="button">About 50,000: the size of the vocabulary</button></li><li><button type="button" data-right>About 10.8: the natural logarithm of 50,000</button></li><li><button type="button">About 0: the probability of one token, 1 / 50,000</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: About 10.8: the natural logarithm of 50,000</strong></p><p>With V tokens, each gets p = 1/V, so L = −ln(1/V) = ln V = ln 50,000 ≈ 10.8. (50,000 itself is the perplexity e^L.) This is a quick check of a new training run: if a freshly initialised model starts far from ln V, look for a bug first.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Why do deep learning libraries usually compute the cross-entropy straight from the logits and not from the probabilities after softmax?</p>
+<ol type="A" class="pg-options"><li><button type="button">Because softmax has no derivative, so the model could not learn</button></li><li><button type="button">Because logits lie between 0 and 1, and probabilities do not</button></li><li><button type="button">Because the loss computed from logits always comes out smaller</button></li><li><button type="button" data-right>Because it is numerically more stable: no ln(0) and no overflow of e^z</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Because it is numerically more stable: no ln(0) and no overflow of e^z</strong></p><p>A tiny probability can be rounded down to exactly 0, and ln(0) makes the loss infinite. A large logit can make e^z overflow. Libraries compute ln p directly from the logits (log-softmax), subtracting the largest logit first. So give such a loss function raw logits, not the output of softmax.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Cross-entropy for one example: <code>L = −ln p(true class)</code>. For a batch, take the mean over its examples.</li><li>A confident mistake is expensive: p = 0.5 costs 0.69, but p = 0.01 costs 4.61.</li><li>With softmax, the gradient with respect to the logits is <code>p − y</code>: the prediction minus the one-hot target.</li><li><strong>Perplexity</strong> is <code>e^L</code>. A model that knows nothing yet starts near <code>L = ln V</code>, where V is the number of classes or tokens.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="p4-tokens-embeddings-and-attention.html"><small>Previous step</small>Tokens, embeddings and attention</a><a href="p8-how-a-model-picks-the-next-token.html"><small>Next step</small>How a model picks the next token</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

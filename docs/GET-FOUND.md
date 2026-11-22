@@ -5,10 +5,12 @@ once the steps below are done.
 
 ## 1. Search engines
 
-Every lesson and every glossary word has a plain page of its own, in English
-and in Russian (for example `lessons/what-is-ai.html` and
-`ru/glossary/neural-network.html`). Someone who searches "what is a neural
-network" can land on that page and continue in the app with one button.
+Every lesson, every glossary word, every lesson plan for teachers and every
+step of the learning path has a plain page of its own, in English and in
+Russian (for example `lessons/what-is-ai.html`, `teachers/what-is-ai.html` and
+`ru/glossary/neural-network.html`). The AI Lab, the history of AI and the quiz
+have a page each. Someone who searches "what is a neural network" or "AI lesson
+plan" can land on such a page and continue in the app with one button.
 
 Google finds new pages slowly when nobody tells it about them. Telling it
 takes about ten minutes, once:
@@ -23,12 +25,14 @@ takes about ten minutes, once:
 5. After the change is merged, press **Verify** in Search Console.
 6. In the menu on the left open **Sitemaps**, type `sitemap.xml` and press **Submit**.
 
-After that Google reads all 189 addresses by itself. The first pages usually
+After that Google reads all 325 addresses by itself. The first pages usually
 appear within days, the rest within a few weeks. Search Console then shows
 which searches bring visitors.
 
-Bing (which also feeds other search engines) can copy everything from Google:
-https://www.bing.com/webmasters → **Import from Google Search Console**.
+Bing, Yandex and some other search engines need nothing from you: every time
+the pages change, a small job on GitHub (`.github/workflows/indexnow.yml`) sends
+them the list of pages. You can see its runs in the repository's **Actions** tab
+("Tell search engines about the pages").
 
 ## 2. One learner brings the next
 
@@ -38,7 +42,7 @@ who opens the link sees "A friend got 8 of 10. Can you beat that?" and, after
 their own quiz, who did better. No account is needed and nothing is stored on
 a server: the result travels inside the link.
 
-## When a lesson or a glossary word changes
+## When a text of the site changes
 
 The plain pages are copies of the texts in `js/content/`. After a change, run
 

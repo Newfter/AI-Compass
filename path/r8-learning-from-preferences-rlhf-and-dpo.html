@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Learning from preferences: RLHF and DPO: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Bradley–Terry, the optimum of the KL-regularised objective, DPO, and reward hacking. Research frontier: step 8 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Learning from preferences: RLHF and DPO: step by step, with tasks">
+<meta property="og:description" content="Bradley–Terry, the optimum of the KL-regularised objective, DPO, and reward hacking. Research frontier: step 8 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Learning from preferences: RLHF and DPO","headline":"Learning from preferences: RLHF and DPO","description":"Bradley–Terry, the optimum of the KL-regularised objective, DPO, and reward hacking.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Learning from preferences: RLHF and DPO","item":"https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Research frontier</a> · Step 8 of 12 · 8 min</p>
+<h1>Learning from preferences: RLHF and DPO</h1>
+<p class="pg-lead">Bradley–Terry, the optimum of the KL-regularised objective, DPO, and reward hacking.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>⚖️ Teaching taste</h2>
+<p>Pretraining teaches a model to continue text like its corpus, not to be helpful, honest or careful. <strong>RLHF</strong> (reinforcement learning from human feedback) teaches it what people prefer, from their comparisons: people find it easier to compare two answers than to write a perfect one.</p>
+<p>After pretraining, the usual recipe begins with <strong>supervised fine-tuning</strong> (SFT) on answers written by people. Then comes the comparison data: a person sees two answers to the same prompt and picks the better one.</p>
+<p>A <strong>reward model</strong>, a network that maps a prompt and an answer to one number, is fitted to these comparisons. Then RL, often PPO, optimises the model against it, with a <strong>KL penalty</strong> that keeps the model close to the SFT model.</p>
+<section class="pg-check"><p><strong>Task.</strong> Put the usual steps of RLHF in order.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📊 The Bradley–Terry model</h2>
+<p>A reward model gives each answer y a number r(y). The <strong>Bradley–Terry model</strong> links these numbers to people's choices: it assumes that people prefer one answer to another with probability σ of the difference of their rewards.</p>
+<p>The reward model is fitted by maximum likelihood: it minimises the average of −ln P over the pairs that people compared, where y_w is the chosen answer and y_l the rejected one.</p>
+<div class="pg-example is-mono"><div>P(y_w ≻ y_l) = σ(r(y_w) − r(y_l))</div><div>loss = −ln σ(r(y_w) − r(y_l))</div><div>equal rewards → P = 0.5</div></div>
+<p class="pg-note">r(y) is short for r(x, y), the reward of answer y to prompt x. Both answers of a pair answer the same prompt.</p>
+<section class="pg-check"><p><strong>Task.</strong> Under the Bradley–Terry model, P(A is preferred to B) = σ(r(A) − r(B)), where σ(z) = 1/(1 + e^(−z)). A reward model scores answer A exactly ln 3 higher than answer B. What is the probability that A is preferred?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> A reward model was trained with the Bradley–Terry model, P(A is preferred to B) = σ(r(A) − r(B)). Then 5 is added to every reward it outputs. How do its predicted preferences change?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎯 The objective and its exact optimum</h2>
+<p>The RL step treats the model as a policy π(y | x), written π(y) for short: a distribution over answers y to a prompt x. It maximises the expected reward minus a KL penalty, β·KL(π ‖ π_ref), where π_ref is the <strong>reference model</strong>, usually the SFT model.</p>
+<p>Over all such distributions, this objective has an exact optimum π*: π_ref reweighted by exp(r/β) and divided by the normalising constant Z(x), the <strong>partition function</strong>. A small β lets π* chase the reward; a large β keeps it close to π_ref.</p>
+<div class="pg-example is-mono"><div>maximise over π: E[r(y)] − β · KL(π ‖ π_ref), where y ~ π</div><div>π*(y) = π_ref(y) · exp(r(y) / β) / Z(x)</div><div>Z(x) = Σ_y π_ref(y) · exp(r(y) / β)</div></div>
+<p class="pg-note">One-line proof: E[r(y)] − β·KL(π ‖ π_ref) = β·ln Z(x) − β·KL(π ‖ π*), and KL(π ‖ π*) ≥ 0, with equality only for π = π*. Z(x) sums over all possible answers, far too many to enumerate: RL approximates π* by sampling instead.</p>
+<section class="pg-check"><p><strong>Task.</strong> The policy that maximises E[r] − β·KL(π ‖ π_ref) is π*(y) ∝ π_ref(y)·exp(r(y)/β). Only two answers, A and B, are possible: π_ref(A) = π_ref(B) = 0.5, and r(A) − r(B) = β·ln 4. What is π*(A)?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>✨ DPO: no separate reward model</h2>
+<p>Solve the optimum for the reward: r(y) is β times the log-ratio of π* to π_ref, plus β·ln Z(x), which depends only on the prompt x. Bradley–Terry uses only the difference between the rewards of two answers to the same prompt, so Z(x) cancels.</p>
+<p><strong>DPO</strong> (direct preference optimisation) puts the trained policy π_θ in place of π* and minimises the Bradley–Terry loss on the comparison pairs. Its <strong>implicit reward</strong> is β·ln(π_θ(y)/π_ref(y)): no separate reward model is trained, and nothing is sampled from π_θ during training.</p>
+<div class="pg-example is-mono"><div>r(y) = β · ln(π*(y) / π_ref(y)) + β · ln Z(x)</div><div>loss = −ln σ(β · ln(π_θ(y_w) / π_ref(y_w)) − β · ln(π_θ(y_l) / π_ref(y_l)))</div></div>
+<p class="pg-note">ln π(y) is the log-probability of the whole answer y to the prompt x: the sum of the log-probabilities of its tokens.</p>
+<section class="pg-check"><p><strong>Task.</strong> DPO's implicit reward of an answer y is β·ln(π_θ(y)/π_ref(y)). For one answer, ln π_θ(y) = −10 and ln π_ref(y) = −14 (log-probabilities of the whole answer), and β = 0.1. What is its implicit reward?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> DPO writes the reward of an answer y to a prompt x as r(y) = β·ln(π*(y)/π_ref(y)) + β·ln Z(x): π* is the optimal policy, π_ref the reference model, Z(x) a sum over all answers to x. Why does Z(x) drop out of the DPO loss?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎭 Reward hacking</h2>
+<p>A reward model is only a proxy for what people want. Optimised hard against it, a policy can find what the proxy likes but people do not: <strong>reward hacking</strong>. This is Goodhart's law at work: a measure that becomes a target stops being a good measure.</p>
+<p>Reward models often prefer longer answers. Models trained on human approval have been observed to agree with a user's stated views more than the facts allow: <strong>sycophancy</strong>.</p>
+<p>In a 2022 study, a large “gold” reward model stood in for people and labelled the comparisons for a proxy reward model. As optimisation against the proxy moved the policy away from its start, the proxy reward kept rising, while the gold reward rose, peaked and then fell: <strong>over-optimisation</strong>.</p>
+<p class="pg-note">Defences: the KL penalty, stopping early, better reward models retrained on fresh comparisons, and checks by people.</p>
+<section class="pg-check"><p><strong>Task.</strong> A model was optimised against a reward model. Which observations suggest reward hacking, and which a real improvement?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>RLHF learns from comparisons: SFT, then a reward model fitted with Bradley–Terry, <code>P(y_w ≻ y_l) = σ(r(y_w) − r(y_l))</code>, then RL, often PPO, with a KL penalty that keeps the policy close to π_ref.</li><li>Only differences of rewards enter Bradley–Terry, so rewards have no fixed zero: adding a constant to every reward changes no prediction. Their scale, though, is fixed through σ.</li><li>The KL-regularised objective <code>E[r] − β·KL(π ‖ π_ref)</code> has the exact optimum <code>π* ∝ π_ref·exp(r/β)</code>. DPO solves it for r; within a pair Z(x) cancels, and what remains is a loss on the policy itself, with no separate reward model.</li><li>A reward model is only a proxy: optimised too hard, it gets hacked, for example with longer answers or sycophancy. Judge the result on what the optimisation never saw: blind human ratings, known answers, held-out checks.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="r7-reinforcement-learning-the-core.html"><small>Previous step</small>Reinforcement learning: the core</a><a href="r9-inside-the-model-interpretability.html"><small>Next step</small>Inside the model: interpretability</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

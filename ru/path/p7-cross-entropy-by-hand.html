@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Кросс-энтропия своими руками: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Обычная функция потерь нейросетевых классификаторов и языковых моделей, а ещё перплексия. Под капотом: шаг 7 из 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Кросс-энтропия своими руками: шаг за шагом, с заданиями">
+<meta property="og:description" content="Обычная функция потерь нейросетевых классификаторов и языковых моделей, а ещё перплексия. Под капотом: шаг 7 из 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Кросс-энтропия своими руками","headline":"Кросс-энтропия своими руками","description":"Обычная функция потерь нейросетевых классификаторов и языковых моделей, а ещё перплексия.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Кросс-энтропия своими руками","item":"https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/p7-cross-entropy-by-hand.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Под капотом</a> · Шаг 7 из 8 · 7 мин</p>
+<h1>Кросс-энтропия своими руками</h1>
+<p class="pg-lead">Обычная функция потерь нейросетевых классификаторов и языковых моделей, а ещё перплексия.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🎯 Классификатор отвечает вероятностями</h2>
+<p>Нейросеть-классификатор выдаёт для каждого класса оценку — <strong>логит</strong> (logit), а softmax превращает логиты в вероятности. Например, для фотографии и классов «кошка», «собака» и «лиса» ответ может быть таким: p = (0,7; 0,2; 0,1).</p>
+<p>Функция потерь должна одним числом показать, насколько плох этот ответ. Она должна быть малой, когда правильный класс (то, что на самом деле на фото) получил высокую вероятность. Обычно берут <strong>кросс-энтропию</strong> (cross-entropy): минус натуральный логарифм (ln) вероятности правильного класса.</p>
+<div class="pg-example is-mono"><div>L = −ln p(правильный класс)</div><div>на фото кошка: L = −ln 0,7 ≈ 0,36</div><div>на фото лиса: L = −ln 0,1 ≈ 2,30</div></div>
+<p class="pg-note">Полная формула сравнивает правильный ответ y с предсказанием p: <code>L = −Σ_i y_i·ln p_i</code>. Здесь <code>y_i</code> равно 1 для правильного класса и 0 для остальных, так что от суммы остаётся одно слагаемое.</p>
+<h2>📋 Сколько стоит вероятность: −ln p</h2>
+<p>В таблице — функция потерь при разных вероятностях правильного класса. Она равна 0, только когда p = 1, и растёт без предела, когда p приближается к 0.</p>
+<p>Неуверенность стоит недорого: 0,69 при p = 0,5. Уверенная ошибка стоит дорого: если правильному классу досталось всего 0,01, функция потерь равна 4,61.</p>
+<div class="pg-table"><table><thead><tr><th>p (правильный класс)</th><th>−ln p</th></tr></thead><tbody><tr><td>1</td><td>0</td></tr><tr><td>0,9</td><td>0,11</td></tr><tr><td>0,5</td><td>0,69</td></tr><tr><td>0,25</td><td>1,39</td></tr><tr><td>0,1</td><td>2,30</td></tr><tr><td>0,01</td><td>4,61</td></tr></tbody></table></div><p class="pg-note">Каждое уменьшение p вдвое прибавляет к функции потерь одно и то же число, ln 2 ≈ 0,693: падение с 0,02 до 0,01 стоит столько же, сколько падение с 1 до 0,5.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Модель дала правильному классу вероятность 0,5. Чему равна кросс-энтропия −ln(0,5)? Ответ округли до сотых.</p><details><summary>Показать решение</summary><p>−ln(0,5) = ln(1 / 0,5) = ln 2 ≈ 0,693, то есть 0,69. Столько стоит ответ «пятьдесят на пятьдесят» при двух классах: его даёт модель, которая всегда отвечает 0,5 и ничему не научилась. Поэтому, если при двух классах функция потерь держится около 0,69, это тревожный знак.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> Функцию потерь для пачки (batch) обычно считают как среднее по её примерам. В трёх примерах правильный класс получил вероятности 0,5; 0,25 и 1. Чему равно это среднее? Ответ округли до сотых. Используй таблицу.</p><details><summary>Показать решение</summary><p>(0,69 + 1,39 + 0) / 3 = 2,08 / 3 ≈ 0,69. Точное значение: (ln 2 + 2·ln 2 + 0) / 3 = ln 2. Среднее такое же, как у трёх ответов «пятьдесят на пятьдесят», хотя один ответ был идеальным: одно число не показывает, как потери распределены по примерам.</p></details></section>
+<section class="pg-check"><p><strong>Задание.</strong> Модель дала классу A вероятность 0,99, а классу B — 0,01. Правильный класс — B. Чему равна функция потерь? Используй таблицу.</p><details><summary>Показать решение</summary><p>−ln(0,01) ≈ 4,61. Вероятность 0,99 у неправильного класса в формулу не входит: учитывается только 0,01 у правильного. Одна уверенная ошибка стоит дороже шести ответов «пятьдесят на пятьдесят», вместе взятых: 6 · 0,69 = 4,14.</p></details></section>
+<h2>🧮 Почему не accuracy?</h2>
+<p>Почему бы не обучать модель прямо по accuracy — доле правильных ответов? Крошечный сдвиг веса почти никогда не меняет ни одного ответа, так что accuracy остаётся прежней. Её градиент почти везде равен нулю, и градиентный спуск не знает, в каком направлении шагать.</p>
+<p>Кросс-энтропия плавно меняется вместе с вероятностями, поэтому направление она даёт. А в паре с softmax у неё очень простой градиент по логитам z: предсказание минус правильный ответ.</p>
+<div class="pg-example is-mono"><div>∂L/∂z = p − y</div></div>
+<p class="pg-note">y — правильный ответ в виде <strong>one-hot-вектора</strong>: 1 для правильного класса и 0 для остальных. Если классов три и правильный — первый, то y = (1; 0; 0).</p>
+<section class="pg-check"><p><strong>Задание.</strong> Softmax выдал p = (0,7; 0,2; 0,1), а правильный класс — первый. Градиент кросс-энтропии по логитам равен p − y (y равно 1 у правильного класса и 0 у остальных). Чему равна первая компонента градиента?</p><details><summary>Показать решение</summary><p>Здесь y = (1; 0; 0): это one-hot-вектор правильного ответа. Поэтому первая компонента равна 0,7 − 1 = −0,3, а весь градиент — (−0,3; 0,2; 0,1). Шаг против этого градиента поднимает логит правильного класса и опускает два других, каждый пропорционально своей ошибке.</p></details></section>
+<h2>🎲 Перплексия: функция потерь как число вариантов</h2>
+<p>Языковая модель — тоже классификатор. Её классы — все токены, которые она может выдать, то есть её <strong>словарь</strong> (vocabulary), а правильный класс — токен, который на самом деле идёт следующим. Её функция потерь L — средняя кросс-энтропия на токен.</p>
+<p><strong>Перплексия</strong> (perplexity) превращает L обратно в число вариантов: модель сомневается так, будто выбирает из стольких же равновероятных токенов. Если в словаре V токенов и модель даёт каждому одинаковую вероятность, её перплексия равна ровно V.</p>
+<div class="pg-example is-mono"><div>перплексия = e^L</div><div>p = 1/V у каждого токена:</div><div>L = ln V, перплексия = V</div></div>
+<p class="pg-note">Из-за натурального логарифма L измеряется в <strong>натах</strong> (nats); с логарифмом по основанию 2 получились бы биты. Чем ниже перплексия, тем лучше; её наименьшее возможное значение — 1, при L = 0.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Перплексия — это e в степени, равной средней кросс-энтропии. У языковой модели средняя кросс-энтропия равна ln 4 ≈ 1,39 ната на токен. Чему равна её перплексия?</p><details><summary>Показать решение</summary><p>e^(ln 4) = 4. В среднем модель сомневается так, будто на каждом шаге выбирает из 4 равновероятных токенов.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Модель ещё ничего не знает и распределяет вероятность поровну по словарю из 50 000 токенов. Какое значение кросс-энтропии стоит ожидать в самом начале обучения?</p>
+<ol type="A" class="pg-options"><li><button type="button">Около 1: сумма всех вероятностей</button></li><li><button type="button">Около 50 000: размер словаря</button></li><li><button type="button" data-right>Около 10,8: натуральный логарифм 50 000</button></li><li><button type="button">Около 0: вероятность одного токена, 1 / 50 000</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Около 10,8: натуральный логарифм 50 000</strong></p><p>Когда токенов V, каждый получает p = 1/V, поэтому L = −ln(1/V) = ln V = ln 50 000 ≈ 10,8. (А 50 000 — это перплексия e^L.) Так удобно проверять новый запуск обучения: если у только что инициализированной модели функция потерь далека от ln V, сначала стоит поискать ошибку в коде.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Задание.</strong> Почему библиотеки глубокого обучения обычно считают кросс-энтропию сразу по логитам, а не по вероятностям после softmax?</p>
+<ol type="A" class="pg-options"><li><button type="button">Потому что у softmax нет производной, а значит, модель не смогла бы учиться</button></li><li><button type="button">Потому что логиты лежат между 0 и 1, а вероятности — нет</button></li><li><button type="button">Потому что по логитам функция потерь всегда получается меньше</button></li><li><button type="button" data-right>Потому что так численно устойчивее: нет ln(0) и переполнения e^z</button></li></ol>
+<details class="pg-why"><summary>Показать ответ</summary><p><strong>Верный ответ: Потому что так численно устойчивее: нет ln(0) и переполнения e^z</strong></p><p>Крошечная вероятность может округлиться ровно до 0, и функция потерь из-за ln(0) станет бесконечной. А при большом логите может переполниться e^z. Библиотеки считают ln p напрямую по логитам (log-softmax), сначала вычитая наибольший логит. Поэтому в такую функцию потерь передавай сами логиты, а не результат softmax.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Кросс-энтропия для одного примера: <code>L = −ln p(правильный класс)</code>. Для пачки берут среднее по её примерам.</li><li>Уверенная ошибка стоит дорого: p = 0,5 обходится в 0,69, а p = 0,01 — уже в 4,61.</li><li>С softmax градиент по логитам равен <code>p − y</code>: предсказание минус one-hot-вектор правильного ответа.</li><li><strong>Перплексия</strong> равна <code>e^L</code>. Модель, которая ещё ничего не знает, начинает примерно с <code>L = ln V</code>, где V — число классов или токенов.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="p4-tokens-embeddings-and-attention.html"><small>Предыдущий шаг</small>Токены, эмбеддинги и внимание</a><a href="p8-how-a-model-picks-the-next-token.html"><small>Следующий шаг</small>Как модель выбирает следующий токен</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

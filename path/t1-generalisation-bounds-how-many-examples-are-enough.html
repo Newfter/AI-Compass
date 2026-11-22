@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Generalisation bounds: how many examples are enough: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Compute sample sizes from Hoeffding and the union bound, then find their limit. Theory at the limit: step 1 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Generalisation bounds: how many examples are enough: step by step, with tasks">
+<meta property="og:description" content="Compute sample sizes from Hoeffding and the union bound, then find their limit. Theory at the limit: step 1 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Generalisation bounds: how many examples are enough","headline":"Generalisation bounds: how many examples are enough","description":"Compute sample sizes from Hoeffding and the union bound, then find their limit.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Generalisation bounds: how many examples are enough","item":"https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 1 of 12 · 10 min</p>
+<h1>Generalisation bounds: how many examples are enough</h1>
+<p class="pg-lead">Compute sample sizes from Hoeffding and the union bound, then find their limit.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🎯 One classifier, fixed in advance</h2>
+<p>A classifier h has a <strong>true error</strong> R(h) = P(h(x) ≠ y) on a fresh example from the data distribution, and an <strong>empirical error</strong> R̂(h): its share of mistakes on a sample of n examples drawn independently from that distribution. How far apart can the two be?</p>
+<p>If h is fixed before the sample is drawn, its n mistakes are independent 0/1 variables with mean R(h), so <strong>Hoeffding's inequality</strong> applies. It assumes nothing else about the data.</p>
+<p>Set the right-hand side equal to δ and solve for ε: the result is a guarantee that holds with probability at least 1 − δ. Such statements with an ε and a δ are the language of <strong>PAC</strong> learning: probably (1 − δ) approximately (ε) correct.</p>
+<div class="pg-example is-mono"><div>X_1 … X_n independent, with values in [0, 1] and mean μ:</div><div>P(|(X_1 + … + X_n)/n − μ| ≥ ε) ≤ 2·exp(−2·n·ε²)</div><div>for h fixed in advance, with probability ≥ 1 − δ:</div><div>|R(h) − R̂(h)| ≤ √(ln(2/δ) / (2n))</div><div>n = 1000, δ = 0.05: √(ln 40 / 2000) ≈ 0.043</div></div>
+<p class="pg-note">The probability is over samples: R(h) is a fixed number, only R̂(h) is random. Halving ε takes four times as many examples; a δ ten times smaller only adds ln 10 ≈ 2.3 to ln(2/δ).</p>
+<section class="pg-check"><p><strong>Task.</strong> A classifier is fixed before n independent test examples are drawn. Hoeffding: P(|test error − true error| ≥ ε) ≤ 2·exp(−2·n·ε²). What is the smallest n for which this guarantees a deviation below 0.02 with probability ≥ 0.95?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> 1000 binary classifiers answer every example by an independent fair coin flip, so each has true error 0.5. All are scored on the same 10 examples. What is the probability that at least one makes no error? Two decimal places.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> From 200 classifiers you keep the one with the lowest error R̂ on a sample of n = 1000 examples and argue: “By Hoeffding, with probability 0.95 its true error is within 0.043 of its R̂.” What is wrong with this argument?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🔗 The union bound: paying for the choice</h2>
+<p>A classifier chosen after looking at the sample is still a member of the class H it was chosen from. So ask for more: a sample that is good for every h in H at once. The <strong>union bound</strong> says: the probability that at least one of several events happens is at most the sum of their probabilities.</p>
+<p>For a finite class that adds up |H| copies of Hoeffding's bound. Setting the sum equal to δ gives a guarantee for all h in H simultaneously, so it covers the h you end up with, whatever rule picked it. The class costs only ln|H| under the root.</p>
+<p>A test set reused to compare k models, each fixed without looking at it, is the same situation with |H| = k.</p>
+<div class="pg-example is-mono"><div>P(some h in H has |R(h) − R̂(h)| ≥ ε) ≤ |H|·2·exp(−2·n·ε²)</div><div>with probability ≥ 1 − δ, for all h in H at once:</div><div>|R(h) − R̂(h)| ≤ √((ln|H| + ln(2/δ)) / (2n))</div><div>|H| = 10⁶, n = 10,000, δ = 0.05: 0.0296 (one fixed h: 0.0136)</div></div>
+<p class="pg-note">If each new model is chosen after seeing earlier scores on the test set, the k models are no longer a fixed list: the union then has to cover every model that could have been chosen.</p>
+<section class="pg-check"><p><strong>Task.</strong> k = 1000 models, fixed in advance, share a test set of n = 10,000 examples. Union bound: P(some model has |test error − true error| ≥ ε) ≤ 2·k·exp(−2·n·ε²). For what ε is the right-hand side equal to 0.05? Three decimal places.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Some h in a finite class H has true error R(h) = 0 (the realisable case). The learner returns any h in H with no errors on n independent examples. Order the proof that the returned h has R(h) ≤ ε with probability at least 1 − δ.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> A finite class H, |H| = 1000, has an h with true error 0. With probability ≥ 1 − δ, any h in H with no errors on n ≥ (ln|H| + ln(1/δ)) / ε independent examples has true error ≤ ε. What is the smallest such n for ε = δ = 0.01?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📐 Infinite classes: the VC dimension</h2>
+<p>For an infinite class ln|H| is useless. But on a finite set of points only the labellings matter. H <strong>shatters</strong> a set of k points when it realises all 2^k labellings of it. The <strong>VC dimension</strong> d of H is the size of the largest set that H shatters, or ∞ if there is no largest one.</p>
+<p>So d ≥ k needs just one shattered set of k points, while d &lt; k needs every set of k points to fail. The <strong>Sauer–Shelah lemma</strong>: for a finite d ≥ 1, on any n ≥ d points H realises at most (e·n/d)^d labellings, a polynomial in n in place of 2^n.</p>
+<p>With that count in the role of |H| (the full proof needs one more idea, a second “ghost” sample) comes <strong>uniform convergence</strong>: with probability at least 1 − δ the gap |R(h) − R̂(h)| is small for all h in H at once, at most of the order shown below. Textbooks differ in the constants.</p>
+<div class="pg-example is-mono"><div>thresholds, h(x) = 1 if x ≥ a: d = 1</div><div>intervals, h(x) = 1 if a ≤ x ≤ b: d = 2</div><div>half-spaces in R^m, h(x) = 1 if w·x + b ≥ 0: d = m + 1</div><div>axis-aligned rectangles in the plane, h(x) = 1 inside: d = 4</div><div>for n ≥ 2d: gap at most of the order of √((d·ln(n/d) + ln(1/δ)) / n)</div></div>
+<section class="pg-check"><p><strong>Task.</strong> Does the class shatter the set of points, that is, realise every labelling of it?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge, on paper. On the real line, h_ω(x) = 1 if sin(ω·x) ≥ 0 and 0 otherwise: a class with one parameter ω. Prove that its VC dimension is infinite. Try the points x_j = 10^(−j), j = 1 … m, and a clever ω for each labelling.</p><details><summary>Show the answer</summary><p>Take labels y_1 … y_m, each 0 or 1, and set ω = π·(1 + Σ_i (1 − y_i)·10^i). Then ω·x_j = π·(10^(−j) + Σ_i (1 − y_i)·10^(i−j)). Now sort the terms of the sum by i.</p>
+<p>Terms with i &gt; j are multiples of 10, so their total is an even integer: it adds a multiple of 2π and changes nothing. The term i = j adds π exactly when y_j = 0. The rest, c = 10^(−j) + the terms with i &lt; j, satisfies 0 &lt; c &lt; 1/9, because c is at most 0.1 + 0.01 + … + 10^(−j).</p>
+<p>So sin(ω·x_j) = sin(π·c) &gt; 0 when y_j = 1, and sin(π + π·c) &lt; 0 when y_j = 0: all 2^m labellings are realised, for every m. One parameter, infinite VC dimension: the number of parameters does not measure the capacity of a class.</p></details></section>
+<h2>🚧 Where these bounds stop</h2>
+<p>All these bounds hold for every data distribution, and the uniform ones for every way of picking h from H. That worst-case reach is their strength, and their limit.</p>
+<p>An <strong>over-parameterised</strong> network has far more weights than training examples. Then both ln|H| (count the bits of the weights) and the VC dimension are typically far above n, and the guaranteed gap exceeds 1: it says nothing about errors that lie between 0 and 1. In experiments such networks fit even random labels.</p>
+<p>Yet trained on real data the same networks generalise. A bound that sees only the class cannot explain that. Bounds through weight norms, PAC-Bayes bounds and bounds that depend on the training algorithm are partial answers; a full explanation is open research.</p>
+<div class="pg-example is-mono"><div>10⁶ weights of 32 bits each: up to 2^(32·10⁶) classifiers</div><div>ln of that count: 32·10⁶·ln 2 ≈ 2.2·10⁷</div><div>even with one example per weight, n = 10⁶, and δ = 0.05:</div><div>√((2.2·10⁷ + ln 40) / (2·10⁶)) ≈ 3.3</div></div>
+<p class="pg-note">Norm-based bounds measure the size of the weights instead of their number. PAC-Bayes bounds replace ln|H| by the KL divergence of a distribution over weights from a prior fixed before the data. Algorithm-dependent bounds use, for example, how little the result changes when one training example is replaced: stability.</p>
+<section class="pg-check"><p><strong>Task.</strong> A network always fits its n training examples perfectly, with real labels and with fair-coin labels alike. A bound on true minus training error holds for every distribution and depends only on the class, n and δ. What follows?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>For an h fixed before the sample, with probability ≥ 1 − δ: <code>|R(h) − R̂(h)| ≤ √(ln(2/δ) / (2n))</code> (Hoeffding), so <code>n ≥ ln(2/δ) / (2ε²)</code> examples give precision ε. For an h chosen with the same sample this guarantee is void.</li><li>Union bound over a finite class H, or over k models fixed in advance that share a test set (|H| = k): with probability ≥ 1 − δ, <code>|R(h) − R̂(h)| ≤ √((ln|H| + ln(2/δ)) / (2n))</code> for all h at once. The class costs only ln|H|.</li><li>Realisable case (a perfect h exists, the learner returns an error-free one): <code>n ≥ (ln|H| + ln(1/δ)) / ε</code> examples are enough for R(h) ≤ ε with probability ≥ 1 − δ. 1/ε in place of 1/ε².</li><li>For infinite classes the VC dimension d does the work of ln|H|: for n ≥ 2d, a gap at most of the order of <code>√((d·ln(n/d) + ln(1/δ)) / n)</code>. For over-parameterised networks all these bounds typically exceed 1; why such networks generalise is open research.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><span></span><a href="t2-optimisation-theory-how-fast-can-descent-go.html"><small>Next step</small>Optimisation theory: how fast can descent go</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

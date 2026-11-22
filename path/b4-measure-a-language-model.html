@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Measure a language model: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Evaluation sets, ways to score answers and how much a score can be trusted. Build with AI: step 4 of 7.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b4-measure-a-language-model.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Measure a language model: step by step, with tasks">
+<meta property="og:description" content="Evaluation sets, ways to score answers and how much a score can be trusted. Build with AI: step 4 of 7.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Measure a language model","headline":"Measure a language model","description":"Evaluation sets, ways to score answers and how much a score can be trusted.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Measure a language model","item":"https://newfter.github.io/AI-Compass/path/b4-measure-a-language-model.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/b4-measure-a-language-model.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🚀 <a href="./#build">Build with AI</a> · Step 4 of 7 · 7 min</p>
+<h1>Measure a language model</h1>
+<p class="pg-lead">Evaluation sets, ways to score answers and how much a score can be trusted.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🧪 Five good answers prove nothing</h2>
+<p>You change a prompt, try five questions by hand, and the answers look good. That is a demo: a few cases that you thought of, mostly ones that work. It says little about the thousands of questions that real users will ask.</p>
+<p>To know more, you need an <strong>evaluation set</strong>, or “eval” for short: a saved list of test cases, the same for every run, with a rule for scoring every answer. A test case is an input, such as a user's question, often together with the answer you expect.</p>
+<p>You run the whole set again after every change to the prompt, the model or the documents it works with. Then “it seems better” becomes a number, and you can compare it with the number before the change.</p>
+<p class="pg-note">The best test cases come from real use: questions that real users asked (with personal details removed), including the ones your system got wrong.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> You changed a prompt, and the 5 questions you tried by hand get better answers. What do you know now?</p>
+<ol type="A" class="pg-options"><li><button type="button">That the model has learned from your 5 questions and will keep answering them well</button></li><li><button type="button">That the problem is solved: the old prompt had a bug, and it is now fixed</button></li><li><button type="button" data-right>Very little: 5 hand-picked cases can get better while hundreds of others get worse</button></li><li><button type="button">A lot: every answer you checked got better, so the new prompt is better for all users</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Very little: 5 hand-picked cases can get better while hundreds of others get worse</strong></p><p>Five cases that you picked yourself are a tiny sample, and not a random one: a change that helps them can break other cases, and you would not see it. The model has learned nothing: a new prompt does not change its weights. Only a run over a saved, much larger set shows the wider picture.</p></details>
+</div></section>
+<h2>📏 How to score an answer</h2>
+<p>A test case helps only if its answer can be scored. There are four common ways to do that. The table lists them roughly from the most to the least reliable.</p>
+<p>A <strong>rubric</strong> is a short list of criteria, for example: “answers the question”, “stays polite”, “invents nothing”. A <strong>judge model</strong> is another language model that scores answers by such a rubric.</p>
+<div class="pg-table"><table><thead><tr><th>Way of scoring</th><th>Fits when</th></tr></thead><tbody><tr><td><strong>Exact match</strong>: the answer equals the expected one</td><td>There is one right answer: a label or a number</td></tr><tr><td>A check in code</td><td>A program can test the output: JSON must parse, code must pass its tests</td></tr><tr><td>A rubric scored by people</td><td>A good answer can be worded in many ways: free text</td></tr><tr><td>A rubric scored by a judge model</td><td>The same, in large numbers: once the judge has been checked against people</td></tr></tbody></table></div><p class="pg-note">Use the first two wherever the task allows: they are cheap, and the same answer always gets the same score. A judge model is far faster and cheaper than people. But before you trust it, have people score a sample of answers and compare its scores with theirs.</p>
+<section class="pg-check"><p><strong>Task.</strong> Which way of scoring fits each task?</p><details><summary>Show the solution</summary><p>With one right label, an exact match is enough. Code is judged by running it: its tests pass or fail. JSON is parsed first, then each field is compared with the expected value. A polite reply can be worded in a thousand ways, so it needs criteria: a rubric, scored by people or by a judge model that was checked against people.</p></details></section>
+<h2>🎲 A score is a measurement, and it has noise</h2>
+<p>Imagine your set has 100 test questions. They are only a sample of everything users could ask: another 100 questions of the same kind would probably give a different score, a few percentage points higher or lower. So a score is a measurement, and like every measurement it has noise.</p>
+<p>The <strong>standard error</strong> (SE) says how large this noise is. It depends on the accuracy p (the share of right answers, from 0 to 1) and on the number of questions n. The more questions, the smaller the error.</p>
+<p>Take two standard errors below the score and two above it: that is a rough <strong>95% confidence interval</strong>. A range built this way holds the true accuracy (the one on all possible questions of this kind) in about 95 cases out of 100. The last line below is not finished: you will work it out on the next screen.</p>
+<div class="pg-example is-mono"><div>SE = √(p·(1 − p) / n)</div><div>95% interval ≈ p ± 2·SE</div><div>p = 0.8, n = 100</div><div>SE = √(0.8·0.2 / 100) = ?</div></div>
+<p class="pg-note">The formula is an approximation. Trust it when the set has at least about 10 right and 10 wrong answers. At p = 1 it gives SE = 0, but 20 right answers out of 20 do not prove that a model never fails.</p>
+<section class="pg-check"><p><strong>Task.</strong> A model answers 80 of 100 test questions correctly. The standard error of this accuracy is √(p·(1 − p) / n): p is the share of right answers, n is the number of questions. What is this error, as a number from 0 to 1?</p><details><summary>Show the solution</summary><p>p = 0.8, so p·(1 − p) = 0.8·0.2 = 0.16. Then √(0.16 / 100) = √0.0016 = 0.04, that is 4 percentage points. Twice that, ±8 points, gives a rough 95% interval: from 0.72 to 0.88. So “80% right” on 100 questions means “somewhere between about 72% and 88%”.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Model A scores 80% and model B scores 84% on the same 100 test questions. Is B the better model?</p>
+<ol type="A" class="pg-options"><li><button type="button">Yes: 84 is more than 80, and both scores were measured in exactly the same way</button></li><li><button type="button">Yes: both models got the same questions, so the gap cannot be a matter of luck</button></li><li><button type="button">No: the gap is inside the noise, and that proves the two models are equally good</button></li><li><button type="button" data-right>That is not shown yet: a gap of 4 points is well inside the noise of about ±8 points</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: That is not shown yet: a gap of 4 points is well inside the noise of about ±8 points</strong></p><p>Each score here has noise of about ±8 points, so a gap of 4 points, just 4 answers, can easily be luck: the same questions are still only a sample. But the models are not proved equal either: this test is too small to tell. Use more questions, or compare the models question by question: where is only one of them right?</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Task.</strong> The standard error of an accuracy p measured on n test questions is √(p·(1 − p) / n). A test has 100 questions. How many questions must it have in total to halve the standard error, at the same accuracy?</p><details><summary>Show the solution</summary><p>n is under the square root, so the error falls only like 1/√n. To halve it, √n must double, so n must become 4 times as large: 4·100 = 400. Check with p = 0.8: √(0.16 / 100) = 0.04, and √(0.16 / 400) = 0.02. Low noise is expensive: ten times less noise needs 100 times the questions.</p></details></section>
+<h2>🧼 Three ways a score lies</h2>
+<p><strong>Contamination</strong>: the model has seen the test before. The questions, or their answers, were in its training data, or they are in your own prompt as examples. Then the score may show memory, not skill.</p>
+<p>Tuning on the test set: you improve the prompt again and again on the same cases whose score you then report. The prompt gets fitted to exactly these cases, and on new ones the score is usually lower.</p>
+<p>An unchecked judge: a judge model may prefer long answers, or answers written in its own style, and nobody has compared its scores with human scores.</p>
+<p class="pg-note">What helps: write new test cases and keep them private. Tune the prompt on one set and report the score on another. Compare the judge's scores with human scores on a sample before you trust it.</p>
+<section class="pg-check"><p><strong>Task.</strong> Can you trust the reported score?</p><details><summary>Show the solution</summary><p>A score is easier to trust when the test cases are new to the model, were not used to tune the prompt, and are scored by a rule that was itself checked. Copied examples are contamination, 30 rounds of tuning fit the prompt to those 50 cases, and an unchecked judge may reward the wrong things.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> The questions and answers of a public test have been on the internet for years. A new language model scores very high on this test. What is the main doubt about this score?</p>
+<ol type="A" class="pg-options"><li><button type="button">Noise: a score close to 100% has a larger standard error than a score close to 50%</button></li><li><button type="button">None: a test that anyone can read was checked by many people, so its scores can be trusted</button></li><li><button type="button">A bug: a score this high is nearly always caused by an error in the scoring code</button></li><li><button type="button" data-right>Contamination: the test may have been in the model's training data, so the score may show memory</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Contamination: the test may have been in the model's training data, so the score may show memory</strong></p><p>Much of a language model's training text comes from the internet, so a public test can end up in it. Then the score may show memory, not skill: this is <strong>contamination</strong>. A public test is easy to check, and just as easy to memorise. Test the model with new, unpublished questions.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> You build an application on a language model. You fix one wrong answer by changing the prompt. What protects you from breaking ten other cases without noticing?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>A regression set: every saved test case is run again after each change</button></li><li><button type="button">A question to the model itself: is the new prompt better than the old one?</button></li><li><button type="button">Three more runs of the case you fixed: to be sure that it now stays right</button></li><li><button type="button">A temperature of zero: with it, the answers hardly change between runs</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: A regression set: every saved test case is run again after each change</strong></p><p>A changed prompt is used for every case, so it can break answers that used to be right: that is a regression. A <strong>regression set</strong> catches it: all saved cases are run again after each change, and the new scores are compared with the old ones. Add every failure you fix to the set: if it comes back, the next run shows it.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>An <strong>evaluation set</strong> is a saved list of test cases plus a rule for scoring. Run all of it again after every change.</li><li>Every score has noise. For an accuracy p on n questions, a rough 95% interval is <code>p ± 2·√(p·(1 − p) / n)</code>. A small gap on a small set proves nothing, and half the noise costs four times the questions.</li><li>A score can lie when the model has seen the test cases, when the prompt was tuned on them, or when nobody checked the judge model against people.</li><li>Every failure you fix becomes a new test case: the regression set grows, and an old mistake that comes back is caught by the next run.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="b3-rag-answers-from-your-documents.html"><small>Previous step</small>RAG: answers from your documents</a><a href="b5-prompt-injection.html"><small>Next step</small>Prompt injection</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

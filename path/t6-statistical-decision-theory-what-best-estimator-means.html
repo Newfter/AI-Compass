@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Statistical decision theory: what “best estimator” means: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Compute risks, a Cramér–Rao bound, the James–Stein gain and a minimax rule. Theory at the limit: step 6 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t6-statistical-decision-theory-what-best-estimator-means.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Statistical decision theory: what “best estimator” means: step by step, with tasks">
+<meta property="og:description" content="Compute risks, a Cramér–Rao bound, the James–Stein gain and a minimax rule. Theory at the limit: step 6 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Statistical decision theory: what “best estimator” means","headline":"Statistical decision theory: what “best estimator” means","description":"Compute risks, a Cramér–Rao bound, the James–Stein gain and a minimax rule.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Statistical decision theory: what “best estimator” means","item":"https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t6-statistical-decision-theory-what-best-estimator-means.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 6 of 12 · 10 min</p>
+<h1>Statistical decision theory: what “best estimator” means</h1>
+<p class="pg-lead">Compute risks, a Cramér–Rao bound, the James–Stein gain and a minimax rule.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>⚖️ Risk: an estimator is judged at every θ</h2>
+<p>An <strong>estimator</strong> δ turns the data X into a guess δ(X) of the parameter θ, and a <strong>loss</strong> L(θ, a) prices the guess a: here the squared error (a − θ)², unless stated. The <strong>risk</strong> R(θ, δ) is the loss averaged over the data at a fixed θ. It is a function of θ, not one number.</p>
+<p>δ is <strong>inadmissible</strong> if another estimator has a risk that is no larger at every θ and smaller at some θ (it dominates δ); otherwise δ is <strong>admissible</strong>. Risk functions usually cross. Two summaries give one number: the <strong>Bayes risk</strong> averages R(θ, δ) over a prior π on θ, the <strong>minimax</strong> criterion takes the supremum over θ.</p>
+<p>For the squared error, risk = bias² + variance. The classic trade: take an unbiased X̄ with variance v and shrink it towards 0 by a factor c (lines 2 to 4). The bias grows, the variance falls.</p>
+<div class="pg-example is-mono"><div>R(θ, δ) = E_θ[(δ(X) − θ)²] = (E_θ[δ(X)] − θ)² + Var_θ(δ(X))</div><div>δ_c = c·X̄ for a mean μ: R(μ, δ_c) = (1 − c)²·μ² + c²·v</div><div>smallest at c* = μ²/(μ² + v), where the risk is c*·v</div><div>μ = 1, v = 1: c* = 0.5 and risk 0.5, against 1 for X̄</div></div>
+<p class="pg-note">c* depends on the unknown μ, so c*·X̄ is not an estimator. The point is that a little bias can buy a lot of variance. The question from here on: when can the data themselves choose the shrinkage?</p>
+<section class="pg-check"><p><strong>Task.</strong> X̄ is an unbiased estimator of a mean μ, with variance 1. The shrunk estimator 0.6·X̄ has a smaller risk (expected squared error) than X̄ exactly when |μ| &lt; m. What is m?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📐 Fisher information and the Cramér–Rao bound</h2>
+<p>How precise can an unbiased estimator be? For a model f(x; θ) with a scalar θ, the <strong>score</strong> is s(x; θ) = ∂ ln f(x; θ)/∂θ. Under regularity conditions (the support does not depend on θ, and one may differentiate under the integral) E_θ[s] = 0, and the variance of the score is the <strong>Fisher information</strong> I(θ).</p>
+<p><strong>Cramér–Rao bound</strong>: under these conditions every unbiased estimator of θ from n independent observations drawn from this model has variance at least 1/(n·I(θ)). The proof in one line: an unbiased δ has covariance 1 with the total score, and the Cauchy–Schwarz inequality gives 1 ≤ Var(δ)·n·I(θ).</p>
+<p>For a finite n the bound need not be attained. But under regularity conditions the maximum likelihood estimator θ_ML attains it in the limit: √n·(θ_ML − θ) converges in distribution to N(0, 1/I(θ)).</p>
+<div class="pg-example is-mono"><div>I(θ) = E_θ[s²] = −E_θ[∂² ln f(X; θ)/∂θ²]</div><div>unbiased δ, n independent observations: Var_θ(δ) ≥ 1/(n·I(θ))</div><div>Bernoulli(p): s = (x − p)/(p·(1 − p)), I(p) = 1/(p·(1 − p))</div><div>p = 0.2, n = 100: bound 0.16/100 = 0.0016, attained by the sample mean</div><div>N(μ, σ²) with a known σ: I(μ) = 1/σ²</div></div>
+<p class="pg-note">For a vector θ, F = E_θ[s·s^T] is the Fisher matrix, and KL(p_θ ‖ p_(θ+Δ)) ≈ ½·Δ^T·F·Δ. The <strong>natural gradient</strong> step θ ← θ − η·F^(−1)·∇L is steepest descent in this KL geometry, so to first order it does not depend on the parameterisation. Adaptive optimisers are at best a loose diagonal analogue of it.</p>
+<section class="pg-check"><p><strong>Task.</strong> X_1 … X_n are independent N(0, θ) with an unknown variance θ: ln f(x; θ) = −½·ln(2πθ) − x²/(2θ). With I(θ) = E[(∂ ln f/∂θ)²], compute the Cramér–Rao bound 1/(n·I(θ)) for unbiased estimators of θ at θ = 2, n = 100.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Bernoulli model: p = σ(z), so dp/dz = p·(1 − p); loss L = −ln p. At p = 0.2 it takes one natural-gradient step z ← z − η·(∂L/∂z)/F(z), with F(z) the Fisher information in z and η = 0.05. To first order, what is Δp ≈ (dp/dz)·Δz?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> X ~ N(θ, I_d), loss ‖δ − θ‖². Which step does not follow? (1) X is unbiased, with risk d. (2) By the Cramér–Rao bound no unbiased estimator has a risk below d at any θ. (3) So no estimator has. (4) So X is admissible for every d.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎯 James–Stein: for d ≥ 3 the obvious estimator is inadmissible</h2>
+<p>Estimate a vector: X ~ N(θ, I_d), one observation, loss ‖δ − θ‖², the squared errors summed over the coordinates. X is the maximum likelihood estimator: unbiased, minimax, with risk d at every θ. For d = 1 and d = 2 it is admissible.</p>
+<p>For d ≥ 3 it is not. The <strong>James–Stein estimator</strong> shrinks X towards the origin by a factor computed from ‖X‖², and its risk is below d at EVERY θ. The coordinates may be quantities that have nothing to do with each other: estimating them jointly still lowers the total risk.</p>
+<p>The gain is largest at θ = 0 and vanishes as ‖θ‖ → ∞. It is a statement about the sum: the risk of a single coordinate can exceed 1. This estimator is not admissible either: the positive-part version, which replaces a negative factor by 0, dominates it.</p>
+<div class="pg-example is-mono"><div>δ_JS(X) = (1 − (d − 2)/‖X‖²)·X, d ≥ 3</div><div>R(θ, δ_JS) = d − (d − 2)²·E_θ[1/‖X‖²] &lt; d = R(θ, X)</div><div>θ = 0: E[1/‖X‖²] = 1/(d − 2), so the risk is d − (d − 2) = 2 for every d ≥ 3</div><div>d = 5, ‖X‖² = 6: the factor is 1 − 3/6 = 0.5</div></div>
+<p class="pg-note">The proof rests on Stein's identity: for X ~ N(θ, I_d) and a weakly differentiable g with E|∂g_i/∂x_i| finite, E[(X_i − θ_i)·g_i(X)] = E[∂g_i/∂x_i(X)]. It is integration by parts against the Gaussian density.</p>
+<section class="pg-check"><p><strong>Task.</strong> X ~ N(θ, I_d), d ≥ 3, and δ(X) = X + g(X) with g(x) = −(d − 2)·x/‖x‖². Order the proof that the risk E‖δ(X) − θ‖² is below d at every θ. Stein's identity: E[(X_i − θ_i)·g_i(X)] = E[∂g_i/∂x_i(X)].</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> X ~ N(θ, I_d), d = 10. The James–Stein estimator (1 − (d − 2)/‖X‖²)·X has the risk d − (d − 2)²·E[1/‖X‖²], against d for X. E‖X‖² = d + ‖θ‖². Which upper bound on its risk does Jensen's inequality for 1/‖X‖² give at ‖θ‖² = 6?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎲 Bayes estimators, and how they lead to minimax ones</h2>
+<p>Put a prior π on θ. The <strong>Bayes estimator</strong> minimises the Bayes risk, and it can be found one data set at a time: for the observed x, take the action a that minimises the posterior expected loss E[L(θ, a) | x]. For the squared error this is the posterior mean; for the absolute error, a posterior median.</p>
+<p>A conjugate example: a Beta(a, b) prior on a Bernoulli parameter p and k successes in n trials give the posterior Beta(a + k, b + n − k). Its mean lies between the prior mean a/(a + b) and k/n, with the weights a + b and n: the prior counts as a + b earlier observations.</p>
+<p>Bayes estimators lead to minimax ones. If a Bayes estimator δ has the same risk c at every θ, it is minimax: for any estimator δ_2, sup_θ R(θ, δ_2) ≥ the average of R(θ, δ_2) over π ≥ the average of R(θ, δ) over π = c.</p>
+<div class="pg-example is-mono"><div>posterior mean of p: (a + k)/(a + b + n)</div><div>Beta(2, 2), 7 successes in 10 trials: Beta(9, 5), mean 9/14 = 0.643 (k/n = 0.7)</div><div>δ is Bayes for π and R(θ, δ) = c for all θ, so δ is minimax</div><div>k/n: risk p·(1 − p)/n, worst case 1/(4n) at p = 0.5</div></div>
+<p class="pg-note">A Bayes estimator that is unique for its prior is admissible: an estimator that dominated it would have a Bayes risk no larger, so it would be Bayes as well. The X of the previous screens is only a limit of Bayes estimators (normal priors with variance τ² → ∞), and for d ≥ 3 that is not enough.</p>
+<section class="pg-check"><p><strong>Task.</strong> A posterior puts probability 0.4 on θ = 0, 0.35 on θ = 1 and 0.25 on θ = 10. Match each loss L(θ, a) to its Bayes estimate: the a that minimises the posterior expected loss.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> k ~ Binomial(n, p) with n = 100, squared error. Under a Beta(a, a) prior the posterior mean is δ_a = (k + a)/(n + 2a). For which a &gt; 0 is the risk of δ_a the same for every p (which makes δ_a minimax)?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge, on paper. Where does d − 2 come from? Let θ ~ N(0, τ²·I_d) and X | θ ~ N(θ, I_d), d ≥ 3. Find the Bayes estimator for squared error. Then, with τ² unknown, find an unbiased estimate of its shrink factor from X alone.</p><details><summary>Show the answer</summary><p>Each θ_i has the posterior N((1 − B)·X_i, 1 − B) with B = 1/(1 + τ²). So the Bayes estimator is (1 − B)·X, and its Bayes risk is d·(1 − B). How much it shrinks depends on the prior, and τ² is unknown.</p>
+<p>But the data reveal B. Marginally X ~ N(0, (1 + τ²)·I_d), so B·‖X‖² has the χ² distribution with d degrees of freedom, and the mean of 1/χ² is 1/(d − 2) for d ≥ 3. Hence E[(d − 2)/‖X‖²] = B: the James–Stein estimator is the Bayes estimator with B replaced by an unbiased estimate. This is called <strong>empirical Bayes</strong>.</p>
+<p>Estimating B costs little: averaged over this prior, the James–Stein risk is d − (d − 2)·B, only 2·B above the optimum d·(1 − B). For d = 10, τ² = 1: 10 for X, 6 for James–Stein, 5 for the Bayes estimator. And James–Stein beats X at every θ with no prior assumed: the d coordinates themselves supply the variance of the prior.</p></details></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Risk R(θ, δ) = E_θ[L(θ, δ(X))] is a function of θ. δ is inadmissible if another estimator is never worse and somewhere better; the Bayes risk averages R over a prior, minimax looks at the worst θ. For the squared error, risk = bias² + variance, and <code>c·X̄</code> has risk <code>(1 − c)²·μ² + c²·v</code>: a little bias can buy a lot of variance.</li><li>Fisher information: <code>I(θ) = E[(∂ ln f/∂θ)²]</code>. Cramér–Rao, for regular models: an unbiased estimator from n independent observations has variance at least <code>1/(n·I(θ))</code>; it does not bind biased ones. The natural gradient <code>θ ← θ − η·F^(−1)·∇L</code> measures steps by KL, so to first order it does not depend on the parameterisation.</li><li>James–Stein: for X ~ N(θ, I_d) with d ≥ 3, <code>(1 − (d − 2)/‖X‖²)·X</code> has the risk <code>d − (d − 2)²·E[1/‖X‖²]</code>: below d at every θ, and 2 at θ = 0. So X is inadmissible for d ≥ 3, though admissible for d = 1 and 2. The gain is in the total risk, not in every coordinate. It is empirical Bayes: the data estimate the shrinkage.</li><li>A Bayes estimate minimises the posterior expected loss: the posterior mean for squared error, a median for absolute error. Beta(a, b) with k successes in n trials gives the mean <code>(a + k)/(a + b + n)</code>. A Bayes estimator with constant risk is minimax: for a Bernoulli p it is <code>(k + √n/2)/(n + √n)</code>, with risk <code>1/(4·(√n + 1)²)</code>.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="t5-kernels-and-the-infinite-width-limit.html"><small>Previous step</small>Kernels and the infinite-width limit</a><a href="t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"><small>Next step</small>Diffusion as differential equations: scores, SDEs and ODEs</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

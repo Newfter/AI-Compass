@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Скрытые переменные и ELBO: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Нижняя граница ELBO и её зазор, трюк с репараметризацией, KL-член для гауссова энкодера и коллапс апостериорного распределения. Передний край науки: шаг 5 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Скрытые переменные и ELBO: шаг за шагом, с заданиями">
+<meta property="og:description" content="Нижняя граница ELBO и её зазор, трюк с репараметризацией, KL-член для гауссова энкодера и коллапс апостериорного распределения. Передний край науки: шаг 5 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Скрытые переменные и ELBO","headline":"Скрытые переменные и ELBO","description":"Нижняя граница ELBO и её зазор, трюк с репараметризацией, KL-член для гауссова энкодера и коллапс апостериорного распределения.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Скрытые переменные и ELBO","item":"https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/r5-latent-variables-and-the-elbo.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Передний край науки</a> · Шаг 5 из 12 · 7 мин</p>
+<h1>Скрытые переменные и ELBO</h1>
+<p class="pg-lead">Нижняя граница ELBO и её зазор, трюк с репараметризацией, KL-член для гауссова энкодера и коллапс апостериорного распределения.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🎲 Модель со скрытыми причинами</h2>
+<p><strong>Скрытая переменная</strong> (latent variable) z — ненаблюдаемая причина данных x. Сначала z случайно выбирают из простого <strong>априорного распределения</strong> (prior) p(z), заданного до всяких наблюдений: здесь это N(0, I).</p>
+<p>Затем нейросеть-<strong>декодер</strong> (decoder) с весами θ задаёт по z распределение p_θ(x | z), например нормальное со средним, предсказанным по z.</p>
+<p>Для обучения методом максимального правдоподобия нужен логарифм правдоподобия ln p_θ(x) каждого обучающего примера. Но p_θ(x), <strong>маргинальное правдоподобие</strong> (evidence), — это интеграл по всем возможным z:</p>
+<div class="pg-example is-mono"><div>z ~ p(z) = N(0, I)</div><div>x ~ p_θ(x | z)</div><div>p_θ(x) = ∫ p_θ(x | z) · p(z) dz</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> У модели со скрытой переменной априорное распределение p(z) = N(0, I) и нейросеть-декодер p_θ(x | z). Почему её не обучают, просто максимизируя ln p_θ(x) = ln ∫ p_θ(x | z)·p(z) dz?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>📐 ELBO и её зазор</h2>
+<p>Добавим <strong>энкодер</strong> (encoder) q_φ(z | x) — вторую сеть с весами φ, которая по x выдаёт распределение тех z, что могли породить этот x. Энкодер приближает истинное <strong>апостериорное распределение</strong> (posterior) p_θ(z | x) = p_θ(x | z)·p(z) / p_θ(x), которое нельзя вычислить точно: в него входит p_θ(x).</p>
+<p><strong>Дивергенция Кульбака–Лейблера</strong> (KL divergence) KL(q ‖ p) = E_q[ln q − ln p] никогда не бывает отрицательной и равна 0, только если q = p. Поэтому из тождества ниже следует, что <strong>нижняя вариационная граница</strong> (ELBO) не превосходит ln p_θ(x), а зазор — в точности KL между энкодером и апостериорным распределением.</p>
+<p>При обучении ELBO максимизируют сразу по θ и φ. Декодер и энкодер, обученные так, образуют <strong>вариационный автокодировщик</strong> (VAE).</p>
+<div class="pg-example is-mono"><div>ln p_θ(x) = ELBO + KL(q_φ(z | x) ‖ p_θ(z | x))</div><div>ELBO = E_q[ln p_θ(x | z)] − KL(q_φ(z | x) ‖ p(z))</div></div>
+<p class="pg-note">Вывод: p_θ(x) = p_θ(x, z) / p_θ(z | x) при любом z. Прологарифмируем, усредним по z ~ q_φ(z | x) (это усреднение и обозначают E_q), прибавим и вычтем ln q_φ(z | x), а затем разложим p_θ(x, z) = p_θ(x | z) · p(z).</p>
+<section class="pg-check"><p><strong>Задание.</strong> В VAE с энкодером q_φ(z | x) и декодером p_θ(x | z) для входа x получилось ln p_θ(x) = −1000 нат и ELBO = −1012 нат. Чему равна KL(q_φ(z | x) ‖ p_θ(z | x)) между энкодером и истинным апостериорным распределением, в натах?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🔀 Трюк с репараметризацией</h2>
+<p>ELBO — это математическое ожидание по z ~ q_φ(z | x), и его оценивают по случайно выбранным z. Но обратное распространение ошибки не проходит через случайный выбор: если просто взять z из q_φ, от z к φ не ведёт ни один путь.</p>
+<p><strong>Трюк с репараметризацией</strong> (reparameterisation trick): берём шум ε, распределение которого не зависит от φ, и вычисляем z как детерминированную дифференцируемую функцию от ε и выходов энкодера. Тогда для дифференцируемой f, например ln p_θ(x | z), градиент E_q[f(z)] доходит до φ обычным обратным распространением ошибки.</p>
+<div class="pg-example is-mono"><div>z = μ_φ(x) + σ_φ(x) · ε, ε ~ N(0, I)</div><div>∇_φ E_q[f(z)] = E_ε[∇_φ f(μ_φ(x) + σ_φ(x) · ε)]</div><div>по каждому измерению: ∂z/∂μ = 1, ∂z/∂σ = ε</div><div>без трюка: ∇_φ E_q[f(z)] = E_q[f(z) · ∇_φ ln q_φ(z | x)]</div></div>
+<p class="pg-note">Последняя строка даёт оценку REINFORCE (score-function estimator); её же используют методы градиента по политике (policy gradient). Эта оценка годится и для дискретных z, и для недифференцируемой f, где трюк напрямую неприменим. Обе оценки несмещённые, но у REINFORCE дисперсия обычно намного выше.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Используя трюк с репараметризацией, VAE вычисляет скрытую переменную как z = μ + σ·ε, где ε ~ N(0, 1). Здесь μ = 2, σ = 0,5, а выпавший шум ε = −2. Чему равна производная ∂z/∂σ для этого значения z?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>📦 Слагаемое KL в явном виде</h2>
+<p>Возьмём гауссов энкодер q_φ(z | x) = N(μ, diag(σ²)), где μ и σ выдаёт сеть, и априорное распределение N(0, I). Тогда слагаемое KL в ELBO не требует сэмплирования: в каждом измерении z для него есть явная формула, а KL для всего z — это сумма по измерениям.</p>
+<p>И μ², и σ² − 1 − ln σ² никогда не бывают отрицательными, поэтому KL в одном измерении равна 0, только когда μ = 0 и σ = 1, то есть когда в нём q_φ(z | x) совпадает с априорным распределением.</p>
+<div class="pg-example is-mono"><div>KL(N(μ, σ²) ‖ N(0, 1)) = ½ · (μ² + σ² − 1 − ln σ²)</div><div>μ = 1, σ = 1 → 0,5 ната</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> Гауссов энкодер выдаёт для одного измерения z среднее μ = 2 и стандартное отклонение σ = 1. В этом измерении KL относительно априорного распределения равна KL(N(μ, σ²) ‖ N(0, 1)) = ½·(μ² + σ² − 1 − ln σ²). Сколько это в натах?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🧲 Две силы</h2>
+<p>Два слагаемых ELBO тянут в разные стороны. <strong>Слагаемое реконструкции</strong> (reconstruction term) E_q[ln p_θ(x | z)] требует, чтобы по z можно было как можно точнее восстановить x. А слагаемое KL для каждого x тянет q_φ(z | x) к одному и тому же априорному распределению.</p>
+<p>Слагаемое KL, усреднённое по данным, называют <strong>скоростью</strong> (rate): она ограничивает сверху взаимную информацию между x и z при кодировании энкодером, то есть сколько нат z несёт об x. Вес β &gt; 1 при слагаемом KL (<strong>β-VAE</strong>) обычно даёт более гладкое латентное пространство (latent space) и более размытые реконструкции.</p>
+<div class="pg-example is-mono"><div>E_q[ln p_θ(x | z)] − β · KL(q_φ(z | x) ‖ p(z))</div><div>β = 1: ELBO; β &gt; 1: целевая функция β-VAE</div><div>скорость = E_x[KL(q_φ(z | x) ‖ p(z))] ≥ I(x; z)</div></div>
+<p class="pg-note">Диффузионные модели — тема следующего шага твоего пути — обычно обучают, максимизируя перевзвешенную ELBO того же рода.</p>
+<section class="pg-check"><p><strong>Задание.</strong> У VAE очень мощный декодер: каждый пиксель он предсказывает по всем предыдущим. Обучение даёт хорошее значение ELBO, но KL(q_φ(z | x) ‖ p(z)) в итоге близка к 0 для каждого входа. Что, скорее всего, произошло?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>У модели со скрытой переменной <code>p_θ(x) = ∫ p_θ(x | z)·p(z) dz</code> и нейросетью-декодером правдоподобие нельзя вычислить точно, поэтому VAE обучает вместе с декодером энкодер q_φ(z | x).</li><li><code>ln p_θ(x) = ELBO + KL(q_φ(z | x) ‖ p_θ(z | x))</code>: ELBO — нижняя граница, а её зазор — это KL между энкодером и истинным апостериорным распределением.</li><li>Репараметризация <code>z = μ + σ·ε</code> пропускает градиент через случайно выбранные z (∂z/∂σ = ε). Для гауссова энкодера и априорного распределения N(0, I) слагаемое KL — это сумма <code>½·(μ² + σ² − 1 − ln σ²)</code> по измерениям.</li><li>Если декодер обходится без z, KL может упасть почти до 0, и код z становится бесполезным: это коллапс апостериорного распределения (posterior collapse).</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="r4-why-giant-networks-generalise.html"><small>Предыдущий шаг</small>Почему огромные сети обобщают</a><a href="r6-diffusion-models.html"><small>Следующий шаг</small>Диффузионные модели</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

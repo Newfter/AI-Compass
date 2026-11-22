@@ -23,6 +23,7 @@
 <meta name="theme-color" content="#050b14">
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Data: The Fuel of AI","headline":"Data: The Fuel of AI","description":"Where the examples that AI learns from come from, how they go wrong, and why a model is always tested on examples it has never seen.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","educationalLevel":"beginner","url":"https://newfter.github.io/AI-Compass/lessons/data-the-fuel-of-ai.html","image":"https://newfter.github.io/AI-Compass/images/og-image.png","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Lessons","item":"https://newfter.github.io/AI-Compass/lessons/"},{"@type":"ListItem","position":3,"name":"Data: The Fuel of AI","item":"https://newfter.github.io/AI-Compass/lessons/data-the-fuel-of-ai.html"}]}</script>
 </head>
@@ -31,7 +32,9 @@
     <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
     <nav aria-label="AI Compass">
         <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
         <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
         <a href="https://newfter.github.io/AI-Compass/ru/lessons/data-the-fuel-of-ai.html" hreflang="ru" lang="ru">Русский</a>
     </nav>
 </header>
@@ -41,6 +44,7 @@
 <p class="pg-kicker">🌍 AI in your world · Lesson 13 · 2 min read</p>
 <h1>Data: The Fuel of AI</h1>
 <p class="pg-lead">Where the examples that AI learns from come from, how they go wrong, and why a model is always tested on examples it has never seen.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
 <h2>Where data comes from</h2>
 <p>A model learns only from its examples, its <strong data-term='dataset'>dataset</strong>. Some data is collected on purpose: photos, recordings, survey answers. Much more is left behind as we use apps: every search, click, like and pause. Sensors add more: phones, watches, cars and weather stations measure things all day. For many tasks, each example also needs a <strong>label</strong>, the right answer (“cat”, “spam”, “healthy leaf”). Labels are often added by people, one example at a time.</p>
 <p class="pg-note"><strong>Did you know?</strong> Behind many famous AI systems are thousands of people who labelled data by hand: drawing boxes around cars, marking which answers are helpful, or sorting photos. This work is real, and it is often low-paid.</p>
@@ -53,12 +57,27 @@
 <p>Data is about people, so it comes with questions. Did people agree to their data being used? Could it reveal something private? Does it include everyone the model will be used on? A face dataset made mostly of one group of people will work worse for others: the model's <strong data-term='bias'>bias</strong> starts in the data. Good datasets are documented: where the data came from, who is in it, what is missing.</p>
 <p class="pg-note"><strong>Did you know?</strong> Laws like the EU's GDPR give people rights over their data, such as the right to see what a company keeps about them and to ask for it to be deleted.</p>
 <section class="pg-keys"><h2>Key points</h2><ul><li>A model learns only from its examples; many examples need a label, often added by people.</li><li>Messy data (missing, wrong, repeated or impossible values) teaches a model mistakes, so data is cleaned first.</li><li>A model is judged on a test set it never learned from; great on training but worse on tests means overfitting.</li></ul></section>
-<section class="pg-check"><h2>Check yourself</h2><p>You train a model on 1,000 photos and then test it on the same 1,000 photos. It scores 100%. What does that tell you?</p><ol type="A"><li>It's ready to use: 100% is perfect</li><li>Very little: it may have memorised them, so you need to test it on new photos</li><li>The photos were too easy for it</li></ol><details><summary>Show the answer</summary><p>A model can memorise its training examples, so a score on them says little. Only a test on examples it has never seen shows whether it learned the rule. The photos weren't necessarily easy: the test just wasn't fair.</p></details></section>
+<section class="pg-check"><h2>Check yourself</h2><div class="pg-quiz">
+<p class="pg-q">You train a model on 1,000 photos and then test it on the same 1,000 photos. It scores 100%. What does that tell you?</p>
+<ol type="A" class="pg-options"><li><button type="button">The photos were too easy for it</button></li><li><button type="button" data-right>Very little: it may have memorised them, so you need to test it on new photos</button></li><li><button type="button">It's ready to use: 100% is perfect</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Very little: it may have memorised them, so you need to test it on new photos</strong></p><p>A model can memorise its training examples, so a score on them says little. Only a test on examples it has never seen shows whether it learned the rule. The photos weren't necessarily easy: the test just wasn't fair.</p></details>
+</div></section>
+<h2>Words in this lesson</h2><p class="pg-tags"><a href="../glossary/data.html">Data</a><a href="../glossary/dataset.html">Dataset</a><a href="../glossary/overfitting.html">Overfitting</a><a href="../glossary/bias.html">Bias</a><a href="../glossary/proxy.html">Proxy</a><a href="../glossary/decision-tree.html">Decision tree</a><a href="../glossary/test-set.html">Test set</a><a href="../glossary/data-cleaning.html">Data cleaning</a><a href="../glossary/label.html">Label</a></p>
 <aside class="pg-cta"><p>Try the mini-lab, take the quiz and keep your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#lesson-13">Do this lesson in the app →</a></aside>
+<p class="pg-aside">🍎 <a href="../teachers/data-the-fuel-of-ai.html">For teachers: a ready plan for this lesson</a></p>
 <nav class="pg-pager" aria-label="Lessons"><a href="your-ai-toolkit.html"><small>Previous lesson</small>Your AI Toolkit</a><a href="how-apps-choose-for-you.html"><small>Next lesson</small>How Apps Choose for You</a></nav>
 </article>
 </main>
 <footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
     <p>A free student project. No ads, no sign-up.</p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>

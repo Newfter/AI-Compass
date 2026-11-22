@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Backpropagation by hand: step by step, with tasks | AI Compass</title>
+<meta name="description" content="One forward pass, one backward pass and one update of a tiny network. Under the hood: step 3 of 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p5-backpropagation-by-hand.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Backpropagation by hand: step by step, with tasks">
+<meta property="og:description" content="One forward pass, one backward pass and one update of a tiny network. Under the hood: step 3 of 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Backpropagation by hand","headline":"Backpropagation by hand","description":"One forward pass, one backward pass and one update of a tiny network.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Backpropagation by hand","item":"https://newfter.github.io/AI-Compass/path/p5-backpropagation-by-hand.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/p5-backpropagation-by-hand.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Under the hood</a> · Step 3 of 8 · 8 min</p>
+<h1>Backpropagation by hand</h1>
+<p class="pg-lead">One forward pass, one backward pass and one update of a tiny network.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🧱 A network is a chain of functions</h2>
+<p>A neural network is a chain of functions: each one takes the result of the one before it. <strong>Backpropagation</strong> is the chain rule, applied to this chain from the loss backwards, reusing every intermediate result.</p>
+<p>On the tiny network below you will do one training step by hand: a <strong>forward pass</strong> from the input to the loss, a <strong>backward pass</strong> from the loss to the weights, and an update of both weights.</p>
+<div class="pg-example is-mono"><div>z = w₁·x</div><div>h = ReLU(z)</div><div>ŷ = w₂·h</div><div>L = (ŷ − y)²</div><div>x = 2, y = 10, w₁ = 1, w₂ = 3</div></div>
+<p class="pg-note">x is the input, y is the target, ŷ is the prediction, L is the loss (the squared error). ReLU(z) = max(0, z). The network has no biases, to keep the arithmetic short.</p>
+<section class="pg-check"><p><strong>Task.</strong> Start the forward pass: z = w₁·x, h = ReLU(z), ŷ = w₂·h. With x = 2, w₁ = 1 and w₂ = 3, what is the prediction ŷ?</p><details><summary>Show the solution</summary><p>z = 1·2 = 2, h = ReLU(2) = 2, ŷ = 3·2 = 6. Keep z and h: the backward pass will need them.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> The forward pass ends with the loss. With ŷ = 6 and the target y = 10, what is L = (ŷ − y)²?</p><details><summary>Show the solution</summary><p>(6 − 10)² = (−4)² = 16. The forward pass is done, and every result is stored: z = 2, h = 2, ŷ = 6, L = 16.</p></details></section>
+<h2>⛓️ Backwards, one local derivative at a time</h2>
+<p>To train the network we need to know how each weight affects L. Every link of the chain has a simple <strong>local derivative</strong>: how its output changes when one of its inputs changes.</p>
+<p>The gradient of a weight is the product of the local derivatives along the path from the loss back to that weight.</p>
+<div class="pg-example is-mono"><div>∂L/∂ŷ = 2·(ŷ − y)</div><div>∂ŷ/∂w₂ = h</div><div>∂ŷ/∂h = w₂</div><div>∂h/∂z = ReLU′(z) = 1 if z &gt; 0, else 0</div><div>∂z/∂w₁ = x</div></div>
+<p class="pg-note">∂ works like the d in dL/dw, but for a function of several variables: ∂L/∂w₂ is how L changes when only w₂ changes. If several paths lead from the loss to a weight, the products along these paths are added.</p>
+<section class="pg-check"><p><strong>Task.</strong> The backward pass starts at the loss. With ŷ = 6 and y = 10, what is ∂L/∂ŷ = 2·(ŷ − y)?</p><details><summary>Show the solution</summary><p>2·(6 − 10) = 2·(−4) = −8. The minus sign says that the loss falls when ŷ grows. Every gradient in this network starts with this −8: it is computed once and reused.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> A tiny network: h = ReLU(w₁·x), ŷ = w₂·h, L = (ŷ − y)². With x = 2, y = 10, w₁ = 1 and w₂ = 3, what is the gradient of the last weight, ∂L/∂w₂?</p><details><summary>Show the solution</summary><p>Forward: h = ReLU(1·2) = 2, ŷ = 3·2 = 6. Backward: ∂L/∂ŷ = 2·(6 − 10) = −8 and ∂ŷ/∂w₂ = h = 2. So ∂L/∂w₂ = −8·2 = −16: the loss falls when w₂ grows.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> A tiny network: h = ReLU(w₁·x), ŷ = w₂·h, L = (ŷ − y)². With x = 2, y = 10, w₁ = 1 and w₂ = 3, what is the gradient of the first weight, ∂L/∂w₁?</p><details><summary>Show the solution</summary><p>Forward: z = 1·2 = 2, h = 2, ŷ = 3·2 = 6. Backward: ∂L/∂ŷ = 2·(6 − 10) = −8, ∂ŷ/∂h = w₂ = 3, ReLU′(z) = 1 (because z &gt; 0), ∂z/∂w₁ = x = 2. The product along the path: −8·3·1·2 = −48. The first factor, −8, is shared with ∂L/∂w₂: it is computed once.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A neuron computes h = ReLU(z) with z = w·x. For one training example, z is negative. What gradient does the weight w get from this example?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>Zero: the slope of ReLU is 0 there, so nothing flows back</button></li><li><button type="button">The same as for a positive z: ReLU matters only in the forward pass</button></li><li><button type="button">A negative one, equal to z: the neuron passes its input back</button></li><li><button type="button">A very large one: the whole error goes to this single weight</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Zero: the slope of ReLU is 0 there, so nothing flows back</strong></p><p>For z &lt; 0 the neuron outputs 0 and its local derivative ReLU′(z) is 0. The gradient of w is a product that contains this zero, so this example does not move w. A neuron whose z is negative for every example stops learning: this is a <strong>dead ReLU</strong>.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Task.</strong> Now update the weights by gradient descent: w ← w − η · gradient, with the learning rate η = 0.01. At the moment w₂ = 3 and its gradient is −16. What is the new w₂?</p><details><summary>Show the solution</summary><p>3 − 0.01·(−16) = 3 + 0.16 = 3.16. The gradient is negative, so the step raises w₂. That raises ŷ, which was below the target.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> The same update for the other weight: w₁ = 1, its gradient is −48, and η = 0.01. What is the new w₁?</p><details><summary>Show the solution</summary><p>1 − 0.01·(−48) = 1 + 0.48 = 1.48. We computed both gradients with the old weights and only then updated both weights. The gradient of w₁ is three times as large, so w₁ moved three times as far.</p></details></section>
+<h2>📉 Did the step help?</h2>
+<p>Check with one more forward pass, now with the new weights w₁ = 1.48 and w₂ = 3.16. One training step moved the prediction from 6 to about 9.35 and cut the loss from 16 to about 0.42:</p>
+<div class="pg-example is-mono"><div>z = 1.48·2 = 2.96</div><div>h = ReLU(2.96) = 2.96</div><div>ŷ = 3.16·2.96 ≈ 9.35</div><div>L = (9.35 − 10)² ≈ 0.42</div></div>
+<p class="pg-note">Deep learning libraries do exactly this for millions or billions of weights: one forward pass, then one backward pass that gives every gradient. The method is called reverse-mode automatic differentiation.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Why does backpropagation run backwards, from the loss towards the inputs?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right>One backward pass gives every gradient for about the cost of two forward passes</button></li><li><button type="button">The gradients of the early layers do not depend on what the later layers do</button></li><li><button type="button">A pass in the forward direction would give the gradients the wrong sign</button></li><li><button type="button">Only the last layer needs training, so the computation has to start there</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: One backward pass gives every gradient for about the cost of two forward passes</strong></p><p>Every gradient is built from the loss backwards, so the weights of the early layers all share the factors of the later layers. A backward pass computes each shared factor once. Going forwards, or testing the weights one by one with small changes, would need about one pass per weight.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Suppose a gradient is multiplied by about 0.25 in each of 10 layers on its way back (0.25 is the largest slope of the sigmoid). What reaches the first layer?</p>
+<ol type="A" class="pg-options"><li><button type="button">A gradient whose sign flips in every layer</button></li><li><button type="button" data-right>Almost nothing: about one millionth of the gradient</button></li><li><button type="button">A huge gradient: it grows in every layer</button></li><li><button type="button">The same gradient: the depth does not change it</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Almost nothing: about one millionth of the gradient</strong></p><p>0.25¹⁰ = (0.25⁵)² ≈ 0.001² = 0.000001: one millionth. This is the <strong>vanishing gradient</strong> problem: it can make the early layers of a deep network learn extremely slowly. What helps: ReLU-like activations (slope 1 where the neuron is active), residual connections (shortcuts around layers) and normalisation.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>The <strong>forward pass</strong> computes the chain from the input to the loss and stores every intermediate value.</li><li>The <strong>backward pass</strong> is the chain rule: local derivatives are multiplied from the loss back, as in <code>∂L/∂w₁ = ∂L/∂ŷ · ∂ŷ/∂h · ∂h/∂z · ∂z/∂w₁</code>.</li><li>One backward pass gives the gradient of every weight, for about the cost of two forward passes.</li><li>A gradient can be lost. A ReLU with z &lt; 0 passes back 0 (a dead ReLU if z &lt; 0 for every example). Many small factors multiply to almost nothing (a vanishing gradient).</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="p2-gradient-descent-by-hand.html"><small>Previous step</small>Gradient descent by hand</a><a href="p6-overfitting-and-how-to-catch-it.html"><small>Next step</small>Overfitting, and how to catch it</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

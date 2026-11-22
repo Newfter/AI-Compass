@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>How a model picks the next token: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Temperature, top-k and top-p, with the numbers in your hands. Under the hood: step 8 of 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p8-how-a-model-picks-the-next-token.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="How a model picks the next token: step by step, with tasks">
+<meta property="og:description" content="Temperature, top-k and top-p, with the numbers in your hands. Under the hood: step 8 of 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"How a model picks the next token","headline":"How a model picks the next token","description":"Temperature, top-k and top-p, with the numbers in your hands.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"How a model picks the next token","item":"https://newfter.github.io/AI-Compass/path/p8-how-a-model-picks-the-next-token.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/p8-how-a-model-picks-the-next-token.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Under the hood</a> · Step 8 of 8 · 7 min</p>
+<h1>How a model picks the next token</h1>
+<p class="pg-lead">Temperature, top-k and top-p, with the numbers in your hands.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🎲 The model gives a distribution, not a word</h2>
+<p>A language model does not output the next word directly. It gives a probability to every token in its vocabulary (all the tokens it can output): a <strong>probability distribution</strong> over the next token. Here is one for the prompt “The cat sat on the …”:</p>
+<div class="pg-example"><div>A <strong>decoding rule</strong> (also called a decoding strategy) turns the distribution into one token. The two simplest rules:</div><div><strong>Greedy decoding</strong>: always take the most likely token. Here that is “mat”, every time.</div><div><strong>Sampling</strong>: draw a token at random with these probabilities. The token “mat” comes up about half the time, “moon” about once in twenty draws.</div></div>
+<div class="pg-table"><table><thead><tr><th>Next token</th><th>Probability</th></tr></thead><tbody><tr><td>mat</td><td>0.5</td></tr><tr><td>sofa</td><td>0.2</td></tr><tr><td>floor</td><td>0.15</td></tr><tr><td>roof</td><td>0.1</td></tr><tr><td>moon</td><td>0.05</td></tr></tbody></table></div><p class="pg-note">The chosen token is added to the text, and everything repeats for the next position. A real vocabulary has tens of thousands of tokens or more; this toy one has five, to keep the sums short.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Greedy decoding always takes the most likely token. What is its typical weakness in long texts?</p>
+<ol type="A" class="pg-options"><li><button type="button">It often picks one of the least likely tokens</button></li><li><button type="button">It only works with a much larger context window</button></li><li><button type="button" data-right>It gives repetitive text that can get stuck in a loop</button></li><li><button type="button">It is much slower than drawing a token at random</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: It gives repetitive text that can get stuck in a loop</strong></p><p>Greedy decoding is deterministic: no random draw can break a repeating pattern. Once a phrase has appeared, the model can rate repeating it as even more likely, and then the same phrase comes back again and again. Sampling sometimes takes a less likely token, which keeps the text varied.</p></details>
+</div></section>
+<h2>✂️ Top-k: keep the k best, then renormalise</h2>
+<p>Sampling from the whole distribution has the opposite weakness. A real distribution has a long tail of unlikely tokens. Each of them is rare, but together they can come up quite often, and one strange token can send the rest of the text in the wrong direction.</p>
+<p><strong>Top-k sampling</strong> cuts the tail off: set a number k, keep the k most likely tokens and drop the rest. Then divide each kept probability by their sum, so that they add up to 1 again: this is called <strong>renormalising</strong>. Only then draw a token.</p>
+<div class="pg-example is-mono"><div>k = 2: keep mat (0.5) and sofa (0.2)</div><div>their sum: 0.5 + 0.2 = 0.7</div><div>sofa: 0.2 / 0.7 ≈ 0.29</div><div>mat: 0.5 / 0.7 ≈ ?</div></div>
+<p class="pg-note">The tokens “floor”, “roof” and “moon” now have probability 0: they can no longer be drawn. You will work out the new probability of “mat” on the next screen.</p>
+<section class="pg-check"><p><strong>Task.</strong> A language model's next-token probabilities are 0.5, 0.2, 0.15, 0.1 and 0.05. With top-k sampling and k = 2, what is the probability of the most likely token after renormalising, to two decimal places?</p><details><summary>Show the solution</summary><p>Top-k with k = 2 keeps only the two most likely tokens: 0.5 and 0.2. Their sum is 0.7, and dividing by it makes them add up to 1 again: 0.5 / 0.7 ≈ 0.71 and 0.2 / 0.7 ≈ 0.29. The other three tokens can no longer be drawn. With k = 1 only the top token would stay: greedy decoding again.</p></details></section>
+<h2>🧮 Top-p: keep the smallest set that reaches p</h2>
+<p><strong>Top-p sampling</strong>, also called <strong>nucleus sampling</strong>, does not fix the number of tokens. It fixes a share of the probability: a threshold p that you set, for example 0.9.</p>
+<p>Sort the tokens from the most likely to the least likely and add up their probabilities one by one. Stop as soon as the sum reaches or passes p. Keep the tokens you have counted, drop the rest, renormalise and draw a token.</p>
+<div class="pg-table"><table><thead><tr><th>Next token</th><th>Probability</th><th>Sum so far</th></tr></thead><tbody><tr><td>mat</td><td>0.5</td><td>0.5</td></tr><tr><td>sofa</td><td>0.2</td><td>0.7</td></tr><tr><td>floor</td><td>0.15</td><td>0.85</td></tr><tr><td>roof</td><td>0.1</td><td>0.95</td></tr><tr><td>moon</td><td>0.05</td><td>1</td></tr></tbody></table></div><p class="pg-note">With p = 0.9 the sum first reaches the threshold at “roof” (0.95). So four tokens stay, and only “moon” is dropped. The kept set is called the nucleus.</p>
+<section class="pg-check"><p><strong>Task.</strong> A language model's next-token probabilities, sorted from the largest, are 0.5, 0.2, 0.15, 0.1 and 0.05. With top-p (nucleus) sampling and p = 0.8, how many tokens stay as candidates?</p><details><summary>Show the solution</summary><p>0.5 + 0.2 = 0.7 is still below 0.8. Adding 0.15 gives 0.85, so the threshold is reached and 3 tokens stay. The token that takes the sum past p is kept too: the set has to cover at least p. The 3 kept probabilities are then renormalised: each is divided by 0.85.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Top-k keeps the same number of tokens at every step. Why can top-p fit better?</p>
+<ol type="A" class="pg-options"><li><button type="button">It always keeps more tokens than top-k, which makes the text more varied</button></li><li><button type="button">Temperature becomes useless: the shape of the distribution stops mattering</button></li><li><button type="button">The output becomes deterministic: one prompt always gives the same text</button></li><li><button type="button" data-right>The number of tokens adapts: few when the model is sure, many when it is unsure</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: The number of tokens adapts: few when the model is sure, many when it is unsure</strong></p><p>With p = 0.9, a top token at 0.95 stays alone, while five tokens at 0.2 each all stay: the set follows the shape of the distribution. A fixed k = 2 would add a weak token in the first case and throw away three good ones in the second. The two rules can also be used together.</p></details>
+</div></section>
+<h2>🌡️ Temperature reshapes the distribution</h2>
+<p>Top-k and top-p cut the distribution. <strong>Temperature</strong> reshapes it. The model first computes a raw score for every token, its <strong>logit</strong>, and softmax turns the logits z into the probabilities p.</p>
+<p>The temperature T is a positive number that you set: every logit is divided by T before softmax. T = 1 changes nothing.</p>
+<p>T below 1 stretches the gaps between the logits: at T = 0.5 the logits (2, 1, 0) become (4, 2, 0). The distribution gets sharper, and the text more predictable. T above 1 shrinks the gaps: the distribution gets flatter, and the text more varied, with more strange tokens.</p>
+<div class="pg-example is-mono"><div>p = softmax(z / T)</div><div>p_i = e^(z_i / T) / Σ_j e^(z_j / T)</div><div>z = (2, 1, 0)</div><div>T = 1: p ≈ (0.67, 0.24, 0.09)</div><div>T = 0.5: p ≈ (0.87, 0.12, 0.02)</div><div>T = 2: p ≈ (0.51, 0.31, 0.19)</div></div>
+<p class="pg-note">The order of the tokens never changes: at every T above 0 the largest logit keeps the largest probability. Only the gap between it and the others grows or shrinks.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A language model samples the next token from softmax(z / T): z are its logits, T is the temperature. What happens as T goes down towards 0?</p>
+<ol type="A" class="pg-options"><li><button type="button">The text gets more random: unlikely tokens are drawn more and more often</button></li><li><button type="button" data-right>Sampling comes close to greedy decoding: the top token takes almost everything</button></li><li><button type="button">The distribution turns uniform: every token becomes equally likely</button></li><li><button type="button">The distribution stays the same: dividing all the logits by T changes nothing</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Sampling comes close to greedy decoding: the top token takes almost everything</strong></p><p>A tiny T makes the gaps between the logits huge, so softmax gives almost everything to the largest one: for the logits (2, 1, 0) and T = 0.1 the top token gets more than 0.9999. That is why many tools treat a temperature of 0 as greedy decoding. A very large T does the opposite: the distribution gets close to uniform.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Task.</strong> Two tokens have the logits (ln 3, 0). At T = 1 softmax gives them the probabilities (0.75, 0.25), because e^(ln 3) = 3 and e⁰ = 1. What is the probability of the first token at T = 0.5?</p><details><summary>Show the solution</summary><p>The logits become (2·ln 3, 0), and e^(2·ln 3) = 3² = 9, so the first probability is 9 / (9 + 1) = 0.9. Halving T squares the ratio of the two probabilities: from 3 : 1 to 9 : 1. At T = 2 the ratio would shrink to √3 : 1, and the first probability to about 0.63.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> You lower the temperature of a language model from 1 to 0.2. What does that do to its answers?</p>
+<ol type="A" class="pg-options"><li><button type="button">They become factually correct, because the likeliest answer is the true one</button></li><li><button type="button">They get checked: at a low temperature the model verifies its facts</button></li><li><button type="button">They get more random, because unlikely tokens are drawn more often</button></li><li><button type="button" data-right>They get more predictable, but a likely answer can still be false</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: They get more predictable, but a likely answer can still be false</strong></p><p>A low temperature keeps the model close to its most likely continuations, so the answers vary less from run to run. But likely is not the same as true: if the top continuation is a mistake, a low temperature repeats that mistake reliably. Nothing in sampling checks the facts.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>A language model outputs a <strong>probability distribution</strong> over the next token. A decoding rule picks one token: greedy decoding takes the top one, sampling draws at random.</li><li><strong>Top-k</strong> keeps a fixed number of tokens. <strong>Top-p</strong> keeps the smallest set of top tokens whose probabilities add up to p or more, so the number of tokens follows the distribution. Both renormalise before sampling.</li><li>Temperature: <code>softmax(z / T)</code>. T below 1 sharpens the distribution, T above 1 flattens it, and T → 0 gives greedy decoding.</li><li>Predictable is not the same as true: a low temperature does not check the facts.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="p7-cross-entropy-by-hand.html"><small>Previous step</small>Cross-entropy by hand</a><span></span></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

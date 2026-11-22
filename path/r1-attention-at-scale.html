@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Attention at scale: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Why √d_k, the causal mask, the KV cache, grouped-query attention, memory-bound decoding and FlashAttention. Research frontier: step 1 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Attention at scale: step by step, with tasks">
+<meta property="og:description" content="Why √d_k, the causal mask, the KV cache, grouped-query attention, memory-bound decoding and FlashAttention. Research frontier: step 1 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Attention at scale","headline":"Attention at scale","description":"Why √d_k, the causal mask, the KV cache, grouped-query attention, memory-bound decoding and FlashAttention.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Attention at scale","item":"https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Research frontier</a> · Step 1 of 12 · 8 min</p>
+<h1>Attention at scale</h1>
+<p class="pg-lead">Why √d_k, the causal mask, the KV cache, grouped-query attention, memory-bound decoding and FlashAttention.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>📏 Why divide by √d_k</h2>
+<p>A score is the dot product q·k of a query and a key, each with d_k entries. Assume that all entries are independent, with mean 0 and variance 1. Then every product q_i·k_i has variance 1, and their sum q·k has variance d_k.</p>
+<p>With d_k = 64 the scores have a standard deviation of 8. Softmax of such spread-out scores tends to put almost all the weight on one or a few keys, and most of its gradients become tiny: it <strong>saturates</strong>. Dividing the scores by √d_k = 8 brings their variance back to 1.</p>
+<div class="pg-example is-mono"><div>Var(q_i·k_i) = E[q_i²]·E[k_i²] = 1</div><div>Var(q·k) = Σ_i Var(q_i·k_i) = d_k</div><div>Var(q·k / √d_k) = 1</div><div>Attention(Q, K, V) = softmax(Q·K^T / √d_k)·V</div></div>
+<section class="pg-check"><p><strong>Task.</strong> All entries of a query q and a key k are independent, with mean 0 and variance 1, and each vector has d_k = 256 entries. What is the standard deviation of their dot product q·k?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎭 The causal mask</h2>
+<p>An autoregressive language model is trained to predict the next token at every position of a text, all in one parallel pass. So the output at each position may depend only on that token and the ones before it.</p>
+<p>The <strong>causal mask</strong> sets the score of every key that comes after the query to −∞ before the softmax (in code, often a very large negative number), so its weight is 0. Of the n² query–key pairs, n(n + 1)/2 remain: 10 of 16 for n = 4.</p>
+<p class="pg-note">In a plain implementation the mask saves no work: the masked scores are computed and then thrown away.</p>
+<section class="pg-check"><p><strong>Task.</strong> A language model is trained to predict every next token of a 1000-token text in one parallel pass. What goes wrong if the causal mask is removed?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🗄️ The KV cache</h2>
+<p>To generate the next token, attention in every layer needs the keys and values of all tokens so far. Because of the causal mask, they never change when later tokens arrive, so they are stored instead of being computed again: the <strong>KV cache</strong>.</p>
+<p>Each step then computes the query, key and value of the new token only, in every layer, and appends the new key and value to the cache.</p>
+<div class="pg-example is-mono"><div>cache per token = 2 · layers · KV heads · head size · bytes per number</div><div>2 · 32 · 32 · 128 · 2 = 524,288 bytes = 2¹⁹ bytes = 0.5 MiB</div></div>
+<p class="pg-note">The 2 counts keys and values, and the head size is d_k. In plain multi-head attention every head has its own keys and values, so there are as many KV heads as heads. With long contexts and many users at once, the cache can take more memory than the weights.</p>
+<section class="pg-check"><p><strong>Task.</strong> KV cache per token = 2 · layers · KV heads · head size · bytes per number. With 32 layers, 32 KV heads of size 128 and 2-byte numbers, how many GiB does the cache of one sequence of 4096 tokens take? (1 GiB = 2³⁰ bytes)</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>👥 Share keys and values between heads</h2>
+<p>In <strong>multi-query attention</strong>, all query heads share a single key head and a single value head.</p>
+<p>In <strong>grouped-query attention</strong>, the query heads are split into groups, and each group shares one key head and one value head: for example, 32 query heads in 8 groups of 4.</p>
+<p>The cache is then 32/8 = 4 times smaller than with 32 KV heads, while every query head still computes its own scores. Published comparisons often find grouped-query attention close to full multi-head attention in quality: one reason it is widely used.</p>
+<p class="pg-note">Multi-head and multi-query attention are the two extreme cases of grouped-query attention: one group per query head, and a single group.</p>
+<section class="pg-check"><p><strong>Task.</strong> A model has 32 layers, 32 query heads and a head size of 128, and stores 2-byte numbers. Match each design with its KV cache for one sequence of 4096 tokens.</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>⏱️ Generating is limited by memory bandwidth</h2>
+<p>The prompt is processed in one parallel pass, the <strong>prefill</strong>: each weight read from memory serves many tokens, so with a long prompt the arithmetic units stay busy. Then comes <strong>decoding</strong>, one new token per step.</p>
+<p>In a <strong>dense</strong> model, which uses all its weights for every token, each decoding step of a single sequence reads every weight once, for only about 2 operations per parameter: a multiply and an add.</p>
+<p>A modern accelerator can do a few hundred operations in the time it reads one byte, so during decoding its arithmetic units mostly wait. The speed is then set by the <strong>memory bandwidth</strong>: the number of bytes per second that main memory can deliver.</p>
+<div class="pg-example is-mono"><div>time per token ≥ bytes read per token / memory bandwidth</div></div>
+<p class="pg-note">This is why servers <strong>batch</strong> many users: one read of the weights then produces a token for every sequence in the batch.</p>
+<section class="pg-check"><p><strong>Task.</strong> For a single user, each new token requires reading every weight once. The model has 10 billion 2-byte parameters, and the memory bandwidth is 2000 GB/s (1 GB = 10⁹ bytes). At most how many tokens per second can that user get?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>⚡ FlashAttention: the same maths, less traffic</h2>
+<p>Plain attention writes the n × n score matrix to the accelerator's slow main memory and reads it back for the softmax, then does the same with the n × n attention weights for the product with V.</p>
+<p><strong>FlashAttention</strong> splits Q, K and V into <strong>tiles</strong> that fit in the small fast memory on the chip. For each query it keeps a running maximum m, a running sum ℓ and an unnormalised output o, and updates them tile by tile: the <strong>online softmax</strong>. At the end, the output is o / ℓ.</p>
+<p>The n × n matrix never reaches main memory. The result equals plain attention up to rounding, and the extra memory grows like n instead of n². It is faster because it moves far fewer bytes, not because it computes less: the arithmetic is still about O(n²·d_k).</p>
+<div class="pg-example is-mono"><div>m′ = max(m, max_j s_j)</div><div>ℓ′ = ℓ·e^(m − m′) + Σ_j e^(s_j − m′)</div><div>o′ = o·e^(m − m′) + Σ_j e^(s_j − m′)·v_j</div></div>
+<p class="pg-note">Here j runs over the keys of the new tile, s_j = q·k_j / √d_k are their scores and v_j their values. When the maximum grows, everything summed so far is rescaled by e^(m − m′).</p>
+<section class="pg-check"><p><strong>Task.</strong> What does FlashAttention change compared with plain attention?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>If the entries of q and k are independent, with mean 0 and variance 1, then <code>Var(q·k) = d_k</code>. Dividing the scores by √d_k brings the variance back to 1, which helps keep softmax out of saturation.</li><li>The causal mask hides later tokens. That is also why the keys and values of past tokens never change and can be cached.</li><li><code>KV cache per token = 2 · layers · KV heads · head size · bytes per number</code>. Grouped-query and multi-query attention shrink it by sharing KV heads among query heads.</li><li>At batch size 1, decoding is limited by memory bandwidth: <code>tokens per second ≤ bandwidth / bytes read per token</code>. FlashAttention is exact attention that saves memory traffic, not arithmetic.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><span></span><a href="r2-scaling-laws.html"><small>Next step</small>Scaling laws</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

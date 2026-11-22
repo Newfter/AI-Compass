@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Заглянуть внутрь модели: интерпретируемость: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Признаки как направления, суперпозиция, разреженные автокодировщики, зонды против вмешательств и индукционные головы. Передний край науки: шаг 9 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/r9-inside-the-model-interpretability.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/r9-inside-the-model-interpretability.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/r9-inside-the-model-interpretability.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/r9-inside-the-model-interpretability.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Заглянуть внутрь модели: интерпретируемость: шаг за шагом, с заданиями">
+<meta property="og:description" content="Признаки как направления, суперпозиция, разреженные автокодировщики, зонды против вмешательств и индукционные головы. Передний край науки: шаг 9 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/r9-inside-the-model-interpretability.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Заглянуть внутрь модели: интерпретируемость","headline":"Заглянуть внутрь модели: интерпретируемость","description":"Признаки как направления, суперпозиция, разреженные автокодировщики, зонды против вмешательств и индукционные головы.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r9-inside-the-model-interpretability.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Заглянуть внутрь модели: интерпретируемость","item":"https://newfter.github.io/AI-Compass/ru/path/r9-inside-the-model-interpretability.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/r9-inside-the-model-interpretability.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">🔭 <a href="./#research">Передний край науки</a> · Шаг 9 из 12 · 8 мин</p>
+<h1>Заглянуть внутрь модели: интерпретируемость</h1>
+<p class="pg-lead">Признаки как направления, суперпозиция, разреженные автокодировщики, зонды против вмешательств и индукционные головы.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🔬 Признаки как направления</h2>
+<p><strong>Механистическая интерпретируемость</strong> (mechanistic interpretability) пытается понять по весам и активациям обученной сети, как она вычисляет выход. В трансформере у каждой позиции есть вектор, общий для всех слоёв: каждый слой внимания и MLP читает его и прибавляет к нему свой выход. Это <strong>остаточный поток</strong> (residual stream).</p>
+<p><strong>Гипотеза линейного представления</strong> (linear representation hypothesis): многие понятия, или <strong>признаки</strong> (features), представлены в этом пространстве направлениями. Насколько сильно признак присутствует в активации x, показывает проекция x на его направление.</p>
+<p>Её многое подтверждает: линейный классификатор часто может извлечь признак из активаций, а прибавив к ним направление признака, часто можно управлять выходом модели. Но это гипотеза, а не закон: некоторые изученные признаки лежат на окружностях или других фигурах, которые не помещаются в одно измерение.</p>
+<div class="pg-example is-mono"><div>сила признака u в активации x = x · u, где ‖u‖ = 1</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> У признака единичное направление u = (0,6; 0,8), а активация равна x = (2; 1). Насколько сильно признак присутствует в x, если мерить проекцией x·u?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🧶 Полисемантичные нейроны и суперпозиция</h2>
+<p>В обученных сетях многие отдельные нейроны реагируют на несколько не связанных между собой вещей. Такой нейрон называют <strong>полисемантичным</strong>.</p>
+<p>Одно из объяснений — <strong>суперпозиция</strong>: слой хранит больше признаков, чем у него измерений, в виде почти, но не совсем ортогональных направлений, которых в больших размерностях помещается очень много. Тогда не каждому признаку достаётся свой нейрон, и нейрон может откликаться на несколько признаков.</p>
+<p>Лучше всего суперпозиция работает при <strong>разреженности</strong> (sparsity) признаков: каждый активен лишь на малой доле входов, поэтому одновременно активны немногие. Цена — <strong>интерференция</strong> (interference): проекция на направление одного признака захватывает и малые слагаемые от других активных признаков.</p>
+<div class="pg-example is-mono"><div>x = Σ_j f_j · u_j: силы признаков f_j, умноженные на единичные направления u_j</div><div>x · u_i = f_i + Σ_(j≠i) f_j · (u_j · u_i)</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> Косинусное сходство двух независимых равномерно распределённых единичных векторов в пространстве размерности d = 10 000 имеет среднее 0 и типичный размер (стандартное отклонение) 1/√d. Чему равен этот типичный размер?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> При суперпозиции слой хранит больше признаков, чем у него измерений, в виде почти ортогональных направлений. Почему это лучше всего работает, когда признаки разреженные, то есть редко активны?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🔎 Разреженные автокодировщики</h2>
+<p><strong>Разреженный автокодировщик</strong> (sparse autoencoder, SAE) пытается извлечь признаки из суперпозиции. Его обучают на активациях x одного слоя: он кодирует каждый x в гораздо более широкий код f из сил признаков и декодирует f обратно в реконструкцию x̂.</p>
+<p>Штраф L1 вместе с ReLU делает большинство компонент f равными ровно 0, так что каждый x собирается из немногих признаков. Столбцы W_dec образуют <strong>словарь признаков</strong> (dictionary): это кандидаты в направления признаков, и многие из них оказываются интерпретируемыми.</p>
+<p>Ограничения: остаётся некоторая ошибка реконструкции, часть признаков никогда не активируется (<strong>мёртвые признаки</strong>, dead features), а при росте словаря признаки могут дробиться на более узкие.</p>
+<div class="pg-example is-mono"><div>f = ReLU(W_enc · x + b_enc)</div><div>x̂ = W_dec · f = Σ_j f_j · (столбец j матрицы W_dec)</div><div>функция потерь = ‖x − x̂‖² + λ · ‖f‖₁</div><div>x: 512 чисел → f: 16 · 512 = 8192 признака</div></div>
+<p class="pg-note">Столбцы W_dec обычно держат единичной длины или умножают штраф на их нормы: иначе член L1 можно было бы сделать сколь угодно малым, уменьшив f и во столько же раз увеличив W_dec.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Разреженный автокодировщик вычисляет f = ReLU(W_enc·x + b_enc) и x̂ = W_dec·f, а обучается на функции потерь ‖x − x̂‖² + λ·‖f‖₁. Сопоставь каждую часть с её ролью.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🧪 Извлекается — ещё не значит используется</h2>
+<p><strong>Линейный зонд</strong> (linear probe) — это линейная модель, обученная предсказывать свойство по активациям слоя. Если это удаётся, информация линейно доступна в этом слое, но модель может никогда ею не пользоваться.</p>
+<p>Чтобы проверить использование, нужно вмешаться. <strong>Подмена активаций</strong> (activation patching) переносит активации одного компонента из прогона на одном входе в прогон на другом и измеряет, как сдвигается выход. <strong>Абляция</strong> (ablation) убирает компонент: например, заменяет его выход нулём или средним по многим входам.</p>
+<p><strong>Управление</strong> (steering) прибавляет к остаточному потоку направление признака — <strong>управляющий вектор</strong> (steering vector). В каждом случае интерпретация подтверждается, только если выход меняется так, как она предсказывает.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Линейный зонд (линейный классификатор, обученный на активациях) верно определяет тональность предложения по активациям слоя 10 языковой модели в 95% случаев на отложенных данных. Что это показывает?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🔁 Индукционные головы</h2>
+<p><strong>Схема</strong> (circuit) — небольшой набор компонентов, которые вместе выполняют одно вычисление. Одна из хорошо изученных схем состоит из двух голов внимания в разных слоях. <strong>Голова предыдущего токена</strong> (previous-token head) в более раннем слое записывает в каждую позицию сведения о токене прямо перед ней.</p>
+<p><strong>Индукционная голова</strong> (induction head) в более позднем слое, стоя на текущем токене A, по этим сведениям находит позиции сразу после прежних вхождений A, смотрит на них и копирует найденный там токен. Поэтому после [A][B] … [A] она предсказывает [B].</p>
+<p>В изученных моделях индукционные головы сформировались за короткую фазу обучения, совпавшую с резким улучшением <strong>обучения в контексте</strong> (in-context learning) — умения лучше предсказывать дальнейшие токены, опираясь на более ранние части того же контекста.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Текст пока такой: «синий чайник … красный диван … синий», где каждое слово — один токен, а … — другой текст. Вероятность какого следующего токена повышает индукционная голова?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Многие признаки, судя по всему, представлены направлениями в остаточном потоке, а сила признака в x — это проекция <code>x·u</code> на его единичное направление u. Это хорошо подтверждённая гипотеза, а не закон: некоторые признаки не одномерны.</li><li>Суперпозиция, одно из объяснений полисемантичных нейронов, укладывает больше признаков, чем измерений, в почти ортогональные направления: у случайных направлений в d измерениях косинус порядка 1/√d. Лучше всего она работает при разреженных признаках; цена — небольшая интерференция.</li><li>Разреженный автокодировщик выучивает широкий словарь кандидатов в направления признаков с функцией потерь <code>‖x − x̂‖² + λ·‖f‖₁</code>: реконструкция плюс штраф L1, который делает код разреженным.</li><li>Зонд показывает, что извлекается, а вмешательство (подмена активаций, абляция, управление) — что используется. Индукционная голова вместе с головой предыдущего токена образует схему <code>[A][B] … [A] → [B]</code>, связанную с обучением в контексте.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><a href="r8-learning-from-preferences-rlhf-and-dpo.html"><small>Предыдущий шаг</small>Обучение на предпочтениях: RLHF и DPO</a><a href="r10-smaller-and-faster-models.html"><small>Следующий шаг</small>Модели меньше и быстрее</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

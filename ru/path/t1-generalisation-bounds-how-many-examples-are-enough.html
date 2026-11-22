@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Границы обобщения: сколько примеров достаточно: шаг за шагом, с заданиями | AI Compass</title>
+<meta name="description" content="Вычисли объём выборки по Хёфдингу и оценке объединения и найди их предел. Теория на пределе: шаг 1 из 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Границы обобщения: сколько примеров достаточно: шаг за шагом, с заданиями">
+<meta property="og:description" content="Вычисли объём выборки по Хёфдингу и оценке объединения и найди их предел. Теория на пределе: шаг 1 из 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../../css/pages.css">
+<script src="../../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Границы обобщения: сколько примеров достаточно","headline":"Границы обобщения: сколько примеров достаточно","description":"Вычисли объём выборки по Хёфдингу и оценке объединения и найди их предел.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Границы обобщения: сколько примеров достаточно","item":"https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../../index.html?lang=ru">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+        <a href="https://newfter.github.io/AI-Compass/path/t1-generalisation-bounds-how-many-examples-are-enough.html" hreflang="en" lang="en">English</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=ru">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/ru/path/">Путь обучения</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Теория на пределе</a> · Шаг 1 из 12 · 10 мин</p>
+<h1>Границы обобщения: сколько примеров достаточно</h1>
+<p class="pg-lead">Вычисли объём выборки по Хёфдингу и оценке объединения и найди их предел.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Ссылка скопирована" hidden>🔗 Поделиться</button></p>
+<h2>🎯 Один классификатор, зафиксированный заранее</h2>
+<p>У классификатора h есть <strong>истинная ошибка</strong> R(h) = P(h(x) ≠ y) на новом примере из распределения данных и <strong>эмпирическая ошибка</strong> R̂(h) — доля его ошибок на выборке из n примеров, независимо взятых из того же распределения. Насколько могут расходиться эти два числа?</p>
+<p>Если h зафиксирован до того, как получена выборка, его n ошибок — независимые величины со значениями 0 и 1 и средним R(h), и к ним применимо <strong>неравенство Хёфдинга</strong> (Hoeffding). Больше о данных оно ничего не предполагает.</p>
+<p>Приравняем правую часть к δ и выразим ε: получится гарантия, которая выполняется с вероятностью не меньше 1 − δ. Такие утверждения с ε и δ — язык <strong>PAC</strong>-обучения (probably approximately correct): «вероятно (1 − δ) приближённо (ε) корректно».</p>
+<div class="pg-example is-mono"><div>X_1 … X_n независимы, со значениями в [0; 1] и средним μ:</div><div>P(|(X_1 + … + X_n)/n − μ| ≥ ε) ≤ 2·exp(−2·n·ε²)</div><div>для h, зафиксированного заранее, с вероятностью ≥ 1 − δ:</div><div>|R(h) − R̂(h)| ≤ √(ln(2/δ) / (2n))</div><div>n = 1000, δ = 0,05: √(ln 40 / 2000) ≈ 0,043</div></div>
+<p class="pg-note">Вероятность берётся по выборкам: R(h) — фиксированное число, случайна только R̂(h). Чтобы уменьшить ε вдвое, нужно вчетверо больше примеров, а уменьшение δ в десять раз добавляет к ln(2/δ) всего ln 10 ≈ 2,3.</p>
+<section class="pg-check"><p><strong>Задание.</strong> Классификатор зафиксирован до выбора n независимых тестовых примеров. По Хёфдингу, P(|ошибка на тесте − истинная ошибка| ≥ ε) ≤ 2·exp(−2·n·ε²). При каком наименьшем n это гарантирует отклонение меньше 0,02 с вероятностью ≥ 0,95?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> 1000 бинарных классификаторов отвечают на каждый пример независимым броском честной монеты (истинная ошибка 0,5). Их проверяют на одних и тех же 10 примерах. С какой вероятностью хотя бы один ни разу не ошибётся? Округли до сотых.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Из 200 классификаторов взяли тот, у которого наименьшая ошибка R̂ на выборке из n = 1000 примеров, и рассуждают: «По Хёфдингу, с вероятностью 0,95 его истинная ошибка отличается от R̂ не больше чем на 0,043». В чём ошибка?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>🔗 Оценка объединения: плата за выбор</h2>
+<p>Классификатор, подобранный по выборке, всё равно лежит в классе H, из которого его выбирали. Потребуем большего: пусть выборка будет хорошей сразу для всех h из H. <strong>Оценка объединения</strong> (union bound, неравенство Буля): вероятность того, что произойдёт хотя бы одно из нескольких событий, не больше суммы их вероятностей.</p>
+<p>Для конечного класса складываются |H| оценок Хёфдинга. Приравняв сумму к δ, получаем гарантию сразу для всех h из H, а значит, и для того h, который в итоге выбран, каким бы правилом его ни выбирали. Класс стоит всего ln|H| под корнем.</p>
+<p>Тестовая выборка, на которой сравнивают k моделей, зафиксированных без оглядки на неё, — тот же случай с |H| = k.</p>
+<div class="pg-example is-mono"><div>P(найдётся h из H с |R(h) − R̂(h)| ≥ ε) ≤ |H|·2·exp(−2·n·ε²)</div><div>с вероятностью ≥ 1 − δ сразу для всех h из H:</div><div>|R(h) − R̂(h)| ≤ √((ln|H| + ln(2/δ)) / (2n))</div><div>|H| = 10⁶, n = 10 000, δ = 0,05: 0,0296 (один заранее выбранный h: 0,0136)</div></div>
+<p class="pg-note">Если каждую новую модель выбирают, уже зная прежние результаты на тесте, то k моделей — уже не заранее заданный список: объединение придётся брать по всем моделям, которые могли быть выбраны.</p>
+<section class="pg-check"><p><strong>Задание.</strong> У k = 1000 заранее заданных моделей общий тест из n = 10 000 примеров. Оценка объединения: P(хотя бы у одной |ошибка на тесте − истинная ошибка| ≥ ε) ≤ 2·k·exp(−2·n·ε²). При каком ε правая часть равна 0,05? Округли до тысячных.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> В конечном классе H есть h с истинной ошибкой R(h) = 0 (реализуемый случай). Алгоритм возвращает любой h из H без ошибок на n независимых примерах. Расставь шаги доказательства того, что с вероятностью ≥ 1 − δ у него R(h) ≤ ε.</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Задание.</strong> Конечный класс H, |H| = 1000, содержит h с истинной ошибкой 0. С вероятностью ≥ 1 − δ у любого h из H без ошибок на n ≥ (ln|H| + ln(1/δ)) / ε независимых примерах истинная ошибка ≤ ε. Каково наименьшее такое n при ε = δ = 0,01?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<h2>📐 Бесконечные классы: VC-размерность</h2>
+<p>Для бесконечного класса ln|H| бесполезен. Но на конечном наборе точек важны только разметки. H <strong>разбивает</strong> (shatters) набор из k точек, если реализует все 2^k его разметок. <strong>Размерность Вапника — Червоненкиса</strong> (VC-размерность) d класса H — размер наибольшего набора, который H разбивает, или ∞, если наибольшего нет.</p>
+<p>Чтобы d ≥ k, достаточно одного разбиваемого набора из k точек; чтобы d &lt; k, нужно, чтобы не разбивался ни один. <strong>Лемма Зауэра — Шелаха</strong> (Sauer–Shelah): при конечном d ≥ 1 на любых n ≥ d точках H реализует не больше (e·n/d)^d разметок — многочлен от n вместо 2^n.</p>
+<p>Это число занимает место |H| (в полном доказательстве нужна ещё одна идея — вторая, «призрачная» выборка), и получается <strong>равномерная сходимость</strong> (uniform convergence): с вероятностью не меньше 1 − δ разрыв |R(h) − R̂(h)| мал сразу для всех h из H, не больше величины указанного ниже порядка. Константы в учебниках разные.</p>
+<div class="pg-example is-mono"><div>пороги, h(x) = 1 при x ≥ a: d = 1</div><div>отрезки, h(x) = 1 при a ≤ x ≤ b: d = 2</div><div>полупространства в R^m, h(x) = 1 при w·x + b ≥ 0: d = m + 1</div><div>прямоугольники со сторонами вдоль осей на плоскости, h(x) = 1 внутри: d = 4</div><div>при n ≥ 2d: разрыв не больше величины порядка √((d·ln(n/d) + ln(1/δ)) / n)</div></div>
+<section class="pg-check"><p><strong>Задание.</strong> Разбивает ли класс этот набор точек, то есть реализует ли каждую его разметку?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-check"><p><strong>Сначала подумай.</strong> Задача со звёздочкой, на бумаге. На прямой h_ω(x) = 1, если sin(ω·x) ≥ 0, и 0 иначе: класс с одним параметром ω. Докажи, что его VC-размерность бесконечна. Попробуй точки x_j = 10^(−j), j = 1 … m, и хитрое ω для каждой разметки.</p><details><summary>Показать ответ</summary><p>Возьмём метки y_1 … y_m, каждая 0 или 1, и положим ω = π·(1 + Σ_i (1 − y_i)·10^i). Тогда ω·x_j = π·(10^(−j) + Σ_i (1 − y_i)·10^(i−j)). Разберём слагаемые суммы по i.</p>
+<p>Слагаемые с i &gt; j кратны 10, их сумма — чётное целое: она добавляет кратное 2π и ничего не меняет. Слагаемое с i = j добавляет π ровно тогда, когда y_j = 0. Остаток, c = 10^(−j) + слагаемые с i &lt; j, удовлетворяет 0 &lt; c &lt; 1/9, потому что c не больше 0,1 + 0,01 + … + 10^(−j).</p>
+<p>Поэтому sin(ω·x_j) = sin(π·c) &gt; 0 при y_j = 1 и sin(π + π·c) &lt; 0 при y_j = 0: реализуются все 2^m разметок, при любом m. Один параметр — и бесконечная VC-размерность: число параметров не измеряет ёмкость класса.</p></details></section>
+<h2>🚧 Где эти оценки перестают работать</h2>
+<p>Все эти оценки верны для любого распределения данных, а равномерные — ещё и для любого способа выбрать h из H. В этой всеобщности и их сила, и их предел.</p>
+<p>У <strong>перепараметризованной</strong> сети весов намного больше, чем обучающих примеров. Тогда и ln|H| (посчитай биты весов), и VC-размерность обычно намного больше n, а гарантированный разрыв больше 1: он ничего не говорит об ошибках, которые лежат между 0 и 1. В экспериментах такие сети запоминают даже случайные метки.</p>
+<p>И всё же на реальных данных те же сети обобщают. Оценка, которая видит только класс, объяснить этого не может. Оценки через нормы весов, PAC-байесовские оценки и оценки, зависящие от алгоритма обучения, — частичные ответы; полного объяснения пока нет, это открытая область исследований.</p>
+<div class="pg-example is-mono"><div>10⁶ весов по 32 бита: до 2^(32·10⁶) классификаторов</div><div>логарифм этого числа: 32·10⁶·ln 2 ≈ 2,2·10⁷</div><div>даже при одном примере на вес, n = 10⁶, и δ = 0,05:</div><div>√((2,2·10⁷ + ln 40) / (2·10⁶)) ≈ 3,3</div></div>
+<p class="pg-note">Оценки через нормы измеряют величину весов, а не их число. PAC-байесовские оценки заменяют ln|H| на KL-дивергенцию распределения на весах относительно априорного, выбранного до данных. Оценки, зависящие от алгоритма, используют, например, то, как мало меняется результат при замене одного примера: устойчивость (stability).</p>
+<section class="pg-check"><p><strong>Задание.</strong> Сеть всегда обучается до нулевой ошибки на n примерах, будь метки настоящими или от честной монеты. Оценка разности истинной и обучающей ошибок верна при любом распределении и зависит лишь от класса, n и δ. Что отсюда следует?</p><p class="pg-soft">Реши его в приложении.</p></section>
+<section class="pg-keys"><h2>Запомни</h2><ul><li>Для h, зафиксированного до выборки, с вероятностью ≥ 1 − δ: <code>|R(h) − R̂(h)| ≤ √(ln(2/δ) / (2n))</code> (неравенство Хёфдинга), поэтому точность ε дают <code>n ≥ ln(2/δ) / (2ε²)</code> примеров. Для h, выбранного по той же выборке, эта гарантия не действует.</li><li>Оценка объединения для конечного класса H или для k заранее заданных моделей на одной тестовой выборке (|H| = k): с вероятностью ≥ 1 − δ <code>|R(h) − R̂(h)| ≤ √((ln|H| + ln(2/δ)) / (2n))</code> сразу для всех h. Класс стоит всего ln|H|.</li><li>Реализуемый случай (идеальный h существует, алгоритм возвращает h без ошибок на выборке): <code>n ≥ (ln|H| + ln(1/δ)) / ε</code> примеров достаточно, чтобы R(h) ≤ ε с вероятностью ≥ 1 − δ. 1/ε вместо 1/ε².</li><li>Для бесконечных классов работу ln|H| выполняет VC-размерность d: при n ≥ 2d разрыв не больше величины порядка <code>√((d·ln(n/d) + ln(1/δ)) / n)</code>. Для перепараметризованных сетей все эти оценки обычно больше 1; почему такие сети обобщают — открытый вопрос.</li></ul></section>
+
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<nav class="pg-pager" aria-label="Путь обучения"><span></span><a href="t2-optimisation-theory-how-fast-can-descent-go.html"><small>Следующий шаг</small>Теория оптимизации: как быстро может идти спуск</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../../ru/lessons/">Уроки</a>
+        <a href="../../ru/path/">Путь обучения</a>
+        <a href="../../ru/glossary/">Слова об ИИ</a>
+        <a href="../../ru/lab/">ИИ-лаборатория</a>
+        <a href="../../ru/quiz/">Тест</a>
+        <a href="../../ru/history/">История ИИ</a>
+        <a href="../../ru/teachers/">Учителям</a>
+    </nav>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
+</footer>
+</body>
+</html>

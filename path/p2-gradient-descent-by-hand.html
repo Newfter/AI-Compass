@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Gradient descent by hand: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Take the steps yourself and watch the learning rate bite. Under the hood: step 2 of 8.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/p2-gradient-descent-by-hand.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Gradient descent by hand: step by step, with tasks">
+<meta property="og:description" content="Take the steps yourself and watch the learning rate bite. Under the hood: step 2 of 8.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Gradient descent by hand","headline":"Gradient descent by hand","description":"Take the steps yourself and watch the learning rate bite.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Gradient descent by hand","item":"https://newfter.github.io/AI-Compass/path/p2-gradient-descent-by-hand.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/p2-gradient-descent-by-hand.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">⚙️ <a href="./#pro">Under the hood</a> · Step 2 of 8 · 7 min</p>
+<h1>Gradient descent by hand</h1>
+<p class="pg-lead">Take the steps yourself and watch the learning rate bite.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🎯 The loss says how wrong the model is</h2>
+<p>Training means finding the parameters that make a <strong>loss function</strong> small. Take the smallest possible model: one parameter <code>w</code> and this loss:</p>
+<div class="pg-example is-mono"><div>L(w) = (w − 3)²</div></div>
+<p class="pg-note">The minimum is at w = 3. Pretend we do not know that, and find it step by step.</p>
+<h2>⛷️ Follow the slope downhill</h2>
+<p>The gradient <code>dL/dw</code> says how the loss changes when <code>w</code> grows. So we step against it. The size of the step is set by the <strong>learning rate</strong> <code>η</code>.</p>
+<div class="pg-example is-mono"><div>dL/dw = 2·(w − 3)</div><div>w ← w − η · dL/dw</div></div>
+<section class="pg-check"><p><strong>Task.</strong> L(w) = (w − 3)². What is the gradient dL/dw at w = 5?</p><details><summary>Show the solution</summary><p>2·(5 − 3) = 4. It is positive: the loss grows when w grows, so w has to go down.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> L(w) = (w − 3)², w = 5, learning rate η = 0.1. What is w after one step of gradient descent?</p><details><summary>Show the solution</summary><p>5 − 0.1·4 = 4.6: a small step towards 3.</p></details></section>
+<section class="pg-check"><p><strong>Task.</strong> Take a second step from w = 4.6, with the same η = 0.1. What is w now?</p><details><summary>Show the solution</summary><p>4.6 − 0.1·3.2 = 4.28. The steps get smaller as the slope flattens: here every step removes 20% of the remaining distance to 3.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> L(w) = (w − 3)², start at w = 5, but now the learning rate is η = 1. What happens?</p>
+<ol type="A" class="pg-options"><li><button type="button">w slowly drifts towards 3</button></li><li><button type="button">w grows without limit</button></li><li><button type="button" data-right>w jumps between 5 and 1 forever</button></li><li><button type="button">w lands exactly on 3 in one step</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: w jumps between 5 and 1 forever</strong></p><p>5 − 1·4 = 1, then 1 − 1·(−4) = 5, and so on: every step overshoots by exactly the distance it started with. With η = 0.5 one step would land on 3; with η above 1 the jumps grow.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Task.</strong> L(w) = (w − 3)². Now η = 1.1 and w = 5. What is w after one step?</p><details><summary>Show the solution</summary><p>5 − 4.4 = 0.6. That is 2.4 away from the minimum: further than the 2 we started with. Every step multiplies the distance by −1.2. This is divergence, and it is what “the loss exploded” means in practice.</p></details></section>
+<h2>🔗 With data: the chain rule</h2>
+<p>A real loss depends on data. Take one example, x = 2 with the target y = 10, the model <code>ŷ = w·x</code> and the squared error. The chain rule carries the gradient through the model:</p>
+<div class="pg-example is-mono"><div>L = (w·x − y)²</div><div>dL/dw = 2·(w·x − y)·x</div></div>
+<section class="pg-check"><p><strong>Task.</strong> One example: x = 2, y = 10. The model is ŷ = w·x with w = 3, and the loss is L = (w·x − y)². What is dL/dw?</p><details><summary>Show the solution</summary><p>2·(6 − 10)·2 = −16. It is negative, so the update w − η·(−16) moves w up, towards the true value 5.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Why is the gradient usually computed on a small batch of examples and not on the whole dataset?</p>
+<ol type="A" class="pg-options"><li><button type="button">A small batch has no noise at all</button></li><li><button type="button" data-right>Each step is far cheaper, and many noisy steps beat a few exact ones</button></li><li><button type="button">The gradient of the whole dataset points the wrong way</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Each step is far cheaper, and many noisy steps beat a few exact ones</strong></p><p>A step on 32 examples costs a tiny fraction of a pass over millions of them. This is stochastic gradient descent (SGD), and its noise often even helps.</p></details>
+</div></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> During training the loss swings up and down wildly and then turns into NaN. What should you try first?</p>
+<ol type="A" class="pg-options"><li><button type="button">Add more layers</button></li><li><button type="button">Train for more epochs</button></li><li><button type="button" data-right>Lower the learning rate</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Lower the learning rate</strong></p><p>A swinging, exploding loss means the steps are too big: each one overshoots the minimum by more than the last. Lower the learning rate (or clip the gradients).</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>Gradient descent: <code>w ← w − η·dL/dw</code>.</li><li>A learning rate that is too small is slow; one that is too large oscillates or diverges.</li><li>The chain rule carries the gradient through the model: for <code>L = (w·x − y)²</code>, <code>dL/dw = 2·(w·x − y)·x</code>.</li><li>Mini-batches give cheaper, noisier steps: this is SGD.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="p1-a-neuron-by-hand.html"><small>Previous step</small>A neuron by hand</a><a href="p5-backpropagation-by-hand.html"><small>Next step</small>Backpropagation by hand</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

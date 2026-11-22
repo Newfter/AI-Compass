@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Kernels and the infinite-width limit: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Solve kernel regression by hand, derive the NTK dynamics and find their limits. Theory at the limit: step 5 of 12.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/t5-kernels-and-the-infinite-width-limit.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Kernels and the infinite-width limit: step by step, with tasks">
+<meta property="og:description" content="Solve kernel regression by hand, derive the NTK dynamics and find their limits. Theory at the limit: step 5 of 12.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Kernels and the infinite-width limit","headline":"Kernels and the infinite-width limit","description":"Solve kernel regression by hand, derive the NTK dynamics and find their limits.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Kernels and the infinite-width limit","item":"https://newfter.github.io/AI-Compass/path/t5-kernels-and-the-infinite-width-limit.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/t5-kernels-and-the-infinite-width-limit.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">📜 <a href="./#theory">Theory at the limit</a> · Step 5 of 12 · 10 min</p>
+<h1>Kernels and the infinite-width limit</h1>
+<p class="pg-lead">Solve kernel regression by hand, derive the NTK dynamics and find their limits.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>📐 A kernel is an inner product of features</h2>
+<p>A <strong>kernel</strong> is a function k(x, z) of two inputs that equals an inner product φ(x)·φ(z) for some <strong>feature map</strong> φ into a space with an inner product, possibly of infinite dimension. A method that needs the features only through inner products can then work with k alone and never compute φ.</p>
+<p>For any points x_1 … x_n the <strong>Gram matrix</strong> K, with entries K_ij = k(x_i, x_j), is symmetric and positive semi-definite (second line below). Conversely, every symmetric function whose Gram matrices are all positive semi-definite is a kernel: a feature map for it exists (the Moore–Aronszajn theorem).</p>
+<p>Example: the polynomial kernel (1 + x·z)² on R^d is the inner product of all monomials of degree at most 2, each with a fixed positive weight. That is (d + 1)·(d + 2)/2 features, yet one value of k costs a single dot product in R^d.</p>
+<div class="pg-example is-mono"><div>k(x, z) = φ(x)·φ(z)</div><div>c^T·K·c = ‖Σ_i c_i·φ(x_i)‖² ≥ 0 for every vector c</div><div>(1 + x·z)² = 1 + 2·Σ_i x_i·z_i + Σ_i x_i²·z_i² + 2·Σ_(i&lt;j) x_i·x_j·z_i·z_j</div><div>φ(x) = (1, √2·x_i, x_i², √2·x_i·x_j for i &lt; j)</div><div>1 + d + d + d·(d − 1)/2 = (d + 1)·(d + 2)/2; d = 100: 5151 features</div></div>
+<p class="pg-note">The Gaussian kernel exp(−‖x − z‖²/(2·s²)) is the same idea with a feature space of infinite dimension: φ has infinitely many coordinates and can never be computed in full, and k is still one line of code.</p>
+<section class="pg-check"><p><strong>Task.</strong> A kernel k and five points x_1 … x_5 satisfy k(x_i, x_i) = 1 for every i and k(x_i, x_j) = ρ for every pair i ≠ j. What is the smallest value of ρ for which this is possible?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🎯 The representer theorem and kernel ridge regression</h2>
+<p>Each kernel has its own function space H, the <strong>reproducing kernel Hilbert space</strong> (RKHS): the functions f(x) = w·φ(x), with the norm ‖f‖ equal to the smallest ‖w‖ that gives f. A small ‖f‖ means a function that is simple in the sense of this kernel.</p>
+<p><strong>Representer theorem</strong>: take any loss that depends on f only through f(x_1), …, f(x_n), and add λ·‖f‖² with λ &gt; 0. Then every minimiser over H has the form f(x) = Σ_i α_i·k(x_i, x). A search in a space of any dimension reduces to n numbers.</p>
+<p>With the squared loss this is <strong>kernel ridge regression</strong>. Substituting the form above gives the vector of fitted values f(X) = K·α and ‖f‖² = α^T·K·α, and setting the gradient to zero gives α in closed form (second line).</p>
+<div class="pg-example is-mono"><div>minimise Σ_i (f(x_i) − y_i)² + λ·‖f‖² over f in H</div><div>f(x) = Σ_i α_i·k(x_i, x) with α = (K + λ·I)^(−1)·y</div><div>fitted values K·α: along an eigenvector of K with eigenvalue s, the component of y is multiplied by s/(s + λ)</div><div>λ → 0, K invertible: α → K^(−1)·y, the interpolant of smallest ‖f‖</div></div>
+<p class="pg-note">Proof of the theorem: split w = u + v, with u in the span of φ(x_1), …, φ(x_n) and v orthogonal to that span. No f(x_i) = w·φ(x_i) depends on v, while ‖w‖² = ‖u‖² + ‖v‖². So a non-zero v only adds to the penalty: at a minimiser v = 0.</p>
+<section class="pg-check"><p><strong>Task.</strong> Kernel ridge regression minimises Σ_i (f(x_i) − y_i)² + λ·‖f‖² and gives f(x) = Σ_i α_i·k(x_i, x), α = (K + λ·I)^(−1)·y, K_ij = k(x_i, x_j). Two points: K_11 = K_22 = 1, K_12 = K_21 = 0.5, y = (1, 0), λ = 0.5. What is f(x_1)?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>📈 From a network to a kernel: the tangent kernel</h2>
+<p>Take any model f(x; θ) that is differentiable in its parameters θ, and linearise it around a point θ_0 (first line). The linearised model is linear in θ, with the feature map φ(x) = ∇_θ f(x; θ_0). The kernel of these features is the <strong>neural tangent kernel</strong> (NTK), Θ (second line).</p>
+<p>Train on L = ½·Σ_i (f(x_i) − y_i)² by <strong>gradient flow</strong>, dθ/dt = −∇_θ L: gradient descent in the limit of a vanishing learning rate. Then the vector of <strong>residuals</strong> r = f(X) − y obeys dr/dt = −Θ_t·r, where Θ_t is the Gram matrix of the NTK on the training inputs at the current θ(t). This is exact for any such model.</p>
+<p>If Θ_t stayed equal to one matrix Θ, this would be a linear equation: along an eigenvector of Θ with eigenvalue λ_i the residual would decay as e^(−λ_i·t). Directions with large λ_i are fitted first; for common kernels they are smooth, low-frequency functions (<strong>spectral bias</strong>). In general Θ_t moves with θ.</p>
+<div class="pg-example is-mono"><div>f_lin(x; θ) = f(x; θ_0) + ∇_θ f(x; θ_0)·(θ − θ_0)</div><div>Θ(x, z) = ∇_θ f(x; θ)·∇_θ f(z; θ)</div><div>f = a·b·x at (a, b) = (2, 1): ∇_θ f = (b·x, a·x) = (x, 2·x), Θ(x, z) = 5·x·z</div><div>gradient flow: dr/dt = −Θ_t·r</div><div>constant Θ: r(t) = exp(−Θ·t)·r(0); λ_i = 10 and 0.1 at t = 1: factors 0.000045 and 0.905</div><div>1% along λ_i = 0.1 takes t = ln 100 / 0.1 ≈ 46.05</div></div>
+<p class="pg-note">A gradient-descent step of size η changes the output of the linearised model at any input z by exactly −η·Σ_i Θ(z, x_i)·r_i, with its own residuals r_i. For the model itself this is only the first-order term in η.</p>
+<section class="pg-check"><p><strong>Task.</strong> The model f(x) = a·b·x with parameters (a, b) = (2, 1) takes one gradient-descent step, η = 0.1, on ½·(f(1) − 3)². The NTK predicts the change of f(2) to first order in η. By how much does the true change exceed that prediction?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> A differentiable model f(x; θ) is trained by gradient flow, dθ/dt = −∇_θ L, on L = ½·Σ_i r_i² with r_i = f(x_i) − y_i. Put the steps of the derivation of the residual dynamics in order.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Gradient flow on ½·‖r‖² with a constant NTK matrix Θ gives dr/dt = −Θ·r for the residuals r = f(X) − y. Two training points: Θ_11 = Θ_22 = 1, Θ_12 = Θ_21 = 0.5, and r(0) = (1, 0). What is r_1 at t = 2? Three decimal places.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> Finite width, gradient flow on ½·‖r‖², r = f(X) − y, λ_min(Θ_0) = λ &gt; 0. Find the flaw: (1) dr/dt = −Θ_t·r; (2) Θ_t is a Gram matrix, so ‖r‖ never grows; (3) so ‖r(t)‖ ≤ e^(−λ·t)·‖r(0)‖; (4) so the loss tends to 0.</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Task.</strong> The model f(x) = (1/√m)·Σ_j a_j·b_j·x has 2m parameters a_j, b_j, drawn independently from N(0, 1). Its tangent kernel is Θ(x, z) = ∇_θ f(x)·∇_θ f(z). To what number does Θ(1, 3) converge as the width m → ∞?</p><p class="pg-soft">Solve it in the app.</p></section>
+<h2>🔭 The infinite-width limit, and what it leaves out</h2>
+<p>Let the width m of every hidden layer go to infinity in the <strong>NTK parameterisation</strong>: weights drawn from N(0, 1), and every sum over m units scaled by 1/√m. At initialisation the outputs on any finite set of inputs become jointly Gaussian, a <strong>Gaussian process</strong> (central limit theorem), and Θ_0 tends to a deterministic kernel.</p>
+<p>The theorem (fully connected network; activation with bounded first and second derivatives; Θ_0 positive definite on the training set): in this limit, under gradient flow on the squared loss, Θ_t stays equal to Θ_0 throughout training. So the network equals its linearisation f_lin; the lines below follow from that.</p>
+<p>The idea of the proof: a sum of m terms scaled by 1/√m can move by order 1 while each weight moves only a vanishing amount, too little to change ∇_θ f. This is the <strong>lazy regime</strong>, also called the kernel regime. Its price: the features never change, so it cannot describe representation learning or transfer.</p>
+<div class="pg-example is-mono"><div>gradient flow: r(t) = exp(−Θ_0·t)·r(0)</div><div>gradient descent, small enough η, same theorem: r = (I − η·Θ_0)^k·r(0) after k steps</div><div>end of training, f_0 = the network at initialisation:</div><div>f(x) = f_0(x) + Θ_0(x, X)·Θ_0(X, X)^(−1)·(y − f_0(X))</div><div>this is f_0 plus kernel regression with λ → 0 on the targets y − f_0(X)</div></div>
+<p class="pg-note">In experiments, networks of practical width, trained with practical learning rates, usually leave this regime: Θ_t changes. Which regime a given setup is in, and a full theory of feature learning, are open questions.</p>
+<section class="pg-check"><p><strong>Task.</strong> In the infinite-width NTK limit, a network trained by gradient flow on the squared loss keeps its tangent kernel at its initial value and predicts by kernel regression with it. Why can this limit not explain transfer learning?</p><p class="pg-soft">Solve it in the app.</p></section>
+<section class="pg-check"><p><strong>Think first.</strong> Challenge, on paper. Gradient flow on ½·(f(1) − y)² for f(x) = a·b·x, with the kernel Θ = Θ(1, 1) = a² + b². Find a conserved quantity, express Θ through p = a·b, and find Θ at the end of training from (a, b) = (2, 1) with y = 6.</p><details><summary>Show the answer</summary><p>Gradient flow: da/dt = −r·b and db/dt = −r·a with r = a·b − y. So d(a²)/dt = d(b²)/dt = −2·r·a·b, and c = a² − b² is conserved. Then Θ² = (a² + b²)² = (a² − b²)² + 4·a²·b² = c² + 4·p², so Θ = √(c² + 4·p²): the kernel is tied to the output p = f(1).</p>
+<p>From (2, 1): c = 3 and Θ = √(9 + 16) = 5. Since Θ ≥ 3 &gt; 0, the equation dp/dt = −Θ·(p − y) drives p to y = 6, where Θ = √(9 + 144) = √153 ≈ 12.37. The kernel has grown about 2.5 times: nothing like a constant Θ, so this training is not in the kernel regime.</p>
+<p>Start from (a, b) = (s, 0), so f = 0 at first, with y = 1: Θ goes from s² to √(s⁴ + 4), a factor √(1 + 4/s⁴): 2.24 for s = 1, but only 1.0002 for s = 10. A large parameter scale with an order-1 change of the output is the lazy regime. Width acts the same way: m terms scaled by 1/√m, and each weight needs to move only a little.</p></details></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>A kernel is an inner product of features, <code>k(x, z) = φ(x)·φ(z)</code>; equivalently, all its Gram matrices are symmetric and positive semi-definite. The features can be many, or infinitely many: (1 + x·z)² on R^100 stands for 5151 monomials and costs one dot product.</li><li>Representer theorem: a minimiser of a loss on f(x_1), …, f(x_n) plus λ·‖f‖², λ &gt; 0, has the form Σ_i α_i·k(x_i, x). For the squared loss, <code>α = (K + λ·I)^(−1)·y</code>: in the fit K·α each eigen-component of y is multiplied by s/(s + λ), and λ → 0 with K invertible gives the interpolant of smallest norm.</li><li>The tangent kernel is <code>Θ(x, z) = ∇_θ f(x)·∇_θ f(z)</code>. Under gradient flow on the squared loss, <code>dr/dt = −Θ_t·r</code> exactly, at any width. Only if Θ_t is constant does r(t) = exp(−Θ·t)·r(0) follow: the mode with eigenvalue λ_i decays as e^(−λ_i·t), large eigenvalues first.</li><li>Infinite width, NTK parameterisation: a Gaussian process at initialisation, and a deterministic Θ_0 that stays constant under gradient flow on the squared loss: kernel regression with Θ_0. The features never move: no representation learning. Real networks usually leave this regime; a full theory of feature learning is open.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><a href="t4-high-dimensions-and-random-matrices.html"><small>Previous step</small>High dimensions and random matrices</a><a href="t6-statistical-decision-theory-what-best-estimator-means.html"><small>Next step</small>Statistical decision theory: what “best estimator” means</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>

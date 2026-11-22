@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Written by tools/build-pages.js from the texts in js/content/. Do not edit by hand. -->
+<title>Tokens and the context window: step by step, with tasks | AI Compass</title>
+<meta name="description" content="Count tokens, plan the window as a budget and work out what a request costs. Build with AI: step 1 of 7.">
+<link rel="canonical" href="https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html">
+<link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html">
+<link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/path/b1-tokens-and-the-context-window.html">
+<link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AI Compass">
+<meta property="og:title" content="Tokens and the context window: step by step, with tasks">
+<meta property="og:description" content="Count tokens, plan the window as a budget and work out what a request costs. Build with AI: step 1 of 7.">
+<meta property="og:url" content="https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://newfter.github.io/AI-Compass/images/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="../css/pages.css">
+<script src="../js/pages.js" defer></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Tokens and the context window","headline":"Tokens and the context window","description":"Count tokens, plan the window as a budget and work out what a request costs.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Tokens and the context window","item":"https://newfter.github.io/AI-Compass/path/b1-tokens-and-the-context-window.html"}]}</script>
+</head>
+<body>
+<header class="pg-top">
+    <a class="pg-logo" href="../index.html?lang=en">🧭 AI <span>Compass</span></a>
+    <nav aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../teachers/">For teachers</a>
+        <a href="https://newfter.github.io/AI-Compass/ru/path/b1-tokens-and-the-context-window.html" hreflang="ru" lang="ru">Русский</a>
+    </nav>
+</header>
+<main class="pg-main">
+<p class="pg-crumbs"><a href="https://newfter.github.io/AI-Compass/?lang=en">AI Compass</a> › <a href="https://newfter.github.io/AI-Compass/path/">Learning path</a></p>
+<article>
+<p class="pg-kicker">🚀 <a href="./#build">Build with AI</a> · Step 1 of 7 · 8 min</p>
+<h1>Tokens and the context window</h1>
+<p class="pg-lead">Count tokens, plan the window as a budget and work out what a request costs.</p>
+<p class="pg-tools"><button type="button" class="pg-chip" data-share data-done="Link copied" hidden>🔗 Share</button></p>
+<h2>🔤 A model reads tokens, not words</h2>
+<p>Before a language model sees your text, a program called a <strong>tokeniser</strong> cuts it into <strong>tokens</strong>: words and pieces of words. Every token comes from a fixed list, the model's <strong>vocabulary</strong>, and has its own number there. The model works only with these numbers.</p>
+<p>A common word is usually one token. A rare word is cut into several pieces: “unbelievably” might become <code>un</code> + <code>believ</code> + <code>ably</code>. Punctuation marks are tokens too.</p>
+<p>A model's limits and prices are counted in tokens, not in words, so it helps to estimate how many tokens a text has. A rough rule for English text: 100 tokens are about 75 words.</p>
+<p class="pg-note">The rule works for ordinary English text. Other languages and program code usually need more tokens for the same amount of text. Models also differ in their tokenisers, so only your model's own tokeniser gives the exact count.</p>
+<section class="pg-check"><p><strong>Task.</strong> A rough rule for English text: 100 tokens are about 75 words. About how many tokens is an English article of 1500 words?</p><details><summary>Show the solution</summary><p>1500 / 75 = 20, so the article is about 20 · 100 = 2000 tokens. There are more tokens than words, because some words take several tokens and punctuation marks are tokens too. This is only an estimate: the exact number depends on the text and on the model's tokeniser.</p></details></section>
+<h2>🧩 Where the vocabulary comes from: byte-pair encoding</h2>
+<p>Nobody writes the vocabulary by hand. A widely used method, <strong>byte-pair encoding</strong> (BPE), builds it from a large collection of texts.</p>
+<p>At the start every single character is a token. Count how often each pair of neighbouring tokens appears, and merge the most frequent pair into one new token, everywhere in the text. Then count again and repeat, tens of thousands of times: every merge adds one token to the vocabulary.</p>
+<p>Here is the first count for a tiny text. Pairs overlap: in <code>aaa</code> the pair <code>aa</code> is counted twice.</p>
+<div class="pg-example is-mono"><div>text: aaabdaaabac</div><div>pairs: aa aa ab bd da aa aa ab ba ac</div><div>counts: aa 4, ab 2, bd 1, da 1, ba 1, ac 1</div></div>
+<p class="pg-note">The name comes from data compression: the method was invented there to replace frequent pairs of bytes. Many real tokenisers also start from bytes, not characters. The merges are learned once, before the model itself is trained, and after that they never change.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> In the text <code>aaabdaaabac</code>, which pair of neighbouring characters does byte-pair encoding merge first?</p>
+<ol type="A" class="pg-options"><li><button type="button" data-right><code>aa</code></button></li><li><button type="button"><code>ab</code></button></li><li><button type="button"><code>bd</code></button></li><li><button type="button"><code>ac</code></button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: <code>aa</code></strong></p><p><code>aa</code> appears 4 times, more often than any other pair: <code>ab</code> appears 2 times and the rest once each. Byte-pair encoding always merges the most frequent pair, whatever its letters and wherever it stands in the text.</p></details>
+</div></section>
+<section class="pg-check"><p><strong>Task.</strong> Merge every <code>aa</code> in <code>aaabdaaabac</code> into one new token <code>Z</code>, going from left to right. How many tokens does the text have now?</p><details><summary>Show the solution</summary><p>Each <code>aaa</code> becomes <code>Z a</code>, so the text is <code>Z a b d Z a b a c</code>: 9 tokens instead of 11. The pair was counted 4 times, but it can be replaced only 2 times, because the pairs in <code>aaa</code> overlap. Now the count starts again on the new text, and two merges later the whole piece <code>aaab</code> is a single token.</p></details></section>
+<h2>📚 What the merges give us</h2>
+<p>After tens of thousands of merges, frequent words have become single tokens. A rare word never gets a token of its own, so it is written with a few smaller pieces: <strong>subword tokens</strong>.</p>
+<p>This is a compromise. A vocabulary of whole words would need millions of entries and would still miss every new word. Single characters can spell anything, but they make a text several times longer.</p>
+<p>Pieces of words give both: texts stay short, and no word is left out. The vocabulary has a fixed size: tens of thousands to a few hundred thousand tokens, depending on the model. And the single characters stay in it, so any text can be spelled: a typo, a new name, a word the model has never seen.</p>
+<p class="pg-note">“Frequent” means frequent in the texts the vocabulary was built from, and these usually contain more English than any other language. This is one reason why other languages usually need more tokens.</p>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> Why do language models split text into pieces of words (subword tokens) and not into whole words?</p>
+<ol type="A" class="pg-options"><li><button type="button">A whole word is too long to be stored in the vocabulary as a single number</button></li><li><button type="button">A text cut into pieces of words takes fewer tokens than one cut into whole words</button></li><li><button type="button">A model that reads pieces of words answers more truthfully than one that reads words</button></li><li><button type="button" data-right>A fixed vocabulary of pieces can spell any word, even a new or misspelled one</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: A fixed vocabulary of pieces can spell any word, even a new or misspelled one</strong></p><p>A vocabulary of whole words would need millions of entries and would still miss new words, names and typos. Pieces cover everything with a fixed list: a frequent word is one token, a rare one is spelled with several. The price: a text has more tokens than words.</p></details>
+</div></section>
+<h2>📦 The context window is a budget</h2>
+<p>A model can work with a limited number of tokens at once: its <strong>context window</strong>. Everything in one request has to fit into it: your instructions to the model (the <strong>system prompt</strong>), the conversation so far, the documents you add, the question, and also the answer the model writes.</p>
+<p>So the window is a budget: tokens spent on one part are gone for the others, and what does not fit, the model does not see.</p>
+<p>Here is a plan for a small window of 8000 tokens (real windows range from a few thousand tokens to a million or more). One line is still empty: you will fill it in on the next screen.</p>
+<div class="pg-example is-mono"><div>window: 8000 tokens</div><div>instructions: 500</div><div>question: 300</div><div>kept for the answer: 1000</div><div>left for documents: ?</div></div>
+<p class="pg-note">Why does the conversation so far count? The model keeps nothing between requests, so a chat application sends the whole conversation again with every new message.</p>
+<section class="pg-check"><p><strong>Task.</strong> A model has a context window of 8000 tokens. You send instructions of 500 tokens and a question of 300 tokens, and the answer may be up to 1000 tokens long. At most, how many tokens can the documents take?</p><details><summary>Show the solution</summary><p>8000 − 500 − 300 − 1000 = 6200. The room for the answer comes out of the same window as the input, so it is subtracted too. A longer document has to be shortened, or only its most useful parts are sent.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A long chat no longer fits into the context window. What do chat applications usually do so that it can go on?</p>
+<ol type="A" class="pg-options"><li><button type="button">They move the oldest messages into the model's weights, where they need no window</button></li><li><button type="button">They make the model read the oldest messages faster, so that they use fewer tokens</button></li><li><button type="button" data-right>They drop or summarise the oldest messages, so the model no longer sees them in full</button></li><li><button type="button">They make the window grow with the chat, so that every message still fits into it</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: They drop or summarise the oldest messages, so the model no longer sees them in full</strong></p><p>The window has a fixed size, and the weights, set in training, do not change during a chat. The model sees only what the application puts into the window again, so the application leaves the oldest messages out or replaces them with a short summary. This is why a chatbot can lose details from the start of a long chat.</p></details>
+</div></section>
+<h2>🏷️ Tokens are also the price and the waiting time</h2>
+<p>Model providers usually charge per token, and they count two kinds. <strong>Input tokens</strong> are everything you send, each time you send it: instructions, conversation, documents, question. <strong>Output tokens</strong> are everything the model writes in reply, and each usually costs several times more than an input token.</p>
+<p>The model writes its answer one token after another, so a long answer also means a long wait.</p>
+<p>Prices are usually given per million tokens. Suppose a model costs 2 units (of any currency) per million input tokens and 10 units per million output tokens. A request with 4000 input tokens and 500 output tokens then costs:</p>
+<div class="pg-example is-mono"><div>input: 4000 · 2 / 1,000,000 = 0.008</div><div>output: 500 · 10 / 1,000,000 = 0.005</div><div>total: 0.008 + 0.005 = 0.013 units</div></div>
+<p class="pg-note">A model's API (the interface that programs use to call it) usually reports how many input and output tokens each request used, so you can measure them and do not have to guess. Real prices differ from model to model and change often.</p>
+<section class="pg-check"><p><strong>Task.</strong> A model costs 2 units per million input tokens and 10 units per million output tokens. One request uses 4000 input tokens and 500 output tokens. How many units do 1000 such requests cost?</p><details><summary>Show the solution</summary><p>One request: 4000 · 2 / 1,000,000 = 0.008 units for the input and 500 · 10 / 1,000,000 = 0.005 for the output, 0.013 together. So 1000 requests cost 1000 · 0.013 = 13 units. The same in millions of tokens: 4 · 2 + 0.5 · 10 = 13.</p></details></section>
+<section class="pg-check"><div class="pg-quiz">
+<p class="pg-q"><strong>Task.</strong> A request has 4000 input tokens at 2 units per million and 500 output tokens at 10 units per million. Which change saves the most money?</p>
+<ol type="A" class="pg-options"><li><button type="button">Cutting the instructions from 500 tokens to 250</button></li><li><button type="button" data-right>Sending half as many input tokens</button></li><li><button type="button">Asking for an answer half as long</button></li><li><button type="button">Deleting a 100-token greeting from the instructions</button></li></ol>
+<details class="pg-why"><summary>Show the answer</summary><p><strong>Right answer: Sending half as many input tokens</strong></p><p>Half the input saves 2000 · 2 / 1,000,000 = 0.004 units per request. Half the output saves 250 · 10 / 1,000,000 = 0.0025. The 250 tokens of instructions save 0.0005 and the greeting 0.0002. An output token costs 5 times more, but this request has 8 times more input tokens: count before you optimise.</p></details>
+</div></section>
+<section class="pg-keys"><h2>Remember</h2><ul><li>A model reads <strong>tokens</strong>, not words. For English text, 100 tokens are about 75 words; other languages and code usually need more.</li><li><strong>Byte-pair encoding</strong> builds the vocabulary by merging the most frequent pair of neighbouring tokens, again and again. Its pieces of words can spell any text.</li><li>The <strong>context window</strong> is one budget for the instructions, the conversation, the documents, the question and the answer. What does not fit, the model does not see.</li><li>Price and waiting time both grow with the number of tokens, and an output token usually costs more than an input token. Measure where your tokens go before you optimise.</li></ul></section>
+
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<nav class="pg-pager" aria-label="Learning path"><span></span><a href="b2-search-by-meaning.html"><small>Next step</small>Search by meaning</a></nav>
+</article>
+</main>
+<footer class="pg-foot">
+    <nav class="pg-more" aria-label="AI Compass">
+        <a href="../lessons/">Lessons</a>
+        <a href="../path/">Learning path</a>
+        <a href="../glossary/">AI words</a>
+        <a href="../lab/">AI Lab</a>
+        <a href="../quiz/">Quiz</a>
+        <a href="../history/">History of AI</a>
+        <a href="../teachers/">For teachers</a>
+    </nav>
+    <p>A free student project. No ads, no sign-up.</p>
+    <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
+</footer>
+</body>
+</html>
