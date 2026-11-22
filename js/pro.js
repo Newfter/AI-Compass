@@ -514,6 +514,7 @@
         { names: ["stats", "статистика"], usage: "stats", does: "pro.cmd.stats", run: cmdStats },
         { names: ["path", "путь"], usage: "path", does: "pro.cmd.path", run: cmdPath },
         { names: ["review", "повторить"], usage: "review", does: "pro.cmd.review", run: cmdReview },
+        { names: ["exam", "экзамен"], usage: "exam", does: "pro.cmd.exam", run: function () { if (A.learn && typeof A.learn.exam === "function") A.learn.exam(terminal ? terminal.input : null); } },
         { names: ["look", "оформление"], usage: "look [id]", does: "pro.cmd.look", run: cmdLook },
         { names: ["theme", "тема"], usage: "theme [dark|light]", does: "pro.cmd.theme", run: cmdTheme },
         { names: ["lang", "язык"], usage: "lang [en|ru]", does: "pro.cmd.lang", run: cmdLang },

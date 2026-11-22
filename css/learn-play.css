@@ -10,6 +10,7 @@
    4. The tasks: choose, type a number, order, sort, match
    5. The feedback under a task
    6. The end screens
+   6b. The qualifying exam (the clock, the silent tasks, the start and the result)
    7. Explain it back
    8. For young explorers (bigger letters)
    9. Phones
@@ -581,6 +582,11 @@
 }
 
 @media (hover: none), (pointer: coarse), (pointer: none) {
+    /* (".lpw" in front: the base rule of .lpw-clock-hide comes later in this file) */
+    .lpw .lpw-clock-hide {
+        height: 44px;
+    }
+
     .lpw-number-sign {
         display: inline-flex;
     }
@@ -948,6 +954,350 @@
     font-size: 0.875rem;
 }
 
+/* ===== 6b. THE QUALIFYING EXAM ===== */
+/* The clock in the top bar: calm. At five minutes it only changes colour */
+.lpw-clock {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+}
+
+.lpw-clock-time {
+    min-width: 4.2em;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.lpw-clock.is-hidden .lpw-clock-time {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.lpw-clock.is-warning .lpw-clock-time {
+    border-color: var(--warning);
+    background: color-mix(in srgb, var(--warning) 14%, var(--surface-solid));
+    color: var(--text-warning);
+}
+
+.lpw-clock-hide {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font: 600 0.8125rem/1 var(--font-body);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.lpw-clock-hide:hover {
+    border-color: var(--accent-2);
+    color: var(--text);
+}
+
+.lpw-close.is-armed {
+    border-color: var(--warning);
+    color: var(--text-warning);
+}
+
+/* "Answer 3 of 30 saved" and the question before leaving: a line above the buttons.
+   The line of answers is empty (and flat) before the first one */
+.lpw-exam-status,
+.lpw-leave {
+    flex: none;
+    margin: 0;
+    padding: 8px 24px;
+    border-top: 1px solid var(--border);
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
+.lpw-exam-status {
+    color: var(--text-muted);
+}
+
+.lpw-exam-status:empty {
+    padding: 0;
+    border: 0;
+}
+
+.lpw-leave {
+    border-top-color: color-mix(in srgb, var(--warning) 55%, var(--border));
+    background: color-mix(in srgb, var(--warning) 10%, var(--surface-solid));
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* The silent tasks: what was picked is marked, never whether it is right */
+.lpw-option.is-picked,
+.lpw-match-item.is-paired {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.12);
+}
+
+.lpw-option.is-picked .lpw-option-key {
+    border-color: var(--accent-2);
+    color: var(--text);
+}
+
+.lpw-input.is-saved,
+.lpw-order-item.is-saved {
+    border-color: var(--accent-2);
+}
+
+.lpw-sort-done .is-saved .lpw-sort-mark {
+    color: var(--text-accent-2);
+}
+
+.lpw-match-tag {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    margin-right: 8px;
+    border: 1px solid var(--accent-2);
+    border-radius: 6px;
+    color: var(--text-accent-2);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* The start screen: the rules, a warm warning when the stages are not done, the clock */
+.lpw-exam-rules,
+.lpw-exam-mode,
+.lpw-exam-assumes,
+.lpw-exam-units,
+.lpw-exam-repeat {
+    width: 100%;
+    max-width: 58ch;
+    text-align: left;
+}
+
+.lpw-exam-rules {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lpw-exam-rules li {
+    position: relative;
+    padding-left: 22px;
+    line-height: 1.5;
+}
+
+.lpw-exam-rules li::before {
+    position: absolute;
+    top: 0.62em;
+    left: 5px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    content: "";
+}
+
+.lpw-exam-assumes {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid color-mix(in srgb, var(--warning) 50%, var(--border));
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--warning) 8%, var(--surface-solid));
+    line-height: 1.5;
+}
+
+.lpw-exam-mode {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.lpw-exam-mode legend {
+    margin-bottom: 8px;
+    padding: 0;
+    font-weight: 700;
+}
+
+.lpw-exam-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-height: 52px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    background: var(--surface-2);
+    cursor: pointer;
+}
+
+.lpw-exam-option:has(input:checked) {
+    border-color: var(--accent-2);
+    background: rgba(var(--accent-2-rgb), 0.1);
+}
+
+.lpw-exam-option:has(input:focus-visible) {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+}
+
+.lpw-exam-option input {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 2px 0 0;
+    accent-color: var(--accent-2);
+}
+
+.lpw-exam-option-body {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+    line-height: 1.45;
+}
+
+.lpw-exam-option-body span {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+}
+
+/* "Квалификационный": a long word in big letters on a narrow phone breaks, with a hyphen where it can */
+.lpw-exam-intro .lpw-end-title,
+.lpw-exam-end .lpw-end-title {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+}
+
+.lpw-exam-note {
+    max-width: 58ch;
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+/* The result: units to repeat, the table by unit, the missed questions */
+.lpw-exam-repeat {
+    display: grid;
+    gap: 4px;
+}
+
+.lpw-exam-repeat ul {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0 0 0 4px;
+    list-style: none;
+}
+
+.lpw-exam-units {
+    overflow-x: auto;
+}
+
+.lpw-exam-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+}
+
+.lpw-exam-table caption {
+    padding-bottom: 8px;
+    text-align: left;
+}
+
+.lpw-exam-table th,
+.lpw-exam-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    line-height: 1.4;
+    text-align: left;
+    vertical-align: top;
+}
+
+.lpw-exam-table thead th {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.lpw-exam-table th[scope="row"] {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.lpw-exam-table tr.is-full th[scope="row"] {
+    box-shadow: inset 3px 0 0 var(--success);
+}
+
+.lpw-exam-table tr.is-part th[scope="row"] {
+    box-shadow: inset 3px 0 0 var(--warning);
+}
+
+.lpw-exam-table tr.is-none th[scope="row"] {
+    box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.lpw-exam-table td {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.lpw-exam-table .lpw-exam-stage th {
+    padding-top: 16px;
+    color: var(--text-accent-2);
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.lpw-exam-marks {
+    display: inline-flex;
+    gap: 4px;
+    margin-right: 8px;
+    font-weight: 700;
+}
+
+.lpw-exam-marks .is-right {
+    color: var(--text-success);
+}
+
+.lpw-exam-marks .is-wrong {
+    color: var(--text-danger);
+}
+
+.lpw-exam-marks .is-none {
+    color: var(--text-dim);
+}
+
+.lpw-exam-answer,
+.lpw-exam-why {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    overflow-wrap: anywhere;
+}
+
+.lpw-exam-answer strong {
+    color: var(--text);
+}
+
 /* ===== 7. EXPLAIN IT BACK ===== */
 .lpw-textarea,
 .lpw-prompt {
@@ -1136,9 +1486,86 @@
     }
 }
 
+/* The exam on the narrowest phones, and on a phone with bigger text: "3 of 30" gives
+   its place to the clock (the progress bar keeps it for screen readers, and the line
+   above the buttons says how many answers are saved), so the bar stays one row */
+@media (max-width: 359px) {
+    .lpw.is-exam .lpw-count {
+        display: none;
+    }
+
+    .lpw.is-exam .lpw-clock {
+        margin-right: auto;
+    }
+
+    .lpw.is-exam .lpw-head {
+        gap: 6px;
+    }
+
+    .lpw.is-exam .lpw-clock-time {
+        min-width: 0;
+        padding: 6px 8px;
+    }
+
+    .lpw.is-exam .lpw-clock-hide {
+        padding: 0 8px;
+    }
+}
+
+@media (max-width: 640px) {
+    html.st-large-text .lpw.is-exam .lpw-count {
+        display: none;
+    }
+
+    html.st-large-text .lpw.is-exam .lpw-clock {
+        margin-right: auto;
+    }
+
+    html.st-large-text .lpw.is-exam .lpw-head {
+        gap: 6px;
+    }
+
+    html.st-large-text .lpw.is-exam .lpw-clock-time {
+        min-width: 0;
+        padding: 6px 8px;
+    }
+
+    html.st-large-text .lpw.is-exam .lpw-clock-hide {
+        padding: 0 8px;
+    }
+}
+
+/* The exam on a phone held upright: the name gets a whole line, the clock and the
+   buttons share the one above it */
+@media (max-width: 640px) and (min-height: 521px) {
+    .lpw.is-exam .lpw-head {
+        flex-wrap: wrap;
+    }
+
+    .lpw.is-exam .lpw-count {
+        margin-right: auto;
+    }
+
+    .lpw.is-exam .lpw-kicker {
+        order: 1;
+        flex-basis: 100%;
+    }
+}
+
 @media (max-width: 640px) {
     .lpw {
         padding: 0;
+    }
+
+    .lpw-exam-status,
+    .lpw-leave {
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+
+    .lpw-exam-table th,
+    .lpw-exam-table td {
+        padding: 7px 6px;
     }
 
     .lpw-window {

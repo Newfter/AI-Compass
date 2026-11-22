@@ -15,6 +15,8 @@
      { mode: "cards", kind: "review" | "more" | "topic", topic, cards: [ids] }
      { mode: "cards", kind: "test", stage, cards: [ids] }
      { mode: "cards", kind: "place", probes: [{ stage, cards: [ids] }] }
+     { mode: "cards", kind: "exam", exam: plan, cards: [ids] }   the qualifying
+              exam (plan: see examPlan in js/learn.js); its tasks are silent
      { mode: "guide", unit: "z1" }
      { mode: "explain", lesson: 3 }
 
@@ -36,6 +38,10 @@
    An info screen can end with "prompts": ready requests for a chatbot, each
    with a Copy button ([{ label, text }]; text: one line or a list of lines).
    In the texts of a course, **two stars** make bold and `backticks` code.
+   A task in its silent mode (the exam, settings.silent of mountTask) keeps the
+   answer and shows only what was picked: no right or wrong, no answer, no
+   explanation, no word for screen readers, and no attribute in the markup that
+   tells which option, line or pair is the right one.
 
    Sections of this file:
     1. Settings and small helpers
@@ -46,7 +52,8 @@
     6. Cards: the memory check, practice, a stage test, the level check
     7. A guided step
     8. Explain it back
-    9. Opening and closing
+    9. The qualifying exam
+   10. Opening and closing
    Texts: js/content/learn.js ("learn.play.", "learn.task.", "learn.review."...).
    Styles: css/learn-play.css.
    ========================================================= */
@@ -76,6 +83,10 @@
     const PROMPT_ROWS_MAX = 7;       // ...and at most this many, until the window has measured its text
     const PROMPT_EDGE = 2;           // px: the field's two borders, added to the height of its text
     const TASKS = ["choice", "order", "sort", "match", "number"];
+    const CLOCK_TICK = 1000;         // ms: how often the exam's clock is drawn (it reads the wall clock each time)
+    const CLOCK_WARN = 5;            // minutes left when the clock turns to its calm warning
+    const CLOCK_SAY = [15, 5, 1];    // minutes left that are said to screen readers
+    const REPEAT_FIRST = 3;          // "not passed yet": how many units are named to repeat first
     const CLOSE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 
     function isTask(step) {
@@ -222,6 +233,8 @@
         let task = null;         // the task on screen: { giveUp(), key(event) }, or null
         let actions = {};        // what the buttons of the screen do: { name: function (button) }
         const drafts = {};       // "Explain it back": what was typed for each lesson and not saved yet (until the page reloads)
+        let clockTimer = 0;      // the exam's clock
+        let leavePress = null;   // A.confirmPress of × while an exam runs
 
         // ---------- 2. Building the window ----------
         function build() {
@@ -234,14 +247,19 @@
                     '<header class="lpw-head">' +
                         '<p class="lpw-kicker mono" id="lpw-kicker"></p>' +
                         '<p class="lpw-count mono"></p>' +
+                        '<div class="lpw-clock" hidden><span class="sr-only lpw-clock-label"></span><span class="lpw-clock-time mono" role="timer"></span>' +
+                            '<button type="button" class="lpw-clock-hide" data-act="clockhide"></button></div>' +
                         '<button type="button" class="lpw-listen" data-act="listen" aria-pressed="false" hidden>' +
                             '<span class="lpw-listen-icon" aria-hidden="true">🔊</span><span class="lpw-listen-text"></span></button>' +
                         '<button type="button" class="lpw-close" data-act="close">' + CLOSE_ICON + "</button>" +
                     "</header>" +
                     '<div class="lpw-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><span></span></div>' +
                     '<div class="lpw-body"></div>' +
+                    '<p class="lpw-exam-status" role="status" hidden></p>' +
+                    '<p class="lpw-leave" role="alert" hidden></p>' +
                     '<footer class="lpw-foot"></footer>' +
                     '<p class="lpw-legend mono" aria-hidden="true"></p>' +
+                    '<p class="sr-only lpw-clock-live" aria-live="polite"></p>' +
                 "</div>";
             document.body.appendChild(root);
             const find = function (selector) { return root.querySelector(selector); };
@@ -249,8 +267,22 @@
                 window: find(".lpw-window"), kicker: find(".lpw-kicker"), count: find(".lpw-count"),
                 listen: find(".lpw-listen"), listenIcon: find(".lpw-listen-icon"), listenText: find(".lpw-listen-text"),
                 close: find(".lpw-close"), bar: find(".lpw-bar"), barFill: find(".lpw-bar span"),
-                body: find(".lpw-body"), foot: find(".lpw-foot"), keys: find(".lpw-legend")
+                body: find(".lpw-body"), foot: find(".lpw-foot"), keys: find(".lpw-legend"),
+                clock: find(".lpw-clock"), clockLabel: find(".lpw-clock-label"), clockTime: find(".lpw-clock-time"),
+                clockHide: find(".lpw-clock-hide"), clockLive: find(".lpw-clock-live"),
+                examStatus: find(".lpw-exam-status"), leave: find(".lpw-leave")
             };
+            // During the exam, × asks first: the first press arms it, a second one leaves
+            leavePress = A.confirmPress(parts.close, {
+                enabled: examOn,
+                onArm: function () { showLeave(true); },
+                onDisarm: function () { showLeave(false); },
+                onConfirm: leaveExam
+            });
+            // A tab shown again (or a phone that woke up): the clock catches up at once
+            document.addEventListener("visibilitychange", function () {
+                if (!document.hidden) tickClock();
+            });
             root.addEventListener("click", holdBackDouble, true);
             root.addEventListener("click", onClick);
             document.addEventListener("keydown", onKey);
@@ -271,6 +303,8 @@
                 element: parts.window,
                 modal: true,
                 closeOnNavigate: true,
+                // A running exam takes Esc itself (onKey): it asks before it closes
+                escape: function () { return examOn() ? "none" : "anywhere"; },
                 close: function (reason) {
                     close({ focusBack: reason === "escape" || reason === "close" });
                 }
@@ -303,8 +337,8 @@
                 parts.bar.setAttribute("aria-valuenow", String(Math.round(clean * 100)));
                 parts.bar.setAttribute("aria-label", options.count || options.kicker || "");
             }
-            parts.close.setAttribute("aria-label", t("learn.play.close"));
-            parts.close.title = t("learn.play.close");
+            parts.close.setAttribute("aria-label", t(examOn() ? "learn.exam.leave" : "learn.play.close"));
+            parts.close.title = t(examOn() ? "learn.exam.leave" : "learn.play.close");
             // The number keys only work on a task with buttons to choose (see mountTask)
             A.dom.setText(parts.keys, t("learn.play.keysNext"));
         }
@@ -443,7 +477,9 @@
             const button = event.target.closest("[data-act]");
             if (!button || !root.contains(button) || button.getAttribute("aria-disabled") === "true") return;
             const act = button.getAttribute("data-act");
-            if (act === "close") close({ focusBack: true });
+            // (during the exam, A.confirmPress on × asks first and leaves: see leavePress)
+            if (act === "close") { if (!examOn()) close({ focusBack: true }); }
+            else if (act === "clockhide") toggleClock();
             else if (act === "listen") toggleSpeaking();
             else if (act === "copy") copyPrompt(button);
             else if (typeof actions[act] === "function") actions[act](button);
@@ -473,9 +509,18 @@
         // 1-9 choose an answer; Enter presses the main button of the screen
         function onKey(event) {
             if (!isOpen || A.overlays.top() !== WINDOW_ID) return;
+            // A running exam: Esc presses ×, which asks first (core leaves Esc to this window then)
+            if (event.key === "Escape" || event.key === "Esc") {
+                if (examOn() && !event.repeat) {
+                    event.preventDefault();
+                    parts.close.click();
+                }
+                return;
+            }
             if (event.altKey || event.ctrlKey || event.metaKey) return;
             const typing = A.dom.isTyping(event.target);
-            if (!typing && task && task.key && task.key(event)) {
+            // (in the exam an answer moves on at once: a key held down must not answer the next question too)
+            if (!typing && task && task.key && !(event.repeat && examOn()) && task.key(event)) {
                 event.preventDefault();
                 return;
             }
@@ -590,13 +635,18 @@
             feedback.scrollIntoView({ block: "nearest", behavior: A.motion.ok() ? "smooth" : "auto" });
         }
 
-        // Puts a task into "box". settings: { tries, done(result, feedback) }.
+        // Puts a task into "box". settings: { tries, silent, done(result, feedback) }.
+        // silent (the exam): the answer is kept and nothing is revealed: no right or wrong,
+        // no answer, no hint, nothing said aloud; only what was picked is marked, and the
+        // buttons are named in the markup so that they do not give the answer away
+        // (an option by its place on the screen, a line or a right-hand pair by a random number).
         // done gets { correct (right on the first try), solved (right in the end),
         // shown (the learner pressed "Show the answer"), answer (a text to show, or "") }
         // and the element for the feedback.
         // Returns { giveUp(), key(event) }: "I don't know" and the number keys.
         function mountTask(box, step, settings) {
             const tries = settings.tries;
+            const silent = Boolean(settings.silent);
             let wrong = 0;          // wrong tries so far
             let over = false;
             let shown = false;      // "Show the answer" was pressed
@@ -640,7 +690,7 @@
                 let order = step.options.map(function (_, index) { return index; });
                 if (!step.keepOrder) order = A.util.shuffle(order);
                 area.innerHTML = '<div class="lpw-options" role="group">' + order.map(function (index, place) {
-                    return '<button type="button" class="ui-option lpw-option" data-option="' + index + '">' +
+                    return '<button type="button" class="ui-option lpw-option" data-option="' + (silent ? place : index) + '">' +
                         '<span class="lpw-option-key mono" aria-hidden="true">' + num(place + 1) + "</span>" +
                         '<span class="lpw-option-text" data-speak>' + rich(step.options[index]) + "</span></button>";
                 }).join("") + "</div>";
@@ -667,7 +717,15 @@
                 area.addEventListener("click", function (event) {
                     const button = event.target.closest(".lpw-option");
                     if (!button || over || isLocked(button)) return;
-                    if (Number(button.getAttribute("data-option")) === right) {
+                    const picked = silent ? order[Number(button.getAttribute("data-option"))] : Number(button.getAttribute("data-option"));
+                    if (silent) {
+                        buttons.forEach(function (item) { item.setAttribute("aria-disabled", "true"); });
+                        button.classList.add("is-picked");
+                        if (picked !== right) wrong += 1;
+                        end(picked === right);
+                        return;
+                    }
+                    if (picked === right) {
                         reveal();
                         end(true);
                         return;
@@ -705,7 +763,7 @@
                         (step.signed ? '<button type="button" class="btn btn-ghost btn-small lpw-number-sign" aria-label="' + esc(t("learn.task.sign")) + '" title="' + esc(t("learn.task.sign")) + '">±</button>' : "") +
                         '<input class="lpw-input" id="lpw-number" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="14">' +
                         (step.unit ? '<span class="lpw-number-unit">' + esc(step.unit) + "</span>" : "") +
-                        '<button type="submit" class="btn btn-primary btn-small lpw-number-check">' + esc(t("learn.play.check")) + "</button>" +
+                        '<button type="submit" class="btn btn-primary btn-small lpw-number-check">' + esc(t(silent ? "learn.exam.submit" : "learn.play.check")) + "</button>" +
                     "</span>" +
                 "</form>";
                 const form = area.firstChild;
@@ -749,7 +807,14 @@
                     // A share or a probability ("share": true in the course) may be typed as a
                     // percentage: "81%" is 0.81. Any other answer reads "100%" as 100
                     const value = typed.percent && step.share ? typed.value / 100 : typed.value;
-                    if (Math.abs(value - step.answer) <= tolerance + 1e-9) {
+                    const near = Math.abs(value - step.answer) <= tolerance + 1e-9;
+                    if (silent) {
+                        if (!near) wrong += 1;
+                        lock("saved");
+                        end(near);
+                        return;
+                    }
+                    if (near) {
                         lock("right");
                         end(true);
                         return;
@@ -785,6 +850,8 @@
                 let pool = A.util.shuffle(all);
                 // A shuffle that changes nothing would give the answer away: turn it round
                 if (all.length > 1 && pool.every(function (value, index) { return value === index; })) pool.reverse();
+                // The name of a line in the markup (silent: a random number, not its place in the right order)
+                const tag = silent ? A.util.shuffle(all) : all;
                 let placed = [];
                 let kept = 0;        // the lines at the start that are right (after a wrong try they stay)
                 const draw = function (state) {       // "": still solving; "right" or "shown": the end
@@ -794,7 +861,7 @@
                             "<span data-speak>" + rich(step.items[item]) + "</span></li>";
                     }).join("");
                     const picks = pool.map(function (item) {
-                        return '<button type="button" class="ui-option lpw-order-pick" data-item="' + item + '"><span data-speak>' + rich(step.items[item]) + "</span></button>";
+                        return '<button type="button" class="ui-option lpw-order-pick" data-item="' + tag[item] + '"><span data-speak>' + rich(step.items[item]) + "</span></button>";
                     }).join("");
                     area.innerHTML =
                         (rows ? '<ol class="lpw-order-list">' + rows + "</ol>" : "") +
@@ -809,7 +876,15 @@
                     draw(state);
                 };
                 const check = function () {
-                    if (placed.every(function (value, index) { return value === index; })) {
+                    const inOrder = placed.every(function (value, index) { return value === index; });
+                    if (silent) {
+                        // The lines stay in the order the learner chose, with no mark of right or wrong
+                        if (!inOrder) wrong += 1;
+                        draw("saved");
+                        end(inOrder);
+                        return;
+                    }
+                    if (inOrder) {
                         showAnswer("right");
                         end(true);
                         return;
@@ -839,7 +914,7 @@
                     }
                     const pick = event.target.closest(".lpw-order-pick");
                     if (!pick) return;
-                    const item = Number(pick.getAttribute("data-item"));
+                    const item = tag.indexOf(Number(pick.getAttribute("data-item")));
                     pool = pool.filter(function (value) { return value !== item; });
                     placed.push(item);
                     feedback.innerHTML = "";
@@ -876,6 +951,11 @@
                         (state === "shown" ? ' <span class="sr-only">(' + esc(t("learn.task.srShown")) + ")</span>" : "") +
                         "</span></li>";
                 };
+                // Silent: the row shows the group that was picked, not whether it is right
+                const savedRowHTML = function (item, picked) {
+                    return '<li class="is-saved"><span class="lpw-sort-mark" aria-hidden="true">•</span>' +
+                        '<span class="lpw-sort-line">' + rich(item[0]) + ' <span class="lpw-sort-arrow" aria-hidden="true">→</span> <strong>' + rich(step.groups[picked]) + "</strong></span></li>";
+                };
                 const draw = function () {
                     const left = queue.length - at;
                     let html = "";
@@ -895,8 +975,12 @@
                     const item = step.items[queue[at]];
                     const ok = item[1] === group;
                     if (!ok) wrong += 1;
-                    rows.unshift(rowHTML(item, ok ? "right" : "wrong", group));
-                    say(t(ok ? "learn.play.right" : "learn.play.wrong") + " " + item[0] + ": " + step.groups[item[1]]);
+                    if (silent) {
+                        rows.unshift(savedRowHTML(item, group));
+                    } else {
+                        rows.unshift(rowHTML(item, ok ? "right" : "wrong", group));
+                        say(t(ok ? "learn.play.right" : "learn.play.wrong") + " " + item[0] + ": " + step.groups[item[1]]);
+                    }
                     at += 1;
                     draw();
                     if (at >= queue.length) end(wrong === 0);
@@ -929,8 +1013,13 @@
                 if (rights.length > 1 && rights.every(function (value, index) { return value === index; })) rights.push(rights.shift());
                 const chosen = { left: -1, right: -1 };
                 let matched = 0;
+                // The name of a button in the markup. Silent: the right-hand ones get random
+                // numbers, so that equal numbers on both sides do not show the pairs
+                const tag = silent ? A.util.shuffle(step.pairs.map(function (_, index) { return index; })) : null;
+                const nameOf = function (side, index) { return tag && side === "right" ? tag[index] : index; };
+                const indexOf = function (side, name) { return tag && side === "right" ? tag.indexOf(name) : name; };
                 const itemHTML = function (side, index, text) {
-                    return '<button type="button" class="ui-option lpw-match-item" data-side="' + side + '" data-pair="' + index + '" aria-pressed="false">' +
+                    return '<button type="button" class="ui-option lpw-match-item" data-side="' + side + '" data-pair="' + nameOf(side, index) + '" aria-pressed="false">' +
                         "<span data-speak>" + rich(text) + "</span></button>";
                 };
                 area.innerHTML = '<div class="lpw-match">' +
@@ -938,7 +1027,7 @@
                     '<div class="lpw-match-col" role="group">' + rights.map(function (index) { return itemHTML("right", index, step.pairs[index][1]); }).join("") + "</div>" +
                 "</div>";
                 const find = function (side, index) {
-                    return area.querySelector('[data-side="' + side + '"][data-pair="' + index + '"]');
+                    return area.querySelector('[data-side="' + side + '"][data-pair="' + nameOf(side, index) + '"]');
                 };
                 const choose = function (side, index) {
                     const before = find(side, chosen[side]);
@@ -962,7 +1051,7 @@
                     const button = event.target.closest(".lpw-match-item");
                     if (!button || over || button.getAttribute("aria-disabled") === "true") return;
                     const side = button.getAttribute("data-side");
-                    const index = Number(button.getAttribute("data-pair"));
+                    const index = indexOf(side, Number(button.getAttribute("data-pair")));
                     choose(side, chosen[side] === index ? -1 : index);
                     if (chosen.left === -1 || chosen.right === -1) return;
                     const left = find("left", chosen.left);
@@ -970,6 +1059,19 @@
                     const ok = chosen.left === chosen.right;
                     choose("left", -1);
                     choose("right", -1);
+                    if (silent) {
+                        // A pair is kept as it was made, right or not, and both get its number
+                        matched += 1;
+                        if (!ok) wrong += 1;
+                        [left, right].forEach(function (item) {
+                            item.classList.add("is-paired");
+                            item.setAttribute("aria-disabled", "true");
+                            item.insertAdjacentHTML("afterbegin", '<span class="lpw-match-tag mono">' + num(matched) + "</span>");
+                        });
+                        if (matched === step.pairs.length) end(wrong === 0);
+                        else focusFirst('.lpw-match-item[data-side="left"]:not([aria-disabled="true"])');
+                        return;
+                    }
                     if (ok) {
                         [left, right].forEach(function (item) {
                             item.classList.add("is-correct");
@@ -1009,6 +1111,12 @@
                 giveUp: function () {
                     if (over) return;
                     shown = true;
+                    if (silent) {
+                        // "I don't know" in the exam: a wrong answer, and nothing is shown
+                        wrong += 1;
+                        end(false);
+                        return;
+                    }
                     made.giveUp();
                 },
                 key: made.key
@@ -1023,6 +1131,7 @@
             if (session.mode === "guide") return session.info.title;
             if (session.mode === "explain") return t("learn.explain.title");
             if (request.kind === "place") return t("learn.place.title");
+            if (request.kind === "exam") return t("learn.exam.title");
             if (request.kind === "test") return t("learn.review.test", { stage: host.stageName(request.stage) });
             if (request.kind === "topic") return t("learn.review.practice", { topic: host.topicName(request.topic) });
             if (request.kind === "more") return t("learn.review.more");
@@ -1064,7 +1173,12 @@
             }
             session = {
                 mode: "cards", request: request, kind: request.kind, queue: queue, index: 0,
-                right: 0, total: 0, missed: [], seen: {}, scores: {}, asked: {}, start: "", show: null
+                right: 0, total: 0, missed: [], seen: {}, scores: {}, asked: {}, start: "", show: null,
+                // The exam: answers { card id: true | false } (a question not in it was not answered)
+                exam: request.kind !== "exam" ? null : {
+                    plan: request.exam, clock: true, started: 0, deadline: 0, answers: {}, said: {}, hidden: false,
+                    ended: false, timeUp: false, seconds: 0, right: 0, outcome: "", result: null
+                }
             };
             if (!queue.length) {
                 showEmpty();
@@ -1078,6 +1192,7 @@
                 session.queue = session.queue.filter(function (item) { return Boolean(host.card(item.id)); });
                 if (!session.queue.length) showEmpty();
                 else if (place) showPlaceIntro();
+                else if (session.exam) showExamIntro();
                 else showCard();
             }, function () {
                 if (mine === run) loadError(function () { startCards(request); });
@@ -1619,7 +1734,364 @@
             });
         }
 
-        // ---------- 9. Opening and closing ----------
+        // ---------- 9. The qualifying exam ----------
+        // A set of cards like a stage test, with four differences: a start screen with the
+        // rules before the clock runs; the tasks in their silent mode (mountTask: an answer
+        // is kept, nothing is marked right or wrong, so nothing can leak before the end);
+        // the memory is not moved (host.answer is never called); and the result is kept by
+        // host.finishExam. Leaving a running exam asks once (A.confirmPress on ×, and Esc
+        // presses ×) and keeps nothing.
+        // The clock reads the wall clock (Date.now) at every tick and when the tab is shown
+        // again, so a tab in the background or a phone that slept keeps true time.
+        function examOn() {
+            return Boolean(isOpen && session && session.exam && session.exam.started && !session.exam.ended);
+        }
+
+        function stopClock() {
+            clearInterval(clockTimer);
+            clockTimer = 0;
+        }
+
+        // The question before leaving (shown while × is armed) and the name of ×
+        function showLeave(on) {
+            A.dom.setHidden(parts.leave, !on);
+            A.dom.setText(parts.leave, on ? t("learn.exam.leaveAsk") : "");
+            parts.close.classList.toggle("is-armed", on);
+            const label = t(on ? "learn.exam.leaveSure" : (examOn() ? "learn.exam.leave" : "learn.play.close"));
+            parts.close.setAttribute("aria-label", label);
+            parts.close.title = label;
+        }
+
+        // The window without the exam's parts: a new session, or the window closed
+        function resetExamChrome() {
+            stopClock();
+            if (leavePress) leavePress.disarm();
+            root.classList.remove("is-exam");
+            A.dom.setHidden(parts.clock, true);
+            parts.clock.classList.remove("is-warning", "is-hidden");
+            A.dom.setText(parts.examStatus, "");
+            A.dom.setHidden(parts.examStatus, true);
+            A.dom.setText(parts.clockLive, "");
+            showLeave(false);
+        }
+
+        // "44:05"
+        function clockText(seconds) {
+            const left = Math.max(0, seconds);
+            return Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+        }
+
+        // "31 min 12 s"
+        function timeText(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const rest = seconds % 60;
+            return rest ? t("learn.exam.minSec", { m: num(minutes), s: num(rest) }) : t("learn.exam.min", { m: num(minutes) });
+        }
+
+        function stagesText(plan) {
+            // "“A” and “B”" (a third one: "“A” and “B” and “C”")
+            return plan.stages.reduce(function (text, id) {
+                const name = t("learn.exam.stage", { stage: host.stageName(id) });
+                return text ? t("learn.exam.and", { a: text, b: name }) : name;
+            }, "");
+        }
+
+        function updateClockButton() {
+            const hidden = Boolean(session && session.exam && session.exam.hidden);
+            A.dom.setText(parts.clockHide, t(hidden ? "learn.exam.show" : "learn.exam.hide"));
+            parts.clockHide.setAttribute("aria-label", t(hidden ? "learn.exam.showClock" : "learn.exam.hideClock"));
+            parts.clockHide.title = t(hidden ? "learn.exam.showClock" : "learn.exam.hideClock");
+            parts.clock.classList.toggle("is-hidden", hidden);
+            A.dom.setText(parts.clockLabel, t("learn.exam.clockLabel") + ": ");
+        }
+
+        // One tick of the clock: the time left, the warning, the marks said aloud, the end
+        function tickClock() {
+            if (!examOn() || !session.exam.clock) return;
+            const exam = session.exam;
+            const left = exam.deadline - Date.now();
+            if (left <= 0) {
+                finishExam(true);
+                return;
+            }
+            A.dom.setText(parts.clockTime, exam.hidden ? t("learn.exam.clockHidden") : clockText(Math.ceil(left / 1000)));
+            parts.clock.classList.toggle("is-warning", left <= CLOCK_WARN * 60000);
+            // Each mark is said once. After a sleep that passed several, only the time left now
+            const marks = CLOCK_SAY.filter(function (mark) { return !exam.said[mark] && left <= mark * 60000; });
+            if (marks.length) {
+                marks.forEach(function (mark) { exam.said[mark] = true; });
+                A.dom.setText(parts.clockLive, A.plural("learn.exam.left", Math.ceil(left / 60000)));
+            }
+        }
+
+        function toggleClock() {
+            if (!examOn()) return;
+            session.exam.hidden = !session.exam.hidden;
+            updateClockButton();
+            tickClock();
+        }
+
+        // The start screen: the rules, and the choice of the clock. The clock does not run yet.
+        function showExamIntro() {
+            session.show = showExamIntro;
+            resetExamChrome();
+            const exam = session.exam;
+            const plan = exam.plan;
+            const total = session.queue.length;
+            const marks = host.examMarks(total);
+            const saved = host.examSaved();
+            const values = {
+                n: num(total), units: num(plan.units.length), m: num(plan.minutes),
+                pass: num(marks.pass), honours: num(marks.honours), stages: stagesText(plan)
+            };
+            const rules = ["questions", "clock", "once", "silent", "leave", "pass"].map(function (rule) {
+                return "<li data-speak>" + esc(t("learn.exam.rule." + rule, values)) + "</li>";
+            }).join("");
+            const option = function (value, title, text, checked) {
+                return '<label class="lpw-exam-option"><input type="radio" name="lpw-exam-clock" value="' + value + '"' + (checked ? " checked" : "") + ">" +
+                    '<span class="lpw-exam-option-body"><strong>' + esc(title) + "</strong><span>" + esc(text) + "</span></span></label>";
+            };
+            screen({
+                kicker: sessionTitle(),
+                html: '<div class="lpw-end lpw-exam-intro">' +
+                        '<span class="lpw-end-icon" aria-hidden="true">🎓</span>' +
+                        '<h3 class="lpw-end-title" data-focus tabindex="-1" data-speak>' + esc(t("learn.exam.title")) + "</h3>" +
+                        '<p class="lpw-text" data-speak>' + esc(t("learn.exam.lead", values)) + "</p>" +
+                        // The one choice of this screen comes before the rules: it is in view without scrolling
+                        '<fieldset class="lpw-exam-mode"><legend>' + esc(t("learn.exam.mode")) + "</legend>" +
+                            option("on", t("learn.exam.withClock"), t("learn.exam.withClockText", values), exam.clock) +
+                            option("off", t("learn.exam.noClock"), t("learn.exam.noClockText"), !exam.clock) +
+                        "</fieldset>" +
+                        '<ul class="lpw-exam-rules">' + rules + "</ul>" +
+                        // Fewer than half of the units done: said honestly, and still offered
+                        (plan.finished * 2 < plan.units.length
+                            ? '<p class="lpw-exam-assumes" data-speak>' + esc(t("learn.exam.assumes", { stages: values.stages, done: num(plan.finished), units: values.units })) + "</p>"
+                            : "") +
+                        (saved.best ? '<p class="lpw-next lpw-exam-best">' + esc(t("learn.exam.best", { score: num(saved.best.right), total: num(saved.best.total), n: num(saved.attempts) })) + "</p>" : "") +
+                        '<p class="lpw-exam-note">' + esc(t("learn.exam.note")) + "</p>" +
+                        saveNote() +
+                    "</div>",
+                buttons: [{ act: "begin", label: t("learn.exam.begin"), primary: true }],
+                actions: { begin: beginExam }
+            });
+            Array.prototype.forEach.call(parts.body.querySelectorAll('input[name="lpw-exam-clock"]'), function (input) {
+                input.addEventListener("change", function () { if (input.checked) exam.clock = input.value !== "off"; });
+            });
+        }
+
+        function beginExam() {
+            const exam = session.exam;
+            if (exam.started) return;
+            const picked = parts.body.querySelector('input[name="lpw-exam-clock"]:checked');
+            exam.clock = !picked || picked.value !== "off";
+            exam.started = Date.now();
+            exam.deadline = exam.clock ? exam.started + exam.plan.minutes * 60000 : 0;
+            // (a mark at or above the whole time is not said: it is where the clock starts)
+            CLOCK_SAY.forEach(function (mark) { if (mark >= exam.plan.minutes) exam.said[mark] = true; });
+            root.classList.add("is-exam");
+            A.dom.setHidden(parts.examStatus, false);
+            A.dom.setHidden(parts.clock, !exam.clock);
+            updateClockButton();
+            if (exam.clock) clockTimer = setInterval(tickClock, CLOCK_TICK);
+            showExamQuestion();
+            tickClock();
+        }
+
+        // A question: as in a stage test, but its task is silent and there is no "Next":
+        // an answer is saved and the next question comes at once
+        function showExamQuestion() {
+            session.show = showExamQuestion;
+            const item = session.queue[session.index];
+            const card = host.card(item.id);
+            if (!card) {
+                examAnswered(false);
+                return;
+            }
+            if (leavePress) leavePress.disarm();
+            const total = session.queue.length;
+            const hint = taskHint(card);
+            screen({
+                kicker: sessionTitle(),
+                count: t("learn.play.step", { n: num(session.index + 1), total: num(total) }),
+                progress: session.index / total,
+                html: '<div class="lpw-step lpw-card lpw-exam-card" data-card="' + esc(item.id) + '">' +
+                        '<p class="lpw-from mono">' + esc(card.from) + "</p>" +
+                        contextHTML(card) +
+                        '<h3 class="lpw-q" data-focus tabindex="-1" data-speak>' + rich(card.q) + "</h3>" +
+                        (hint ? '<p class="lpw-task-kind">' + esc(hint) + "</p>" : "") +
+                        '<div class="lpw-task"></div>' +
+                    "</div>",
+                buttons: [{ act: "skip", label: t("learn.exam.dontKnow") }],
+                actions: { skip: function () { if (task) task.giveUp(); } }
+            });
+            task = mountTask(parts.body.querySelector(".lpw-task"), card, {
+                tries: CARD_TRIES,
+                silent: true,
+                done: function (result) { examAnswered(result.correct); }
+            });
+        }
+
+        // An answer (or "I don't know") is kept, and the exam moves on
+        function examAnswered(correct) {
+            if (!examOn()) return;
+            const exam = session.exam;
+            // An answer that comes after zero (before a tick of the clock has seen it: a
+            // phone that slept, a slow timer) is too late: the exam ends without it
+            if (exam.clock && Date.now() >= exam.deadline) {
+                finishExam(true);
+                return;
+            }
+            const item = session.queue[session.index];
+            if (!item || Object.prototype.hasOwnProperty.call(exam.answers, item.id)) return;
+            exam.answers[item.id] = correct === true;
+            task = null;
+            session.index += 1;
+            A.dom.setText(parts.examStatus, t("learn.exam.saved", { n: num(session.index), total: num(session.queue.length) }));
+            if (session.index < session.queue.length) showExamQuestion();
+            else finishExam(false);
+        }
+
+        // The end: every question is answered, or the time ran out (timeUp: the question
+        // on the screen and every one after it count as wrong)
+        function finishExam(timeUp) {
+            const exam = session.exam;
+            if (!exam || exam.ended) return;
+            exam.ended = true;
+            task = null;
+            const total = session.queue.length;
+            let seconds = Math.max(0, Math.round((Date.now() - exam.started) / 1000));
+            if (exam.clock) seconds = Math.min(seconds, exam.plan.minutes * 60);
+            exam.timeUp = Boolean(timeUp);
+            exam.seconds = seconds;
+            exam.right = session.queue.filter(function (item) { return exam.answers[item.id] === true; }).length;
+            exam.outcome = host.examOutcome(exam.right, total);
+            resetExamChrome();
+            exam.result = host.finishExam({ right: exam.right, total: total, seconds: seconds, clock: exam.clock });
+            if (exam.outcome !== "notyet") celebrate();
+            showExamEnd();
+        }
+
+        // The right answer of a card, for the result (every kind of task)
+        function answerHTML(card) {
+            const arrow = " → ";
+            if (card.type === "number") return esc(num(card.answer) + (card.unit ? " " + card.unit : ""));
+            if (card.type === "order") {
+                return list(card.items).map(function (item, index) { return esc(num(index + 1) + ". ") + rich(item); }).join(" ");
+            }
+            if (card.type === "sort") {
+                return card.items.map(function (item) { return rich(item[0]) + arrow + rich(card.groups[item[1]]); }).join("; ");
+            }
+            if (card.type === "match") {
+                return card.pairs.map(function (pair) { return rich(pair[0]) + arrow + rich(pair[1]); }).join("; ");
+            }
+            return rich(card.options[typeof card.correct === "number" ? card.correct : 0]);
+        }
+
+        // The result: the score and the outcome, the time, a table by unit, then every
+        // missed question with its answer, its explanation and the way to its unit
+        function showExamEnd() {
+            session.show = showExamEnd;
+            const exam = session.exam;
+            const total = session.queue.length;
+            const marks = host.examMarks(total);
+            const outcome = exam.outcome;
+            const stateOf = function (id) {
+                if (!Object.prototype.hasOwnProperty.call(exam.answers, id)) return "none";
+                return exam.answers[id] ? "right" : "wrong";
+            };
+            const byUnit = {};
+            session.queue.forEach(function (item) {
+                const card = host.card(item.id);
+                const unit = card && card.unitId ? card.unitId : "";
+                (byUnit[unit] = byUnit[unit] || []).push({ id: item.id, card: card, state: stateOf(item.id) });
+            });
+            const unitIds = exam.plan.units.filter(function (id) { return byUnit[id]; });
+            const weak = unitIds.filter(function (id) { return byUnit[id].some(function (row) { return row.state !== "right"; }); });
+            const signs = { right: "✓", wrong: "✗", none: "–" };
+            let stage = "";
+            const rows = unitIds.map(function (id) {
+                const info = host.unit(id);
+                const questions = byUnit[id];
+                const right = questions.filter(function (row) { return row.state === "right"; }).length;
+                let head = "";
+                if (info && info.stage !== stage) {
+                    stage = info.stage;
+                    head = '<tr class="lpw-exam-stage"><th scope="colgroup" colspan="2">' + esc(info.stageTitle) + "</th></tr>";
+                }
+                return head + '<tr class="' + (right === questions.length ? "is-full" : (right ? "is-part" : "is-none")) + '" data-unit="' + esc(id) + '">' +
+                    '<th scope="row">' + esc(info ? info.title : id) + "</th>" +
+                    '<td><span class="lpw-exam-marks" aria-hidden="true">' + questions.map(function (row) {
+                        return '<span class="is-' + row.state + '">' + signs[row.state] + "</span>";
+                    }).join("") + "</span>" +
+                    '<span class="lpw-exam-frac mono">' + esc(t("learn.exam.ofTotal", { right: num(right), total: num(questions.length) })) + "</span></td></tr>";
+            }).join("");
+            const missed = [];
+            unitIds.forEach(function (id) {
+                byUnit[id].forEach(function (row) { if (row.state !== "right" && row.card) missed.push(row); });
+            });
+            const missedHTML = missed.map(function (row) {
+                const card = row.card;
+                return '<li data-card="' + esc(row.id) + '"><span class="lpw-from mono">' + esc(card.from) +
+                        (row.state === "none" ? " · " + esc(t("learn.exam.notAnswered")) : "") + "</span>" +
+                    '<span class="lpw-missed-q">' + rich(card.q) + "</span>" +
+                    '<span class="lpw-exam-answer"><strong>' + esc(t("learn.exam.answer")) + "</strong> " + answerHTML(card) + "</span>" +
+                    (card.why ? '<span class="lpw-exam-why">' + rich(card.why) + "</span>" : "") +
+                    '<button type="button" class="lp-link" data-act="unit" data-unit="' + esc(card.unitId) + '">' +
+                        esc(t("learn.review.openUnit", { title: card.from })) + "</button></li>";
+            }).join("");
+            const repeat = outcome === "notyet" && weak.length
+                ? '<div class="lpw-exam-repeat"><p class="lpw-text" data-speak>' + esc(t("learn.exam.repeat")) + "</p><ul>" +
+                    weak.slice(0, REPEAT_FIRST).map(function (id) {
+                        const info = host.unit(id);
+                        return '<li><button type="button" class="lp-link" data-act="unit" data-unit="' + esc(id) + '">' + esc(info ? info.title : id) + "</button></li>";
+                    }).join("") + "</ul></div>"
+                : "";
+            const unanswered = session.queue.filter(function (item) { return stateOf(item.id) === "none"; }).length;
+            const time = exam.clock
+                ? t("learn.exam.time", { time: timeText(exam.seconds), limit: timeText(exam.plan.minutes * 60) })
+                : t("learn.exam.timeFree", { time: timeText(exam.seconds) });
+            const saved = exam.result;
+            const best = saved && saved.newBest
+                ? t("learn.exam.newBest")
+                : (saved && saved.best ? t("learn.exam.best", { score: num(saved.best.right), total: num(saved.best.total), n: num(saved.attempts) }) : "");
+            const back = { act: "path", label: t("learn.play.backToPath") };
+            const again = { act: "retake", label: t("learn.exam.retake") };
+            const actionsNow = endActions();
+            actionsNow.retake = function () { host.openExam(opener); };
+            screen({
+                kicker: sessionTitle(),
+                progress: 1,
+                html: '<div class="lpw-end lpw-exam-end is-' + outcome + (outcome !== "notyet" ? " is-pass" : "") + '" data-outcome="' + outcome + '">' +
+                        '<span class="lpw-end-icon" aria-hidden="true">' + { honours: "🏆", pass: "🎓", notyet: "🧗" }[outcome] + "</span>" +
+                        '<h3 class="lpw-end-title" data-focus tabindex="-1" data-speak>' + esc(t("learn.exam.result." + outcome)) + "</h3>" +
+                        '<p class="lpw-score mono" data-speak>' + esc(t("learn.exam.score", { score: num(exam.right), total: num(total) })) + "</p>" +
+                        '<p class="lpw-text" data-speak>' + esc(t("learn.exam.text." + outcome, { pass: num(marks.pass) })) + "</p>" +
+                        (exam.timeUp ? '<p class="lpw-text lpw-exam-timeup" data-speak>' + esc(t("learn.exam.timeUp", { n: num(unanswered) })) + "</p>" : "") +
+                        '<p class="lpw-next lpw-exam-time" data-speak>' + esc(time) + "</p>" +
+                        (best ? '<p class="lpw-next lpw-exam-best">' + esc(best) + "</p>" : "") +
+                        repeat +
+                        (outcome === "notyet" ? '<p class="lpw-next" data-speak>' + esc(t("learn.exam.again")) + "</p>" : "") +
+                        '<div class="lpw-exam-units"><table class="lpw-exam-table"><caption class="lpw-mini mono">' + esc(t("learn.exam.units")) + "</caption>" +
+                            '<thead><tr><th scope="col">' + esc(t("learn.exam.unit")) + '</th><th scope="col">' + esc(t("learn.exam.right")) + "</th></tr></thead>" +
+                            "<tbody>" + rows + "</tbody></table></div>" +
+                        (missedHTML ? '<div class="lpw-missed lpw-exam-missed"><p class="lpw-mini mono">' + esc(t("learn.exam.missed")) + "</p><ul>" + missedHTML + "</ul></div>" : "") +
+                        '<p class="lpw-exam-note">' + esc(t("learn.exam.note")) + "</p>" +
+                        saveNote() +
+                    "</div>",
+                buttons: outcome === "notyet" ? [back, Object.assign({ primary: true }, again)] : [again, Object.assign({ primary: true }, back)],
+                actions: actionsNow
+            });
+        }
+
+        // × pressed twice (or Esc twice) during the exam: it ends without a result
+        function leaveExam() {
+            if (!examOn()) return;
+            session.exam.ended = true;
+            stopClock();
+            close({ focusBack: true });
+        }
+
+        // ---------- 10. Opening and closing ----------
         // Opens the window on a request (from: the button that asked, it gets the focus back)
         function open(request, from) {
             if (!root) build();
@@ -1636,6 +2108,7 @@
                 root.classList.remove("is-closing");
                 overlay.opened();
             }
+            resetExamChrome();       // (an exam still running ends here, without a result)
             root.classList.toggle("is-kid", host.who() === "kid");
             root.setAttribute("data-mode", request.mode);
             if (request.mode === "guide") startGuide(request);
@@ -1661,6 +2134,7 @@
             task = null;
             session = null;
             actions = {};
+            resetExamChrome();
             root.classList.add("is-closing");
             document.addEventListener("click", holdBackAfterClose, true);
             setTimeout(function () { document.removeEventListener("click", holdBackAfterClose, true); }, DOUBLE_CLICK_MS);
@@ -1680,6 +2154,10 @@
         // Another language: the screen is drawn again in it
         A.onLanguageChange(function () {
             if (!isOpen || !session) return;
+            if (examOn()) {
+                updateClockButton();
+                tickClock();
+            }
             if (session.mode === "guide") session.info = host.unit(session.info.id) || session.info;
             if (session.mode === "explain") session.info = host.explainInfo(session.info.n) || session.info;
             if (typeof session.show === "function") session.show();
