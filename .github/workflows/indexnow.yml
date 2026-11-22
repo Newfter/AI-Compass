@@ -1,15 +1,25 @@
-# Tells search engines (Bing, Yandex and the others that use "IndexNow") which pages the site
-# has, every time its pages change. Google does not use IndexNow: for Google see docs/GET-FOUND.md.
+# Tells search engines (Bing and the others that use "IndexNow") which pages of the site are new
+# or changed, every time its pages change. Google does not use IndexNow: see docs/GET-FOUND.md.
+#
 # How it works: IndexNow accepts a list of addresses from whoever can prove that the site is theirs.
 # The proof is the small text file 2bcef68462ffeea45658b64de94970d4.txt next to index.html: it holds the same
 # key that this job sends. The key is not a secret (anyone can read that file).
-# The job never fails: if the service does not answer, it only says so in its log.
+#
+# - After a change on "main" it sends only the pages that changed (and the pages that were removed).
+# - Started by hand (Actions tab, "Run workflow") it sends every page of sitemap.xml.
+# - The job never fails: when the service does not accept the list, it tries again two more
+#   times and then only says so in its log.
+#
+# Yandex: its own address (yandex.com/indexnow) refuses this site, because the folder of the site,
+# "AI-Compass", has capital letters (tried on 2026-11-22: the same request in small letters passes
+# its check, but the site does not exist in small letters). So the list goes to the shared address,
+# and Yandex finds the pages the usual way, by following links.
 name: Tell search engines about the pages
 
 on:
   push:
     branches: [main]
-    paths: ["sitemap.xml", "**.html"]
+    paths: ["sitemap.xml", "**.html", ".github/workflows/indexnow.yml"]
   workflow_dispatch:         # and by hand, from the Actions tab
 
 permissions:
@@ -20,22 +30,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # the whole history: the job compares the pages with the ones before
 
-      # GitHub Pages needs about a minute to publish the new pages (and the key file).
+      # GitHub Pages needs a minute or two to publish the new pages.
       # A run started by hand does not wait: the site is already published then.
       - name: Wait until the site is published
         if: github.event_name == 'push'
         run: sleep 180
 
-      - name: Send the list of pages (sitemap.xml)
+      - name: Send the list of pages
         continue-on-error: true
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
         run: |
           python3 - <<'PY'
-          import json, re, time, urllib.error, urllib.parse, urllib.request
+          import json, os, re, subprocess, time, urllib.error, urllib.request
 
           SITE = "https://newfter.github.io/AI-Compass/"
           KEY = "2bcef68462ffeea45658b64de94970d4"
-          SERVICE = "https://api.indexnow.org/indexnow"    # it passes the list on to Bing, Yandex and the others
+          SERVICE = "https://api.indexnow.org/indexnow"    # it passes the list on to the search engines
           TRIES = 3       # a new key file can take some minutes to be seen from outside
           PAUSE = 120     # seconds between the tries
 
@@ -53,10 +69,41 @@ jobs:
               except Exception as error:
                   return 0, str(error)
 
-          pages = sorted(set(re.findall(r"<loc>([^<]+)</loc>", open("sitemap.xml", encoding="utf-8").read())))
-          pages = [page for page in pages if page.startswith(SITE)]
-          body = json.dumps({"host": "newfter.github.io", "key": KEY, "keyLocation": SITE + KEY + ".txt", "urlList": pages}).encode("utf-8")
+          def git(*words):
+              return subprocess.run(["git"] + list(words), capture_output=True, text=True, check=True).stdout
 
+          def addresses_in(sitemap):
+              return {page for page in re.findall(r"<loc>([^<]+)</loc>", sitemap) if page.startswith(SITE)}
+
+          def address_of(path):
+              """lessons/index.html -> .../lessons/ and lab/chatbot.html -> .../lab/chatbot.html"""
+              if path == "index.html":
+                  return SITE
+              if path.endswith("/index.html"):
+                  return SITE + path[:-len("index.html")]
+              return SITE + path
+
+          # ---------- 1. Which pages to send ----------
+          everything = addresses_in(open("sitemap.xml", encoding="utf-8").read())
+          pages, which = everything, "every page of sitemap.xml"
+          if os.environ.get("EVENT") == "push":
+              try:
+                  before, after = os.environ["BEFORE"], os.environ["AFTER"]
+                  changed = {address_of(path) for path in git("diff", "--name-only", before, after).splitlines() if path.endswith(".html")}
+                  if SITE in changed:    # the app itself: also its addresses with ?lang=
+                      changed |= {page for page in everything if page.startswith(SITE + "?")}
+                  removed = addresses_in(git("show", before + ":sitemap.xml")) - everything
+                  pages, which = (changed & everything) | removed, "the pages that changed"
+              except Exception as error:
+                  print("Could not see what changed, so every page is sent.", str(error)[:200])
+          pages = sorted(pages)
+          print("To send:", len(pages), "addresses (" + which + ")")
+          if not pages:
+              print("No page of sitemap.xml changed: nothing to send.")
+              raise SystemExit(0)
+
+          # ---------- 2. Sending ----------
+          body = json.dumps({"host": "newfter.github.io", "key": KEY, "keyLocation": SITE + KEY + ".txt", "urlList": pages}).encode("utf-8")
           sent = False
           for attempt in range(1, TRIES + 1):
               # The proof must be on the published site first: the service reads it from there
@@ -76,17 +123,4 @@ jobs:
                   time.sleep(PAUSE)
           if not sent:
               print("Not sent this time. Nothing is broken: the pages stay in sitemap.xml, and the next change of the site tries again.")
-
-          # TEMPORARY (removed in the next commit): why does Yandex refuse the addresses?
-          def yandex(name, address, location):
-              data = {"host": "newfter.github.io", "key": KEY, "urlList": [address]}
-              if location:
-                  data["keyLocation"] = location
-              print("PROBE", name, "->", ask("https://yandex.com/indexnow", json.dumps(data).encode("utf-8")))
-          low = SITE.replace("AI-Compass", "ai-compass")
-          print("PROBE small letters on the site: key file", ask(low + KEY + ".txt")[0], "| page", ask(low + "lessons/")[0])
-          yandex("1 no key location", SITE + "lessons/", None)
-          yandex("2 small letters", low + "lessons/", low + KEY + ".txt")
-          yandex("3 address outside the folder of the key", "https://newfter.github.io/", SITE + KEY + ".txt")
-          yandex("4 the home page of the site", SITE, SITE + KEY + ".txt")
           PY

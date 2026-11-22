@@ -29,10 +29,15 @@ After that Google reads all 325 addresses by itself. The first pages usually
 appear within days, the rest within a few weeks. Search Console then shows
 which searches bring visitors.
 
-Bing, Yandex and some other search engines need nothing from you: every time
-the pages change, a small job on GitHub (`.github/workflows/indexnow.yml`) sends
-them the list of pages. You can see its runs in the repository's **Actions** tab
-("Tell search engines about the pages").
+Bing and the other search engines that use the shared "IndexNow" service need
+nothing from you: every time the pages change, a small job on GitHub
+(`.github/workflows/indexnow.yml`) sends them the pages that changed. You can see
+its runs in the repository's **Actions** tab ("Tell search engines about the
+pages"). The button **Run workflow** there sends every page again.
+
+Yandex is the exception: its own address does not accept this site, because the
+folder name `AI-Compass` has capital letters (tried on 2026-11-22). Yandex still
+finds the pages by following links, only more slowly.
 
 ## 2. One learner brings the next
 
