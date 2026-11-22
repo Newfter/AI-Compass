@@ -78,7 +78,15 @@ jobs:
               print("Not sent this time. Nothing is broken: the pages stay in sitemap.xml, and the next change of the site tries again.")
 
           # TEMPORARY (removed in the next commit): why does Yandex refuse the addresses?
-          one = json.dumps({"host": "newfter.github.io", "key": KEY, "keyLocation": SITE + KEY + ".txt", "urlList": [SITE + "lessons/"]}).encode("utf-8")
-          print("PROBE yandex, one address:", ask("https://yandex.com/indexnow", one))
-          print("PROBE yandex, GET:", ask("https://yandex.com/indexnow?url=" + urllib.parse.quote(SITE + "lessons/", safe="") + "&key=" + KEY + "&keyLocation=" + urllib.parse.quote(SITE + KEY + ".txt", safe="")))
+          def yandex(name, address, location):
+              data = {"host": "newfter.github.io", "key": KEY, "urlList": [address]}
+              if location:
+                  data["keyLocation"] = location
+              print("PROBE", name, "->", ask("https://yandex.com/indexnow", json.dumps(data).encode("utf-8")))
+          low = SITE.replace("AI-Compass", "ai-compass")
+          print("PROBE small letters on the site: key file", ask(low + KEY + ".txt")[0], "| page", ask(low + "lessons/")[0])
+          yandex("1 no key location", SITE + "lessons/", None)
+          yandex("2 small letters", low + "lessons/", low + KEY + ".txt")
+          yandex("3 address outside the folder of the key", "https://newfter.github.io/", SITE + KEY + ".txt")
+          yandex("4 the home page of the site", SITE, SITE + KEY + ".txt")
           PY
