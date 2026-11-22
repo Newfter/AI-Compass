@@ -641,6 +641,20 @@
     border-style: dashed;
 }
 
+/* The qualifying exam after the last stage: one wide step, under the stage test */
+.lp-exam-item {
+    grid-column: 1 / -1;
+}
+
+.lp-unit.is-exam .lp-unit-title {
+    hyphens: auto;
+}
+
+.lp-unit.is-exam {
+    border-color: color-mix(in srgb, var(--accent-2) 55%, var(--border));
+    background: rgba(var(--accent-2-rgb), 0.06);
+}
+
 .lp-unit-icon {
     flex: none;
     width: 30px;

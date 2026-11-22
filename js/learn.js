@@ -13,7 +13,11 @@
    - the memory: every question of a finished lesson becomes a card that
      comes back after 1, 2, 4, 8, 16 and 32 days (spaced repetition).
      A right answer on its day moves the card one box up, a wrong one
-     back to box 1; practising early never moves a card up.
+     back to box 1; practising early never moves a card up;
+   - the qualifying exam: one more step after the last stage of
+     data.exam.stages, with questions drawn fresh from the cards of every
+     unit of those stages (section 6 has the plan, section 10 the draw).
+     It measures and does not train: it never moves a card.
    The study window itself (the level check, the memory check, the guided
    steps, "Explain it back") is js/learn-play.js: it loads the first time
    it is needed, and gets everything it needs from "host" (section 10).
@@ -50,6 +54,10 @@
                      the experiment, the lesson; before: the learning days older than that)
      learn.placed    { day, start, scores }   a level check taken before the three
                      questions: kept until they are answered, then it moves into the profile
+     learn.exam      { v: 1, best, attempts, last }   the qualifying exam: the best result,
+                     how many exams were finished (one that was left does not count) and the
+                     last one. A result: { right, total, seconds, clock (false: taken
+                     without the clock), day }
    Texts and data: js/content/learn.js. Styles: css/learn.css.
    ========================================================= */
 
@@ -149,7 +157,7 @@
 
     // What this tab last read or wrote under each key, as text: this is how it notices
     // that another tab has saved since (see takeSaved below)
-    const KEYS = ["learn.profile", "learn.memory", "learn.units", "learn.explain", "learn.days"];
+    const KEYS = ["learn.profile", "learn.memory", "learn.units", "learn.explain", "learn.days", "learn.exam"];
     const lastSeen = {};
 
     function save(key, value) {
@@ -276,6 +284,26 @@
         save("learn.days", { v: 1, days: days, before: daysBefore });
     }
 
+    // The qualifying exam: { best, attempts, last }, each result { right, total, seconds, clock, day }
+    function examRow(row) {
+        if (!isObject(row) || !whole(row.right) || !whole(row.total) || !row.total || row.right > row.total) return null;
+        return { right: row.right, total: row.total, seconds: whole(row.seconds) ? row.seconds : 0, clock: row.clock !== false, day: whole(row.day) ? row.day : 0 };
+    }
+
+    function readExam() {
+        const saved = A.storage.get("learn.exam", null);
+        if (!isObject(saved) || saved.v !== 1) return { best: null, attempts: 0, last: null };
+        const last = examRow(saved.last);
+        const best = examRow(saved.best) || last;
+        return { best: best, attempts: whole(saved.attempts) ? saved.attempts : (best ? 1 : 0), last: last };
+    }
+
+    const exam = readExam();
+
+    function saveExam() {
+        save("learn.exam", { v: 1, best: exam.best, attempts: exam.attempts, last: exam.last });
+    }
+
     KEYS.forEach(function (key) { lastSeen[key] = JSON.stringify(A.storage.get(key, null)); });
 
     // The site may be open in two tabs (or a tab stayed open since yesterday). Each tab
@@ -308,6 +336,8 @@
                 replaceAll(units.tests, saved.tests);
             } else if (key === "learn.explain") {
                 replaceAll(explained, readExplained());
+            } else if (key === "learn.exam") {
+                replaceAll(exam, readExam());
             } else {
                 replaceAll(days, readDays());
             }
@@ -679,6 +709,67 @@
         return { stages: stages, next: next, start: start };
     }
 
+    // ----- The qualifying exam -----
+    // data.exam gives its numbers for all "units" units of its stages. In a copy of the
+    // site where a stage is missing, the exam uses the stages that are there, and every
+    // number shrinks by the same share (12 units: 15 questions, 23 minutes, pass 12,
+    // honours 14). Rounded up, so that a smaller exam is never easier.
+    function roundUp(value) {
+        return Math.ceil(value - 1e-9);       // (0.1 + 0.2 must not round up to 1)
+    }
+
+    // The right answers that pass, and that pass with honours, out of "total" questions
+    function examMarks(total) {
+        const share = total / data.exam.questions;
+        return { pass: roundUp(data.exam.pass * share), honours: roundUp(data.exam.honours * share) };
+    }
+
+    function examOutcome(right, total) {
+        const marks = examMarks(total);
+        if (right >= marks.honours) return "honours";
+        return right >= marks.pass ? "pass" : "notyet";
+    }
+
+    // The numbers of an exam on this many units: { questions, minutes, pass, honours }
+    function examNumbers(unitCount) {
+        const rule = data.exam;
+        const questions = Math.max(unitCount, roundUp(rule.questions * unitCount / rule.units));
+        return Object.assign({ questions: questions, minutes: roundUp(rule.minutes * questions / rule.questions) }, examMarks(questions));
+    }
+
+    // The plan of the exam, or null when there is none:
+    //   { stages (in the order of the path), units (their units, in order), last (the stage
+    //     it follows), finished (how many of those units are done), questions, minutes, pass, honours }
+    // stageIds: other stages than data.exam.stages (a test uses it for the smaller exam)
+    function examPlan(stageIds) {
+        const rule = data.exam;
+        if (!isObject(rule) || !whole(rule.units) || !rule.units || !whole(rule.questions) || !rule.questions) return null;
+        const wanted = Array.isArray(stageIds) ? stageIds : rule.stages;
+        const stages = (Array.isArray(wanted) ? wanted : []).filter(function (id, index, all) {
+            return has(STAGE_BY_ID, id) && all.indexOf(id) === index && STAGE_BY_ID[id].course && has(COURSES, STAGE_BY_ID[id].course);
+        }).sort(function (a, b) { return STAGE_BY_ID[a].index - STAGE_BY_ID[b].index; });
+        const unitIds = [];
+        stages.forEach(function (id) {
+            COURSES[STAGE_BY_ID[id].course].units.forEach(function (unit) {
+                if (unit.cards) unitIds.push(unit.id);
+            });
+        });
+        if (!unitIds.length) return null;
+        return Object.assign({
+            stages: stages, units: unitIds, last: stages[stages.length - 1],
+            finished: unitIds.filter(function (id) { return has(units.done, id); }).length
+        }, examNumbers(unitIds.length));
+    }
+
+    // The exam on the path: "new" (not taken), "tried" (not passed yet), "pass" or "honours"
+    function examState() {
+        const best = exam.best;
+        return {
+            state: best ? (examOutcome(best.right, best.total) === "notyet" ? "tried" : examOutcome(best.right, best.total)) : "new",
+            best: best, attempts: exam.attempts, last: exam.last
+        };
+    }
+
     // ---------- 7. Today's session ----------
     // The lab experiment to try today: the one of the newest finished lesson that
     // was not tried yet, otherwise any experiment not tried yet.
@@ -1033,6 +1124,25 @@
     }
 
     // ----- The path -----
+    // The qualifying exam: one more step after the last stage of its list. It is not one
+    // of the stage's steps (it never counts in "3 of 13" and is never the next step).
+    function examStepHTML(plan) {
+        const now = examState();
+        const best = now.best;
+        const passed = now.state === "pass" || now.state === "honours";
+        const values = {
+            score: best ? num(best.right) : "", total: num(best ? best.total : plan.questions),
+            pass: num(best ? examMarks(best.total).pass : plan.pass), honours: num(plan.honours)
+        };
+        return '<li class="lp-exam-item"><button type="button" class="lp-unit is-exam' + (passed ? " is-done" : "") + '" data-lp="exam" data-fid="exam" data-exam-state="' + now.state + '">' +
+                '<span class="lp-unit-icon" aria-hidden="true">🎓</span>' +
+                '<span class="lp-unit-body"><strong class="lp-unit-title">' + esc(t("learn.exam.title")) + "</strong>" +
+                    '<span class="lp-unit-kind mono">' + esc(t("learn.exam.kind", { n: num(plan.questions), m: num(plan.minutes) })) + "</span>" +
+                    '<span class="lp-unit-text">' + esc(t("learn.exam.state." + now.state, values)) + "</span></span>" +
+                (passed ? '<span class="lp-unit-state is-done"><span aria-hidden="true">✓</span><span class="sr-only">' + esc(t("learn.exam.passed")) + "</span></span>" : "") +
+            "</button></li>";
+    }
+
     function stepKindText(step) {
         if (step.kind === "lesson") return t("learn.path.kind.lesson", { number: num(step.number), n: num(step.minutes) });
         if (step.kind === "test") return A.plural("learn.path.kind.test", data.test.questions);
@@ -1041,6 +1151,7 @@
     }
 
     function pathHTML(path) {
+        const examNow = examPlan();
         const cards = path.stages.map(function (entry, index) {
             const stage = entry.stage;
             const open = openStages.has(stage.id);
@@ -1088,7 +1199,8 @@
                             esc(t(open ? "learn.path.hide" : "learn.path.show")) + ' <span class="lp-caret" aria-hidden="true">⌄</span></button>' +
                     "</div>" +
                 "</header>" +
-                '<ol class="lp-units" id="lp-units-' + stage.id + '"' + (open ? "" : " hidden") + ">" + stepsHTML + "</ol>" +
+                '<ol class="lp-units" id="lp-units-' + stage.id + '"' + (open ? "" : " hidden") + ">" + stepsHTML +
+                    (examNow && examNow.last === stage.id ? examStepHTML(examNow) : "") + "</ol>" +
             "</article>";
         }).join("");
         return '<div class="lp-block-head"><h3 class="lp-block-title" id="lp-path-title">' + esc(t("learn.path.title")) + "</h3>" +
@@ -1303,6 +1415,8 @@
             render();
         } else if (action === "unit") {
             openStep(button.getAttribute("data-unit"), button);
+        } else if (action === "exam") {
+            startExam(button);
         } else if (action === "practise") {
             startCards("topic", button, button.getAttribute("data-topic"));
         } else if (action === "more") {
@@ -1415,6 +1529,36 @@
             if (!found) break;
         }
         return play({ mode: "cards", kind: "test", stage: stageId, cards: A.util.shuffle(cards) }, opener);
+    }
+
+    // The questions of the qualifying exam, drawn fresh every time: a card of every unit
+    // first, then one more card from units chosen at random (a unit at most once a round,
+    // so the extra questions come from different units), all in a mixed order. No card
+    // twice. -> [card ids]
+    function examDraw(plan) {
+        const chosen = plan || examPlan();
+        if (!chosen) return [];
+        const pools = {};
+        chosen.units.forEach(function (id) { pools[id] = A.util.shuffle(unitCards(id)); });
+        const cards = [];
+        for (let round = 0; cards.length < chosen.questions; round++) {
+            let found = false;
+            A.util.shuffle(chosen.units).forEach(function (id) {
+                if (cards.length < chosen.questions && pools[id][round]) {
+                    cards.push(pools[id][round]);
+                    found = true;
+                }
+            });
+            if (!found) break;
+        }
+        return A.util.shuffle(cards);
+    }
+
+    // The qualifying exam: its start screen, with new questions
+    function startExam(opener) {
+        const plan = examPlan();
+        if (!plan) return Promise.resolve(false);
+        return play({ mode: "cards", kind: "exam", exam: plan, cards: examDraw(plan) }, opener);
     }
 
     // The stages the level check asks about: every stage but the first one ("zero": that
@@ -1648,6 +1792,31 @@
             return start;
         },
 
+        // The qualifying exam. It never moves the memory: host.answer is not called for it.
+        examMarks: examMarks,
+        examOutcome: examOutcome,
+        examSaved: function () {
+            takeSaved();
+            return { best: exam.best, attempts: exam.attempts };
+        },
+        // A finished exam (one that was left never comes here): result { right, total,
+        // seconds, clock }. -> { best, attempts, newBest } (newBest: better than a saved best)
+        finishExam: function (result) {
+            takeSaved();
+            const row = { right: result.right, total: result.total, seconds: result.seconds, clock: result.clock !== false, day: today() };
+            const before = exam.best;
+            // Better: a bigger share right; the same share in less time
+            const better = !before || row.right * before.total > before.right * row.total ||
+                (row.right * before.total === before.right * row.total && row.seconds < before.seconds);
+            if (better) exam.best = row;
+            exam.attempts += 1;
+            exam.last = row;
+            saveExam();
+            renderSoon();
+            return { best: exam.best, attempts: exam.attempts, newBest: better && Boolean(before) };
+        },
+        openExam: function (opener) { return startExam(opener); },
+
         // The guided steps
         loadCourse: loadCourse,
         localStep: localStep,
@@ -1840,6 +2009,8 @@
             keywords: "memory check review repeat spaced repetition cards remember память проверка повторение карточки вспомнить интервальное" },
         { id: "learn-level", icon: "🎯", title: "learn.cmd.level", run: function () { ensure(); startPlacement(document.activeElement); },
             keywords: "level check placement test where start уровень проверка тест с чего начать" },
+        { id: "learn-exam", icon: "🎓", title: "learn.exam.title", run: function () { ensure(); startExam(document.activeElement); },
+            keywords: "qualifying exam final test phd doctoral research theory hard квалификационный экзамен итоговый аспирантура исследования теория" },
         { id: "learn-explain", icon: "🗣️", title: "learn.cmd.explain", run: function () { ensure(); explainAny(document.activeElement); },
             keywords: "explain back own words teach feynman объяснить своими словами рассказать фейнман" },
         { id: "learn-setup", icon: "👤", title: "learn.cmd.setup", run: function () { openPage(); openWizard(); },
@@ -1932,7 +2103,11 @@
     //   plan()                 today's session: { steps: [{ id, title, text, done }], done, total, complete }
     //   memory()               { total, due, strong, seen, right, boxes, forecast, next }
     //   topics()               [{ topic, name, total, known, due, share, state }]
-    //   path()                 { stages: [{ id, state, done, total, star }], next: { stage, key, title } or null }
+    //   path()                 { stages: [{ id, state, done, total, star }], next: { stage, key, title } or null,
+    //                            exam: { state: "new" | "tried" | "pass" | "honours", best, attempts, last } or null }
+    //   exam(opener)           opens the start screen of the qualifying exam (new questions)
+    //   examPlan(stageIds)     the exam's plan (see examPlan above); stageIds: other stages, for tests
+    //   examDraw(stageIds)     one fresh draw of its questions: [card ids]
     A.feature("learn", {
         open: openPage,
         step: openGuidedStep,
@@ -1960,9 +2135,16 @@
                 stages: path.stages.map(function (entry) {
                     return { id: entry.stage.id, state: entry.state, done: entry.done, total: entry.total, star: entry.star };
                 }),
-                next: path.next ? { stage: path.next.stage, key: path.next.step.key, title: path.next.step.title } : null
+                next: path.next ? { stage: path.next.stage, key: path.next.step.key, title: path.next.step.title } : null,
+                exam: examPlan() ? examState() : null
             };
-        }
+        },
+        exam: function (opener) {
+            ensure();
+            return startExam(opener || document.activeElement);
+        },
+        examPlan: examPlan,
+        examDraw: function (stageIds) { return examDraw(examPlan(stageIds)); }
     });
 
     // The home card shows before the page itself is built
