@@ -21,24 +21,50 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # GitHub Pages needs about a minute to publish the new pages (and the key file)
+      # GitHub Pages needs about a minute to publish the new pages (and the key file).
+      # A run started by hand does not wait: the site is already published then.
       - name: Wait until the site is published
+        if: github.event_name == 'push'
         run: sleep 180
 
       - name: Send the list of pages (sitemap.xml)
         continue-on-error: true
         run: |
           python3 - <<'PY'
-          import json, re, urllib.request
+          import json, re, urllib.error, urllib.request
+
           SITE = "https://newfter.github.io/AI-Compass/"
           KEY = "2bcef68462ffeea45658b64de94970d4"
+          AGENT = "Mozilla/5.0 (compatible; AI-Compass-pages/1.0; +" + SITE + ")"
+
+          def ask(address, data=None, agent=AGENT):
+              headers = {}
+              if agent:
+                  headers["User-Agent"] = agent
+              if data is not None:
+                  headers["Content-Type"] = "application/json; charset=utf-8"
+              request = urllib.request.Request(address, data=data, headers=headers)
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as answer:
+                      return answer.status, answer.read(500).decode("utf-8", "replace").strip()
+              except urllib.error.HTTPError as error:
+                  return error.code, error.read(500).decode("utf-8", "replace").strip()
+              except Exception as error:
+                  return 0, str(error)
+
+          def body(pages):
+              return json.dumps({"host": "newfter.github.io", "key": KEY, "keyLocation": SITE + KEY + ".txt", "urlList": pages}).encode("utf-8")
+
+          print("0. robots.txt of the host:", ask("https://newfter.github.io/robots.txt")[0], "| sitemap.xml of the site:", ask(SITE + "sitemap.xml")[0])
+          status, text = ask(SITE + KEY + ".txt")
+          print("1. Key file on the site:", status, repr(text[:80]), "right" if (status == 200 and text == KEY) else "NOT RIGHT")
+
           pages = sorted(set(re.findall(r"<loc>([^<]+)</loc>", open("sitemap.xml", encoding="utf-8").read())))
           pages = [page for page in pages if page.startswith(SITE)]
-          body = json.dumps({"host": "newfter.github.io", "key": KEY, "keyLocation": SITE + KEY + ".txt", "urlList": pages}).encode("utf-8")
-          request = urllib.request.Request("https://api.indexnow.org/indexnow", data=body, headers={"Content-Type": "application/json; charset=utf-8"})
-          try:
-              with urllib.request.urlopen(request, timeout=30) as answer:
-                  print("Sent", len(pages), "addresses. Answer:", answer.status, "(200 and 202 mean accepted)")
-          except Exception as error:
-              print("IndexNow did not accept the list this time:", error)
+          one = [SITE + "lessons/"]
+
+          print("2. One address, the program does not say its name:", ask("https://api.indexnow.org/indexnow", body(one), agent=None))
+          print("3. One address, the program says its name:", ask("https://api.indexnow.org/indexnow", body(one)))
+          for service in ["https://api.indexnow.org/indexnow", "https://www.bing.com/indexnow", "https://yandex.com/indexnow"]:
+              print("4. All", len(pages), "addresses to", service, "->", ask(service, body(pages)))
           PY
