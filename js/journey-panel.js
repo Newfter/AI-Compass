@@ -113,6 +113,8 @@
                     "</header>" +
                     '<div class="jr-body" data-ref="body">' +
                         '<section class="jr-hero jr-card" data-ref="hero" aria-labelledby="jr-title"></section>' +
+                        // Signed out with accounts on: "saved only on this device" (js/account.js)
+                        '<p class="jr-save-line" data-ref="saveLine" hidden></p>' +
                         '<section class="jr-next jr-card" data-ref="next" aria-labelledby="jr-next-title"></section>' +
                         '<section class="jr-card jr-account" data-ref="account" aria-labelledby="jr-account-title" hidden></section>' +
                         // Two columns on wide screens, each as tall as its own cards
@@ -139,6 +141,7 @@
         root.querySelectorAll("[data-ref]").forEach(function (element) {
             ui[element.getAttribute("data-ref")] = element;
         });
+        if (A.account && typeof A.account.line === "function") A.account.line(ui.saveLine, "#journey");
 
         // Closing: the × button, or a click on the dimmed page around the window
         ui.close.addEventListener("click", function () { close("close"); });
@@ -1018,16 +1021,11 @@
                 esc(t("account.dash.title")) + "</h3>" + (meta ? '<span class="jr-card-meta">' + esc(meta) + "</span>" : "") + "</div>";
         };
         if (!signedIn()) {
-            card.classList.add("is-out");
-            card.innerHTML = head("") +
-                '<div class="jr-account-invite">' +
-                    "<p>" + esc(t("account.dash.out")) + "</p>" +
-                    '<button type="button" class="btn btn-primary btn-small" data-action="signin" data-focus="signin">' +
-                        esc(t("account.dash.signIn")) + "</button>" +
-                "</div>";
+            // (the line under the level card invites to sign in: js/account.js)
+            card.hidden = true;
+            card.innerHTML = "";
             return;
         }
-        card.classList.remove("is-out");
         const user = A.account.user();
         let html = head(t("account.dash.in", { name: user.nickname }));
         if (account.stats) {
@@ -1210,9 +1208,6 @@
         },
 
         // The account card (section 10)
-        signin: function () {
-            if (accountOn()) A.account.signIn("#journey");     // the window opens again after Google
-        },
         account: function () {
             close("command", true);
             if (host.button) host.button.focus({ preventScroll: true });

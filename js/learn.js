@@ -918,6 +918,8 @@
                 '<section class="lp-setup card" data-ref="setup" aria-labelledby="lp-setup-title" hidden></section>' +
                 '<div class="lp-main" data-ref="main" hidden>' +
                     '<div class="lp-me" data-ref="me"></div>' +
+                    // Signed out with accounts on: "saved only on this device" (js/account.js)
+                    '<p class="lp-save-line" data-ref="saveLine" hidden></p>' +
                     '<section class="lp-today card" data-ref="today" aria-labelledby="lp-today-title"></section>' +
                     '<section class="lp-path" data-ref="path" aria-labelledby="lp-path-title"></section>' +
                     '<section class="lp-skills card" data-ref="skills" aria-labelledby="lp-skills-title"></section>' +
@@ -930,6 +932,7 @@
             setup: ref("setup"), main: ref("main"), me: ref("me"), today: ref("today"),
             path: ref("path"), skills: ref("skills"), about: ref("about"), note: ref("note"), live: ref("live")
         };
+        if (A.account && typeof A.account.line === "function") A.account.line(ref("saveLine"), "#learn");
         mount.addEventListener("click", onClick);
         seedMemory();
         render();

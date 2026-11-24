@@ -937,6 +937,8 @@
         tidiedFor = "";
         tidy(today());
         saveNow(true);
+        // A deliberate replacement: signed in, the copy in the account follows it (js/account.js)
+        A.emit("removed", { key: "journey", all: true });
         paintButton(false);
         refreshPanel();
     }

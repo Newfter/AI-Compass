@@ -2081,7 +2081,8 @@
     function signedInOnline() {
         return guarded(function () {
             const account = A.account;
-            return Boolean(account && account.enabled && account.signedIn());
+            if (!account || !account.enabled) return false;
+            return typeof account.hasSession === "function" ? account.hasSession() : account.signedIn();
         }, false);
     }
 
@@ -2453,7 +2454,7 @@
         return guarded(function () {
             const account = A.account;
             if (!account || !account.enabled) return 0;
-            return account.signedIn() ? 2 : 1;
+            return signedInOnline() ? 2 : 1;
         }, 0);
     }
 
@@ -2502,27 +2503,21 @@
             "</div>";
     }
 
-    // The online account (js/account.js): one row, only when online accounts are on
-    function onlineRow() {
-        const online = onlineState();
-        if (!online) return "";
-        return '<div class="st-row pf-online">' +
-                label("p", "st-row-name", "profiles.online") +
-                label("p", "st-hint", "profiles.onlineHint") +
-                (online === 2 ? label("p", "st-note pf-online-note", "profiles.onlineLock") : "") +
-                button("online", "profiles.onlineOpen", "btn btn-ghost btn-small") +
-            "</div>";
+    // Signed in online (js/account.js draws that account at the top of this group): the
+    // learners on this device are locked, and this says why
+    function onlineLockRow() {
+        return onlineState() === 2 ? '<div class="st-row pf-online">' + label("p", "st-note pf-online-note", "profiles.onlineLock") + "</div>" : "";
     }
 
     function startHTML(index, locked) {
+        // (with online accounts on, "Sign in with Google" above is the one main button)
         return '<div class="st-row pf-start">' +
                 label("p", "pf-intro", "profiles.intro") +
-                button("create", "profiles.create", "btn btn-primary pf-main") +
+                button("create", "profiles.create", (onlineState() ? "btn btn-ghost" : "btn btn-primary") + " pf-main") +
                 button("load", "profiles.load", "pf-quiet", locked) +
             "</div>" +
             othersRow("profiles.learners", index.list, locked) +
-            (index.list.length ? '<div class="st-row pf-more">' + label("p", "st-hint pf-honest", "profiles.honest") + "</div>" : "") +
-            onlineRow();
+            (index.list.length ? '<div class="st-row pf-more">' + label("p", "st-hint pf-honest", "profiles.honest") + "</div>" : "");
     }
 
     function accountHTML(index, active, locked) {
@@ -2546,7 +2541,6 @@
                 "</div>" +
                 label("p", "st-hint pf-honest", "profiles.honest") +
             "</div>" +
-            onlineRow() +
             '<div class="st-row pf-end">' +
                 warningLine(active) +
                 removeButton(active, "profiles.deleteMine", "pf-quiet pf-remove", locked) +
@@ -2597,7 +2591,7 @@
         const index = state.index;
         const active = activeProfile();
         const locked = onlineState() === 2 ? " disabled" : "";
-        return active ? accountHTML(index, active, locked) : startHTML(index, locked);
+        return onlineLockRow() + (active ? accountHTML(index, active, locked) : startHTML(index, locked));
     }
 
     // "Switch to NAME", right after an account was loaded from a file
@@ -2729,11 +2723,17 @@
         element.setAttribute("aria-labelledby", "pf-title");
         element.innerHTML =
             label("h3", "st-group-title", "profiles.title", ' id="pf-title" tabindex="-1"') +
+            // With online accounts on, js/account.js draws its card here (A.account.mount),
+            // and the learners on this device follow under their own heading
+            '<div class="st-row pf-online-slot" hidden></div>' +
+            '<h4 class="pf-sub" id="pf-sub" hidden></h4>' +
             '<p class="pf-status st-note" role="status"></p>' +
             '<div class="pf-offer" hidden></div>' +
             '<div class="pf-body"></div>' +
             '<input type="file" class="pf-file" accept=".json,application/json" tabindex="-1" hidden>';
         ui.title = element.querySelector(".st-group-title");
+        ui.slot = element.querySelector(".pf-online-slot");
+        ui.sub = element.querySelector(".pf-sub");
         ui.line = element.querySelector(".pf-status");
         ui.offerBox = element.querySelector(".pf-offer");
         ui.body = element.querySelector(".pf-body");
@@ -2756,7 +2756,18 @@
                 forget();
             }
             render(false);
+            paintOnline();
         });
+    }
+
+    // The online account's card (js/account.js), when online accounts are on
+    function paintOnline() {
+        if (!ui.slot) return;
+        const on = onlineState() !== 0;
+        if (on) guarded(function () { A.account.mount(ui.slot); });
+        else ui.slot.hidden = true;
+        A.dom.setHidden(ui.sub, !on);
+        if (on) A.dom.setText(ui.sub, t("profiles.local"));
     }
 
     // ----- A double tap must not press what has moved under the finger -----
@@ -3031,8 +3042,6 @@
         } else if (action === "load") {
             ui.file.value = "";
             ui.file.click();
-        } else if (action === "online") {
-            guarded(function () { A.account.open(); });
         }
     }
 
@@ -3092,8 +3101,12 @@
         }
     });
 
-    // The online account signed in or out: buttons lock or unlock
-    A.on("account", function () { render(false); });
+    // The online account signed in or out: buttons lock or unlock, the greeting follows
+    A.on("account", function () {
+        render(false);
+        paintOnline();
+        paintHello();
+    });
 
     /* =========================================================
        13. THE GREETING ON THE HOME PAGE, THE CTRL+K COMMAND,
@@ -3132,6 +3145,17 @@
 
     function paintHello() {
         if (!hello || !contentReady()) return;
+        const online = guarded(function () { return A.account && A.account.enabled ? A.account.user() : null; }, null);
+        if (online && online.nickname) {
+            A.dom.setHidden(hello, false);
+            A.dom.setText(hello.firstChild, online.nickname.charAt(0).toUpperCase());
+            A.dom.setText(hello.lastChild, t("profiles.hello", { name: online.nickname }));
+            A.dom.setAttr(hello, "aria-label", t("profiles.helloLabel", { name: online.nickname }));
+            hello.classList.add("is-online");
+            hello.classList.remove("is-waiting");
+            return;
+        }
+        hello.classList.remove("is-online");
         const active = usable() ? activeProfile() : null;
         A.dom.setHidden(hello, !active);
         if (!active) return;
@@ -3153,6 +3177,7 @@
         paintHello();
         paintVeil();
         render(false);
+        paintOnline();
         // An open form is not drawn again (the learner may be typing): core has
         // translated its plain texts, the two with a name in them follow here
         const hint = ui.root && ui.root.querySelector("[data-pf-add-hint]");

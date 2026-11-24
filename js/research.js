@@ -1285,6 +1285,8 @@
         const index = shown.findIndex(function (entry) { return entry.id === id; });
         notebook.entries = notebook.entries.filter(function (entry) { return entry.id !== id; });
         saveNotebook();
+        // Signed in, the copy in the account loses it too (js/account.js)
+        A.emit("removed", { key: NOTEBOOK_KEY, items: [id] });
         if (editing === id) editing = null;
         renderList();
         say(t("research.nb.deleted"), "info");

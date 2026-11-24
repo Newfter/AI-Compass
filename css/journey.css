@@ -1131,21 +1131,6 @@
 /* ===== YOUR ACCOUNT (only when the site has accounts: js/account.js) =====
    The nickname, the Knowledge Challenge numbers (the .jr-stat tiles), the last
    attempts and the diary of saved results, as plain rows with a date. */
-.jr-account-invite {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px 20px;
-    flex-wrap: wrap;
-}
-
-.jr-account-invite p {
-    flex: 1 1 280px;
-    color: var(--text-muted);
-    font-size: 0.875rem;
-    line-height: 1.55;
-}
-
 .jr-account-muted {
     color: var(--text-muted);
     font-size: 0.875rem;

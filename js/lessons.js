@@ -777,6 +777,8 @@
         if (isDone) completed.add(n);
         else completed.delete(n);
         saveCompleted();
+        // Marked as not done on purpose: signed in, the copy in the account follows (js/account.js)
+        if (!isDone && wasDone) A.emit("removed", { key: "lessons.completed", items: [n] });
         updateProgress();
         const finishedTrack = isDone && !trackWasDone && isTrackDone(track);
         if (isDone && !wasDone) A.track("lesson.complete", { n: n });
@@ -806,6 +808,8 @@
     function resetProgress() {
         completed.clear();
         saveCompleted();
+        // A deliberate reset: signed in, the copy in the account follows it (js/account.js)
+        A.emit("removed", { key: "lessons.completed", all: true });
         Object.keys(checkAnswers).forEach(function (key) { delete checkAnswers[key]; });
         Object.keys(labState).forEach(function (key) { delete labState[key]; });
         updateProgress();

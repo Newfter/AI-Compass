@@ -628,7 +628,7 @@
         const target = event.target.closest("[data-action]");
         if (!target || !ui.root.contains(target)) return;
         const action = target.getAttribute("data-action");
-        if (action === "signin") A.account.signIn("#challenge");
+        if (action === "signin") A.account.open({ returnTo: "#challenge", opener: target });
         else if (action === "start") { quitPress = null; attempt = null; saveAttempt(); start(); }
         else if (action === "continue") resume();
         else if (action === "pick") pick(Number(target.getAttribute("data-position")));
