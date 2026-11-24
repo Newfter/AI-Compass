@@ -12,6 +12,8 @@ It is plain HTML, CSS and JavaScript: no libraries, no frameworks, no build step
 
 This guide is for the people who look after the site. It explains how the code is organised and how to make the most common changes.
 
+**Running the live product** (switching on accounts, reading the user numbers, the app stores, monthly upkeep, what to do when something goes wrong) is in [`docs/LAUNCH.md`](docs/LAUNCH.md).
+
 - [Run it on your computer](#run-it-on-your-computer)
 - [The folder map](#the-folder-map)
 - [How the pieces talk](#how-the-pieces-talk)
