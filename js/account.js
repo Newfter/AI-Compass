@@ -2103,20 +2103,31 @@
     }
 
     // The account and everything saved online go; the progress on this device stays
+    // Inside the sync lock: no save of this browser runs while the account is deleted,
+    // and none starts after it (this tab knows nobody before the lock is let go)
     function deleteAccount() {
         if (!user) return Promise.resolve(false);
-        return rpc("delete_my_account").then(function () {
-            [STORE.synced, STORE.pending, STORE.queue].forEach(function (key) { A.storage.remove(key); });
-            return client.auth.signOut({ scope: "local" }).catch(function () {});
-        }).then(function () {
-            A.util.attempt(function () { window.localStorage.removeItem(AUTH_KEY); });
-            session = null;
-            if (user) {
+        const who = user.id;
+        clearTimeout(syncTimer);
+        syncTimer = 0;
+        return withLock(function () {
+            if (!user || user.id !== who) return false;
+            return rpc("delete_my_account").then(function () {
+                [STORE.synced, STORE.pending, STORE.queue].forEach(function (key) { A.storage.remove(key); });
                 becomeNobody();
+                return true;
+            });
+        }).then(function (done) {
+            if (!done) return false;
+            const out = client ? client.auth.signOut({ scope: "local" }).catch(function () {}) : Promise.resolve();
+            return out.then(function () {
+                A.util.attempt(function () { window.localStorage.removeItem(AUTH_KEY); });
+                session = null;
+                paintAll();
                 emitAccount("signout");
-            }
-            A.toast(t("account.in.deleted"), "🗑️");
-            return true;
+                A.toast(t("account.in.deleted"), "🗑️");
+                return true;
+            });
         }, function () {
             A.toast(t("account.in.deleteFailed"), "⚠️");
             return false;
