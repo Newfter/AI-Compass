@@ -1,7 +1,8 @@
 {
+    "id": "./",
     "name": "AI Compass",
     "short_name": "AI Compass",
-    "description": "A free, interactive guide to Artificial Intelligence for teenagers: short lessons, live AI experiments, a quiz, a glossary and the history of AI, in English and Russian.",
+    "description": "Learn how AI works, free and without sign-up: a personal path in small steps, experiments you run in your browser and reviews that help you remember.",
     "start_url": "./",
     "scope": "./",
     "display": "standalone",
@@ -31,7 +32,42 @@
             "purpose": "maskable"
         }
     ],
+    "screenshots": [
+        {
+            "src": "images/screenshots/home-narrow.webp",
+            "sizes": "1080x1920",
+            "type": "image/webp",
+            "form_factor": "narrow",
+            "label": "The home page: free lessons and experiments that explain AI simply"
+        },
+        {
+            "src": "images/screenshots/path-narrow.webp",
+            "sizes": "1080x1920",
+            "type": "image/webp",
+            "form_factor": "narrow",
+            "label": "My path: a personal plan with a short session for every day"
+        },
+        {
+            "src": "images/screenshots/home-wide.webp",
+            "sizes": "1920x1080",
+            "type": "image/webp",
+            "form_factor": "wide",
+            "label": "The home page: free lessons and experiments that explain AI simply"
+        },
+        {
+            "src": "images/screenshots/lesson-wide.webp",
+            "sizes": "1920x1080",
+            "type": "image/webp",
+            "form_factor": "wide",
+            "label": "A lesson: What is AI?"
+        }
+    ],
     "shortcuts": [
+        {
+            "name": "My path",
+            "url": "./#learn",
+            "icons": [{ "src": "images/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        },
         {
             "name": "Lessons",
             "url": "./#lessons",

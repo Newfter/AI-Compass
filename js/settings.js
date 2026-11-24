@@ -748,6 +748,10 @@
                             '<p class="st-hint st-group-hint" data-i18n="settings.soundHint">' + t("settings.soundHint") + "</p>"
                         ].concat(sound)) +
 
+                        // "Install the app", where this browser can: js/platform.js draws it in here
+                        // (A.platform.mountInstall, called by paint() below) and shows the section
+                        '<section class="st-group st-app" data-app-mount hidden></section>' +
+
                         '<footer class="st-foot">' +
                             '<p class="st-privacy">' + ICONS.lock + text("settings.privacy") + "</p>" +
                             '<p class="st-privacy st-no-save" hidden>' + ICONS.lock + text("settings.noStorage") + "</p>" +
@@ -782,7 +786,8 @@
             noSave: layer.querySelector(".st-no-save"),
             reset: layer.querySelector(".st-reset"),
             resetLabel: layer.querySelector(".st-reset-label"),
-            voices: Array.from(layer.querySelectorAll(".st-voice"))
+            voices: Array.from(layer.querySelectorAll(".st-voice")),
+            app: layer.querySelector("[data-app-mount]")
         };
 
         // Every radio button and drop-down list
@@ -888,6 +893,8 @@
         paintReset();
         paintNumbers();
         paintVoices();
+        // "Install the app" draws itself too (js/platform.js), only where there is something to offer
+        if (A.platform && typeof A.platform.mountInstall === "function") A.platform.mountInstall(ui.app);
     }
 
     // The look picker: the chosen card, the names in the page's language, one sentence

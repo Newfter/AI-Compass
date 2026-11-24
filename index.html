@@ -213,6 +213,7 @@
     <link rel="stylesheet" href="./css/profiles.css">
     <link rel="stylesheet" href="./css/challenge.css">
     <link rel="stylesheet" href="./css/learn.css">
+    <link rel="stylesheet" href="./css/platform.css">
     <!-- The Pro design: only used with class design-pro on <html> (chosen in Settings, "Design") -->
     <link rel="stylesheet" href="./css/pro.css">
     <!-- Printing: only used when the page is printed (keep it after the other stylesheets).
@@ -780,14 +781,16 @@
             </a>
             <p data-i18n="footer.tagline">Made for curious minds.</p>
             <!-- "Install the app" (js/platform.js shows it when the browser offers to install the
-                 site; on iPhones and iPads the button opens the short help below it) -->
+                 site; where the browser has no install window of its own, on iPhones and iPads, in
+                 Safari on a Mac and in Firefox on Android, the button opens the short help below it,
+                 which js/platform.js fills with the text for that browser) -->
             <p id="install-app" hidden>
                 <button class="btn btn-ghost" type="button">
                     <span aria-hidden="true">📲</span>
                     <span data-i18n="platform.install">Install the app</span>
                 </button>
             </p>
-            <p id="install-help" data-i18n="platform.iosHelp" hidden>On an iPhone or iPad: tap the Share button (a square with an arrow), then “Add to Home Screen”.</p>
+            <p id="install-help" data-i18n="platform.iosHelp" hidden>On an iPhone or iPad: tap the Share button (a square with an arrow; if you don't see it, tap ⋯ first). Then choose “Add to Home Screen”.</p>
         </div>
 
         <nav class="footer-links" aria-label="Footer links" data-i18n-attr="aria-label:core.navFooter">
