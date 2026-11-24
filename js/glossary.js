@@ -1281,6 +1281,7 @@
         markCard(card, markedWords);      // the short definition becomes the full one (and back)
         if (open) {
             A.track("glossary.explore", { id: id });
+            takeExplored();         // so the save below keeps what another tab saved
             if (!state.explored.has(id)) {
                 state.explored.add(id);
                 A.storage.set("glossary.explored", Array.from(state.explored));
@@ -1290,6 +1291,21 @@
             }
         }
         markLooseRows();
+    }
+
+    // The site may be open twice (two tabs, an old tab): terms opened in the other one since
+    // this page read the list are added here, before a save (so it never writes them over)
+    // and when the other one saves (so they show as explored). -> true when there were some
+    function takeExplored() {
+        let added = false;
+        loadExplored().forEach(function (id) {
+            if (state.explored.has(id)) return;
+            state.explored.add(id);
+            added = true;
+            if (cards[id]) cards[id].el.classList.add("is-explored");
+        });
+        if (added && ui) updateExplored();
+        return added;
     }
 
     // A short glowing pulse around a card (from the start if it is already glowing)
@@ -1713,6 +1729,12 @@
     // screen, when the browser has a quiet moment after loading, or as soon as
     // something needs it (ensure(): a palette command, a link to a term...).
     const ensure = A.whenNeeded(mount, build);
+
+    // Terms opened in another tab show here too (see takeExplored)
+    window.addEventListener("storage", takeExplored);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) takeExplored();
+    });
 
     // A link like index.html#term-neural-network opens that term
     // (an id of SAME_AS too: #term-k-means opens "Clustering")
