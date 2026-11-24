@@ -83,7 +83,7 @@
 <section class="pg-check"><p><strong>Task.</strong> What does FlashAttention change compared with plain attention?</p><p class="pg-soft">Solve it in the app.</p></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>If the entries of q and k are independent, with mean 0 and variance 1, then <code>Var(q·k) = d_k</code>. Dividing the scores by √d_k brings the variance back to 1, which helps keep softmax out of saturation.</li><li>The causal mask hides later tokens. That is also why the keys and values of past tokens never change and can be cached.</li><li><code>KV cache per token = 2 · layers · KV heads · head size · bytes per number</code>. Grouped-query and multi-query attention shrink it by sharing KV heads among query heads.</li><li>At batch size 1, decoding is limited by memory bandwidth: <code>tokens per second ≤ bandwidth / bytes read per token</code>. FlashAttention is exact attention that saves memory traffic, not arithmetic.</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/r1">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><span></span><a href="r2-scaling-laws.html"><small>Next step</small>Scaling laws</a></nav>
 </article>
 </main>
