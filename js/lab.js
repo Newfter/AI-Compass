@@ -582,14 +582,17 @@
             if (!options.quiet && A.track) A.track("lab.use", { exp: id });
             load(id, entry, !options.quiet);
         }
+        // The palette, a link, Compass Bot or a lesson: go to the lab first. From another page
+        // that adds the step #lab to the history (Back returns to that page), and the line
+        // below renames this step #lab/<id>, so Back from a page opened later comes back here.
+        if (options.go) A.navigate("lab", { focus: false });
         // The address names the open experiment. Opening quietly leaves it alone, unless it
         // already points at the lab (#lab, the menu link): then it names the experiment too,
         // as it does for that link while an experiment is open (see followLink)
         if (!options.quiet || window.location.hash === "#lab") setHash(LINK_PREFIX + id);
         if (options.go) {
-            // The palette, a link, Compass Bot or a lesson: go to the lab. The focus goes to the
-            // experiment's title (focus: true) or, as for any section, to the lab's heading.
-            A.navigate("lab", { focus: false });
+            // The focus goes to the experiment's title (focus: true) or, as for any section,
+            // to the lab's heading.
             if (options.focus) headTitle.focus({ preventScroll: true });
             else A.dom.focusHeading("lab");
         } else {

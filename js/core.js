@@ -1726,18 +1726,40 @@
         return document.getElementById(id);
     }
 
-    // The page the address points into (#lab, #term-bias...), or null
+    // The page a feature's own address names: #lab/maze (the lab), #learn/b5 (My path),
+    // #research/bench... The feature follows the rest of the address itself.
+    function subAddressPage() {
+        const match = /^#([a-z][a-z0-9-]*)\//.exec(window.location.hash);
+        const page = match ? document.getElementById(match[1]) : null;
+        return page && pageOf(page) === page ? page : null;
+    }
+
+    // The page the address points into (#lab, #term-bias, #lab/maze...), or null
     function addressPage() {
-        return pageOf(addressTarget());
+        return pageOf(addressTarget()) || subAddressPage();
     }
 
     function startPages() {
         root.classList.add("paged");
-        const target = addressTarget();
+        const target = addressTarget() || subAddressPage();
         if (!showPageOf(target)) showPageOf(document.getElementById("home"));
         window.addEventListener("hashchange", function () {
             const target = addressTarget();
             if (!target) {
+                const page = subAddressPage();
+                if (page) {
+                    // #lab/maze: its feature (whose listener ran first) has usually shown the
+                    // page already. If not (#lab while an experiment is open becomes
+                    // #lab/<id>), it opens here, as for #lab.
+                    if (page !== currentPage) {
+                        closeAll({ reason: "navigate", navigating: true });
+                        buildParts(page);
+                        showPageOf(page);
+                        window.scrollTo(0, 0);
+                        dom.focusHeading(page);
+                    }
+                    return;
+                }
                 // Back to the plain address (no #): the home page
                 if (!window.location.hash) {
                     showPageOf(document.getElementById("home"));
