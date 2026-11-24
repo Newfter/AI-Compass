@@ -43,7 +43,7 @@ window.AICompass.content.set("privacy", {
                 text: [
                     "Everything works without an account. If you sign in with Google, your progress is also saved online, so you can go on learning on another device, and you can take part in the Knowledge Challenge. Then AI Compass keeps:",
                     [
-                        "<strong>your e-mail address</strong> and the name on your Google account, so that the site knows it is you. Other people never see them;",
+                        "<strong>your e-mail address</strong> and the name on your Google account, so that the site knows it is you. The site never shows them to anyone; only the owner of AI Compass can see them, in the database;",
                         "<strong>a nickname</strong>. It is public: everyone can see it on the leaderboard;",
                         "<strong>your progress</strong>, the same as in your browser;",
                         "<strong>your learning diary</strong>: the results you see in My Compass;",
@@ -63,7 +63,7 @@ window.AICompass.content.set("privacy", {
                         "whether the app or a plain page like this one was opened, whether the app is installed, and whether you are signed in."
                     ],
                     "AI Compass does not keep your IP address. It uses no cookies, no advertising and no trackers from other companies.",
-                    "The daily records are deleted after 35 days. Only totals stay, like “120 devices today”, and for each random number the first and the last day it was seen.",
+                    "The daily records are deleted after 35 days. Only totals stay, like “120 devices today”, and for each random number the first and the last day it was seen, and on how many days.",
                     "If “Do Not Track” or “Global Privacy Control” is switched on in your browser, nothing is counted."
                 ]
             },
@@ -74,7 +74,7 @@ window.AICompass.content.set("privacy", {
                     [
                         "<strong>GitHub Pages</strong> hosts the site. Like every web host, GitHub sees your IP address and keeps server logs.",
                         "<strong>Google Fonts</strong>: the letters of the app come from Google's servers, so Google sees your IP address when you open the app.",
-                        "<strong>Supabase</strong> keeps the accounts and the visit counts. Like every server, it sees your IP address when your browser connects, but AI Compass does not save it.",
+                        "<strong>Supabase</strong> keeps the accounts and the visit counts. Like every server, it sees your IP address when your browser connects and may keep it for a short time in its server logs. The tables of AI Compass never save it.",
                         "<strong>Google sign-in</strong>, only if you choose it: Google then tells AI Compass your e-mail address and name."
                     ]
                 ]
@@ -128,7 +128,7 @@ window.AICompass.content.set("privacy", {
                 text: [
                     "Всё работает и без аккаунта. Если войти через Google, прогресс сохранится и в интернете: можно продолжать учиться на другом устройстве и участвовать в «Проверке знаний». Тогда AI Compass хранит:",
                     [
-                        "<strong>твой адрес e-mail</strong> и имя из аккаунта Google, чтобы сайт узнавал тебя. Другие люди их никогда не видят;",
+                        "<strong>твой адрес e-mail</strong> и имя из аккаунта Google, чтобы сайт узнавал тебя. Сайт их никому не показывает; их может увидеть только владелец AI Compass, в базе данных;",
                         "<strong>ник</strong>. Он публичный: его видят все в таблице лидеров;",
                         "<strong>твой прогресс</strong> — такой же, как в браузере;",
                         "<strong>твой дневник учёбы</strong>: результаты, которые ты видишь в «Моём компасе»;",
@@ -148,7 +148,7 @@ window.AICompass.content.set("privacy", {
                         "что было открыто — приложение или простая страница вроде этой, установлено ли приложение и выполнен ли вход в аккаунт."
                     ],
                     "AI Compass не хранит твой IP-адрес. Здесь нет cookie, рекламы и трекеров других компаний.",
-                    "Записи по дням удаляются через 35 дней. Остаются только итоги, например «120 устройств сегодня», а для каждого случайного номера — первый и последний день, когда его видели.",
+                    "Записи по дням удаляются через 35 дней. Остаются только итоги, например «120 устройств сегодня», а для каждого случайного номера — первый и последний день, когда его видели, и сколько всего было таких дней.",
                     "Если в твоём браузере включены «Не отслеживать» (Do Not Track) или Global Privacy Control, ничего не считается."
                 ]
             },
@@ -159,7 +159,7 @@ window.AICompass.content.set("privacy", {
                     [
                         "<strong>GitHub Pages</strong> размещает сайт. Как любой хостинг, GitHub видит твой IP-адрес и ведёт журналы сервера.",
                         "<strong>Google Fonts</strong>: шрифты приложения загружаются с серверов Google, поэтому Google видит твой IP-адрес, когда ты открываешь приложение.",
-                        "<strong>Supabase</strong> хранит аккаунты и подсчёт посещений. Как любой сервер, он видит твой IP-адрес при подключении, но AI Compass его не сохраняет.",
+                        "<strong>Supabase</strong> хранит аккаунты и подсчёт посещений. Как любой сервер, он видит твой IP-адрес при подключении и может недолго хранить его в журналах сервера. Таблицы AI Compass его не сохраняют.",
                         "<strong>Вход через Google</strong> — только если ты его выберешь. Тогда Google сообщает AI Compass твой e-mail и имя."
                     ]
                 ]
