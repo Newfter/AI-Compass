@@ -629,7 +629,7 @@ function unitPage(lang, stage, unit, index) {
 <p class="pg-lead">${esc(lead)}</p>
 ${tools(lang)}
 ${body}
-${cta(lang, "learn", w.ctaUnit, w.ctaUnitText)}
+${cta(lang, "learn/" + unit.id, w.ctaUnit, w.ctaUnitText)}
 ${pager(prev && pagerLink(prev.slug + ".html", w.prevStep, esc(unitName(lang, prev))), next && pagerLink(next.slug + ".html", w.nextStep, esc(unitName(lang, next))), w.path)}
 </article>`
     });
