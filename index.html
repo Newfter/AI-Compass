@@ -235,6 +235,8 @@
     <script src="./js/arctic-blue.js" defer></script>
     <!-- The settings of this copy of the site (the account service): see docs/ACCOUNTS-SETUP.md -->
     <script src="./js/config.js" defer></script>
+    <!-- Counts visits once a day per device, without personal data (see privacy.html) -->
+    <script src="./js/count.js" defer></script>
 
     <!-- All the texts, in English and Russian (one file per part of the site) -->
     <script src="./js/content/page.js" defer></script>
@@ -806,11 +808,13 @@
         </nav>
 
         <div class="footer-bottom">
-            <!-- The two links lead to the plain pages that search engines read (lessons/, glossary/;
-                 tools/build-pages.js writes them). js/invite.js points them at ru/ in Russian. -->
+            <!-- The links lead to the plain pages that tools/build-pages.js writes: lessons/ and
+                 glossary/ (for search engines) and privacy.html (what the site keeps, and why).
+                 js/invite.js points them at ru/ in Russian. -->
             <p>© 2026 AI Compass. <span data-i18n="footer.cas">A student CAS project.</span>
                 <a href="./lessons/" data-plain="lessons" data-i18n="footer.readLessons">Lessons to read</a> ·
-                <a href="./glossary/" data-plain="glossary" data-i18n="footer.readGlossary">AI words A–Z</a></p>
+                <a href="./glossary/" data-plain="glossary" data-i18n="footer.readGlossary">AI words A–Z</a> ·
+                <a href="./privacy.html" data-plain="privacy.html" data-i18n="footer.privacy">Privacy</a></p>
             <a href="#home" class="back-to-top" data-i18n="footer.top">Back to top ↑</a>
         </div>
     </div>

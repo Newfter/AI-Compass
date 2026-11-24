@@ -249,12 +249,14 @@
     /* =========================================================
        6. THE FOOTER LINKS TO THE PLAIN PAGES
        <a data-plain="lessons"> in the footer of index.html leads to lessons/
-       in English and to ru/lessons/ in Russian (the pages search engines read).
+       in English and to ru/lessons/ in Russian (the pages search engines read);
+       <a data-plain="privacy.html"> leads to privacy.html or ru/privacy.html.
        ========================================================= */
 
     function pointPlainLinks() {
         Array.prototype.forEach.call(document.querySelectorAll("a[data-plain]"), function (anchor) {
-            anchor.setAttribute("href", "./" + (A.lang === "ru" ? "ru/" : "") + anchor.getAttribute("data-plain") + "/");
+            const target = anchor.getAttribute("data-plain");
+            anchor.setAttribute("href", "./" + (A.lang === "ru" ? "ru/" : "") + target + (/\.html$/.test(target) ? "" : "/"));
         });
     }
     pointPlainLinks();
