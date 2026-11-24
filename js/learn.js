@@ -1492,8 +1492,27 @@
         return playerLoading;
     }
 
+    // A link to a guided step, #learn/<id> (see "A link to a step"): while its window is open,
+    // the address names what the window shows; null when the address is no such link
+    const STEP_LINK = "#learn/";
+
+    function linkedStep() {
+        const hash = window.location.hash;
+        return hash.indexOf(STEP_LINK) === 0 ? hash.slice(STEP_LINK.length) : null;
+    }
+
+    function setAddress(hash) {
+        if (window.location.hash === hash) return;
+        try {
+            history.replaceState(history.state, "", hash);
+        } catch (error) {
+            // a page opened from a file may refuse this: the step works without it
+        }
+    }
+
     // Opens the study window on a request (see the modes at the top of js/learn-play.js)
     function play(request, opener) {
+        if (linkedStep() !== null) setAddress(request.mode === "guide" ? STEP_LINK + request.unit : "#learn");
         const from = opener || document.activeElement;
         return loadPlayer().then(function (studyWindow) {
             studyWindow.open(request, from);
@@ -1724,8 +1743,12 @@
         answer: answerCard,
         // The numbers of the memory: { total, due, next (the day of the next card), ... }
         memory: memoryStats,
-        // The window closed: the page shows what changed
-        closed: function () { renderSoon(); },
+        // The window closed: the page shows what changed (and a step's link becomes #learn,
+        // so the page stays on My path and a reload doesn't open the step again)
+        closed: function () {
+            if (linkedStep() !== null) setAddress("#learn");
+            renderSoon();
+        },
         // When the button that opened the window is gone: the heading of today's session
         focusFallback: function () {
             const page = document.getElementById("learn");
@@ -2086,6 +2109,22 @@
         play({ mode: "guide", unit: id }, opener || document.activeElement);
         return true;
     }
+
+    // A link to a step: index.html#learn/b5. The plain page of a step (path/b5-....html) ends
+    // with "Do this step in the app", which goes there: My path opens with the step's window
+    // over it, also for a new visitor (a step needs no answers to the three questions).
+    // Closing the window leaves My path. An id that is no step just shows My path.
+    // (Core shows this page for "#learn/..." too; the step is opened here.)
+    function openFromLink() {
+        const id = linkedStep();
+        if (id === null) return;
+        // The page's heading takes the focus, so it gets it back when the window closes
+        openPage();
+        if (has(UNIT_BY_ID, id)) play({ mode: "guide", unit: id }, document.activeElement);
+        else setAddress("#learn");
+    }
+    window.addEventListener("hashchange", openFromLink);
+    A.ready(openFromLink);
 
     if (A.search && typeof A.search.register === "function") {
         A.search.register("learn", {

@@ -85,7 +85,7 @@
 </div></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>The <strong>forward pass</strong> computes the chain from the input to the loss and stores every intermediate value.</li><li>The <strong>backward pass</strong> is the chain rule: local derivatives are multiplied from the loss back, as in <code>∂L/∂w₁ = ∂L/∂ŷ · ∂ŷ/∂h · ∂h/∂z · ∂z/∂w₁</code>.</li><li>One backward pass gives the gradient of every weight, for about the cost of two forward passes.</li><li>A gradient can be lost. A ReLU with z &lt; 0 passes back 0 (a dead ReLU if z &lt; 0 for every example). Many small factors multiply to almost nothing (a vanishing gradient).</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/p5">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><a href="p2-gradient-descent-by-hand.html"><small>Previous step</small>Gradient descent by hand</a><a href="p6-overfitting-and-how-to-catch-it.html"><small>Next step</small>Overfitting, and how to catch it</a></nav>
 </article>
 </main>

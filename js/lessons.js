@@ -334,12 +334,26 @@
     }
 
     // ---------- 4. Saved progress ----------
-    const savedCompleted = A.storage.get("lessons.completed", []);
-    const completed = new Set(
-        (Array.isArray(savedCompleted) ? savedCompleted : []).filter(function (n) {
+    // The finished lessons as saved (only whole numbers from 1 to TOTAL count)
+    function savedCompleted() {
+        const saved = A.storage.get("lessons.completed", []);
+        return new Set((Array.isArray(saved) ? saved : []).filter(function (n) {
             return Number.isInteger(n) && n >= 1 && n <= TOTAL;
-        })
-    );
+        }));
+    }
+    const completed = savedCompleted();
+
+    // The site may be open twice (two tabs, an old tab, the app and a tab): the other one may
+    // have saved since this page read the list. Taken again before every change, so the change
+    // is added to what is saved and never writes over a lesson finished there; and when the
+    // other one saves, so this page shows it. -> true when the list changed
+    function takeSaved() {
+        const saved = savedCompleted();
+        if (saved.size === completed.size && Array.from(saved).every(function (n) { return completed.has(n); })) return false;
+        completed.clear();
+        saved.forEach(function (n) { completed.add(n); });
+        return true;
+    }
 
     const checkAnswers = {};   // lesson number -> chosen option (this visit only)
     const labState = {};       // lesson number -> state of its mini-lab
@@ -770,6 +784,7 @@
 
     // ---------- 7. Completing lessons ----------
     function setCompleted(n, isDone) {
+        takeSaved();
         const before = completed.size;
         const wasDone = completed.has(n);
         const track = trackOf(n);
@@ -800,6 +815,16 @@
             A.toast(t("lessons.toast.done", { title: lessonTitle(n) }), "✅");
         }
     }
+
+    // Lessons finished (or reset) in the other tab show here too
+    function showSaved() {
+        if (takeSaved()) updateProgress();
+    }
+    window.addEventListener("storage", showSaved);
+    window.addEventListener("pageshow", showSaved);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) showSaved();
+    });
 
     // Reset needs two presses, so progress is not lost by accident. The first press
     // asks "Sure?" (updateHUD paints the armed button); a second press within
