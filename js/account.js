@@ -2726,7 +2726,17 @@
             if (event.isTrusted === false || flushingFeatures) return;
             saveOnLeave();
         });
-        window.addEventListener("pageshow", function () { leaving = false; });
+        window.addEventListener("pageshow", function (event) {
+            leaving = false;
+            // Back from Google's page: the browser shows this page again exactly as it was
+            // left (the back/forward cache), with "Opening Google…". The sign-in did not
+            // happen, so every way to sign in works again
+            if (event.persisted && signingIn) {
+                signingIn = false;
+                A.util.attempt(function () { A.storage.session.remove(STORE.returnTo); });
+                paintCard();
+            }
+        });
         document.addEventListener("visibilitychange", function () {
             if (document.hidden) {
                 saveOnLeave();
