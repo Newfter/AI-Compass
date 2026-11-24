@@ -13,6 +13,8 @@
      lab/         the experiments of the AI Lab      (1 page)
      history/     the history of AI                  (1 page)
      quiz/        quiz questions with answers        (1 page)
+     privacy.html what the site keeps about a person, and why
+                  (ru/privacy.html in Russian; the text is js/content/privacy.js)
      go/          the tiny pages a shared result opens first
                   (quiz, exam, certificate: see js/invite.js)
      sitemap.xml  the list of all pages, for search engines
@@ -24,6 +26,8 @@
    Nothing here is written by hand: change the texts in js/content/
    and run the script again. The pages' look is css/pages.css, their
    few buttons (answer a question, share, print) are js/pages.js.
+   Every page also loads js/config.js and js/count.js, which counts
+   visits without personal data (see privacy.html).
 
    Sections of this file:
     1. Read the site's own texts
@@ -31,7 +35,7 @@
     3. The lessons, the words, the path
     4. One page (the frame around every page) and its small parts
     5. Lessons            6. Glossary          7. Teachers
-    8. The learning path  9. Lab, history, quiz
+    8. The learning path  9. Lab, history, quiz, privacy
    10. The pages a shared result opens first
    11. The sitemap
    ========================================================= */
@@ -76,7 +80,7 @@ const A = new Proxy({
 ["lessons.js", "lessons-deep.js", "lessons-world.js", "glossary.js", "glossary-terms.js",
     "teachers-basics.js", "teachers-deep.js", "teachers-world.js", "quiz.js", "quiz-bank.js",
     "timeline.js", "lab.js", "learn.js", "courses/zero.js", "courses/skills.js", "courses/pro.js",
-    "courses/build.js", "courses/research.js", "courses/theory.js"].forEach((file) => {
+    "courses/build.js", "courses/research.js", "courses/theory.js", "privacy.js"].forEach((file) => {
     const code = fs.readFileSync(path.join(ROOT, "js/content", file), "utf8");
     vm.runInNewContext(code, { window: { AICompass: A }, AICompass: A }, { filename: file });
 });
@@ -266,8 +270,9 @@ const unitName = (lang, unit) => unmarked(t(lang, "learn.unit." + unit.id) || ""
 /* ---------- 4. One page, and its small parts ---------- */
 
 const written = [];   // { folder, file } of every page, for the sitemap
-const folderOf = (lang, folder) => (lang === "ru" ? "ru/" : "") + folder + "/";
-const upOf = (lang) => (lang === "ru" ? "../../" : "../");
+// folder "" is the top of the site, next to index.html (privacy.html; ru/privacy.html in Russian)
+const folderOf = (lang, folder) => (lang === "ru" ? "ru/" : "") + (folder ? folder + "/" : "");
+const upOf = (lang, folder) => (folder === "" ? (lang === "ru" ? "../" : "./") : (lang === "ru" ? "../../" : "../"));
 
 // folder: "lessons", "glossary"...; file: "what-is-ai.html" or "index.html"
 function address(lang, folder, file) {
@@ -277,10 +282,12 @@ function address(lang, folder, file) {
 // o: { title, desc, h1, body, jsonld, type (of the page, for chat previews) }
 function page(lang, folder, file, o) {
     const w = W[lang];
-    const up = upOf(lang);
+    const up = upOf(lang, folder);
     const otherLang = lang === "ru" ? "en" : "ru";
     const self = address(lang, folder, file);
-    const crumbs = [{ name: w.site, url: SITE + "?lang=" + lang }, { name: w[folder], url: address(lang, folder, "index.html") }];
+    const privacyAddress = address(lang, "", "privacy.html");
+    const crumbs = [{ name: w.site, url: SITE + "?lang=" + lang }];
+    if (folder) crumbs.push({ name: w[folder], url: address(lang, folder, "index.html") });
     if (file !== "index.html") crumbs.push({ name: o.h1, url: self });
     const jsonld = [o.jsonld, {
         "@context": "https://schema.org", "@type": "BreadcrumbList",
@@ -313,6 +320,8 @@ function page(lang, folder, file, o) {
 <link rel="icon" href="${up}images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="${up}css/pages.css">
 <script src="${up}js/pages.js" defer></script>
+<script src="${up}js/config.js" defer></script>
+<script src="${up}js/count.js" defer></script>
 ${jsonld.map((item) => `<script type="application/ld+json">${JSON.stringify(item).replace(/</g, "\\u003c")}</script>`).join("\n")}
 </head>
 <body>
@@ -324,14 +333,14 @@ ${jsonld.map((item) => `<script type="application/ld+json">${JSON.stringify(item
     </nav>
 </header>
 <main class="pg-main">
-<p class="pg-crumbs">${crumbs.slice(0, file === "index.html" ? 1 : 2).map((c) => `<a href="${c.url}">${esc(c.name)}</a>`).join(" › ")}</p>
+<p class="pg-crumbs">${crumbs.filter((c) => c.url !== self).map((c) => `<a href="${c.url}">${esc(c.name)}</a>`).join(" › ")}</p>
 ${o.body}
 </main>
 <footer class="pg-foot">
     <nav class="pg-more" aria-label="${esc(w.site)}">
         ${menu(SECTIONS)}
     </nav>
-    <p>${w.made}</p>
+    <p>${w.made}${self === privacyAddress ? "" : ` <a href="${up}${folderOf(lang, "")}privacy.html">${content.privacy[lang].link}</a>`}</p>
     <p><a class="pg-btn" href="${up}index.html?lang=${lang}">${w.ctaAll}</a></p>
 </footer>
 </body>
@@ -724,6 +733,23 @@ function quizPage(lang) {
     });
 }
 
+/* The privacy page: what the site keeps about a person, and why. It sits next to index.html
+   (privacy.html, ru/privacy.html); its text is js/content/privacy.js. */
+function privacyPage(lang) {
+    const p = content.privacy[lang];
+    // a text is a paragraph; a list of texts is a list with dots
+    const blocks = (items) => items.map((item) => (Array.isArray(item)
+        ? `<ul>${item.map((line) => `<li>${line}</li>`).join("")}</ul>`
+        : `<p>${item}</p>`)).join("\n");
+    page(lang, "", "privacy.html", {
+        title: p.title, desc: p.desc, h1: p.h1, type: "website",
+        jsonld: { "@context": "https://schema.org", "@type": "WebPage", name: p.title, description: p.desc, inLanguage: lang },
+        body: `<h1>${esc(p.h1)}</h1>\n<p class="pg-lead">${p.lead}</p>\n` +
+            `<aside class="pg-keys"><h2>${esc(p.short.title)}</h2>${blocks([p.short.items])}</aside>\n` +
+            p.sections.map((section) => `<h2 id="${section.id}">${esc(section.title)}</h2>\n${blocks(section.text)}`).join("\n")
+    });
+}
+
 LANGS.forEach((lang) => {
     lessonsIndex(lang);
     lessons.forEach((lesson) => lessonPage(lang, lesson));
@@ -736,6 +762,7 @@ LANGS.forEach((lang) => {
     labPage(lang);
     historyPage(lang);
     quizPage(lang);
+    privacyPage(lang);
 });
 
 /* ---------- 10. The pages a shared result opens first ----------

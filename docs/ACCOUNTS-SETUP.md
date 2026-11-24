@@ -128,3 +128,33 @@ month, 500 MB of data (one visitor's progress is a few kilobytes), and the quest
 | `challenge_questions` | the questions with their answers | nobody from the site: the answers and explanations are only sent back after an attempt is finished |
 
 A person can delete their account and everything with it from the account window ("Delete my account").
+
+## Counting visits, and the numbers page
+
+The same Supabase project also counts how many people use the site, without personal data. It
+starts by itself once the two values are in `js/config.js` and `supabase/schema.sql` has run (its
+part 8 builds the counting).
+
+- **What is counted.** Once a day per device, `js/count.js` sends a random device number made in
+  the browser, the language, the app or a plain page, installed or not, signed in or not. No
+  name, e-mail or IP address is kept, and there are no cookies. It does nothing on your own
+  computer (localhost), for test robots, or when Do Not Track or Global Privacy Control is on.
+  Visitors read all this on `privacy.html` (linked from every footer).
+- **The numbers page:** https://newfter.github.io/AI-Compass/stats.html. Bookmark it: the site does
+  not link to it and search engines skip it. It shows today, yesterday, the last 7 and 30 days,
+  new visitors, accounts, the installed app, the languages and a chart of 30, 90 or 365 days.
+- **Without the page**, in Supabase: **SQL Editor → New query**, paste and **Run**:
+
+  ```sql
+  select day, dau as active_that_day, wau as last_7_days, mau as last_30_days,
+         new_visitors, accounts_total, accounts_new
+  from public.visit_days order by day desc limit 30;
+  ```
+
+| Table | What | Kept |
+| --- | --- | --- |
+| `visits` | one row per device per day: the device number, the language and the yes/no facts | 35 days |
+| `visitors` | one row per device number: its first and last day, on how many days it came | for good |
+| `visit_days` | the totals of each finished day (no device numbers) | for good |
+
+None of the three can be read from the site; only the totals come out, through `site_stats()`.
