@@ -1702,9 +1702,11 @@
     }
 
     // A page opened by a button (not a link): the address follows, so the
-    // back button returns to the page before
+    // back button returns to the page before. An address that already points
+    // into the page (#glossary, or #term-bias in the glossary: a feature that
+    // follows its own link opens the page first) stays as it is.
     function rememberPage(page) {
-        if (!page || window.location.hash === "#" + page.id) return;
+        if (!page || addressPage() === page) return;
         try {
             history.pushState(history.state, "", "#" + page.id);
         } catch (error) {
@@ -1722,6 +1724,11 @@
             return null;
         }
         return document.getElementById(id);
+    }
+
+    // The page the address points into (#lab, #term-bias...), or null
+    function addressPage() {
+        return pageOf(addressTarget());
     }
 
     function startPages() {

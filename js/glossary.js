@@ -1324,8 +1324,16 @@
         // Build the glossary first, and the parts of the page above it, so the card's
         // place is known. Windows in the way (the lesson reader, the phone menu...) close.
         ensure();
-        A.buildParts(mount);
-        A.overlays.closeAll({ navigating: true, reason: "navigate" });
+        const page = mount.closest("main > section");
+        if (page && document.documentElement.classList.contains("paged") && !page.classList.contains("page-current")) {
+            // Another page is on screen (the word of the day on Home, Ctrl+K, Compass Bot,
+            // a word in the lab or a lesson...): the glossary page opens, and the Back button
+            // returns to that page. A.navigate closes the windows and builds the parts too.
+            A.navigate(page.id, { focus: false });
+        } else {
+            A.buildParts(mount);
+            A.overlays.closeAll({ navigating: true, reason: "navigate" });
+        }
 
         const card = cards[id];
 
@@ -1710,7 +1718,18 @@
     // (an id of SAME_AS too: #term-k-means opens "Clustering")
     function openFromHash() {
         const match = /^#term-([a-z0-9-]+)$/.exec(window.location.hash);
-        if (match && termById(match[1])) show(match[1]);
+        const term = match ? termById(match[1]) : null;
+        if (!term) return;
+        // #term-k-means names the card #term-clustering: the address names the card itself,
+        // so it says which page it is in (core shows that page, and Back stays simple)
+        if (term.id !== match[1]) {
+            try {
+                history.replaceState(history.state, "", "#term-" + term.id);
+            } catch (error) {
+                // a page opened from a file may refuse this: the term still opens
+            }
+        }
+        show(term.id);
     }
     window.addEventListener("hashchange", openFromHash);
     if (document.readyState === "loading") {
