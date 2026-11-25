@@ -25,7 +25,10 @@ jobs:
             echo "js/config.js is empty: accounts are switched off, nothing to do."
             exit 0
           fi
+          # A new-style key (sb_publishable_...) is not a JWT: Supabase wants it only in "apikey"
+          bearer=()
+          case "$key" in sb_*) ;; *) bearer=(-H "Authorization: Bearer $key") ;; esac
           status=$(curl -sS -o /tmp/ping.txt -w "%{http_code}" -X POST "$url/rest/v1/rpc/ping" \
-            -H "apikey: $key" -H "Authorization: Bearer $key" -H "Content-Type: application/json" -d '{}')
+            -H "apikey: $key" "${bearer[@]}" -H "Content-Type: application/json" -d '{}')
           echo "ping answered $status: $(cat /tmp/ping.txt)"
           [ "$status" = "200" ]

@@ -11,7 +11,7 @@
    ========================================================= */
 window.AICompassConfig = {
     // The "Project URL", like "https://abcdefghijkl.supabase.co"
-    supabaseUrl: "",
+    supabaseUrl: "https://urcjfgnhgyegqgeulzha.supabase.co",
     // The "anon public" key (also called the publishable key): a long text starting with "eyJ" or "sb_publishable_"
-    supabaseAnonKey: ""
+    supabaseAnonKey: "sb_publishable_tw8Vewd40LTl6_Nt1yeVNw_2RZAHp8y"
 };
