@@ -1302,7 +1302,7 @@
         const other = foreign && foreign.s !== undefined ? checkedValue(rule, parse(foreign.s)) : undefined;
         const newer = Boolean(onlineRow && snap && onlineRow.e > snap.e);
         const times = readTimes();
-        const localTime = rule.timed ? choiceTime(times[row.key], foreign, foreignAt) : 0;
+        let localTime = rule.timed ? choiceTime(times[row.key], foreign, foreignAt) : 0;
         const cloudTime = onlineRow ? num(onlineRow.t) : 0;
         let out;
         if (pending && pending.all) {
@@ -1318,6 +1318,11 @@
             }
         } else if (snap && cloud !== undefined && snap.l === printOf(raw)) {
             out = cloud;                                // nothing changed here since the last sync
+        } else if (rule.timed && snap && now !== undefined && cloud !== undefined && !changedOnline(onlineRow, snap)) {
+            // A choice made here since the last sync, and on no other device: it wins, with a
+            // time after the one online (the clocks of two devices are not compared)
+            localTime = Math.max(localTime, cloudTime + 1);
+            out = rule.merge(now, cloud, localTime, cloudTime);
         } else if (rule.delta && synced !== undefined && cloud !== undefined && now !== undefined) {
             out = rule.delta(cloud, now, synced);       // a counter: the online copy + what was earned here
         } else {
@@ -1339,16 +1344,44 @@
         };
     }
 
-    // The choices: the later change wins; a device that never chose takes the account's.
-    // Two devices that never chose keep their own (no device ever flips the other's look
-    // back); the same time with another value here: the value saved online with it wins.
+    // Has the online row changed since this device last synced it?
+    function changedOnline(onlineRow, snap) {
+        if (!onlineRow) return Boolean(snap);
+        if (!snap) return true;
+        return onlineRow.e !== snap.e || num(onlineRow.t) !== num(snap.t) || fingerprint(stable(onlineRow.d)) !== snap.h;
+    }
+
+    // The times of choices, written into what is stored now (two rows may change times in
+    // one merge: neither writes over the other's)
+    function storeTimes(changes) {
+        const names = Object.keys(changes);
+        if (!names.length) return;
+        const times = readTimes();
+        names.forEach(function (name) { times[name] = changes[name]; });
+        A.storage.set(STORE.times, times);
+    }
+
+    // The choices. What changed since the last sync decides, not the clocks of two devices
+    // (a device whose clock is a day fast would win every time for a day, one whose clock
+    // is behind could never change a choice):
+    // - chosen here and not on another device: this device's choice wins, with a time after
+    //   the one online;
+    // - chosen only on another device: that choice is taken;
+    // - chosen on both, or a first sync here: the later change wins; a device that never
+    //   chose takes the account's. Two devices that never chose keep their own (no device
+    //   ever flips the other's look back); the same time with another value here: the
+    //   value saved online with it wins.
     function combinePrefs(onlineRow, snap, foreign, foreignAt) {
         const cloud = onlineRow && isObject(onlineRow.d) ? onlineRow.d : {};
+        const synced = snap && snap.s !== undefined && isObject(parse(snap.s)) ? parse(snap.s) : null;
         const times = readTimes();
         const mine = readChoices();
         const data = Object.assign({}, cloud);
         const sets = {};
-        let timesChanged = false;
+        const newTimes = {};
+        function setTime(name, time) {
+            if (num(times[name]) !== time) newTimes[name] = time;
+        }
         CHOICES.forEach(function (choice) {
             const name = choice.name;
             const value = mine[name];
@@ -1359,15 +1392,31 @@
                 return;
             }
             const thereTime = num(there.t);
+            if (synced) {
+                const was = isObject(synced[name]) ? synced[name] : null;
+                const changedThere = !was || !sameValue(was.v, there.v) || num(was.t) !== thereTime;
+                const changedHere = value !== null && num(times[name]) > 0 && num(times[name]) !== (was ? num(was.t) : 0);
+                if (changedHere && !changedThere) {
+                    if (sameValue(value, there.v)) setTime(name, thereTime);
+                    else {
+                        const time = Math.max(localTime, thereTime + 1);
+                        data[name] = { v: value, t: time };
+                        setTime(name, time);
+                    }
+                    return;
+                }
+                if (changedThere && !changedHere) {
+                    if (!sameValue(value, there.v)) sets[name] = there.v;
+                    setTime(name, thereTime);
+                    return;
+                }
+            }
             if (value === null || thereTime > localTime || (thereTime > 0 && thereTime === localTime && !sameValue(value, there.v))) {
                 if (!sameValue(value, there.v)) sets[name] = there.v;
-                if (num(times[name]) !== num(there.t)) {
-                    times[name] = num(there.t);
-                    timesChanged = true;
-                }
+                setTime(name, thereTime);
                 return;
             }
-            if (localTime > num(there.t) && !sameValue(value, there.v)) data[name] = { v: value, t: localTime };
+            if (localTime > thereTime && !sameValue(value, there.v)) data[name] = { v: value, t: localTime };
         });
         return {
             changed: Object.keys(sets).length > 0,
@@ -1379,8 +1428,8 @@
                     if (!has(heldChoices, choice.name)) heldChoices[choice.name] = { before: before };
                     heldChoices[choice.name].after = sets[choice.name];
                 });
-                if (timesChanged) A.storage.set(STORE.times, times);
             },
+            store: function () { storeTimes(newTimes); },
             data: data,
             epoch: Math.max(onlineRow ? onlineRow.e : 0, 1),
             time: 0,
@@ -1558,6 +1607,7 @@
                     applyingWrites(result.apply);
                     if (changed.indexOf(row.key) === -1) changed.push(row.key);
                 }
+                if (result.store) result.store();       // (the times of choices)
                 const value = envelope(result);
                 const local = localPrints(row);
                 if (sameAsOnline(onlineRow, value)) {
