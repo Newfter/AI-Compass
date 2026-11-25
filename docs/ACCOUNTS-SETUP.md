@@ -122,7 +122,7 @@ month, 500 MB of data (one visitor's progress is a few kilobytes), and the quest
 | --- | --- | --- |
 | `auth.users` (managed by Supabase) | the Google account's email address and name | only the owner in the Supabase dashboard; never shown on the site |
 | `profiles` | the nickname | the nickname is public (the leaderboard); nothing else |
-| `user_progress` | the same progress the browser saves: one row for each kind of progress (finished lessons, quiz bests, flashcards, My Compass, My path, the research notebook...), one row `lab.challenges`, one row `prefs` (the look, the language, the design, calm motion, the text sizes) and one row `bundle` with every other personal key (the teachers' kit, the timed quiz, the tools' last inputs...). At most 100 rows of 256 KB each | only that person |
+| `user_progress` | the same progress the browser saves: one row for each kind of progress (finished lessons, quiz bests, flashcards, My Compass, My path, the research notebook...), one row `lab.challenges`, one row `prefs` (the look, the language, the design, calm motion, the text sizes), one row `lab.draw.data` (the drawings of Lab → "Draw and teach") and one row `bundle` with every other personal key (the teachers' kit, the timed quiz, the tools' last inputs...). A value bigger than 150 KB is kept in parts: rows `<row>.part-<id>` of at most 150 KB each, listed by the row itself (a full research notebook in Russian, 2.7 MB, is 19 parts). At most 100 rows of 256 KB each: a person with a full notebook and all the drawings has about 45 (a save adds one or two parts for a moment) | only that person |
 | `events` | the diary of results shown in My Compass | only that person |
 | `challenge_attempts` | every Knowledge Challenge attempt: the questions, the answers, the score, the time | only that person; the leaderboard shows each player's best score, time and nickname |
 | `challenge_questions` | the questions with their answers | nobody from the site: the answers and explanations are only sent back after an attempt is finished |
@@ -146,14 +146,20 @@ Nothing needs to be set up for this: `supabase/schema.sql` already has the table
   each. The look, the language and the other choices follow the latest change (a new device
   takes the account's choices first). Any other key goes into the `bundle` row: gaps are filled
   both ways, and a key changed on this device since the last save wins.
+- **Big progress.** A row holds at most 256 KB, so a value bigger than 150 KB (a big research
+  notebook, the drawings of "Draw and teach") is saved in parts. The parts go first, the row that
+  lists them last, and only if it is still what the device last saw: another device reads either
+  the old value or the new one, whole, never a mix. A change sends only the parts it changed.
+  Whatever still cannot be saved online (the database refuses it, or the 100 rows are used up) is
+  named in Settings → Account as "only on this device".
 - **A reset stays a reset.** "Reset progress", "Start over", a deleted note or a mistake cleared
   from "My mistakes" while signed in is sent as a deliberate removal (a higher "epoch" on the
   row). Another device that still has the old progress does not bring it back: it keeps the
   online copy plus only what it did itself since its last save.
 - **Signing out asks.** "Remove my progress from this device" is ticked by default (the safe
   choice on a shared or school computer: the next person starts fresh, and everything comes
-  back on the next sign-in). The removal waits until everything is saved online: offline, the
-  person stays signed in and is told why. Unticked, the progress stays on the device; another
+  back on the next sign-in). The removal waits until everything is saved online: offline, or
+  while something could not be saved online, the person stays signed in and is told why. Unticked, the progress stays on the device; another
   person who then signs in on that device does not get it in their account.
 
 ## Counting visits, and the numbers page

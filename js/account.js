@@ -36,7 +36,23 @@
        sizes: the latest change wins (each choice keeps the time it was made);
      - "bundle": every other personal key, also of features added later:
        gaps are filled both ways; a key changed on this device since the last
-       sync wins, one changed only on the other device is taken from there.
+       sync wins, one changed only on the other device is taken from there;
+     - "lab.draw.data": the drawings of Lab → "Draw and teach", kept the same
+       way in a row of their own (200 KB when the lab is full).
+   A row holds at most 150 KB (the database takes 256 KB a row). A bigger
+   value (a full research notebook: 1.7 MB, in Russian 2.7 MB) is kept in
+   parts (section 3): its text in pieces of at most 150 KB, each in a row
+   "<row>.part-<id>" whose id is made from the piece's text, and the row
+   itself, which lists the ids in order, the length of the whole text and its
+   fingerprint. The pieces go first, then the row, only if it is still as last
+   seen: that write is the moment the new value replaces the old one, so a
+   value is only ever read whole (a reader checks every piece and the whole),
+   and two devices that save at the same moment never mix their parts. The
+   pieces nobody lists any more are deleted after. The text is cut from its
+   end, so a new note changes only the first piece. What still cannot be saved
+   online (more than 24 parts, or refused by the database) stays on this
+   device: Settings → Account names it, and "Remove my progress from this
+   device" then does not sign out (it would be lost for good).
    The browser remembers what each row was when it was last synced
    ("account.synced"). That is how it knows what changed here since, and
    what changed online since (writes say "only if the row is still as I last
@@ -90,10 +106,12 @@
     const SYNC_LONGEST = 30000;                 // ms: a stream of changes is saved at least this often
     const RETRY_DELAYS = [5000, 20000, 60000, 180000];   // ms: a failed save is tried again after these
     const ROUNDS = 3;                           // a row that changed online meanwhile: read, merge, write again
-    const PUSH_MAX_CHARS = 200000;              // a row longer than this stays on this device (the database takes 256 KB)
-    const BUNDLE_ITEM_MAX = 50000;              // a key of the "bundle" longer than this stays on this device
+    const ROW_MAX_BYTES = 150000;               // a value bigger than this in the database (it takes 256 KB a row) is kept in parts...
+    const PART_BYTES = 150000;                  // ...of at most this many bytes (UTF-8) each, every part a row of its own
+    const MAX_PARTS = 24;                       // parts of one value, at most (3.6 MB): a bigger value stays on this device
+    const ORPHAN_AGE = 3600000;                 // ms: a part of no row, this much older than the newest row online, is left over
     const SNAPSHOT_TEXT_MAX = 100000;           // longer synced texts are remembered as a fingerprint only
-    const KEEPALIVE_MAX = 60000;                // characters sent while the page closes (browsers allow 64 KB)
+    const KEEPALIVE_MAX = 60000;                // bytes sent while the page closes (browsers allow 64 KB)
     const RELOAD_GUARD = 30000;                 // ms: the page reloads at most once per this, after a merge
     const STATUS_TICK = 30000;                  // ms: "saved 3 minutes ago" is redrawn this often
     const EVENT_BATCH = 2000;                   // ms: results that come together are sent in one request
@@ -139,6 +157,12 @@
     // things in progress, the last tab or command used, Compass Bot's chat
     const DEVICE_ONLY = /^(?:account\.|assistant\.|challenge\.attempt$|invite$|pro\.timer$|research\.tab$|lab\.last$|palette\.recent$|probe$|effects\.calm$)/;
     const CHALLENGES_KEY = /^lab\.([a-z0-9][a-z0-9-]{0,40})\.challenges$/;
+    // Keys kept in a row of their own, the way the bundle keeps its keys: too big to go with
+    // the others (the drawings of Lab → "Draw and teach" are 200 KB when the lab is full)
+    const OWN_ROWS = ["lab.draw.data"];
+    // A part of a value kept in parts (section 3): "<row>.part-<id>", the id made from its text
+    const PART_KEY = /^([a-z][a-z0-9._-]*)\.part-([a-z0-9]{1,30})$/;
+    const KEY_PATTERN = /^[a-z][a-z0-9._-]{0,63}$/;    // a key the database takes (supabase/schema.sql)
     // What stays on the device after "Remove my progress from this device": the look
     // and the language (not progress; the next person starts from the same screen)
     const SEED_KEYS = ["language", "theme", "palette", "settings", "motion.calm"];
@@ -211,6 +235,90 @@
 
     function printOf(value) {
         return fingerprint(stable(value));
+    }
+
+    // The bytes of a text in UTF-8, as the database counts them (a Russian letter takes 2)
+    function utf8Length(text) {
+        let n = 0;
+        for (let i = 0; i < text.length; i++) {
+            const code = text.charCodeAt(i);
+            if (code < 0x80) n += 1;
+            else if (code < 0x800) n += 2;
+            else if (code >= 0xd800 && code <= 0xdbff && i + 1 < text.length) {
+                const next = text.charCodeAt(i + 1);
+                if (next >= 0xdc00 && next <= 0xdfff) {
+                    n += 4;
+                    i += 1;
+                } else n += 3;
+            } else n += 3;
+        }
+        return n;
+    }
+
+    // The size of a value in the database (jsonb), a little over what it really is: there a
+    // number or a name takes more room than in the JSON text (measured with PostgreSQL 16:
+    // a list of 20,000 single digits, 40 KB as text, is 240 KB there)
+    function jsonbBytes(value) {
+        if (typeof value === "string") return utf8Length(value);
+        if (typeof value === "number") return 9 + 2 * Math.ceil(String(Math.abs(value)).replace(/[^0-9]/g, "").length / 4);
+        if (Array.isArray(value)) {
+            let n = 7;
+            for (let i = 0; i < value.length; i++) n += 4 + jsonbBytes(value[i] === undefined ? null : value[i]);
+            return n;
+        }
+        if (isObject(value)) {
+            let n = 7;
+            Object.keys(value).forEach(function (key) {
+                if (value[key] !== undefined) n += 8 + utf8Length(key) + jsonbBytes(value[key]);
+            });
+            return n;
+        }
+        return 0;
+    }
+
+    function jsonbSize(value) {
+        return 4 + jsonbBytes(value);
+    }
+
+    // A long text in pieces of at most PART_BYTES bytes, cut from its end: a change near the
+    // start (a new note comes first in the notebook) leaves every later piece as it was.
+    // Never between the two halves of an emoji
+    function pieces(text) {
+        const out = [];
+        let end = text.length;
+        let bytes = 0;
+        let i = text.length;
+        while (i > 0) {
+            let start = i - 1;
+            const code = text.charCodeAt(start);
+            let size = code < 0x80 ? 1 : code < 0x800 ? 2 : 3;
+            if (code >= 0xdc00 && code <= 0xdfff && start > 0) {
+                const high = text.charCodeAt(start - 1);
+                if (high >= 0xd800 && high <= 0xdbff) {
+                    start -= 1;
+                    size = 4;
+                }
+            }
+            if (bytes + size > PART_BYTES) {
+                out.unshift(text.slice(i, end));
+                end = i;
+                bytes = 0;
+            }
+            bytes += size;
+            i = start;
+        }
+        out.unshift(text.slice(0, end));
+        return out;
+    }
+
+    // A piece's name: two fingerprints of its text (106 bits: two different texts never get
+    // the same name, so a piece that is online already need not be sent again)
+    function pieceId(text) {
+        return ("00000000000" + fingerprint(text)).slice(-11) + ("00000000000" + fingerprint(text + "|")).slice(-11);
+    }
+
+    function partName(rowKey, id) {
+        return rowKey + ".part-" + id;
     }
 
     function newId() {
@@ -337,14 +445,14 @@
     }
 
     // One request to the table user_progress (PostgREST). Resolves { status, data }
-    function rest(method, query, body, accessToken, keepalive) {
+    function rest(method, query, body, accessToken, keepalive, prefer) {
         const options = {
             method: method,
             headers: {
                 apikey: ANON_KEY,
                 Authorization: "Bearer " + accessToken,
                 "Content-Type": "application/json",
-                Prefer: "return=representation"
+                Prefer: prefer || "return=representation"
             },
             cache: "no-store",
             keepalive: Boolean(keepalive)
@@ -362,25 +470,292 @@
         return Object.assign(new Error("http_" + response.status + (code ? "_" + code : "")), { status: response.status, code: code });
     }
 
-    // An online row as this file reads it: { e, d, t, r, updated_at }
+    // The parts a row lists (a value kept in parts): { l: [ids, in order], n: the length of
+    // the whole text, h: its fingerprint, z: the length of each piece (or null) }, or null
+    function splitOf(value) {
+        const p = isObject(value) ? value.p : null;
+        if (!isObject(p) || !Array.isArray(p.l) || !p.l.length || p.l.length > 100 || !whole(p.n) || typeof p.h !== "string") return null;
+        if (!p.l.every(function (id) { return typeof id === "string" && /^[a-z0-9]{1,30}$/.test(id); })) return null;
+        const z = Array.isArray(p.z) && p.z.length === p.l.length && p.z.every(whole) &&
+            p.z.reduce(function (sum, size) { return sum + size; }, 0) === p.n ? p.z.slice() : null;
+        return { l: p.l.slice(), n: p.n, h: p.h, z: z };
+    }
+
+    // An online row as this file reads it: { e, d, t, r, updated_at, parts: [ids of its parts] }
     function readEnvelope(row) {
         const value = row.value;
         if (isObject(value) && value.v === 2 && whole(value.e)) {
-            return { e: value.e, d: value.d === undefined ? null : value.d, t: num(value.t), r: typeof value.r === "string" ? value.r : "", updated_at: row.updated_at };
+            const split = splitOf(value);
+            const out = { e: value.e, d: value.d === undefined || split ? null : value.d, t: num(value.t), r: typeof value.r === "string" ? value.r : "", updated_at: row.updated_at, parts: split ? split.l : [] };
+            if (split) out.split = split;       // (d is put together from the parts: assemble)
+            return out;
         }
-        return { e: 0, d: value, t: 0, r: "", updated_at: row.updated_at };     // a row written before envelopes
+        return { e: 0, d: value, t: 0, r: "", updated_at: row.updated_at, parts: [] };     // a row written before envelopes
     }
 
-    // Reads rows (keys: some of them; none: all). Resolves { key: row or null }
-    function readRows(accessToken, keys) {
-        let query = "?select=key,value,updated_at";
-        if (keys) query += "&key=in." + encodeURIComponent("(" + keys.map(function (key) { return '"' + key + '"'; }).join(",") + ")");
+    function keyList(keys) {
+        return encodeURIComponent("(" + keys.map(function (key) { return '"' + key + '"'; }).join(",") + ")");
+    }
+
+    // Rows as they are online: [{ key, value, updated_at }] (keys: some of them; none: all)
+    function getRows(accessToken, keys, columns) {
+        let query = "?select=" + (columns || "key,value,updated_at");
+        if (keys) query += "&key=in." + keyList(keys);
         return rest("GET", query, undefined, accessToken, false).then(function (response) {
             if (response.status !== 200 || !Array.isArray(response.data)) throw failed(response);
-            const out = {};
-            if (keys) keys.forEach(function (key) { out[key] = null; });
-            response.data.forEach(function (row) { out[row.key] = readEnvelope(row); });
-            return out;
+            return response.data.filter(function (row) { return isObject(row) && typeof row.key === "string"; });
+        });
+    }
+
+    // ----- A value too big for one row: in parts -----
+    // A row holds at most ROW_MAX_BYTES. A bigger value (a full research notebook: 1.7 MB, in
+    // Russian 2.7 MB) is kept in parts: its JSON text in pieces (pieces: cut from the end),
+    // each in a row "<row>.part-<id>" whose name comes from its text, and the row itself,
+    // which lists them in order. A save writes the parts that are not online yet, then the
+    // row, only if it is still as last seen (writeRow): so a value is only ever read whole,
+    // and two devices that save at the same moment never mix their parts (the second one
+    // reads again and merges, like with any row). The parts nobody lists any more are
+    // deleted after, but only those older than the row that replaced them: a part another
+    // device is writing at this moment is newer, and stays.
+    const partCache = {};       // id -> the piece's text: known here, need not be read again
+    const pieceRows = {};       // row -> the ids it lists online, as last read or written here
+    let partsOnline = {};       // row -> the ids of every part of it online (the last full read)
+
+    // Notes what rows list online (lists: { row: ids, or none for a row of one piece or
+    // none there }; all: every row was read), and keeps in memory only the pieces a row
+    // lists: a long visit with a big notebook does not pile up old pieces
+    function keepPieces(lists, all) {
+        if (all) Object.keys(pieceRows).forEach(function (key) { delete pieceRows[key]; });
+        Object.keys(lists).forEach(function (key) {
+            if (lists[key] && lists[key].length) pieceRows[key] = lists[key].slice();
+            else delete pieceRows[key];
+        });
+        const listed = {};
+        Object.keys(pieceRows).forEach(function (key) { pieceRows[key].forEach(function (id) { listed[id] = true; }); });
+        Object.keys(partCache).forEach(function (id) { if (!listed[id]) delete partCache[id]; });
+    }
+
+    function rowByKey(key) {
+        return allRows().filter(function (row) { return row.key === key; })[0] || null;
+    }
+
+    // How a value is written: one row, or a row that lists its parts (seen: the row online)
+    function layout(value, seen) {
+        if (jsonbSize(value) <= ROW_MAX_BYTES) return { head: value, ids: [], pieces: [] };
+        const text = stable(value.d);
+        const list = keptPieces(text, seen) || pieces(text);
+        const head = { v: 2, e: value.e, p: { l: list.map(pieceId), n: text.length, h: fingerprint(text), z: list.map(function (piece) { return piece.length; }) } };
+        if (value.t) head.t = value.t;
+        if (value.r) head.r = value.r;
+        return { head: head, ids: head.p.l, pieces: list };
+    }
+
+    // The pieces of the row online that are still there, unchanged, at the start of the text
+    // and at its end, stay; only the text between them is cut again, together with the piece
+    // after it (or before it, at the end), so that small pieces do not pile up. A note added
+    // at the top, or changed or deleted in the middle of a big notebook, then makes one or two
+    // new pieces, not twenty. Should the pieces still become too many, all are cut again
+    function keptPieces(text, seen) {
+        const ids = seen && Array.isArray(seen.parts) ? seen.parts : [];
+        if (!ids.length || !ids.every(function (id) { return has(partCache, id); })) return null;
+        const old = ids.map(function (id) { return partCache[id]; });
+        let first = 0;
+        let start = 0;
+        while (first < old.length && text.startsWith(old[first], start)) {
+            start += old[first].length;
+            first += 1;
+        }
+        let last = old.length;
+        let end = text.length;
+        while (last > first && end - old[last - 1].length >= start && text.slice(end - old[last - 1].length, end) === old[last - 1]) {
+            end -= old[last - 1].length;
+            last -= 1;
+        }
+        if (start < end && last < old.length) {
+            end += old[last].length;
+            last += 1;
+        } else if (start < end && first > 0) {
+            first -= 1;
+            start -= old[first].length;
+        }
+        const list = old.slice(0, first).concat(start < end ? pieces(text.slice(start, end)) : [], old.slice(last));
+        if (list.join("") !== text || list.length > Math.min(pieces(text).length + 2, MAX_PARTS)) return null;
+        return list.every(function (piece) { return utf8Length(piece) <= PART_BYTES; }) ? list : null;
+    }
+
+    // The pieces this device has of a row (split: how the row online is cut): they need not
+    // be read. Its own copy is cut the way the row online is, from the start and from the end
+    // (a piece counts only when its text gives its id), and the way it would cut it itself
+    function knowPieces(key, split) {
+        const row = rowByKey(key);
+        const value = row ? A.util.attempt(function () { return row.read(); }, undefined) : undefined;
+        if (value === undefined || value === null) return;
+        const text = stable(value);
+        pieces(text).forEach(function (piece) { partCache[pieceId(piece)] = piece; });
+        if (!split || !split.z) return;
+        function match(i, from, to) {
+            if (from < 0 || to > text.length || has(partCache, split.l[i])) return has(partCache, split.l[i]);
+            const piece = text.slice(from, to);
+            if (pieceId(piece) !== split.l[i]) return false;
+            partCache[split.l[i]] = piece;
+            return true;
+        }
+        let at = 0;
+        for (let i = 0; i < split.l.length && match(i, at, at + split.z[i]); i++) at += split.z[i];
+        at = text.length;
+        for (let i = split.l.length - 1; i >= 0 && match(i, at - split.z[i], at); i--) at -= split.z[i];
+    }
+
+    // Puts together the rows kept in parts (rows: { key: row or null }), reading the parts this
+    // device does not know. A part missing: the row is read again (the value was replaced
+    // meanwhile, and its old parts deleted). Still not whole, it is "broken" and is never
+    // taken for data: "stuck" when it is the same row as before (its parts are gone for good:
+    // the next write puts this device's copy there, all of its parts sent again), else it
+    // kept changing (read again later). Its parts stay listed: none of them is taken for
+    // left over
+    function markBroken(row, stuck) {
+        row.broken = true;
+        row.stuck = stuck;
+        delete row.split;
+    }
+
+    function assemble(accessToken, rows, round, before) {
+        const split = Object.keys(rows).filter(function (key) { return rows[key] && rows[key].split && rowByKey(key); });
+        if (!split.length) return Promise.resolve(rows);
+        const need = [];
+        split.forEach(function (key) {
+            if (!round) knowPieces(key, rows[key].split);
+            rows[key].split.l.forEach(function (id) {
+                if (!has(partCache, id) && need.indexOf(partName(key, id)) === -1) need.push(partName(key, id));
+            });
+        });
+        return (need.length ? getRows(accessToken, need) : Promise.resolve([])).then(function (found) {
+            found.forEach(function (part) {
+                const match = PART_KEY.exec(part.key);
+                const text = isObject(part.value) && typeof part.value.c === "string" ? part.value.c : null;
+                if (match && text !== null && pieceId(text) === match[2]) partCache[match[2]] = text;
+            });
+            const again = split.filter(function (key) {
+                const row = rows[key];
+                if (!row.split.l.every(function (id) { return has(partCache, id); })) return true;
+                const text = row.split.l.map(function (id) { return partCache[id]; }).join("");
+                const value = text.length === row.split.n && fingerprint(text) === row.split.h ? parse(text) : undefined;
+                if (value === undefined) return true;
+                row.d = value;
+                delete row.split;
+                return false;
+            });
+            if (!again.length) return rows;
+            const moving = again.filter(function (key) {
+                if (!before || before[key] !== rows[key].updated_at) return true;
+                markBroken(rows[key], true);
+                return false;
+            });
+            if (!moving.length) return rows;
+            if (round >= 2) {
+                moving.forEach(function (key) { markBroken(rows[key], false); });
+                return rows;
+            }
+            const seen = {};
+            moving.forEach(function (key) { seen[key] = rows[key].updated_at; });
+            return getRows(accessToken, moving).then(function (fresh) {
+                moving.forEach(function (key) { rows[key] = null; });
+                fresh.forEach(function (row) { rows[row.key] = readEnvelope(row); });
+                return assemble(accessToken, rows, round + 1, seen);
+            });
+        });
+    }
+
+    // Deletes parts of a row that are older than before (the time of the row that replaced
+    // them). A part that could not be deleted now goes at a later save
+    function dropParts(accessToken, names, before) {
+        if (!names.length || !before) return Promise.resolve();
+        return rest("DELETE", "?key=in." + keyList(names) + "&updated_at=lt." + encodeURIComponent(before), undefined, accessToken, false, "return=minimal")
+            .then(function () {}, function () {});
+    }
+
+    // After a full read: the parts no row lists (replaced, or left by a save that did not
+    // finish) go when they are older than their row; the parts of no row at all (the first
+    // save of a row that did not finish) when they are an hour older than the newest row
+    // online (the times are the database's own: the clock of this device plays no part)
+    function sweepParts(accessToken, listing, rows) {
+        const gone = {};
+        let newest = 0;
+        listing.forEach(function (item) { newest = Math.max(newest, Date.parse(item.updated_at) || 0); });
+        listing.forEach(function (item) {
+            const match = PART_KEY.exec(item.key);
+            if (!match) return;
+            const head = rows[match[1]];
+            if (head && head.parts.indexOf(match[2]) !== -1) return;
+            const before = head ? head.updated_at : newest > ORPHAN_AGE ? new Date(newest - ORPHAN_AGE).toISOString() : "";
+            if (before) (gone[before] = gone[before] || []).push(item.key);
+        });
+        return Promise.all(Object.keys(gone).map(function (before) { return dropParts(accessToken, gone[before], before); }));
+    }
+
+    // Reads rows (keys: some of them; none: all). Resolves { key: row or null }, the values
+    // kept in parts put together. A full read also deletes the parts nobody needs any more
+    function readRows(accessToken, keys) {
+        const listing = keys ? Promise.resolve(null) : getRows(accessToken, null, "key,updated_at");
+        return listing.then(function (list) {
+            const wanted = keys || list.filter(function (item) { return !PART_KEY.test(item.key); }).map(function (item) { return item.key; });
+            return (wanted.length ? getRows(accessToken, wanted) : Promise.resolve([])).then(function (found) {
+                const out = {};
+                if (keys) keys.forEach(function (key) { out[key] = null; });
+                found.forEach(function (row) { if (!PART_KEY.test(row.key)) out[row.key] = readEnvelope(row); });
+                return assemble(accessToken, out, 0);
+            }).then(function (out) {
+                const lists = {};
+                Object.keys(out).forEach(function (key) { lists[key] = out[key] ? out[key].parts : null; });
+                keepPieces(lists, Boolean(list));
+                if (!list) return out;
+                partsOnline = {};
+                list.forEach(function (item) {
+                    const match = PART_KEY.exec(item.key);
+                    if (match) (partsOnline[match[1]] = partsOnline[match[1]] || []).push(match[2]);
+                });
+                return sweepParts(accessToken, list, out).then(function () { return out; });
+            });
+        });
+    }
+
+    // Writes the parts that are not online yet, one request each (a part is at most 150 KB):
+    // written again if it is there already (that makes it newer than any deletion planned)
+    function uploadParts(accessToken, key, list) {
+        return list.reduce(function (chain, part) {
+            return chain.then(function () {
+                return rest("POST", "?on_conflict=user_id,key", { user_id: user.id, key: partName(key, part.id), value: { v: 2, c: part.text } },
+                    accessToken, false, "resolution=merge-duplicates,return=minimal").then(function (response) {
+                    if (response.status < 200 || response.status > 299) throw failed(response);
+                });
+            });
+        }, Promise.resolve());
+    }
+
+    // Writes a row's value (shape: its layout), only if the row is still as last seen (seen).
+    // A value in parts: first the parts the row online does not list already (those stay
+    // until a newer row replaces it, and then this write is refused anyway), then the row;
+    // then the parts before go. Resolves { updated_at, parts } or { conflict: true }
+    function writeValue(accessToken, key, seen, shape) {
+        const there = seen && Array.isArray(seen.parts) ? seen.parts : [];
+        const send = [];
+        shape.ids.forEach(function (id, i) {
+            if (there.indexOf(id) === -1 && !send.some(function (part) { return part.id === id; })) send.push({ id: id, text: shape.pieces[i] });
+        });
+        return uploadParts(accessToken, key, send).then(function () {
+            return writeRow(accessToken, key, seen, shape.head, false);
+        }).then(function (answer) {
+            if (answer.conflict) return answer;
+            shape.ids.forEach(function (id, i) { partCache[id] = shape.pieces[i]; });
+            const lists = {};
+            lists[key] = shape.ids;
+            keepPieces(lists, false);
+            const old = there.concat(partsOnline[key] || []).filter(function (id, i, all) {
+                return shape.ids.indexOf(id) === -1 && all.indexOf(id) === i;
+            });
+            return dropParts(accessToken, old.map(function (id) { return partName(key, id); }), answer.updated_at).then(function () {
+                return { updated_at: answer.updated_at, parts: shape.ids };
+            });
         });
     }
 
@@ -1006,32 +1381,39 @@
     };
 
     // ----- Everything else: the bundle -----
+    // (and OWN_ROWS: a key with a row of its own, kept the same way: "lab.draw.data")
     function inBundle(key) {
         return !DEVICE_ONLY.test(key) && !has(PROGRESS, key) && !CHALLENGES_KEY.test(key) && CHOICE_KEYS.indexOf(key) === -1;
     }
 
-    function readBundle() {
+    // The keys of this device that a bundle row holds (owns: which): { key: value }
+    function readBundle(owns) {
         const out = {};
         liveKeys().forEach(function (key) {
-            if (!inBundle(key)) return;
+            if (!owns(key)) return;
             let text = null;
             try {
                 text = window.localStorage.getItem("aic:" + key);
             } catch (error) {
                 return;
             }
-            if (text === null || text.length > BUNDLE_ITEM_MAX) return;
+            if (text === null) return;
             const value = parse(text);
             if (value !== undefined) out[key] = value;
         });
         return out;
     }
 
-    const bundleRow = { key: "bundle", custom: true, read: readBundle };
+    function bundleOf(key, owns) {
+        return { key: key, custom: true, bundle: true, owns: owns, read: function () { return readBundle(owns); } };
+    }
+
+    const bundleRow = bundleOf("bundle", function (key) { return inBundle(key) && OWN_ROWS.indexOf(key) === -1; });
+    const ownRows = OWN_ROWS.map(function (name) { return bundleOf(name, function (key) { return key === name; }); });
 
     function allRows() {
         return Object.keys(PROGRESS).map(function (key) { return storageRow(key, PROGRESS[key]); })
-            .concat([challengesRow, prefsRow, bundleRow]);
+            .concat([challengesRow, prefsRow, bundleRow], ownRows);
     }
 
     // The row a key of this device belongs to, and the item it is in that row
@@ -1040,7 +1422,7 @@
         const lab = CHALLENGES_KEY.exec(key);
         if (lab) return { row: challengesRow.key, item: lab[1] };
         if (CHOICE_KEYS.indexOf(key) !== -1 || DEVICE_ONLY.test(key)) return null;
-        return { row: bundleRow.key, item: key };
+        return { row: OWN_ROWS.indexOf(key) !== -1 ? key : bundleRow.key, item: key };
     }
 
     /* ---------- 6. Noticing changes on this device ----------
@@ -1325,10 +1707,9 @@
                 const text = stable(value);
                 if (text.length <= SNAPSHOT_TEXT_MAX) entry.x = text;
                 else entry.xh = fingerprint(text);
-                if (row.key === bundleRow.key) {
-                    const now = readBundle();
+                if (row.bundle) {
                     entry.xlh = {};
-                    Object.keys(now).forEach(function (key) { entry.xlh[key] = printOf(now[key]); });
+                    Object.keys(value).forEach(function (key) { entry.xlh[key] = printOf(value[key]); });
                 }
             }
             if (entry.h || entry.x !== undefined || entry.xh !== undefined) snapshot.rows[row.key] = entry;
@@ -1515,9 +1896,13 @@
 
     // Every other key: gaps are filled both ways; a key changed here since the last
     // sync wins, one changed only online is taken; removed keys go on both sides
-    function combineBundle(onlineRow, snap, foreign, pending) {
-        const now = readBundle();
-        const cloud = onlineRow && isObject(onlineRow.d) ? onlineRow.d : {};
+    function combineBundle(row, onlineRow, snap, foreign, pending) {
+        const now = row.read();
+        const cloud = {};
+        // (only the keys of this row: one another row holds is no business of this one)
+        if (onlineRow && isObject(onlineRow.d)) {
+            Object.keys(onlineRow.d).forEach(function (key) { if (row.owns(key)) cloud[key] = onlineRow.d[key]; });
+        }
         const synced = snap && snap.s !== undefined && isObject(parse(snap.s)) ? parse(snap.s) : null;
         const prints = snap && isObject(snap.lh) ? snap.lh : null;
         const before = foreign && foreign.s !== undefined && isObject(parse(foreign.s)) ? parse(foreign.s) : null;
@@ -1557,14 +1942,26 @@
             else if (snap && changedHere) data[key] = now[key];
             // (a first sync and both differ: each side keeps its own)
         });
-        // The row must fit in the database: the biggest keys stay on this device
-        while (stable(data).length > PUSH_MAX_CHARS) {
+        // The row must fit in the database (in parts: MAX_PARTS at most). The biggest keys
+        // changed here then stay only on this device (Settings → Account names them); a key
+        // that is online already keeps its online copy there
+        const dropped = [];
+        const most = (MAX_PARTS - 1) * PART_BYTES;
+        while (utf8Length(stable(data)) > most) {
             let biggest = "";
+            let size = 0;
             Object.keys(data).forEach(function (key) {
-                if (!biggest || stable(data[key]).length > stable(data[biggest]).length) biggest = key;
+                if (has(cloud, key) && sameValue(cloud[key], data[key])) return;
+                const bytes = utf8Length(stable(data[key]));
+                if (bytes > size) {
+                    biggest = key;
+                    size = bytes;
+                }
             });
             if (!biggest) break;
-            delete data[biggest];
+            dropped.push(biggest);
+            if (has(cloud, biggest)) data[biggest] = cloud[biggest];
+            else delete data[biggest];
         }
         const base = Math.max(onlineRow ? onlineRow.e : 0, snap ? snap.e : 0);
         return {
@@ -1573,6 +1970,7 @@
                 Object.keys(sets).forEach(function (key) { A.storage.set(key, sets[key]); });
                 removes.forEach(function (key) { A.storage.remove(key); });
             },
+            dropped: dropped,
             data: data,
             epoch: pending ? base + 1 : Math.max(base, 1),
             time: 0,
@@ -1600,7 +1998,7 @@
         // (when they signed out with "keep"; else when they last synced)
         const foreignAt = foreign ? num(snapshot.left || snapshot.at) : 0;
         if (row.key === prefsRow.key) return combinePrefs(onlineRow, snap, foreign, foreignAt);
-        if (row.key === bundleRow.key) return combineBundle(onlineRow, snap, foreign, pending);
+        if (row.bundle) return combineBundle(row, onlineRow, snap, foreign, pending);
         const result = combine(row, onlineRow, snap, foreign, foreignAt, pending);
         result.apply = function () { row.write(result.local); };
         result.pending = pending;
@@ -1623,23 +2021,29 @@
     // What this device remembers of a row after a sync
     // What this device has of a row, as fingerprints: taken when the value to sync is made,
     // so that a change made while it is on its way still counts as a change
-    function localPrints(row) {
-        const out = { l: printOf(row.read()) };
-        if (row.key === bundleRow.key) {
-            const now = readBundle();
+    // (dropped: keys of a bundle row that stay only here: they count as changed here, so
+    // the next save tries them again)
+    function localPrints(row, dropped) {
+        const value = row.read();
+        const out = { l: printOf(value) };
+        if (row.bundle) {
             out.lh = {};
-            Object.keys(now).forEach(function (key) { out.lh[key] = printOf(now[key]); });
+            Object.keys(value).forEach(function (key) {
+                if (!dropped || dropped.indexOf(key) === -1) out.lh[key] = printOf(value[key]);
+            });
         }
         return out;
     }
 
-    function remember(snapshot, row, value, updatedAt, local) {
+    // (parts: the ids of the parts the row online lists, for a value kept in parts)
+    function remember(snapshot, row, value, updatedAt, local, parts) {
         const text = stable(value.d);
         const entry = { e: value.e, u: updatedAt, h: fingerprint(text), l: local.l };
         if (text.length <= SNAPSHOT_TEXT_MAX) entry.s = text;
         if (value.t) entry.t = value.t;
         if (value.r) entry.r = value.r;
         if (local.lh) entry.lh = local.lh;
+        if (parts && parts.length) entry.p = parts.slice();
         snapshot.rows[row.key] = entry;
     }
 
@@ -1648,7 +2052,7 @@
     function assumedOnline(snap) {
         if (!snap) return null;
         if (snap.s === undefined || !snap.u) return undefined;
-        return { e: snap.e, d: parse(snap.s), t: num(snap.t), r: snap.r || "", updated_at: snap.u };
+        return { e: snap.e, d: parse(snap.s), t: num(snap.t), r: snap.r || "", updated_at: snap.u, parts: Array.isArray(snap.p) ? snap.p : [] };
     }
 
     // The rows that changed on this device since they were last synced
@@ -1678,14 +2082,39 @@
             // Every row is merged first: a snapshot of the person signed in here before is
             // used for that (what they left behind), then forgotten
             const results = list.map(function (row) {
-                const onlineRow = has(rowsKnown, row.key) ? rowsKnown[row.key] : assumedOnline(snapshot.owner === user.id ? snapshot.rows[row.key] : undefined);
-                return { row: row, onlineRow: onlineRow || null, result: combineRow(row, onlineRow || null, snapshot) };
+                let onlineRow = (has(rowsKnown, row.key) ? rowsKnown[row.key] : assumedOnline(snapshot.owner === user.id ? snapshot.rows[row.key] : undefined)) || null;
+                // A key with a row of its own was kept in the bundle by the earlier version of
+                // this file: while its own row is not online, the bundle's copy counts as it
+                // (the bundle itself keeps it no more)
+                const bundle = rowsKnown[bundleRow.key];
+                if (!onlineRow && has(rowsKnown, row.key) && OWN_ROWS.indexOf(row.key) !== -1 && bundle && !bundle.broken &&
+                    isObject(bundle.d) && has(bundle.d, row.key)) {
+                    onlineRow = { e: 0, d: {}, t: 0, r: "", updated_at: "", parts: [] };
+                    onlineRow.d[row.key] = bundle.d[row.key];
+                }
+                // A row online that could not be read whole is never taken for data. One that
+                // kept changing while it was read is read again (like a row that changed
+                // online); one whose parts are gone for good gets this device's copy (nothing
+                // of it can be read anyway; its epoch stays, so the other devices add theirs)
+                if (onlineRow && onlineRow.broken && !onlineRow.stuck) return { row: row, onlineRow: onlineRow, result: null };
+                const result = combineRow(row, onlineRow && onlineRow.broken ? null : onlineRow, snapshot);
+                if (onlineRow && onlineRow.broken) {
+                    result.epoch = Math.max(result.epoch, onlineRow.e);
+                    if (!result.reset && onlineRow.r) result.reset = onlineRow.r;
+                }
+                return { row: row, onlineRow: onlineRow, result: result };
             });
+            const reread = [];
             if (snapshot.owner !== user.id) snapshot = { v: 2, owner: user.id, at: 0, rows: {} };
             results.forEach(function (item) {
                 const row = item.row;
                 const onlineRow = item.onlineRow;
                 const result = item.result;
+                delete localOnly[row.key];
+                if (!result) {
+                    reread.push(row);
+                    return;
+                }
                 if (result.changed) {
                     // (what the feature holds in memory now differs from what is saved)
                     if (has(PROGRESS, row.key)) holdBase(row.key, row.read());
@@ -1693,45 +2122,66 @@
                     if (changed.indexOf(row.key) === -1) changed.push(row.key);
                 }
                 if (result.store) result.store();       // (the times of choices)
+                if (result.dropped && result.dropped.length) localOnly[row.key] = "big";
                 const value = envelope(result);
-                const local = localPrints(row);
+                const local = localPrints(row, result.dropped);
                 if (sameAsOnline(onlineRow, value)) {
-                    if (onlineRow && onlineRow.updated_at) remember(snapshot, row, value, onlineRow.updated_at, local);
+                    if (onlineRow && onlineRow.updated_at) remember(snapshot, row, value, onlineRow.updated_at, local, onlineRow.parts);
                     else if (!onlineRow) delete snapshot.rows[row.key];
                     if (result.pending) clearPending(row.key, result.pending.id);
                     return;
                 }
                 if (!onlineRow && emptyData(value.d)) return;            // nothing to keep online yet
-                if (stable(value).length > PUSH_MAX_CHARS) return;      // too big: it stays on this device
-                if (refused[row.key] === printOf(value)) return;        // the database said no to this very value
-                plan.push({ row: row, onlineRow: onlineRow, value: value, pending: result.pending, local: local });
+                // (a row whose parts are gone gets all of its parts again)
+                const seen = onlineRow && onlineRow.broken ? { updated_at: onlineRow.updated_at, parts: [] } : onlineRow;
+                const shape = layout(value, seen);
+                if (shape.ids.length > MAX_PARTS || (shape.ids.length && !KEY_PATTERN.test(partName(row.key, shape.ids[0])))) {
+                    localOnly[row.key] = "big";                         // too big even in parts: it stays on this device
+                    return;
+                }
+                if (refused[row.key] === printOf(value)) {              // the database said no to this very value
+                    localOnly[row.key] = "refused";
+                    return;
+                }
+                plan.push({ row: row, seen: seen, value: value, shape: shape, pending: result.pending, local: local });
             });
             snapshot.owner = user.id;
             writeSnapshot(snapshot);
+            // (the values kept in parts go one after the other: the new parts of two values
+            // never count against the 100 rows a person has at the same time)
+            let inParts = Promise.resolve();
             return Promise.all(plan.map(function (step) {
-                return writeRow(accessToken, step.row.key, step.onlineRow, step.value, false).then(function (answer) {
-                    return Object.assign(step, answer);
-                }, function (error) {
-                    return Object.assign(step, { error: error });
-                });
+                function write() {
+                    return writeValue(accessToken, step.row.key, step.seen, step.shape).then(function (answer) {
+                        return Object.assign(step, answer);
+                    }, function (error) {
+                        return Object.assign(step, { error: error });
+                    });
+                }
+                if (!step.shape.ids.length) return write();
+                inParts = inParts.then(write);
+                return inParts;
             })).then(function (steps) {
                 const latest = readSnapshot();
                 latest.owner = user.id;
-                const conflicts = [];
+                const conflicts = reread.slice();
                 let problem = null;
                 steps.forEach(function (step) {
                     if (step.error) {
                         // A value the database refuses (too big, too many keys) is not sent again
-                        // until it changes; any other problem is tried again later
-                        if ([400, 403, 413, 422].indexOf(step.error.status) !== -1) refused[step.row.key] = printOf(step.value);
-                        else problem = problem || step.error;
+                        // until it changes, and stays only on this device (the card says so);
+                        // any other problem is tried again later
+                        if ([400, 403, 413, 422].indexOf(step.error.status) !== -1) {
+                            refused[step.row.key] = printOf(step.value);
+                            localOnly[step.row.key] = "refused";
+                        } else problem = problem || step.error;
                         return;
                     }
                     if (step.conflict) {
                         conflicts.push(step.row);
                         return;
                     }
-                    remember(latest, step.row, step.value, step.updated_at, step.local);
+                    remember(latest, step.row, step.value, step.updated_at, step.local, step.parts);
                     if (step.pending) clearPending(step.row.key, step.pending.id);
                 });
                 latest.at = Date.now();
@@ -1747,7 +2197,14 @@
         return pass(rows, known || {});
     }
 
-    const refused = {};         // row -> the fingerprint of a value the database refused
+    const refused = {};         // row -> the fingerprint of a value the database refused (until the next full merge)
+    // row -> why it is only on this device: "big" (too big even in parts, or some keys of a
+    // bundle row) or "refused" (the database said no)
+    const localOnly = {};
+
+    function forgetLocalOnly() {
+        Object.keys(localOnly).forEach(function (key) { delete localOnly[key]; });
+    }
 
     function emptyData(data) {
         return data === null || (isObject(data) && !Object.keys(data).length);
@@ -1762,6 +2219,7 @@
     function fullSync() {
         if (!user) return Promise.resolve({ ok: false, changed: [] });
         const who = user.id;
+        Object.keys(refused).forEach(function (key) { delete refused[key]; });
         syncing += 1;
         if (saveState.status !== "ok") setSaveState("checking");
         else setSaveState("saving");
@@ -1844,11 +2302,12 @@
     function savedFine() {
         retries = 0;
         if (!user) return;
-        if (!syncing && (leaveMessage === "unsaved" || leaveMessage === "unsavedKeep")) {
+        if (!syncing && (leaveMessage === "unsaved" || leaveMessage === "unsavedKeep" ||
+            (leaveMessage === "localOnly" && !Object.keys(localOnly).length))) {
             leaveMessage = "";
-            paintCard();
         }
         if (!syncing) setSaveState("ok");
+        paintCard();            // (what is only on this device may have changed: the hint under the choice)
         emitAccount("saved");
     }
 
@@ -1902,9 +2361,9 @@
             const result = combineRow(row, onlineRow, snapshot);
             const value = envelope(result);
             if (sameAsOnline(onlineRow, value)) return;
-            const local = localPrints(row);
-            const size = stable(value).length;
-            if (size > budget) return;
+            const local = localPrints(row, result.dropped);
+            const size = utf8Length(JSON.stringify({ value: value }));
+            if (size > budget || jsonbSize(value) > ROW_MAX_BYTES) return;     // (a value in parts waits for the next visit)
             budget -= size;
             writeRow(accessToken, row.key, onlineRow, value, true).then(function (answer) {
                 if (answer.conflict) return;
@@ -2079,6 +2538,9 @@
 
     function becomeNobody() {
         user = null;
+        forgetLocalOnly();
+        keepPieces({}, true);
+        partsOnline = {};
         clearTimeout(syncTimer);
         syncTimer = 0;
         clearInterval(statusTimer);
@@ -2172,6 +2634,13 @@
                 paintCard();
                 return false;
             }
+            if (remove && Object.keys(localOnly).length) {
+                // Saved, except what could not be saved online at all (too big): removing it
+                // would lose it for good. Stay signed in and say what ("keep" signs out)
+                leaveMessage = "localOnly";
+                paintCard();
+                return false;
+            }
             return finishSignOut(remove);
         });
     }
@@ -2179,6 +2648,7 @@
     function finishSignOut(remove) {
         const c = client;
         clearTimeout(syncTimer);
+        const onlyHere = localOnlyText();      // (known only while this person is signed in)
         if (!remove) markLeft();        // (while this person is still known here)
         const out = c ? c.auth.signOut({ scope: "local" }).catch(function () {}) : Promise.resolve();
         return out.then(function () {
@@ -2196,7 +2666,7 @@
                 becomeNobody();
                 emitAccount("signout");
             }
-            A.toast(t("account.toast.kept"), "👋");
+            A.toast(onlyHere ? t("account.toast.keptLocal", { list: onlyHere }) : t("account.toast.kept"), "👋");
             return true;
         });
     }
@@ -2413,9 +2883,34 @@
             "</div>";
     }
 
+    // What is only on this device (it could not be saved online), in words: "the research
+    // notebook and My path" (one name for the rows of one feature), or ""
+    const WHAT = {
+        "lessons.completed": "lessons", "glossary.explored": "glossary", "glossary.cards": "glossary",
+        "lab.tried": "lab", "lab.challenges": "lab", "lab.draw.data": "drawings",
+        "quiz.bests": "quiz", "quiz.daily": "quiz", "quiz.mistakes": "quiz",
+        "journey": "compass", "research.notebook": "notebook", "prefs": "choices", "bundle": "other"
+    };
+
+    function localOnlyText() {
+        const names = [];
+        Object.keys(localOnly).forEach(function (key) {
+            const name = t("account.what." + (has(WHAT, key) ? WHAT[key] : /^learn\./.test(key) ? "path" : "other"));
+            if (names.indexOf(name) === -1) names.push(name);
+        });
+        if (!names.length) return "";
+        return A.util.attempt(function () {
+            return new Intl.ListFormat(A.lang === "ru" ? "ru" : "en", { style: "long", type: "conjunction" }).format(names);
+        }, names.join(", "));
+    }
+
+    function savedState() {
+        return saveState.status === "ok" || (saveState.status === "never" && saveState.time);
+    }
+
     function stateClass() {
         const status = saveState.status;
-        if (status === "ok" || (status === "never" && saveState.time)) return "ac-state is-ok";
+        if (savedState()) return Object.keys(localOnly).length ? "ac-state is-problem" : "ac-state is-ok";
         if (status === "failed" || status === "offline") return "ac-state is-problem";
         return "ac-state is-busy";
     }
@@ -2424,7 +2919,12 @@
         const status = saveState.status;
         let icon = ICONS.cloud;
         let text;
-        if (status === "ok" || (status === "never" && saveState.time)) {
+        const onlyHere = localOnlyText();
+        if (savedState() && onlyHere) {
+            // Never "All progress saved" while something is only on this device
+            icon = ICONS.warning;
+            text = t("account.state.partial", { when: whenText(saveState.time || Date.now()), list: onlyHere });
+        } else if (savedState()) {
             icon = ICONS.check;
             text = t("account.state.ok", { when: whenText(saveState.time || Date.now()) });
         } else if (status === "offline" || status === "failed") {
@@ -2435,6 +2935,14 @@
         }
         return '<span class="ac-state-icon">' + icon + "</span><span data-ac-state-text>" + esc(text) + "</span>" +
             (status === "failed" ? ' <button type="button" class="ac-link" data-ac="retry" data-focus="retry">' + esc(t("account.state.retry")) + "</button>" : "");
+    }
+
+    // The hint under "Remove my progress from this device": it never says the progress is
+    // safe in the account while some of it is only on this device
+    function leaveHint(remove) {
+        if (!remove) return t("account.leave.keepHint");
+        const onlyHere = localOnlyText();
+        return onlyHere ? t("account.leave.removeHintLocal", { list: onlyHere }) : t("account.leave.removeHint");
     }
 
     function inHTML() {
@@ -2473,10 +2981,13 @@
                         '<input type="checkbox" data-ac-wipe data-focus="wipe"' + (remove ? " checked" : "") + ' aria-describedby="ac-wipe-hint">' +
                         "<span>" + esc(t("account.leave.remove")) + "</span>" +
                     "</label>" +
-                    '<p class="st-hint" id="ac-wipe-hint" data-ac-wipe-hint>' + esc(t(remove ? "account.leave.removeHint" : "account.leave.keepHint")) + "</p>" +
+                    '<p class="st-hint" id="ac-wipe-hint" data-ac-wipe-hint>' + esc(leaveHint(remove)) + "</p>" +
                     '<button type="button" class="btn btn-ghost btn-small ac-signout" data-ac="signout" data-focus="signout"' + (leaveMessage === "working" ? " disabled" : "") + ">" +
                         esc(t(leaveMessage === "working" ? "account.leave.working" : "account.in.signOut")) + "</button>" +
                     (leaveMessage === "unsaved" ? '<p class="st-note is-problem" role="alert">' + esc(t("account.leave.unsaved")) + "</p>" : "") +
+                    (leaveMessage === "localOnly" && localOnlyText()
+                        ? '<p class="st-note is-problem" role="alert">' + esc(t("account.leave.localOnly", { list: localOnlyText() })) + "</p>"
+                        : "") +
                     (leaveMessage === "unsavedKeep"
                         ? '<p class="st-note is-problem" role="alert">' + esc(t("account.leave.unsavedKeep")) + "</p>" +
                           '<button type="button" class="btn btn-ghost btn-small ac-signout" data-ac="signout-anyway" data-focus="signout-anyway">' +
@@ -2496,7 +3007,7 @@
     function cardSignature() {
         return stable([A.lang, user ? [user.nickname, user.nicknameChosen, user.email] : hasSession() ? "wait" : "out",
             saveState.status === "failed" || saveState.status === "offline", signingIn, signInMessage, leaveMessage,
-            nameMessage, leaveChoice(), A.storage.available(), Boolean(A.challenge)]);
+            nameMessage, leaveChoice(), A.storage.available(), Boolean(A.challenge), localOnlyText()]);
     }
 
     // Draws the card again, keeping the focus, an open "privacy" and what is being typed
@@ -2619,12 +3130,12 @@
         if (!event.target.matches("[data-ac-wipe]")) return;
         const remove = event.target.checked;
         A.storage.set(STORE.leave, remove ? "remove" : "keep");
-        if (leaveMessage === "unsaved" || leaveMessage === "unsavedKeep") {
+        if (leaveMessage === "unsaved" || leaveMessage === "unsavedKeep" || leaveMessage === "localOnly") {
             leaveMessage = "";              // (the warning was about the other choice)
             paintCard();
         }
         const hint = card.querySelector("[data-ac-wipe-hint]");
-        if (hint) A.dom.setText(hint, t(remove ? "account.leave.removeHint" : "account.leave.keepHint"));
+        if (hint) A.dom.setText(hint, leaveHint(remove));
     }
 
     /* ---------- 12. The way in: the buttons, links and commands; the invitation; the lines ---------- */
@@ -2970,8 +3481,9 @@
         // Saves what changed now; sync(): the full merge with what is saved online
         save: saveNow,
         sync: fullSync,
-        // { status: "never" | "checking" | "saving" | "ok" | "offline" | "failed", time }
-        saveState: function () { return Object.assign({}, saveState); },
+        // { status: "never" | "checking" | "saving" | "ok" | "offline" | "failed", time,
+        //   localOnly: [rows that could not be saved online: they are only on this device] }
+        saveState: function () { return Object.assign({}, saveState, { localOnly: Object.keys(localOnly) }); },
         // The diary of results, newest first (a Promise of rows { type, detail, at })
         history: readHistory,
         onChange: function (callback) {
