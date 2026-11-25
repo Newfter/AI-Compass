@@ -29,7 +29,8 @@
             body.signed_in = /access_token/.test(store.getItem("aic-auth") || "");
             fetch(url + "/rest/v1/rpc/hello", {
                 method: "POST", keepalive: true, body: JSON.stringify(body),
-                headers: { apikey: key, Authorization: "Bearer " + key, "Content-Type": "application/json" }
+                headers: /^sb_/.test(key) ? { apikey: key, "Content-Type": "application/json" } :
+                    { apikey: key, Authorization: "Bearer " + key, "Content-Type": "application/json" }
             }).then(function (answer) {
                 if (answer.ok) { me.last = today; save(); }
             }).catch(function () { /* next page tries again */ });

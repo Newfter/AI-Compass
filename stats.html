@@ -378,7 +378,9 @@
             method: "POST",
             cache: "no-store",
             signal: controller ? controller.signal : undefined,
-            headers: { apikey: key, Authorization: "Bearer " + key, "Content-Type": "application/json", Accept: "application/json" },
+            // A new-style key (sb_publishable_...) is not a JWT: Supabase wants it only in "apikey"
+            headers: /^sb_/.test(key) ? { apikey: key, "Content-Type": "application/json", Accept: "application/json" } :
+                { apikey: key, Authorization: "Bearer " + key, "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify({ days: 400 })
         }).then(function (response) {
             return response.text().then(function (text) {
