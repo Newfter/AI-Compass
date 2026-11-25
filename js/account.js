@@ -1244,9 +1244,18 @@
         }, "") || "";
     }
 
-    // The snapshot also says whose progress on this device it was taken of
+    // A fingerprint of the person signed in (their e-mail address), or "": the same person
+    // again, also with a new account after "Delete my account" (maybe on another device)
+    function personPrint(person) {
+        const email = person && typeof person.email === "string" ? person.email.trim().toLowerCase() : "";
+        return email ? fingerprint("person:" + email) : "";
+    }
+
+    // The snapshot also says whose progress on this device it was taken of: the local
+    // learner, and the person signed in
     function writeSnapshot(snapshot) {
         snapshot.learner = localLearner();
+        if (user && snapshot.owner === user.id) snapshot.who = personPrint(user);
         A.storage.set(STORE.synced, snapshot);
     }
 
@@ -1504,9 +1513,13 @@
     function combineRow(row, onlineRow, snapshot) {
         const mine = snapshot.owner === user.id;
         const snap = mine ? snapshot.rows[row.key] : undefined;
+        // The same person with a new account (the old one was deleted, maybe on another
+        // device, and this device was signed out): the progress here is theirs, and it is
+        // merged like at a first sign-in
+        const again = !mine && Boolean(snapshot.who) && snapshot.who === personPrint(user);
         // Another person's snapshot tells what they left on this device; after a switch of
         // the local learner (js/profiles.js) the progress here is not theirs any more
-        const theirs = !mine && snapshot.owner && String(snapshot.learner || "") === localLearner();
+        const theirs = !mine && !again && snapshot.owner && String(snapshot.learner || "") === localLearner();
         const foreign = theirs ? snapshot.rows[row.key] : undefined;
         let pending = row.key === prefsRow.key ? null : pendingFor(row.key);
         // A removal whose write arrived although its answer did not: it is done
