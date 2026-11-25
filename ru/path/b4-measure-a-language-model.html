@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Измерь языковую модель","headline":"Измерь языковую модель","description":"Наборы для оценки, способы проверять ответы и сколько можно верить одной цифре.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/b4-measure-a-language-model.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Измерь языковую модель","item":"https://newfter.github.io/AI-Compass/ru/path/b4-measure-a-language-model.html"}]}</script>
 </head>
@@ -91,7 +93,7 @@
 </div></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li><strong>Набор для оценки</strong> (eval) — это сохранённый список тестовых случаев и правило оценки. Прогоняй его целиком после каждого изменения.</li><li>В любом результате есть шум. Для доли верных ответов p на n вопросах грубый 95%-ный интервал — это <code>p ± 2·√(p·(1 − p) / n)</code>. Маленький разрыв на маленьком наборе ничего не доказывает, а чтобы шум стал вдвое меньше, вопросов нужно вчетверо больше.</li><li>Результат может обманывать, когда модель уже видела тестовые случаи, когда промпт настраивали на них же или когда модель-судью никто не сверял с людьми.</li><li>Каждая исправленная ошибка становится новым тестовым случаем: регрессионный набор растёт, и, если старая ошибка вернётся, следующий прогон это покажет.</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/b4">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><a href="b3-rag-answers-from-your-documents.html"><small>Предыдущий шаг</small>RAG: ответы по твоим документам</a><a href="b5-prompt-injection.html"><small>Следующий шаг</small>Промпт-инъекции</a></nav>
 </article>
 </main>
@@ -105,7 +107,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>

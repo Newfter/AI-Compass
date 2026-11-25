@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Переобучение и как его поймать","headline":"Переобучение и как его поймать","description":"Потери на обучении и на валидации, ранняя остановка и регуляризация.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Переобучение и как его поймать","item":"https://newfter.github.io/AI-Compass/ru/path/p6-overfitting-and-how-to-catch-it.html"}]}</script>
 </head>
@@ -85,7 +87,7 @@
 <p>Число могло скрывать проблему. Если положительных случаев всего 1%, модель, которая всегда отвечает «нет», получает accuracy 99% и не находит ничего.</p></details></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li>Суди о модели по потерям на отложенных примерах, а не на обучающих: только примеры, на которых она не училась, показывают, как она справляется с новыми данными.</li><li>Потери на обучении падают, а на валидации растут — это <strong>переобучение</strong>. И те и другие остаются высокими — <strong>недообучение</strong>.</li><li>Обучающая выборка — чтобы подбирать веса, валидационная — чтобы выбирать, тестовая — чтобы один раз сообщить результат.</li><li>С переобучением борются L2-штраф <code>λ·Σw²</code>, dropout, более разнообразные данные и ранняя остановка.</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/p6">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><a href="p5-backpropagation-by-hand.html"><small>Предыдущий шаг</small>Обратное распространение своими руками</a><a href="p3-measure-a-classifier.html"><small>Следующий шаг</small>Измерь классификатор</a></nav>
 </article>
 </main>
@@ -99,7 +101,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>

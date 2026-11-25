@@ -24,6 +24,8 @@
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
 <script src="../js/pages.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Attention at scale","headline":"Attention at scale","description":"Why √d_k, the causal mask, the KV cache, grouped-query attention, memory-bound decoding and FlashAttention.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Attention at scale","item":"https://newfter.github.io/AI-Compass/path/r1-attention-at-scale.html"}]}</script>
 </head>
@@ -83,7 +85,7 @@
 <section class="pg-check"><p><strong>Task.</strong> What does FlashAttention change compared with plain attention?</p><p class="pg-soft">Solve it in the app.</p></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>If the entries of q and k are independent, with mean 0 and variance 1, then <code>Var(q·k) = d_k</code>. Dividing the scores by √d_k brings the variance back to 1, which helps keep softmax out of saturation.</li><li>The causal mask hides later tokens. That is also why the keys and values of past tokens never change and can be cached.</li><li><code>KV cache per token = 2 · layers · KV heads · head size · bytes per number</code>. Grouped-query and multi-query attention shrink it by sharing KV heads among query heads.</li><li>At batch size 1, decoding is limited by memory bandwidth: <code>tokens per second ≤ bandwidth / bytes read per token</code>. FlashAttention is exact attention that saves memory traffic, not arithmetic.</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/r1">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><span></span><a href="r2-scaling-laws.html"><small>Next step</small>Scaling laws</a></nav>
 </article>
 </main>
@@ -97,7 +99,7 @@
         <a href="../history/">History of AI</a>
         <a href="../teachers/">For teachers</a>
     </nav>
-    <p>A free student project. No ads, no sign-up.</p>
+    <p>A free student project. No ads, no sign-up. <a href="../privacy.html">Privacy</a></p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>
 </body>

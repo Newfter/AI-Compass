@@ -24,6 +24,8 @@
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
 <script src="../js/pages.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Diffusion as differential equations: scores, SDEs and ODEs","headline":"Diffusion as differential equations: scores, SDEs and ODEs","description":"Derive Tweedie's formula and the flow ODE; compute scores, drifts, a likelihood.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Diffusion as differential equations: scores, SDEs and ODEs","item":"https://newfter.github.io/AI-Compass/path/t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"}]}</script>
 </head>
@@ -82,7 +84,7 @@
 <p>The reverse SDE with the exact score has the path distribution of the forward SDE. So from the same x_T it returns a random x_0 ~ N(α_T·v·x_T/V_T, v·σ_T²/V_T), and as α_T → 0 this is N(0, v) whatever x_T was. The SDE forgets its starting point; the ODE turns it into a code. Same marginals, different couplings of noise and data.</p></details></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>Score and denoiser: <code>∇ ln p_t(x_t) = −E[ε | x_t]/σ_t</code> for x_t = α_t·x_0 + σ_t·ε, so regression on the noise learns the score (denoising score matching, s_θ = −ε_θ/σ_t). Tweedie: <code>E[x_0 | x_t] = (x_t + σ_t²·∇ ln p_t(x_t))/α_t</code>, for any data distribution and Gaussian noise.</li><li>Forward SDE <code>dx = f·dt + g·dw</code>, reverse SDE <code>dx = [f − g²·∇ ln p_t]·dt + g·dw̄</code>, probability-flow ODE <code>dx/dt = f − ½·g²·∇ ln p_t</code>. With the exact score all three have the same marginals p_t (Fokker–Planck plus ∇p = p·∇ ln p). The two SDEs also share the joint law of x_0 and x_T; the ODE pairs them one to one.</li><li>The ODE is an ordinary ODE: higher-order solvers, an invertible latent code, and the exact log-density of its own model by <code>d ln p_t(x(t))/dt = −∇·u</code>. For data N(0, v), p_t = N(0, V_t) with V_t = α_t²·v + σ_t², and the ODE keeps x_t/√V_t constant.</li><li>Guidance is Bayes' rule on scores: <code>∇ ln p_t(x | c) = ∇ ln p_t(x) + ∇ ln p_t(c | x)</code>. Scaling the last term by w &gt; 1 sharpens the result, but the samples then no longer follow p(x | c). The ε-loss is score matching with the weight σ_t²; the likelihood bound corresponds to the weight g(t)².</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/t7">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><a href="t6-statistical-decision-theory-what-best-estimator-means.html"><small>Previous step</small>Statistical decision theory: what “best estimator” means</a><a href="t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"><small>Next step</small>Reinforcement learning theory: contractions, gradients and regret</a></nav>
 </article>
 </main>
@@ -96,7 +98,7 @@
         <a href="../history/">History of AI</a>
         <a href="../teachers/">For teachers</a>
     </nav>
-    <p>A free student project. No ads, no sign-up.</p>
+    <p>A free student project. No ads, no sign-up. <a href="../privacy.html">Privacy</a></p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>
 </body>

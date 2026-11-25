@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Теория статистических решений: что значит «лучшая оценка»","headline":"Теория статистических решений: что значит «лучшая оценка»","description":"Вычисли риски, границу Рао — Крамера, выигрыш Джеймса — Стейна и минимакс.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/t6-statistical-decision-theory-what-best-estimator-means.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Теория статистических решений: что значит «лучшая оценка»","item":"https://newfter.github.io/AI-Compass/ru/path/t6-statistical-decision-theory-what-best-estimator-means.html"}]}</script>
 </head>
@@ -82,7 +84,7 @@
 <p>Плата за оценивание B мала: в среднем по этому априорному распределению риск такой оценки равен d − (d − 2)·B, всего на 2·B выше оптимума d·(1 − B). При d = 10, τ² = 1: 10 у X, 6 у неё, 5 у байесовской оценки. И оценка Джеймса — Стейна лучше X при каждом θ без априорных предположений: нужную дисперсию ей дают сами d координат.</p></details></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li>Риск R(θ, δ) = E_θ[L(θ, δ(X))] — функция от θ. δ недопустима, если другая оценка нигде не хуже и где-то лучше; байесовский риск усредняет R по априорному распределению, минимакс берёт худшее θ. Для квадрата ошибки риск = смещение² + дисперсия; у <code>c·X̄</code> это <code>(1 − c)²·μ² + c²·v</code>: малое смещение может сильно снизить дисперсию.</li><li>Информация Фишера: <code>I(θ) = E[(∂ ln f/∂θ)²]</code>. Неравенство Рао — Крамера для регулярных моделей: дисперсия несмещённой оценки по n независимым наблюдениям не меньше <code>1/(n·I(θ))</code>; смещённые оценки оно не ограничивает. Натуральный градиент <code>θ ← θ − η·F^(−1)·∇L</code> измеряет шаги по KL и в первом порядке не зависит от параметризации.</li><li>Джеймс — Стейн: для X ~ N(θ, I_d) при d ≥ 3 у оценки <code>(1 − (d − 2)/‖X‖²)·X</code> риск <code>d − (d − 2)²·E[1/‖X‖²]</code>: меньше d при каждом θ и равен 2 при θ = 0. Значит, X недопустима при d ≥ 3, хотя допустима при d = 1 и 2. Выигрыш — в суммарном риске, не в каждой координате. Это эмпирический байесовский подход: сжатие оценивают по данным.</li><li>Байесовская оценка минимизирует апостериорные ожидаемые потери: апостериорное среднее для квадрата ошибки, медиана для модуля. Beta(a, b) и k успехов в n испытаниях дают среднее <code>(a + k)/(a + b + n)</code>. Байесовская оценка с постоянным риском минимаксна: для параметра Бернулли p это <code>(k + √n/2)/(n + √n)</code> с риском <code>1/(4·(√n + 1)²)</code>.</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/t6">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><a href="t5-kernels-and-the-infinite-width-limit.html"><small>Предыдущий шаг</small>Ядра и предел бесконечной ширины</a><a href="t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"><small>Следующий шаг</small>Диффузия как дифференциальные уравнения: скор, СДУ и ОДУ</a></nav>
 </article>
 </main>
@@ -96,7 +98,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>

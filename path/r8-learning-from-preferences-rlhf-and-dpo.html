@@ -24,6 +24,8 @@
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
 <script src="../js/pages.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Learning from preferences: RLHF and DPO","headline":"Learning from preferences: RLHF and DPO","description":"Bradley–Terry, the optimum of the KL-regularised objective, DPO, and reward hacking.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Learning from preferences: RLHF and DPO","item":"https://newfter.github.io/AI-Compass/path/r8-learning-from-preferences-rlhf-and-dpo.html"}]}</script>
 </head>
@@ -78,7 +80,7 @@
 <section class="pg-check"><p><strong>Task.</strong> A model was optimised against a reward model. Which observations suggest reward hacking, and which a real improvement?</p><p class="pg-soft">Solve it in the app.</p></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>RLHF learns from comparisons: SFT, then a reward model fitted with Bradley–Terry, <code>P(y_w ≻ y_l) = σ(r(y_w) − r(y_l))</code>, then RL, often PPO, with a KL penalty that keeps the policy close to π_ref.</li><li>Only differences of rewards enter Bradley–Terry, so rewards have no fixed zero: adding a constant to every reward changes no prediction. Their scale, though, is fixed through σ.</li><li>The KL-regularised objective <code>E[r] − β·KL(π ‖ π_ref)</code> has the exact optimum <code>π* ∝ π_ref·exp(r/β)</code>. DPO solves it for r; within a pair Z(x) cancels, and what remains is a loss on the policy itself, with no separate reward model.</li><li>A reward model is only a proxy: optimised too hard, it gets hacked, for example with longer answers or sycophancy. Judge the result on what the optimisation never saw: blind human ratings, known answers, held-out checks.</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/r8">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><a href="r7-reinforcement-learning-the-core.html"><small>Previous step</small>Reinforcement learning: the core</a><a href="r9-inside-the-model-interpretability.html"><small>Next step</small>Inside the model: interpretability</a></nav>
 </article>
 </main>
@@ -92,7 +94,7 @@
         <a href="../history/">History of AI</a>
         <a href="../teachers/">For teachers</a>
     </nav>
-    <p>A free student project. No ads, no sign-up.</p>
+    <p>A free student project. No ads, no sign-up. <a href="../privacy.html">Privacy</a></p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>
 </body>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="dark light">
+<!-- =========================================================
+     AI COMPASS — THE OWNER'S NUMBERS PAGE
+     How many devices use the site: today, yesterday, the last 7 and 30
+     days, new visitors, accounts, the installed app, the languages, and a
+     chart of the last 30, 90 or 365 days. Only totals: no personal data.
+     Not linked from the site and not in sitemap.xml: bookmark it.
+     The numbers come from site_stats() in supabase/schema.sql (part 8),
+     at the address in js/config.js; js/count.js counts the visits.
+     ========================================================= -->
+<title>AI Compass: user numbers</title>
+<meta name="theme-color" content="#050b14">
+<link rel="icon" href="images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="stylesheet" href="css/pages.css">
+<style>
+    /* The colours of the three lines (validated for colour blindness on these cards), the grid */
+    :root { --s1: #3987e5; --s2: #d95926; --s3: #199e70; --axis: #33445f; --bad: #e66767; }
+    @media (prefers-color-scheme: light) {
+        :root { --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --axis: #b9c6d6; --bad: #d03b3b; }
+    }
+    .st-wide { max-width: 1040px; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .st-head { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; justify-content: space-between; margin-top: 20px; }
+    .st-head h1 { margin: 0; }
+    .st-status { margin: 6px 0 0; color: var(--soft); font-size: 0.92rem; }
+    .st-btn {
+        font: inherit; font-size: 0.92rem; font-weight: 600; color: var(--text); background: var(--card);
+        border: 1px solid var(--line); border-radius: 999px; padding: 7px 16px; min-height: 40px; cursor: pointer;
+    }
+    .st-btn:hover { border-color: var(--accent); }
+    .st-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+    a.st-btn { display: inline-flex; align-items: center; text-decoration: none; }
+
+    /* The message instead of the numbers: off, loading, a problem, nothing counted yet */
+    .st-state { margin-top: 20px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 14px; padding: 16px 20px; }
+    .st-state.is-problem { border-left-color: var(--bad); }
+    .st-state h2 { margin: 0 0 6px; font-size: 1.2rem; }
+    .st-state p, .st-state ol { margin: 0 0 10px; }
+    .st-state ol { padding-left: 22px; }
+    .st-state li { margin-bottom: 4px; }
+    .st-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .st-detail { color: var(--soft); font-size: 0.85rem; overflow-wrap: anywhere; }
+
+    /* The numbers */
+    .st-numbers { transition: none; }
+    .st-numbers.is-refreshing { opacity: 0.55; }
+    .st-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+    .st-tile { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+    .st-label { margin: 0; color: var(--soft); font-size: 0.9rem; font-weight: 600; line-height: 1.35; }
+    .st-value { margin: 4px 0 2px; font-size: clamp(1.6rem, 4.6vw, 2.1rem); font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+    .st-hint { margin: 0; color: var(--soft); font-size: 0.85rem; line-height: 1.45; }
+    .st-meter { height: 8px; margin: 8px 0; border-radius: 999px; background: var(--line); background: color-mix(in srgb, var(--accent) 20%, transparent); overflow: hidden; }
+    .st-meter span { display: block; height: 100%; min-width: 0; border-radius: 999px; background: var(--accent); }
+    .st-split { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 0.95rem; }
+    .st-split + .st-meter { margin-top: 4px; }
+
+    /* The chart: the time range above it, the card, the legend, the plot, the table */
+    .st-range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 28px; }
+    .st-range-label { color: var(--soft); font-size: 0.92rem; font-weight: 600; margin-right: 2px; }
+    .st-card { margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px 14px; }
+    .st-card h2 { margin: 0; font-size: 1.15rem; }
+    .st-card-sub { margin: 2px 0 0; color: var(--soft); font-size: 0.9rem; }
+    .st-legend { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 10px 0 2px; padding: 0; list-style: none; }
+    .st-key {
+        display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 4px 10px; cursor: pointer;
+        font: inherit; font-size: 0.9rem; color: var(--text); background: none; border: 1px solid transparent; border-radius: 999px;
+    }
+    .st-key:hover { border-color: var(--line); }
+    .st-key i { width: 18px; height: 3px; border-radius: 2px; flex: none; }
+    .st-key b { font-variant-numeric: tabular-nums; }
+    .st-key[aria-pressed="false"] { color: var(--soft); text-decoration: line-through; }
+    .st-key[aria-pressed="false"] i { background: var(--axis) !important; }
+    .st-plot { position: relative; margin-top: 6px; border-radius: 10px; }
+    .st-plot svg { display: block; width: 100%; overflow: visible; }
+    .st-plot text { fill: var(--soft); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .st-tip {
+        position: absolute; top: 4px; z-index: 2; min-width: 168px; pointer-events: none; padding: 8px 12px;
+        background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 10px;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28); font-size: 0.86rem; line-height: 1.45;
+    }
+    .st-tip p { margin: 0 0 4px; font-weight: 700; }
+    .st-tip div { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .st-tip i { width: 12px; height: 2px; border-radius: 1px; flex: none; }
+    .st-tip b { min-width: 3ch; font-variant-numeric: tabular-nums; }
+    .st-tip span { color: var(--soft); }
+    .st-note { margin: 8px 0 0; color: var(--soft); font-size: 0.88rem; }
+    .st-table { margin-top: 12px; }
+    .st-table summary { cursor: pointer; color: var(--accent); font-weight: 600; min-height: 32px; }
+    .st-table table { margin-top: 10px; font-variant-numeric: tabular-nums; }
+    .st-table td:not(:first-child), .st-table th:not(:first-child) { text-align: right; }
+    .st-meaning { margin-top: 28px; }
+    .st-meaning h2 { margin-top: 0; }
+    .st-meaning ul { margin: 0; padding-left: 22px; }
+    .st-meaning li { margin-bottom: 6px; }
+
+    @media (max-width: 760px) {
+        .st-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .st-tile { padding: 12px 13px; }
+        .st-card { padding: 14px 12px 12px; }
+        .st-range .st-btn { padding: 7px 12px; }
+    }
+</style>
+</head>
+<body>
+<header class="pg-top st-wide">
+    <a class="pg-logo" href="index.html">🧭 AI <span>Compass</span></a>
+    <span class="pg-soft">The owner's page · not linked from the site</span>
+</header>
+<main class="pg-main st-wide">
+    <div class="st-head">
+        <div>
+            <h1>User numbers</h1>
+            <p class="st-status" id="status">How many devices use AI Compass. Days run from midnight to midnight UTC.</p>
+        </div>
+        <button type="button" class="st-btn" id="refresh" hidden>Refresh</button>
+    </div>
+
+    <section class="st-state" id="state" aria-live="polite">
+        <h2 id="state-title">Loading the numbers…</h2>
+        <div id="state-body"><p>This takes a second or two.</p></div>
+    </section>
+
+    <div class="st-numbers" id="numbers" hidden>
+        <section aria-label="The numbers in short">
+            <div class="st-tiles">
+                <div class="st-tile">
+                    <p class="st-label">Active today</p>
+                    <p class="st-value" id="t-today">–</p>
+                    <p class="st-hint">devices so far today, since 00:00 UTC</p>
+                </div>
+                <div class="st-tile">
+                    <p class="st-label">Yesterday</p>
+                    <p class="st-value" id="t-yesterday">–</p>
+                    <p class="st-hint" id="t-yesterday-hint">devices on the whole day</p>
+                </div>
+                <div class="st-tile">
+                    <p class="st-label">Last 7 days</p>
+                    <p class="st-value" id="t-week">–</p>
+                    <p class="st-hint">different devices, today included (weekly active users)</p>
+                </div>
+                <div class="st-tile">
+                    <p class="st-label">Last 30 days</p>
+                    <p class="st-value" id="t-month">–</p>
+                    <p class="st-hint">different devices, today included (monthly active users)</p>
+                </div>
+                <div class="st-tile">
+                    <p class="st-label">New visitors this week</p>
+                    <p class="st-value" id="t-new">–</p>
+                    <p class="st-hint">devices that came for the first time in the last 7 days</p>
+                </div>
+                <div class="st-tile">
+                    <p class="st-label">Accounts</p>
+                    <p class="st-value" id="t-accounts">–</p>
+                    <p class="st-hint" id="t-accounts-hint">signed up with Google</p>
+                </div>
+                <div class="st-tile">
+                    <p class="st-label">Use the installed app</p>
+                    <p class="st-value" id="t-installed">–</p>
+                    <div class="st-meter" aria-hidden="true"><span id="m-installed" style="width: 0"></span></div>
+                    <p class="st-hint">of the visits in the last 30 days</p>
+                </div>
+                <div class="st-tile">
+                    <p class="st-label">Language</p>
+                    <div class="st-split"><span>English</span><strong id="t-en">–</strong></div>
+                    <div class="st-meter" aria-hidden="true"><span id="m-en" style="width: 0"></span></div>
+                    <div class="st-split"><span>Russian</span><strong id="t-ru">–</strong></div>
+                    <div class="st-meter" aria-hidden="true"><span id="m-ru" style="width: 0"></span></div>
+                    <p class="st-hint">of the visits in the last 30 days</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="st-range" role="group" aria-label="Time range of the chart and the table">
+            <span class="st-range-label" aria-hidden="true">Show</span>
+            <button type="button" class="st-btn" data-range="30" aria-pressed="false">30 days</button>
+            <button type="button" class="st-btn" data-range="90" aria-pressed="true">90 days</button>
+            <button type="button" class="st-btn" data-range="365" aria-pressed="false">365 days</button>
+        </div>
+
+        <section class="st-card" aria-labelledby="chart-title">
+            <h2 id="chart-title">Active users per day</h2>
+            <p class="st-card-sub" id="chart-sub">The last 90 finished days (UTC). Press a name to hide or show its line.</p>
+            <ul class="st-legend" id="legend"></ul>
+            <div class="st-plot" id="plot" tabindex="0" role="group"
+                 aria-label="Chart of active users per day. Use the left and right arrow keys to read the days."
+                 aria-describedby="chart-sub">
+                <svg id="chart" aria-hidden="true" focusable="false"></svg>
+                <div class="st-tip" id="tip" hidden></div>
+            </div>
+            <p class="sr-only" id="readout" aria-live="polite"></p>
+            <p class="st-note" id="chart-note" hidden></p>
+            <details class="st-table">
+                <summary>Show the numbers as a table</summary>
+                <div class="pg-table">
+                    <table>
+                        <thead><tr><th scope="col">Day (UTC)</th><th scope="col">Active that day</th><th scope="col">Last 7 days</th>
+                            <th scope="col">Last 30 days</th><th scope="col">New visitors</th><th scope="col">Accounts</th></tr></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </details>
+        </section>
+    </div>
+
+    <section class="pg-note st-meaning" aria-labelledby="meaning-title">
+        <h2 id="meaning-title">What these numbers mean</h2>
+        <ul>
+            <li><strong>They count devices, not people.</strong> A phone and a laptop of one person are two devices; one school computer shared by a class is one.</li>
+            <li><strong>Each device counts once per day</strong>, however many pages it opens. Days run from midnight to midnight UTC.</li>
+            <li><strong>No personal data is kept.</strong> A device is only a random number made by its browser: no names, no e-mail addresses, no IP addresses. After 13 months, or when a browser's data is cleared, the same device counts as new.</li>
+            <li><strong>Not everyone is counted:</strong> browsers with Do Not Track or Global Privacy Control switched on, test robots, and the site opened on your own computer (localhost) while you work on it.</li>
+            <li><strong>A day counts at most 20,000 devices, and at most 2,000 of them new.</strong> Anyone could send made-up visits, so these limits keep the free database from filling up. If the numbers ever stop at them, the site has grown: raise the two limits in <code>hello()</code> in supabase/schema.sql (part 8).</li>
+            <li><strong>The numbers start on the day counting was switched on.</strong> Nothing before that day is known. The daily list behind them is deleted after 35 days; the totals of each day stay.</li>
+        </ul>
+    </section>
+</main>
+<footer class="pg-foot st-wide">
+    <p>This page is for the owner of AI Compass. The site does not link to it and search engines skip it, so bookmark it.</p>
+    <p>What visitors are told: <a href="privacy.html">the privacy page</a>.</p>
+</footer>
+
+<script src="js/config.js"></script>
+<script>
+/* The numbers page: asks the database for site_stats() and draws it.
+   States: counting off (js/config.js is empty), loading, a problem, nothing counted yet, the numbers. */
+(function () {
+    "use strict";
+    var SETUP = "https://github.com/Newfter/AI-Compass/blob/main/docs/ACCOUNTS-SETUP.md";
+    var DASHBOARD = "https://supabase.com/dashboard/projects";
+    var SERIES = [
+        { id: "dau", name: "Daily", long: "active that day", color: "var(--s1)" },
+        { id: "wau", name: "Weekly", long: "last 7 days", color: "var(--s2)" },
+        { id: "mau", name: "Monthly", long: "last 30 days", color: "var(--s3)" }
+    ];
+    var SVG = "http://www.w3.org/2000/svg";
+    var config = window.AICompassConfig || {};
+    var base = String(config.supabaseUrl || "").replace(/\/+$/, "");
+    var key = String(config.supabaseAnonKey || "");
+    var data = null;
+    var range = 90;
+    var shown = { dau: true, wau: true, mau: true };
+    var view = null;        // what the chart shows now: { days, rows, x(), y(), ... }
+    var pointed = -1;       // the day under the pointer or the keyboard, or -1
+    var loading = false;
+
+    function $(id) { return document.getElementById(id); }
+    function el(tag, attrs, text) {
+        var node = document.createElement(tag);
+        Object.keys(attrs || {}).forEach(function (name) { node.setAttribute(name, attrs[name]); });
+        if (text !== undefined) node.textContent = text;
+        return node;
+    }
+    function svg(tag, attrs, parent) {
+        var node = document.createElementNS(SVG, tag);
+        Object.keys(attrs).forEach(function (name) { node.setAttribute(name, attrs[name]); });
+        if (parent) parent.appendChild(node);
+        return node;
+    }
+    function num(value) { return Number(value) || 0; }
+    function fmt(value) { return num(value).toLocaleString("en-US"); }
+    function compact(value) {
+        return value >= 10000 ? (value / 1000).toLocaleString("en-US", { maximumFractionDigits: 1 }) + "K" : fmt(value);
+    }
+    function percent(part, whole) {
+        if (!num(whole)) return null;
+        var share = num(part) / num(whole) * 100;
+        return share > 0 && share < 1 ? "<1%" : Math.round(share) + "%";
+    }
+    // Days are "YYYY-MM-DD" in UTC; arithmetic on them in whole days
+    function toTime(day) { return Date.parse(day + "T00:00:00Z"); }
+    function addDays(day, n) { return new Date(toTime(day) + n * 864e5).toISOString().slice(0, 10); }
+    function dayName(day, withYear) {
+        return new Date(toTime(day)).toLocaleDateString("en-GB",
+            { day: "numeric", month: "short", year: withYear === false ? undefined : "numeric", timeZone: "UTC" });
+    }
+
+    /* ---------- The message instead of the numbers ---------- */
+
+    // parts: a list of paragraphs (texts), or { steps: [...] }, or { detail: "..." }; actions: buttons and links
+    function showState(title, parts, actions, problem) {
+        var box = $("state"), body = $("state-body");
+        $("state-title").textContent = title;
+        body.textContent = "";
+        parts.forEach(function (part) {
+            if (typeof part === "string") body.appendChild(el("p", {}, part));
+            else if (part.steps) {
+                var list = el("ol");
+                part.steps.forEach(function (step) { list.appendChild(el("li", {}, step)); });
+                body.appendChild(list);
+            } else if (part.detail) body.appendChild(el("p", { "class": "st-detail" }, part.detail));
+            else if (part.link) {
+                var line = el("p", {}, part.before || "");
+                line.appendChild(el("a", { href: part.link }, part.text));
+                line.appendChild(document.createTextNode(part.after || ""));
+                body.appendChild(line);
+            }
+        });
+        if (actions && actions.length) {
+            var row = el("div", { "class": "st-actions" });
+            actions.forEach(function (action) {
+                if (action.href) row.appendChild(el("a", { "class": "st-btn", href: action.href, target: "_blank", rel: "noopener" }, action.text));
+                else {
+                    var button = el("button", { type: "button", "class": "st-btn" }, action.text);
+                    button.addEventListener("click", action.run);
+                    row.appendChild(button);
+                }
+            });
+            body.appendChild(row);
+        }
+        box.classList.toggle("is-problem", Boolean(problem));
+        box.hidden = false;
+        $("numbers").hidden = true;
+        $("refresh").hidden = true;
+    }
+
+    function showOff() {
+        showState("Counting is off", [
+            "Visits are counted by the same Supabase project that runs the accounts. Until it is set up, nothing is counted and this page stays empty.",
+            { link: SETUP, before: "Set it up with ", text: "docs/ACCOUNTS-SETUP.md", after: " (about 25 minutes, free), then put the project's two public values into js/config.js. The numbers appear here from the next visit on." }
+        ]);
+    }
+
+    function showProblem(problem) {
+        var status = problem && problem.status;
+        var body = (problem && problem.body) || {};
+        var detail = { detail: "Details: " + (status ? "HTTP " + status + " " : "") + (body.code ? body.code + " " : "") + (body.message || (problem && problem.message) || "") };
+        var retry = { text: "Try again", run: function () { load(); } };
+        var restore = { text: "Open the Supabase dashboard", href: DASHBOARD };
+        if (status === 404 && (body.code === "PGRST202" || /site_stats/.test(body.message || ""))) {
+            showState("The counting part of the database is missing", [
+                "Supabase answered, but it does not know site_stats yet: the newest part of supabase/schema.sql has not been run.",
+                { steps: [
+                    "In Supabase, open SQL Editor and click New query.",
+                    "Paste the whole supabase/schema.sql and click Run. Running it again is safe: it keeps every row.",
+                    "Come back and press Try again."
+                ] }, detail], [retry, restore], true);
+        } else if (status === 401 || status === 403) {
+            showState("Supabase refused the key", [
+                "Check supabaseAnonKey in js/config.js: it must be the “anon public” (publishable) key of this project, and supabaseUrl must be its Project URL.",
+                detail], [retry, restore], true);
+        } else {
+            var steps = [
+                "Supabase pauses a free project after a quiet week. Open the Supabase dashboard, choose the AI Compass project and click Restore project. It wakes up in a minute or two, with every number kept.",
+                "Then press Try again. If it still fails, check that supabaseUrl in js/config.js is the Project URL."
+            ];
+            if (!status) steps.unshift("Check that this computer is online.");
+            showState(status ? "The database answered with an error" : "Can't reach the database", [
+                status ? "Supabase answered, but with an error instead of the numbers." : "The page could not reach Supabase, where the numbers are kept.",
+                { steps: steps }, detail], [retry, restore], true);
+        }
+    }
+
+    function showEmpty() {
+        showState("No visits counted yet", [
+            "Counting is switched on, but no visit has arrived yet.",
+            "Visits count only on the real address of the site (not while you test it on your own computer), and each device only once a day. Today's visits show up here at once; the first full day appears after midnight UTC."
+        ], [{ text: "Check again", run: function () { load(); } }]);
+    }
+
+    /* ---------- Asking the database ---------- */
+
+    function load() {
+        if (!base || !key) { showOff(); return; }
+        if (loading) return;
+        loading = true;
+        if (data) $("numbers").classList.add("is-refreshing");
+        else showState("Loading the numbers…", ["This takes a second or two."]);
+        var controller = window.AbortController ? new AbortController() : null;
+        var timer = setTimeout(function () { if (controller) controller.abort(); }, 20000);
+        fetch(base + "/rest/v1/rpc/site_stats", {
+            method: "POST",
+            cache: "no-store",
+            signal: controller ? controller.signal : undefined,
+            headers: { apikey: key, Authorization: "Bearer " + key, "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ days: 400 })
+        }).then(function (response) {
+            return response.text().then(function (text) {
+                var body = null;
+                try { body = text ? JSON.parse(text) : null; } catch (e) { body = null; }
+                if (!response.ok) {
+                    var failure = new Error(text.slice(0, 200));
+                    failure.status = response.status;
+                    failure.body = body;
+                    throw failure;
+                }
+                if (!body || typeof body !== "object" || !body.today || !Array.isArray(body.series) || !body.totals) {
+                    var odd = new Error("The answer is not the numbers: " + text.slice(0, 120));
+                    odd.status = response.status;
+                    throw odd;
+                }
+                return body;
+            });
+        }).then(function (body) {
+            data = body;
+            render();
+        }).catch(function (problem) {
+            data = null;
+            showProblem(problem);
+        }).then(function () {
+            clearTimeout(timer);
+            loading = false;
+            $("numbers").classList.remove("is-refreshing");
+        });
+    }
+
+    /* ---------- The numbers ---------- */
+
+    function render() {
+        var d = data, today = d.today, week = d.week || {}, last30 = d.last30 || {}, totals = d.totals;
+        if (!num(totals.visitors) && !d.series.length && !num(today.dau)) { showEmpty(); return; }
+        $("state").hidden = true;
+        $("numbers").hidden = false;
+        $("refresh").hidden = false;
+
+        var updated = d.updated_at ? new Date(d.updated_at) : new Date();
+        $("status").textContent = "Updated at " + updated.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) +
+            " (your time). Days run from midnight to midnight UTC" + (d.since ? "; counting since " + dayName(d.since) : "") + ".";
+
+        $("t-today").textContent = fmt(today.dau);
+        $("t-week").textContent = fmt(today.wau);
+        $("t-month").textContent = fmt(today.mau);
+        $("t-new").textContent = fmt(week.new_visitors);
+        $("t-accounts").textContent = fmt(totals.accounts);
+        $("t-accounts-hint").textContent = num(week.accounts_new)
+            ? "+" + fmt(week.accounts_new) + " new in the last 7 days" : "none new in the last 7 days";
+
+        var yesterday = d.yesterday;
+        $("t-yesterday").textContent = yesterday ? fmt(yesterday.dau) : "–";
+        var before = yesterday && d.series.filter(function (row) { return row.day === addDays(yesterday.day, -1); })[0];
+        var hint = "no full day counted yet";
+        if (yesterday) {
+            hint = "devices on the whole day";
+            if (before) {
+                var change = num(yesterday.dau) - num(before.dau);
+                hint = change === 0 ? "the same as the day before"
+                    : (change > 0 ? "▲ " + fmt(change) + " more" : "▼ " + fmt(-change) + " fewer") + " than the day before";
+            }
+        }
+        $("t-yesterday-hint").textContent = hint;
+
+        var visits = num(last30.visits);
+        var installed = percent(last30.installed, visits);
+        $("t-installed").textContent = installed || "–";
+        $("m-installed").style.width = visits ? (num(last30.installed) / visits * 100) + "%" : "0";
+        var ru = num(last30.ru), en = visits - ru;
+        $("t-en").textContent = percent(en, visits) || "–";
+        $("t-ru").textContent = percent(ru, visits) || "–";
+        $("m-en").style.width = visits ? (en / visits * 100) + "%" : "0";
+        $("m-ru").style.width = visits ? (ru / visits * 100) + "%" : "0";
+
+        drawLegend();
+        drawChart();
+        drawTable();
+    }
+
+    /* ---------- The chart ---------- */
+
+    // The days of the chosen range, oldest first: every finished day, null where nothing was counted
+    function rowsOfRange() {
+        var last = addDays(data.today.day, -1), first = addDays(data.today.day, -range), byDay = {};
+        data.series.forEach(function (row) { byDay[row.day] = row; });
+        var rows = [];
+        for (var day = first; day <= last; day = addDays(day, 1)) rows.push({ day: day, row: byDay[day] || null });
+        return rows;
+    }
+
+    function niceStep(raw) {
+        if (raw <= 1) return 1;
+        var power = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / power;
+        return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * power;
+    }
+
+    function drawLegend() {
+        var legend = $("legend"), rows = data.series, latest = rows[rows.length - 1];
+        legend.textContent = "";
+        SERIES.forEach(function (series) {
+            var item = el("li");
+            var button = el("button", { type: "button", "class": "st-key", "aria-pressed": String(shown[series.id]) });
+            var swatch = el("i", { "aria-hidden": "true" });
+            swatch.style.background = series.color;
+            button.appendChild(swatch);
+            var words = el("span", {}, series.name + " (" + series.long + ")" + (latest ? " " : ""));
+            if (latest) words.appendChild(el("b", {}, fmt(latest[series.id])));   // the last finished day
+            button.appendChild(words);
+            button.addEventListener("click", function () {
+                var visible = SERIES.filter(function (s) { return shown[s.id]; }).length;
+                if (shown[series.id] && visible === 1) return;   // one line always stays
+                shown[series.id] = !shown[series.id];
+                drawLegend();
+                drawChart();
+                legend.querySelectorAll("button")[SERIES.indexOf(series)].focus();
+            });
+            item.appendChild(button);
+            legend.appendChild(item);
+        });
+    }
+
+    function drawChart() {
+        var plot = $("plot"), chart = $("chart");
+        var rows = rowsOfRange();
+        var visible = SERIES.filter(function (s) { return shown[s.id]; });
+        var width = Math.max(260, Math.round(plot.clientWidth));
+        var height = width < 560 ? 230 : 300;
+        var max = 0;
+        rows.forEach(function (r) { if (r.row) visible.forEach(function (s) { max = Math.max(max, num(r.row[s.id])); }); });
+        var step = niceStep(max / 4), top = Math.max(step, Math.ceil(max / step) * step), ticks = [];
+        for (var t = 0; t <= top + step / 2; t += step) ticks.push(t);
+        var labelWidth = Math.max.apply(null, ticks.map(function (v) { return compact(v).length; })) * 7.4 + 10;
+        var pad = { left: Math.round(labelWidth), right: 12, top: 10, bottom: 28 };
+        var innerW = width - pad.left - pad.right, innerH = height - pad.top - pad.bottom;
+        var n = rows.length;
+        var x = function (i) { return pad.left + (n === 1 ? innerW / 2 : i * innerW / (n - 1)); };
+        var y = function (v) { return pad.top + innerH - v / top * innerH; };
+        view = { rows: rows, visible: visible, x: x, y: y, pad: pad, width: width, height: height, innerW: innerW, innerH: innerH };
+
+        chart.textContent = "";
+        chart.setAttribute("viewBox", "0 0 " + width + " " + height);
+        chart.setAttribute("height", height);
+
+        // Grid and the numbers on the left
+        ticks.forEach(function (v) {
+            svg("line", { x1: pad.left, x2: width - pad.right, y1: y(v), y2: y(v), stroke: v === 0 ? "var(--axis)" : "var(--line)", "stroke-width": 1, "shape-rendering": "crispEdges" }, chart);
+            var label = svg("text", { x: pad.left - 8, y: y(v) + 4, "text-anchor": "end", "class": "st-y" }, chart);
+            label.textContent = compact(v);
+        });
+
+        // Dates along the bottom
+        var dates = [];
+        if (range === 365) {
+            rows.forEach(function (r, i) { if (r.day.slice(8) === "01") dates.push(i); });
+            var every = Math.ceil(dates.length / Math.max(2, Math.floor(innerW / 64)));
+            dates = dates.filter(function (i, k) { return k % every === 0; });
+        } else {
+            var count = Math.max(2, Math.min(7, Math.floor(innerW / 80)));
+            for (var k = 0; k < count; k++) dates.push(Math.round(k * (n - 1) / (count - 1)));
+        }
+        dates.forEach(function (i, k) {
+            var day = rows[i].day, anchor = range === 365 ? "start" : (k === 0 ? "start" : k === dates.length - 1 ? "end" : "middle");
+            var label = svg("text", { x: x(i), y: height - 8, "text-anchor": anchor, "class": "st-x" }, chart);
+            label.textContent = range === 365
+                ? new Date(toTime(day)).toLocaleDateString("en-GB", { month: "short", year: day.slice(5, 7) === "01" || k === 0 ? "numeric" : undefined, timeZone: "UTC" })
+                : dayName(day, false);
+            if (range === 365) svg("line", { x1: x(i), x2: x(i), y1: pad.top + innerH, y2: pad.top + innerH + 4, stroke: "var(--axis)" }, chart);
+        });
+
+        // The lines: a break where a day has no numbers (before counting began)
+        visible.forEach(function (s) {
+            var d = "", last = null;
+            rows.forEach(function (r, i) {
+                if (!r.row) { last = null; return; }
+                d += (last === null ? "M" : "L") + x(i).toFixed(1) + " " + y(num(r.row[s.id])).toFixed(1);
+                last = i;
+            });
+            if (d) svg("path", { d: d, fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, chart);
+            var end = -1;
+            rows.forEach(function (r, i) { if (r.row) end = i; });
+            if (end >= 0) svg("circle", { cx: x(end), cy: y(num(rows[end].row[s.id])), r: 4, fill: s.color, stroke: "var(--card)", "stroke-width": 2 }, chart);
+        });
+
+        // The crosshair layer (drawn by point())
+        view.cross = svg("g", { "class": "st-cross" }, chart);
+        var hit = svg("rect", { x: pad.left, y: pad.top, width: innerW, height: innerH + pad.bottom, fill: "transparent" }, chart);
+        var follow = function (event) {
+            var box = chart.getBoundingClientRect();
+            var at = (event.clientX - box.left) * (width / box.width);
+            point(Math.round((at - pad.left) / innerW * (n - 1)), false);
+        };
+        hit.addEventListener("pointermove", follow);
+        hit.addEventListener("pointerdown", follow);
+        hit.addEventListener("pointerleave", function () { if (document.activeElement !== plot) point(-1); });
+
+        var firstData = -1;
+        rows.forEach(function (r, i) { if (r.row && firstData < 0) firstData = i; });
+        var note = $("chart-note");
+        if (firstData < 0) {
+            note.hidden = false;
+            note.textContent = "No full day in this range yet: the chart starts after the first midnight UTC of counting.";
+        } else if (firstData > 0) {
+            note.hidden = false;
+            note.textContent = "Counting started on " + dayName(rows[firstData].day) + "; the days before it have no numbers.";
+        } else note.hidden = true;
+        $("chart-sub").textContent = "The last " + range + " finished days (UTC). Press a name to hide or show its line.";
+        if (pointed >= 0) point(Math.min(pointed, n - 1), true);
+    }
+
+    // Shows the crosshair and the numbers of day i (or hides them for -1)
+    function point(i, fromKeys) {
+        var tip = $("tip");
+        if (!view) return;
+        view.cross.textContent = "";
+        if (i < 0 || !view.rows.length) { pointed = -1; tip.hidden = true; return; }
+        i = Math.max(0, Math.min(view.rows.length - 1, i));
+        var r = view.rows[i];
+        if (!r.row) {   // a day before counting began: jump to the first day with numbers
+            var first = view.rows.findIndex(function (item) { return item.row; });
+            if (first < 0) { tip.hidden = true; return; }
+            i = Math.max(i, first);
+            r = view.rows[i];
+        }
+        pointed = i;
+        var cx = view.x(i);
+        svg("line", { x1: cx, x2: cx, y1: view.pad.top, y2: view.pad.top + view.innerH, stroke: "var(--soft)", "stroke-width": 1 }, view.cross);
+        view.visible.forEach(function (s) {
+            svg("circle", { cx: cx, cy: view.y(num(r.row[s.id])), r: 4.5, fill: s.color, stroke: "var(--card)", "stroke-width": 2 }, view.cross);
+        });
+        tip.textContent = "";
+        tip.appendChild(el("p", {}, dayName(r.day)));
+        var spoken = [dayName(r.day) + ":"];
+        SERIES.forEach(function (s) {
+            if (!shown[s.id]) return;
+            var line = el("div");
+            var swatch = el("i", { "aria-hidden": "true" });
+            swatch.style.background = s.color;
+            line.appendChild(swatch);
+            line.appendChild(el("b", {}, fmt(r.row[s.id])));
+            line.appendChild(el("span", {}, s.name + " (" + s.long + ")"));
+            tip.appendChild(line);
+            spoken.push(s.name + " " + fmt(r.row[s.id]) + ",");
+        });
+        var extra = el("div");
+        extra.appendChild(el("span", {}, "New visitors " + fmt(r.row.new_visitors) + " · accounts " + fmt(r.row.accounts_total)));
+        tip.appendChild(extra);
+        spoken.push("new visitors " + fmt(r.row.new_visitors) + ".");
+        tip.hidden = false;
+        var plotWidth = $("plot").clientWidth, scale = plotWidth / view.width, tipWidth = tip.offsetWidth;
+        var left = cx * scale + 14;
+        if (left + tipWidth > plotWidth) left = cx * scale - tipWidth - 14;
+        tip.style.left = Math.max(0, left) + "px";
+        if (fromKeys) $("readout").textContent = spoken.join(" ");
+    }
+
+    function drawTable() {
+        var body = $("table-body");
+        body.textContent = "";
+        rowsOfRange().slice().reverse().forEach(function (r) {
+            if (!r.row) return;
+            var tr = el("tr");
+            tr.appendChild(el("th", { scope: "row" }, dayName(r.day)));
+            ["dau", "wau", "mau", "new_visitors", "accounts_total"].forEach(function (name) { tr.appendChild(el("td", {}, fmt(r.row[name]))); });
+            body.appendChild(tr);
+        });
+        if (!body.children.length) {
+            var empty = el("tr"), cell = el("td", { colspan: "6" }, "No full day in this range yet.");
+            empty.appendChild(cell);
+            body.appendChild(empty);
+        }
+    }
+
+    /* ---------- What the owner can do ---------- */
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-range]"), function (button) {
+        button.addEventListener("click", function () {
+            range = Number(button.getAttribute("data-range"));
+            Array.prototype.forEach.call(document.querySelectorAll("[data-range]"), function (other) {
+                other.setAttribute("aria-pressed", String(other === button));
+            });
+            pointed = -1;
+            $("tip").hidden = true;
+            if (data) { drawChart(); drawTable(); }
+        });
+    });
+
+    $("plot").addEventListener("keydown", function (event) {
+        if (!view || !view.rows.length) return;
+        var last = view.rows.length - 1, i = pointed < 0 ? last : pointed;
+        var keys = { ArrowLeft: i - 1, ArrowRight: i + 1, Home: 0, End: last, PageUp: i - 7, PageDown: i + 7 };
+        if (event.key === "Escape") { point(-1); return; }
+        if (!(event.key in keys)) return;
+        event.preventDefault();
+        point(Math.max(0, Math.min(last, keys[event.key])), true);
+    });
+    $("plot").addEventListener("focus", function () { if (view && pointed < 0) point(view.rows.length - 1, true); });
+    $("plot").addEventListener("blur", function () { point(-1); });
+    $("refresh").addEventListener("click", function () { load(); });
+
+    var resizeTimer = null;
+    window.addEventListener("resize", function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () { if (data && !$("numbers").hidden) drawChart(); }, 120);
+    });
+
+    load();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+/* =========================================================
+   AI COMPASS — THE APP: "INSTALL THE APP" (js/platform.js, section 5)
+   - The box in the footer of index.html: the button (#install-app) and,
+     where the browser has no install window of its own, the help that
+     says where to tap (#install-help).
+   - The group "The app" of the settings window (.st-app), which
+     js/platform.js draws into the place js/settings.js leaves for it.
+     It uses the window's own groups and rows (css/settings.css).
+   Only the looks' colour tokens are used, so both fit every look, light
+   and dark, in the Simple and the Pro design. Nothing moves.
+   ========================================================= */
+
+/* The help: a small framed note, in the page's normal text colour */
+#install-help,
+.st-app-help {
+    max-width: 34rem;
+    padding: 10px 14px;
+    border: 1px solid var(--border-strong);
+    border: 1px solid color-mix(in srgb, var(--accent-2) 45%, var(--border));
+    border-radius: 12px;
+    background: var(--glass);
+    background: color-mix(in srgb, var(--accent-2) 9%, transparent);
+    color: var(--text);
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+
+/* The settings window: the button, or the help, right under the group's line */
+.st-app-row {
+    padding-top: 2px;
+}
+
+.st-app-help {
+    max-width: none;
+    font-size: 0.9375rem;
+}
+
+/* Big enough for a finger, like the window's other buttons */
+@media (hover: none), (pointer: coarse) {
+    .st-app-install {
+        min-height: 44px;
+    }
+}

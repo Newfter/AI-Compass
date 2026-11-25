@@ -24,6 +24,8 @@
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
 <script src="../js/pages.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Statistical decision theory: what “best estimator” means","headline":"Statistical decision theory: what “best estimator” means","description":"Compute risks, a Cramér–Rao bound, the James–Stein gain and a minimax rule.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Statistical decision theory: what “best estimator” means","item":"https://newfter.github.io/AI-Compass/path/t6-statistical-decision-theory-what-best-estimator-means.html"}]}</script>
 </head>
@@ -82,7 +84,7 @@
 <p>Estimating B costs little: averaged over this prior, the James–Stein risk is d − (d − 2)·B, only 2·B above the optimum d·(1 − B). For d = 10, τ² = 1: 10 for X, 6 for James–Stein, 5 for the Bayes estimator. And James–Stein beats X at every θ with no prior assumed: the d coordinates themselves supply the variance of the prior.</p></details></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>Risk R(θ, δ) = E_θ[L(θ, δ(X))] is a function of θ. δ is inadmissible if another estimator is never worse and somewhere better; the Bayes risk averages R over a prior, minimax looks at the worst θ. For the squared error, risk = bias² + variance, and <code>c·X̄</code> has risk <code>(1 − c)²·μ² + c²·v</code>: a little bias can buy a lot of variance.</li><li>Fisher information: <code>I(θ) = E[(∂ ln f/∂θ)²]</code>. Cramér–Rao, for regular models: an unbiased estimator from n independent observations has variance at least <code>1/(n·I(θ))</code>; it does not bind biased ones. The natural gradient <code>θ ← θ − η·F^(−1)·∇L</code> measures steps by KL, so to first order it does not depend on the parameterisation.</li><li>James–Stein: for X ~ N(θ, I_d) with d ≥ 3, <code>(1 − (d − 2)/‖X‖²)·X</code> has the risk <code>d − (d − 2)²·E[1/‖X‖²]</code>: below d at every θ, and 2 at θ = 0. So X is inadmissible for d ≥ 3, though admissible for d = 1 and 2. The gain is in the total risk, not in every coordinate. It is empirical Bayes: the data estimate the shrinkage.</li><li>A Bayes estimate minimises the posterior expected loss: the posterior mean for squared error, a median for absolute error. Beta(a, b) with k successes in n trials gives the mean <code>(a + k)/(a + b + n)</code>. A Bayes estimator with constant risk is minimax: for a Bernoulli p it is <code>(k + √n/2)/(n + √n)</code>, with risk <code>1/(4·(√n + 1)²)</code>.</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/t6">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><a href="t5-kernels-and-the-infinite-width-limit.html"><small>Previous step</small>Kernels and the infinite-width limit</a><a href="t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"><small>Next step</small>Diffusion as differential equations: scores, SDEs and ODEs</a></nav>
 </article>
 </main>
@@ -96,7 +98,7 @@
         <a href="../history/">History of AI</a>
         <a href="../teachers/">For teachers</a>
     </nav>
-    <p>A free student project. No ads, no sign-up.</p>
+    <p>A free student project. No ads, no sign-up. <a href="../privacy.html">Privacy</a></p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>
 </body>

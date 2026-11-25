@@ -24,6 +24,8 @@
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
 <script src="../js/pages.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Reinforcement learning theory: contractions, gradients and regret","headline":"Reinforcement learning theory: contractions, gradients and regret","description":"Prove the Bellman contraction; compute greedy losses, UCB indices and regret.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Reinforcement learning theory: contractions, gradients and regret","item":"https://newfter.github.io/AI-Compass/path/t8-reinforcement-learning-theory-contractions-gradients-and-regret.html"}]}</script>
 </head>
@@ -81,7 +83,7 @@
 <p>The same fact explains the surrogate: it differs from the lemma only by d^π in place of d_δ, so at δ = 0 it has the value 0 and the gradient ∇J. It agrees with J(π′) − J(π) to first order; the mismatch of the states enters only at second order, and a trust region keeps that term small.</p></details></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>The Bellman optimality operator is a γ-contraction in the maximum norm: <code>‖T·V − T·U‖_∞ ≤ γ·‖V − U‖_∞</code>. So V* is its only fixed point, value iteration obeys <code>‖V_k − V*‖_∞ ≤ γ^k·‖V_0 − V*‖_∞</code>, and with rewards in [0, R_max] all values lie in [0, R_max/(1 − γ)].</li><li>The horizon multiplies errors: if ‖V − V*‖_∞ ≤ ε, a policy that is greedy for V can lose up to <code>2·γ·ε/(1 − γ)</code>. Tabular Q-learning converges if every pair is updated infinitely often and its steps satisfy Σα_n = ∞, Σα_n² &lt; ∞; with bootstrapping, function approximation and off-policy updates together, the weights can diverge.</li><li>Bandits: regret <code>R_T = Σ_i Δ_i·E[n_i]</code>. ε-greedy with a fixed ε has linear regret. UCB1, with the index <code>μ̂_i + √(2·ln t / n_i)</code>, has regret of the order of Σ ln T / Δ_i and, whatever the gaps, at most of the order of √(K·T·ln T); no algorithm beats the order √(K·T) in the worst case.</li><li>Performance difference lemma: <code>J(π′) − J(π) = (1/(1 − γ))·E[A^π(s, a)]</code> with s ~ d^π′, a ~ π′, exactly. With the states of π it is a surrogate, right only to first order; its gradient at π′ = π is the policy gradient <code>(1/(1 − γ))·E[∇ ln π_θ(a | s)·Q^π(s, a)]</code>.</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/t8">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><a href="t7-diffusion-as-differential-equations-scores-sdes-and-odes.html"><small>Previous step</small>Diffusion as differential equations: scores, SDEs and ODEs</a><a href="t9-transformers-in-theory-what-attention-can-and-cannot-compute.html"><small>Next step</small>Transformers in theory: what attention can and cannot compute</a></nav>
 </article>
 </main>
@@ -95,7 +97,7 @@
         <a href="../history/">History of AI</a>
         <a href="../teachers/">For teachers</a>
     </nav>
-    <p>A free student project. No ads, no sign-up.</p>
+    <p>A free student project. No ads, no sign-up. <a href="../privacy.html">Privacy</a></p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>
 </body>

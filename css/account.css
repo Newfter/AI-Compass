@@ -1,9 +1,12 @@
 /* =========================================================
    AI COMPASS — ACCOUNTS (js/account.js)
    1. The button in the menu bar (and in the phone menu)
-   2. The account window: it reuses the Settings window's layer, panel,
-      header, groups and notes (css/settings.css, .st-*); only what is
-      special to accounts is here.
+   2. Settings → Account: the online account's card at the top of the
+      group (the group itself is css/settings.css and css/profiles.css)
+   3. The line next to the progress (My path, My Compass)
+   4. The invitation after real progress
+   5. The Pro design, high contrast
+   Calm motion: the site switches every animation off by itself (style.css).
    ========================================================= */
 
 /* ===== 1. THE BUTTON IN THE MENU BAR ===== */
@@ -50,110 +53,241 @@
     }
 }
 
-/* ===== 2. THE ACCOUNT WINDOW ===== */
-/* A window in the middle of the screen (the Settings window slides in from the right) */
-.ac-layer {
-    align-items: center;
-    justify-content: center;
+/* ===== 2. SETTINGS → ACCOUNT: THE CARD ===== */
+/* The place js/profiles.js keeps for it, under the group's title */
+.pf-online-slot {
+    padding-top: 6px;
+}
+
+/* "Learners on this device": the heading of the local accounts below the card */
+.pf-sub {
+    margin: 0;
+    padding: 14px 18px 0;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.ac-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     padding: 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background: var(--surface);
+    overflow-wrap: anywhere;
 }
 
-.ac-panel {
-    width: min(32rem, 100%);
-    max-height: calc(100% - 32px);
-    border-radius: 22px;
-    opacity: 0;
-    transform: translateY(16px) scale(0.98);
-    transition: transform 0.32s var(--ease), opacity 0.22s ease;
+.ac-card-out {
+    border-color: rgba(var(--accent-2-rgb), 0.45);
+    background:
+        linear-gradient(160deg, rgba(var(--accent-2-rgb), 0.12), rgba(var(--accent-rgb), 0.06) 60%, transparent),
+        var(--surface);
 }
 
-.st-layer.is-open .ac-panel {
-    opacity: 1;
-    transform: none;
-}
-
-.st-layer.is-closing .ac-panel {
-    transform: translateY(10px);
-}
-
-.ac-body {
-    padding-bottom: 24px;
-}
-
-/* "Sign in with Google": a big, easy button */
-.ac-signin {
-    display: grid;
+.ac-card-head {
+    display: flex;
+    align-items: center;
     gap: 12px;
 }
 
+.ac-card-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(var(--accent-2-rgb), 0.16);
+    color: var(--text-accent-2);
+}
+
+.ac-card-title,
+.ac-who-name {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+/* A heading takes the focus when the card is opened from elsewhere: no ring */
+.ac-card-title:focus,
+.ac-who-name:focus {
+    outline: none;
+}
+
+.ac-card-text {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+}
+
+/* "Sign in with Google": the one big button */
 .ac-google {
     justify-content: center;
     gap: 12px;
-    min-height: 56px;
+    width: 100%;
+    min-height: 52px;
     font-size: 1.0625rem;
 }
 
-.ac-google svg {
+.ac-google svg,
+.ac-nudge .btn-primary svg {
     flex: none;
     padding: 2px;
     border-radius: 50%;
     background: #fff;
 }
 
-.ac-list {
-    display: grid;
-    gap: 10px;
+.ac-card-note {
     margin: 0;
-    padding: 0;
-    list-style: none;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    text-align: center;
 }
 
-.ac-list li {
+.ac-problem,
+.ac-state {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    color: var(--text-muted);
-    line-height: 1.5;
+    gap: 8px;
+    margin: 0;
 }
 
-.ac-list svg {
+.ac-problem svg {
     flex: none;
-    margin-top: 0.2em;
+    margin-top: 0.15em;
+}
+
+/* Signed in: the letter and the nickname */
+.ac-who {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.ac-avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 800;
+}
+
+.ac-who-text {
+    min-width: 0;
+}
+
+.ac-who-mail {
+    margin: 2px 0 0;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+}
+
+/* "All progress saved · 2 minutes ago", "Saving…", "Offline…", "Couldn't save" */
+.ac-state {
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.ac-state-icon {
+    display: inline-flex;
+    flex: none;
+}
+
+/* The words stay next to the icon on a narrow phone; "Try again" moves to the next line */
+.ac-state > span:not(.ac-state-icon) {
+    flex: 1 1 0%;
+    min-width: 9em;
+}
+
+.ac-state > svg {
+    flex: none;
+}
+
+.ac-state.is-ok .ac-state-icon {
     color: var(--text-success);
 }
 
-.ac-privacy {
-    align-items: flex-start;
+.ac-state.is-busy .ac-state-icon {
+    color: var(--text-accent-2);
 }
 
-.ac-hello {
+.ac-state.is-problem {
+    color: var(--text-warning);
+}
+
+/* A button that looks like a link: "Try again", "Sign in" */
+.ac-link {
+    min-height: 32px;
+    padding: 2px 4px;
+    border: 0;
+    background: none;
+    color: var(--text-accent);
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.ac-link:hover {
+    color: var(--text);
+}
+
+.ac-link:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+/* The nickname */
+.ac-name {
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.ac-hello svg {
-    flex: none;
-    margin-top: 0.2em;
-    color: var(--text-success);
+.ac-label {
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 700;
 }
 
-.ac-email {
-    color: var(--text-muted);
-    overflow-wrap: anywhere;
+.ac-choose {
+    margin: 0;
 }
 
 .ac-name-row {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 10px;
 }
 
 .ac-input {
-    flex: 1 1 12rem;
+    flex: 1 1 11rem;
     min-width: 0;
-    min-height: 48px;
+    min-height: 46px;
     padding: 10px 14px;
     border: 1px solid var(--border-strong);
     border-radius: 12px;
@@ -170,49 +304,56 @@
 }
 
 .ac-name-note {
-    margin-top: 10px;
+    margin-top: 0;
 }
 
 .ac-name-note:not(.is-problem) {
     color: var(--text-success);
 }
 
-.ac-sync {
+.ac-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.ac-buttons .btn {
+    flex: 1 1 auto;
+}
+
+/* Sign out: the choice first, in plain words */
+.ac-leave,
+.ac-danger {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.ac-check {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    margin-bottom: 12px;
-    color: var(--text-muted);
-    line-height: 1.5;
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
 }
 
-.ac-sync svg {
+.ac-check input {
     flex: none;
-    margin-top: 0.2em;
-    color: var(--text-accent-2);
+    width: 20px;
+    height: 20px;
+    margin: 1px 0 0;
+    accent-color: var(--accent-2);
 }
 
-.ac-sync.is-problem {
-    color: var(--text-warning);
-}
-
-.ac-problem {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-}
-
-.ac-problem svg {
-    flex: none;
-    margin-top: 0.15em;
-}
-
-.ac-buttons {
-    margin-top: 0;
-}
-
-.ac-buttons + .st-hint {
-    margin-top: 10px;
+.ac-leave .st-hint,
+.ac-danger .st-hint {
+    margin: 0;
 }
 
 .ac-danger .ac-delete {
@@ -224,13 +365,184 @@
     background: color-mix(in srgb, var(--danger) 14%, var(--surface));
 }
 
-@media (max-width: 520px) {
-    .ac-layer {
-        padding: 0;
-    }
+/* What is kept, and who sees it */
+.ac-privacy {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
 
-    .ac-panel {
-        max-height: 100%;
-        border-radius: 0;
+.ac-privacy summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    color: var(--text);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ac-privacy summary svg {
+    flex: none;
+    color: var(--text-success);
+}
+
+.ac-privacy summary:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+.ac-privacy-list {
+    display: grid;
+    gap: 8px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ac-privacy-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+}
+
+.ac-privacy-list svg {
+    flex: none;
+    margin-top: 0.15em;
+    color: var(--text-success);
+}
+
+/* The greeting on the home page, signed in online: the nickname's letter */
+.pf-hello.is-online .pf-hello-pic {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+/* ===== 3. THE LINE NEXT TO THE PROGRESS (My path, My Compass) ===== */
+.ac-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    margin: 0;
+    padding: 10px 14px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
+.ac-line[hidden] {
+    display: none;
+}
+
+.ac-line-icon {
+    display: inline-flex;
+    flex: none;
+    color: var(--text-accent-2);
+}
+
+.ac-line-text {
+    flex: 1 1 14rem;
+}
+
+.lp-save-line {
+    margin-top: 12px;
+}
+
+.jr-save-line {
+    margin-top: -4px;
+}
+
+/* ===== 4. THE INVITATION AFTER REAL PROGRESS ===== */
+.ac-nudge {
+    position: fixed;
+    left: 16px;
+    right: calc(16px + var(--launcher-room, 96px));
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    z-index: calc(var(--z-launcher) + 1);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 10px 12px;
+    max-width: 380px;
+    padding: 14px 16px;
+    border: 1px solid rgba(var(--accent-2-rgb), 0.5);
+    border-radius: 16px;
+    background: var(--surface-solid);
+    box-shadow: var(--shadow);
+    color: var(--text);
+}
+
+.ac-nudge.is-in {
+    animation: ac-nudge-in 0.32s var(--ease) both;
+}
+
+@keyframes ac-nudge-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
     }
+}
+
+.ac-nudge-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(var(--accent-2-rgb), 0.16);
+    color: var(--text-accent-2);
+}
+
+.ac-nudge-text {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.ac-nudge-buttons {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ac-nudge-buttons .btn {
+    flex: 1 1 auto;
+    gap: 8px;
+}
+
+/* A narrow phone: the whole width (the assistant's button moves up, style.css) */
+@media (max-width: 420px) {
+    .ac-nudge {
+        right: 16px;
+        bottom: calc(var(--launcher-clearance, 100px) + env(safe-area-inset-bottom, 0px));
+        max-width: none;
+    }
+}
+
+/* ===== 5. THE PRO DESIGN, HIGH CONTRAST ===== */
+html.design-pro .ac-card,
+html.design-pro .ac-nudge {
+    border-radius: 8px;
+}
+
+html.design-pro .ac-state,
+html.design-pro .ac-line,
+html.design-pro .ac-input {
+    border-radius: 6px;
+}
+
+html.st-contrast .ac-card,
+html.st-contrast .ac-nudge,
+html.st-contrast .ac-line,
+html.st-contrast .ac-state {
+    border: 2px solid var(--text);
 }

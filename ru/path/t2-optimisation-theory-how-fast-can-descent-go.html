@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Теория оптимизации: как быстро может идти спуск","headline":"Теория оптимизации: как быстро может идти спуск","description":"Выведи пределы шага и скорости сходимости, посчитай число шагов по оценкам.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/t2-optimisation-theory-how-fast-can-descent-go.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Теория оптимизации: как быстро может идти спуск","item":"https://newfter.github.io/AI-Compass/ru/path/t2-optimisation-theory-how-fast-can-descent-go.html"}]}</script>
 </head>
@@ -82,7 +84,7 @@
 <p>В общем случае: для μ-сильно выпуклых задач при обычных ограничениях на шум градиента шаги η_t = c/t с c &gt; 1/(2μ) дают средний квадрат расстояния до точки минимума порядка 1/t. При меньшем c сходимость медленнее: при c = 1/(4λ) в этой модели даже вклад начальной точки в E[x_t²] убывает лишь как 1/√t.</p></details></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li>Лемма о спуске для L-гладкой f: <code>f(y) ≤ f(x) + ∇f(x)·(y − x) + (L/2)·‖y − x‖²</code>. Градиентный шаг η уменьшает f не меньше чем на η·(1 − L·η/2)·‖∇f(x)‖², в лучшем случае на ‖∇f(x)‖²/(2L) при η = 1/L. Без выпуклости и PL отсюда следует только малость градиента: при η = 1/L min по i &lt; k от ‖∇f(x_i)‖² ≤ 2L·(f(x_0) − f*)/k.</li><li>На квадратичной функции координата вдоль каждого собственного вектора за шаг умножается на 1 − η·λ_i: спуск сходится из любой точки тогда и только тогда, когда η &lt; 2/λ_max, а скорость задаёт κ = L/μ. То, что при обучении сетей по всей выборке λ_max держится около 2/η (граница устойчивости), — наблюдение, а не теорема.</li><li>При η = 1/L: для выпуклой f <code>f(x_k) − f* ≤ L·‖x_0 − x*‖²/(2k)</code>; PL или μ-сильная выпуклость дают <code>f(x_k) − f* ≤ (1 − μ/L)^k·(f(x_0) − f*)</code>, около κ·ln(1/ε) шагов. Метод Нестерова достигает порядков 1/k² и √κ·ln(1/ε); в худшем случае при большой размерности ни один метод, использующий только градиенты, их не улучшит.</li><li>SGD с постоянным шагом η на (λ/2)·x² с шумом градиента дисперсии σ² выходит на дисперсию <code>η·σ²/(λ·(2 − η·λ))</code>: это быстро, но дальше плато, почти пропорциональное η. Шаги η_t = c/t с c &gt; 1/(2λ) убирают плато: E[x_t²] убывает как 1/t.</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/t2">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><a href="t1-generalisation-bounds-how-many-examples-are-enough.html"><small>Предыдущий шаг</small>Границы обобщения: сколько примеров достаточно</a><a href="t3-information-theory-of-learning.html"><small>Следующий шаг</small>Теория информации в обучении</a></nav>
 </article>
 </main>
@@ -96,7 +98,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>

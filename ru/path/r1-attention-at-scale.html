@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Внимание в больших масштабах","headline":"Внимание в больших масштабах","description":"Зачем делить на √d_k, каузальная маска, KV-кэш, групповое внимание, генерация, которая упирается в память, и FlashAttention.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Внимание в больших масштабах","item":"https://newfter.github.io/AI-Compass/ru/path/r1-attention-at-scale.html"}]}</script>
 </head>
@@ -83,7 +85,7 @@
 <section class="pg-check"><p><strong>Задание.</strong> Что меняет FlashAttention по сравнению с обычным вниманием?</p><p class="pg-soft">Реши его в приложении.</p></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li>Если компоненты q и k независимы, со средним 0 и дисперсией 1, то <code>Var(q·k) = d_k</code>. Деление оценок на √d_k возвращает дисперсию к 1, и это помогает softmax не уходить в насыщение.</li><li>Каузальная маска скрывает более поздние токены. Из-за неё же ключи и значения предыдущих токенов не меняются, и их можно кэшировать.</li><li><code>KV-кэш на токен = 2 · слои · KV-головы · размер головы · байты на число</code>. Групповое внимание по запросам и внимание с одной головой ключей уменьшают его: одну KV-голову используют сразу несколько голов запросов.</li><li>При размере батча 1 декодирование упирается в пропускную способность памяти: <code>токенов в секунду ≤ пропускная способность / байты, прочитанные за токен</code>. FlashAttention — точное внимание, которое экономит трафик памяти, а не вычисления.</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/r1">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><span></span><a href="r2-scaling-laws.html"><small>Следующий шаг</small>Законы масштабирования</a></nav>
 </article>
 </main>
@@ -97,7 +99,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>

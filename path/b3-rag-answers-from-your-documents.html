@@ -24,6 +24,8 @@
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
 <script src="../js/pages.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"RAG: answers from your documents","headline":"RAG: answers from your documents","description":"Retrieve, then generate: the pipeline, its two ways to fail and how to tell them apart.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"RAG: answers from your documents","item":"https://newfter.github.io/AI-Compass/path/b3-rag-answers-from-your-documents.html"}]}</script>
 </head>
@@ -85,7 +87,7 @@
 </div></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li><strong>RAG</strong>: first retrieve the chunks that fit the question, then let the model answer from them and cite its sources.</li><li>“Answer only from the sources, or say that you do not know” lowers the risk of a made-up answer. It does not remove it.</li><li>When an answer is wrong, look first at what was retrieved: a retrieval failure and a generation failure need different repairs.</li><li>The success rates of the stages multiply: 0.85 · 0.90 = 0.765. Facts that change belong in retrieval or a tool call; fine-tuning is for behaviour.</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/b3">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><a href="b2-search-by-meaning.html"><small>Previous step</small>Search by meaning</a><a href="b4-measure-a-language-model.html"><small>Next step</small>Measure a language model</a></nav>
 </article>
 </main>
@@ -99,7 +101,7 @@
         <a href="../history/">History of AI</a>
         <a href="../teachers/">For teachers</a>
     </nav>
-    <p>A free student project. No ads, no sign-up.</p>
+    <p>A free student project. No ads, no sign-up. <a href="../privacy.html">Privacy</a></p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>
 </body>

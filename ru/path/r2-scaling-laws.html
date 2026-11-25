@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Законы масштабирования","headline":"Законы масштабирования","description":"Степенные законы, C ≈ 6·N·D, оптимальное деление бюджета, цена инференса и умения, которые появляются будто бы внезапно.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r2-scaling-laws.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Законы масштабирования","item":"https://newfter.github.io/AI-Compass/ru/path/r2-scaling-laws.html"}]}</script>
 </head>
@@ -76,7 +78,7 @@
 <section class="pg-check"><p><strong>Задание.</strong> С каким утверждением о законах масштабирования согласится придирчивый рецензент?</p><p class="pg-soft">Реши его в приложении.</p></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li>Эмпирически функция потерь на тестовых данных убывает с ростом N, D и C по степенному закону, приближаясь к неустранимой ошибке E: <code>L = E + A/N^α + B/D^β</code>. При α = 1/3, чтобы уменьшить A/N^α вдвое, нужно в 8 раз больше параметров.</li><li>Обучение плотного трансформера стоит <code>C ≈ 6·N·D</code> флопов: около 2 на параметр и токен в прямом проходе и 4 — в обратном.</li><li>По данным исследования 2022 года, с ростом вычислительного бюджета оптимальные по вычислениям N и D растут вместе, и на каждый параметр приходится около 20 токенов. Инференс стоит около 2·N флопов на токен, поэтому при большой нагрузке выгоднее модели поменьше, обученные дольше.</li><li>Строгие метрики вроде точного совпадения могут превращать плавный рост в кажущиеся скачки, а аппроксимациям законов масштабирования можно доверять прежде всего в диапазоне тех запусков, по которым их подбирали.</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/r2">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><a href="r1-attention-at-scale.html"><small>Предыдущий шаг</small>Внимание в больших масштабах</a><a href="r3-optimisers-for-large-models.html"><small>Следующий шаг</small>Оптимизаторы для больших моделей</a></nav>
 </article>
 </main>
@@ -90,7 +92,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>

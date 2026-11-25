@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Обучение на предпочтениях: RLHF и DPO","headline":"Обучение на предпочтениях: RLHF и DPO","description":"Модель Брэдли–Терри, оптимум задачи со штрафом за KL, DPO и взлом награды.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Обучение на предпочтениях: RLHF и DPO","item":"https://newfter.github.io/AI-Compass/ru/path/r8-learning-from-preferences-rlhf-and-dpo.html"}]}</script>
 </head>
@@ -78,7 +80,7 @@
 <section class="pg-check"><p><strong>Задание.</strong> Модель оптимизировали по модели вознаграждения. Какие наблюдения говорят о взломе награды, а какие — о настоящем улучшении?</p><p class="pg-soft">Реши его в приложении.</p></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li>RLHF учится на сравнениях: SFT, затем модель вознаграждения по Брэдли–Терри, <code>P(y_w ≻ y_l) = σ(r(y_w) − r(y_l))</code>, затем RL, часто PPO, со штрафом за KL, который держит политику близко к π_ref.</li><li>В модель Брэдли–Терри входят только разности наград, поэтому у наград нет фиксированного нуля: прибавка константы ко всем наградам не меняет ни одного предсказания. А вот масштаб задан через σ.</li><li>У целевой функции с KL-регуляризацией <code>E[r] − β·KL(π ‖ π_ref)</code> есть точный оптимум <code>π* ∝ π_ref·exp(r/β)</code>. DPO выражает из него r; внутри пары Z(x) сокращается, и остаётся функция потерь для самой политики, без отдельной модели вознаграждения.</li><li>Модель вознаграждения — лишь заменитель: при слишком сильной оптимизации её взламывают, например длинными ответами или угодничеством. Оценивай результат по тому, чего оптимизация не видела: по слепым оценкам людей, известным ответам, отложенным проверкам.</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/r8">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><a href="r7-reinforcement-learning-the-core.html"><small>Предыдущий шаг</small>Обучение с подкреплением: основа</a><a href="r9-inside-the-model-interpretability.html"><small>Следующий шаг</small>Заглянуть внутрь модели: интерпретируемость</a></nav>
 </article>
 </main>
@@ -92,7 +94,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>

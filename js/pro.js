@@ -314,7 +314,7 @@
     function duration(ms) {
         const minutes = Math.floor(ms / 60000);
         const hours = Math.floor(minutes / 60);
-        return hours ? hours + ":" + String(minutes % 60).padStart(2, "0") + " h" : minutes + " min";
+        return hours ? t("pro.sessionHours", { h: hours, m: String(minutes % 60).padStart(2, "0") }) : t("pro.sessionMinutes", { n: minutes });
     }
 
     function sessionHTML() {
@@ -808,11 +808,11 @@
         const info = [
             "ai@compass",
             "----------",
-            "OS: AI Compass (" + (A.lang === "ru" ? "RU" : "EN") + ")",
-            "Design: Pro",
-            "Look: " + lookName(),
-            "Lessons: " + n.lessons.done + "/" + n.lessons.total,
-            "Lab: " + n.lab.done + "/" + n.lab.total + "  ·  XP: " + (n.xp === null ? 0 : n.xp)
+            t("pro.neo.os", { lang: A.lang === "ru" ? "RU" : "EN" }),
+            t("pro.neo.design", { name: t("settings.designPro") }),
+            t("pro.neo.look", { name: lookName() }),
+            t("pro.neo.lessons", { done: n.lessons.done, total: n.lessons.total }),
+            t("pro.neo.lab", { done: n.lab.done, total: n.lab.total, xp: n.xp === null ? 0 : n.xp })
         ];
         art.forEach(function (line, index) {
             print(line + "  " + (info[index] || ""), index < 2 ? "info" : "");

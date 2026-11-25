@@ -24,6 +24,8 @@
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
 <script src="../js/pages.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Diffusion models","headline":"Diffusion models","description":"Noise in closed form, predicting the noise, sampling, guidance, latent diffusion and flow matching.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Diffusion models","item":"https://newfter.github.io/AI-Compass/path/r6-diffusion-models.html"}]}</script>
 </head>
@@ -79,7 +81,7 @@
 <section class="pg-check"><p><strong>Task.</strong> In flow matching, the path x_t = (1 − t)·x₀ + t·ε runs from the data x₀ at t = 0 to the noise ε at t = 1. What target does the network learn to predict at x_t?</p><p class="pg-soft">Solve it in the app.</p></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>The forward process <code>x_t = √ᾱ_t·x₀ + √(1 − ᾱ_t)·ε</code> destroys data and can be sampled at any t in one go. A network ε_θ learns to predict the noise, which is the same as learning the score ∇ ln p_t(x_t) up to the factor −√(1 − ᾱ_t).</li><li>Sampling starts from noise and denoises step by step: about 1000 steps in early samplers, tens with ODE solvers, a few or even one after distillation.</li><li>Classifier-free guidance <code>ε_g = ε_u + w·(ε_c − ε_u)</code> trades variety for faithfulness to the prompt. Latent diffusion saves work by running in a space compressed by an autoencoder.</li><li>Flow matching trains a network to predict the velocity ε − x₀ along straight paths between data and noise; straighter paths need fewer sampling steps.</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/r6">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><a href="r5-latent-variables-and-the-elbo.html"><small>Previous step</small>Latent variables and the ELBO</a><a href="r7-reinforcement-learning-the-core.html"><small>Next step</small>Reinforcement learning: the core</a></nav>
 </article>
 </main>
@@ -93,7 +95,7 @@
         <a href="../history/">History of AI</a>
         <a href="../teachers/">For teachers</a>
     </nav>
-    <p>A free student project. No ads, no sign-up.</p>
+    <p>A free student project. No ads, no sign-up. <a href="../privacy.html">Privacy</a></p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>
 </body>

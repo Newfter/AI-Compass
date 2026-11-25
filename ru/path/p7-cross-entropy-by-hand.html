@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Кросс-энтропия своими руками","headline":"Кросс-энтропия своими руками","description":"Обычная функция потерь нейросетевых классификаторов и языковых моделей, а ещё перплексия.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Кросс-энтропия своими руками","item":"https://newfter.github.io/AI-Compass/ru/path/p7-cross-entropy-by-hand.html"}]}</script>
 </head>
@@ -81,7 +83,7 @@
 </div></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li>Кросс-энтропия для одного примера: <code>L = −ln p(правильный класс)</code>. Для пачки берут среднее по её примерам.</li><li>Уверенная ошибка стоит дорого: p = 0,5 обходится в 0,69, а p = 0,01 — уже в 4,61.</li><li>С softmax градиент по логитам равен <code>p − y</code>: предсказание минус one-hot-вектор правильного ответа.</li><li><strong>Перплексия</strong> равна <code>e^L</code>. Модель, которая ещё ничего не знает, начинает примерно с <code>L = ln V</code>, где V — число классов или токенов.</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/p7">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><a href="p4-tokens-embeddings-and-attention.html"><small>Предыдущий шаг</small>Токены, эмбеддинги и внимание</a><a href="p8-how-a-model-picks-the-next-token.html"><small>Следующий шаг</small>Как модель выбирает следующий токен</a></nav>
 </article>
 </main>
@@ -95,7 +97,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>

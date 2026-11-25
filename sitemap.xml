@@ -1954,4 +1954,16 @@
         <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/quiz/"/>
         <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/quiz/"/>
     </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/privacy.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/privacy.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/privacy.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/privacy.html"/>
+    </url>
+    <url>
+        <loc>https://newfter.github.io/AI-Compass/ru/privacy.html</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://newfter.github.io/AI-Compass/privacy.html"/>
+        <xhtml:link rel="alternate" hreflang="ru" href="https://newfter.github.io/AI-Compass/ru/privacy.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://newfter.github.io/AI-Compass/privacy.html"/>
+    </url>
 </urlset>

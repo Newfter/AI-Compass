@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Скрытые переменные и ELBO","headline":"Скрытые переменные и ELBO","description":"Нижняя граница ELBO и её зазор, трюк с репараметризацией, KL-член для гауссова энкодера и коллапс апостериорного распределения.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Скрытые переменные и ELBO","item":"https://newfter.github.io/AI-Compass/ru/path/r5-latent-variables-and-the-elbo.html"}]}</script>
 </head>
@@ -77,7 +79,7 @@
 <section class="pg-check"><p><strong>Задание.</strong> У VAE очень мощный декодер: каждый пиксель он предсказывает по всем предыдущим. Обучение даёт хорошее значение ELBO, но KL(q_φ(z | x) ‖ p(z)) в итоге близка к 0 для каждого входа. Что, скорее всего, произошло?</p><p class="pg-soft">Реши его в приложении.</p></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li>У модели со скрытой переменной <code>p_θ(x) = ∫ p_θ(x | z)·p(z) dz</code> и нейросетью-декодером правдоподобие нельзя вычислить точно, поэтому VAE обучает вместе с декодером энкодер q_φ(z | x).</li><li><code>ln p_θ(x) = ELBO + KL(q_φ(z | x) ‖ p_θ(z | x))</code>: ELBO — нижняя граница, а её зазор — это KL между энкодером и истинным апостериорным распределением.</li><li>Репараметризация <code>z = μ + σ·ε</code> пропускает градиент через случайно выбранные z (∂z/∂σ = ε). Для гауссова энкодера и априорного распределения N(0, I) слагаемое KL — это сумма <code>½·(μ² + σ² − 1 − ln σ²)</code> по измерениям.</li><li>Если декодер обходится без z, KL может упасть почти до 0, и код z становится бесполезным: это коллапс апостериорного распределения (posterior collapse).</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/r5">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><a href="r4-why-giant-networks-generalise.html"><small>Предыдущий шаг</small>Почему огромные сети обобщают</a><a href="r6-diffusion-models.html"><small>Следующий шаг</small>Диффузионные модели</a></nav>
 </article>
 </main>
@@ -91,7 +93,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>

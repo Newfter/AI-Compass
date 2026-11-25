@@ -6,17 +6,20 @@
      browser, so it opens and works without a connection (sw.js explains how).
      It also hands it the parts loaded on demand (A.offlineFiles in core.js),
      to save ahead: after one visit, the whole site works offline.
-   - "Install the app". When the browser offers to install the site as an app,
-     a button appears in the footer and a command in Ctrl+K. iPhones and iPads
-     never offer it: there the button shows how to do it with Share.
+   - "Install the app": in the footer, in the settings window and in Ctrl+K.
+     Where the browser has an install window of its own (Chrome, Edge...),
+     the button opens it; where it has none (iPhones and iPads, Safari on a
+     Mac, Firefox on Android), a short help says where to tap.
+   - Keeping the progress: the browser is asked not to delete what the site
+     saved, where it answers without asking the visitor.
    - A short message when the connection drops and when it comes back.
    - Links ending in ?lang=ru or ?lang=en open the site in that language. The
      script in the <head> of index.html does that; this file finishes the job
      when the browser can't save the language.
    - AICompass.share(...): the phone's share window, or the link copied.
    Printing needs no JavaScript (css/print.css). What search engines and chat
-   apps read is in the <head> of index.html; the app's name and icons are in
-   manifest.webmanifest.
+   apps read is in the <head> of index.html; the app's name, icons, pictures
+   and shortcuts are in manifest.webmanifest.
 
    Sections of this file:
     1. Settings
@@ -24,13 +27,15 @@
     3. The offline copy (the service worker)
     4. Offline and back online
     5. Installing the app
-    6. Sharing
-    7. Ctrl+K commands and the public API
+    6. Keeping the progress on this device
+    7. Sharing
+    8. Ctrl+K commands and the public API
    Other features use AICompass.share and AICompass.platform (see the last section).
    Progress events (A.track): "app.install" {} once the app is installed,
    "app.share" { via: "share" or "copy" } when something was shared.
    Nothing is saved by this file, and nothing is sent anywhere.
-   Every text (English and Russian) is in js/content/platform.js
+   The install box and its group in the settings window are styled in
+   css/platform.css. Every text (English and Russian) is in js/content/platform.js
    ========================================================= */
 
 (function () {
@@ -51,7 +56,7 @@
     // The message that asks the service worker to save the files this page has already
     // loaded (sw.js, section 5, listens for it)
     const SAVE_MESSAGE = "save-files";
-    // Where the "Install the app" button and the iPhone help are (the footer of index.html)
+    // Where the "Install the app" button and its help are (the footer of index.html)
     const INSTALL_BOX_ID = "install-app";
     const INSTALL_HELP_ID = "install-help";
 
@@ -162,49 +167,143 @@
 
     /* =========================================================
        5. INSTALLING THE APP
-       Chrome, Edge and Samsung Internet send "beforeinstallprompt" when the
-       site can be installed: the button and the command appear, and pressing
-       one shows the browser's own install window. Safari on iPhones and iPads
-       never sends it: there the button shows the help text below it instead.
-       Nothing is shown when the site already runs as the installed app.
+       Three places offer it, and they always agree: the box in the footer of
+       index.html, the group "The app" in the settings window (js/settings.js
+       leaves an empty place for it and calls mountInstall each time it draws
+       the window) and a Ctrl+K command (section 8). No pop-up ever offers it:
+       another part of the site owns the only pop-up nudge.
+       - Chrome, Edge, Samsung Internet and the other browsers built on
+         Chromium send "beforeinstallprompt" when the site can be installed:
+         the button appears, and pressing it shows the browser's own window.
+       - Browsers that can install a site but have no such window get a short
+         help that says where to tap. The footer's button opens and closes it;
+         the settings window shows it at once:
+           iPhones and iPads: Share, then "Add to Home Screen" (Safari, and
+             since iOS 16.4 Chrome, Edge and the others too; on an older
+             system, or inside another app, it says to open Safari first);
+           Safari 17 or newer on a Mac: File, then "Add to Dock";
+           Firefox on Android: the menu ⋮, then "Install".
+       - Firefox on a computer can't install a site: nothing is shown there.
+         Nothing is shown either once the site runs as the installed app, or
+         has just been installed.
        ========================================================= */
     const installBox = document.getElementById(INSTALL_BOX_ID);
     const installButton = installBox && installBox.querySelector("button");
     const installHelp = document.getElementById(INSTALL_HELP_ID);
 
-    // Opened from the home screen, as the installed app
+    const agent = navigator.userAgent || "";
+    // Opened from the home screen, the dock or the start menu, as the installed app
     const runsAsApp = A.media("(display-mode: standalone)").matches || window.navigator.standalone === true;
     // iPhones and iPads (an iPad says "Macintosh", but has a touch screen)
-    const isAppleMobile = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
-        (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
-    const showsHelp = isAppleMobile && !runsAsApp;
+    const isAppleMobile = /iPhone|iPad|iPod/.test(agent) ||
+        (/Macintosh/.test(agent) && navigator.maxTouchPoints > 1);
+
+    // The help for this browser (a text of js/content/platform.js), or "" when it needs none
+    function helpForThisBrowser() {
+        if (isAppleMobile) {
+            // Every browser of an iPhone or iPad can add the site to the home screen since
+            // iOS 16.4; before, only Safari could. The others write their own name in the
+            // user agent, and a page shown inside another app (a chat, a social network)
+            // has no "Safari/" in it at all.
+            const system = /(?:iPhone OS|CPU OS) (\d+)_(\d+)/.exec(agent);
+            const beforeIos164 = Boolean(system) && Number(system[1]) * 100 + Number(system[2]) < 1604;
+            const otherBrowser = /CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|YaBrowser|GSA\//.test(agent);
+            if (!/Safari\//.test(agent) || (otherBrowser && beforeIos164)) return "platform.iosSafariHelp";
+            return "platform.iosHelp";
+        }
+        // Safari on a Mac (only Safari writes "Version/17.1 Safari/..."): "Add to Dock" since Safari 17
+        const safari = /Macintosh/.test(agent) && !/Chrom|Edg|OPR|YaBrowser|Firefox/.test(agent) &&
+            /Version\/(\d+)[\d.]* Safari\//.exec(agent);
+        if (safari && Number(safari[1]) >= 17) return "platform.macHelp";
+        if (/Android/.test(agent) && /Firefox\//.test(agent)) return "platform.firefoxHelp";
+        return "";
+    }
+
+    const helpKey = runsAsApp ? "" : helpForThisBrowser();
 
     let offer = null;           // the browser's offer to install (the event), kept until it is used
     let installed = runsAsApp;  // true once the app is installed (or runs as the app)
+    let helpOpen = false;       // the help under the footer's button is open
+    let settingsGroup = null;   // the group "The app" of the settings window, once drawn
     let commandAdded = false;
 
-    function showInstall(show) {
-        if (installBox) A.dom.setHidden(installBox, !show);
-        if (!show) showHelp(false);
-        if (show) addInstallCommand();
+    // What can be offered now: "window" (the browser's install window), "help" or "" (nothing)
+    function offerKind() {
+        if (installed) return "";
+        if (offer) return "window";
+        return helpKey ? "help" : "";
     }
 
-    // The iPhone help below the button (the button says whether it is open)
-    function showHelp(show) {
-        if (!installHelp || !installButton) return;
-        A.dom.setHidden(installHelp, !show);
-        if (showsHelp) A.dom.setAttr(installButton, "aria-expanded", String(show));
+    // Shows the offer as it is now, in every place
+    function paintInstall() {
+        const kind = offerKind();
+        if (kind !== "help") helpOpen = false;
+        if (installBox) A.dom.setHidden(installBox, !kind);
+        if (installButton) {
+            // With the help, the button opens and closes it, and says whether it is open
+            if (kind === "help") {
+                A.dom.setAttr(installButton, "aria-controls", INSTALL_HELP_ID);
+                A.dom.setAttr(installButton, "aria-expanded", String(helpOpen));
+            } else if (installButton.hasAttribute("aria-expanded")) {
+                installButton.removeAttribute("aria-controls");
+                installButton.removeAttribute("aria-expanded");
+            }
+        }
+        if (installHelp) A.dom.setHidden(installHelp, !helpOpen);
+        paintSettings(kind);
+        if (kind) addInstallCommand();
     }
 
-    // What the button and the command do. The result says what happened:
-    // "accepted" or "dismissed" (the browser's window), "help" (iPhone), "installed"
-    // (nothing to do) or "unavailable" (the browser offers nothing now, or didn't show
-    // its window because this didn't come right after a click).
+    // The help's text: the one for this browser (core translates it again when the language changes)
+    if (installHelp && helpKey) {
+        A.dom.setAttr(installHelp, "data-i18n", helpKey);
+        A.dom.setText(installHelp, t(helpKey));
+    }
+
+    // The group "The app" of the settings window. js/settings.js leaves an empty, hidden
+    // <section> for it and calls this each time it draws the window: the first call fills
+    // it, and every call shows it only when there is something to offer.
+    function mountInstall(group) {
+        if (!group) return;
+        if (group !== settingsGroup) {
+            settingsGroup = group;
+            group.setAttribute("aria-labelledby", "st-app-title");
+            group.innerHTML =
+                '<h3 class="st-group-title" id="st-app-title" data-i18n="platform.settingsTitle">' + t("platform.settingsTitle") + "</h3>" +
+                '<p class="st-hint st-group-hint" id="st-app-hint" data-i18n="platform.settingsHint">' + t("platform.settingsHint") + "</p>" +
+                '<div class="st-row st-app-row">' +
+                    '<button type="button" class="btn btn-ghost btn-small st-app-install" aria-describedby="st-app-hint" hidden>' +
+                        '<span aria-hidden="true">📲</span>' + A.i18nHTML("platform.install") + "</button>" +
+                    (helpKey ? A.i18nHTML(helpKey, "st-app-help", "p") : "") +
+                "</div>";
+            group.querySelector(".st-app-install").addEventListener("click", function () { install(); });
+        }
+        paintSettings(offerKind());
+    }
+
+    function paintSettings(kind) {
+        if (!settingsGroup) return;
+        // A hidden button can't keep the focus: it goes to the window's title
+        if (!kind && settingsGroup.contains(document.activeElement)) {
+            const dialog = settingsGroup.closest('[role="dialog"]');
+            const title = dialog && dialog.querySelector('[tabindex="-1"]');
+            if (title) title.focus({ preventScroll: true });
+        }
+        A.dom.setHidden(settingsGroup, !kind);
+        A.dom.setHidden(settingsGroup.querySelector(".st-app-install"), kind !== "window");
+        const help = settingsGroup.querySelector(".st-app-help");
+        if (help) A.dom.setHidden(help, kind !== "help");
+    }
+
+    // What the buttons and the command do. The result says what happened:
+    // "accepted" or "dismissed" (the browser's window), "help" (the help is shown),
+    // "installed" (nothing to do) or "unavailable" (the browser offers nothing now, or
+    // didn't show its window because this didn't come right after a click).
     function install() {
         if (offer) {
             const asked = offer;
             offer = null;
-            showInstall(false);   // an offer can be used only once
+            paintInstall();   // an offer can be used only once
             let shown;
             try {
                 shown = Promise.resolve(asked.prompt());
@@ -222,7 +321,7 @@
                 // the offer is still good, so the button comes back for the next try
                 if (!offer && !installed) {
                     offer = asked;
-                    showInstall(true);
+                    paintInstall();
                 }
                 return "unavailable";
             });
@@ -231,8 +330,9 @@
             A.toast(t("platform.alreadyInstalled"), "📲");
             return Promise.resolve("installed");
         }
-        if (showsHelp) {
-            showHelp(true);
+        if (helpKey) {
+            helpOpen = true;
+            paintInstall();
             return Promise.resolve("help");
         }
         A.toast(t("platform.installMenu"), "📲");
@@ -243,34 +343,75 @@
         // No banner from the browser: our button and command offer it instead
         event.preventDefault();
         offer = event;
-        showInstall(true);
+        paintInstall();
     });
 
     window.addEventListener("appinstalled", function () {
         offer = null;
         installed = true;
-        showInstall(false);
+        paintInstall();
         A.toast(t("platform.installed"), "🎉");
         A.track("app.install", {});
+        keepProgress();
     });
 
     if (installButton) {
-        // On iPhones the button opens the help: it says so, and whether the help is open
-        if (showsHelp) {
-            installButton.setAttribute("aria-controls", INSTALL_HELP_ID);
-            installButton.setAttribute("aria-expanded", "false");
-        }
         installButton.addEventListener("click", function () {
-            // On iPhones the button opens and closes the help
-            if (showsHelp && installHelp && !installHelp.hidden) showHelp(false);
-            else install();
+            if (offerKind() === "help") {
+                helpOpen = !helpOpen;
+                paintInstall();
+            } else {
+                install();
+            }
         });
     }
 
-    if (showsHelp) showInstall(true);
+    paintInstall();
 
     /* =========================================================
-       6. SHARING
+       6. KEEPING THE PROGRESS ON THIS DEVICE
+       The progress is saved in this browser, and a browser may delete what a
+       site saved: Safari after 7 days without a visit, the others when the
+       device runs out of space. navigator.storage.persist() asks it to keep
+       it. Browsers built on Chromium (Chrome, Edge, Samsung Internet...) and
+       on Safari's engine (every browser of an iPhone) answer by themselves,
+       without asking the visitor: yes for an installed app, for example.
+       Firefox would ask the visitor instead, so it is never asked there.
+       It is asked once per visit at most, at a good moment: when the site
+       runs as the installed app (or has just been installed), or after the
+       first real progress of the visit (a finished lesson, step, quiz...).
+       Nothing is saved and nothing is sent.
+       ========================================================= */
+    // The progress events (A.track) that save something worth keeping
+    const PROGRESS_EVENTS = ["lesson.complete", "learn.placement", "learn.unit", "learn.review", "learn.test",
+        "quiz.finish", "daily.complete", "flashcard.finish", "challenge.finish"];
+    // Chromium and Safari's engine (WebKit) write "AppleWebKit/"; Firefox doesn't
+    const asksNobody = /AppleWebKit\//.test(agent) && !/Firefox\//.test(agent);
+    let keepAsked = false;
+
+    function keepProgress() {
+        if (keepAsked || !asksNobody) return;
+        keepAsked = true;
+        try {
+            const storage = navigator.storage;
+            if (!storage || typeof storage.persist !== "function") return;
+            const already = typeof storage.persisted === "function" ? storage.persisted() : false;
+            Promise.resolve(already).then(function (kept) {
+                return kept || storage.persist();
+            }).catch(function () { /* not allowed here: nothing changes */ });
+        } catch (error) {
+            // Storage blocked: nothing to keep
+        }
+    }
+
+    if (runsAsApp) A.whenIdle(keepProgress);
+
+    A.on("activity", function (activity) {
+        if (activity && PROGRESS_EVENTS.indexOf(activity.type) !== -1) keepProgress();
+    });
+
+    /* =========================================================
+       7. SHARING
        AICompass.share({ title, text, url }) shares a text and a link:
        - with the device's share window, where there is one (phones, tablets,
          some computers);
@@ -357,10 +498,10 @@
     }
 
     /* =========================================================
-       7. CTRL+K COMMANDS AND THE PUBLIC API
+       8. CTRL+K COMMANDS AND THE PUBLIC API
        ========================================================= */
 
-    // "Install the app" appears only once the site can be installed (section 5)
+    // "Install the app" appears only once there is something to offer (section 5)
     function addInstallCommand() {
         if (commandAdded) return;
         commandAdded = true;
@@ -369,13 +510,13 @@
             group: "cmd.groupActions",
             icon: "📲",
             title: function () { return t("platform.cmdInstall"); },
-            keywords: "install app application home screen offline download pwa установить приложение экран домой офлайн скачать",
-            // The browser's install window opens over the page; on iPhones the
-            // command goes down to the help in the footer
-            keepOverlays: !showsHelp,
+            keywords: "install app application home screen dock offline download pwa установить приложение экран домой док офлайн скачать",
+            // The browser's install window opens over the page; where there is none,
+            // the command goes down to the help in the footer
+            keepOverlays: !helpKey,
             run: function () {
                 install();
-                if (showsHelp && installBox && !installBox.hidden) {
+                if (helpKey && installBox && !installBox.hidden) {
                     installBox.scrollIntoView({ block: "center", behavior: A.motion.ok() ? "smooth" : "auto" });
                     if (installButton) installButton.focus({ preventScroll: true });
                 }
@@ -405,19 +546,22 @@
     });
 
     // AICompass.share({ title, text, url }) -> Promise of "shared" | "copied" | "cancelled" | "failed"
-    //     (see section 6), for example the quiz result:
+    //     (see section 7), for example the quiz result:
     //     A.share({ text: "I scored 10 of 12 in the AI Challenge!", url: A.platform.link("quiz") });
     A.feature("share", share);
 
     // AICompass.platform:
-    //   link(part)    the site's public address in the current language, e.g. link("quiz")
-    //   install()     the browser's install window (iPhones: the help), Promise of what happened
-    //   canInstall()  true while the browser offers to install (or on iPhones and iPads)
-    //   installed     true when the site runs as the installed app, or was just installed
+    //   link(part)          the site's public address in the current language, e.g. link("quiz")
+    //   install()           the browser's install window (or, where there is none, the help in
+    //                       the footer), Promise of what happened (section 5)
+    //   canInstall()        true while something can be offered: the browser's window or the help
+    //   mountInstall(group) draws the group "The app" into the settings window (js/settings.js)
+    //   installed           true when the site runs as the installed app, or was just installed
     A.feature("platform", {
         link: link,
         install: install,
-        canInstall: function () { return Boolean(offer) || (showsHelp && !installed); },
+        canInstall: function () { return offerKind() !== ""; },
+        mountInstall: mountInstall,
         get installed() { return installed; }
     });
 })();

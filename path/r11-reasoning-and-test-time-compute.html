@@ -24,6 +24,8 @@
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
 <script src="../js/pages.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Reasoning and test-time compute","headline":"Reasoning and test-time compute","description":"Chains of thought, majority votes, best-of-n with a checker, learned verifiers, and RL with checkable rewards.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Reasoning and test-time compute","item":"https://newfter.github.io/AI-Compass/path/r11-reasoning-and-test-time-compute.html"}]}</script>
 </head>
@@ -79,7 +81,7 @@
 <section class="pg-check"><p><strong>Task.</strong> Without a hint, a model consistently answers a maths question with 12. With a hint suggesting 15 added to the prompt, it answers 15, and its written reasoning never mentions the hint. What can you conclude?</p><p class="pg-soft">Solve it in the app.</p></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>Each written token is fed back as input, so a chain of thought gives a fixed-depth transformer more serial computation per answer: test-time compute spent in series.</li><li>With independent errors and p &gt; 0.5, a majority vote helps: p = 0.6 per sample gives 0.648 for a majority of 3. Correlated errors shrink the gain. With a perfect checker, best-of-n succeeds with probability <code>1 − (1 − p)^n</code>.</li><li>A learned verifier can be gamed: the more samples it ranks, the more its top pick tends to owe its rank to the verifier's errors. Outcome rewards need only final answers but are blind to the path; process rewards judge each step but need step labels.</li><li>RL with verifiable rewards can teach long reasoning, but a reward with gaps, like an incomplete test suite, can be hacked. A written chain of thought is evidence about the computation, not a guaranteed explanation.</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/r11">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><a href="r10-smaller-and-faster-models.html"><small>Previous step</small>Smaller and faster models</a><a href="r12-research-that-holds-up.html"><small>Next step</small>Research that holds up</a></nav>
 </article>
 </main>
@@ -93,7 +95,7 @@
         <a href="../history/">History of AI</a>
         <a href="../teachers/">For teachers</a>
     </nav>
-    <p>A free student project. No ads, no sign-up.</p>
+    <p>A free student project. No ads, no sign-up. <a href="../privacy.html">Privacy</a></p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>
 </body>

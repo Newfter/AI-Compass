@@ -690,3 +690,243 @@ grant execute on function public.my_profile(), public.set_nickname(text), public
   public.submit_attempt(uuid, jsonb, text), public.my_stats(), public.delete_my_account()
   to authenticated;
 grant execute on function public.challenge_board(text), public.ping() to anon, authenticated;
+
+-- =================================================================================
+-- 8. Counting visits: how many people use the site, without personal data
+-- =================================================================================
+-- Like the rest of this file, this part can run again at any time: it creates what is missing,
+-- refreshes the functions and keeps every row.
+--
+-- js/count.js runs on every page of the site. At most once a day per device it calls hello()
+-- with a random device number made in the browser (never an account, a name, an e-mail or an IP
+-- address), the language and three yes/no facts: the app or a plain page, the installed app or
+-- a browser tab, signed in or not. The owner's page stats.html shows the totals (site_stats()).
+--
+--   visits      one row per device per day (UTC). Kept 35 days, then deleted.
+--   visitors    one row per device number: its first and last day and on how many days it
+--               came, to tell new visitors from returning ones. Nothing else. Deleted 400 days
+--               after its first day: by then js/count.js has replaced that number (every 13
+--               months), so it never comes back.
+--   visit_days  the totals of each finished day, kept for good. No device numbers at all.
+--
+-- The free database holds 500 MB, and anyone can call hello() with made-up numbers. So a day
+-- counts at most 20,000 devices (new or returning) and at most 2,000 new device numbers; the
+-- rest of that day is ignored. Rows of these sizes take about 112 bytes each, so even a script
+-- that sends the most every day for years fills at most about 80 MB of visits (36 days) and
+-- 90 MB of visitors (400 days). When the site really grows past these numbers, raise the two
+-- limits in hello() below (and keep that sum well under 500 MB).
+--
+-- The words: "active that day" (dau) = devices seen that day; "last 7 days" (wau) and "last 30
+-- days" (mau) = different devices seen in the 7 or 30 days that end that day. A device is one
+-- browser on one phone or computer, so these numbers count devices, not people.
+--
+-- To see the numbers without stats.html, run this in the SQL editor:
+--   select day, dau as active_that_day, wau as last_7_days, mau as last_30_days,
+--          new_visitors, accounts_total, accounts_new
+--   from public.visit_days order by day desc limit 30;
+
+create table if not exists public.visits (
+  day date not null,
+  visitor uuid not null,
+  app boolean not null default false,        -- opened the app (index.html)
+  page boolean not null default false,       -- opened a plain page (lessons/, glossary/ ...)
+  installed boolean not null default false,  -- in the installed app, not in a browser tab
+  signed_in boolean not null default false,  -- signed in with Google
+  lang text not null check (lang in ('en', 'ru')),
+  primary key (day, visitor)
+);
+
+create table if not exists public.visitors (
+  visitor uuid primary key,
+  first_day date not null,
+  last_day date not null,
+  days int not null default 1
+);
+create index if not exists visitors_first_day on public.visitors (first_day);
+
+create table if not exists public.visit_days (
+  day date primary key,
+  dau int not null,             -- devices active that day
+  wau int not null,             -- different devices in the 7 days that end that day
+  mau int not null,             -- different devices in the 30 days that end that day
+  new_visitors int not null,    -- devices seen for the first time that day
+  signed_in int not null,       -- of dau: signed in
+  installed int not null,       -- of dau: in the installed app
+  ru int not null,              -- of dau: in Russian (the others in English)
+  app int not null,             -- of dau: opened the app
+  page int not null,            -- of dau: opened a plain page
+  accounts_total int not null,  -- accounts at the end of that day
+  accounts_new int not null     -- accounts made that day
+);
+
+-- Locked: no policies and no grants, so the browser can neither read nor change these tables.
+-- It reaches them only through hello() and site_stats() below.
+alter table public.visits enable row level security;
+alter table public.visitors enable row level security;
+alter table public.visit_days enable row level security;
+revoke all on public.visits, public.visitors, public.visit_days from public, anon, authenticated;
+
+-- Today in UTC, by the server clock: a day runs from midnight to midnight UTC for everyone.
+create or replace function private.visit_today() returns date
+language sql stable set search_path = '' as $$
+  select (now() at time zone 'UTC')::date
+$$;
+
+-- Writes the totals of every finished day that has none yet (also of a day when nobody came),
+-- then deletes the visits older than 35 days. hello() and site_stats() call it; the work is done
+-- once a day, because once yesterday has its totals it returns at once. Running it again
+-- changes nothing.
+create or replace function private.roll_up_visits(today date) returns void
+language plpgsql set search_path = '' as $$
+declare
+  since date;
+begin
+  if exists (select 1 from public.visit_days d where d.day = today - 1) then return; end if;
+  -- One call does the work; a call at the same moment goes on without waiting for it.
+  if not pg_try_advisory_xact_lock(7710204513) then return; end if;
+  if exists (select 1 from public.visit_days d where d.day = today - 1) then return; end if;
+
+  select min(v.day) into since from public.visits v;
+  if since is not null then
+    insert into public.visit_days (day, dau, wau, mau, new_visitors, signed_in, installed, ru, app, page,
+                                   accounts_total, accounts_new)
+    select x.day,
+           (select count(*) from public.visits v where v.day = x.day),
+           (select count(distinct v.visitor) from public.visits v where v.day between x.day - 6 and x.day),
+           (select count(distinct v.visitor) from public.visits v where v.day between x.day - 29 and x.day),
+           (select count(*) from public.visitors w where w.first_day = x.day),
+           (select count(*) from public.visits v where v.day = x.day and v.signed_in),
+           (select count(*) from public.visits v where v.day = x.day and v.installed),
+           (select count(*) from public.visits v where v.day = x.day and v.lang = 'ru'),
+           (select count(*) from public.visits v where v.day = x.day and v.app),
+           (select count(*) from public.visits v where v.day = x.day and v.page),
+           (select count(*) from public.profiles p
+             where p.created_at < (x.day + 1)::timestamp at time zone 'UTC'),
+           (select count(*) from public.profiles p
+             where p.created_at >= x.day::timestamp at time zone 'UTC'
+               and p.created_at < (x.day + 1)::timestamp at time zone 'UTC')
+    from (select since + n as day from generate_series(0, today - 1 - since) n) x
+    where not exists (select 1 from public.visit_days d where d.day = x.day)
+    on conflict (day) do nothing;
+  end if;
+
+  delete from public.visits v where v.day < today - 35;
+  -- A device number lives 13 months (js/count.js makes a new one then): an older row can
+  -- never be seen again, and keeping it would only let the table grow for ever
+  delete from public.visitors w where w.first_day < today - 400;
+end $$;
+
+-- The site's daily hello (js/count.js): records today's visit of one device. Junk is ignored (no
+-- device number, a language other than en and ru). A day takes at most 20,000 devices, new or
+-- returning, and at most 2,000 new device numbers (see the top of this part): past that, the
+-- call does nothing, so a script cannot fill the database. Both checks stop counting at their
+-- limit, so a refused call stays cheap. It returns nothing: nothing about any device ever goes
+-- back to the browser.
+create or replace function public.hello(visitor uuid, lang text default 'en', app boolean default false,
+  page boolean default false, installed boolean default false, signed_in boolean default false)
+returns void
+language plpgsql security definer set search_path = '' as $$
+#variable_conflict use_column
+declare
+  today date := private.visit_today();
+begin
+  if hello.visitor is null or hello.visitor = '00000000-0000-0000-0000-000000000000'
+     or hello.lang is null or hello.lang not in ('en', 'ru') then
+    return;
+  end if;
+  -- A device not yet counted today: only while the day has room (20,000 devices) ...
+  if not exists (select 1 from public.visits v where v.day = today and v.visitor = hello.visitor) then
+    if (select count(*) from (select 1 from public.visits v where v.day = today limit 20000) x) >= 20000 then
+      return;
+    end if;
+    -- ... and a number never seen before only while the day has room for new ones (2,000)
+    if not exists (select 1 from public.visitors w where w.visitor = hello.visitor)
+       and (select count(*) from (select 1 from public.visitors w where w.first_day = today limit 2000) x) >= 2000 then
+      return;
+    end if;
+  end if;
+
+  -- A second hello on the same day only adds what is new (the app after a plain page ...)
+  insert into public.visits as v (day, visitor, app, page, installed, signed_in, lang)
+  values (today, hello.visitor, coalesce(hello.app, false), coalesce(hello.page, false),
+          coalesce(hello.installed, false), coalesce(hello.signed_in, false), hello.lang)
+  on conflict (day, visitor) do update
+    set app = v.app or excluded.app, page = v.page or excluded.page,
+        installed = v.installed or excluded.installed, signed_in = v.signed_in or excluded.signed_in;
+
+  insert into public.visitors as w (visitor, first_day, last_day, days)
+  values (hello.visitor, today, today, 1)
+  on conflict (visitor) do update
+    set last_day = excluded.last_day, days = w.days + 1
+    where w.last_day < excluded.last_day;
+
+  perform private.roll_up_visits(today);
+end $$;
+
+-- The numbers of stats.html: today so far, yesterday, the totals of the last `days` finished
+-- days (1 to 400; 90 when not given), how many device numbers are known (of the last 13 months)
+-- and how many accounts there are. Only totals, never a device number: they are not secret, so
+-- anyone may ask. Asking also writes yesterday's totals when they are due, so the numbers are
+-- complete even before today's first visit.
+create or replace function public.site_stats(days int default 90) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+#variable_conflict use_column
+declare
+  today date := private.visit_today();
+  n int := least(greatest(coalesce(site_stats.days, 90), 1), 400);
+  live jsonb;
+  last30 jsonb;
+begin
+  perform private.roll_up_visits(today);
+
+  -- Today so far, and the last 7 and 30 days including today, straight from the visits
+  select jsonb_build_object(
+           'day', today,
+           'dau', count(*) filter (where v.day = today),
+           'wau', count(distinct v.visitor) filter (where v.day > today - 7),
+           'mau', count(distinct v.visitor),
+           'new_visitors', (select count(*) from public.visitors w where w.first_day = today),
+           'signed_in', count(*) filter (where v.day = today and v.signed_in),
+           'installed', count(*) filter (where v.day = today and v.installed),
+           'ru', count(*) filter (where v.day = today and v.lang = 'ru'),
+           'app', count(*) filter (where v.day = today and v.app),
+           'page', count(*) filter (where v.day = today and v.page)),
+         jsonb_build_object(
+           'visits', count(*),
+           'signed_in', count(*) filter (where v.signed_in),
+           'installed', count(*) filter (where v.installed),
+           'ru', count(*) filter (where v.lang = 'ru'),
+           'app', count(*) filter (where v.app),
+           'page', count(*) filter (where v.page))
+    into live, last30
+    from public.visits v
+   where v.day > today - 30 and v.day <= today;
+
+  return jsonb_build_object(
+    'today', live,
+    'yesterday', (select to_jsonb(d) from public.visit_days d where d.day = today - 1),
+    'series', (select coalesce(jsonb_agg(to_jsonb(d) order by d.day), '[]'::jsonb)
+                 from public.visit_days d where d.day >= today - n and d.day < today),
+    'days', n,
+    'last30', last30,
+    'week', jsonb_build_object(
+      'new_visitors', (select count(*) from public.visitors w
+                        where w.first_day > today - 7 and w.first_day <= today),
+      'accounts_new', (select count(*) from public.profiles p
+                        where p.created_at >= (today - 6)::timestamp at time zone 'UTC')),
+    'totals', jsonb_build_object(
+      'visitors', (select count(*) from public.visitors),
+      'accounts', (select count(*) from public.profiles)),
+    'since', least((select min(d.day) from public.visit_days d), (select min(v.day) from public.visits v)),
+    'updated_at', now());
+end $$;
+
+-- Who may call what in this part: the browser calls hello() and site_stats(), nothing else.
+revoke all on function private.visit_today(), private.roll_up_visits(date) from public, anon, authenticated;
+revoke all on function public.hello(uuid, text, boolean, boolean, boolean, boolean), public.site_stats(int)
+  from public, anon, authenticated;
+grant execute on function public.hello(uuid, text, boolean, boolean, boolean, boolean), public.site_stats(int)
+  to anon, authenticated;
+
+-- The website's API (PostgREST) learns about new functions at once.
+notify pgrst, 'reload schema';

@@ -24,6 +24,8 @@
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
 <script src="../js/pages.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Optimisers for large models","headline":"Optimisers for large models","description":"Moving averages, Adam and its bias correction, AdamW, gradient clipping and the memory that training needs.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Optimisers for large models","item":"https://newfter.github.io/AI-Compass/path/r3-optimisers-for-large-models.html"}]}</script>
 </head>
@@ -76,7 +78,7 @@
 <section class="pg-check"><p><strong>Task.</strong> Mixed-precision training with Adam needs about 16 bytes per parameter: 16-bit weights and gradients, plus a 32-bit master copy, m and v. How many GB (10⁹ bytes) is that for 3 billion parameters, not counting activations?</p><p class="pg-soft">Solve it in the app.</p></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>An exponential moving average <code>m ← β·m + (1 − β)·g</code> remembers about 1/(1 − β) steps: about 10 for β = 0.9, about 1000 for β = 0.999.</li><li>Adam divides a bias-corrected average of the gradients, m̂, by the root of a bias-corrected average of their squares, √v̂. So, ignoring ε, its first step moves each weight with a nonzero gradient by η, and a positive constant factor on the loss cancels.</li><li>AdamW applies weight decay directly: <code>w ← w − η·(m̂ / (√v̂ + ε) + λ·w)</code>. An L2 penalty inside Adam is divided by √v̂ instead, so it is weakest for weights with large past gradients.</li><li>Warmup and clipping by the global norm help keep training stable. Mixed-precision training with Adam needs about 16 bytes per parameter, before activations.</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/r3">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><a href="r2-scaling-laws.html"><small>Previous step</small>Scaling laws</a><a href="r4-why-giant-networks-generalise.html"><small>Next step</small>Why giant networks generalise</a></nav>
 </article>
 </main>
@@ -90,7 +92,7 @@
         <a href="../history/">History of AI</a>
         <a href="../teachers/">For teachers</a>
     </nav>
-    <p>A free student project. No ads, no sign-up.</p>
+    <p>A free student project. No ads, no sign-up. <a href="../privacy.html">Privacy</a></p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>
 </body>

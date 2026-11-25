@@ -83,7 +83,7 @@ window.AICompassConfig = {
 };
 ```
 
-When this file is on GitHub Pages, the sign-in button, the account window, the Challenge section and the daily wake-up job (`.github/workflows/keep-awake.yml`) all switch on by themselves.
+When this file is on GitHub Pages, the sign-in button, the online account's card at the top of Settings → Account, the Challenge section and the daily wake-up job (`.github/workflows/keep-awake.yml`) all switch on by themselves.
 
 | Value | May it be public? | Why |
 | --- | --- | --- |
@@ -122,9 +122,78 @@ month, 500 MB of data (one visitor's progress is a few kilobytes), and the quest
 | --- | --- | --- |
 | `auth.users` (managed by Supabase) | the Google account's email address and name | only the owner in the Supabase dashboard; never shown on the site |
 | `profiles` | the nickname | the nickname is public (the leaderboard); nothing else |
-| `user_progress` | the same progress the browser saves (finished lessons, quiz bests, flashcard boxes, My Compass...) | only that person |
+| `user_progress` | the same progress the browser saves: one row for each kind of progress (finished lessons, quiz bests, flashcards, My Compass, My path, the research notebook...), one row `lab.challenges`, one row `prefs` (the look, the language, the design, calm motion, the text sizes), one row `lab.draw.data` (the drawings of Lab → "Draw and teach") and one row `bundle` with every other personal key (the teachers' kit, the timed quiz, the tools' last inputs...). A value bigger than 150 KB is kept in parts: rows `<row>.part-<id>` of at most 150 KB each, listed by the row itself (a full research notebook in Russian, 2.7 MB, is 19 parts). At most 100 rows of 256 KB each: a person with a full notebook and all the drawings has about 45 (a save adds one or two parts for a moment) | only that person |
 | `events` | the diary of results shown in My Compass | only that person |
 | `challenge_attempts` | every Knowledge Challenge attempt: the questions, the answers, the score, the time | only that person; the leaderboard shows each player's best score, time and nickname |
 | `challenge_questions` | the questions with their answers | nobody from the site: the answers and explanations are only sent back after an attempt is finished |
 
-A person can delete their account and everything with it from the account window ("Delete my account").
+A person can delete their account and everything with it in Settings → Account ("Delete my account", pressed twice).
+
+## How the progress is kept in sync
+
+Nothing needs to be set up for this: `supabase/schema.sql` already has the table. What the site does
+(the details are at the top of `js/account.js`):
+
+- **When.** On every sign-in and every visit the device merges its progress with the account's.
+  After that, a change is saved a few seconds later, and also when the tab is hidden or closed.
+  A save that fails (no internet, the project paused) is tried again, and the status in
+  Settings → Account says so ("Offline: it will save when you're back", "Couldn't save" with
+  "Try again"). Two tabs or two devices never write over each other: a write only goes through
+  if the row is still what the device last saw; otherwise it reads, merges and writes again.
+- **Nothing is lost.** Finished lessons, explored terms and learning days are the union of both
+  devices; scores keep the best; flashcards and memory cards keep the more advanced card; the XP
+  of My Compass adds up what each device earned; notes keep every note and the later edit of
+  each. The look, the language and the other choices follow the latest change (a new device
+  takes the account's choices first). Any other key goes into the `bundle` row: gaps are filled
+  both ways, and a key changed on this device since the last save wins.
+- **Big progress.** A row holds at most 256 KB, so a value bigger than 150 KB (a big research
+  notebook, the drawings of "Draw and teach") is saved in parts. The parts go first, the row that
+  lists them last, and only if it is still what the device last saw: another device reads either
+  the old value or the new one, whole, never a mix. A change sends only the parts it changed.
+  Whatever still cannot be saved online (the database refuses it, or the 100 rows are used up) is
+  named in Settings → Account as "only on this device".
+- **A reset stays a reset.** "Reset progress", "Start over", a deleted note or a mistake cleared
+  from "My mistakes" while signed in is sent as a deliberate removal (a higher "epoch" on the
+  row). Another device that still has the old progress does not bring it back: it keeps the
+  online copy plus only what it did itself since its last save.
+- **Signing out asks.** "Remove my progress from this device" is ticked by default (the safe
+  choice on a shared or school computer: the next person starts fresh, and everything comes
+  back on the next sign-in). The removal waits until everything is saved online: offline, or
+  while something could not be saved online, the person stays signed in and is told why. Unticked, the progress stays on the device; another
+  person who then signs in on that device does not get it in their account.
+
+## Counting visits, and the numbers page
+
+The same Supabase project also counts how many people use the site, without personal data. It
+starts by itself once the two values are in `js/config.js` and `supabase/schema.sql` has run (its
+part 8 builds the counting).
+
+- **What is counted.** Once a day per device, `js/count.js` sends a random device number made in
+  the browser, the language, the app or a plain page, installed or not, signed in or not. No
+  name, e-mail or IP address is kept, and there are no cookies. It does nothing on your own
+  computer (localhost), for test robots, or when Do Not Track or Global Privacy Control is on.
+  Visitors read all this on `privacy.html` (linked from every footer).
+- **The numbers page:** https://newfter.github.io/AI-Compass/stats.html. Bookmark it: the site does
+  not link to it and search engines skip it. It shows today, yesterday, the last 7 and 30 days,
+  new visitors, accounts, the installed app, the languages and a chart of 30, 90 or 365 days.
+- **Without the page**, in Supabase: **SQL Editor → New query**, paste and **Run**:
+
+  ```sql
+  select day, dau as active_that_day, wau as last_7_days, mau as last_30_days,
+         new_visitors, accounts_total, accounts_new
+  from public.visit_days order by day desc limit 30;
+  ```
+
+| Table | What | Kept |
+| --- | --- | --- |
+| `visits` | one row per device per day: the device number, the language and the yes/no facts | 35 days |
+| `visitors` | one row per device number: its first and last day, on how many days it came | 13 months after its first day (the device makes a new number then) |
+| `visit_days` | the totals of each finished day (no device numbers) | for good |
+
+None of the three can be read from the site; only the totals come out, through `site_stats()`.
+
+A day counts at most 20,000 devices, and at most 2,000 of them new. So a broken or unkind script
+that calls `hello()` again and again cannot fill the free database (at the very most about 180 MB
+of its 500 MB). If the numbers page ever shows a day near 20,000 devices or 2,000 new ones, raise
+the two limits in `hello()` (part 8 of `supabase/schema.sql`) and run the whole file again (that is
+safe: it keeps every row).

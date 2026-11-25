@@ -180,9 +180,9 @@
        Clicks on the tabs, the cards and "All tools" add a step to the
        browser's history (pushState), so Back and Forward go through them;
        an address that only gets more exact ("#research" -> "#research/bench")
-       is replaced. Core's own page switch looks for an element with the
-       address as its id, which "#research/bench" is not: this file shows the
-       page itself (showPage).
+       is replaced. Core shows the page for "#research/..." when the page
+       loads, and after a change of address when another page is on screen;
+       this file also shows it itself (showPage), before it follows the rest.
        ========================================================= */
     let lastAddress = "";          // the address this file last followed or wrote
     let followed = false;          // an address was followed once (the page has loaded)
@@ -1285,6 +1285,8 @@
         const index = shown.findIndex(function (entry) { return entry.id === id; });
         notebook.entries = notebook.entries.filter(function (entry) { return entry.id !== id; });
         saveNotebook();
+        // Signed in, the copy in the account loses it too (js/account.js)
+        A.emit("removed", { key: NOTEBOOK_KEY, items: [id] });
         if (editing === id) editing = null;
         renderList();
         say(t("research.nb.deleted"), "info");
@@ -1622,7 +1624,7 @@
 
     window.addEventListener("popstate", onAddressChange);
     window.addEventListener("hashchange", onAddressChange);
-    // On page load, once every script has run (core showed the home page for "#research/...")
+    // On page load, once every script has run (core has shown this page for "#research/...")
     A.ready(function () {
         updateExamLink();
         if (readAddress()) follow();

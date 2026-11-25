@@ -39,6 +39,8 @@ window.AICompass.addTranslations({
         "profiles.export": "Save to a file",
         "profiles.others": "Other learners on this device",
         "profiles.learners": "Learners on this device",
+        // With online accounts on: the heading of this device's learners, under the online account
+        "profiles.local": "Learners on this device",
         "profiles.switch": "Switch",
         "profiles.switchTo": "Switch to {name}",
         "profiles.delete": "Delete",
@@ -51,9 +53,6 @@ window.AICompass.addTranslations({
         "profiles.deleteWarning": "This erases the account “{name}” and all its progress from this device. It cannot be undone. To keep it, save it to a file first.",
 
         // The online account (shown only when online accounts are switched on)
-        "profiles.online": "Online account",
-        "profiles.onlineHint": "It keeps your progress on the internet too, with a Google account.",
-        "profiles.onlineOpen": "Open",
         "profiles.onlineLock": "Sign out of the online account first. While you are signed in, accounts on this device cannot be added, switched, loaded or deleted.",
 
         // ----- What happened (the line in the group, and a toast) -----
@@ -145,6 +144,7 @@ window.AICompass.addTranslations({
         "profiles.export": "Сохранить в файл",
         "profiles.others": "Другие аккаунты на этом устройстве",
         "profiles.learners": "Аккаунты на этом устройстве",
+        "profiles.local": "Ученики на этом устройстве",
         "profiles.switch": "Перейти",
         "profiles.switchTo": "Перейти в аккаунт «{name}»",
         "profiles.delete": "Удалить",
@@ -157,9 +157,6 @@ window.AICompass.addTranslations({
         "profiles.deleteWarning": "Аккаунт «{name}» и весь его прогресс будут стёрты с этого устройства. Вернуть их будет нельзя. Чтобы не потерять аккаунт, сначала сохрани его в файл.",
 
         // Онлайн-аккаунт (виден, только когда онлайн-аккаунты включены)
-        "profiles.online": "Онлайн-аккаунт",
-        "profiles.onlineHint": "Он хранит твой прогресс ещё и в интернете, через аккаунт Google.",
-        "profiles.onlineOpen": "Открыть",
         "profiles.onlineLock": "Сначала выйди из онлайн-аккаунта. Пока вход выполнен, аккаунты на этом устройстве нельзя добавлять, менять, загружать и удалять.",
 
         // ----- Что произошло (строка в группе и всплывающее сообщение) -----

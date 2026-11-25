@@ -1609,6 +1609,8 @@
             }
         }
         if (change) saveMistakes();
+        // Signed in, the copy in the account loses it too (js/account.js)
+        if (change && change.change === "cleared") A.emit("removed", { key: MISTAKES_KEY, items: [question.key] });
         return change;
     }
 

@@ -24,6 +24,8 @@
 <link rel="icon" href="../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../css/pages.css">
 <script src="../js/pages.js" defer></script>
+<script src="../js/config.js" defer></script>
+<script src="../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Agents and tools","headline":"Agents and tools","description":"The loop of an agent, who really runs a tool, and why long chains break.","inLanguage":"en","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=en"},{"@type":"ListItem","position":2,"name":"Learning path","item":"https://newfter.github.io/AI-Compass/path/"},{"@type":"ListItem","position":3,"name":"Agents and tools","item":"https://newfter.github.io/AI-Compass/path/b6-agents-and-tools.html"}]}</script>
 </head>
@@ -92,7 +94,7 @@
 </div></section>
 <section class="pg-keys"><h2>Remember</h2><ul><li>An <strong>agent</strong> is a model in a loop: it chooses a tool, sees the result and chooses again, until it decides that the goal is reached.</li><li>The model only writes a tool call. Your application runs it, so your code can check it, refuse it or ask a person first.</li><li>The chances of success multiply over the steps (0.95²⁰ ≈ 0.36), and every step pays for the whole context again. Keep runs short and let the agent check its work.</li><li>Give every run a budget and a stop condition. When the steps are known in advance, code with fixed steps is usually the better choice.</li></ul></section>
 
-<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn">Do this step in the app →</a></aside>
+<aside class="pg-cta"><p>Tasks with hints, a memory check that brings the idea back before you forget it, and your progress. Free, no sign-up.</p><a class="pg-btn" href="../index.html?lang=en#learn/b6">Do this step in the app →</a></aside>
 <nav class="pg-pager" aria-label="Learning path"><a href="b5-prompt-injection.html"><small>Previous step</small>Prompt injection</a><a href="b7-run-it-for-real-users.html"><small>Next step</small>Run it for real users</a></nav>
 </article>
 </main>
@@ -106,7 +108,7 @@
         <a href="../history/">History of AI</a>
         <a href="../teachers/">For teachers</a>
     </nav>
-    <p>A free student project. No ads, no sign-up.</p>
+    <p>A free student project. No ads, no sign-up. <a href="../privacy.html">Privacy</a></p>
     <p><a class="pg-btn" href="../index.html?lang=en">Open AI Compass</a></p>
 </footer>
 </body>

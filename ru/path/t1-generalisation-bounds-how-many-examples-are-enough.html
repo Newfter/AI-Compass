@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Границы обобщения: сколько примеров достаточно","headline":"Границы обобщения: сколько примеров достаточно","description":"Вычисли объём выборки по Хёфдингу и оценке объединения и найди их предел.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Границы обобщения: сколько примеров достаточно","item":"https://newfter.github.io/AI-Compass/ru/path/t1-generalisation-bounds-how-many-examples-are-enough.html"}]}</script>
 </head>
@@ -81,7 +83,7 @@
 <section class="pg-check"><p><strong>Задание.</strong> Сеть всегда обучается до нулевой ошибки на n примерах, будь метки настоящими или от честной монеты. Оценка разности истинной и обучающей ошибок верна при любом распределении и зависит лишь от класса, n и δ. Что отсюда следует?</p><p class="pg-soft">Реши его в приложении.</p></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li>Для h, зафиксированного до выборки, с вероятностью ≥ 1 − δ: <code>|R(h) − R̂(h)| ≤ √(ln(2/δ) / (2n))</code> (неравенство Хёфдинга), поэтому точность ε дают <code>n ≥ ln(2/δ) / (2ε²)</code> примеров. Для h, выбранного по той же выборке, эта гарантия не действует.</li><li>Оценка объединения для конечного класса H или для k заранее заданных моделей на одной тестовой выборке (|H| = k): с вероятностью ≥ 1 − δ <code>|R(h) − R̂(h)| ≤ √((ln|H| + ln(2/δ)) / (2n))</code> сразу для всех h. Класс стоит всего ln|H|.</li><li>Реализуемый случай (идеальный h существует, алгоритм возвращает h без ошибок на выборке): <code>n ≥ (ln|H| + ln(1/δ)) / ε</code> примеров достаточно, чтобы R(h) ≤ ε с вероятностью ≥ 1 − δ. 1/ε вместо 1/ε².</li><li>Для бесконечных классов работу ln|H| выполняет VC-размерность d: при n ≥ 2d разрыв не больше величины порядка <code>√((d·ln(n/d) + ln(1/δ)) / n)</code>. Для перепараметризованных сетей все эти оценки обычно больше 1; почему такие сети обобщают — открытый вопрос.</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/t1">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><span></span><a href="t2-optimisation-theory-how-fast-can-descent-go.html"><small>Следующий шаг</small>Теория оптимизации: как быстро может идти спуск</a></nav>
 </article>
 </main>
@@ -95,7 +97,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>

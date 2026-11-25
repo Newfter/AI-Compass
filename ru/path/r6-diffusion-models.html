@@ -24,6 +24,8 @@
 <link rel="icon" href="../../images/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="stylesheet" href="../../css/pages.css">
 <script src="../../js/pages.js" defer></script>
+<script src="../../js/config.js" defer></script>
+<script src="../../js/count.js" defer></script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Диффузионные модели","headline":"Диффузионные модели","description":"Зашумление одной формулой, предсказание шума, сэмплирование, наведение, латентная диффузия и flow matching.","inLanguage":"ru","isAccessibleForFree":true,"learningResourceType":"lesson","url":"https://newfter.github.io/AI-Compass/ru/path/r6-diffusion-models.html","publisher":{"@type":"Organization","name":"AI Compass","url":"https://newfter.github.io/AI-Compass/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"AI Compass","item":"https://newfter.github.io/AI-Compass/?lang=ru"},{"@type":"ListItem","position":2,"name":"Путь обучения","item":"https://newfter.github.io/AI-Compass/ru/path/"},{"@type":"ListItem","position":3,"name":"Диффузионные модели","item":"https://newfter.github.io/AI-Compass/ru/path/r6-diffusion-models.html"}]}</script>
 </head>
@@ -79,7 +81,7 @@
 <section class="pg-check"><p><strong>Задание.</strong> В сопоставлении потоков путь x_t = (1 − t)·x₀ + t·ε ведёт от данных x₀ при t = 0 к шуму ε при t = 1. Что сеть учится предсказывать в точке x_t?</p><p class="pg-soft">Реши его в приложении.</p></section>
 <section class="pg-keys"><h2>Запомни</h2><ul><li>Прямой процесс <code>x_t = √ᾱ_t·x₀ + √(1 − ᾱ_t)·ε</code> разрушает данные, и x_t при любом t можно получить сразу. Сеть ε_θ учится предсказывать шум, а это то же самое, что выучивать скор ∇ ln p_t(x_t) с точностью до множителя −√(1 − ᾱ_t).</li><li>Сэмплирование начинается с шума и убирает его шаг за шагом: около 1000 шагов у ранних сэмплеров, десятки с решателями ОДУ, несколько или даже один после дистилляции.</li><li>Наведение без классификатора <code>ε_g = ε_u + w·(ε_c − ε_u)</code> жертвует разнообразием ради точности следования запросу. Латентная диффузия экономит вычисления, работая в пространстве, сжатом автокодировщиком.</li><li>В сопоставлении потоков сеть учится предсказывать скорость ε − x₀ на прямых путях между данными и шумом; чем прямее пути, тем меньше шагов нужно при сэмплировании.</li></ul></section>
 
-<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn">Пройти этот шаг в приложении →</a></aside>
+<aside class="pg-cta"><p>Задания с подсказками, проверка памяти, которая возвращает идею до того, как ты её забудешь, и твой прогресс. Бесплатно и без регистрации.</p><a class="pg-btn" href="../../index.html?lang=ru#learn/r6">Пройти этот шаг в приложении →</a></aside>
 <nav class="pg-pager" aria-label="Путь обучения"><a href="r5-latent-variables-and-the-elbo.html"><small>Предыдущий шаг</small>Скрытые переменные и ELBO</a><a href="r7-reinforcement-learning-the-core.html"><small>Следующий шаг</small>Обучение с подкреплением: основа</a></nav>
 </article>
 </main>
@@ -93,7 +95,7 @@
         <a href="../../ru/history/">История ИИ</a>
         <a href="../../ru/teachers/">Учителям</a>
     </nav>
-    <p>Бесплатный школьный проект. Без рекламы и регистрации.</p>
+    <p>Бесплатный школьный проект. Без рекламы и регистрации. <a href="../../ru/privacy.html">Конфиденциальность</a></p>
     <p><a class="pg-btn" href="../../index.html?lang=ru">Открыть AI Compass</a></p>
 </footer>
 </body>
