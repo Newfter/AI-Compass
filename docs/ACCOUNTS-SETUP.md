@@ -181,7 +181,13 @@ part 8 builds the counting).
 | Table | What | Kept |
 | --- | --- | --- |
 | `visits` | one row per device per day: the device number, the language and the yes/no facts | 35 days |
-| `visitors` | one row per device number: its first and last day, on how many days it came | for good |
+| `visitors` | one row per device number: its first and last day, on how many days it came | 13 months after its first day (the device makes a new number then) |
 | `visit_days` | the totals of each finished day (no device numbers) | for good |
 
 None of the three can be read from the site; only the totals come out, through `site_stats()`.
+
+A day counts at most 20,000 devices, and at most 2,000 of them new. So a broken or unkind script
+that calls `hello()` again and again cannot fill the free database (at the very most about 180 MB
+of its 500 MB). If the numbers page ever shows a day near 20,000 devices or 2,000 new ones, raise
+the two limits in `hello()` (part 8 of `supabase/schema.sql`) and run the whole file again (that is
+safe: it keeps every row).

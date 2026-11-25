@@ -704,8 +704,17 @@ grant execute on function public.challenge_board(text), public.ping() to anon, a
 --
 --   visits      one row per device per day (UTC). Kept 35 days, then deleted.
 --   visitors    one row per device number: its first and last day and on how many days it
---               came, to tell new visitors from returning ones. Nothing else.
+--               came, to tell new visitors from returning ones. Nothing else. Deleted 400 days
+--               after its first day: by then js/count.js has replaced that number (every 13
+--               months), so it never comes back.
 --   visit_days  the totals of each finished day, kept for good. No device numbers at all.
+--
+-- The free database holds 500 MB, and anyone can call hello() with made-up numbers. So a day
+-- counts at most 20,000 devices (new or returning) and at most 2,000 new device numbers; the
+-- rest of that day is ignored. Rows of these sizes take about 112 bytes each, so even a script
+-- that sends the most every day for years fills at most about 80 MB of visits (36 days) and
+-- 90 MB of visitors (400 days). When the site really grows past these numbers, raise the two
+-- limits in hello() below (and keep that sum well under 500 MB).
 --
 -- The words: "active that day" (dau) = devices seen that day; "last 7 days" (wau) and "last 30
 -- days" (mau) = different devices seen in the 7 or 30 days that end that day. A device is one
@@ -802,12 +811,17 @@ begin
   end if;
 
   delete from public.visits v where v.day < today - 35;
+  -- A device number lives 13 months (js/count.js makes a new one then): an older row can
+  -- never be seen again, and keeping it would only let the table grow for ever
+  delete from public.visitors w where w.first_day < today - 400;
 end $$;
 
 -- The site's daily hello (js/count.js): records today's visit of one device. Junk is ignored (no
--- device number, a language other than en and ru), and at most 100,000 new device numbers are
--- taken per day, so a script cannot fill the database. It returns nothing: nothing about any
--- device ever goes back to the browser.
+-- device number, a language other than en and ru). A day takes at most 20,000 devices, new or
+-- returning, and at most 2,000 new device numbers (see the top of this part): past that, the
+-- call does nothing, so a script cannot fill the database. Both checks stop counting at their
+-- limit, so a refused call stays cheap. It returns nothing: nothing about any device ever goes
+-- back to the browser.
 create or replace function public.hello(visitor uuid, lang text default 'en', app boolean default false,
   page boolean default false, installed boolean default false, signed_in boolean default false)
 returns void
@@ -820,9 +834,16 @@ begin
      or hello.lang is null or hello.lang not in ('en', 'ru') then
     return;
   end if;
-  if not exists (select 1 from public.visitors w where w.visitor = hello.visitor)
-     and (select count(*) from public.visitors w where w.first_day = today) >= 100000 then
-    return;
+  -- A device not yet counted today: only while the day has room (20,000 devices) ...
+  if not exists (select 1 from public.visits v where v.day = today and v.visitor = hello.visitor) then
+    if (select count(*) from (select 1 from public.visits v where v.day = today limit 20000) x) >= 20000 then
+      return;
+    end if;
+    -- ... and a number never seen before only while the day has room for new ones (2,000)
+    if not exists (select 1 from public.visitors w where w.visitor = hello.visitor)
+       and (select count(*) from (select 1 from public.visitors w where w.first_day = today limit 2000) x) >= 2000 then
+      return;
+    end if;
   end if;
 
   -- A second hello on the same day only adds what is new (the app after a plain page ...)
@@ -843,9 +864,10 @@ begin
 end $$;
 
 -- The numbers of stats.html: today so far, yesterday, the totals of the last `days` finished
--- days (1 to 400; 90 when not given) and the totals of all time. Only totals, never a device
--- number: they are not secret, so anyone may ask. Asking also writes yesterday's totals when
--- they are due, so the numbers are complete even before today's first visit.
+-- days (1 to 400; 90 when not given), how many device numbers are known (of the last 13 months)
+-- and how many accounts there are. Only totals, never a device number: they are not secret, so
+-- anyone may ask. Asking also writes yesterday's totals when they are due, so the numbers are
+-- complete even before today's first visit.
 create or replace function public.site_stats(days int default 90) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 #variable_conflict use_column
@@ -895,7 +917,7 @@ begin
     'totals', jsonb_build_object(
       'visitors', (select count(*) from public.visitors),
       'accounts', (select count(*) from public.profiles)),
-    'since', (select min(w.first_day) from public.visitors w),
+    'since', least((select min(d.day) from public.visit_days d), (select min(v.day) from public.visits v)),
     'updated_at', now());
 end $$;
 
