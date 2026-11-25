@@ -216,6 +216,7 @@
             <li><strong>Each device counts once per day</strong>, however many pages it opens. Days run from midnight to midnight UTC.</li>
             <li><strong>No personal data is kept.</strong> A device is only a random number made by its browser: no names, no e-mail addresses, no IP addresses. After 13 months, or when a browser's data is cleared, the same device counts as new.</li>
             <li><strong>Not everyone is counted:</strong> browsers with Do Not Track or Global Privacy Control switched on, test robots, and the site opened on your own computer (localhost) while you work on it.</li>
+            <li><strong>A day counts at most 20,000 devices, and at most 2,000 of them new.</strong> Anyone could send made-up visits, so these limits keep the free database from filling up. If the numbers ever stop at them, the site has grown: raise the two limits in <code>hello()</code> in supabase/schema.sql (part 8).</li>
             <li><strong>The numbers start on the day counting was switched on.</strong> Nothing before that day is known. The daily list behind them is deleted after 35 days; the totals of each day stay.</li>
         </ul>
     </section>

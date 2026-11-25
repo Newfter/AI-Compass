@@ -63,7 +63,7 @@ window.AICompass.content.set("privacy", {
                         "whether the app or a plain page like this one was opened, whether the app is installed, and whether you are signed in."
                     ],
                     "AI Compass does not keep your IP address. It uses no cookies, no advertising and no trackers from other companies.",
-                    "The daily records are deleted after 35 days. Only totals stay, like “120 devices today”, and for each random number the first and the last day it was seen, and on how many days.",
+                    "The daily records are deleted after 35 days. What stays: totals, like “120 devices today”, and for each random number the first and the last day it was seen and on how many days. That is deleted too, 13 months after the number was first seen.",
                     "If “Do Not Track” or “Global Privacy Control” is switched on in your browser, nothing is counted."
                 ]
             },
@@ -148,7 +148,7 @@ window.AICompass.content.set("privacy", {
                         "что было открыто — приложение или простая страница вроде этой, установлено ли приложение и выполнен ли вход в аккаунт."
                     ],
                     "AI Compass не хранит твой IP-адрес. Здесь нет cookie, рекламы и трекеров других компаний.",
-                    "Записи по дням удаляются через 35 дней. Остаются только итоги, например «120 устройств сегодня», а для каждого случайного номера — первый и последний день, когда его видели, и сколько всего было таких дней.",
+                    "Записи по дням удаляются через 35 дней. Остаются итоги, например «120 устройств сегодня», а для каждого случайного номера — первый и последний день, когда его видели, и сколько всего было таких дней. Через 13 месяцев после первого дня удаляется и это.",
                     "Если в твоём браузере включены «Не отслеживать» (Do Not Track) или Global Privacy Control, ничего не считается."
                 ]
             },
