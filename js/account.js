@@ -122,10 +122,10 @@
 
     // What this file keeps in the browser (keys "account.*" are never synced)
     const STORE = {
-        synced: "account.synced",       // { v, owner, learner, at, rows: { row: { e, u, h, s, l, t, r, lh } } }
+        synced: "account.synced",       // { v, owner, who, learner, at, left, rows: { row: { e, u, h, s, l, t, r, lh, x, xh, xlh } } }
         pending: "account.pending",     // { owner, rows: { row: { id, all } or { id, items } } }
         times: "account.times",         // { choice: when it was last changed on this device }
-        queue: "account.queue",         // the results waiting to be sent
+        queue: "account.queue",         // the results waiting to be sent: [{ type, detail, at, by }]
         nudge: "account.nudge",         // { n: progress seen, seen: n when last shown, at: when }
         leave: "account.leave",         // "remove" or "keep": the last sign-out choice on this device
         merged: "account.merged",       // { at, tab, print }: a merge changed this device's progress
@@ -1299,6 +1299,57 @@
         return foreign && when <= num(foreignAt) ? 0 : when;
     }
 
+    // What the person signed in here before left of a row: as it was when they signed out
+    // with "keep" (x; a long one only as a fingerprint, xh), else when they last synced (s)
+    function leftText(foreign, raw) {
+        if (foreign.x !== undefined) return foreign.x;
+        if (foreign.xh !== undefined && raw !== undefined && foreign.xh === printOf(raw)) return stable(raw);
+        return foreign.s;
+    }
+
+    // A deliberate "keep" sign-out: what this person leaves on this device is written down
+    // (left: when), so that a person who signs in here next gets none of it in their
+    // account, not even what was not saved yet; only what is done here after this moment
+    function markLeft() {
+        if (!user) return;
+        let snapshot = readSnapshot();
+        if (snapshot.owner !== user.id) snapshot = { v: 2, owner: user.id, at: 0, rows: {} };
+        snapshot.left = Date.now();
+        allRows().forEach(function (row) {
+            const value = A.util.attempt(function () { return row.read(); }, undefined);
+            const entry = snapshot.rows[row.key] || { e: 0 };
+            delete entry.x;
+            delete entry.xh;
+            delete entry.xlh;
+            if (value !== undefined && value !== null) {
+                const text = stable(value);
+                if (text.length <= SNAPSHOT_TEXT_MAX) entry.x = text;
+                else entry.xh = fingerprint(text);
+                if (row.key === bundleRow.key) {
+                    const now = readBundle();
+                    entry.xlh = {};
+                    Object.keys(now).forEach(function (key) { entry.xlh[key] = printOf(now[key]); });
+                }
+            }
+            if (entry.h || entry.x !== undefined || entry.xh !== undefined) snapshot.rows[row.key] = entry;
+        });
+        writeSnapshot(snapshot);
+    }
+
+    // The same person signed in again: what they left is theirs again
+    function forgetLeft(snapshot) {
+        if (!snapshot.left) return;
+        delete snapshot.left;
+        Object.keys(snapshot.rows).forEach(function (key) {
+            const entry = snapshot.rows[key];
+            if (!isObject(entry)) return;
+            delete entry.x;
+            delete entry.xh;
+            delete entry.xlh;
+            if (!entry.h) delete snapshot.rows[key];        // (never synced: only written down at the sign-out)
+        });
+    }
+
     // One row of progress: this device's value, the online row, what was synced last
     // (snap: this person's; foreign: another person's, signed in here before, who last
     // synced at foreignAt). Returns { local, data, epoch, time, reset }
@@ -1308,7 +1359,7 @@
         const now = checkedValue(rule, raw);
         const cloud = onlineRow ? checkedValue(rule, onlineRow.d) : undefined;
         const synced = snap && snap.s !== undefined ? checkedValue(rule, parse(snap.s)) : undefined;
-        const other = foreign && foreign.s !== undefined ? checkedValue(rule, parse(foreign.s)) : undefined;
+        const other = foreign ? checkedValue(rule, parse(leftText(foreign, raw))) : undefined;
         const newer = Boolean(onlineRow && snap && onlineRow.e > snap.e);
         const times = readTimes();
         let localTime = rule.timed ? choiceTime(times[row.key], foreign, foreignAt) : 0;
@@ -1396,6 +1447,22 @@
             const value = mine[name];
             const localTime = choiceTime(times[name], foreign && !snap, foreignAt);
             const there = isObject(cloud[name]) && cloud[name].v !== null && cloud[name].v !== undefined ? cloud[name] : null;
+            // A choice of the person signed in here before (made before they left): it never
+            // goes into this account. The account's own choice is taken; without one, the
+            // name for certificates goes, and a look or language stays as this device's own
+            // (no time: as if never chosen)
+            const previous = Boolean(foreign) && !snap && value !== null && num(times[name]) <= num(foreignAt) &&
+                (num(times[name]) > 0 || name === "lessons.certName");
+            if (previous) {
+                if (there) {
+                    if (!sameValue(value, there.v)) sets[name] = there.v;
+                    setTime(name, num(there.t));
+                } else {
+                    if (name === "lessons.certName") sets[name] = null;
+                    setTime(name, 0);
+                }
+                return;
+            }
             if (!there) {
                 if (value !== null) data[name] = { v: value, t: localTime };
                 return;
@@ -1454,6 +1521,7 @@
         const synced = snap && snap.s !== undefined && isObject(parse(snap.s)) ? parse(snap.s) : null;
         const prints = snap && isObject(snap.lh) ? snap.lh : null;
         const before = foreign && foreign.s !== undefined && isObject(parse(foreign.s)) ? parse(foreign.s) : null;
+        const leftPrints = foreign && isObject(foreign.xlh) ? foreign.xlh : null;
         const newer = Boolean(onlineRow && snap && onlineRow.e > snap.e);
         const removed = pending && Array.isArray(pending.items) ? pending.items : [];
         const data = Object.assign({}, cloud);
@@ -1472,7 +1540,9 @@
             const thereText = there ? stable(cloud[key]) : "";
             const changedHere = !prints || !has(prints, key) || fingerprint(hereText) !== prints[key];
             const changedThere = !synced || !has(synced, key) || stable(synced[key]) !== thereText;
-            const leftBehind = before && here && has(before, key) && stable(before[key]) === hereText;
+            // Left by the person before, as it was when they signed out (else when they last synced)
+            const leftBehind = here && (leftPrints ? has(leftPrints, key) && leftPrints[key] === fingerprint(hereText)
+                : Boolean(before) && has(before, key) && stable(before[key]) === hereText);
             if (!here) {
                 sets[key] = cloud[key];
                 return;
@@ -1527,7 +1597,8 @@
             clearPending(row.key, pending.id);
             pending = null;
         }
-        const foreignAt = foreign ? num(snapshot.at) : 0;
+        // (when they signed out with "keep"; else when they last synced)
+        const foreignAt = foreign ? num(snapshot.left || snapshot.at) : 0;
         if (row.key === prefsRow.key) return combinePrefs(onlineRow, snap, foreign, foreignAt);
         if (row.key === bundleRow.key) return combineBundle(onlineRow, snap, foreign, pending);
         const result = combine(row, onlineRow, snap, foreign, foreignAt, pending);
@@ -1602,6 +1673,7 @@
         function pass(list, rowsKnown) {
             round += 1;
             let snapshot = readSnapshot();
+            if (snapshot.owner === user.id) forgetLeft(snapshot);
             const plan = [];
             // Every row is merged first: a snapshot of the person signed in here before is
             // used for that (what they left behind), then forgotten
@@ -1772,6 +1844,10 @@
     function savedFine() {
         retries = 0;
         if (!user) return;
+        if (!syncing && (leaveMessage === "unsaved" || leaveMessage === "unsavedKeep")) {
+            leaveMessage = "";
+            paintCard();
+        }
         if (!syncing) setSaveState("ok");
         emitAccount("saved");
     }
@@ -2037,7 +2113,7 @@
 
     /* ---------- 9. Sign in, sign out, delete, the nickname ---------- */
     let signInMessage = "";     // "", "offline", "failed"
-    let leaveMessage = "";      // "", "working", "unsaved"
+    let leaveMessage = "";      // "", "working", "unsaved" (remove), "unsavedKeep"
     let nameMessage = "";       // "", "saved", "invalid", "taken", "failed"
 
     // Opens Google's sign-in page. returnTo: a "#section" to show afterwards
@@ -2079,17 +2155,20 @@
     }
 
     // Signs out. options.remove: true removes this person's progress from this device
-    // (after everything is saved online), false keeps it; without it, the choice shown
+    // (after everything is saved online), false keeps it; without it, the choice shown.
+    // options.anyway (with "keep"): signs out also when the latest progress is not saved
     function signOut(options) {
         if (!user || leaveMessage === "working") return Promise.resolve(false);
         const remove = options && typeof options.remove === "boolean" ? options.remove : leaveChoice() === "remove";
+        const anyway = Boolean(options && options.anyway) && !remove;
         A.storage.set(STORE.leave, remove ? "remove" : "keep");
         leaveMessage = "working";
         paintCard();
         return fullSync().then(function (result) {
-            if (!result.ok && remove) {
-                // Removing what is not saved would lose it: stay signed in
-                leaveMessage = "unsaved";
+            if (!result.ok && !anyway) {
+                // Removing what is not saved would lose it; keeping it, it is in no account:
+                // stay signed in and say so ("Sign out anyway" keeps it on this device only)
+                leaveMessage = remove ? "unsaved" : "unsavedKeep";
                 paintCard();
                 return false;
             }
@@ -2100,6 +2179,7 @@
     function finishSignOut(remove) {
         const c = client;
         clearTimeout(syncTimer);
+        if (!remove) markLeft();        // (while this person is still known here)
         const out = c ? c.auth.signOut({ scope: "local" }).catch(function () {}) : Promise.resolve();
         return out.then(function () {
             A.util.attempt(function () { window.localStorage.removeItem(AUTH_KEY); });
@@ -2205,7 +2285,7 @@
         if (EVENT_TYPES.indexOf(activity.type) === -1) return;
         const queue = A.storage.get(STORE.queue, []);
         const list = Array.isArray(queue) ? queue : [];
-        list.push({ type: activity.type, detail: activity.detail || {}, at: new Date(activity.time || Date.now()).toISOString() });
+        list.push({ type: activity.type, detail: activity.detail || {}, at: new Date(activity.time || Date.now()).toISOString(), by: user ? user.id : "" });
         while (list.length > QUEUE_MAX) list.shift();
         A.storage.set(STORE.queue, list);
         clearTimeout(eventTimer);
@@ -2216,11 +2296,15 @@
         clearTimeout(eventTimer);
         eventTimer = 0;
         if (!user || flushing || !online()) return Promise.resolve(false);
-        const queue = A.storage.get(STORE.queue, []);
-        if (!Array.isArray(queue) || !queue.length) return Promise.resolve(true);
+        const who = user.id;
+        const stored = A.storage.get(STORE.queue, []);
+        const all = Array.isArray(stored) ? stored : [];
+        // Results of a person signed in here before never go into this person's diary
+        const queue = all.filter(function (e) { return isObject(e) && e.by === who; });
+        if (queue.length !== all.length) A.storage.set(STORE.queue, queue);
+        if (!queue.length) return Promise.resolve(true);
         flushing = true;
         const batch = queue.slice(0, 50);
-        const who = user.id;
         return loadClient().then(function (c) {
             return c.from("events").insert(batch.map(function (e) { return { user_id: who, type: e.type, detail: e.detail, at: e.at }; }));
         }).then(function (result) {
@@ -2393,6 +2477,11 @@
                     '<button type="button" class="btn btn-ghost btn-small ac-signout" data-ac="signout" data-focus="signout"' + (leaveMessage === "working" ? " disabled" : "") + ">" +
                         esc(t(leaveMessage === "working" ? "account.leave.working" : "account.in.signOut")) + "</button>" +
                     (leaveMessage === "unsaved" ? '<p class="st-note is-problem" role="alert">' + esc(t("account.leave.unsaved")) + "</p>" : "") +
+                    (leaveMessage === "unsavedKeep"
+                        ? '<p class="st-note is-problem" role="alert">' + esc(t("account.leave.unsavedKeep")) + "</p>" +
+                          '<button type="button" class="btn btn-ghost btn-small ac-signout" data-ac="signout-anyway" data-focus="signout-anyway">' +
+                            esc(t("account.leave.anyway")) + "</button>"
+                        : "") +
                 "</div>" +
                 privacyHTML() +
                 '<div class="ac-danger">' +
@@ -2497,6 +2586,8 @@
             signIn(back);
         } else if (action === "signout") {
             signOut();
+        } else if (action === "signout-anyway") {
+            signOut({ remove: false, anyway: true });
         } else if (action === "retry") {
             retries = 0;
             fullSync().then(function (result) { if (result.ok) afterMerge(result, "merged", false); });
@@ -2528,6 +2619,10 @@
         if (!event.target.matches("[data-ac-wipe]")) return;
         const remove = event.target.checked;
         A.storage.set(STORE.leave, remove ? "remove" : "keep");
+        if (leaveMessage === "unsaved" || leaveMessage === "unsavedKeep") {
+            leaveMessage = "";              // (the warning was about the other choice)
+            paintCard();
+        }
         const hint = card.querySelector("[data-ac-wipe-hint]");
         if (hint) A.dom.setText(hint, t(remove ? "account.leave.removeHint" : "account.leave.keepHint"));
     }
